@@ -1,0 +1,10 @@
+.DS_Store
+node_modules/
+local-data/
+uploads/
+*.log
+.env
+.wrangler/
+dist/
+
+*.pem

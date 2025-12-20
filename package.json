@@ -1,0 +1,17 @@
+{
+  "name": "photobooth-production",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "update-manifests": "node tools/update-manifests.js",
+    "update-manifests:hawks": "node tools/update-manifests.js assets/Hawks",
+    "deploy": "node tools/deploy.js",
+    "ship": "node tools/update-manifests.js && node tools/deploy.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "multer": "^1.4.5-lts.1"
+  }
+}
