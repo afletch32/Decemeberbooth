@@ -2832,7 +2832,8 @@ function extFromName(name, fallback) {
   const m = (name || '').match(/\.([a-z0-9]+)$/i); return m ? m[1].toLowerCase() : (fallback || 'png');
 }
 // Initialize the admin-upload preference from storage and wire up the checkbox
-// so future changes persist. Defaults to remote uploads enabled when unset.
+// so future changes persist. Defaults to remote/server uploads enabled when
+// unset so assets land in a shared location instead of the current device.
 function loadUploadDestinationPreference() {
   const stored = localStorage.getItem("useCloudflareUploads");
   const use = stored === null ? true : stored === "true";
@@ -2855,23 +2856,28 @@ function preferRemoteUploads() {
   const stored = localStorage.getItem("useCloudflareUploads");
   return stored === null ? true : stored === "true";
 }
+let serverUploadAvailable = true;
 // Attempt to hand off the upload to the local server's /api/upload endpoint so
 // files land in a shared, device-accessible location rather than being
 // embedded locally.
 async function uploadViaServer(file, kind, hash) {
   try {
-    if (!location || location.protocol === "file:") return "";
+    if (!location || location.protocol === "file:" || !serverUploadAvailable) return "";
     const form = new FormData();
     const fname = `${kind || "file"}-${hash}.${extFromName(file && file.name, "png")}`;
     const wrapped = new File([file], fname, { type: file.type || "application/octet-stream" });
     form.append("file", wrapped);
     const resp = await fetch("/api/upload", { method: "POST", body: form });
-    const json = resp && resp.ok ? await resp.json() : null;
+    if (!resp || !resp.ok) {
+      serverUploadAvailable = false;
+      return "";
+    }
+    const json = await resp.json();
     if (json && json.url) {
       const absolute = json.url.startsWith("http") ? json.url : new URL(json.url, location.href).href;
       return absolute;
     }
-  } catch (_) { }
+  } catch (_) { serverUploadAvailable = false; }
   return "";
 }
 // Upload an asset. If Cloudinary is configured, upload there and return its secure URL.
