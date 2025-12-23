@@ -225,6 +225,7 @@ const DOM = {
   finalPreview: document.getElementById('finalPreview'),
   finalPreviewContent: document.getElementById('finalPreviewContent'),
   finalStrip: document.getElementById('finalStrip'),
+  finalLive: document.getElementById('finalLive'),
   qrCodeContainer: document.getElementById('qrCodeContainer'),
   qrCode: document.getElementById('qrCode'),
   lastShot: document.getElementById('lastShot'),
@@ -248,6 +249,18 @@ const DOM = {
   themeEditor: document.getElementById('themeEditor'),
   themeEditorActive: document.getElementById('themeEditorActive'),
   themeEditorEditing: document.getElementById('themeEditorEditing'),
+  stylePreview: document.getElementById('stylePreview'),
+  stylePreviewHeading: document.getElementById('stylePreviewHeading'),
+  stylePreviewSubheading: document.getElementById('stylePreviewSubheading'),
+  stylePreviewBody: document.getElementById('stylePreviewBody'),
+  stylePreviewButton: document.getElementById('stylePreviewButton'),
+  styleAccentSwatch: document.getElementById('styleAccentSwatch'),
+  styleAccent2Swatch: document.getElementById('styleAccent2Swatch'),
+  styleAccentPicker: document.getElementById('styleAccentPicker'),
+  styleAccent2Picker: document.getElementById('styleAccent2Picker'),
+  quickPicksGrouped: document.getElementById('quickPicksGrouped'),
+  fontPickerModal: document.getElementById('fontPickerModal'),
+  closeFontPicker: document.getElementById('closeFontPicker'),
   themeName: document.getElementById('themeName'),
   eventNameInput: document.getElementById('eventNameInput'),
   cloudNameInput: document.getElementById('cloudNameInput'),
@@ -259,8 +272,6 @@ const DOM = {
   emailJsTemplate: document.getElementById('emailJsTemplate'),
   syncNowBtn: document.getElementById('syncNowBtn'),
   syncStatus: document.getElementById('syncStatus'),
-  // Admin toggle to decide whether uploads prefer the shared remote endpoint
-  // or fall back to device-local handling.
   useCloudflareUploads: document.getElementById('useCloudflareUploads'),
   offlineModeToggle: document.getElementById('offlineModeToggle'),
   sendPendingBtn: document.getElementById('sendPendingBtn'),
@@ -349,6 +360,18 @@ let toastTimer = null;
 let lastShareUrl = null; // Public share URL served by SW
 let demoMode = false; // Allows running from file:// without camera
 let captureAspectRatio = null; // Override capture aspect (width/height) when set
+const AUTO_ENHANCE_ENABLED = true;
+const AUTO_ENHANCE_FILTER = 'brightness(1.05) contrast(1.08) saturate(1.08)';
+const LIVE_PHOTO_ENABLED = true;
+const LIVE_PHOTO_DURATION_MS = 2000;
+let lastLiveClipUrl = null;
+let lastLiveClipBlob = null;
+const ACCENT_PRESET_COLORS = [
+  '#ffffff', '#0f1222', '#111827', '#1f2937',
+  '#ef4444', '#f97316', '#facc15', '#22c55e',
+  '#06b6d4', '#3b82f6', '#6366f1', '#a855f7',
+  '#ec4899', '#f43f5e'
+];
 let createThemeAssets = null; // Temporary storage for create-from-folder workflow
 // Cache-busting stamp for this session to avoid stale images during editing
 const SESSION_BUST = Date.now();
@@ -463,6 +486,37 @@ function setupThemeEditorControls() {
   if (DOM.themeLogo) DOM.themeLogo.addEventListener('change', () => handleThemeAssetInputChange('logo'));
   if (DOM.themeOverlays) DOM.themeOverlays.addEventListener('change', () => handleThemeAssetInputChange('overlay'));
   if (DOM.themeTemplates) DOM.themeTemplates.addEventListener('change', () => handleThemeAssetInputChange('template'));
+  if (DOM.themeWelcomeTitle) DOM.themeWelcomeTitle.addEventListener('input', updateStylePreview);
+  if (DOM.themeWelcomePrompt) DOM.themeWelcomePrompt.addEventListener('input', updateStylePreview);
+  if (DOM.stylePreview) DOM.stylePreview.addEventListener('click', showFontPickerModal);
+  if (DOM.closeFontPicker) DOM.closeFontPicker.addEventListener('click', hideFontPickerModal);
+  if (DOM.fontPickerModal) {
+    DOM.fontPickerModal.addEventListener('click', (e) => {
+      if (e.target === DOM.fontPickerModal) hideFontPickerModal();
+    });
+  }
+  if (DOM.styleAccentSwatch && DOM.styleAccentPicker) {
+    DOM.styleAccentSwatch.addEventListener('click', (e) => {
+      e.stopPropagation();
+      DOM.styleAccentPicker.click();
+    });
+    DOM.styleAccentPicker.addEventListener('input', () => {
+      const target = activeTheme || getSelectedThemeTarget();
+      if (!target) return;
+      setThemeAccentValue(target, 'accent', DOM.styleAccentPicker.value);
+    });
+  }
+  if (DOM.styleAccent2Swatch && DOM.styleAccent2Picker) {
+    DOM.styleAccent2Swatch.addEventListener('click', (e) => {
+      e.stopPropagation();
+      DOM.styleAccent2Picker.click();
+    });
+    DOM.styleAccent2Picker.addEventListener('input', () => {
+      const target = activeTheme || getSelectedThemeTarget();
+      if (!target) return;
+      setThemeAccentValue(target, 'accent2', DOM.styleAccent2Picker.value);
+    });
+  }
 }
 
 function handleThemeAssetInputChange(kind) {
@@ -531,6 +585,7 @@ function setupEventNameInput() {
     if (DOM.eventTitle) {
       DOM.eventTitle.textContent = DOM.eventNameInput.value.trim() || (activeTheme && activeTheme.welcome && activeTheme.welcome.title) || DOM.eventTitle.textContent;
     }
+    updateStylePreview();
   });
 }
 
@@ -545,8 +600,6 @@ function init() {
   setupFolderPickers();
   setupCustomPairingControls();
   setupEventNameInput();
-  // Respect admin preference for where uploads should be stored
-  loadUploadDestinationPreference();
   loadCloudinarySettings();
   setThemeEditorMode(DOM.themeEditorModeSelect ? DOM.themeEditorModeSelect.value : 'edit');
   loadEmailJsSettings();
@@ -1144,6 +1197,17 @@ function updateThemeEditorSummary() {
   if (DOM.themeEditorEditing) {
     DOM.themeEditorEditing.textContent = describeEditingState();
   }
+  updateStylePreview();
+}
+
+function showFontPickerModal() {
+  if (!DOM.fontPickerModal) return;
+  DOM.fontPickerModal.classList.add('show');
+}
+
+function hideFontPickerModal() {
+  if (!DOM.fontPickerModal) return;
+  DOM.fontPickerModal.classList.remove('show');
 }
 
 function describeActiveTheme(theme, key) {
@@ -1178,6 +1242,32 @@ function syncThemeEditorWithActiveTheme() {
   updateThemeEditorSummary();
 }
 
+function updateStylePreview() {
+  if (!DOM.stylePreviewHeading || !DOM.stylePreviewSubheading || !DOM.stylePreviewBody || !DOM.stylePreviewButton) return;
+  const eventName = valueFromInput(DOM.eventNameInput) || (DOM.eventTitle && DOM.eventTitle.textContent) || '';
+  const welcomeTitle = valueFromInput(DOM.themeWelcomeTitle)
+    || (activeTheme && activeTheme.welcome && activeTheme.welcome.title)
+    || eventName
+    || 'Welcome!';
+  const prompt = valueFromInput(DOM.themeWelcomePrompt)
+    || (activeTheme && activeTheme.welcome && activeTheme.welcome.prompt)
+    || 'Touch to start';
+  const subheading = eventName && eventName !== welcomeTitle ? eventName : 'Event Title';
+
+  DOM.stylePreviewHeading.textContent = welcomeTitle;
+  DOM.stylePreviewSubheading.textContent = subheading;
+  DOM.stylePreviewBody.textContent = eventName || 'Event Name';
+  DOM.stylePreviewButton.textContent = prompt;
+  if (DOM.styleAccentPicker) {
+    const accentHex = colorToHex(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+    if (accentHex) DOM.styleAccentPicker.value = accentHex;
+  }
+  if (DOM.styleAccent2Picker) {
+    const accent2Hex = colorToHex(getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim());
+    if (accent2Hex) DOM.styleAccent2Picker.value = accent2Hex;
+  }
+}
+
 function applyThemeEditorBasics(theme) {
   if (DOM.themeName) DOM.themeName.value = theme.name || '';
   setupFontPicker().then(() => {
@@ -1206,6 +1296,17 @@ function updateThemeEditorSummaries(theme) {
   if (DOM.summaryLogo) DOM.summaryLogo.textContent = theme.logo ? 'Current logo: set' : 'Current logo: none';
   if (DOM.summaryOverlays) DOM.summaryOverlays.textContent = `Existing overlays: ${(theme.overlays || []).length}`;
   if (DOM.summaryTemplates) DOM.summaryTemplates.textContent = `Templates: ${getTemplateList(theme).length}`;
+}
+
+function setThemeAccentValue(theme, key, color) {
+  if (!theme || (key !== 'accent' && key !== 'accent2')) return;
+  theme[key] = color;
+  applyThemeBasics(theme);
+  applyThemeEditorColors(theme);
+  saveThemesToStorage();
+  renderCurrentAssets(theme);
+  updateStylePreview();
+  if (DOM.options) renderOptions();
 }
 
 function renderCurrentAssets(theme) {
@@ -1369,24 +1470,47 @@ function renderCurrentAssets(theme) {
   // Accent colors
   if (DOM.currentAccents) {
     DOM.currentAccents.innerHTML = '';
-    const addColor = (label, color) => {
+    const cssAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    const cssAccent2 = getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim();
+    const addColor = (label, key, color) => {
       const item = document.createElement('div');
       item.className = 'color-item';
-      const sw = document.createElement('div');
+      const sw = document.createElement('button');
+      sw.type = 'button';
       sw.className = 'color-swatch';
       sw.style.background = color || 'transparent';
       const hex = (color && color.startsWith('#')) ? color : (colorToHex(color || '') || (color || 'none'));
       const text = document.createElement('span');
       text.textContent = `${label}: ${hex}`;
-      item.appendChild(sw); item.appendChild(text);
-      DOM.currentAccents.appendChild(item);
+      const picker = document.createElement('input');
+      picker.type = 'color';
+      picker.className = 'visually-hidden';
+      picker.value = (hex && hex.startsWith('#')) ? hex : '#ffffff';
+      sw.title = 'Click to pick a color';
+      sw.addEventListener('click', () => picker.click());
+      picker.addEventListener('input', () => setThemeAccentValue(theme, key, picker.value));
+      item.appendChild(sw);
+      item.appendChild(text);
+      item.appendChild(picker);
+
+      const palette = document.createElement('div');
+      palette.className = 'color-palette';
+      ACCENT_PRESET_COLORS.forEach((preset) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'color-swatch preset';
+        btn.style.background = preset;
+        btn.title = preset;
+        btn.addEventListener('click', () => setThemeAccentValue(theme, key, preset));
+        palette.appendChild(btn);
+      });
+      const wrapper = document.createElement('div');
+      wrapper.appendChild(item);
+      wrapper.appendChild(palette);
+      DOM.currentAccents.appendChild(wrapper);
     };
-    if (theme.accent) addColor('Accent', theme.accent);
-    if (theme.accent2) addColor('Accent 2', theme.accent2);
-    if (!theme.accent && !theme.accent2) {
-      const span = document.createElement('span'); span.style.color = '#888'; span.textContent = 'None';
-      DOM.currentAccents.appendChild(span);
-    }
+    addColor('Accent', 'accent', theme.accent || cssAccent || '#ff7a18');
+    addColor('Accent 2', 'accent2', theme.accent2 || cssAccent2 || '#ffffff');
   }
   setGrid(DOM.currentOverlays, getOverlayList(theme), false, 'overlay', false);
   setGrid(DOM.currentTemplates, getTemplateList(theme), true, 'template', false);
@@ -1743,7 +1867,7 @@ const startBoothFromAdmin = (...args) => startBooth(...args);
 async function capturePhotoFlow() {
   lastCaptureFlow = capturePhotoFlow; // Store this function for retake
   setBoothControlsVisible(false);
-  const photo = await countdownAndSnap();
+  const photo = await countdownAndSnap({ live: true });
   const finalUrl = await finalizeToPrint(photo, selectedOverlay);
   showFinal(finalUrl);
   recordAnalytics('photo', selectedOverlay);
@@ -1812,6 +1936,73 @@ function drawToCanvasFromVideo() {
     ctx.drawImage(v, sx, sy, sWidth, sHeight, 0, 0, c.width, c.height);
   }
   return c;
+}
+
+function applyAutoEnhanceCanvas(canvas) {
+  if (!AUTO_ENHANCE_ENABLED || !canvas) return canvas;
+  const out = document.createElement('canvas');
+  out.width = canvas.width;
+  out.height = canvas.height;
+  const ctx = out.getContext('2d');
+  ctx.filter = AUTO_ENHANCE_FILTER;
+  ctx.drawImage(canvas, 0, 0);
+  ctx.filter = 'none';
+  return out;
+}
+
+function clearLiveClip() {
+  if (lastLiveClipUrl) {
+    try { URL.revokeObjectURL(lastLiveClipUrl); } catch (_) { }
+  }
+  lastLiveClipUrl = null;
+  lastLiveClipBlob = null;
+  if (DOM.finalLive) {
+    DOM.finalLive.pause();
+    DOM.finalLive.removeAttribute('src');
+    DOM.finalLive.load();
+    DOM.finalLive.classList.add('hidden');
+  }
+  if (DOM.finalStrip) DOM.finalStrip.classList.remove('hidden');
+}
+
+function setLiveClip(blob) {
+  clearLiveClip();
+  if (!blob) return;
+  lastLiveClipBlob = blob;
+  lastLiveClipUrl = URL.createObjectURL(blob);
+}
+
+function pickLiveMimeType() {
+  if (typeof MediaRecorder === 'undefined') return '';
+  const candidates = [
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm'
+  ];
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || '';
+}
+
+async function captureLiveClip(durationMs) {
+  try {
+    const stream = DOM.video && DOM.video.srcObject;
+    if (!LIVE_PHOTO_ENABLED || !stream || typeof MediaRecorder === 'undefined') return null;
+    const mimeType = pickLiveMimeType();
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    const chunks = [];
+    recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    const stopped = new Promise((resolve) => {
+      recorder.onstop = () => resolve();
+    });
+    recorder.start();
+    await delay(Math.max(300, durationMs));
+    recorder.stop();
+    await stopped;
+    if (!chunks.length) return null;
+    return new Blob(chunks, { type: chunks[0].type || 'video/webm' });
+  } catch (e) {
+    console.warn('Live clip capture failed', e);
+    return null;
+  }
 }
 function updateCaptureAspect() {
   if (!DOM.videoContainer) return;
@@ -2005,6 +2196,7 @@ async function runStripSequence(template) {
   lastCaptureFlow = () => runStripSequence(template); // Store this function for retake
   // 3 photos automatically with pauses
   const shots = [];
+  clearLiveClip();
   const lastShotImg = document.getElementById('lastShot');
   const { state: previewState, prevAspect } = await prepareStripCapture(template);
   let previewRestored = false;
@@ -2047,10 +2239,18 @@ async function showCountdown(text) {
   co.classList.remove('show');
   await delay(200);
 }
-async function countdownAndSnap() {
+async function countdownAndSnap(options = {}) {
+  const { live = false } = options || {};
   for (let n = 3; n > 0; n--) { await showCountdown(n); }
-  const shot = drawToCanvasFromVideo();
+  const livePromise = live ? captureLiveClip(LIVE_PHOTO_DURATION_MS) : null;
+  const shot = applyAutoEnhanceCanvas(drawToCanvasFromVideo());
   triggerFlash();
+  if (livePromise) {
+    const clip = await livePromise;
+    setLiveClip(clip);
+  } else {
+    clearLiveClip();
+  }
   return shot;
 }
 
@@ -2289,6 +2489,19 @@ function showFinal(url) {
   if (DOM.closePreviewBtn) DOM.closePreviewBtn.style.display = 'block';
 
   img.src = url;
+  if (DOM.finalLive && lastLiveClipUrl) {
+    DOM.finalLive.src = lastLiveClipUrl;
+    DOM.finalLive.poster = url;
+    DOM.finalLive.classList.remove('hidden');
+    if (img) img.classList.add('hidden');
+    DOM.finalLive.play().catch(() => {});
+  } else if (DOM.finalLive) {
+    DOM.finalLive.pause();
+    DOM.finalLive.removeAttribute('src');
+    DOM.finalLive.load();
+    DOM.finalLive.classList.add('hidden');
+    if (img) img.classList.remove('hidden');
+  }
   const offline = offlineModeActive();
   // Default: hide QR/link until we have a public URL
   if (qrContainer) qrContainer.classList.add('hidden');
@@ -2486,6 +2699,7 @@ function hideFinal() {
   if (DOM.shareStatus) DOM.shareStatus.style.display = 'none';
   DOM.retakeBtn.style.display = 'none';
   if (DOM.closePreviewBtn) DOM.closePreviewBtn.style.display = 'none';
+  clearLiveClip();
   lastCaptureFlow = null; // Clear the stored flow
   clearTimeout(hidePreviewTimer);
   setBoothControlsVisible(true);
@@ -2831,69 +3045,13 @@ async function fileSha256Hex(file) {
 function extFromName(name, fallback) {
   const m = (name || '').match(/\.([a-z0-9]+)$/i); return m ? m[1].toLowerCase() : (fallback || 'png');
 }
-// Initialize the admin-upload preference from storage and wire up the checkbox
-// so future changes persist. Defaults to remote/server uploads enabled when
-// unset so assets land in a shared location instead of the current device.
-function loadUploadDestinationPreference() {
-  const stored = localStorage.getItem("useCloudflareUploads");
-  const use = stored === null ? true : stored === "true";
-  if (DOM.useCloudflareUploads) {
-    DOM.useCloudflareUploads.checked = use;
-    DOM.useCloudflareUploads.addEventListener("change", () => {
-      localStorage.setItem("useCloudflareUploads", DOM.useCloudflareUploads.checked ? "true" : "false");
-    });
-  }
-  return use;
-}
-// Read the current preference for remote uploads. This guards uploadAsset so we
-// don't repeatedly touch the DOM when the checkbox is missing.
-function preferRemoteUploads() {
-  try {
-    if (DOM.useCloudflareUploads && typeof DOM.useCloudflareUploads.checked === "boolean") {
-      return DOM.useCloudflareUploads.checked;
-    }
-  } catch (_) { }
-  const stored = localStorage.getItem("useCloudflareUploads");
-  return stored === null ? true : stored === "true";
-}
-let serverUploadAvailable = true;
-// Attempt to hand off the upload to the local server's /api/upload endpoint so
-// files land in a shared, device-accessible location rather than being
-// embedded locally.
-async function uploadViaServer(file, kind, hash) {
-  try {
-    if (!location || location.protocol === "file:" || !serverUploadAvailable) return "";
-    const form = new FormData();
-    const fname = `${kind || "file"}-${hash}.${extFromName(file && file.name, "png")}`;
-    const wrapped = new File([file], fname, { type: file.type || "application/octet-stream" });
-    form.append("file", wrapped);
-    const resp = await fetch("/api/upload", { method: "POST", body: form });
-    if (!resp || !resp.ok) {
-      serverUploadAvailable = false;
-      return "";
-    }
-    const json = await resp.json();
-    if (json && json.url) {
-      const absolute = json.url.startsWith("http") ? json.url : new URL(json.url, location.href).href;
-      return absolute;
-    }
-  } catch (_) { serverUploadAvailable = false; }
-  return "";
-}
 // Upload an asset. If Cloudinary is configured, upload there and return its secure URL.
 // Otherwise, fall back to a local data URL.
 async function uploadAsset(file, kind) {
   try {
     const index = getAssetIndex();
     const hash = await fileSha256Hex(file);
-    // Reuse the existing URL if we've already uploaded identical content.
     if (index[hash]) return index[hash];
-    // Prefer remote/server uploads when the admin toggle allows it to keep
-    // assets accessible across devices.
-    if (preferRemoteUploads()) {
-      const serverUrl = await uploadViaServer(file, kind, hash);
-      if (serverUrl) { index[hash] = serverUrl; saveThemesToStorage(); return serverUrl; }
-    }
     const cfg = getCloudinaryConfig();
     if (cfg.use && cfg.cloud && cfg.preset) {
       const form = new FormData();
@@ -3749,11 +3907,11 @@ function refreshFontPickerUI(theme, options = {}) {
 }
 
 function updateQuickPickExpansion() {
-  const wrap = DOM.fontQuickPicks;
+  const wrap = DOM.quickPicks;
   if (!wrap) return;
   wrap.classList.toggle('expanded', quickPicksExpanded);
-  if (DOM.fontQuickPicksToggle) {
-    DOM.fontQuickPicksToggle.textContent = quickPicksExpanded ? 'show less' : 'show all';
+  if (DOM.quickPicksToggle) {
+    DOM.quickPicksToggle.textContent = quickPicksExpanded ? 'show less' : 'show all';
   }
 }
 
@@ -3763,21 +3921,11 @@ function toggleQuickPicks() {
 }
 
 function renderQuickPickButtons() {
-  const wrap = DOM.fontQuickPicks;
-  if (!wrap) return;
-  wrap.innerHTML = '';
+  const wrap = DOM.quickPicks;
+  if (wrap) wrap.innerHTML = '';
   const pairings = Array.isArray(fontCatalog.pairings) ? fontCatalog.pairings.slice() : [];
-  if (DOM.fontQuickPicksToggle) {
-    DOM.fontQuickPicksToggle.style.display = pairings.length ? 'inline' : 'none';
-  }
-  if (!pairings.length) {
-    const note = document.createElement('div');
-    note.style.fontSize = '0.9em';
-    note.style.opacity = '0.7';
-    note.textContent = 'No quick picks configured yet.';
-    wrap.appendChild(note);
-    return;
-  }
+  if (DOM.quickPicksToggle) DOM.quickPicksToggle.style.display = 'none';
+  if (!pairings.length) return;
   const seasonalWords = ["Christmas", "Holiday", "Spooky", "Valentine", "Easter", "New Year"];
   pairings.sort((a, b) => {
     if (a.isCustom && !b.isCustom) return -1;
@@ -3809,6 +3957,75 @@ function renderQuickPickButtons() {
     wrap.appendChild(card);
   });
   updateQuickPickExpansion();
+}
+
+function getPairingCategory(pair) {
+  const text = `${pair.notes || ''} ${pair.preview || ''}`.toLowerCase();
+  if (text.includes('christmas') || text.includes('holiday')) return 'Christmas';
+  if (text.includes('new year')) return 'New Year';
+  if (text.includes('halloween') || text.includes('spooky')) return 'Halloween';
+  if (text.includes('valentine')) return "Valentine's";
+  if (text.includes('graduation') || text.includes('grad')) return 'Graduation';
+  if (text.includes('birthday')) return 'Birthday';
+  if (text.includes('wedding') || text.includes('romantic')) return 'Weddings';
+  return 'General';
+}
+
+function renderGroupedQuickPicks() {
+  const wrap = DOM.quickPicksGrouped;
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const pairings = Array.isArray(fontCatalog.pairings) ? fontCatalog.pairings.slice() : [];
+  if (!pairings.length) {
+    const note = document.createElement('div');
+    note.style.fontSize = '0.9em';
+    note.style.opacity = '0.7';
+    note.textContent = 'No quick picks configured yet.';
+    wrap.appendChild(note);
+    return;
+  }
+  const groups = new Map();
+  pairings.forEach((pair) => {
+    const cat = getPairingCategory(pair);
+    if (!groups.has(cat)) groups.set(cat, []);
+    groups.get(cat).push(pair);
+  });
+  const order = ['Christmas', 'New Year', 'Halloween', "Valentine's", 'Graduation', 'Birthday', 'Weddings', 'General'];
+  order.forEach((cat) => {
+    const list = groups.get(cat);
+    if (!list || !list.length) return;
+    const group = document.createElement('div');
+    group.className = 'quick-pick-group';
+    const title = document.createElement('div');
+    title.className = 'quick-pick-group-title';
+    title.textContent = cat;
+    const grid = document.createElement('div');
+    grid.className = 'quick-pick-group-grid';
+    list.forEach((pair) => {
+      const heading = pair.heading;
+      const body = pair.body;
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `quick-pick-card${pair.isCustom ? ' quick-pick-card-custom' : ''}`;
+      const previewText = findPairingPreview(pair);
+      card.innerHTML = `
+        <div class="quick-pick-label${pair.isCustom ? ' quick-pick-label-custom' : ''}">${pair.isCustom ? 'Custom quick pick' : 'Quick pick'}</div>
+        <div class="quick-pick-title">${heading} + ${body}${pair.notes ? ` — ${pair.notes}` : ''}</div>
+        <div class="quick-pick-preview" style="font-family: ${composeFontString(heading)};">${previewText}</div>
+      `;
+      card.addEventListener('click', () => {
+        applyFontSelection(heading, body, {
+          keepPairing: true,
+          headingPreviewText: previewText,
+          bodyPreviewText: getFontPreviewText(body)
+        });
+      });
+      grid.appendChild(card);
+    });
+    group.appendChild(title);
+    group.appendChild(grid);
+    wrap.appendChild(group);
+  });
 }
 
 async function reloadFontPickerOptions(options = {}) {
@@ -3857,6 +4074,7 @@ async function reloadFontPickerOptions(options = {}) {
   if (href) injectStylesheetOnce(href);
   populateFontPickerOptions(fontCatalog.available);
   renderQuickPickButtons();
+  renderGroupedQuickPicks();
   renderCustomPairingsList();
   if (previous && previous.heading) ensureOptionExists(DOM.headingFontSelect, previous.heading);
   if (previous && previous.body) ensureOptionExists(DOM.bodyFontSelect, previous.body);
@@ -3869,6 +4087,16 @@ async function reloadFontPickerOptions(options = {}) {
 }
 
 function attachFontPickerListeners() {
+  const openSelect = (select) => {
+    if (!select) return;
+    if (typeof select.showPicker === 'function') {
+      select.showPicker();
+      return;
+    }
+    select.focus();
+    select.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    select.click();
+  };
   if (DOM.headingFontSelect) {
     DOM.headingFontSelect.addEventListener('change', () => {
       if (ignoreFontPickerEvents) return;
@@ -3885,6 +4113,12 @@ function attachFontPickerListeners() {
       applyFontSelection(heading, body, { keepPairing: false });
     });
   }
+  if (DOM.headingFontPreview) {
+    DOM.headingFontPreview.addEventListener('click', () => openSelect(DOM.headingFontSelect));
+  }
+  if (DOM.bodyFontPreview) {
+    DOM.bodyFontPreview.addEventListener('click', () => openSelect(DOM.bodyFontSelect));
+  }
   if (DOM.fontPairingSelect) {
     DOM.fontPairingSelect.addEventListener('change', () => {
       if (ignoreFontPickerEvents) return;
@@ -3899,8 +4133,8 @@ function attachFontPickerListeners() {
       });
     });
   }
-  if (DOM.fontQuickPicksToggle) {
-    DOM.fontQuickPicksToggle.addEventListener('click', toggleQuickPicks);
+  if (DOM.quickPicksToggle) {
+    DOM.quickPicksToggle.addEventListener('click', toggleQuickPicks);
   }
 }
 
@@ -4685,8 +4919,6 @@ function ensureArray(target, prop) {
   if (!Array.isArray(target[prop])) target[prop] = [];
 }
 
-// Collect files selected in the theme editor and push them through uploadAsset
-// so the resulting URLs are stored back onto the theme model.
 async function uploadThemeAssetsFromEditor(target) {
   const tasks = [];
   let backgroundsAdded = 0;

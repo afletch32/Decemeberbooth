@@ -504,6 +504,36 @@
       color: var(--accent2);
     }
 
+    .quick-pick-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .quick-pick-group {
+      background: #0b0d12;
+      border: 1px solid #1c1f29;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .quick-pick-group-title {
+      font-weight: 700;
+      color: var(--accent2);
+      margin-bottom: 8px;
+    }
+
+    .quick-pick-group-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .font-picker-modal {
+      width: min(640px, 92vw);
+    }
+
     .color-item {
       display: flex;
       align-items: center;
@@ -519,6 +549,32 @@
       height: 30px;
       border-radius: 6px;
       border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      background: transparent;
+      padding: 0;
+    }
+
+    .color-palette {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .color-swatch.preset {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+    }
+
+    .color-custom-btn {
+      background: #1f2433;
+      color: #ddd;
+      border: 1px solid #2a3142;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.85em;
+      cursor: pointer;
     }
 
     .font-item {
@@ -578,6 +634,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      cursor: pointer;
     }
 
     .quick-picks-header {
@@ -595,6 +652,11 @@
       gap: 10px;
       max-height: 220px;
       overflow: hidden;
+    }
+
+    .quick-picks-grid.expanded {
+      max-height: none;
+      overflow: visible;
     }
 
     .quick-pick-card {
@@ -1251,6 +1313,14 @@
       border-radius: 12px;
       box-shadow: 0 10px 30px #000;
     }
+    #finalLive {
+      max-height: 92vh;
+      max-width: 92vw;
+      border: 8px solid #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px #000;
+      background: #000;
+    }
 
     #finalPreviewActions {
       display: flex;
@@ -1459,6 +1529,100 @@
       border-top: 1px solid #232637;
       margin: 10px 0 4px;
     }
+
+    .style-preview {
+      margin: 12px 0;
+      padding: 16px;
+      background: #0b0f1a;
+      border: 1px solid #232734;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .style-preview-heading {
+      font-family: var(--font-heading);
+      font-size: 1.8em;
+      color: var(--accent2);
+      margin: 0;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.45);
+    }
+
+    .style-preview-subheading {
+      font-family: var(--font-heading);
+      font-size: 1.1em;
+      color: var(--accent);
+      margin: 0;
+    }
+
+    .style-preview-body {
+      font-family: var(--font-body);
+      color: #d4d8eb;
+      margin: 0;
+    }
+
+    .style-preview-button {
+      align-self: flex-start;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      background: var(--accent);
+      color: #000;
+      font-weight: 600;
+      font-family: var(--font-heading);
+    }
+
+    .style-preview-swatches {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .style-swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 1px solid #1f2433;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+    }
+
+    .style-swatch.secondary {
+      background: var(--accent2);
+    }
+
+    details.font-panel > summary,
+    details.font-subsection > summary {
+      list-style: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    details.font-panel > summary {
+      font-size: 1.3em;
+    }
+
+    details.font-panel[open] > summary {
+      margin-bottom: 10px;
+    }
+
+    details.font-subsection {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px solid #1c1f29;
+      border-radius: 10px;
+      background: #0b0d12;
+    }
+
+    details.font-subsection[open] > summary {
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 
@@ -1542,10 +1706,10 @@
             </div>
             <div class="admin-field" style="margin:0;">
               <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-                <input type="checkbox" id="useCloudflareUploads"> Use server storage for Admin uploads
+                <input type="checkbox" id="useCloudflareUploads"> Use Cloudflare storage for Admin uploads
               </label>
-              <small style="display:block; color:#888;">Uploads prefer the local server (/api/upload) when available.
-                If off and Cloudinary is configured, uploads go to Cloudinary. Base64 is no longer used.</small>
+              <small style="display:block; color:#888;">If off and Cloudinary is configured, uploads go to Cloudinary.
+                Base64 is no longer used.</small>
             </div>
           </div>
         </details>
@@ -1581,14 +1745,6 @@
                 <div id="currentLogo" class="asset-single"></div>
               </div>
               <div class="asset-row">
-                <label>Font:</label>
-                <div id="currentFont" class="asset-single"></div>
-              </div>
-              <div class="asset-row">
-                <label>Accent Colors:</label>
-                <div id="currentAccents" class="asset-grid"></div>
-              </div>
-              <div class="asset-row">
                 <label>Overlays:</label>
                 <div id="currentOverlays" class="asset-grid"></div>
               </div>
@@ -1606,6 +1762,22 @@
           <h2>Theme Editor</h2>
           <p style="color:#bbb; margin-top:0;">Theme assets are managed from the controls on the left. A single shared
             logo now applies to every theme.</p>
+          <div id="stylePreview" class="style-preview" aria-label="Style preview">
+            <div class="style-preview-swatches">
+              <button id="styleAccentSwatch" type="button" class="style-swatch" style="background: var(--accent);"></button>
+              <button id="styleAccent2Swatch" type="button" class="style-swatch secondary"></button>
+            </div>
+            <input type="color" id="styleAccentPicker" class="visually-hidden" value="#ffffff">
+            <input type="color" id="styleAccent2Picker" class="visually-hidden" value="#ffffff">
+            <h3 id="stylePreviewHeading" class="style-preview-heading">Welcome to Fletch Photobooth</h3>
+            <p id="stylePreviewSubheading" class="style-preview-subheading">Event Title Example</p>
+            <p id="stylePreviewBody" class="style-preview-body">This is a quick preview of the selected fonts and colors.</p>
+            <button id="stylePreviewButton" type="button" class="style-preview-button">Touch to start</button>
+          </div>
+          <div>
+            <h3 style="margin:14px 0 6px;">Quick Picks</h3>
+            <div id="quickPicksGrouped" class="quick-pick-groups"></div>
+          </div>
           <details class="theme-tools" style="margin-top:12px;">
             <summary style="cursor:pointer; color:#ddd;">Theme data tools</summary>
             <div class="btn-row" style="margin-top:10px;">
@@ -1682,93 +1854,10 @@
         </details>
       </div>
       </div>
-      <div class="panel">
-        <h2>Font Library</h2>
-        <div class="font-picker">
-          <div class="font-row">
-            <label for="libraryHeadingFont">Heading Font</label>
-            <select id="libraryHeadingFont">
-              <option value="">Loading…</option>
-            </select>
-            <div id="headingPreview" class="font-preview font-heading">
-              <small>Preview</small>
-              <div class="font-preview-text">Welcome to Fletch Photobooth</div>
-            </div>
-          </div>
-          <div class="font-row">
-            <label for="libraryBodyFont">Body Font</label>
-            <select id="libraryBodyFont">
-              <option value="">Loading…</option>
-            </select>
-            <div id="bodyPreview" class="font-preview font-body">
-              <small>Preview</small>
-              <div class="font-preview-text">Welcome to Fletch Photobooth</div>
-            </div>
-          </div>
-          <div class="font-row">
-            <label for="libraryPairings">Recommended Pairings</label>
-            <select id="libraryPairings">
-              <option value="">Loading…</option>
-            </select>
-          </div>
-          <div>
-            <div class="font-quick-header">
-              <span>Quick Picks</span>
-              <button type="button" id="libraryQpToggle" class="font-quick-toggle">show all</button>
-            </div>
-            <div id="libraryQuickPicks" class="quick-picks"></div>
-          </div>
-        </div>
-        <hr class="font-divider">
-        <h3 style="margin-top:8px;">Add Custom Fonts</h3>
-        <label for="addFontFamily">Google Font Family:</label>
-        <input type="text" id="addFontFamily" placeholder="e.g., Pacifico"><button onclick="addFontByFamily()">Add</button><br />
-        <small>Tip: enter a Google Fonts family name (weights default).</small><br />
-        <label for="addFontUrl">Google Fonts URL:</label>
-        <input type="text" id="addFontUrl" placeholder="https://fonts.googleapis.com/css2?family=...&display=swap"
-          style="width:60%"><button onclick="addFontByUrl()">Add URL</button>
-        <div id="currentFonts" style="margin-top:8px; font-size:0.95em; color:#bbb;">Loading fonts list…</div>
-        <div class="font-picker">
-          <h3>Font Pairings</h3>
-          <p class="font-picker-note">Pick a quick pairing or add your own combo. The selection updates the active theme immediately.</p>
-          <div class="font-current-previews">
-            <div class="font-preview-column">
-              <span class="font-preview-label">Heading preview</span>
-              <div id="headingFontPreview" class="font-preview-box">Welcome to Fletch Photobooth</div>
-            </div>
-            <div class="font-preview-column">
-              <span class="font-preview-label">Body preview</span>
-              <div id="bodyFontPreview" class="font-preview-box">Welcome to Fletch Photobooth</div>
-            </div>
-          </div>
-          <div class="font-select-legacy">
-            <label for="headingFontSelect">Heading Font</label>
-            <select id="headingFontSelect"></select>
-            <label for="bodyFontSelect">Body Font</label>
-            <select id="bodyFontSelect"></select>
-            <label for="fontPairingSelect">Pairing Suggestions</label>
-            <select id="fontPairingSelect"></select>
-          </div>
-          <div class="quick-picks-header">
-            <span>Quick Picks</span>
-            <button type="button" id="qpToggle" class="button-ghost">show all</button>
-          </div>
-          <div id="quickPicks" class="quick-picks-grid"></div>
-          <div class="quick-picks-add">
-            <h4>Add a quick pick</h4>
-            <form id="quickPickForm" class="quick-picks-form">
-              <input id="addPairingHeading" list="fontSuggestions" type="text" placeholder="Heading font (e.g., Playfair Display)">
-              <input id="addPairingBody" list="fontSuggestions" type="text" placeholder="Body font (e.g., Source Sans 3)">
-              <input id="addPairingPreview" type="text" placeholder="Preview text (optional)">
-              <input id="addPairingNotes" type="text" placeholder="Notes (optional)">
-              <button type="submit" id="addPairingBtn">Add Pairing</button>
-            </form>
-            <small id="customPairingHint" class="quick-picks-hint">Fonts must be available on Google Fonts or added above.</small>
-            <div id="customPairingsList" class="custom-pairings-list"></div>
-          </div>
-          <datalist id="fontSuggestions"></datalist>
-        </div>
-      </div>
+      <details class="panel font-panel">
+        <summary>Font Library</summary>
+        <p style="color:#9aa; margin:0;">Click the main preview to change fonts. Quick picks are shown on the right.</p>
+      </details>
     </div>
   </div>
 
@@ -1804,8 +1893,9 @@
     </div>
     <div id="countdownOverlay"></div>
     <div id="flashOverlay"></div>
-    <div id="finalPreview">
+      <div id="finalPreview">
       <div id="finalPreviewContent">
+        <video id="finalLive" class="hidden" autoplay muted loop playsinline></video>
         <img id="finalStrip" />
         <div id="finalPreviewActions">
           <div id="qrCodeContainer" class="hidden">
@@ -1861,10 +1951,44 @@
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
-  <div id="createThemeModal" class="modal-backdrop">
-    <div class="modal-card">
+    <div id="fontPickerModal" class="modal-backdrop">
+      <div class="modal-card font-picker-modal">
+        <h3>Choose Fonts</h3>
+        <div class="font-picker">
+          <div class="font-row">
+            <label for="headingFontSelect">Heading Font</label>
+            <select id="headingFontSelect"></select>
+          </div>
+          <div class="font-row">
+            <label for="bodyFontSelect">Body Font</label>
+            <select id="bodyFontSelect"></select>
+          </div>
+          <div class="font-row">
+            <label for="fontPairingSelect">Pairing Suggestions</label>
+            <select id="fontPairingSelect"></select>
+          </div>
+        </div>
+        <details class="font-subsection" open>
+          <summary>Add Custom Fonts</summary>
+          <label for="addFontFamily">Google Font Family:</label>
+          <input type="text" id="addFontFamily" placeholder="e.g., Pacifico"><button onclick="addFontByFamily()">Add</button><br />
+          <small>Tip: enter a Google Fonts family name (weights default).</small><br />
+          <label for="addFontUrl">Google Fonts URL:</label>
+          <input type="text" id="addFontUrl" placeholder="https://fonts.googleapis.com/css2?family=...&display=swap"
+            style="width:60%"><button onclick="addFontByUrl()">Add URL</button>
+          <div id="currentFonts" style="margin-top:8px; font-size:0.95em; color:#bbb;">Loading fonts list…</div>
+        </details>
+        <div class="modal-footer">
+          <button type="button" id="closeFontPicker">Close</button>
+        </div>
+        <datalist id="fontSuggestions"></datalist>
+      </div>
+    </div>
+
+    <div id="createThemeModal" class="modal-backdrop">
+      <div class="modal-card">
       <h3>Create New Theme</h3>
       <label for="createThemeName">Theme Name</label>
       <input type="text" id="createThemeName" placeholder="My New Theme">
