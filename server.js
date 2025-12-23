@@ -14,10 +14,11 @@ const os = require('os');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+const DATA_ROOT = process.env.DATA_ROOT || __dirname;
 
 // Directories
-const LOCAL_DATA_DIR = path.join(__dirname, 'local-data');
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const LOCAL_DATA_DIR = path.join(DATA_ROOT, 'local-data');
+const UPLOADS_DIR = path.join(DATA_ROOT, 'uploads');
 
 // Ensure directories exist
 [LOCAL_DATA_DIR, UPLOADS_DIR].forEach(dir => {
@@ -178,38 +179,49 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 // Serve static files from root directory
 app.use(express.static(__dirname));
 
-// Start server - listen on all network interfaces (0.0.0.0)
-app.listen(PORT, '0.0.0.0', () => {
-  const networkAddresses = getNetworkAddresses();
+function startServer(port = PORT) {
+  // Start server - listen on all network interfaces (0.0.0.0)
+  const server = app.listen(port, '0.0.0.0', () => {
+    const info = server.address();
+    const resolvedPort = info && typeof info === 'object' ? info.port : port;
+    const networkAddresses = getNetworkAddresses();
 
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🎉 PHOTOBOOTH SERVER RUNNING');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('');
-  console.log('📍 Access URLs:');
-  console.log(`   Local:    http://localhost:${PORT}`);
-
-  if (networkAddresses.length > 0) {
-    networkAddresses.forEach(addr => {
-      console.log(`   Network:  http://${addr}:${PORT}`);
-    });
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🎉 PHOTOBOOTH SERVER RUNNING');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('');
-    console.log('📱 Use the Network URL to access from other devices');
-    console.log('   (iPad, phone, etc. on the same WiFi network)');
-  }
+    console.log('📍 Access URLs:');
+    console.log(`   Local:    http://localhost:${resolvedPort}`);
 
-  console.log('');
-  console.log(`📂 Directory: ${__dirname}`);
-  console.log(`💾 Data:      ${LOCAL_DATA_DIR}`);
-  console.log(`📤 Uploads:   ${UPLOADS_DIR}`);
-  console.log('');
-  console.log('✅ API Endpoints:');
-  console.log('   GET/PUT  /api/fonts');
-  console.log('   GET/PUT  /api/themes');
-  console.log('   POST     /api/upload');
-  console.log('');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('⚠️  Press Ctrl+C to stop the server');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('');
-});
+    if (networkAddresses.length > 0) {
+      networkAddresses.forEach(addr => {
+        console.log(`   Network:  http://${addr}:${resolvedPort}`);
+      });
+      console.log('');
+      console.log('📱 Use the Network URL to access from other devices');
+      console.log('   (iPad, phone, etc. on the same WiFi network)');
+    }
+
+    console.log('');
+    console.log(`📂 Directory: ${__dirname}`);
+    console.log(`💾 Data:      ${LOCAL_DATA_DIR}`);
+    console.log(`📤 Uploads:   ${UPLOADS_DIR}`);
+    console.log('');
+    console.log('✅ API Endpoints:');
+    console.log('   GET/PUT  /api/fonts');
+    console.log('   GET/PUT  /api/themes');
+    console.log('   POST     /api/upload');
+    console.log('');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('⚠️  Press Ctrl+C to stop the server');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('');
+  });
+  return server;
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app, startServer, UPLOADS_DIR, LOCAL_DATA_DIR };

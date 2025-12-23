@@ -101,6 +101,8 @@ async function walk(root, onDir) {
   const results = [];
   while (stack.length) {
     const cur = stack.pop();
+    const processed = await onDir(cur);
+    if (processed) results.push(processed);
     let dirents;
     try {
       dirents = await fsp.readdir(cur, { withFileTypes: true });
@@ -110,8 +112,6 @@ async function walk(root, onDir) {
     for (const de of dirents) {
       const p = path.join(cur, de.name);
       if (de.isDirectory()) {
-        const r = await onDir(p);
-        if (r) results.push(r);
         stack.push(p);
       }
     }
@@ -137,7 +137,20 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  exists,
+  readJSON,
+  isImage,
+  listImages,
+  writeJSON,
+  mergeBySrc,
+  processDir,
+  walk,
+};

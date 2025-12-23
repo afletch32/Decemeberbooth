@@ -1542,10 +1542,10 @@
             </div>
             <div class="admin-field" style="margin:0;">
               <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-                <input type="checkbox" id="useCloudflareUploads"> Use Cloudflare storage for Admin uploads
+                <input type="checkbox" id="useCloudflareUploads"> Use server storage for Admin uploads
               </label>
-              <small style="display:block; color:#888;">If off and Cloudinary is configured, uploads go to Cloudinary.
-                Base64 is no longer used.</small>
+              <small style="display:block; color:#888;">Uploads prefer the local server (/api/upload) when available.
+                If off and Cloudinary is configured, uploads go to Cloudinary. Base64 is no longer used.</small>
             </div>
           </div>
         </details>
