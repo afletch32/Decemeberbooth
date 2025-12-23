@@ -1642,6 +1642,8 @@
             <div id="themeQuickSelect" class="theme-quick-grid"></div>
             <label for="eventNameInput">Event Name</label>
             <input type="text" id="eventNameInput" placeholder="e.g., Halloween Dance 2025">
+            <label for="eventDateInput">Event Date</label>
+            <input type="date" id="eventDateInput">
             <div class="btn-row">
               <button type="button" onclick="exportCurrentEvent()">Export Event</button>
             </div>
@@ -1777,6 +1779,15 @@
           <div>
             <h3 style="margin:14px 0 6px;">Quick Picks</h3>
             <div id="quickPicksGrouped" class="quick-pick-groups"></div>
+          </div>
+          <div class="panel" style="margin-top:14px;">
+            <h3 style="margin:0 0 8px;">Event Gallery Link</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" onclick="copyEventGalleryLink()">Copy Link</button>
+              <button type="button" onclick="openEventGalleryLink()">Open Link</button>
+            </div>
+            <div id="eventGalleryLink" style="margin-top:8px; font-size:0.9em; color:#bbb; word-break:break-all;"></div>
+            <small style="display:block; margin-top:6px; color:#888;">Requires Cloudinary and a tag-based image list.</small>
           </div>
           <details class="theme-tools" style="margin-top:12px;">
             <summary style="cursor:pointer; color:#ddd;">Theme data tools</summary>

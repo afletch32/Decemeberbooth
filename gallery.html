@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Event Gallery</title>
+  <link rel="stylesheet" href="fonts.css">
+  <style>
+    :root {
+      --accent: #d4f2d9;
+      --accent2: #ffffff;
+      --font-heading: 'Comic Neue', cursive;
+      --font-body: 'Comic Neue', cursive;
+    }
+    body {
+      margin: 0;
+      font-family: var(--font-body, 'Comic Neue', cursive);
+      background: #0b0d12;
+      color: #fff;
+    }
+    header {
+      padding: 20px;
+      text-align: center;
+      background: #0f1220;
+      border-bottom: 1px solid #1f2433;
+    }
+    h1 {
+      margin: 0;
+      font-family: var(--font-heading, 'Comic Neue', cursive);
+      color: var(--accent2);
+      font-size: 2rem;
+    }
+    #status {
+      margin-top: 8px;
+      color: #b7bdd3;
+      font-size: 0.95rem;
+    }
+    .grid {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .card {
+      background: #111523;
+      border: 1px solid #1f2433;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+    }
+    .card img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      aspect-ratio: 4 / 3;
+    }
+    .note {
+      padding: 16px;
+      color: #b7bdd3;
+      text-align: center;
+    }
+    a {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="galleryTitle">Event Gallery</h1>
+    <div id="status">Loading photos…</div>
+  </header>
+  <main>
+    <div id="galleryGrid" class="grid"></div>
+    <div id="emptyState" class="note" style="display:none;">
+      No photos found yet.
+    </div>
+    <div id="errorState" class="note" style="display:none;"></div>
+  </main>
+  <script src="scripts/gallery.js"></script>
+</body>
+</html>

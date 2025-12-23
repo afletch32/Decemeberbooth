@@ -1,3 +1,5 @@
+import { buildEventFolderPath } from "./cloudinary-utils.mjs";
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
@@ -214,6 +216,7 @@ const DOM = {
   analyticsData: document.getElementById('analyticsData'),
   logo: document.getElementById('logo'),
   eventTitle: document.getElementById('eventTitle'),
+  eventDateInput: document.getElementById('eventDateInput'),
   options: document.getElementById('options'),
   videoWrap: document.getElementById('videoWrap'),
   videoContainer: document.getElementById('videoContainer'),
@@ -259,6 +262,7 @@ const DOM = {
   styleAccentPicker: document.getElementById('styleAccentPicker'),
   styleAccent2Picker: document.getElementById('styleAccent2Picker'),
   quickPicksGrouped: document.getElementById('quickPicksGrouped'),
+  eventGalleryLink: document.getElementById('eventGalleryLink'),
   fontPickerModal: document.getElementById('fontPickerModal'),
   closeFontPicker: document.getElementById('closeFontPicker'),
   themeName: document.getElementById('themeName'),
@@ -567,7 +571,10 @@ function setupOfflineControls() {
       localStorage.setItem('forceCameraOnFile', DOM.forceCameraFileToggle.checked ? 'true' : 'false');
     });
   }
-  window.addEventListener('online', () => updatePendingUI());
+  window.addEventListener('online', () => {
+    updatePendingUI();
+    flushPendingUploads();
+  });
   window.addEventListener('offline', () => updatePendingUI());
 }
 
@@ -589,6 +596,16 @@ function setupEventNameInput() {
   });
 }
 
+function setupEventDateInput() {
+  if (!DOM.eventDateInput) return;
+  DOM.eventDateInput.addEventListener('input', () => {
+    const key = DOM.eventSelect && DOM.eventSelect.value;
+    if (!key) return;
+    saveStoredEventDate(key, DOM.eventDateInput.value.trim());
+    updateStylePreview();
+  });
+}
+
 function init() {
   setupEventSelector();
   setupBoothButtons();
@@ -600,10 +617,12 @@ function init() {
   setupFolderPickers();
   setupCustomPairingControls();
   setupEventNameInput();
+  setupEventDateInput();
   loadCloudinarySettings();
   setThemeEditorMode(DOM.themeEditorModeSelect ? DOM.themeEditorModeSelect.value : 'edit');
   loadEmailJsSettings();
   updatePendingUI();
+  flushPendingUploads();
   applyPreviewOrientation();
 }
 
@@ -878,6 +897,10 @@ function cloudinaryEnabled() {
   const cfg = getCloudinaryConfig();
   return cfg.use;
 }
+function cloudinaryConfigured() {
+  const cfg = getCloudinaryConfig();
+  return Boolean(cfg.cloud && cfg.preset);
+}
 
 // --- Overlay Spot-Color Mask (optional) ---
 // If enabled, any pixel in an overlay matching `SPOT_MASK.color` within `tolerance`
@@ -1129,6 +1152,7 @@ function refreshTemplatesFromFolder(theme) {
 function syncAdminUiWithTheme(themeKey, theme) {
   const currentKey = themeKey || (DOM.eventSelect && DOM.eventSelect.value) || '';
   const storedName = getStoredEventName(currentKey);
+  const storedDate = getStoredEventDate(currentKey);
   if (DOM.eventTitle) DOM.eventTitle.textContent = storedName || (theme.welcome && theme.welcome.title) || '';
   if (DOM.logo) {
     if (theme.logo) {
@@ -1145,6 +1169,8 @@ function syncAdminUiWithTheme(themeKey, theme) {
   if (DOM.options) renderOptions();
   syncThemeEditorWithActiveTheme();
   if (DOM.eventNameInput) DOM.eventNameInput.value = storedName || '';
+  if (DOM.eventDateInput) DOM.eventDateInput.value = storedDate || '';
+  updateStylePreview();
 }
 
 function loadTheme(themeKey) {
@@ -1245,6 +1271,7 @@ function syncThemeEditorWithActiveTheme() {
 function updateStylePreview() {
   if (!DOM.stylePreviewHeading || !DOM.stylePreviewSubheading || !DOM.stylePreviewBody || !DOM.stylePreviewButton) return;
   const eventName = valueFromInput(DOM.eventNameInput) || (DOM.eventTitle && DOM.eventTitle.textContent) || '';
+  const eventDate = DOM.eventDateInput ? DOM.eventDateInput.value : '';
   const welcomeTitle = valueFromInput(DOM.themeWelcomeTitle)
     || (activeTheme && activeTheme.welcome && activeTheme.welcome.title)
     || eventName
@@ -1258,6 +1285,10 @@ function updateStylePreview() {
   DOM.stylePreviewSubheading.textContent = subheading;
   DOM.stylePreviewBody.textContent = eventName || 'Event Name';
   DOM.stylePreviewButton.textContent = prompt;
+  if (DOM.eventGalleryLink) {
+    const link = getEventGalleryUrl();
+    DOM.eventGalleryLink.textContent = link ? link : 'Set Cloudinary to enable gallery link.';
+  }
   if (DOM.styleAccentPicker) {
     const accentHex = colorToHex(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
     if (accentHex) DOM.styleAccentPicker.value = accentHex;
@@ -1870,6 +1901,7 @@ async function capturePhotoFlow() {
   const photo = await countdownAndSnap({ live: true });
   const finalUrl = await finalizeToPrint(photo, selectedOverlay);
   showFinal(finalUrl);
+  handleCaptureUpload(finalUrl);
   recordAnalytics('photo', selectedOverlay);
   addToGallery(finalUrl);
 }
@@ -2224,6 +2256,7 @@ async function runStripSequence(template) {
     restorePreviewState(previewState); previewRestored = true;
     if (DOM.liveOverlay) DOM.liveOverlay.style.opacity = previewState.overlayOpacity || '';
     showFinal(stripUrl);
+    handleCaptureUpload(stripUrl);
     recordAnalytics('strip', template.src);
   } finally {
     if (!previewRestored) restorePreviewState(previewState);
@@ -2555,6 +2588,19 @@ function renderQrCode(canvas, text) {
   } catch (e) { console.error(e); }
 }
 
+function copyEventGalleryLink() {
+  const link = getEventGalleryUrl();
+  if (!link) { alert('Set Cloudinary Cloud Name first.'); return; }
+  copyText(link);
+  showToast('Event gallery link copied');
+}
+
+function openEventGalleryLink() {
+  const link = getEventGalleryUrl();
+  if (!link) { alert('Set Cloudinary Cloud Name first.'); return; }
+  try { window.open(link, '_blank', 'noopener'); } catch (_) { location.href = link; }
+}
+
 // Build a slug for the current event selection to organize uploads per event
 function getCurrentEventSlug() {
   try {
@@ -2563,6 +2609,59 @@ function getCurrentEventSlug() {
     // value is like "fall:halloween" or "school:hawks"; use it directly
     return String(val).toLowerCase().replace(/[^a-z0-9:_\-]+/g, '-').replace(/:+/g, '-');
   } catch (_) { return ''; }
+}
+
+function slugifyEventText(value) {
+  return (value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+}
+
+function getEventNameForUploads() {
+  const nameInput = valueFromInput(DOM.eventNameInput);
+  if (nameInput) return nameInput;
+  if (activeTheme && activeTheme.welcome && activeTheme.welcome.title) return activeTheme.welcome.title;
+  const key = DOM.eventSelect && DOM.eventSelect.value;
+  const stored = key ? getStoredEventName(key) : '';
+  return stored || key || 'event';
+}
+
+function getEventDateForUploads() {
+  const input = DOM.eventDateInput ? DOM.eventDateInput.value : '';
+  if (input) return input;
+  const key = DOM.eventSelect && DOM.eventSelect.value;
+  return key ? getStoredEventDate(key) : '';
+}
+
+function getEventUploadSlug() {
+  const name = slugifyEventText(getEventNameForUploads());
+  const date = slugifyEventText(getEventDateForUploads());
+  if (name && date) return `${name}-${date}`;
+  return name || date || getCurrentEventSlug() || 'event';
+}
+
+function getEventFolderBase() {
+  const base = valueFromInput(DOM.cloudFolderInput) || 'photobooth/events';
+  return base.replace(/\/+$/g, '');
+}
+
+function getEventUploadFolderPath() {
+  const base = getEventFolderBase();
+  const name = slugifyEventText(getEventNameForUploads());
+  const date = slugifyEventText(getEventDateForUploads());
+  const fallback = getCurrentEventSlug() || "event";
+  return buildEventFolderPath({ base, name, date, fallback });
+}
+
+function getEventGalleryUrl() {
+  const cfg = getCloudinaryConfig();
+  if (!cfg || !cfg.cloud) return '';
+  const tag = getEventUploadSlug();
+  const title = encodeURIComponent(`${getEventNameForUploads()}${getEventDateForUploads() ? ' (' + getEventDateForUploads() + ')' : ''}`);
+  const cloud = encodeURIComponent(cfg.cloud);
+  return `${location.origin}/gallery.html?cloud=${cloud}&tag=${encodeURIComponent(tag)}&title=${title}`;
 }
 
 // --- Event name storage helpers ---
@@ -2579,6 +2678,21 @@ function saveStoredEventName(key, name) {
   const map = getEventNamesMap();
   if (name) map[key] = name; else delete map[key];
   localStorage.setItem('photoboothEventNames', JSON.stringify(map));
+}
+
+function getEventDatesMap() {
+  try { return JSON.parse(localStorage.getItem('photoboothEventDates') || '{}'); } catch (_) { return {}; }
+}
+function getStoredEventDate(key) {
+  if (!key) return '';
+  const map = getEventDatesMap();
+  return map[key] || '';
+}
+function saveStoredEventDate(key, dateValue) {
+  if (!key) return;
+  const map = getEventDatesMap();
+  if (dateValue) map[key] = dateValue; else delete map[key];
+  localStorage.setItem('photoboothEventDates', JSON.stringify(map));
 }
 
 // --- Export current event (settings + theme) ---
@@ -2603,31 +2717,71 @@ function exportCurrentEvent() {
   showToast('Event exported');
 }
 
+async function uploadImageToCloudinary(blob, options = {}) {
+  const cfg = getCloudinaryConfig();
+  if ((!cfg.use && !options.force) || !cfg.cloud || !cfg.preset) return '';
+  try {
+    const form = new FormData();
+    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    const baseName = `${options.baseName || 'photo'}-${ts}.png`;
+    const file = new File([blob], baseName, { type: blob.type || 'image/png' });
+    form.append('file', file);
+    form.append('upload_preset', cfg.preset);
+    if (options.folder) form.append('folder', options.folder);
+    if (options.tags) form.append('tags', options.tags);
+    const resp = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`, { method: 'POST', body: form });
+    const json = await resp.json();
+    if (json && json.secure_url) return json.secure_url;
+  } catch (e) { console.warn('Cloudinary upload failed', e); }
+  return '';
+}
+
+async function uploadEventPhoto(dataUrl, options = {}) {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  const slug = options.slug || getEventUploadSlug();
+  const folder = getEventUploadFolderPath();
+  const url = await uploadImageToCloudinary(blob, {
+    baseName: slug || 'photo',
+    folder,
+    tags: slug,
+    force: true
+  });
+  if (!url) throw new Error('Cloudinary upload failed');
+}
+
+function handleCaptureUpload(dataUrl) {
+  if (!cloudinaryConfigured()) {
+    showToast('Cloudinary not configured: photo not uploaded');
+    return;
+  }
+  const slug = getEventUploadSlug();
+  if (offlineModeActive() || !navigator.onLine) {
+    const ok = queuePendingUpload(dataUrl, { slug });
+    if (ok) showToast('Offline: photo queued for upload');
+    else alert('Offline upload queue is full or unavailable.');
+    return;
+  }
+  uploadEventPhoto(dataUrl, { slug }).catch(() => {
+    const ok = queuePendingUpload(dataUrl, { slug });
+    if (ok) showToast('Upload failed, queued for retry');
+  });
+}
+
 async function publishShareImage(dataUrl) {
   // Convert data URL to Blob once
   const res = await fetch(dataUrl);
   const blob = await res.blob();
 
   // 1) Prefer Cloudinary if configured (cross-device HTTPS link)
-  const cfg = getCloudinaryConfig();
-  if (cfg.use && cfg.cloud && cfg.preset) {
-    try {
-      const form = new FormData();
-      // Provide a meaningful filename so Cloudinary can use it as the base public_id
-      const evSlug = (typeof getCurrentEventSlug === 'function') ? getCurrentEventSlug() : '';
-      const ts = new Date().toISOString().replace(/[:.]/g, '-');
-      const baseName = `${evSlug || 'photo'}-${ts}.png`;
-      const file = new File([blob], baseName, { type: blob.type || 'image/png' });
-      form.append('file', file);
-      form.append('upload_preset', cfg.preset);
-      // Put each event's images into its own folder
-      const base = (cfg.folderBase || 'photobooth/events').replace(/\/$/, '');
-      if (evSlug) form.append('folder', `${base}/${evSlug}`);
-      const resp = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`, { method: 'POST', body: form });
-      const json = await resp.json();
-      if (json && json.secure_url) return json.secure_url;
-    } catch (e) { console.warn('Cloudinary upload failed', e); }
-  }
+  const slug = getEventUploadSlug();
+  const folder = getEventUploadFolderPath();
+  const cloudUrl = await uploadImageToCloudinary(blob, {
+    baseName: slug || 'photo',
+    folder,
+    tags: slug
+  });
+  if (cloudUrl) return cloudUrl;
 
   // 2) Otherwise try Service Worker (works on same device/origin after SW installs)
   if (!('serviceWorker' in navigator) || !location.protocol.startsWith('http')) return null;
@@ -2839,6 +2993,46 @@ function updatePendingUI() {
   if (adminBtn) {
     adminBtn.textContent = q.length ? `⚙️ (${q.length})` : '⚙️';
   }
+}
+
+// --- Offline upload queue (Cloudinary) ---
+function getPendingUploads() {
+  try { return JSON.parse(localStorage.getItem('photoboothPendingUploads') || '[]'); } catch (_) { return []; }
+}
+function setPendingUploads(arr) {
+  localStorage.setItem('photoboothPendingUploads', JSON.stringify(arr || []));
+}
+function queuePendingUpload(dataUrl, meta = {}) {
+  try {
+    const q = getPendingUploads();
+    q.push({
+      id: Date.now().toString(36),
+      image: dataUrl,
+      createdAt: new Date().toISOString(),
+      slug: meta.slug || getEventUploadSlug()
+    });
+    setPendingUploads(q);
+    return true;
+  } catch (e) {
+    console.warn('Queue upload failed', e);
+    return false;
+  }
+}
+async function flushPendingUploads() {
+  if (!cloudinaryConfigured() || !navigator.onLine) return;
+  const q = getPendingUploads();
+  if (!q.length) return;
+  let sent = 0;
+  for (const item of q.slice()) {
+    try {
+      await uploadEventPhoto(item.image, { slug: item.slug });
+      sent++;
+      const cur = getPendingUploads();
+      const idx = cur.findIndex(x => x.id === item.id);
+      if (idx >= 0) { cur.splice(idx, 1); setPendingUploads(cur); }
+    } catch (_) { /* keep queued */ }
+  }
+  if (sent) showToast(`Uploaded ${sent} pending photo${sent === 1 ? '' : 's'}`);
 }
 async function sendPendingNow() {
   const q = getPending();
@@ -5558,6 +5752,7 @@ Object.assign(window, {
   closeConfirm,
   confirmTemplate,
   copyBuildCmd,
+  copyEventGalleryLink,
   copyShareLink,
   copyShipCmd,
   downloadShareImage,
@@ -5571,6 +5766,7 @@ Object.assign(window, {
   handleImport,
   makeAvailableOffline,
   openShareLink,
+  openEventGalleryLink,
   rebuildManifestsUI,
   retakePhoto,
   saveCloudinarySettings,
