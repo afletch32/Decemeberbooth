@@ -259,6 +259,8 @@ const DOM = {
   emailJsTemplate: document.getElementById('emailJsTemplate'),
   syncNowBtn: document.getElementById('syncNowBtn'),
   syncStatus: document.getElementById('syncStatus'),
+  // Admin toggle to decide whether uploads prefer the shared remote endpoint
+  // or fall back to device-local handling.
   useCloudflareUploads: document.getElementById('useCloudflareUploads'),
   offlineModeToggle: document.getElementById('offlineModeToggle'),
   sendPendingBtn: document.getElementById('sendPendingBtn'),
@@ -543,6 +545,8 @@ function init() {
   setupFolderPickers();
   setupCustomPairingControls();
   setupEventNameInput();
+  // Respect admin preference for where uploads should be stored
+  loadUploadDestinationPreference();
   loadCloudinarySettings();
   setThemeEditorMode(DOM.themeEditorModeSelect ? DOM.themeEditorModeSelect.value : 'edit');
   loadEmailJsSettings();
@@ -2827,13 +2831,69 @@ async function fileSha256Hex(file) {
 function extFromName(name, fallback) {
   const m = (name || '').match(/\.([a-z0-9]+)$/i); return m ? m[1].toLowerCase() : (fallback || 'png');
 }
+// Initialize the admin-upload preference from storage and wire up the checkbox
+// so future changes persist. Defaults to remote/server uploads enabled when
+// unset so assets land in a shared location instead of the current device.
+function loadUploadDestinationPreference() {
+  const stored = localStorage.getItem("useCloudflareUploads");
+  const use = stored === null ? true : stored === "true";
+  if (DOM.useCloudflareUploads) {
+    DOM.useCloudflareUploads.checked = use;
+    DOM.useCloudflareUploads.addEventListener("change", () => {
+      localStorage.setItem("useCloudflareUploads", DOM.useCloudflareUploads.checked ? "true" : "false");
+    });
+  }
+  return use;
+}
+// Read the current preference for remote uploads. This guards uploadAsset so we
+// don't repeatedly touch the DOM when the checkbox is missing.
+function preferRemoteUploads() {
+  try {
+    if (DOM.useCloudflareUploads && typeof DOM.useCloudflareUploads.checked === "boolean") {
+      return DOM.useCloudflareUploads.checked;
+    }
+  } catch (_) { }
+  const stored = localStorage.getItem("useCloudflareUploads");
+  return stored === null ? true : stored === "true";
+}
+let serverUploadAvailable = true;
+// Attempt to hand off the upload to the local server's /api/upload endpoint so
+// files land in a shared, device-accessible location rather than being
+// embedded locally.
+async function uploadViaServer(file, kind, hash) {
+  try {
+    if (!location || location.protocol === "file:" || !serverUploadAvailable) return "";
+    const form = new FormData();
+    const fname = `${kind || "file"}-${hash}.${extFromName(file && file.name, "png")}`;
+    const wrapped = new File([file], fname, { type: file.type || "application/octet-stream" });
+    form.append("file", wrapped);
+    const resp = await fetch("/api/upload", { method: "POST", body: form });
+    if (!resp || !resp.ok) {
+      serverUploadAvailable = false;
+      return "";
+    }
+    const json = await resp.json();
+    if (json && json.url) {
+      const absolute = json.url.startsWith("http") ? json.url : new URL(json.url, location.href).href;
+      return absolute;
+    }
+  } catch (_) { serverUploadAvailable = false; }
+  return "";
+}
 // Upload an asset. If Cloudinary is configured, upload there and return its secure URL.
 // Otherwise, fall back to a local data URL.
 async function uploadAsset(file, kind) {
   try {
     const index = getAssetIndex();
     const hash = await fileSha256Hex(file);
+    // Reuse the existing URL if we've already uploaded identical content.
     if (index[hash]) return index[hash];
+    // Prefer remote/server uploads when the admin toggle allows it to keep
+    // assets accessible across devices.
+    if (preferRemoteUploads()) {
+      const serverUrl = await uploadViaServer(file, kind, hash);
+      if (serverUrl) { index[hash] = serverUrl; saveThemesToStorage(); return serverUrl; }
+    }
     const cfg = getCloudinaryConfig();
     if (cfg.use && cfg.cloud && cfg.preset) {
       const form = new FormData();
@@ -4625,6 +4685,8 @@ function ensureArray(target, prop) {
   if (!Array.isArray(target[prop])) target[prop] = [];
 }
 
+// Collect files selected in the theme editor and push them through uploadAsset
+// so the resulting URLs are stored back onto the theme model.
 async function uploadThemeAssetsFromEditor(target) {
   const tasks = [];
   let backgroundsAdded = 0;

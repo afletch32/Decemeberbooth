@@ -2,12 +2,16 @@
   "name": "photobooth-production",
   "private": true,
   "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node server.js",
     "update-manifests": "node tools/update-manifests.js",
     "update-manifests:hawks": "node tools/update-manifests.js assets/Hawks",
     "deploy": "node tools/deploy.js",
-    "ship": "node tools/update-manifests.js && node tools/deploy.js"
+    "ship": "node tools/update-manifests.js && node tools/deploy.js",
+    "test": "node --test"
   },
   "dependencies": {
     "express": "^4.18.2",
