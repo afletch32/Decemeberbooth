@@ -107,7 +107,7 @@
     }
 
     #adminScreen {
-      padding: 32px 20px;
+      padding: clamp(12px, 3vw, 32px);
       text-align: center;
       position: relative;
       z-index: 100;
@@ -118,7 +118,7 @@
     }
 
     .admin-title {
-      font-size: 2.2em;
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
       margin: 6px 0 18px;
       letter-spacing: .5px;
       background: linear-gradient(90deg, var(--accent), #fff);
@@ -128,10 +128,29 @@
       font-family: var(--font-heading, 'Comic Neue', cursive);
     }
 
+    .start-booth-hero {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: #22c55e;
+      color: #0b0f14;
+      font-weight: 800;
+      border: none;
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+    }
+    .start-booth-hero::before {
+      content: "▶";
+      font-size: 1em;
+    }
+
     .admin-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      gap: clamp(12px, 2vw, 20px);
       max-width: 1200px;
       margin: 0 auto;
       align-items: start;
@@ -339,6 +358,64 @@
     @media (max-width: 900px) {
       .admin-container {
         grid-template-columns: 1fr;
+      }
+    }
+
+    @media (min-width: 1280px) and (max-width: 1728px) {
+      #boothMain {
+        padding-top: clamp(70px, 8vh, 120px);
+        padding-bottom: clamp(24px, 5vh, 64px);
+      }
+      #videoContainer {
+        max-width: min(78vw, 980px);
+      }
+      #captureBtn.primary {
+        width: clamp(110px, 10vw, 150px);
+        height: clamp(110px, 10vw, 150px);
+      }
+    }
+
+    @media (min-width: 1440px) and (max-width: 1728px) and (orientation: portrait) {
+      .admin-container {
+        grid-template-columns: 1fr;
+        max-width: 900px;
+      }
+      #boothMain {
+        flex-direction: column;
+        justify-content: center;
+        padding-top: clamp(80px, 10vh, 140px);
+      }
+      #videoContainer {
+        max-width: min(86vw, 900px);
+      }
+      #options,
+      #controls {
+        width: 100%;
+        max-width: 900px;
+      }
+    }
+
+    @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+      .admin-container {
+        grid-template-columns: 1fr;
+      }
+      #boothMain {
+        flex-direction: column;
+        justify-content: center;
+        padding-top: clamp(70px, 10vh, 120px);
+      }
+      #videoContainer {
+        max-width: min(92vw, 720px);
+      }
+    }
+
+    @media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+      #boothMain {
+        padding-top: clamp(70px, 8vh, 110px);
+        padding-bottom: clamp(20px, 4vh, 50px);
+      }
+      #videoContainer {
+        max-width: min(75vw, 900px);
       }
     }
 
@@ -744,7 +821,7 @@
     #boothScreen {
       display: flex;
       flex-direction: column;
-      height: 100vh;
+      height: 100svh;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -756,7 +833,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px;
+      padding: clamp(6px, 1.6vh, 12px) clamp(8px, 2vw, 16px);
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
       background: rgba(0, 0, 0, 0);
     }
 
@@ -770,6 +852,8 @@
       text-align: center;
       font-family: var(--font);
       color: var(--accent);
+      line-height: 1;
+      margin: 0;
     }
 
     #adminBtn {
@@ -786,7 +870,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px;
+      padding: clamp(60px, 10vh, 110px) clamp(8px, 2vw, 16px) clamp(20px, 6vh, 60px);
       position: relative;
       gap: 10px;
     }
@@ -838,7 +922,8 @@
       justify-content: center;
       align-items: center;
       position: relative;
-      gap: 12px;
+      gap: clamp(8px, 2vh, 14px);
+      padding-bottom: clamp(12px, 4vh, 36px);
     }
 
     #videoContainer {
@@ -968,19 +1053,41 @@
       }
     }
 
+    @media (max-height: 820px) {
+      #boothMain {
+        padding-top: clamp(50px, 8vh, 90px);
+        padding-bottom: clamp(12px, 3vh, 32px);
+      }
+      #options,
+      #controls {
+        padding: 4px;
+        gap: 8px;
+      }
+      #captureBtn.primary {
+        width: clamp(88px, 12vw, 120px);
+        height: clamp(88px, 12vw, 120px);
+        font-size: clamp(1rem, 2vw, 1.4rem);
+      }
+      .mode-btn {
+        padding: 6px 8px;
+        font-size: 0.85em;
+      }
+    }
+
     /* shown in photo mode only */
     #captureBtn.primary {
       animation: pulse 1.6s infinite;
       font-family: 'Bangers', cursive;
-      font-size: 1.6rem;
-      width: 140px;
-      height: 140px;
+      font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+      width: clamp(96px, 14vw, 140px);
+      height: clamp(96px, 14vw, 140px);
       border-radius: 50%;
       border: 8px solid #deffc1;
       outline: 6px solid #285312;
       background: radial-gradient(120% 120% at 35% 30%, #d0f2d4 0%, #6fd880 40%, #20bc1d 75%, #1a8407 100%);
       color: #000;
       box-shadow: 0 16px 36px rgba(0, 0, 0, .55), inset 0 2px 10px rgba(255, 255, 255, .4);
+      margin-bottom: clamp(8px, 3vh, 20px);
     }
 
     #gallery {
@@ -1044,13 +1151,13 @@
     #welcomeOverlay h1 {
       font-family: 'Bangers', cursive;
       letter-spacing: 1px;
-      font-size: 3.4em;
+      font-size: clamp(2rem, 6vw, 3.4rem);
       margin: 0;
       color: var(--accent2);
     }
 
     #welcomeOverlay p {
-      font-size: 1.5 em;
+      font-size: clamp(1rem, 3.2vw, 1.5rem);
       margin-top: 10px;
       animation: pulse 1.5s infinite;
     }
@@ -1197,8 +1304,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: clamp(6rem, 20vw, 18rem);
-      font-family: 'Creepster', cursive;
+      font-size: var(--countdown-size, clamp(6rem, 20vw, 18rem));
+      font-family: var(--font-heading, 'Comic Neue', cursive);
       color: var(--accent);
       text-shadow: 6px 6px 18px #000;
       z-index: 20;
@@ -1299,6 +1406,8 @@
       justify-content: center;
       gap: 20px;
       text-align: center;
+      padding: 24px;
+      box-sizing: border-box;
     }
 
     #finalPreview.show {
@@ -1325,11 +1434,14 @@
     #finalPreviewActions {
       display: flex;
       flex-direction: column;
+      order: -1;
     }
 
     #qrCodeContainer {
       color: #fff;
       font-family: 'Comic Neue', cursive;
+      padding: 12px;
+      box-sizing: border-box;
     }
 
     #qrCodeContainer h2 {
@@ -1564,13 +1676,46 @@
 
     .style-preview-button {
       align-self: flex-start;
-      padding: 8px 16px;
+      cursor: text;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      outline: none;
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .style-preview-button:focus,
+    .style-preview-button:focus-visible {
+      outline: 2px solid var(--accent2);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+    }
+
+    .preview-start-button {
+      width: 110px;
+      height: 110px;
+      font-size: 0.95em;
+      padding: 0;
+      justify-content: center;
+      font-weight: 800;
       border-radius: 999px;
-      border: none;
-      background: var(--accent);
+    }
+
+    .preview-capture-button {
+      animation: pulse 1.6s infinite;
+      font-family: 'Bangers', cursive;
+      font-size: 1.6rem;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      border: 8px solid #deffc1;
+      outline: 6px solid #285312;
+      background: radial-gradient(120% 120% at 35% 30%, #d0f2d4 0%, #6fd880 40%, #20bc1d 75%, #1a8407 100%);
       color: #000;
-      font-weight: 600;
-      font-family: var(--font-heading);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, .55), inset 0 2px 10px rgba(255, 255, 255, .4);
+      justify-content: center;
     }
 
     .style-preview-swatches {
@@ -1629,6 +1774,9 @@
 <body>
   <div id="adminScreen">
     <h1 class="admin-title">Photobooth Setup</h1>
+    <div class="btn-row" style="justify-content:center; margin-bottom:12px;">
+      <button id="startBoothButton" class="start-booth-hero">Start Booth</button>
+    </div>
     <div class="admin-container">
       <div class="admin-left panel">
         <div class="btn-row" style="justify-content:center; margin-top:0;">
@@ -1637,9 +1785,12 @@
         <details class="panel-section" open>
           <summary>Event Basics</summary>
           <div class="section-content">
-            <label for="eventSelect">Choose Event</label>
-            <select id="eventSelect"></select>
-            <div id="themeQuickSelect" class="theme-quick-grid"></div>
+            <div class="btn-row" style="justify-content:flex-start; gap:8px; margin-bottom:10px;">
+              <button type="button" id="chooseEventBtn">Choose Existing Event</button>
+              <button type="button" id="createEventBtn" class="primary">Create New Event</button>
+            </div>
+            <label for="eventProfileSelect">Choose Event</label>
+            <select id="eventProfileSelect"></select>
             <label for="eventNameInput">Event Name</label>
             <input type="text" id="eventNameInput" placeholder="e.g., Halloween Dance 2025">
             <label for="eventDateInput">Event Date</label>
@@ -1651,9 +1802,12 @@
               <input type="checkbox" id="allowRetakes" checked>
               Allow Retakes
             </label>
+            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+              <input type="checkbox" id="livePhotoToggle" checked>
+              Live Photo Capture
+            </label>
             <div class="btn-row">
               <button id="startCameraButton" class="primary">Start Camera</button>
-              <button id="startBoothButton">Start Booth</button>
               <button type="button" onclick="toggleAnalytics()">Analytics</button>
             </div>
             <div id="analytics" class="hidden">
@@ -1720,6 +1874,9 @@
           <div class="section-content">
             <div class="asset-actions">
               <button type="button" id="addLogoBtn">Add Logo</button>
+              <button type="button" id="addBackgroundsBtn">Add Backgrounds</button>
+              <button type="button" id="addOverlaysBtn">Add Overlays</button>
+              <button type="button" id="addTemplatesBtn">Add Templates</button>
             </div>
             <div id="assetUploadInputs" class="hidden">
               <input type="file" id="themeBackground" accept="image/*">
@@ -1762,6 +1919,13 @@
       <div class="admin-right panel">
         <div id="themeEditor">
           <h2>Theme Editor</h2>
+          <label for="eventSelect">Choose Theme</label>
+          <select id="eventSelect"></select>
+          <label for="bannerSizeInput">Banner Size</label>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input type="range" id="bannerSizeInput" min="24" max="120" step="2">
+            <span id="bannerSizeValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+          </div>
           <p style="color:#bbb; margin-top:0;">Theme assets are managed from the controls on the left. A single shared
             logo now applies to every theme.</p>
           <div id="stylePreview" class="style-preview" aria-label="Style preview">
@@ -1771,14 +1935,10 @@
             </div>
             <input type="color" id="styleAccentPicker" class="visually-hidden" value="#ffffff">
             <input type="color" id="styleAccent2Picker" class="visually-hidden" value="#ffffff">
-            <h3 id="stylePreviewHeading" class="style-preview-heading">Welcome to Fletch Photobooth</h3>
-            <p id="stylePreviewSubheading" class="style-preview-subheading">Event Title Example</p>
-            <p id="stylePreviewBody" class="style-preview-body">This is a quick preview of the selected fonts and colors.</p>
-            <button id="stylePreviewButton" type="button" class="style-preview-button">Touch to start</button>
-          </div>
-          <div>
-            <h3 style="margin:14px 0 6px;">Quick Picks</h3>
-            <div id="quickPicksGrouped" class="quick-pick-groups"></div>
+            <h3 id="stylePreviewHeading" class="style-preview-heading" contenteditable="true" spellcheck="false">Welcome to Fletch Photobooth</h3>
+            <p id="stylePreviewSubheading" class="style-preview-subheading" contenteditable="true" spellcheck="false">Event Title Example</p>
+            <div id="stylePreviewBody" class="style-preview-button preview-capture-button" contenteditable="true" spellcheck="false" role="button" tabindex="0">Take Photo</div>
+            <div id="stylePreviewButton" class="style-preview-button start-button preview-start-button" contenteditable="true" spellcheck="false" role="button" tabindex="0">Touch to start</div>
           </div>
           <div class="panel" style="margin-top:14px;">
             <h3 style="margin:0 0 8px;">Event Gallery Link</h3>
@@ -1789,80 +1949,24 @@
             <div id="eventGalleryLink" style="margin-top:8px; font-size:0.9em; color:#bbb; word-break:break-all;"></div>
             <small style="display:block; margin-top:6px; color:#888;">Requires Cloudinary and a tag-based image list.</small>
           </div>
-          <details class="theme-tools" style="margin-top:12px;">
-            <summary style="cursor:pointer; color:#ddd;">Theme data tools</summary>
-            <div class="btn-row" style="margin-top:10px;">
-              <button onclick="exportThemes()">Export Themes</button>
-              <button onclick="importThemes()">Import Themes</button>
-              <button onclick="exportSetupPackage()">Export Package (zip)</button>
-              <button onclick="triggerImportZip()">Import Package (zip)</button>
-            </div>
-            <div class="icon-tiles">
-              <button class="icon-tile" onclick="rebuildManifestsUI()" aria-label="Rebuild Manifests">
-                <span class="icon-glyph" aria-hidden="true">🔄</span>
-                <span class="icon-label">Rebuild</span>
-              </button>
-            </div>
-          </details>
-          <input type="file" id="importFile" class="hidden" accept=".json" onchange="handleImport()">
-          <input type="file" id="importZip" class="hidden" accept=".zip" onchange="handleImportZip()">
         </div>
-
-        <details class="admin-help">
-          <summary>Help &amp; How-To</summary>
-          <div class="admin-help-content">
-            <section class="help-block">
-              <h3>Deploy</h3>
-              <small>Option A (Git projects): create a Cloudflare Pages Deploy Hook and paste it here. Clicking Deploy
-                Now will trigger a new build.</small>
-              <label for="deployHookUrl" class="help-field">
-                Deploy Hook URL
-                <input type="text" id="deployHookUrl"
-                  placeholder="https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/...">
-              </label>
-              <div class="icon-tiles" style="margin-top:6px;">
-                <button class="icon-tile" onclick="triggerDeployHook()" aria-label="Deploy Now">
-                  <span class="icon-glyph" aria-hidden="true">🚀</span>
-                  <span class="icon-label">Deploy</span>
-                </button>
-                <button class="icon-tile" onclick="saveDeploySettings()" aria-label="Save Deploy Hook"
-                  title="Save Deploy Hook">
-                  <span class="icon-glyph" aria-hidden="true">💾</span>
-                  <span class="icon-label">Save</span>
-                </button>
-              </div>
-            </section>
-            <details class="help-block">
-              <summary>How to enable one-click deploy (Git)</summary>
-              <ol>
-                <li>Cloudflare → Pages → your Git project → Settings → Build &amp; deploy.</li>
-                <li>Framework preset: None.</li>
-                <li>Build command: <code id="buildCmdText">npm ci &amp;&amp; node tools/update-manifests.js &amp;&amp; echo skip</code> <button
-                    type="button" onclick="copyBuildCmd()">Copy</button></li>
-                <li>Build output directory: <code>.</code></li>
-                <li>Settings → Deploy Hooks → Create hook → copy URL and paste above → Save.</li>
-                <li>Click “Deploy Now” anytime to rebuild + publish.</li>
-              </ol>
-            </details>
-            <details class="help-block">
-              <summary>Direct upload (no Git)</summary>
-              <div>
-                <p>Run this one command from the project folder:</p>
-                <p><code id="shipCmdText">npm run ship</code> <button type="button" onclick="copyShipCmd()">Copy</button></p>
-                <p>It rebuilds manifests and deploys to your Pages project.</p>
-                <p>Prefer a desktop button? In Finder, right‑click <code>Ship.command</code> → Open. First time run: <code>chmod +x Ship.command</code>. Drag it to the Dock or make an alias.</p>
-              </div>
-            </details>
-            <details class="help-block">
-              <summary>QR / Email (Cloudinary)</summary>
-              <p>Enter Cloudinary Cloud Name + Unsigned Upload Preset in Admin → Email/Cloudinary, check “Use Cloudinary for share links”, then Save. QR will always point to a public URL.</p>
-            </details>
-            <details class="help-block">
-              <summary>After deploy</summary>
-              <p>Hard refresh the app (DevTools → Application → Service Workers → Unregister → reload). If you added files, click “Make Available Offline” to recache.</p>
-            </details>
+        <details class="panel-section" style="margin-top:12px;">
+          <summary>Event-only Assets</summary>
+          <div class="section-content">
+            <label for="eventOnlyBackgrounds">Backgrounds</label>
+            <input type="file" id="eventOnlyBackgrounds" accept="image/*" multiple>
+            <label for="eventOnlyOverlays">Overlays</label>
+            <input type="file" id="eventOnlyOverlays" accept="image/*" multiple>
+            <label for="eventOnlyTemplates">Templates</label>
+            <input type="file" id="eventOnlyTemplates" accept="image/*" multiple>
+            <div id="eventOverridesSummary" style="margin-top:6px; color:#bbb; font-size:0.9em;"></div>
+            <div class="btn-row" style="justify-content:flex-start; gap:8px; margin-top:8px;">
+              <button type="button" id="clearEventOverridesBtn">Clear Event Assets</button>
+            </div>
+            <small style="display:block; margin-top:6px; color:#888;">These assets show only for the selected event.</small>
           </div>
         </details>
+
       </div>
       </div>
       <details class="panel font-panel">
