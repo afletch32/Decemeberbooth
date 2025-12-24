@@ -554,6 +554,14 @@
       color: #f1f5ff;
     }
 
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95em;
+      color: #d4d9e6;
+    }
+
     .modal-footer {
       display: flex;
       justify-content: flex-end;
@@ -926,12 +934,63 @@
       padding-bottom: clamp(12px, 4vh, 36px);
     }
 
+    #boothScreen.countdown-mode #boothHeader,
+    #boothScreen.countdown-mode #options,
+    #boothScreen.countdown-mode #controls,
+    #boothScreen.countdown-mode #captureBtn {
+      display: none;
+    }
+
+    #boothScreen.countdown-mode #boothMain {
+      padding: 0;
+    }
+
+    #boothScreen.countdown-mode #videoWrap {
+      flex: 1;
+      width: 100%;
+      padding: 0;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    #boothScreen.countdown-mode #videoContainer {
+      width: 100%;
+      max-width: none;
+      height: 100%;
+      max-height: calc(92svh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      aspect-ratio: auto;
+      border: none;
+      border-radius: 0;
+    }
+
     #videoContainer {
       position: relative;
       border: 6px solid white;
       border-radius: 12px;
       background: black;
       aspect-ratio: var(--capture-aspect, auto);
+    }
+
+    #videoContainer.recording {
+      box-shadow: 0 0 24px rgba(255, 52, 52, 0.6);
+    }
+
+    #videoContainer.recording::after {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border: 6px solid rgba(255, 52, 52, 0.95);
+      border-radius: 8px;
+      pointer-events: none;
+    }
+
+    #boothScreen.countdown-mode #videoContainer.recording {
+      box-shadow: 0 0 24px rgba(255, 52, 52, 0.6);
+    }
+
+    #boothScreen.countdown-mode #videoContainer.recording::after {
+      inset: 0;
+      border-radius: 0;
     }
 
     #video {
@@ -1151,7 +1210,7 @@
     #welcomeOverlay h1 {
       font-family: 'Bangers', cursive;
       letter-spacing: 1px;
-      font-size: clamp(2rem, 6vw, 3.4rem);
+      font-size: var(--welcome-title-size, clamp(2rem, 6vw, 3.4rem));
       margin: 0;
       color: var(--accent2);
     }
@@ -1656,7 +1715,7 @@
     .style-preview-heading {
       font-family: var(--font-heading);
       font-size: 1.8em;
-      color: var(--accent2);
+      color: var(--accent);
       margin: 0;
       text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.45);
     }
@@ -1664,7 +1723,7 @@
     .style-preview-subheading {
       font-family: var(--font-heading);
       font-size: 1.1em;
-      color: var(--accent);
+      color: var(--accent2);
       margin: 0;
     }
 
@@ -1786,15 +1845,11 @@
           <summary>Event Basics</summary>
           <div class="section-content">
             <div class="btn-row" style="justify-content:flex-start; gap:8px; margin-bottom:10px;">
-              <button type="button" id="chooseEventBtn">Choose Existing Event</button>
+              <button type="button" id="chooseEventBtn">Edit Event</button>
               <button type="button" id="createEventBtn" class="primary">Create New Event</button>
             </div>
             <label for="eventProfileSelect">Choose Event</label>
             <select id="eventProfileSelect"></select>
-            <label for="eventNameInput">Event Name</label>
-            <input type="text" id="eventNameInput" placeholder="e.g., Halloween Dance 2025">
-            <label for="eventDateInput">Event Date</label>
-            <input type="date" id="eventDateInput">
             <div class="btn-row">
               <button type="button" onclick="exportCurrentEvent()">Export Event</button>
             </div>
@@ -1805,6 +1860,10 @@
             <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
               <input type="checkbox" id="livePhotoToggle" checked>
               Live Photo Capture
+            </label>
+            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+              <input type="checkbox" id="instantCaptureToggle">
+              Instant Capture (no countdown)
             </label>
             <div class="btn-row">
               <button id="startCameraButton" class="primary">Start Camera</button>
@@ -1926,6 +1985,11 @@
             <input type="range" id="bannerSizeInput" min="24" max="120" step="2">
             <span id="bannerSizeValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
           </div>
+          <label for="welcomeTitleSizeInput">Welcome Title Size</label>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input type="range" id="welcomeTitleSizeInput" min="24" max="120" step="2">
+            <span id="welcomeTitleSizeValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+          </div>
           <p style="color:#bbb; margin-top:0;">Theme assets are managed from the controls on the left. A single shared
             logo now applies to every theme.</p>
           <div id="stylePreview" class="style-preview" aria-label="Style preview">
@@ -1950,22 +2014,6 @@
             <small style="display:block; margin-top:6px; color:#888;">Requires Cloudinary and a tag-based image list.</small>
           </div>
         </div>
-        <details class="panel-section" style="margin-top:12px;">
-          <summary>Event-only Assets</summary>
-          <div class="section-content">
-            <label for="eventOnlyBackgrounds">Backgrounds</label>
-            <input type="file" id="eventOnlyBackgrounds" accept="image/*" multiple>
-            <label for="eventOnlyOverlays">Overlays</label>
-            <input type="file" id="eventOnlyOverlays" accept="image/*" multiple>
-            <label for="eventOnlyTemplates">Templates</label>
-            <input type="file" id="eventOnlyTemplates" accept="image/*" multiple>
-            <div id="eventOverridesSummary" style="margin-top:6px; color:#bbb; font-size:0.9em;"></div>
-            <div class="btn-row" style="justify-content:flex-start; gap:8px; margin-top:8px;">
-              <button type="button" id="clearEventOverridesBtn">Clear Event Assets</button>
-            </div>
-            <small style="display:block; margin-top:6px; color:#888;">These assets show only for the selected event.</small>
-          </div>
-        </details>
 
       </div>
       </div>
@@ -2104,18 +2152,60 @@
 
     <div id="createThemeModal" class="modal-backdrop">
       <div class="modal-card">
-      <h3>Create New Theme</h3>
-      <label for="createThemeName">Theme Name</label>
-      <input type="text" id="createThemeName" placeholder="My New Theme">
-      <div id="createThemeSummary" style="color:#aab; font-size:0.9em;"></div>
-      <div id="createThemeDropZone" class="drop-zone">
-        <strong>Drop your theme folder here</strong>
-        <span>Include folders like <code>backgrounds/</code>, <code>overlays/</code>, <code>templates/</code>.</span>
-        <button type="button" id="createThemeBrowseBtn">Browse…</button>
+        <h3>Create New Theme</h3>
+        <label for="createThemeName">Theme Name</label>
+        <input type="text" id="createThemeName" placeholder="My New Theme">
+        <div id="createThemeSummary" style="color:#aab; font-size:0.9em;"></div>
+        <div id="createThemeDropZone" class="drop-zone">
+          <strong>Drop your theme folder here</strong>
+          <span>Include folders like <code>backgrounds/</code>, <code>overlays/</code>, <code>templates/</code>.</span>
+          <button type="button" id="createThemeBrowseBtn">Browse…</button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="createThemeCancel">Cancel</button>
+          <button type="button" id="createThemeConfirm" class="primary">Create Theme</button>
+        </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" id="createThemeCancel">Cancel</button>
-        <button type="button" id="createThemeConfirm" class="primary">Create Theme</button>
+    </div>
+
+    <div id="createEventModal" class="modal-backdrop">
+      <div class="modal-card">
+        <h3>Event Details</h3>
+        <label for="createEventName">Event Name</label>
+        <input type="text" id="createEventName" placeholder="e.g., Maddie's Birthday Bonanza">
+        <label for="createEventDate">Event Date</label>
+        <input type="date" id="createEventDate">
+        <label class="checkbox-row" for="createEventUseThemeDefaults">
+          <input type="checkbox" id="createEventUseThemeDefaults" checked>
+          Use theme defaults for text/buttons
+        </label>
+        <label for="createEventBannerText">Banner Text (Top)</label>
+        <input type="text" id="createEventBannerText" placeholder="Welcome to the party!">
+        <label for="createEventWelcomeText">Welcome Screen Text</label>
+        <input type="text" id="createEventWelcomeText" placeholder="Welcome!">
+        <label for="createEventWelcomeSize">Welcome Title Size</label>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <input type="range" id="createEventWelcomeSize" min="24" max="120" step="2">
+          <span id="createEventWelcomeSizeValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+        </div>
+        <label for="createEventStartText">Start Booth Button Text</label>
+        <input type="text" id="createEventStartText" placeholder="Touch to start">
+        <label for="createEventCaptureText">Take Photo Button Text</label>
+        <input type="text" id="createEventCaptureText" placeholder="Take Photo">
+        <div class="panel" style="margin-top:10px;">
+          <h4 style="margin:0 0 8px;">Event-only Assets</h4>
+          <label for="createEventBackgrounds">Backgrounds</label>
+          <input type="file" id="createEventBackgrounds" accept="image/*" multiple>
+          <label for="createEventOverlays">Overlays</label>
+          <input type="file" id="createEventOverlays" accept="image/*" multiple>
+          <label for="createEventTemplates">Templates</label>
+          <input type="file" id="createEventTemplates" accept="image/*" multiple>
+          <div id="createEventSummary" style="margin-top:6px; color:#bbb; font-size:0.9em;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="createEventCancel">Cancel</button>
+          <button type="button" id="createEventConfirm" class="primary">Save Event</button>
+        </div>
       </div>
     </div>
   </div>

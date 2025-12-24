@@ -1,5 +1,5 @@
 import { buildEventFolderPath } from "./cloudinary-utils.mjs";
-import { mergeUniqueUrls } from "./event-utils.mjs";
+import { applyThemeText, getEventTextOverrides, hasEventTextOverrides, mergeUniqueUrls } from "./event-utils.mjs";
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
@@ -221,6 +221,7 @@ const DOM = {
   chooseEventBtn: document.getElementById("chooseEventBtn"),
   createEventBtn: document.getElementById("createEventBtn"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
+  instantCaptureToggle: document.getElementById("instantCaptureToggle"),
   eventDateInput: document.getElementById('eventDateInput'),
   options: document.getElementById('options'),
   videoWrap: document.getElementById('videoWrap'),
@@ -275,7 +276,25 @@ const DOM = {
   clearEventOverridesBtn: document.getElementById("clearEventOverridesBtn"),
   bannerSizeInput: document.getElementById("bannerSizeInput"),
   bannerSizeValue: document.getElementById("bannerSizeValue"),
+  welcomeTitleSizeInput: document.getElementById("welcomeTitleSizeInput"),
+  welcomeTitleSizeValue: document.getElementById("welcomeTitleSizeValue"),
   fontPickerModal: document.getElementById('fontPickerModal'),
+  createEventModal: document.getElementById("createEventModal"),
+  createEventName: document.getElementById("createEventName"),
+  createEventDate: document.getElementById("createEventDate"),
+  createEventUseThemeDefaults: document.getElementById("createEventUseThemeDefaults"),
+  createEventBannerText: document.getElementById("createEventBannerText"),
+  createEventWelcomeText: document.getElementById("createEventWelcomeText"),
+  createEventWelcomeSize: document.getElementById("createEventWelcomeSize"),
+  createEventWelcomeSizeValue: document.getElementById("createEventWelcomeSizeValue"),
+  createEventStartText: document.getElementById("createEventStartText"),
+  createEventCaptureText: document.getElementById("createEventCaptureText"),
+  createEventBackgrounds: document.getElementById("createEventBackgrounds"),
+  createEventOverlays: document.getElementById("createEventOverlays"),
+  createEventTemplates: document.getElementById("createEventTemplates"),
+  createEventSummary: document.getElementById("createEventSummary"),
+  createEventCancel: document.getElementById("createEventCancel"),
+  createEventConfirm: document.getElementById("createEventConfirm"),
   closeFontPicker: document.getElementById('closeFontPicker'),
   themeName: document.getElementById('themeName'),
   eventNameInput: document.getElementById('eventNameInput'),
@@ -392,6 +411,9 @@ const ACCENT_PRESET_COLORS = [
   '#ec4899', '#f43f5e'
 ];
 let createThemeAssets = null; // Temporary storage for create-from-folder workflow
+let createEventAssets = null;
+let createEventMode = "create";
+let createEventTextOverrides = null;
 // Cache-busting stamp for this session to avoid stale images during editing
 const SESSION_BUST = Date.now();
 function withBust(src) { try { if (!src) return src; return src + (src.includes('?') ? '&' : '?') + 'v=' + SESSION_BUST; } catch (_) { return src; } }
@@ -442,12 +464,12 @@ function setupEventSelector() {
 function setupEventProfileControls() {
   if (DOM.chooseEventBtn) {
     DOM.chooseEventBtn.addEventListener("click", () => {
-      if (DOM.eventProfileSelect) DOM.eventProfileSelect.focus();
+      showCreateEventModal("edit");
     });
   }
   if (DOM.createEventBtn) {
     DOM.createEventBtn.addEventListener("click", () => {
-      createNewEventFromSelection();
+      showCreateEventModal();
     });
   }
   if (DOM.eventProfileSelect) {
@@ -461,26 +483,6 @@ function setupEventProfileControls() {
         loadTheme(active.themeKey);
       }
       updateStylePreview();
-    });
-  }
-  if (DOM.eventOnlyBackgrounds) {
-    DOM.eventOnlyBackgrounds.addEventListener("change", (event) => {
-      handleEventOnlyAssetInput("backgrounds", event.target.files);
-    });
-  }
-  if (DOM.eventOnlyOverlays) {
-    DOM.eventOnlyOverlays.addEventListener("change", (event) => {
-      handleEventOnlyAssetInput("overlays", event.target.files);
-    });
-  }
-  if (DOM.eventOnlyTemplates) {
-    DOM.eventOnlyTemplates.addEventListener("change", (event) => {
-      handleEventOnlyAssetInput("templates", event.target.files);
-    });
-  }
-  if (DOM.clearEventOverridesBtn) {
-    DOM.clearEventOverridesBtn.addEventListener("click", () => {
-      clearEventOverrides();
     });
   }
 }
@@ -546,6 +548,18 @@ function setupThemeEditorControls() {
       saveThemesToStorage();
     });
   }
+  if (DOM.welcomeTitleSizeInput) {
+    DOM.welcomeTitleSizeInput.addEventListener("input", () => {
+      const target = activeTheme || getSelectedThemeTarget();
+      if (!target) return;
+      const size = parseInt(DOM.welcomeTitleSizeInput.value, 10);
+      if (!Number.isFinite(size)) return;
+      target.welcomeTitleSize = size;
+      applyWelcomeTitleSize(target);
+      syncWelcomeTitleSizeUI(target);
+      saveThemesToStorage();
+    });
+  }
   const attachPreviewEditable = (node, onCommit) => {
     if (!node) return;
     node.addEventListener("keydown", (event) => {
@@ -565,22 +579,39 @@ function setupThemeEditorControls() {
     });
   };
   attachPreviewEditable(DOM.stylePreviewHeading, (value) => {
-    setStoredBannerText(value);
+    const active = getActiveEvent();
+    if (active) {
+      updateActiveEventDetails({ bannerText: value });
+    } else {
+      const target = activeTheme || getSelectedThemeTarget();
+      if (!target) return;
+      applyThemeText(target, { bannerText: value });
+      saveThemesToStorage();
+    }
     syncBannerText();
   });
   attachPreviewEditable(DOM.stylePreviewSubheading, (value) => {
-    const target = activeTheme || getSelectedThemeTarget();
-    if (!target) return;
-    if (!target.welcome || typeof target.welcome !== "object") target.welcome = {};
-    target.welcome.title = value || "Welcome!";
-    saveThemesToStorage();
+    const active = getActiveEvent();
+    if (active) {
+      updateActiveEventDetails({ welcomeTitle: value || "Welcome!" });
+    } else {
+      const target = activeTheme || getSelectedThemeTarget();
+      if (!target) return;
+      applyThemeText(target, { welcomeTitle: value || "Welcome!" });
+      saveThemesToStorage();
+    }
     syncWelcomeText();
   });
   attachPreviewEditable(DOM.stylePreviewBody, (value) => {
-    const target = activeTheme || getSelectedThemeTarget();
-    if (!target) return;
-    target.captureLabel = value || "Take Photo";
-    saveThemesToStorage();
+    const active = getActiveEvent();
+    if (active) {
+      updateActiveEventDetails({ captureLabel: value || "Take Photo" });
+    } else {
+      const target = activeTheme || getSelectedThemeTarget();
+      if (!target) return;
+      applyThemeText(target, { captureLabel: value || "Take Photo" });
+      saveThemesToStorage();
+    }
     syncCaptureButtonText();
   });
   if (DOM.cloneThemeBtn) DOM.cloneThemeBtn.addEventListener('click', handleCloneTheme);
@@ -612,21 +643,29 @@ function setupThemeEditorControls() {
     });
     DOM.stylePreviewButton.addEventListener("blur", () => {
       const next = normalizeBannerText(DOM.stylePreviewButton.textContent || "");
-      const target = activeTheme || getSelectedThemeTarget();
-      if (target) {
-        if (!target.welcome || typeof target.welcome !== "object") target.welcome = {};
-        target.welcome.prompt = next || "Touch to start";
-        saveThemesToStorage();
+      const active = getActiveEvent();
+      if (active) {
+        updateActiveEventDetails({ startButtonText: next || "Touch to start" });
+      } else {
+        const target = activeTheme || getSelectedThemeTarget();
+        if (target) {
+          applyThemeText(target, { startButtonText: next || "Touch to start" });
+          saveThemesToStorage();
+        }
       }
       updateStylePreview();
     });
     DOM.stylePreviewButton.addEventListener("input", () => {
       const next = normalizeBannerText(DOM.stylePreviewButton.textContent || "");
-      const target = activeTheme || getSelectedThemeTarget();
-      if (target) {
-        if (!target.welcome || typeof target.welcome !== "object") target.welcome = {};
-        target.welcome.prompt = next || "Touch to start";
-        saveThemesToStorage();
+      const active = getActiveEvent();
+      if (active) {
+        updateActiveEventDetails({ startButtonText: next || "Touch to start" });
+      } else {
+        const target = activeTheme || getSelectedThemeTarget();
+        if (target) {
+          applyThemeText(target, { startButtonText: next || "Touch to start" });
+          saveThemesToStorage();
+        }
       }
     });
   }
@@ -693,6 +732,275 @@ function setupCreateThemeModalControls() {
   if (DOM.createThemeConfirm) DOM.createThemeConfirm.addEventListener('click', confirmCreateTheme);
 }
 
+function setupCreateEventModalControls() {
+  if (DOM.createEventModal) {
+    DOM.createEventModal.addEventListener("click", (event) => {
+      if (event.target === DOM.createEventModal) hideCreateEventModal();
+    });
+  }
+  if (DOM.createEventUseThemeDefaults) {
+    DOM.createEventUseThemeDefaults.addEventListener("change", () => {
+      if (!DOM.createEventUseThemeDefaults) return;
+      if (!DOM.createEventUseThemeDefaults.checked) {
+        createEventTextOverrides = readCreateEventTextInputs();
+      }
+      applyCreateEventTextState(DOM.createEventUseThemeDefaults.checked);
+    });
+  }
+  if (DOM.createEventWelcomeSize) {
+    DOM.createEventWelcomeSize.addEventListener("input", () => {
+      if (!DOM.createEventWelcomeSizeValue) return;
+      DOM.createEventWelcomeSizeValue.textContent = `${DOM.createEventWelcomeSize.value}px`;
+    });
+  }
+  if (DOM.createEventBackgrounds) {
+    DOM.createEventBackgrounds.addEventListener("change", (event) => {
+      handleCreateEventFiles("backgrounds", event.target.files);
+      event.target.value = "";
+    });
+  }
+  if (DOM.createEventOverlays) {
+    DOM.createEventOverlays.addEventListener("change", (event) => {
+      handleCreateEventFiles("overlays", event.target.files);
+      event.target.value = "";
+    });
+  }
+  if (DOM.createEventTemplates) {
+    DOM.createEventTemplates.addEventListener("change", (event) => {
+      handleCreateEventFiles("templates", event.target.files);
+      event.target.value = "";
+    });
+  }
+  if (DOM.createEventCancel) DOM.createEventCancel.addEventListener("click", () => {
+    hideCreateEventModal();
+    resetCreateEventAssets();
+  });
+  if (DOM.createEventConfirm) DOM.createEventConfirm.addEventListener("click", () => {
+    confirmCreateEventModal().catch((err) => {
+      console.error("Failed to save event", err);
+      alert("Failed to save event. See console for details.");
+    });
+  });
+}
+
+function ensureCreateEventAssets() {
+  if (!createEventAssets) {
+    createEventAssets = { backgrounds: [], overlays: [], templates: [] };
+  }
+  return createEventAssets;
+}
+
+function resetCreateEventAssets() {
+  createEventAssets = { backgrounds: [], overlays: [], templates: [] };
+}
+
+function updateCreateEventSummary() {
+  if (!DOM.createEventSummary) return;
+  const assets = ensureCreateEventAssets();
+  const parts = [];
+  if (assets.backgrounds.length) parts.push(`${assets.backgrounds.length} background${assets.backgrounds.length === 1 ? "" : "s"}`);
+  if (assets.overlays.length) parts.push(`${assets.overlays.length} overlay${assets.overlays.length === 1 ? "" : "s"}`);
+  if (assets.templates.length) parts.push(`${assets.templates.length} template${assets.templates.length === 1 ? "" : "s"}`);
+  const existing = getActiveEventOverrides();
+  const existingParts = [];
+  if (existing.backgrounds.length) existingParts.push(`${existing.backgrounds.length} background${existing.backgrounds.length === 1 ? "" : "s"}`);
+  if (existing.overlays.length) existingParts.push(`${existing.overlays.length} overlay${existing.overlays.length === 1 ? "" : "s"}`);
+  if (existing.templates.length) existingParts.push(`${existing.templates.length} template${existing.templates.length === 1 ? "" : "s"}`);
+  const selectedText = parts.length ? `Selected for upload: ${parts.join(", ")}` : "No assets selected yet.";
+  const existingText = existingParts.length ? `Existing event assets: ${existingParts.join(", ")}` : "";
+  DOM.createEventSummary.textContent = existingText ? `${selectedText} ${existingText}` : selectedText;
+}
+
+function getThemeTextDefaults() {
+  return {
+    bannerText: resolveThemeBannerText(),
+    welcomeTitle: resolveThemeWelcomeTitle(),
+    welcomeTitleSize: resolveThemeWelcomeTitleSizeValue(),
+    startButtonText: resolveThemeStartButtonText(),
+    captureLabel: resolveThemeCaptureLabel()
+  };
+}
+
+function readCreateEventTextInputs() {
+  const size = DOM.createEventWelcomeSize ? parseInt(DOM.createEventWelcomeSize.value, 10) : NaN;
+  return {
+    bannerText: valueFromInput(DOM.createEventBannerText),
+    welcomeTitle: valueFromInput(DOM.createEventWelcomeText),
+    welcomeTitleSize: Number.isFinite(size) && size > 0 ? size : null,
+    startButtonText: valueFromInput(DOM.createEventStartText),
+    captureLabel: valueFromInput(DOM.createEventCaptureText)
+  };
+}
+
+function writeCreateEventTextInputs(values) {
+  const next = values || {};
+  if (DOM.createEventBannerText) DOM.createEventBannerText.value = next.bannerText || "";
+  if (DOM.createEventWelcomeText) DOM.createEventWelcomeText.value = next.welcomeTitle || "";
+  if (DOM.createEventWelcomeSize) {
+    const size = (typeof next.welcomeTitleSize === "number" && next.welcomeTitleSize > 0)
+      ? next.welcomeTitleSize
+      : resolveThemeWelcomeTitleSizeValue();
+    DOM.createEventWelcomeSize.value = String(size);
+    if (DOM.createEventWelcomeSizeValue) DOM.createEventWelcomeSizeValue.textContent = `${size}px`;
+  }
+  if (DOM.createEventStartText) DOM.createEventStartText.value = next.startButtonText || "";
+  if (DOM.createEventCaptureText) DOM.createEventCaptureText.value = next.captureLabel || "";
+}
+
+function setCreateEventTextInputsDisabled(isDisabled) {
+  const inputs = [
+    DOM.createEventBannerText,
+    DOM.createEventWelcomeText,
+    DOM.createEventWelcomeSize,
+    DOM.createEventStartText,
+    DOM.createEventCaptureText
+  ];
+  inputs.forEach((input) => {
+    if (!input) return;
+    input.disabled = isDisabled;
+  });
+}
+
+function applyCreateEventTextState(useDefaults) {
+  if (useDefaults) {
+    if (!createEventTextOverrides) {
+      createEventTextOverrides = readCreateEventTextInputs();
+    }
+    writeCreateEventTextInputs(getThemeTextDefaults());
+  } else {
+    writeCreateEventTextInputs(createEventTextOverrides || getThemeTextDefaults());
+  }
+  setCreateEventTextInputsDisabled(useDefaults);
+}
+
+function showCreateEventModal(mode = "create") {
+  createEventMode = mode === "edit" ? "edit" : "create";
+  if (!DOM.createEventModal) return;
+  const themeDefaults = getThemeTextDefaults();
+  if (createEventMode === "edit") {
+    const active = getActiveEvent();
+    if (!active) {
+      alert("Choose an event first.");
+      return;
+    }
+    if (DOM.createEventName) DOM.createEventName.value = active.name || "";
+    if (DOM.createEventDate) DOM.createEventDate.value = active.date || "";
+    const eventOverrides = getEventTextOverrides(active);
+    const hasOverrides = hasEventTextOverrides(active);
+    createEventTextOverrides = hasOverrides ? eventOverrides : themeDefaults;
+    if (DOM.createEventUseThemeDefaults) {
+      DOM.createEventUseThemeDefaults.checked = !hasOverrides;
+    }
+  } else {
+    if (DOM.createEventName) DOM.createEventName.value = "";
+    if (DOM.createEventDate) DOM.createEventDate.value = "";
+    createEventTextOverrides = themeDefaults;
+    if (DOM.createEventUseThemeDefaults) {
+      DOM.createEventUseThemeDefaults.checked = true;
+    }
+  }
+  applyCreateEventTextState(!!(DOM.createEventUseThemeDefaults && DOM.createEventUseThemeDefaults.checked));
+  resetCreateEventAssets();
+  updateCreateEventSummary();
+  DOM.createEventModal.classList.add("show");
+}
+
+function hideCreateEventModal() {
+  if (DOM.createEventModal) DOM.createEventModal.classList.remove("show");
+}
+
+function handleCreateEventFiles(kind, fileList) {
+  if (!fileList || fileList.length === 0) return;
+  const assets = ensureCreateEventAssets();
+  const files = Array.from(fileList);
+  if (kind === "backgrounds") assets.backgrounds.push(...files);
+  if (kind === "overlays") assets.overlays.push(...files);
+  if (kind === "templates") assets.templates.push(...files);
+  updateCreateEventSummary();
+}
+
+async function confirmCreateEventModal() {
+  const themeKey = DOM.eventSelect && DOM.eventSelect.value;
+  if (!themeKey) {
+    alert("Select a theme before saving.");
+    return;
+  }
+  const name = valueFromInput(DOM.createEventName);
+  if (!name) {
+    alert("Enter an event name.");
+    return;
+  }
+  const dateValue = DOM.createEventDate ? DOM.createEventDate.value.trim() : "";
+  const useDefaults = !!(DOM.createEventUseThemeDefaults && DOM.createEventUseThemeDefaults.checked);
+  const {
+    bannerText,
+    welcomeTitle,
+    welcomeTitleSize,
+    startButtonText,
+    captureLabel
+  } = useDefaults ? {
+    bannerText: "",
+    welcomeTitle: "",
+    welcomeTitleSize: null,
+    startButtonText: "",
+    captureLabel: ""
+  } : readCreateEventTextInputs();
+  const assets = ensureCreateEventAssets();
+  let targetEvent = null;
+  if (createEventMode === "edit") {
+    targetEvent = getActiveEvent();
+    if (!targetEvent) {
+      alert("Choose an event first.");
+      return;
+    }
+    updateActiveEventDetails({ name, date: dateValue, themeKey, bannerText, welcomeTitle, welcomeTitleSize, startButtonText, captureLabel });
+  } else {
+    const slug = slugifyEventText(name);
+    const idBase = [slug, slugifyEventText(dateValue)].filter(Boolean).join("-");
+    const id = `${idBase || "event"}-${Date.now().toString(36)}`;
+    const newEvent = {
+      id,
+      name,
+      date: dateValue,
+      themeKey,
+      bannerText,
+      welcomeTitle,
+      startButtonText,
+      captureLabel,
+      createdAt: new Date().toISOString(),
+      overrides: { backgrounds: [], overlays: [], templates: [], backgroundIndex: 0 }
+    };
+    if (typeof welcomeTitleSize === "number" && welcomeTitleSize > 0) {
+      newEvent.welcomeTitleSize = welcomeTitleSize;
+    }
+    const events = getStoredEvents();
+    events.push(newEvent);
+    setStoredEvents(events);
+    setActiveEventId(id);
+    populateEventProfileSelect(id);
+    targetEvent = newEvent;
+  }
+  if (targetEvent) {
+    const overrides = ensureEventOverrides(targetEvent);
+    const tasks = [];
+    assets.backgrounds.forEach((file) => {
+      tasks.push(uploadAsset(file, "backgrounds").then((url) => { if (url) overrides.backgrounds.push(url); }));
+    });
+    assets.overlays.forEach((file) => {
+      tasks.push(uploadAsset(file, "overlays").then((url) => { if (url) overrides.overlays.push(url); }));
+    });
+    assets.templates.forEach((file) => {
+      tasks.push(uploadAsset(file, "templates").then((url) => { if (url) overrides.templates.push({ src: url, layout: "double_column" }); }));
+    });
+    if (tasks.length) await Promise.all(tasks);
+    updateActiveEventDetails({ overrides });
+  }
+  syncEventInputsFromActive();
+  updateStylePreview();
+  hideCreateEventModal();
+  resetCreateEventAssets();
+}
+
 function setupOfflineControls() {
   if (DOM.offlineModeToggle) {
     DOM.offlineModeToggle.checked = getOfflinePref();
@@ -743,6 +1051,26 @@ function setupLivePhotoToggle() {
   });
 }
 
+function getInstantCaptureEnabled() {
+  try {
+    return localStorage.getItem("photoboothInstantCapture") === "true";
+  } catch (_) { return false; }
+}
+
+function setInstantCaptureEnabled(enabled) {
+  try {
+    localStorage.setItem("photoboothInstantCapture", enabled ? "true" : "false");
+  } catch (_) { }
+}
+
+function setupInstantCaptureToggle() {
+  if (!DOM.instantCaptureToggle) return;
+  DOM.instantCaptureToggle.checked = getInstantCaptureEnabled();
+  DOM.instantCaptureToggle.addEventListener("change", () => {
+    setInstantCaptureEnabled(DOM.instantCaptureToggle.checked);
+  });
+}
+
 function setupEventNameInput() {
   if (!DOM.eventNameInput) return;
   DOM.eventNameInput.addEventListener('input', () => {
@@ -780,9 +1108,11 @@ function init() {
   setupFinalPreviewListeners();
   setupThemeEditorControls();
   setupCreateThemeModalControls();
+  setupCreateEventModalControls();
   setupOfflineControls();
   setupFolderPickers();
   setupLivePhotoToggle();
+  setupInstantCaptureToggle();
   setupCustomPairingControls();
   setupEventNameInput();
   setupEventDateInput();
@@ -1264,6 +1594,7 @@ function applyThemeBasics(theme) {
   document.documentElement.style.setProperty('--accent2', theme.accent2 || 'white');
   applyThemeFontStyles(theme);
   applyBannerSize(theme);
+  applyWelcomeTitleSize(theme);
   applyThemeBackground(theme);
 }
 
@@ -1445,18 +1776,15 @@ function syncThemeEditorWithActiveTheme() {
   updateThemeEditorSummaries(activeTheme);
   renderCurrentAssets(activeTheme);
   syncBannerSizeUI(activeTheme);
+  syncWelcomeTitleSizeUI(activeTheme);
   updateThemeEditorSummary();
 }
 
 function updateStylePreview() {
   if (!DOM.stylePreviewHeading || !DOM.stylePreviewSubheading || !DOM.stylePreviewBody || !DOM.stylePreviewButton) return;
   const bannerText = resolveBannerText();
-  const welcomeTitle = valueFromInput(DOM.themeWelcomeTitle)
-    || (activeTheme && activeTheme.welcome && activeTheme.welcome.title)
-    || 'Welcome!';
-  const prompt = valueFromInput(DOM.themeWelcomePrompt)
-    || (activeTheme && activeTheme.welcome && activeTheme.welcome.prompt)
-    || 'Touch to start';
+  const welcomeTitle = resolveWelcomeTitle();
+  const prompt = resolveStartButtonText();
   const captureLabel = resolveCaptureLabel();
 
   if (!isPreviewEditing(DOM.stylePreviewHeading)) {
@@ -1982,9 +2310,9 @@ function confirmTemplate() {
 function showWelcome() {
   if (!activeTheme) return;
   // Title + prompt
-  DOM.welcomeTitle.textContent = (activeTheme.welcome && activeTheme.welcome.title) || (DOM.eventTitle && DOM.eventTitle.textContent) || '';
+  DOM.welcomeTitle.textContent = resolveWelcomeTitle();
   DOM.welcomeTitle.style.fontFamily = (activeTheme.fontHeading || activeTheme.fontBody || activeTheme.font || '');
-  if (DOM.startButton) DOM.startButton.textContent = (activeTheme.welcome && activeTheme.welcome.prompt) || 'Touch to start';
+  if (DOM.startButton) DOM.startButton.textContent = resolveStartButtonText();
 
   //  the booth background on the welcome screen and hide standalone images
   const boothBg = DOM.boothScreen ? DOM.boothScreen.style.backgroundImage : '';
@@ -2110,7 +2438,7 @@ const startBoothFromAdmin = (...args) => startBooth(...args);
 async function capturePhotoFlow() {
   lastCaptureFlow = capturePhotoFlow; // Store this function for retake
   setBoothControlsVisible(false);
-  const photo = await countdownAndSnap({ live: getLivePhotoEnabled() });
+  const photo = await countdownAndSnap({ live: getLivePhotoEnabled(), instant: getInstantCaptureEnabled() });
   const finalUrl = await finalizeToPrint(photo, selectedOverlay);
   showFinal(finalUrl);
   handleCaptureUpload(finalUrl);
@@ -2226,6 +2554,11 @@ function pickLiveMimeType() {
   return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || '';
 }
 
+function setRecordingHighlight(isRecording) {
+  if (!DOM.videoContainer) return;
+  DOM.videoContainer.classList.toggle("recording", !!isRecording);
+}
+
 async function captureLiveClip(durationMs) {
   try {
     const stream = DOM.video && DOM.video.srcObject;
@@ -2237,14 +2570,17 @@ async function captureLiveClip(durationMs) {
     const stopped = new Promise((resolve) => {
       recorder.onstop = () => resolve();
     });
+    setRecordingHighlight(true);
     recorder.start();
     await delay(Math.max(300, durationMs));
     recorder.stop();
     await stopped;
+    setRecordingHighlight(false);
     if (!chunks.length) return null;
     return new Blob(chunks, { type: chunks[0].type || 'video/webm' });
   } catch (e) {
     console.warn('Live clip capture failed', e);
+    setRecordingHighlight(false);
     return null;
   }
 }
@@ -2489,22 +2825,31 @@ async function showCountdown(text) {
   const co = DOM.countdownOverlay;
   co.textContent = text;
   updateCountdownFontSize();
+  if (DOM.boothScreen) DOM.boothScreen.classList.add("countdown-mode");
   co.classList.add('show');
   await delay(800);
   co.classList.remove('show');
   await delay(200);
 }
 async function countdownAndSnap(options = {}) {
-  const { live = false } = options || {};
-  for (let n = 3; n > 0; n--) { await showCountdown(n); }
+  const { live = false, instant = false } = options || {};
+  if (!instant) {
+    for (let n = 3; n > 0; n--) { await showCountdown(n); }
+  } else if (DOM.countdownOverlay) {
+    DOM.countdownOverlay.classList.remove('show');
+    if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
+  }
+  if (!live) setRecordingHighlight(false);
   const livePromise = live ? captureLiveClip(LIVE_PHOTO_DURATION_MS) : null;
   const shot = applyAutoEnhanceCanvas(drawToCanvasFromVideo());
   triggerFlash();
   if (livePromise) {
     const clip = await livePromise;
     setLiveClip(clip);
+    setRecordingHighlight(false);
   } else {
     clearLiveClip();
+    setRecordingHighlight(false);
   }
   return shot;
 }
@@ -2726,6 +3071,7 @@ async function detectMaskRegions(img, hexColor, tolerance) {
 // Final preview
 function showFinal(url) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
+  if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
   const img = DOM.finalStrip;
   const prevFit = img ? img.style.objectFit : '';
   if (img) img.style.objectFit = 'contain';
@@ -2855,7 +3201,16 @@ function getStoredEvents() {
 }
 
 function setStoredEvents(events) {
-  localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events || []));
+  const list = Array.isArray(events) ? events.slice() : [];
+  list.sort((a, b) => {
+    const ad = (a && a.date) ? new Date(a.date).getTime() : 0;
+    const bd = (b && b.date) ? new Date(b.date).getTime() : 0;
+    if (ad !== bd) return bd - ad;
+    const an = (a && a.name) ? a.name.toLowerCase() : "";
+    const bn = (b && b.name) ? b.name.toLowerCase() : "";
+    return an.localeCompare(bn);
+  });
+  localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(list));
 }
 
 function getActiveEventId() {
@@ -2892,7 +3247,7 @@ function getActiveEventOverrides() {
   return ensureEventOverrides(active);
 }
 
-function updateActiveEventDetails({ name, date, themeKey, overrides }) {
+function updateActiveEventDetails({ name, date, themeKey, overrides, bannerText, welcomeTitle, welcomeTitleSize, startButtonText, captureLabel }) {
   const events = getStoredEvents();
   const id = getActiveEventId();
   if (!id) return;
@@ -2903,9 +3258,19 @@ function updateActiveEventDetails({ name, date, themeKey, overrides }) {
   if (typeof date === "string") target.date = date;
   if (typeof themeKey === "string") target.themeKey = themeKey;
   if (overrides && typeof overrides === "object") target.overrides = overrides;
+  if (typeof bannerText === "string") target.bannerText = bannerText;
+  if (typeof welcomeTitle === "string") target.welcomeTitle = welcomeTitle;
+  if (typeof welcomeTitleSize === "number" && welcomeTitleSize > 0) {
+    target.welcomeTitleSize = welcomeTitleSize;
+  } else if (welcomeTitleSize === null) {
+    delete target.welcomeTitleSize;
+  }
+  if (typeof startButtonText === "string") target.startButtonText = startButtonText;
+  if (typeof captureLabel === "string") target.captureLabel = captureLabel;
   setStoredEvents(events);
   populateEventProfileSelect(id);
   updateEventOverridesSummary();
+  applyWelcomeTitleSize(activeTheme);
 }
 
 function syncEventInputsFromActive() {
@@ -2927,11 +3292,22 @@ function populateEventProfileSelect(preferredId) {
   placeholder.value = "";
   placeholder.textContent = "Select an event";
   DOM.eventProfileSelect.appendChild(placeholder);
+  const counts = {};
+  events.forEach((event) => {
+    if (!event) return;
+    const key = `${event.name || ""}__${event.date || ""}`;
+    counts[key] = (counts[key] || 0) + 1;
+  });
   events.forEach((event) => {
     if (!event || !event.id) return;
     const option = document.createElement("option");
     const labelParts = [event.name || "Untitled event"];
     if (event.date) labelParts.push(`(${event.date})`);
+    const key = `${event.name || ""}__${event.date || ""}`;
+    if (counts[key] > 1 && event.createdAt) {
+      const time = new Date(event.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      labelParts.push(`• ${time}`);
+    }
     option.value = event.id;
     option.textContent = labelParts.join(" ");
     DOM.eventProfileSelect.appendChild(option);
@@ -2985,15 +3361,6 @@ function createNewEventFromSelection() {
     return;
   }
   const events = getStoredEvents();
-  const existing = events.find((event) => event && event.name === name && event.date === date);
-  if (existing) {
-    setActiveEventId(existing.id);
-    updateActiveEventDetails({ themeKey });
-    syncEventInputsFromActive();
-    updateStylePreview();
-    showToast(`Event "${name}" selected`);
-    return;
-  }
   const idBase = [slug, slugifyEventText(date)].filter(Boolean).join("-");
   const id = `${idBase || "event"}-${Date.now().toString(36)}`;
   const newEvent = {
@@ -3001,6 +3368,7 @@ function createNewEventFromSelection() {
     name,
     date,
     themeKey,
+    createdAt: new Date().toISOString(),
     overrides: { backgrounds: [], overlays: [], templates: [], backgroundIndex: 0 }
   };
   events.push(newEvent);
@@ -5235,8 +5603,6 @@ function valueFromInput(node) {
   return node && typeof node.value === 'string' ? node.value.trim() : '';
 }
 
-const BANNER_TEXT_STORAGE_KEY = "photoboothBannerText";
-
 function normalizeBannerText(value) {
   return (value || "")
     .replace(/\s+/g, " ")
@@ -5261,30 +5627,51 @@ function syncBannerSizeUI(theme) {
   DOM.bannerSizeValue.textContent = `${size}px`;
 }
 
+function getThemeWelcomeTitleSize(theme) {
+  if (theme && typeof theme.welcomeTitleSize === "number" && theme.welcomeTitleSize > 0) {
+    return theme.welcomeTitleSize;
+  }
+  return 56;
+}
+
+function resolveWelcomeTitleSize(theme) {
+  const active = getActiveEvent();
+  if (active && typeof active.welcomeTitleSize === "number" && active.welcomeTitleSize > 0) {
+    return active.welcomeTitleSize;
+  }
+  return getThemeWelcomeTitleSize(theme || activeTheme);
+}
+
+function applyWelcomeTitleSize(theme) {
+  const size = resolveWelcomeTitleSize(theme);
+  if (size && size > 0) {
+    document.documentElement.style.setProperty("--welcome-title-size", `${size}px`);
+    if (DOM.stylePreviewSubheading) {
+      DOM.stylePreviewSubheading.style.fontSize = `${Math.max(14, Math.round(size * 0.5))}px`;
+    }
+  } else {
+    document.documentElement.style.removeProperty("--welcome-title-size");
+    if (DOM.stylePreviewSubheading) DOM.stylePreviewSubheading.style.fontSize = "";
+  }
+}
+
+function syncWelcomeTitleSizeUI(theme) {
+  if (!DOM.welcomeTitleSizeInput || !DOM.welcomeTitleSizeValue) return;
+  const size = getThemeWelcomeTitleSize(theme || activeTheme);
+  DOM.welcomeTitleSizeInput.value = String(size);
+  DOM.welcomeTitleSizeValue.textContent = `${size}px`;
+}
+
 function isPreviewEditing(node) {
   if (!node) return false;
   return document.activeElement === node;
 }
 
-function getStoredBannerText() {
-  try { return localStorage.getItem(BANNER_TEXT_STORAGE_KEY) || ""; } catch (_) { return ""; }
-}
-
-function setStoredBannerText(value) {
-  const trimmed = normalizeBannerText(value);
-  try {
-    if (trimmed) localStorage.setItem(BANNER_TEXT_STORAGE_KEY, trimmed);
-    else localStorage.removeItem(BANNER_TEXT_STORAGE_KEY);
-  } catch (_) { }
-}
-
 function resolveBannerText() {
-  const stored = normalizeBannerText(getStoredBannerText());
-  if (stored) return stored;
-  const selection = getFontPickerSelection();
-  const heading = selection.heading || selection.body;
-  if (heading) return getFontPreviewText(heading);
-  return "Welcome!";
+  const active = getActiveEvent();
+  const eventText = active && typeof active.bannerText === "string" ? normalizeBannerText(active.bannerText) : "";
+  if (eventText) return eventText;
+  return resolveThemeBannerText();
 }
 
 function syncBannerText() {
@@ -5292,7 +5679,30 @@ function syncBannerText() {
   if (DOM.eventTitle) DOM.eventTitle.textContent = bannerText;
 }
 
+function resolveThemeBannerText() {
+  const target = activeTheme || getSelectedThemeTarget();
+  const themeText = target && typeof target.bannerText === "string" ? normalizeBannerText(target.bannerText) : "";
+  if (themeText) return themeText;
+  if (target && target.welcome && target.welcome.title) return target.welcome.title;
+  const selection = getFontPickerSelection();
+  const heading = selection.heading || selection.body;
+  if (heading) return getFontPreviewText(heading);
+  return "Welcome!";
+}
+
 function resolveCaptureLabel() {
+  const active = getActiveEvent();
+  if (active && typeof active.captureLabel === "string" && active.captureLabel.trim()) {
+    return active.captureLabel.trim();
+  }
+  return resolveThemeCaptureLabel();
+}
+
+function syncCaptureButtonText() {
+  if (DOM.captureBtn) DOM.captureBtn.textContent = resolveCaptureLabel();
+}
+
+function resolveThemeCaptureLabel() {
   const target = activeTheme || getSelectedThemeTarget();
   if (target && typeof target.captureLabel === "string" && target.captureLabel.trim()) {
     return target.captureLabel.trim();
@@ -5300,16 +5710,45 @@ function resolveCaptureLabel() {
   return "Take Photo";
 }
 
-function syncCaptureButtonText() {
-  if (DOM.captureBtn) DOM.captureBtn.textContent = resolveCaptureLabel();
+function resolveWelcomeTitle() {
+  const active = getActiveEvent();
+  if (active && typeof active.welcomeTitle === "string" && active.welcomeTitle.trim()) {
+    return active.welcomeTitle.trim();
+  }
+  return resolveThemeWelcomeTitle();
+}
+
+function resolveStartButtonText() {
+  const active = getActiveEvent();
+  if (active && typeof active.startButtonText === "string" && active.startButtonText.trim()) {
+    return active.startButtonText.trim();
+  }
+  return resolveThemeStartButtonText();
 }
 
 function syncWelcomeText() {
-  const target = activeTheme || getSelectedThemeTarget();
-  const title = (target && target.welcome && target.welcome.title) ? target.welcome.title : "Welcome!";
+  const title = resolveWelcomeTitle();
   if (DOM.welcomeTitle) DOM.welcomeTitle.textContent = title;
-  const prompt = (target && target.welcome && target.welcome.prompt) ? target.welcome.prompt : "Touch to start";
+  const prompt = resolveStartButtonText();
   if (DOM.startButton) DOM.startButton.textContent = prompt;
+  applyWelcomeTitleSize(activeTheme);
+}
+
+function resolveThemeWelcomeTitle() {
+  const target = activeTheme || getSelectedThemeTarget();
+  if (target && target.welcome && target.welcome.title) return target.welcome.title;
+  return "Welcome!";
+}
+
+function resolveThemeStartButtonText() {
+  const target = activeTheme || getSelectedThemeTarget();
+  if (target && target.welcome && target.welcome.prompt) return target.welcome.prompt;
+  return "Touch to start";
+}
+
+function resolveThemeWelcomeTitleSizeValue() {
+  const target = activeTheme || getSelectedThemeTarget();
+  return getThemeWelcomeTitleSize(target);
 }
 
 function slugifyThemeName(name) {
