@@ -17,6 +17,7 @@
     :root {
       --accent: rgb(212, 242, 217);
       --accent2: white;
+      --camera-zoom: 1;
       --font-heading: 'Comic Neue', cursive;
       --font-body: 'Comic Neue', cursive;
       --font: var(--font-body);
@@ -969,6 +970,7 @@
       border-radius: 12px;
       background: black;
       aspect-ratio: var(--capture-aspect, auto);
+      overflow: hidden;
     }
 
     #videoContainer.recording {
@@ -1002,8 +1004,8 @@
       transition: opacity 500ms ease;
       object-fit: cover;
       transform-origin: center;
-      -webkit-transform: scaleX(-1) !important;
-      transform: scaleX(-1) !important;
+      -webkit-transform: scaleX(-1) scale(var(--camera-zoom, 1));
+      transform: scaleX(-1) scale(var(--camera-zoom, 1));
     }
 
     #lastShot {
@@ -1017,8 +1019,8 @@
       pointer-events: none;
       display: none;
       transform-origin: center;
-      -webkit-transform: scaleX(1) !important;
-      transform: scaleX(1) !important;
+      -webkit-transform: scaleX(1) scale(var(--camera-zoom, 1));
+      transform: scaleX(1) scale(var(--camera-zoom, 1));
     }
 
     #liveOverlay {
@@ -1030,8 +1032,13 @@
       pointer-events: none;
       border-radius: 6px;
       object-fit: cover;
-      -webkit-transform: scaleX(1) !important;
-      transform: scaleX(1) !important;
+      -webkit-transform: scaleX(1) scale(var(--camera-zoom, 1));
+      transform: scaleX(1) scale(var(--camera-zoom, 1));
+    }
+
+    #videoContainer img:not([src]),
+    #videoContainer img[src=""] {
+      display: none;
     }
 
     .view-landscape #videoContainer {
@@ -1865,6 +1872,11 @@
               <input type="checkbox" id="instantCaptureToggle">
               Instant Capture (no countdown)
             </label>
+            <label for="cameraZoomInput">Camera Zoom</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="cameraZoomInput" min="1" max="2.5" step="0.05">
+              <span id="cameraZoomValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+            </div>
             <div class="btn-row">
               <button id="startCameraButton" class="primary">Start Camera</button>
               <button type="button" onclick="toggleAnalytics()">Analytics</button>

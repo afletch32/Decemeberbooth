@@ -1,4 +1,5 @@
 import { buildEventFolderPath } from "./cloudinary-utils.mjs";
+import { clampZoom } from "./camera-utils.mjs";
 import { applyThemeText, getEventTextOverrides, hasEventTextOverrides, mergeUniqueUrls } from "./event-utils.mjs";
 
 if ('serviceWorker' in navigator) {
@@ -222,6 +223,8 @@ const DOM = {
   createEventBtn: document.getElementById("createEventBtn"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
+  cameraZoomInput: document.getElementById("cameraZoomInput"),
+  cameraZoomValue: document.getElementById("cameraZoomValue"),
   eventDateInput: document.getElementById('eventDateInput'),
   options: document.getElementById('options'),
   videoWrap: document.getElementById('videoWrap'),
@@ -402,6 +405,7 @@ const AUTO_ENHANCE_ENABLED = true;
 const AUTO_ENHANCE_FILTER = 'brightness(1.05) contrast(1.08) saturate(1.08)';
 const LIVE_PHOTO_DEFAULT = true;
 const LIVE_PHOTO_DURATION_MS = 2000;
+const CAMERA_ZOOM_DEFAULT = 1;
 let lastLiveClipUrl = null;
 let lastLiveClipBlob = null;
 const ACCENT_PRESET_COLORS = [
@@ -1071,6 +1075,38 @@ function setupInstantCaptureToggle() {
   });
 }
 
+function getCameraZoom() {
+  try {
+    const stored = localStorage.getItem("photoboothCameraZoom");
+    if (stored !== null) return clampZoom(parseFloat(stored), 1, 2.5);
+  } catch (_) { }
+  return CAMERA_ZOOM_DEFAULT;
+}
+
+function setCameraZoom(value) {
+  const normalized = clampZoom(value, 1, 2.5);
+  try {
+    localStorage.setItem("photoboothCameraZoom", String(normalized));
+  } catch (_) { }
+  applyCameraZoom(normalized);
+}
+
+function applyCameraZoom(value) {
+  const zoom = clampZoom(value, 1, 2.5);
+  document.documentElement.style.setProperty("--camera-zoom", String(zoom));
+  if (DOM.cameraZoomInput) DOM.cameraZoomInput.value = String(zoom);
+  if (DOM.cameraZoomValue) DOM.cameraZoomValue.textContent = `${zoom.toFixed(2)}x`;
+}
+
+function setupCameraZoomControls() {
+  if (!DOM.cameraZoomInput) return;
+  const initial = getCameraZoom();
+  applyCameraZoom(initial);
+  DOM.cameraZoomInput.addEventListener("input", () => {
+    setCameraZoom(DOM.cameraZoomInput.value);
+  });
+}
+
 function setupEventNameInput() {
   if (!DOM.eventNameInput) return;
   DOM.eventNameInput.addEventListener('input', () => {
@@ -1113,6 +1149,7 @@ function init() {
   setupFolderPickers();
   setupLivePhotoToggle();
   setupInstantCaptureToggle();
+  setupCameraZoomControls();
   setupCustomPairingControls();
   setupEventNameInput();
   setupEventDateInput();
@@ -2402,7 +2439,7 @@ async function startCamera(autoStartBooth = false) {
         stream = s;
         if (DOM.video) {
           DOM.video.srcObject = s;
-          DOM.video.style.transform = 'scaleX(-1)';
+          DOM.video.style.transform = '';
         }
         showToast('Camera permission granted');
         if (autoStartBooth) startBoothFlow();
@@ -2472,6 +2509,7 @@ function drawToCanvasFromVideo() {
 
   const videoW = v.videoWidth;
   const videoH = v.videoHeight;
+  const zoom = getCameraZoom();
 
   if (isPortrait) {
     const targetAspect = (typeof captureAspectRatio === 'number' && captureAspectRatio > 0) ? captureAspectRatio : (9 / 16);
@@ -2481,6 +2519,10 @@ function drawToCanvasFromVideo() {
     if (sWidth > videoW) {
       sWidth = videoW;
       sHeight = sWidth / targetAspect;
+    }
+    if (zoom > 1) {
+      sWidth = sWidth / zoom;
+      sHeight = sHeight / zoom;
     }
     sx = (videoW - sWidth) / 2;
     sy = (videoH - sHeight) / 2;
@@ -2498,6 +2540,10 @@ function drawToCanvasFromVideo() {
     if (sHeight > videoH) {
       sHeight = videoH;
       sWidth = sHeight * targetAspect;
+    }
+    if (zoom > 1) {
+      sWidth = sWidth / zoom;
+      sHeight = sHeight / zoom;
     }
     sx = (videoW - sWidth) / 2;
     sy = (videoH - sHeight) / 2;
