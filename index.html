@@ -1036,6 +1036,59 @@
       transform: scaleX(1) scale(var(--camera-zoom, 1));
     }
 
+    @keyframes idleBounce {
+      0%,
+      100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    #character {
+      position: absolute;
+      z-index: 2;
+      pointer-events: none;
+      left: var(--char-x, 12%);
+      bottom: var(--char-bottom, 0%);
+      height: var(--char-height, 75%);
+      animation: idleBounce 1.8s ease-in-out infinite;
+      filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+    }
+
+    #silhouette {
+      position: absolute;
+      bottom: 8%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 180px;
+      height: 320px;
+      border: 3px dashed rgba(255, 255, 255, 0.7);
+      border-radius: 90px;
+      background: rgba(255, 255, 255, 0.08);
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    #silhouette .feet {
+      position: absolute;
+      bottom: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 26px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    #silhouette .label {
+      position: absolute;
+      top: -36px;
+      width: 100%;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    }
+
     #videoContainer img:not([src]),
     #videoContainer img[src=""] {
       display: none;
@@ -1652,6 +1705,68 @@
       text-decoration: underline;
     }
 
+    .theme-card-sections {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .theme-card-section h3 {
+      margin: 0 0 8px;
+      font-size: 0.9em;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #9aa3c7;
+    }
+
+    .theme-card-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .theme-card {
+      border-radius: 12px;
+      border: 1px solid #232637;
+      background: #141826;
+      color: #f6f7ff;
+      padding: 12px 10px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 54px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .theme-card.holiday {
+      background: linear-gradient(135deg, color-mix(in srgb, var(--card-accent, #ff7a18) 70%, #10131f 30%), #10131f);
+      border-color: color-mix(in srgb, var(--card-accent, #ff7a18) 70%, #1d2233 30%);
+      color: var(--card-accent2, #ffffff);
+    }
+
+    .theme-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .theme-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08), 0 10px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .theme-card-summary {
+      display: block;
+      font-size: 0.75em;
+      font-weight: 500;
+      opacity: 0.7;
+      margin-top: 6px;
+      text-transform: none;
+    }
+
     .quick-picks {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -1700,6 +1815,12 @@
     .quick-pick-card .quick-pick-preview {
       font-size: 1.1em;
       line-height: 1.3;
+    }
+
+    @media (max-width: 1100px) {
+      .theme-card-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     .font-divider {
@@ -1872,6 +1993,10 @@
               <input type="checkbox" id="instantCaptureToggle">
               Instant Capture (no countdown)
             </label>
+            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+              <input type="checkbox" id="greenScreenToggle" checked>
+              Green Screen Removal
+            </label>
             <label for="cameraZoomInput">Camera Zoom</label>
             <div style="display:flex; align-items:center; gap:10px;">
               <input type="range" id="cameraZoomInput" min="1" max="2.5" step="0.05">
@@ -1948,6 +2073,7 @@
               <button type="button" id="addBackgroundsBtn">Add Backgrounds</button>
               <button type="button" id="addOverlaysBtn">Add Overlays</button>
               <button type="button" id="addTemplatesBtn">Add Templates</button>
+              <button type="button" id="addCharacterBtn">Add Character</button>
             </div>
             <div id="assetUploadInputs" class="hidden">
               <input type="file" id="themeBackground" accept="image/*">
@@ -1956,6 +2082,7 @@
               <input type="file" id="themeOverlaysFolderPicker" webkitdirectory directory multiple>
               <input type="file" id="themeTemplates" accept="image/*" multiple>
               <input type="file" id="themeTemplatesFolderPicker" webkitdirectory directory multiple>
+              <input type="file" id="themeCharacter" accept="image/*">
             </div>
             <div id="currentAssets" class="current-assets">
               <div
@@ -1982,6 +2109,28 @@
                 <label>Templates:</label>
                 <div id="currentTemplates" class="asset-grid"></div>
               </div>
+              <div class="asset-row">
+                <label>Character:</label>
+                <div id="currentCharacter" class="asset-single"></div>
+              </div>
+              <div class="asset-row">
+                <label>Character Position</label>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                  <label for="characterXInput" style="min-width:64px;">Left</label>
+                  <input type="range" id="characterXInput" min="0" max="60" step="1">
+                  <span id="characterXValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
+                  <label for="characterBottomInput" style="min-width:64px;">Bottom</label>
+                  <input type="range" id="characterBottomInput" min="-10" max="20" step="1">
+                  <span id="characterBottomValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
+                  <label for="characterHeightInput" style="min-width:64px;">Height</label>
+                  <input type="range" id="characterHeightInput" min="40" max="110" step="1">
+                  <span id="characterHeightValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+                </div>
+              </div>
             </div>
           </div>
         </details>
@@ -1991,7 +2140,9 @@
         <div id="themeEditor">
           <h2>Theme Editor</h2>
           <label for="eventSelect">Choose Theme</label>
-          <select id="eventSelect"></select>
+          <select id="eventSelect" class="hidden" aria-hidden="true"></select>
+          <div id="themeQuickSelect" class="theme-card-sections"></div>
+          <div id="themeVibesSection" class="theme-card-sections hidden"></div>
           <label for="bannerSizeInput">Banner Size</label>
           <div style="display:flex; align-items:center; gap:10px;">
             <input type="range" id="bannerSizeInput" min="24" max="120" step="2">
@@ -2045,8 +2196,16 @@
     <div id="boothMain">
       <div id="options"></div>
       <div id="videoWrap" class="view-landscape">
-        <div id="videoContainer"><video id="video" class="hidden" autoplay playsinline muted></video><img
-            id="lastShot" /><img id="liveOverlay" /></div>
+        <div id="videoContainer">
+          <video id="video" class="hidden" autoplay playsinline muted></video>
+          <img id="lastShot" />
+          <img id="liveOverlay" />
+          <img id="character" alt="Character">
+          <div id="silhouette">
+            <div class="feet"></div>
+            <div class="label">Stand Here</div>
+          </div>
+        </div>
         <button id="captureBtn" class="primary" onclick="capturePhotoFlow()">Take Photo</button>
       </div>
       <div id="controls">

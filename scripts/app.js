@@ -134,6 +134,44 @@ let themes = {
           prompt: "Touch to start the fun!"
         }
       },
+      winterWonderland: {
+        name: "❄️ Winter Wonderland",
+        accent: "#b7e3ff",
+        accent2: "#ffffff",
+        fontHeading: "'Playfair Display', serif",
+        fontBody: "'Montserrat', sans-serif",
+        background: "assets/holidays/winter/christmas/backgrounds/",
+        logo: "",
+        overlaysFolder: "assets/holidays/winter/christmas/overlays/",
+        templatesFolder: "assets/holidays/winter/christmas/templates/",
+        welcome: {
+          title: "Winter Wonderland",
+          portrait: "",
+          landscape: "",
+          prompt: "Touch to start"
+        },
+        vibeParentKey: "winter:christmas",
+        vibeSummary: "Timeless, snowy, magical"
+      },
+      santasWorkshop: {
+        name: "🎅 Santa's Workshop",
+        accent: "#d62828",
+        accent2: "#ffffff",
+        fontHeading: "'Mountains of Christmas', cursive",
+        fontBody: "'Poppins', sans-serif",
+        background: "assets/holidays/winter/christmas/backgrounds/",
+        logo: "",
+        overlaysFolder: "assets/holidays/winter/christmas/overlays/",
+        templatesFolder: "assets/holidays/winter/christmas/templates/",
+        welcome: {
+          title: "Santa's Workshop",
+          portrait: "",
+          landscape: "",
+          prompt: "Touch to start"
+        },
+        vibeParentKey: "winter:christmas",
+        vibeSummary: "Playful, festive, nostalgic"
+      },
       newyear: {
         name: "🎉 New Year",
         accent: "#FFD700",
@@ -223,6 +261,7 @@ const DOM = {
   createEventBtn: document.getElementById("createEventBtn"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
+  greenScreenToggle: document.getElementById("greenScreenToggle"),
   cameraZoomInput: document.getElementById("cameraZoomInput"),
   cameraZoomValue: document.getElementById("cameraZoomValue"),
   eventDateInput: document.getElementById('eventDateInput'),
@@ -231,6 +270,8 @@ const DOM = {
   videoContainer: document.getElementById('videoContainer'),
   video: document.getElementById('video'),
   liveOverlay: document.getElementById('liveOverlay'),
+  character: document.getElementById("character"),
+  silhouette: document.getElementById("silhouette"),
   captureBtn: document.getElementById('captureBtn'),
   countdownOverlay: document.getElementById('countdownOverlay'),
   flashOverlay: document.getElementById('flashOverlay'),
@@ -272,6 +313,7 @@ const DOM = {
   styleAccent2Picker: document.getElementById('styleAccent2Picker'),
   quickPicksGrouped: document.getElementById('quickPicksGrouped'),
   eventGalleryLink: document.getElementById('eventGalleryLink'),
+  themeVibesSection: document.getElementById("themeVibesSection"),
   eventOnlyBackgrounds: document.getElementById("eventOnlyBackgrounds"),
   eventOnlyOverlays: document.getElementById("eventOnlyOverlays"),
   eventOnlyTemplates: document.getElementById("eventOnlyTemplates"),
@@ -330,6 +372,15 @@ const DOM = {
   quickPickForm: document.getElementById('quickPickForm'),
   customPairingsList: document.getElementById('customPairingsList'),
   themeQuickSelect: document.getElementById('themeQuickSelect'),
+  themeCharacter: document.getElementById("themeCharacter"),
+  addCharacterBtn: document.getElementById("addCharacterBtn"),
+  currentCharacter: document.getElementById("currentCharacter"),
+  characterXInput: document.getElementById("characterXInput"),
+  characterXValue: document.getElementById("characterXValue"),
+  characterBottomInput: document.getElementById("characterBottomInput"),
+  characterBottomValue: document.getElementById("characterBottomValue"),
+  characterHeightInput: document.getElementById("characterHeightInput"),
+  characterHeightValue: document.getElementById("characterHeightValue"),
   themeFontSelect: document.getElementById('themeFontSelect'),
   themeEditorModeSelect: document.getElementById('themeEditorModeSelect'),
   themeCloneSection: document.getElementById('themeCloneSection'),
@@ -406,6 +457,7 @@ const AUTO_ENHANCE_FILTER = 'brightness(1.05) contrast(1.08) saturate(1.08)';
 const LIVE_PHOTO_DEFAULT = true;
 const LIVE_PHOTO_DURATION_MS = 2000;
 const CAMERA_ZOOM_DEFAULT = 1;
+const GREEN_SCREEN_DEFAULT = true;
 let lastLiveClipUrl = null;
 let lastLiveClipBlob = null;
 const ACCENT_PRESET_COLORS = [
@@ -623,10 +675,12 @@ function setupThemeEditorControls() {
   if (DOM.addBackgroundsBtn && DOM.themeBackground) DOM.addBackgroundsBtn.addEventListener("click", () => DOM.themeBackground.click());
   if (DOM.addOverlaysBtn && DOM.themeOverlays) DOM.addOverlaysBtn.addEventListener("click", () => DOM.themeOverlays.click());
   if (DOM.addTemplatesBtn && DOM.themeTemplates) DOM.addTemplatesBtn.addEventListener("click", () => DOM.themeTemplates.click());
+  if (DOM.addCharacterBtn && DOM.themeCharacter) DOM.addCharacterBtn.addEventListener("click", () => DOM.themeCharacter.click());
   if (DOM.themeBackground) DOM.themeBackground.addEventListener('change', () => handleThemeAssetInputChange('background'));
   if (DOM.themeLogo) DOM.themeLogo.addEventListener('change', () => handleThemeAssetInputChange('logo'));
   if (DOM.themeOverlays) DOM.themeOverlays.addEventListener('change', () => handleThemeAssetInputChange('overlay'));
   if (DOM.themeTemplates) DOM.themeTemplates.addEventListener('change', () => handleThemeAssetInputChange('template'));
+  if (DOM.themeCharacter) DOM.themeCharacter.addEventListener("change", () => handleThemeAssetInputChange("character"));
   if (DOM.themeWelcomeTitle) DOM.themeWelcomeTitle.addEventListener('input', updateStylePreview);
   if (DOM.themeWelcomePrompt) DOM.themeWelcomePrompt.addEventListener('input', updateStylePreview);
   if (DOM.stylePreview) {
@@ -709,6 +763,7 @@ function handleThemeAssetInputChange(kind) {
   else if (kind === 'logo') input = DOM.themeLogo;
   else if (kind === 'overlay') input = DOM.themeOverlays;
   else if (kind === 'template') input = DOM.themeTemplates;
+  else if (kind === 'character') input = DOM.themeCharacter;
   if (!input || !input.files || input.files.length === 0) return;
   updateSelectedTheme(kind).catch((err) => console.error('Failed to update theme assets:', err));
 }
@@ -1075,6 +1130,29 @@ function setupInstantCaptureToggle() {
   });
 }
 
+function getGreenScreenEnabled() {
+  try {
+    const stored = localStorage.getItem("photoboothGreenScreen");
+    if (stored === "true") return true;
+    if (stored === "false") return false;
+  } catch (_) { }
+  return GREEN_SCREEN_DEFAULT;
+}
+
+function setGreenScreenEnabled(enabled) {
+  try {
+    localStorage.setItem("photoboothGreenScreen", enabled ? "true" : "false");
+  } catch (_) { }
+}
+
+function setupGreenScreenToggle() {
+  if (!DOM.greenScreenToggle) return;
+  DOM.greenScreenToggle.checked = getGreenScreenEnabled();
+  DOM.greenScreenToggle.addEventListener("change", () => {
+    setGreenScreenEnabled(DOM.greenScreenToggle.checked);
+  });
+}
+
 function getCameraZoom() {
   try {
     const stored = localStorage.getItem("photoboothCameraZoom");
@@ -1149,7 +1227,9 @@ function init() {
   setupFolderPickers();
   setupLivePhotoToggle();
   setupInstantCaptureToggle();
+  setupGreenScreenToggle();
   setupCameraZoomControls();
+  setupCharacterPositionControls();
   setupCustomPairingControls();
   setupEventNameInput();
   setupEventDateInput();
@@ -1512,39 +1592,142 @@ function populateThemeSelector(preferredKey, attempt = 0) {
   return selectedKey;
 }
 
+function buildThemeCard(item, options = {}) {
+  const { isHoliday = false, showSummary = false, selectEl = DOM.eventSelect } = options;
+  const card = document.createElement("button");
+  card.type = "button";
+  card.className = `theme-card${isHoliday ? " holiday" : ""}`;
+  card.dataset.value = item.value;
+  card.textContent = item.label;
+  const accent = item.theme && item.theme.accent ? item.theme.accent : null;
+  const accent2 = item.theme && item.theme.accent2 ? item.theme.accent2 : null;
+  if (accent) card.style.setProperty("--card-accent", accent);
+  if (accent2) card.style.setProperty("--card-accent2", accent2);
+  if (showSummary && item.theme && item.theme.vibeSummary) {
+    const summary = document.createElement("span");
+    summary.className = "theme-card-summary";
+    summary.textContent = item.theme.vibeSummary;
+    card.appendChild(summary);
+  }
+  card.addEventListener("click", () => {
+    if (selectEl && selectEl.value !== item.value) {
+      selectEl.value = item.value;
+      selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+    } else {
+      highlightThemeQuickSelect(item.value);
+    }
+  });
+  return card;
+}
+
+function renderThemeVibesSection(items, selectedKey) {
+  const container = DOM.themeVibesSection;
+  if (!container) return;
+  const selected = items.find((item) => item.value === selectedKey);
+  let parentKey = null;
+  if (selected && selected.theme && selected.theme.vibeParentKey) {
+    parentKey = selected.theme.vibeParentKey;
+  } else if (selectedKey) {
+    const hasVibes = items.some((item) => item.theme && item.theme.vibeParentKey === selectedKey);
+    parentKey = hasVibes ? selectedKey : null;
+  }
+  if (!parentKey) {
+    container.classList.add("hidden");
+    container.innerHTML = "";
+    return;
+  }
+  const vibeItems = items.filter((item) => item.theme && item.theme.vibeParentKey === parentKey);
+  if (!vibeItems.length) {
+    container.classList.add("hidden");
+    container.innerHTML = "";
+    return;
+  }
+  const parentTheme = resolveThemeByKey(parentKey);
+  const parentLabel = parentTheme && parentTheme.name ? parentTheme.name : "Holiday";
+  container.classList.remove("hidden");
+  container.innerHTML = "";
+  const section = document.createElement("div");
+  section.className = "theme-card-section";
+  const heading = document.createElement("h3");
+  heading.textContent = `${parentLabel} Vibes`;
+  const grid = document.createElement("div");
+  grid.className = "theme-card-grid";
+  vibeItems.forEach((item) => {
+    grid.appendChild(buildThemeCard(item, { isHoliday: true, showSummary: true }));
+  });
+  section.appendChild(heading);
+  section.appendChild(grid);
+  container.appendChild(section);
+}
+
 function renderThemeQuickSelect(selectEl = DOM.eventSelect) {
   const container = DOM.themeQuickSelect;
   if (!container || !selectEl) return;
-  container.innerHTML = '';
+  container.innerHTML = "";
   const options = Array.from(selectEl.options || []).filter((opt) => opt && opt.value);
   if (!options.length) {
-    container.classList.add('hidden');
+    container.classList.add("hidden");
     return;
   }
-  container.classList.remove('hidden');
-  options.forEach((opt) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'theme-quick-btn';
-    btn.textContent = opt.textContent || opt.value;
-    btn.dataset.value = opt.value;
-    btn.addEventListener('click', () => {
-      if (selectEl.value !== opt.value) {
-        selectEl.value = opt.value;
-        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-      } else {
-        highlightThemeQuickSelect(opt.value);
-      }
-    });
-    container.appendChild(btn);
+  container.classList.remove("hidden");
+  const holidayOrder = [
+    { key: "newyear", order: 1 },
+    { key: "valentine", order: 2 },
+    { key: "st-patrick", order: 3 },
+    { key: "stpatrick", order: 3 },
+    { key: "easter", order: 4 },
+    { key: "halloween", order: 10 },
+    { key: "thanksgiving", order: 11 },
+    { key: "christmas", order: 12 }
+  ];
+  const getHolidayOrder = (value, label) => {
+    const text = `${value} ${label}`.toLowerCase().replace(/\s+/g, "");
+    const hit = holidayOrder.find((entry) => text.includes(entry.key));
+    return hit ? hit.order : null;
+  };
+  const items = options.map((opt) => {
+    const theme = resolveThemeByKey(opt.value);
+    const label = opt.textContent || opt.value;
+    const holidayOrderValue = getHolidayOrder(opt.value, label);
+    return {
+      value: opt.value,
+      label,
+      theme,
+      holidayOrder: holidayOrderValue
+    };
   });
+  const mainItems = items.filter((item) => !(item.theme && item.theme.vibeParentKey));
+  const holidays = mainItems.filter((item) => item.holidayOrder !== null);
+  const others = mainItems.filter((item) => item.holidayOrder === null);
+  holidays.sort((a, b) => (a.holidayOrder || 99) - (b.holidayOrder || 99));
+  others.sort((a, b) => a.label.localeCompare(b.label));
+
+  const addSection = (title, list, isHoliday) => {
+    if (!list.length) return;
+    const section = document.createElement("div");
+    section.className = "theme-card-section";
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+    const grid = document.createElement("div");
+    grid.className = "theme-card-grid";
+    list.forEach((item) => {
+      grid.appendChild(buildThemeCard(item, { isHoliday, selectEl }));
+    });
+    section.appendChild(heading);
+    section.appendChild(grid);
+    container.appendChild(section);
+  };
+
+  addSection("Holidays", holidays, true);
+  addSection("Other", others, false);
   highlightThemeQuickSelect(selectEl.value);
+  renderThemeVibesSection(items, selectEl.value);
 }
 
 function highlightThemeQuickSelect(value) {
   const container = DOM.themeQuickSelect;
   if (!container) return;
-  Array.from(container.querySelectorAll('.theme-quick-btn')).forEach((btn) => {
+  Array.from(document.querySelectorAll('.theme-card')).forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.value === value);
   });
 }
@@ -1633,6 +1816,8 @@ function applyThemeBasics(theme) {
   applyBannerSize(theme);
   applyWelcomeTitleSize(theme);
   applyThemeBackground(theme);
+  applyThemeCharacter(theme);
+  applyCharacterPosition(theme);
 }
 
 function refreshFontSelectForTheme(theme) {
@@ -1701,6 +1886,7 @@ function syncAdminUiWithTheme(themeKey, theme) {
   const storedName = active ? active.name : getStoredEventName(currentKey);
   const storedDate = active ? active.date : getStoredEventDate(currentKey);
   syncBannerText();
+  renderThemeQuickSelect(DOM.eventSelect);
   if (DOM.logo) {
     if (theme.logo) {
       DOM.logo.src = theme.logo;
@@ -1894,6 +2080,20 @@ function setThemeAccentValue(theme, key, color) {
   if (DOM.options) renderOptions();
 }
 
+function removeGreen(ctx, width, height) {
+  const frame = ctx.getImageData(0, 0, width, height);
+  const d = frame.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i];
+    const g = d[i + 1];
+    const b = d[i + 2];
+    if (g > 110 && g > r * 1.3 && g > b * 1.3) {
+      d[i + 3] = 0;
+    }
+  }
+  ctx.putImageData(frame, 0, 0);
+}
+
 function renderCurrentAssets(theme) {
   // Helpers
   const bgList = getBackgroundList(theme);
@@ -1919,6 +2119,7 @@ function renderCurrentAssets(theme) {
         if (!confirm('Remove this ' + type + '?')) return;
         if (type === 'background') removeBackground();
         if (type === 'logo') removeLogo();
+        if (type === 'character') removeCharacter();
       };
       item.appendChild(btn);
       wrap.appendChild(item);
@@ -2042,6 +2243,7 @@ function renderCurrentAssets(theme) {
     }
   }
   setSingle(DOM.currentLogo, theme.logo, 'logo');
+  setSingle(DOM.currentCharacter, theme.character, 'character');
   // Font preview
   if (DOM.currentFont) {
     DOM.currentFont.innerHTML = '';
@@ -2122,6 +2324,20 @@ function renderCurrentAssets(theme) {
   }
   setGrid(DOM.currentOverlays, getOverlayList(theme), false, 'overlay', false);
   setGrid(DOM.currentTemplates, getTemplateList(theme), true, 'template', false);
+}
+
+function getCharacterPlacement() {
+  if (!DOM.character || DOM.character.classList.contains("hidden")) return null;
+  const container = DOM.videoContainer;
+  if (!container) return null;
+  const containerRect = container.getBoundingClientRect();
+  const charRect = DOM.character.getBoundingClientRect();
+  if (!containerRect.width || !containerRect.height) return null;
+  const widthRatio = charRect.width / containerRect.width;
+  const heightRatio = charRect.height / containerRect.height;
+  const leftRatio = (charRect.left - containerRect.left) / containerRect.width;
+  const topRatio = (charRect.top - containerRect.top) / containerRect.height;
+  return { widthRatio, heightRatio, leftRatio, topRatio };
 }
 
 function goAdmin() {
@@ -2879,6 +3095,8 @@ async function showCountdown(text) {
 }
 async function countdownAndSnap(options = {}) {
   const { live = false, instant = false } = options || {};
+  const guide = DOM.silhouette;
+  if (guide) guide.style.display = "none";
   if (!instant) {
     for (let n = 3; n > 0; n--) { await showCountdown(n); }
   } else if (DOM.countdownOverlay) {
@@ -2888,6 +3106,12 @@ async function countdownAndSnap(options = {}) {
   if (!live) setRecordingHighlight(false);
   const livePromise = live ? captureLiveClip(LIVE_PHOTO_DURATION_MS) : null;
   const shot = applyAutoEnhanceCanvas(drawToCanvasFromVideo());
+  if (getGreenScreenEnabled()) {
+    try {
+      const ctx = shot.getContext("2d");
+      if (ctx) removeGreen(ctx, shot.width, shot.height);
+    } catch (_) { }
+  }
   triggerFlash();
   if (livePromise) {
     const clip = await livePromise;
@@ -2897,6 +3121,7 @@ async function countdownAndSnap(options = {}) {
     clearLiveClip();
     setRecordingHighlight(false);
   }
+  if (guide) guide.style.display = "";
   return shot;
 }
 
@@ -2983,8 +3208,36 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
   // Background fill
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, targetW, targetH);
-  // Place captured photo with contain (no crop)
-  drawImageContain(ctx, photoCanvas, 0, 0, targetW, targetH);
+  // Background scene
+  const bg = getActiveBackground(activeTheme) || '';
+  if (bg) {
+    try {
+      const bgImg = await loadImage(bg);
+      drawImageCover(ctx, bgImg, 0, 0, targetW, targetH);
+    } catch (_) { }
+  }
+  // Character overlay (optional)
+  if (activeTheme && activeTheme.character) {
+    try {
+      const charImg = await loadImage(activeTheme.character);
+      const placement = getCharacterPlacement();
+      if (placement) {
+        const x = placement.leftRatio * targetW;
+        const y = placement.topRatio * targetH;
+        const w = placement.widthRatio * targetW;
+        const h = placement.heightRatio * targetH;
+        ctx.drawImage(charImg, x, y, w, h);
+      } else {
+        const h = Math.round(targetH * 0.75);
+        const w = Math.round((charImg.naturalWidth || charImg.width) * (h / (charImg.naturalHeight || charImg.height)));
+        const x = Math.round(targetW * 0.12);
+        const y = Math.round(targetH - h);
+        ctx.drawImage(charImg, x, y, w, h);
+      }
+    } catch (_) { }
+  }
+  // Place captured photo with cover (camera fill)
+  drawImageCover(ctx, photoCanvas, 0, 0, targetW, targetH);
   // Optional overlay scaled without cropping
   if (overlaySrc) {
     try {
@@ -4959,7 +5212,8 @@ function toggleQuickPicks() {
 
 function renderQuickPickButtons() {
   const wrap = DOM.quickPicks;
-  if (wrap) wrap.innerHTML = '';
+  if (!wrap) return;
+  wrap.innerHTML = '';
   const pairings = Array.isArray(fontCatalog.pairings) ? fontCatalog.pairings.slice() : [];
   if (DOM.quickPicksToggle) DOM.quickPicksToggle.style.display = 'none';
   if (!pairings.length) return;
@@ -5640,6 +5894,9 @@ function describeThemeUpdate(changes, reason) {
   if (changes.logoUrl) {
     parts.push('Logo applied to all themes');
   }
+  if (changes.characterUrl) {
+    parts.push('Character updated');
+  }
   if (parts.length) return parts.join(' • ');
   if (reason === 'logo') return 'Logo unchanged';
   return 'Theme updated';
@@ -5807,13 +6064,13 @@ function slugifyThemeName(name) {
 
 function ensureCreateThemeAssets() {
   if (!createThemeAssets) {
-    createThemeAssets = { backgrounds: [], overlays: [], templates: [], logos: [] };
+    createThemeAssets = { backgrounds: [], overlays: [], templates: [], logos: [], characters: [] };
   }
   return createThemeAssets;
 }
 
 function resetCreateThemeAssets() {
-  createThemeAssets = { backgrounds: [], overlays: [], templates: [], logos: [] };
+  createThemeAssets = { backgrounds: [], overlays: [], templates: [], logos: [], characters: [] };
 }
 
 function resetCreateThemeModal() {
@@ -5843,11 +6100,12 @@ function updateCreateThemeSummary() {
     return;
   }
   const parts = [];
-  const { backgrounds = [], overlays = [], templates = [], logos = [] } = createThemeAssets;
+  const { backgrounds = [], overlays = [], templates = [], logos = [], characters = [] } = createThemeAssets;
   if (backgrounds.length) parts.push(`${backgrounds.length} background${backgrounds.length === 1 ? '' : 's'}`);
   if (overlays.length) parts.push(`${overlays.length} overlay${overlays.length === 1 ? '' : 's'}`);
   if (templates.length) parts.push(`${templates.length} template${templates.length === 1 ? '' : 's'}`);
   if (logos.length) parts.push(`${logos.length} logo${logos.length === 1 ? '' : 's'}`);
+  if (characters.length) parts.push(`${characters.length} character${characters.length === 1 ? '' : 's'}`);
   summary.textContent = parts.length ? `Assets ready: ${parts.join(', ')}` : 'No assets detected yet.';
   updateThemeEditorSummary();
 }
@@ -5891,6 +6149,7 @@ function categorizeThemeAsset(file) {
   if (rel.includes('template')) return 'templates';
   if (rel.includes('background')) return 'backgrounds';
   if (rel.includes('logo')) return 'logos';
+  if (rel.includes('character')) return 'characters';
   return null;
 }
 
@@ -5998,6 +6257,10 @@ async function confirmCreateTheme() {
     const logoFile = assets.logos[0];
     tasks.push(uploadAsset(logoFile, 'logo').then((url) => { if (url) newTheme.logo = url; }));
   }
+  if (assets.characters && assets.characters.length) {
+    const characterFile = assets.characters[0];
+    tasks.push(uploadAsset(characterFile, 'character').then((url) => { if (url) newTheme.character = url; }));
+  }
 
   try {
     await Promise.all(tasks);
@@ -6078,6 +6341,69 @@ function applyThemeBasicsFromEditor(target) {
   target.welcome.prompt = valueFromInput(DOM.themeWelcomePrompt) || target.welcome.prompt || '';
 }
 
+function applyThemeCharacter(theme) {
+  if (!DOM.character) return;
+  const src = theme && theme.character ? theme.character : '';
+  if (src) {
+    DOM.character.src = withBust(src);
+    DOM.character.classList.remove("hidden");
+  } else {
+    DOM.character.removeAttribute("src");
+    DOM.character.classList.add("hidden");
+  }
+}
+
+function getCharacterPosition(theme) {
+  const left = (theme && typeof theme.characterX === "number") ? theme.characterX : 12;
+  const bottom = (theme && typeof theme.characterBottom === "number") ? theme.characterBottom : 0;
+  const height = (theme && typeof theme.characterHeight === "number") ? theme.characterHeight : 75;
+  return {
+    left: Math.min(60, Math.max(0, left)),
+    bottom: Math.min(20, Math.max(-10, bottom)),
+    height: Math.min(110, Math.max(40, height))
+  };
+}
+
+function applyCharacterPosition(theme) {
+  const pos = getCharacterPosition(theme);
+  document.documentElement.style.setProperty("--char-x", `${pos.left}%`);
+  document.documentElement.style.setProperty("--char-bottom", `${pos.bottom}%`);
+  document.documentElement.style.setProperty("--char-height", `${pos.height}%`);
+  if (DOM.characterXInput) DOM.characterXInput.value = String(pos.left);
+  if (DOM.characterXValue) DOM.characterXValue.textContent = `${pos.left}%`;
+  if (DOM.characterBottomInput) DOM.characterBottomInput.value = String(pos.bottom);
+  if (DOM.characterBottomValue) DOM.characterBottomValue.textContent = `${pos.bottom}%`;
+  if (DOM.characterHeightInput) DOM.characterHeightInput.value = String(pos.height);
+  if (DOM.characterHeightValue) DOM.characterHeightValue.textContent = `${pos.height}%`;
+}
+
+function setupCharacterPositionControls() {
+  const update = () => {
+    const target = activeTheme || getSelectedThemeTarget();
+    if (!target) return;
+    const left = DOM.characterXInput ? parseInt(DOM.characterXInput.value, 10) : NaN;
+    const bottom = DOM.characterBottomInput ? parseInt(DOM.characterBottomInput.value, 10) : NaN;
+    const height = DOM.characterHeightInput ? parseInt(DOM.characterHeightInput.value, 10) : NaN;
+    if (Number.isFinite(left)) target.characterX = left;
+    if (Number.isFinite(bottom)) target.characterBottom = bottom;
+    if (Number.isFinite(height)) target.characterHeight = height;
+    applyCharacterPosition(target);
+    saveThemesToStorage();
+  };
+  if (DOM.characterXInput) DOM.characterXInput.addEventListener("input", update);
+  if (DOM.characterBottomInput) DOM.characterBottomInput.addEventListener("input", update);
+  if (DOM.characterHeightInput) DOM.characterHeightInput.addEventListener("input", update);
+}
+
+function removeCharacter() {
+  const target = getSelectedThemeTarget();
+  if (!target) return;
+  if (target.character) delete target.character;
+  applyThemeCharacter(target);
+  saveThemesToStorage();
+  renderCurrentAssets(target);
+}
+
 function normalizeFolderInput(raw) {
   const trimmed = (raw || '').trim();
   if (!trimmed) return '';
@@ -6110,6 +6436,7 @@ async function uploadThemeAssetsFromEditor(target) {
   let overlaysAdded = 0;
   let templatesAdded = 0;
   let logoUrl = '';
+  let characterUrl = '';
 
   const backgroundFile = DOM.themeBackground && DOM.themeBackground.files ? DOM.themeBackground.files[0] : null;
   if (backgroundFile) {
@@ -6128,6 +6455,15 @@ async function uploadThemeAssetsFromEditor(target) {
       if (!url) return;
       target.logo = url;
       logoUrl = url;
+    }));
+  }
+
+  const characterFile = DOM.themeCharacter && DOM.themeCharacter.files ? DOM.themeCharacter.files[0] : null;
+  if (characterFile) {
+    tasks.push(uploadAsset(characterFile, 'character').then((url) => {
+      if (!url) return;
+      target.character = url;
+      characterUrl = url;
     }));
   }
 
@@ -6156,7 +6492,7 @@ async function uploadThemeAssetsFromEditor(target) {
   }
 
   await Promise.all(tasks);
-  return { backgroundsAdded, overlaysAdded, templatesAdded, logoUrl };
+  return { backgroundsAdded, overlaysAdded, templatesAdded, logoUrl, characterUrl };
 }
 
 function clearThemeFileInputs() {
@@ -6164,6 +6500,7 @@ function clearThemeFileInputs() {
   if (DOM.themeLogo) DOM.themeLogo.value = '';
   if (DOM.themeOverlays) DOM.themeOverlays.value = '';
   if (DOM.themeTemplates) DOM.themeTemplates.value = '';
+  if (DOM.themeCharacter) DOM.themeCharacter.value = '';
 }
 
 // --- De-duplication helpers ---
