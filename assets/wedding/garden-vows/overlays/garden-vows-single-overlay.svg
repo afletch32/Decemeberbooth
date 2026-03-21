@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1200" viewBox="0 0 1800 1200" fill="none">
+<rect width="1800" height="1200" fill="#fffefb"/>
+<rect x="26" y="26" width="1748" height="1148" rx="18" fill="#fffefb" stroke="#cfd8cf" stroke-width="4"/>
+<g opacity="0.9">
+<ellipse cx="1490" cy="92" rx="28" ry="62" fill="#b8c9b5" transform="rotate(28 1490 92)"/>
+<ellipse cx="1556" cy="156" rx="24" ry="50" fill="#92a98f" transform="rotate(36 1556 156)"/>
+<ellipse cx="1434" cy="164" rx="24" ry="50" fill="#d9dfc6" transform="rotate(-6 1434 164)"/>
+<path d="M1380 42 C1444 124 1510 190 1608 256" stroke="#8fa086" stroke-width="4" fill="none"/>
+<ellipse cx="130" cy="1090" rx="20" ry="42" fill="#b8c9b5" transform="rotate(-30 130 1090)"/>
+<ellipse cx="188" cy="1048" rx="16" ry="34" fill="#92a98f" transform="rotate(-14 188 1048)"/>
+</g>
+<text x="146" y="170" fill="#6f7c67" font-size="94" font-family="Italiana, serif" letter-spacing="14">GARDEN</text>
+<text x="254" y="250" fill="#8ca084" font-size="86" font-style="italic" font-family="Cormorant Garamond, serif">vows</text>
+<text x="146" y="340" fill="#6f7c67" font-size="60" font-family="Cormorant Garamond, serif">Olivia and Nicolas</text>
+<rect x="146" y="430" width="1508" height="586" rx="12" fill="none" stroke="#cad7ca" stroke-width="4"/>
+<text x="146" y="1086" fill="#8ca084" font-size="38" font-family="Cormorant Garamond, serif">September 2026</text>
+<text x="1654" y="1086" text-anchor="end" fill="#b0b89e" font-size="28" font-family="Manrope, Arial, sans-serif" letter-spacing="5">GARDEN VOWS</text>
+<rect x="0" y="0" width="1800" height="1200" fill="url(#checker)" opacity="0.42"/>
+<defs>
+  <pattern id="checker" width="24" height="24" patternUnits="userSpaceOnUse">
+    <rect width="24" height="24" fill="#ffffff"/>
+    <rect width="12" height="12" fill="#edf1eb"/>
+    <rect x="12" y="12" width="12" height="12" fill="#edf1eb"/>
+  </pattern>
+</defs>
+</svg>

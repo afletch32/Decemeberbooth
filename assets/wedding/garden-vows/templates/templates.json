@@ -1,0 +1,10 @@
+[
+  {
+    "src": "garden-vows-strip-template.svg",
+    "layout": "photo_strip_3"
+  },
+  {
+    "src": "garden-vows-single-template.svg",
+    "layout": "single_photo"
+  }
+]

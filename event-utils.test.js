@@ -33,6 +33,16 @@ async function loadHasEventTextOverrides() {
   return mod.hasEventTextOverrides;
 }
 
+async function loadFontStyleHelpers() {
+  const moduleUrl = pathToFileURL(join(process.cwd(), "scripts/event-utils.mjs"));
+  const mod = await import(moduleUrl.href);
+  return {
+    normalizeEventStyle: mod.normalizeEventStyle,
+    inferThemeEventStyle: mod.inferThemeEventStyle,
+    pairingSupportsEventStyle: mod.pairingSupportsEventStyle
+  };
+}
+
 test("applyEventNameToTheme sets name and welcome title", async () => {
   const applyEventNameToTheme = await loadApplyEventNameToTheme();
   const theme = {};
@@ -96,4 +106,31 @@ test("hasEventTextOverrides detects non-empty override values", async () => {
   assert.equal(hasEventTextOverrides({}), false);
   assert.equal(hasEventTextOverrides({ bannerText: "Party" }), true);
   assert.equal(hasEventTextOverrides({ welcomeTitleSize: 48 }), true);
+});
+
+test("normalizeEventStyle collapses aliases to supported setup styles", async () => {
+  const { normalizeEventStyle } = await loadFontStyleHelpers();
+
+  assert.equal(normalizeEventStyle("Bridal"), "wedding");
+  assert.equal(normalizeEventStyle("conference"), "expo");
+  assert.equal(normalizeEventStyle("party"), "birthday");
+  assert.equal(normalizeEventStyle("festival"), "community");
+  assert.equal(normalizeEventStyle(""), "general");
+});
+
+test("inferThemeEventStyle prefers saved style and otherwise infers from theme data", async () => {
+  const { inferThemeEventStyle } = await loadFontStyleHelpers();
+
+  assert.equal(inferThemeEventStyle("general:basic", { fontPairingStyle: "expo" }), "expo");
+  assert.equal(inferThemeEventStyle("winter:christmas", { name: "Winter Wonderland" }), "christmas");
+  assert.equal(inferThemeEventStyle("general:basic", { name: "Neighborhood Expo Booth" }), "expo");
+});
+
+test("pairingSupportsEventStyle matches explicit style tags and general fallbacks", async () => {
+  const { pairingSupportsEventStyle } = await loadFontStyleHelpers();
+
+  assert.equal(pairingSupportsEventStyle({ styles: ["wedding"] }, "wedding"), true);
+  assert.equal(pairingSupportsEventStyle({ styles: ["general"] }, "expo"), true);
+  assert.equal(pairingSupportsEventStyle({ notes: "Romantic elegance for weddings" }, "wedding"), true);
+  assert.equal(pairingSupportsEventStyle({ notes: "Spooky season" }, "expo"), false);
 });

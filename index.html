@@ -12,731 +12,1062 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0f1222">
-  <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Comic+Neue&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fonts.css">
   <style>
     :root {
-      --accent: rgb(212, 242, 217);
-      --accent2: white;
+      --accent: #7dc4ff;
+      --accent2: #1d3557;
+      --action-grad-start: #fff6d8;
+      --action-grad-mid: #ffe8a8;
+      --action-grad-end: #fffced;
+      --action-border: #fff4d0;
+      --action-outline: #d7bf71;
+      --action-text: #4d3a00;
+      --bg: #f5f8ff;
+      --bg-soft: #eaf1ff;
+      --surface: #ffffff;
+      --surface-tint: rgba(255, 255, 255, 0.84);
+      --border: #d7e2f7;
+      --text: #21314f;
+      --text-muted: #5a6d93;
+      --danger: #dc4f71;
+      --shadow: 0 20px 44px rgba(76, 102, 155, 0.16);
+      --shadow-strong: 0 28px 64px rgba(54, 74, 118, 0.2);
+      --radius: 18px;
+      --radius-lg: 28px;
       --camera-zoom: 1;
-      --font-heading: 'Comic Neue', cursive;
-      --font-body: 'Comic Neue', cursive;
+      --countdown-size: clamp(6rem, 20vw, 18rem);
+      --edit-header-scale: 1;
+      --edit-header-y: 0px;
+      --edit-camera-scale: 1;
+      --edit-camera-y: 0px;
+      --edit-countdown-camera-scale: 1;
+      --edit-countdown-camera-y: 0px;
+      --edit-welcome-title-scale: 1;
+      --edit-welcome-title-y: 0px;
+      --edit-start-button-scale: 1;
+      --edit-start-button-y: 0px;
+      --edit-event-title-scale: 1;
+      --edit-event-title-y: 0px;
+      --edit-capture-button-scale: 1;
+      --edit-capture-button-y: 0px;
+      --edit-mode-button-scale: 1;
+      --edit-mode-buttons-y: 0px;
+      --edit-options-y: 0px;
+      --edit-options-scale: 1;
+      --capture-landscape-width: 980px;
+      --capture-portrait-width: 560px;
+      --capture-landscape-ratio: 4 / 3;
+      --capture-portrait-ratio: 3 / 4;
+      --font-heading: "Oswald", sans-serif;
+      --font-body: "Cabin", sans-serif;
       --font: var(--font-body);
     }
 
-    body,
-    html {
+    body.viewport-desktop {
+      --capture-landscape-width: 980px;
+      --capture-portrait-width: 560px;
+    }
+
+    body.viewport-tablet {
+      --capture-landscape-width: 760px;
+      --capture-portrait-width: 460px;
+    }
+
+    body.viewport-phone {
+      --capture-landscape-width: 94vw;
+      --capture-portrait-width: 82vw;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: var(--font-body, var(--font, 'Comic Neue', cursive));
-      background: #000;
-      color: white;
       overflow: hidden;
+      font-family: var(--font-body);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 34%),
+        radial-gradient(circle at 85% 12%, rgba(129, 185, 255, 0.22), rgba(255, 255, 255, 0) 28%),
+        linear-gradient(160deg, #f8fbff 0%, #eef4ff 42%, #fff8ef 100%);
     }
 
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
+
+    button,
+    input,
+    select,
+    textarea { font: inherit; }
 
     button {
-      margin: 6px;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.05em;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(243, 247, 255, 0.96));
+      color: var(--text);
+      padding: 11px 15px;
       cursor: pointer;
-      background: #1f1f1f;
-      color: #fff;
+      box-shadow: 0 10px 22px rgba(123, 142, 184, 0.16);
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
     }
 
     button.primary {
-      background: var(--accent);
-      color: #000;
+      background: linear-gradient(135deg, var(--action-grad-start), var(--action-grad-mid) 52%, var(--action-grad-end));
+      color: var(--action-text);
+      border-color: #d9c57f;
       font-weight: 700;
     }
 
-    button .btn-icon {
-      display: inline-block;
-      margin-right: 6px;
-      font-size: 1.1em;
-      line-height: 1;
+    button.button-ghost {
+      background: transparent;
+      box-shadow: none;
     }
 
-    /* App-icon style tiles */
-    .icon-tiles {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
+    button:hover,
+    button:focus-visible {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(113, 133, 179, 0.2);
+      border-color: #b8caea;
+      outline: none;
     }
 
-    .icon-tile {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 84px;
-      height: 84px;
-      border-radius: 20px;
-      border: 6px solid #fff;
-      outline: 5px solid #222;
-      background: radial-gradient(120% 120% at 35% 30%, #d8cbf6 0%, #dd7aec 35%, #7740b5 70%, #492d6b 100%);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, .55), inset 0 2px 10px rgba(255, 255, 255, .45);
-      color: #000;
-      cursor: pointer;
-      transition: transform .12s ease, box-shadow .2s ease;
+    input,
+    select,
+    textarea {
+      transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
     }
 
-    .icon-tile:hover {
-      transform: translateY(-2px);
-    }
-
-    .icon-tile:active {
-      transform: translateY(0);
-    }
-
-    .icon-glyph {
-      font-size: 34px;
-      line-height: 1;
-    }
-
-    .icon-label {
-      margin-top: 6px;
-      font: 700 12px 'Bangers', cursive;
-      letter-spacing: .5px;
-      color: #000;
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #8fb8ef;
+      box-shadow: 0 0 0 4px rgba(143, 184, 239, 0.18);
+      outline: none;
     }
 
     #adminScreen {
-      padding: clamp(12px, 3vw, 32px);
-      text-align: center;
-      position: relative;
-      z-index: 100;
-      background: #000;
-      height: 100vh;
-      overflow: auto;
+      min-height: 100svh;
+      height: 100svh;
+      overflow-x: hidden;
+      overflow-y: auto;
+      display: block;
+      padding: 18px;
       -webkit-overflow-scrolling: touch;
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 40%),
+        linear-gradient(180deg, rgba(249, 251, 255, 0.92), rgba(240, 246, 255, 0.92));
+    }
+
+    html.admin-open,
+    body.admin-open {
+      height: auto;
+      overflow: auto;
     }
 
     .admin-title {
-      font-size: clamp(1.6rem, 4vw, 2.2rem);
-      margin: 6px 0 18px;
-      letter-spacing: .5px;
-      background: linear-gradient(90deg, var(--accent), #fff);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      font-family: var(--font-heading, 'Comic Neue', cursive);
+      margin: 10px 0 6px;
+      font-family: var(--font-heading);
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      letter-spacing: 0.03em;
+      line-height: 0.95;
+      color: #233a62;
+      text-align: center;
     }
 
-    .start-booth-hero {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 10px 18px;
-      border-radius: 999px;
-      background: #22c55e;
-      color: #0b0f14;
-      font-weight: 800;
-      border: none;
-      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
-      cursor: pointer;
-    }
-    .start-booth-hero::before {
-      content: "▶";
-      font-size: 1em;
+    .admin-subtitle {
+      max-width: 760px;
+      margin: 0 auto 18px;
+      color: var(--text-muted);
+      text-align: center;
+      font-size: 1rem;
     }
 
     .admin-container {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: clamp(12px, 2vw, 20px);
-      max-width: 1200px;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      width: min(1220px, 100%);
       margin: 0 auto;
-      align-items: start;
     }
 
-    .panel {
-      background: #0c0c0f;
-      border: 1px solid #1f1f1f;
-      border-radius: 14px;
-      padding: 16px 18px;
-      text-align: left;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, .35);
-      position: relative;
+    .admin-left,
+    .admin-right {
+      min-width: 0;
+      height: auto;
+      overflow: visible;
+      padding-right: 0;
     }
 
-    .panel h2 {
-      margin: 0 0 10px;
-      font-size: 1.4em;
-      color: var(--accent2);
-      font-family: var(--font-heading, 'Comic Neue', cursive);
-    }
-
-    .panel h3 {
-      margin: 10px 0 6px;
-      font-size: 1.05em;
-      color: #ddd;
-      font-family: var(--font-heading, 'Comic Neue', cursive);
-    }
-
-    details.panel-section {
-      background: #0b0d12;
-      border: 1px solid #1c1f29;
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-top: 12px;
-    }
-
-    details.panel-section:first-of-type {
-      margin-top: 0;
-    }
-
-    details.panel-section>summary {
-      list-style: none;
-      cursor: pointer;
-      font-weight: 600;
-      color: var(--accent2);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      font-size: 1.05em;
-    }
-
-    details.panel-section>summary::-webkit-details-marker {
+    .admin-right {
       display: none;
     }
 
-    details.panel-section>summary::after {
-      content: '+';
-      font-weight: 400;
-      color: #888;
-      transition: transform .2s ease;
+    .setup-status {
+      max-width: 1220px;
+      width: min(1220px, 100%);
+      margin: 0 auto 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
     }
 
-    details.panel-section[open]>summary::after {
-      content: '−';
-      color: #bbb;
+    .status-pill {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(245, 249, 255, 0.92));
+      color: var(--text-muted);
+      text-align: center;
+      white-space: nowrap;
+      box-shadow: 0 10px 24px rgba(120, 140, 182, 0.1);
     }
 
-    details.panel-section .section-content {
-      margin-top: 12px;
-      display: flex;
-      flex-direction: column;
+    .status-pill strong {
+      display: block;
+      margin-top: 4px;
+      color: #26416f;
+      font-size: 1rem;
+    }
+
+    .setup-tabs {
+      max-width: 1220px;
+      width: min(1220px, 100%);
+      margin: 0 auto 14px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .setup-tab {
+      min-width: 0;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .setup-tab.active {
+      background: linear-gradient(135deg, var(--action-grad-start), var(--action-grad-mid) 52%, var(--action-grad-end));
+      color: var(--action-text);
+      border-color: #dcc987;
+      box-shadow: 0 14px 28px rgba(215, 191, 113, 0.2);
+    }
+
+    #quickStartBtn {
+      background: linear-gradient(135deg, #dcf8e8, #c6f0d7);
+      border-color: #addfc2;
+      color: #215138;
+      font-weight: 700;
+    }
+
+    .admin-actions {
+      justify-content: center;
+      gap: 12px;
+      margin: 0 auto 14px;
+      width: min(1220px, 100%);
+    }
+
+    .start-booth-hero {
+      min-width: min(320px, 100%);
+      padding-inline: 28px;
+      border-radius: 999px;
+      border-width: 2px;
+      font-family: var(--font-heading);
+      font-size: clamp(1.05rem, 2vw, 1.3rem);
+      letter-spacing: 0.03em;
+      background: linear-gradient(135deg, #203758, #35568b 55%, #4267a7);
+      color: #f5f8ff;
+      box-shadow: var(--shadow-strong);
+    }
+
+    .panel,
+    details.panel-section,
+    .modal-card,
+    #analytics,
+    .font-picker,
+    .style-preview,
+    .quick-pick-group,
+    details.font-subsection {
+      background: var(--surface-tint);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    details.panel-section {
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    details.panel-section > summary,
+    details.font-subsection > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 16px 18px;
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      letter-spacing: 0.03em;
+      color: #29446f;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 247, 255, 0.92));
+      border-bottom: 1px solid rgba(215, 226, 247, 0.85);
+    }
+
+    details.panel-section > summary::-webkit-details-marker,
+    details.font-subsection > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.panel-section > .section-content,
+    details.font-subsection > *:not(summary) {
+      padding: 16px 18px 18px;
+    }
+
+    .section-content {
+      display: grid;
       gap: 10px;
     }
 
     .theme-editor-summary {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 14px;
-      border: 1px solid #1c1f29;
-      border-radius: 12px;
-      background: #0b0d12;
-      margin-bottom: 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 10px;
     }
 
-    .theme-editor-current {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+    .builder-block {
+      display: grid;
+      gap: 10px;
+      padding: 14px 16px;
+      border: 1px solid rgba(213, 224, 244, 0.92);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.92));
     }
 
-    .theme-editor-current-label {
-      font-size: .85em;
-      color: #aab;
+    .builder-block-title {
+      margin: 0;
+      font-family: var(--font-heading);
+      font-size: 0.98rem;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
-      letter-spacing: .08em;
+      color: #29446f;
     }
 
-    .theme-editor-current-name {
-      font-weight: 600;
-      color: var(--accent2);
-      font-size: 1.05em;
-    }
-
-    .theme-editor-current-sub {
-      font-size: .9em;
-      color: #9aa;
-    }
-
-    .theme-editor-action {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      align-items: flex-start;
-    }
-
-    .theme-editor-action label {
-      font-size: .85em;
-      color: #aab;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
-
-    .theme-editor-action select {
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: 1px solid #2d3242;
-      background: #101420;
-      color: #f5f7fb;
-    }
-
-    .theme-editor-section {
-      margin: 16px 0;
-    }
-
-    .theme-editor-section.hidden {
-      display: none;
+    .builder-block-note {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.4;
     }
 
     .theme-editor-group {
       display: grid;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .theme-field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    #adminScreen label {
-      display: block;
-      margin: 10px 0 6px;
-      color: #ddd;
-    }
-
-    #adminScreen input[type="text"],
-    #adminScreen input[type="email"],
-    #adminScreen input[type="color"],
-    #adminScreen select {
-      width: 100%;
-      box-sizing: border-box;
-      background: #101217;
-      color: #eee;
-      border: 1px solid #2b2f3a;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 1em;
-      outline: none;
-    }
-
-    #adminScreen input[type="file"] {
-      display: block;
-      width: 100%;
-      color: #ccc;
-    }
-
-    #adminScreen .btn-row {
-      display: flex;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
-      flex-wrap: wrap;
-      margin: 10px 0 6px;
-    }
-
-    #adminScreen .btn-row button {
-      flex: 1 1 auto;
-    }
-
-    #analytics {
-      background: #0c0c0f;
-      border: 1px solid #1f1f1f;
-      border-radius: 12px;
-      padding: 12px;
-    }
-
-    #analytics h2 {
-      margin-top: 0;
-    }
-
-    @media (max-width: 900px) {
-      .admin-container {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (min-width: 1280px) and (max-width: 1728px) {
-      #boothMain {
-        padding-top: clamp(70px, 8vh, 120px);
-        padding-bottom: clamp(24px, 5vh, 64px);
-      }
-      #videoContainer {
-        max-width: min(78vw, 980px);
-      }
-      #captureBtn.primary {
-        width: clamp(110px, 10vw, 150px);
-        height: clamp(110px, 10vw, 150px);
-      }
-    }
-
-    @media (min-width: 1440px) and (max-width: 1728px) and (orientation: portrait) {
-      .admin-container {
-        grid-template-columns: 1fr;
-        max-width: 900px;
-      }
-      #boothMain {
-        flex-direction: column;
-        justify-content: center;
-        padding-top: clamp(80px, 10vh, 140px);
-      }
-      #videoContainer {
-        max-width: min(86vw, 900px);
-      }
-      #options,
-      #controls {
-        width: 100%;
-        max-width: 900px;
-      }
-    }
-
-    @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
-      .admin-container {
-        grid-template-columns: 1fr;
-      }
-      #boothMain {
-        flex-direction: column;
-        justify-content: center;
-        padding-top: clamp(70px, 10vh, 120px);
-      }
-      #videoContainer {
-        max-width: min(92vw, 720px);
-      }
-    }
-
-    @media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
-      #boothMain {
-        padding-top: clamp(70px, 8vh, 110px);
-        padding-bottom: clamp(20px, 4vh, 50px);
-      }
-      #videoContainer {
-        max-width: min(75vw, 900px);
-      }
-    }
-
-    /* Theme asset previews */
-    .current-assets {
-      margin-top: 12px;
-    }
-
-    .asset-row {
-      margin: 10px 0;
-    }
-
-    .asset-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
       margin-bottom: 10px;
     }
 
-    .asset-actions button {
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: 1px solid #2d3242;
-      background: #1a2133;
-      color: #fff;
-      cursor: pointer;
-      font-size: 0.9em;
+    .theme-field {
+      min-width: 0;
     }
 
-    .asset-actions button:hover {
-      background: #243049;
+    .builder-section-heading {
+      margin: 12px 0 6px;
+      font-family: var(--font-heading);
+      color: #29446f;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
     }
 
-    .asset-row>label {
-      display: block;
-      margin-bottom: 6px;
-      color: #bbb;
+    .editor-explainer {
+      margin: 8px 0 14px;
+      padding: 12px 14px;
+      border: 1px solid rgba(213, 224, 244, 0.92);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 248, 255, 0.9));
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
     }
 
-    .asset-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: flex-start;
+    .editor-explainer strong {
+      color: #29446f;
     }
 
-    .asset-single {
-      display: flex;
-      gap: 8px;
-      align-items: center;
+    .event-type-picker {
+      display: grid;
+      gap: 12px;
     }
 
-    #currentFont.asset-single {
-      align-items: stretch;
-      flex-direction: column;
-    }
-
-    .asset-item {
-      background: #0f1116;
-      border: 1px solid #232734;
-      border-radius: 8px;
-      padding: 6px;
-    }
-
-    .asset-item.selected {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05) inset;
-    }
-
-    .asset-item img {
-      display: block;
-      width: 100px;
-      height: auto;
-      border-radius: 6px;
-    }
-
-    .asset-badge {
-      display: inline-block;
-      margin-top: 4px;
-      font-size: .8em;
-      color: #aaa;
-    }
-
-    .asset-item {
-      position: relative;
-    }
-
-    .asset-remove {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 22px;
-      height: 22px;
-      border: none;
-      border-radius: 50%;
-      background: #2b2f3a;
-      color: #eee;
-      cursor: pointer;
-      font-size: .9em;
-      line-height: 22px;
-      padding: 0;
-    }
-
-    .asset-remove:hover {
-      background: #c43d3d;
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(5, 7, 12, 0.75);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 500;
-    }
-
-    .modal-backdrop.show {
-      display: flex;
-    }
-
-    .modal-card {
-      background: #0f121d;
-      border: 1px solid #1f2433;
-      border-radius: 14px;
-      width: min(520px, 90vw);
-      padding: 22px;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.55);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .modal-card h3 {
+    .event-type-picker label {
       margin: 0;
-      color: #f1f5ff;
     }
 
-    .checkbox-row {
+    .event-type-tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .event-type-tile {
+      display: grid;
+      gap: 6px;
+      align-items: start;
+      min-height: 110px;
+      padding: 14px;
+      border: 1px solid rgba(201, 217, 241, 0.95);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.94));
+      box-shadow: 0 10px 22px rgba(37, 62, 103, 0.08);
+      color: #29446f;
+      text-align: left;
+      transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+
+    .event-type-tile:hover,
+    .event-type-tile:focus-visible {
+      transform: translateY(-1px);
+      border-color: #97b8ee;
+      box-shadow: 0 14px 28px rgba(37, 62, 103, 0.13);
+      outline: none;
+    }
+
+    .event-type-tile.active {
+      border-color: #7ea9ea;
+      background: linear-gradient(180deg, rgba(234, 242, 255, 0.98), rgba(222, 235, 255, 0.96));
+      box-shadow: 0 16px 30px rgba(71, 110, 176, 0.16);
+    }
+
+    .event-type-icon {
+      font-size: 1.55rem;
+      line-height: 1;
+    }
+
+    .event-type-name {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      letter-spacing: 0.03em;
+    }
+
+    .event-type-goal {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      line-height: 1.35;
+    }
+
+    .preview-controls {
+      display: grid;
+      gap: 12px;
+      margin: 12px 0 14px;
+      padding: 16px 18px;
+      border: 1px solid rgba(214, 225, 244, 0.92);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 248, 255, 0.9));
+    }
+
+    .preview-controls-header {
+      display: grid;
+      gap: 4px;
+    }
+
+    .preview-controls-title {
+      margin: 0;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #29446f;
+    }
+
+    .preview-controls-note {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .preview-control-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .preview-slider {
+      display: grid;
+      gap: 6px;
+    }
+
+    .preview-slider label {
+      margin: 0;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: #46618d;
+      text-transform: uppercase;
+    }
+
+    .preview-slider-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 0.95em;
-      color: #d4d9e6;
     }
 
-    .modal-footer {
+    .preview-slider-row input[type="range"] {
+      flex: 1;
+    }
+
+    .preview-slider-value {
+      min-width: 48px;
+      color: #7a8cae;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .style-preview-wrap {
+      width: 100%;
+      overflow: hidden;
+      padding: 8px 0 2px;
+    }
+
+    .style-preview {
+      width: min(100%, 620px);
+      margin: 0 auto;
+      padding: 24px;
+      position: relative;
+      background:
+        radial-gradient(circle at top right, rgba(255, 235, 170, 0.55), rgba(255, 255, 255, 0) 30%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 255, 0.94));
+      box-shadow: 0 18px 34px rgba(35, 61, 103, 0.12);
+    }
+
+    .style-preview::before {
+      content: "Live admin preview";
+      display: inline-flex;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(41, 68, 111, 0.08);
+      color: #46618d;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .style-preview-heading {
+      margin: 0 0 6px;
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 0.95;
+      color: #263f69;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .style-preview-subheading {
+      margin: 0 0 18px;
+      color: var(--text-muted);
+      font-size: 1.02rem;
+    }
+
+    .style-preview-button {
+      user-select: text;
+    }
+
+    .theme-editor-section {
+      display: grid;
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .video-import-panel {
+      position: absolute;
+      left: 50%;
+      bottom: 14px;
+      transform: translateX(-50%);
+      width: min(560px, calc(100vw - 32px));
+      z-index: 24;
+      display: grid;
+      gap: 8px;
+    }
+
+    .capture-mode-bar {
+      max-width: 1220px;
+      width: min(1220px, 100%);
+      margin: 0 auto 12px;
       display: flex;
-      justify-content: flex-end;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .capture-mode-copy {
+      display: grid;
+      gap: 4px;
+    }
+
+    .capture-mode-title {
+      margin: 0;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #29446f;
+    }
+
+    .capture-mode-note {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+
+    .booth-360-panel {
+      position: absolute;
+      left: 50%;
+      bottom: 132px;
+      transform: translateX(-50%);
+      width: min(560px, calc(100vw - 32px));
+      z-index: 24;
+      display: grid;
+      gap: 12px;
+    }
+
+    #boothScreen.mode-360 .booth-360-panel {
+      top: 50%;
+      bottom: auto;
+      transform: translate(-50%, -58%);
+    }
+
+    #boothScreen.mode-360 .video-import-panel {
+      bottom: 28px;
+    }
+
+    #boothScreen.mode-360 #welcomeScreen {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .booth-360-status {
+      padding: 12px 14px;
+      border: 1px solid rgba(201, 217, 241, 0.95);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(241, 247, 255, 0.94));
+      color: #29446f;
+      text-align: left;
+      box-shadow: 0 12px 24px rgba(45, 70, 116, 0.12);
+    }
+
+    .booth-360-status-label {
+      display: inline-flex;
+      width: fit-content;
+      margin-bottom: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(70, 97, 141, 0.08);
+      color: #5f7398;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .booth-360-status-text {
+      margin: 0;
+      font-family: var(--font-heading);
+      font-size: clamp(1.15rem, 2vw, 1.55rem);
+      line-height: 1.05;
+      color: #29446f;
+    }
+
+    .booth-360-status-note {
+      margin: 6px 0 0;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .booth-360-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
       gap: 10px;
     }
 
-    .drop-zone {
-      border: 2px dashed #2d3242;
-      border-radius: 10px;
-      padding: 24px;
+    .booth-360-action {
+      min-height: 64px;
+      border-radius: 18px;
+      text-align: left;
+    }
+
+    .booth-360-action strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 1rem;
+    }
+
+    .booth-360-action span {
+      display: block;
+      font-size: 0.85rem;
+      color: inherit;
+      opacity: 0.84;
+      line-height: 1.35;
+    }
+
+    .airdrop-zone {
+      display: grid;
+      place-items: center;
+      min-height: 92px;
+      padding: 16px 18px;
+      border: 2px dashed #bdd0f0;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0) 45%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(238, 244, 255, 0.92));
+      box-shadow: 0 18px 34px rgba(45, 70, 116, 0.12);
+      color: #29446f;
       text-align: center;
-      color: #aab;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
       cursor: pointer;
+      animation: airdropPulse 2.4s ease-in-out infinite;
+      transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
     }
 
-    .drop-zone.dragover {
-      border-color: var(--accent);
-      background: rgba(45, 50, 66, 0.4);
+    .airdrop-zone:hover,
+    .airdrop-zone:focus-visible,
+    .airdrop-zone.drag-active {
+      transform: translateY(-1px);
+      border-color: #8fb8ef;
+      box-shadow: 0 22px 40px rgba(45, 70, 116, 0.16);
+      outline: none;
     }
 
-    .drop-zone strong {
-      color: var(--accent2);
+    .airdrop-zone p {
+      margin: 0;
+      font-family: var(--font-heading);
+      font-size: clamp(1rem, 2vw, 1.35rem);
+      letter-spacing: 0.03em;
     }
 
-    .quick-pick-groups {
+    .airdrop-zone span {
+      display: block;
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      letter-spacing: 0;
+    }
+
+    .video-import-status {
+      display: none;
+    }
+
+    @keyframes airdropPulse {
+      0%, 100% { box-shadow: 0 18px 34px rgba(45, 70, 116, 0.12); }
+      50% { box-shadow: 0 22px 42px rgba(84, 128, 196, 0.22); }
+    }
+
+    @media (max-width: 720px) {
+      .preview-control-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .video-import-panel {
+        width: min(100%, calc(100vw - 24px));
+        bottom: 10px;
+      }
+
+      .booth-360-panel {
+        width: min(100%, calc(100vw - 24px));
+        bottom: 126px;
+      }
+
+      .booth-360-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .airdrop-zone {
+        min-height: 84px;
+        border-radius: 20px;
+      }
+    }
+
+    .font-pairing-toolbar {
       display: flex;
-      flex-direction: column;
+      align-items: end;
+      justify-content: space-between;
       gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .font-setup-panel {
       margin-top: 12px;
     }
 
-    .quick-pick-group {
-      background: #0b0d12;
-      border: 1px solid #1c1f29;
-      border-radius: 10px;
-      padding: 10px 12px;
-    }
-
-    .quick-pick-group-title {
-      font-weight: 700;
-      color: var(--accent2);
-      margin-bottom: 8px;
-    }
-
-    .quick-pick-group-grid {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    }
-
-    .font-picker-modal {
-      width: min(640px, 92vw);
-    }
-
-    .color-item {
+    .font-setup-panel > summary {
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: #0f1116;
-      border: 1px solid #232734;
-      border-radius: 8px;
-      padding: 6px 8px;
-    }
-
-    .color-swatch {
-      width: 30px;
-      height: 30px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      cursor: pointer;
-      background: transparent;
-      padding: 0;
-    }
-
-    .color-palette {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    .color-swatch.preset {
-      width: 22px;
-      height: 22px;
-      border-radius: 5px;
-    }
-
-    .color-custom-btn {
-      background: #1f2433;
-      color: #ddd;
-      border: 1px solid #2a3142;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 0.85em;
-      cursor: pointer;
-    }
-
-    .font-item {
-      display: flex;
-      align-items: center;
+      justify-content: space-between;
       gap: 10px;
-      background: #0f1116;
-      border: 1px solid #232734;
-      border-radius: 8px;
-      padding: 8px 10px;
     }
 
-    .font-meta {
-      color: #bbb;
-      font-size: .9em;
-    }
-
-    .font-picker {
-      margin-top: 16px;
-      padding: 14px;
-      background: #101217;
-      border: 1px solid #232734;
-      border-radius: 12px;
-    }
-
-    .dual-font-grid {
+    .font-setup-summary-copy {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 4px;
+    }
+
+    .font-setup-summary-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      letter-spacing: 0.03em;
+      color: #29446f;
+      text-transform: uppercase;
+    }
+
+    .font-setup-summary-note {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .font-setup-body {
+      display: grid;
       gap: 12px;
-      margin-bottom: 12px;
     }
 
-    .dual-font-column label {
-      display: block;
-      font-size: .9em;
-      color: #bbb;
-      margin-bottom: 4px;
+    .font-pairing-intro {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
     }
 
-    .font-picker select {
-      width: 100%;
-      padding: 8px 10px;
-      border-radius: 8px;
-      border: 1px solid #1f2536;
-      background: #0d101b;
-      color: #eee;
+    .builder-inline-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .builder-asset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .builder-summary-line {
+      min-height: 20px;
+      color: #66759f;
+      font-size: 0.9rem;
+    }
+
+    .theme-picker-shell {
+      display: grid;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1px solid rgba(213, 224, 244, 0.92);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.92));
+    }
+
+    .theme-picker-header {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .theme-picker-copy {
+      display: grid;
+      gap: 4px;
+    }
+
+    .theme-picker-title {
+      margin: 0;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #29446f;
+    }
+
+    .theme-picker-note {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .font-pairing-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px;
     }
 
     .font-preview-box {
-      margin-top: 6px;
-      padding: 10px 12px;
-      background: #0b0d12;
-      border: 1px solid #1f2233;
-      border-radius: 8px;
-      min-height: 48px;
-      font-size: 1rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      min-height: 108px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 247, 255, 0.94));
+      color: #26416d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
       cursor: pointer;
+    }
+
+    .font-preview-text {
+      font-size: 1.15rem;
+      line-height: 1.2;
+    }
+
+    .event-style-recommendations {
+      display: grid;
+      gap: 10px;
+    }
+
+    .event-style-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .event-style-title {
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      letter-spacing: 0.03em;
+      color: #29446f;
+      text-transform: uppercase;
+    }
+
+    .event-style-note {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+
+    .event-style-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    .event-style-card {
+      min-height: 0;
+    }
+
+    .quick-pick-card {
+      text-align: left;
+      padding: 12px 14px;
+      border-radius: 16px;
+      display: grid;
+      gap: 6px;
+      align-content: start;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.94));
+      border: 1px solid rgba(201, 217, 241, 0.95);
+      box-shadow: 0 8px 18px rgba(37, 62, 103, 0.08);
+      transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+
+    .quick-pick-card:hover,
+    .quick-pick-card:focus-visible {
+      transform: translateY(-1px);
+      border-color: #97b8ee;
+      box-shadow: 0 12px 24px rgba(37, 62, 103, 0.13);
+    }
+
+    .quick-pick-card-custom {
+      border-style: dashed;
+    }
+
+    .quick-pick-label {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      margin-bottom: 2px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(70, 97, 141, 0.08);
+      color: #6b7ea4;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .quick-pick-label-custom {
+      background: rgba(53, 107, 84, 0.1);
+      color: #356b54;
+    }
+
+    .quick-pick-fonts,
+    .quick-pick-title {
+      color: #29446f;
+      font-weight: 700;
+      line-height: 1.15;
+      font-size: 0.98rem;
+    }
+
+    .quick-pick-context {
+      color: #55709c;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .quick-pick-preview {
+      margin-top: 2px;
+      color: #324a77;
+      font-size: 0.98rem;
+      line-height: 1.18;
+    }
+
+    .quick-pick-notes {
+      margin-top: 2px;
+      color: var(--text-muted);
+      font-size: 0.83rem;
+      line-height: 1.35;
+    }
+
+    .quick-pick-empty {
+      padding: 14px 16px;
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--text-muted);
     }
 
     .quick-picks-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 14px;
-      margin-bottom: 6px;
-      font-size: .95em;
-      color: #bbb;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .quick-picks-grid,
+    .quick-pick-groups {
+      display: grid;
+      gap: 12px;
+      margin-top: 10px;
     }
 
     .quick-picks-grid {
-      display: grid;
-      gap: 10px;
-      max-height: 220px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      max-height: 300px;
       overflow: hidden;
     }
 
@@ -745,194 +1076,789 @@
       overflow: visible;
     }
 
-    .quick-pick-card {
-      background: #121522;
-      border: 1px solid #1f2536;
-      border-radius: 10px;
-      padding: 10px 14px;
-      color: #eef;
-      text-align: left;
-      font-size: .95em;
-      line-height: 1.4;
-      transition: background .2s ease, transform .1s ease;
+    .quick-pick-group {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid rgba(213, 224, 244, 0.92);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 247, 255, 0.9));
     }
 
-    .quick-pick-card:hover {
-      background: #1b2032;
-      transform: translateY(-1px);
+    .quick-pick-group-title {
+      margin: 0;
+      font-family: var(--font-heading);
+      font-size: 0.98rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #29446f;
     }
 
-    .quick-pick-label {
-      font-size: .75em;
-      opacity: .7;
-      margin-bottom: 4px;
+    .quick-pick-group-note {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.35;
     }
 
-    .quick-pick-fonts {
-      font-size: .9em;
+    .quick-pick-group-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
     }
 
-    .quick-pick-heading {
+    .current-assets {
+      display: grid;
+      gap: 10px;
+    }
+
+    .asset-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+      gap: 8px;
+    }
+
+    .asset-single {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 44px;
+    }
+
+    .asset-item {
+      position: relative;
+      width: 100%;
+      min-width: 0;
+      aspect-ratio: 3 / 4;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #f6f9ff;
+    }
+
+    .asset-single .asset-item {
+      width: min(140px, 100%);
+      aspect-ratio: 1 / 1;
+    }
+
+    .asset-item img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .asset-item.selected {
+      border-color: #97c6ff;
+      box-shadow: 0 8px 18px rgba(120, 155, 223, 0.28);
+    }
+
+    .asset-remove {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border-radius: 999px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      z-index: 2;
+    }
+
+    .asset-use {
+      position: absolute;
+      left: 4px;
+      bottom: 4px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      line-height: 1.1;
+      z-index: 2;
+    }
+
+    #adminScreen label {
+      display: block;
+      margin: 8px 0 6px;
+      color: #4e638b;
       font-weight: 600;
     }
 
-    .quick-pick-preview {
-      margin-top: 4px;
-      font-size: 1.05em;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    #adminScreen input[type="text"],
+    #adminScreen input[type="email"],
+    #adminScreen input[type="color"],
+    #adminScreen select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--text);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
     }
 
-    .quick-pick-notes {
-      margin-top: 4px;
-      font-size: .8em;
-      opacity: .7;
+    #adminScreen .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
-    button.button-ghost {
-      margin: 0;
-      padding: 0;
-      background: none;
-      border: none;
-      color: var(--accent);
-      font-size: .9em;
-      cursor: pointer;
+    #adminScreen .btn-row > * {
+      flex: 1 1 auto;
     }
 
-    button.button-ghost:hover {
-      text-decoration: underline;
+    .admin-launchpad {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin: 12px auto 14px;
+      max-width: 980px;
     }
 
-    /* Toast */
-    #toast {
-      position: absolute;
-      right: 12px;
-      bottom: 12px;
-      background: rgba(16, 18, 23, 0.95);
-      color: #fff;
-      border: 1px solid #2b2f3a;
-      border-radius: 10px;
-      padding: 10px 14px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, .35);
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 200ms ease, transform 200ms ease;
-      pointer-events: none;
-      z-index: 5;
+    .admin-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(34, 48, 81, 0.35);
+      display: none;
+      z-index: 10000;
     }
 
-    #toast.show {
-      opacity: 1;
-      transform: translateY(0);
+    .admin-modal-backdrop.show { display: block; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(34, 48, 81, 0.35);
+      z-index: 10010;
     }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(760px, 96vw);
+      max-height: min(92svh, 920px);
+      overflow: auto;
+      padding: 20px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-strong);
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-top: 12px;
+    }
+
+    .admin-modal-target {
+      display: block !important;
+      position: fixed;
+      inset: 6vh 6vw;
+      overflow: auto;
+      z-index: 10001;
+    }
+
+    .admin-modal-close {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 10002;
+    }
+
+    .edit-controls {
+      position: fixed;
+      left: 14px;
+      bottom: 14px;
+      z-index: 10003;
+      width: min(340px, 94vw);
+      padding: 14px;
+      display: none;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-strong);
+    }
+
+    .edit-controls.show { display: block; }
+    .edit-target-active { outline: 3px dashed #9fc4ff; outline-offset: 4px; }
 
     #boothScreen {
       display: flex;
       flex-direction: column;
       height: 100svh;
+      position: relative;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0) 38%),
+        radial-gradient(circle at 90% 16%, rgba(255, 222, 170, 0.5) 0%, rgba(255, 255, 255, 0) 30%),
+        radial-gradient(circle at 82% 82%, rgba(125, 196, 255, 0.28) 0%, rgba(255, 255, 255, 0) 32%),
+        linear-gradient(180deg, #edf4ff 0%, #e8f1ff 52%, #fff7eb 100%);
       background-size: cover;
       background-position: center;
-      background-repeat: no-repeat;
-      background-color: #000;
-      position: relative;
     }
 
     #boothHeader {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: clamp(6px, 1.6vh, 12px) clamp(8px, 2vw, 16px);
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 10;
-      background: rgba(0, 0, 0, 0);
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%) translateY(var(--edit-header-y)) scale(var(--edit-header-scale));
+      transform-origin: center;
+      width: min(96vw, 1160px);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-strong);
     }
 
-    #boothHeader img {
-      max-height: 50px;
-    }
+    #boothHeader img { max-height: 54px; }
 
     #eventTitle {
-      font-size: 1.8em;
-      flex: 1;
-      text-align: center;
-      font-family: var(--font);
-      color: var(--accent);
-      line-height: 1;
       margin: 0;
+      font-family: var(--font-heading);
+      color: #26416d;
+      text-align: center;
+      flex: 1;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      min-width: 0;
+      max-width: 100%;
+      line-height: 0.95;
+      overflow-wrap: anywhere;
+      text-wrap: balance;
+      letter-spacing: 0.03em;
+      transform: translateY(var(--edit-event-title-y)) scale(var(--edit-event-title-scale));
+      transform-origin: center;
     }
 
     #adminBtn {
-      background: none;
-      border: none;
-      font-size: 1.5em;
-      color: white;
-      cursor: pointer;
-      z-index: 5;
+      position: fixed;
+      right: 12px;
+      top: 12px;
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      z-index: 35;
+      background: rgba(255, 255, 255, 0.84);
+      backdrop-filter: blur(12px);
     }
 
     #boothMain {
       flex: 1;
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
-      padding: clamp(60px, 10vh, 110px) clamp(8px, 2vw, 16px) clamp(20px, 6vh, 60px);
+      gap: 18px;
+      padding: clamp(78px, 10vh, 128px) 16px clamp(28px, 6vh, 54px);
       position: relative;
-      gap: 10px;
     }
 
     #options,
     #controls {
-      width: 18%;
+      position: absolute;
+      top: 50%;
+      transform-origin: center;
+      max-height: 84vh;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.76);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-strong);
+      padding: 12px;
+    }
+
+    #options {
+      left: 10px;
+      transform: translateY(calc(-50% + var(--edit-options-y))) scale(var(--edit-options-scale));
+      width: clamp(152px, 16vw, 210px);
+    }
+
+    #controls {
+      right: 10px;
       display: flex;
       flex-direction: column;
-      align-items: stretch;
-      text-align: center;
-      overflow: auto;
-      max-height: 88vh;
-      padding: 4px;
+      gap: 10px;
+      transform: translateY(calc(-50% + var(--edit-mode-buttons-y)));
     }
 
     #options .thumb {
       width: 100%;
       max-width: 140px;
-      margin: 6px 0;
-      border: 3px solid transparent;
-      border-radius: 10px;
-      background: #00000055;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      margin: 6px auto;
+      padding: 4px;
+      border: 2px solid #d8e6fb;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #fdfefe, #eef5ff);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
     }
 
     #options .thumb img {
       width: 100%;
-      border-radius: 8px;
       display: block;
+      border-radius: 10px;
     }
 
-    #options .thumb img:error {
-      visibility: hidden;
-    }
-
-    /* Hide broken image icon */
     #options .thumb.selected {
-      border-color: var(--accent);
-      box-shadow: 0 0 18px #000;
+      border-color: #97c6ff;
+      box-shadow: 0 8px 18px rgba(120, 155, 223, 0.34);
+    }
+
+    .mode-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      border: 1px solid #ccdaf4;
+      background: linear-gradient(180deg, #ffffff, #eef4ff);
+      display: grid;
+      place-items: center;
+      transform: scale(var(--edit-mode-button-scale));
     }
 
     #videoWrap {
-      flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       position: relative;
-      gap: clamp(8px, 2vh, 14px);
-      padding-bottom: clamp(12px, 4vh, 36px);
+      gap: 16px;
+      padding-bottom: 16px;
+    }
+
+    #videoContainer {
+      position: relative;
+      overflow: hidden;
+      border: 10px solid rgba(255, 255, 255, 0.98);
+      border-radius: 30px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0)),
+        #edf3ff;
+      box-shadow: 0 30px 60px rgba(87, 109, 154, 0.22);
+      width: min(92vw, var(--capture-landscape-width));
+      max-height: 82svh;
+      aspect-ratio: var(--capture-aspect, 4 / 3);
+      transform: translateY(var(--edit-camera-y)) scale(var(--edit-camera-scale));
+    }
+
+    .view-landscape #videoContainer {
+      width: min(92vw, var(--capture-landscape-width));
+      aspect-ratio: var(--capture-landscape-ratio);
+    }
+
+    .view-portrait #videoContainer {
+      width: min(86vw, var(--capture-portrait-width));
+      aspect-ratio: var(--capture-portrait-ratio);
+    }
+
+    #video,
+    #lastShot,
+    #liveOverlay {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      border-radius: 18px;
+    }
+
+    #video {
+      opacity: 0;
+      transition: opacity 450ms ease;
+      transform-origin: center;
+      -webkit-transform: scaleX(-1) scale(var(--camera-zoom));
+      transform: scaleX(-1) scale(var(--camera-zoom));
+    }
+
+    #video.active { opacity: 1; }
+
+    #lastShot,
+    #liveOverlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      -webkit-transform: scaleX(1) scale(var(--camera-zoom));
+      transform: scaleX(1) scale(var(--camera-zoom));
+    }
+
+    #captureBtn {
+      display: none;
+      position: relative;
+      z-index: 6;
+      transform: translateY(var(--edit-capture-button-y)) scale(var(--edit-capture-button-scale)) !important;
+    }
+
+    #captureBtn.primary {
+      width: clamp(96px, 14vw, 138px);
+      height: clamp(96px, 14vw, 138px);
+      border-radius: 34px;
+      border: 3px solid var(--action-border);
+      outline: 3px solid var(--action-outline);
+      background: linear-gradient(145deg, var(--action-grad-start), var(--action-grad-mid) 45%, var(--action-grad-end));
+      box-shadow: 0 20px 36px rgba(117, 141, 190, 0.26);
+      color: var(--action-text);
+      font-family: var(--font-heading);
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    #captureBtn.recording-stop {
+      background: linear-gradient(145deg, #ffb8cb, #ff95b2);
+      outline-color: #d37b96;
+    }
+
+    #welcomeScreen {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      transition: opacity 500ms;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    #welcomeScreen.faded { opacity: 0; pointer-events: none; }
+    #welcomeImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
+
+    #welcomeOverlay {
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+      width: min(92vw, 920px);
+      text-align: center;
+      padding: 28px 30px;
+      border-radius: 26px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.76);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-strong);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    #welcomeTitle {
+      margin: 0;
+      color: #29446f;
+      font-family: var(--font-heading);
+      font-size: clamp(2.4rem, 7vw, 5rem);
+      max-width: min(84vw, 14ch);
+      max-height: min(44vh, 360px);
+      line-height: 0.92;
+      overflow-wrap: anywhere;
+      overflow: hidden;
+      text-wrap: balance;
+      letter-spacing: 0;
+      text-transform: none;
+      pointer-events: none;
+      transform: translateY(var(--edit-welcome-title-y)) scale(var(--edit-welcome-title-scale));
+      transform-origin: center;
+    }
+
+    .start-button,
+    #startButton {
+      transform: translateY(var(--edit-start-button-y)) scale(var(--edit-start-button-scale));
+      transform-origin: center;
+    }
+
+    .start-button {
+      width: auto;
+      min-width: clamp(180px, 34vw, 280px);
+      padding: 16px 26px;
+      position: relative;
+      z-index: 2;
+      border-radius: 999px;
+      border: 2px solid var(--action-border);
+      outline: 3px solid var(--action-outline);
+      background: linear-gradient(145deg, var(--action-grad-start), var(--action-grad-mid) 48%, var(--action-grad-end));
+      color: var(--action-text);
+      font-family: var(--font-body);
+      font-weight: 700;
+      box-shadow: 0 18px 34px rgba(126, 149, 198, 0.28);
+      letter-spacing: 0.01em;
+      text-transform: none;
+      touch-action: manipulation;
+    }
+
+    #countdownOverlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--countdown-size);
+      color: #27416a;
+      font-family: var(--font-heading);
+      text-shadow: 0 8px 24px rgba(255, 255, 255, 0.9);
+      opacity: 0;
+      transform: scale(0.9);
+      transition: opacity 200ms, transform 200ms;
+      z-index: 20;
+    }
+
+    #countdownOverlay.show { opacity: 1; transform: scale(1); }
+
+    #recordingOverlay {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      display: none;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #f1cad4;
+      background: #fff2f5;
+      color: #9f2c4b;
+      z-index: 21;
+    }
+
+    #recordingOverlay.show { display: inline-flex; }
+    #recordingOverlay .rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--danger); }
+
+    #flashOverlay { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 30; pointer-events: none; }
+    #flashOverlay.flash { animation: cameraFlash 320ms ease-out; }
+
+    @keyframes cameraFlash {
+      0% { opacity: 0; }
+      10% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    #finalPreview {
+      position: absolute;
+      inset: 0;
+      z-index: 25;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 300ms;
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.22) 40%, rgba(239, 246, 255, 0.92) 100%);
+      backdrop-filter: blur(8px);
+    }
+
+    #finalPreview.show { opacity: 1; pointer-events: auto; }
+
+    #finalPreviewContent {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: min(96vw, 1100px);
+      height: min(92svh, 900px);
+      padding: 20px;
+    }
+
+    #finalStrip,
+    #finalLive {
+      width: min(var(--review-width, 640px), 92vw);
+      height: min(var(--review-height, 860px), 86svh);
+      object-fit: contain;
+      background: #f8fbff;
+      border: 10px solid #fff;
+      border-radius: 24px;
+      box-shadow: 0 24px 48px rgba(107, 129, 174, 0.22);
+    }
+
+    #finalPreviewActions {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(392px, 92vw);
+      min-height: 420px;
+      max-height: calc(92svh - 20px);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 2;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid #d6e3fb;
+      overflow: auto;
+      box-shadow: var(--shadow-strong);
+    }
+
+    #finalPreviewButtons {
+      position: absolute;
+      right: max(16px, env(safe-area-inset-right, 0px));
+      bottom: max(16px, env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 3;
+    }
+
+    .share-placeholder {
+      display: grid;
+      place-items: center;
+      width: min(420px, 84vw);
+      min-height: 220px;
+      border-radius: 24px;
+      border: 1px dashed #bfd0ef;
+      background: rgba(255, 255, 255, 0.78);
+      color: #58709c;
+      font-family: var(--font-heading);
+      font-size: 1.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .share-mock {
+      position: absolute;
+      inset: auto auto 36px 36px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+      width: min(480px, 60vw);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .share-mock-photo,
+    .share-mock-qr {
+      border-radius: 20px;
+      background: linear-gradient(145deg, #dce9ff, #fff7e8);
+      border: 1px solid #cfddf5;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .share-mock-photo {
+      min-height: 280px;
+    }
+
+    .share-mock-qr {
+      aspect-ratio: 1 / 1;
+      margin-bottom: 10px;
+    }
+
+    .share-mock-label {
+      color: #5c7095;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    #qrCodeContainer {
+      width: min(320px, 88vw);
+      min-height: 360px;
+      color: #344670;
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid #d6e3fb;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(245, 249, 255, 0.94));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    #qrCode {
+      border: 6px solid #fff;
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    #emailForm input {
+      padding: 8px 10px;
+      width: min(240px, 76vw);
+      border: 1px solid #c8d8f4;
+      border-radius: 12px;
+      background: #fff;
+      color: #32436e;
+    }
+
+    .shortcut-btn {
+      padding: 4px 8px;
+      border-radius: 12px;
+      border: 1px solid #ccd9f3;
+      background: #eff5ff;
+      color: #3b4f83;
+    }
+
+    #toast {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid #d4e1f9;
+      background: rgba(255, 255, 255, 0.92);
+      color: #34466f;
+      box-shadow: var(--shadow-strong);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 180ms ease, transform 180ms ease;
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    #confirmModal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(34, 48, 81, 0.4);
+      z-index: 10030;
+    }
+
+    #confirmCard {
+      width: min(520px, 94vw);
+      max-height: 90svh;
+      overflow: auto;
+      padding: 14px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 10px;
+    }
+
+    #confirmPreview {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #f6f9ff;
+    }
+
+    #confirmActions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     #boothScreen.countdown-mode #boothHeader,
@@ -942,250 +1868,112 @@
       display: none;
     }
 
-    #boothScreen.countdown-mode #boothMain {
-      padding: 0;
-    }
-
-    #boothScreen.countdown-mode #videoWrap {
-      flex: 1;
-      width: 100%;
-      padding: 0;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-      padding-top: env(safe-area-inset-top, 0px);
-    }
-
+    #boothScreen.countdown-mode #boothMain { padding: 0; }
+    #boothScreen.countdown-mode #videoWrap { width: 100%; padding: 0; }
     #boothScreen.countdown-mode #videoContainer {
-      width: 100%;
+      width: 90%;
+      height: 90%;
       max-width: none;
-      height: 100%;
       max-height: calc(92svh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-      aspect-ratio: auto;
-      border: none;
-      border-radius: 0;
+      border-radius: 20px;
+      transform: translateY(var(--edit-countdown-camera-y)) scale(var(--edit-countdown-camera-scale));
     }
 
-    #videoContainer {
-      position: relative;
-      border: 6px solid white;
-      border-radius: 12px;
-      background: black;
-      aspect-ratio: var(--capture-aspect, auto);
-      overflow: hidden;
-    }
-
-    #videoContainer.recording {
-      box-shadow: 0 0 24px rgba(255, 52, 52, 0.6);
-    }
-
-    #videoContainer.recording::after {
-      content: "";
-      position: absolute;
-      inset: 6px;
-      border: 6px solid rgba(255, 52, 52, 0.95);
-      border-radius: 8px;
-      pointer-events: none;
-    }
-
-    #boothScreen.countdown-mode #videoContainer.recording {
-      box-shadow: 0 0 24px rgba(255, 52, 52, 0.6);
-    }
-
-    #boothScreen.countdown-mode #videoContainer.recording::after {
-      inset: 0;
-      border-radius: 0;
-    }
-
-    #video {
-      display: block;
-      width: 100%;
-      height: 100%;
-      border-radius: 6px;
-      opacity: 0;
-      transition: opacity 500ms ease;
-      object-fit: cover;
-      transform-origin: center;
-      -webkit-transform: scaleX(-1) scale(var(--camera-zoom, 1));
-      transform: scaleX(-1) scale(var(--camera-zoom, 1));
-    }
-
-    #lastShot {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 6px;
-      pointer-events: none;
-      display: none;
-      transform-origin: center;
-      -webkit-transform: scaleX(1) scale(var(--camera-zoom, 1));
-      transform: scaleX(1) scale(var(--camera-zoom, 1));
-    }
-
-    #liveOverlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      border-radius: 6px;
-      object-fit: cover;
-      -webkit-transform: scaleX(1) scale(var(--camera-zoom, 1));
-      transform: scaleX(1) scale(var(--camera-zoom, 1));
-    }
-
-    @keyframes idleBounce {
-      0%,
-      100% { transform: translateY(0); }
-      50% { transform: translateY(-4px); }
-    }
-
-    #character {
-      position: absolute;
-      z-index: 2;
-      pointer-events: none;
-      left: var(--char-x, 12%);
-      bottom: var(--char-bottom, 0%);
-      height: var(--char-height, 75%);
-      animation: idleBounce 1.8s ease-in-out infinite;
-      filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
-    }
-
-    #silhouette {
-      position: absolute;
-      bottom: 8%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 180px;
-      height: 320px;
-      border: 3px dashed rgba(255, 255, 255, 0.7);
-      border-radius: 90px;
-      background: rgba(255, 255, 255, 0.08);
-      z-index: 4;
-      pointer-events: none;
-    }
-
-    #silhouette .feet {
-      position: absolute;
-      bottom: -14px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 120px;
-      height: 26px;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.6);
-    }
-
-    #silhouette .label {
-      position: absolute;
-      top: -36px;
-      width: 100%;
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-      color: white;
-      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-    }
-
-    #videoContainer img:not([src]),
-    #videoContainer img[src=""] {
+    #boothScreen.share-mode #boothHeader,
+    #boothScreen.share-mode #boothMain,
+    #boothScreen.share-mode #options,
+    #boothScreen.share-mode #controls,
+    #boothScreen.share-mode #countdownOverlay,
+    #boothScreen.share-mode #flashOverlay {
       display: none;
     }
 
-    .view-landscape #videoContainer {
-      max-height: 88vh;
-      max-width: 80vw;
-      aspect-ratio: 16 / 9;
-    }
-
-    .view-landscape #video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .view-portrait #videoContainer {
-      height: 88vh;
-      aspect-ratio: 9 / 16;
-    }
-
-    .view-portrait #video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    #video.active {
-      opacity: 1;
-    }
-
-    #captureBtn {
-      display: none;
-      position: relative;
-      z-index: 5;
-      align-self: center;
-    }
+    #boothScreen.share-mode #finalPreview { background: rgba(243, 248, 255, 0.95); }
 
     @media (max-width: 1100px) {
-      #boothMain {
-        flex-direction: column;
-        align-items: center;
+      #adminScreen {
+        height: auto;
+        min-height: 100svh;
+        overflow: auto;
+      }
+      .admin-container { grid-template-columns: 1fr; }
+      .admin-left,
+      .admin-right {
+        height: auto;
+        overflow: visible;
+        padding-right: 0;
+      }
+      .setup-tabs { grid-template-columns: 1fr; }
+      .theme-editor-summary { grid-template-columns: 1fr; }
+    #boothMain { flex-direction: column; }
+      .video-import-panel {
+        position: static;
+        transform: none;
+        width: 100%;
+        max-width: 560px;
+        margin-top: 12px;
       }
       #options,
       #controls {
+        position: static;
+        transform: none !important;
         width: 100%;
         max-height: none;
         flex-direction: row;
         justify-content: center;
         align-items: center;
-        gap: 10px;
-        padding: 6px;
+        overflow: auto;
+        gap: 8px;
       }
-      #options {
-        order: 3;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
+      #videoContainer { width: min(92vw, var(--capture-landscape-width)); max-width: none; }
+      .share-mock {
+        position: static;
+        width: min(520px, 88vw);
+        margin-top: 16px;
       }
+    }
+
+    @media (max-width: 760px) {
+      #adminScreen { padding: 10px; }
+      .status-pill { white-space: normal; border-radius: 16px; }
+      .theme-editor-group { grid-template-columns: 1fr; }
+      .font-pairing-layout { grid-template-columns: 1fr; }
+      #adminScreen .btn-row > * { flex: 1 1 100%; }
+      .start-booth-hero { min-width: 0; }
+      #finalPreviewButtons {
+        right: 50%;
+        bottom: max(12px, env(safe-area-inset-bottom, 0px));
+        transform: translateX(50%);
+        flex-direction: row;
+      }
+      .share-placeholder {
+        min-height: 160px;
+        font-size: 1.05rem;
+      }
+      .share-mock {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-height: 900px) and (min-width: 1101px) {
+      #boothMain {
+        padding-bottom: 150px;
+      }
+
+      #options,
       #controls {
-        order: 2;
-      }
-      #options .thumb {
-        max-width: 110px;
-        margin: 0 6px;
-      }
-      #videoWrap {
-        order: 1;
-        width: 100%;
-      }
-      #videoContainer {
-        width: 100%;
-        max-width: 680px;
-      }
-      .view-landscape #videoContainer {
-        max-width: min(92vw, 680px);
-      }
-      #captureBtn {
-        margin-bottom: 8px;
+        top: auto;
+        bottom: max(12px, env(safe-area-inset-bottom, 0px));
+        transform: none !important;
+        max-height: 36vh;
       }
     }
 
     @media (max-height: 820px) {
-      #boothMain {
-        padding-top: clamp(50px, 8vh, 90px);
-        padding-bottom: clamp(12px, 3vh, 32px);
-      }
-      #options,
-      #controls {
-        padding: 4px;
-        gap: 8px;
-      }
+      #boothMain { padding-top: clamp(50px, 8vh, 90px); }
       #captureBtn.primary {
-        width: clamp(88px, 12vw, 120px);
-        height: clamp(88px, 12vw, 120px);
-        font-size: clamp(1rem, 2vw, 1.4rem);
+        width: clamp(88px, 12vw, 118px);
+        height: clamp(88px, 12vw, 118px);
       }
       .mode-btn {
         padding: 6px 8px;
@@ -1965,26 +2753,100 @@
 <body>
   <div id="adminScreen">
     <h1 class="admin-title">Photobooth Setup</h1>
-    <div class="btn-row" style="justify-content:center; margin-bottom:12px;">
-      <button id="startBoothButton" class="start-booth-hero">Start Booth</button>
+    <p class="admin-subtitle">Set the event vibe, confirm capture settings, and launch a booth that looks camera-ready from the first screen.</p>
+    <div class="setup-status" id="setupStatus">
+      <div class="status-pill">Camera: <strong id="statusCamera">Not Started</strong></div>
+      <div class="status-pill">Uploads: <strong id="statusUpload">Checking</strong></div>
+      <div class="status-pill">Sync: <strong id="statusSync">Idle</strong></div>
+      <div class="status-pill">Queue: <strong id="statusQueue">0 Pending</strong></div>
+    </div>
+    <div class="btn-row admin-actions">
+      <button type="button" id="quickStartBtn">Quick Start Now</button>
+      <button type="button" id="startBoothButton" class="start-booth-hero">Start Booth</button>
+    </div>
+    <div class="capture-mode-bar">
+      <div class="capture-mode-copy">
+        <p class="capture-mode-title">Capture Mode</p>
+        <p class="capture-mode-note">Use photo mode for the built-in camera, or switch to 360 mode for the iPhone record and AirDrop workflow.</p>
+      </div>
+      <button type="button" id="modeToggle">Switch to 360 Mode</button>
+    </div>
+    <div class="setup-tabs" role="tablist" aria-label="Setup Sections">
+      <button type="button" id="setupTabEvent" class="setup-tab active" data-setup-tab="event">Settings</button>
+      <button type="button" id="setupTabCapture" class="setup-tab" data-setup-tab="capture">Capture</button>
+      <button type="button" id="setupTabShare" class="setup-tab" data-setup-tab="share">Share</button>
     </div>
     <div class="admin-container">
       <div class="admin-left panel">
         <div class="btn-row" style="justify-content:center; margin-top:0;">
           <button id="installBtn" class="primary hidden" type="button">Install App</button>
         </div>
-        <details class="panel-section" open>
-          <summary>Event Basics</summary>
+        <details class="panel-section" id="eventBasicsSection" data-setup-section="event" open>
+          <summary>Event Setup</summary>
           <div class="section-content">
             <div class="btn-row" style="justify-content:flex-start; gap:8px; margin-bottom:10px;">
-              <button type="button" id="chooseEventBtn">Edit Event</button>
-              <button type="button" id="createEventBtn" class="primary">Create New Event</button>
+              <button type="button" id="eventPathCreateBtn">Path 1: Create Event</button>
+              <button type="button" id="eventPathSelectBtn">Path 2: Existing Event</button>
             </div>
-            <label for="eventProfileSelect">Choose Event</label>
-            <select id="eventProfileSelect"></select>
-            <div class="btn-row">
-              <button type="button" onclick="exportCurrentEvent()">Export Event</button>
+            <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Path 1 is for fast event setup. Path 2 is only for loading something you already made.</p>
+            <div class="panel hidden" id="eventPathCreatePanel" style="margin-bottom:10px;">
+              <h3 style="margin:0 0 6px;">Path 1: Create New Event</h3>
+              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Start a brand new event with its own name, text, and assets.</p>
+              <label for="createPathEventName">Event Name</label>
+              <input type="text" id="createPathEventName" placeholder="e.g., Winter Gala 2026">
+              <label for="createPathEventType">Event Type</label>
+              <select id="createPathEventType">
+                <option value="general">General</option>
+                <option value="wedding">Wedding</option>
+                <option value="expo">Expo</option>
+                <option value="party">Party</option>
+                <option value="community">Community</option>
+              </select>
+              <select id="createPathThemeType" class="hidden" aria-hidden="true">
+                <option value="favorite">Favorite</option>
+                <option value="standard" selected>Standard</option>
+                <option value="custom">Custom</option>
+              </select>
+              <label for="createPathThemeSelect">Theme</label>
+              <select id="createPathThemeSelect"></select>
+              <label for="createPathFontPairingSelect">Choose Font Pairing</label>
+              <select id="createPathFontPairingSelect"></select>
+              <p id="createPathFontNote" style="margin:0; color:#9aa; font-size:0.9em;">Five suggested pairings will appear based on the event type.</p>
+              <div id="createPathFontPreviewCards" class="event-style-cards"></div>
+              <label for="createPathBackgrounds">Backgrounds</label>
+              <input type="file" id="createPathBackgrounds" accept="image/*" multiple>
+              <label for="createPathGreenBackgrounds">Green Screen Backgrounds</label>
+              <input type="file" id="createPathGreenBackgrounds" accept="image/*" multiple>
+              <label for="createPathOverlays">Overlays</label>
+              <input type="file" id="createPathOverlays" accept="image/*" multiple>
+              <label for="createPathTemplates">Templates</label>
+              <input type="file" id="createPathTemplates" accept="image/*" multiple>
+              <label for="createPathLogo">Logo</label>
+              <input type="file" id="createPathLogo" accept="image/*">
+              <div id="createPathAssetSummary" style="margin:0 0 6px; color:#9aa; font-size:0.9em;">No event assets selected yet.</div>
+              <div class="btn-row hidden" style="justify-content:flex-start; margin-bottom:10px;" aria-hidden="true">
+                <button type="button" id="toggleThemeFavoriteBtn">Add to Favorites</button>
+              </div>
+              <div class="btn-row">
+                <button type="button" id="createEventBtn" class="primary">Create New Event</button>
+              </div>
             </div>
+            <div class="panel hidden" id="eventPathSelectPanel">
+              <h3 style="margin:0 0 6px;">Path 2: Select Existing Event</h3>
+              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Pick an existing event to edit or export.</p>
+              <label for="eventProfileSelect">Existing Event</label>
+              <select id="eventProfileSelect"></select>
+              <div id="eventOverridesSummary" style="color:#9aa; font-size:0.9em;"></div>
+              <div class="btn-row">
+                <button type="button" id="chooseEventBtn">Edit Selected Event</button>
+                <button type="button" onclick="exportCurrentEvent()">Export Event</button>
+              </div>
+            </div>
+          </div>
+        </details>
+        <details class="panel-section" id="captureSection" data-setup-section="capture">
+          <summary>Capture Controls</summary>
+          <div class="section-content">
             <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
               <input type="checkbox" id="allowRetakes" checked>
               Allow Retakes
@@ -1998,27 +2860,42 @@
               Instant Capture (no countdown)
             </label>
             <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+              <input type="checkbox" id="lowLightToggle">
+              Low Light Flash (torch/screen)
+            </label>
+            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
               <input type="checkbox" id="greenScreenToggle" checked>
               Green Screen Removal
             </label>
+            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+              <input type="checkbox" id="aiBackgroundToggle">
+              AI Background Removal (no green screen)
+            </label>
+            <label for="enhancementModeSelect">Enhancement Mode</label>
+            <select id="enhancementModeSelect">
+              <option value="natural">Natural</option>
+              <option value="bridal-glow" selected>Bridal Glow</option>
+              <option value="harsh-light-fix">Harsh Light Fix</option>
+            </select>
             <label for="cameraZoomInput">Camera Zoom</label>
             <div style="display:flex; align-items:center; gap:10px;">
               <input type="range" id="cameraZoomInput" min="1" max="2.5" step="0.05">
-              <span id="cameraZoomValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+              <span id="cameraZoomValue" style="color:#66759f; min-width:48px; text-align:right;"></span>
             </div>
             <div class="btn-row">
               <button id="startCameraButton" class="primary">Start Camera</button>
               <button type="button" onclick="toggleAnalytics()">Analytics</button>
+              <button type="button" id="editLayoutBtn">Edit Booth Layout</button>
             </div>
             <div id="analytics" class="hidden">
               <h2>Analytics</h2>
               <pre id="analyticsData"
-                style="background:#101217; padding:10px; border-radius:8px; white-space:pre-wrap; word-wrap:break-word;"></pre>
+                style="background:#f6f9ff; padding:10px; border-radius:8px; white-space:pre-wrap; word-wrap:break-word;"></pre>
               <div class="btn-row"><button onclick="clearAnalytics()">Clear Analytics</button></div>
             </div>
           </div>
         </details>
-        <details class="panel-section">
+        <details class="panel-section" id="sharingSection" data-setup-section="share">
           <summary>Sharing & Email</summary>
           <div class="section-content">
             <h3 style="margin:0;">Cloudinary (QR Links)</h3>
@@ -2031,6 +2908,7 @@
             <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
               <input type="checkbox" id="cloudUseToggle"> Use Cloudinary for share links
             </label>
+            <small style="display:block; color:#66759f;">Uploads for overlays/backgrounds/templates are shared immediately across devices when online.</small>
             <h3 style="margin:0;">Email (EmailJS)</h3>
             <label for="emailJsPublic">Public Key</label>
             <input type="text" id="emailJsPublic" placeholder="public_xxxxx">
@@ -2047,7 +2925,7 @@
             </div>
           </div>
         </details>
-        <details class="panel-section">
+        <details class="panel-section" id="offlineSection" data-setup-section="share">
           <summary>Offline & Device Tools</summary>
           <div class="section-content">
             <div class="admin-field" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0;">
@@ -2060,33 +2938,65 @@
                 <input type="checkbox" id="forceCameraFileToggle"> Force camera on file://
               </label>
             </div>
-            <div class="admin-field" style="margin:0;">
-              <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-                <input type="checkbox" id="useCloudflareUploads"> Use Cloudflare storage for Admin uploads
-              </label>
-              <small style="display:block; color:#888;">If off and Cloudinary is configured, uploads go to Cloudinary.
-                Base64 is no longer used.</small>
-            </div>
           </div>
         </details>
-        <details class="panel-section" open>
-          <summary>Current Assets</summary>
-          <div class="section-content">
+        <details class="panel-section" id="currentAssetsSection" data-setup-section="event">
+          <summary>Current Event Assets</summary>
+          <div id="currentAssetsContent" class="section-content hidden">
+            <div class="panel" style="margin-bottom:12px;">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                <div>
+                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Event</div>
+                  <div id="currentEventName" style="font-weight:700; font-size:1.1em;">No event selected</div>
+                  <div id="currentEventDate" style="color:#9aa; font-size:0.9em;"></div>
+                </div>
+                <div>
+                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Theme</div>
+                  <div id="currentEventTheme" style="font-weight:600;"></div>
+                </div>
+              </div>
+	              <div style="margin-top:10px;">
+	                <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Event Gallery Link</div>
+	                <div id="eventGalleryActions" class="hidden" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+	                  <button type="button" onclick="copyEventGalleryLink()">Copy Link</button>
+	                  <button type="button" onclick="openEventGalleryLink()">Open Link</button>
+	                </div>
+	                <div id="eventGalleryLink" style="margin-top:6px; font-size:0.9em; color:#bbb; word-break:break-all;"></div>
+	              </div>
+	              <div style="margin-top:10px;">
+	                <div id="currentEventAssetsSummary" class="hidden" style="color:#9aa;"></div>
+	                <div id="currentThemeAssetsSummary" style="color:#9aa; margin-top:4px;"></div>
+	              </div>
+            </div>
             <div class="asset-actions">
               <button type="button" id="addLogoBtn">Add Logo</button>
-              <button type="button" id="addBackgroundsBtn">Add Backgrounds</button>
-              <button type="button" id="addOverlaysBtn">Add Overlays</button>
-              <button type="button" id="addTemplatesBtn">Add Templates</button>
+              <button type="button" id="addAssetsBtn">Add Assets</button>
               <button type="button" id="addCharacterBtn">Add Character</button>
+              <button type="button" onclick="window.open('./overlay-maker.html', '_blank', 'noopener')">Overlay Builder</button>
+              <button type="button" id="eventToSubThemeBtn" class="hidden">Save Theme Preset</button>
             </div>
             <div id="assetUploadInputs" class="hidden">
               <input type="file" id="themeBackground" accept="image/*">
               <input type="file" id="themeLogo" accept="image/*">
+              <input type="file" id="themeGreenBackgrounds" accept="image/*" multiple>
               <input type="file" id="themeOverlays" accept="image/*" multiple>
-              <input type="file" id="themeOverlaysFolderPicker" webkitdirectory directory multiple>
               <input type="file" id="themeTemplates" accept="image/*" multiple>
-              <input type="file" id="themeTemplatesFolderPicker" webkitdirectory directory multiple>
               <input type="file" id="themeCharacter" accept="image/*">
+              <input type="file" id="bulkAssetsInput" accept="image/*" multiple>
+            </div>
+            <div id="bulkAssetModal" class="hidden" style="position:fixed; inset:0; background:rgba(28,40,72,0.35); z-index:10010; display:flex; align-items:center; justify-content:center; padding:16px;">
+              <div style="width:min(520px, 96vw); background:#fff; border:1px solid #cedcf4; border-radius:16px; box-shadow:0 12px 30px rgba(99, 123, 175, 0.18); padding:16px;">
+                <h3 style="margin:0 0 10px;">Add Assets</h3>
+                <p id="bulkAssetSummary" style="margin:0 0 12px; color:#5c6b93;">0 files selected</p>
+                <label style="display:flex; align-items:center; gap:8px; margin:6px 0;"><input type="checkbox" id="bulkToBackgrounds" checked> Backgrounds</label>
+                <label style="display:flex; align-items:center; gap:8px; margin:6px 0;"><input type="checkbox" id="bulkToGreenBackgrounds"> Green Screen Backgrounds</label>
+                <label style="display:flex; align-items:center; gap:8px; margin:6px 0;"><input type="checkbox" id="bulkToOverlays" checked> Overlays</label>
+                <label style="display:flex; align-items:center; gap:8px; margin:6px 0;"><input type="checkbox" id="bulkToTemplates"> Templates</label>
+                <div class="btn-row" style="margin-top:14px;">
+                  <button type="button" id="bulkAssetCancel">Cancel</button>
+                  <button type="button" id="bulkAssetApply" class="primary">Upload</button>
+                </div>
+              </div>
             </div>
             <div id="currentAssets" class="current-assets">
               <div
@@ -2100,6 +3010,10 @@
               <div class="asset-row">
                 <label>Backgrounds:</label>
                 <div id="currentBackgrounds" class="asset-grid"></div>
+              </div>
+              <div class="asset-row">
+                <label>Green Screen BGs:</label>
+                <div id="currentGreenBackgrounds" class="asset-grid"></div>
               </div>
               <div class="asset-row">
                 <label>Logo:</label>
@@ -2131,7 +3045,7 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
                   <label for="characterHeightInput" style="min-width:64px;">Height</label>
-                  <input type="range" id="characterHeightInput" min="40" max="110" step="1">
+                  <input type="range" id="characterHeightInput" min="20" max="110" step="1">
                   <span id="characterHeightValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
                 </div>
               </div>
@@ -2140,53 +3054,196 @@
         </details>
       </div>
       <div id="toast" role="status" aria-live="polite"></div>
-      <div class="admin-right panel">
+      <div class="admin-right panel hidden" id="themeEditorPanel" data-setup-section="event" hidden aria-hidden="true" style="display:none;">
         <div id="themeEditor">
-          <h2>Theme Editor</h2>
-          <label for="eventSelect">Choose Theme</label>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <h2 style="margin:0;">Live Preview</h2>
+            <button type="button" id="themeEditorCloseBtn">Done</button>
+          </div>
+          <div class="theme-editor-summary">
+            <div class="theme-editor-current">
+              <div class="theme-editor-current-label">Selected Theme</div>
+              <div id="themeEditorActive" class="theme-editor-current-name">None selected</div>
+              <div id="themeEditorEditing" class="theme-editor-current-sub">Preview follows Path 1 or Path 2.</div>
+            </div>
+            <div class="theme-editor-action hidden">
+              <label for="themeEditorModeSelect">Theme Action</label>
+              <select id="themeEditorModeSelect">
+                <option value="edit">Use Theme</option>
+                <option value="create">Create Theme Preset</option>
+              </select>
+            </div>
+          </div>
+          <select id="fontEventStyleSelect" class="hidden" aria-hidden="true">
+            <option value="general">General</option>
+            <option value="wedding">Wedding</option>
+            <option value="expo">Expo</option>
+            <option value="party">Party</option>
+            <option value="community">Community</option>
+          </select>
           <select id="eventSelect" class="hidden" aria-hidden="true"></select>
-          <div id="themeQuickSelect" class="theme-card-sections"></div>
-          <div id="themeVibesSection" class="theme-card-sections hidden"></div>
-          <label for="bannerSizeInput">Banner Size</label>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <input type="range" id="bannerSizeInput" min="24" max="120" step="2">
-            <span id="bannerSizeValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+          <div id="themeQuickSelect" class="hidden" aria-hidden="true"></div>
+          <details id="themeSeasonalSection" class="panel-section hidden" aria-hidden="true">
+            <summary>Seasonal & Holiday Themes</summary>
+            <div id="themeSeasonalContent" class="section-content"></div>
+          </details>
+          <div id="themeVibesSection" class="hidden" aria-hidden="true"></div>
+          <div class="builder-section-heading">Event Setup</div>
+          <div class="editor-explainer">
+            <strong>Finish the event and start the booth.</strong> All event choices belong in Path 1 or Path 2. This panel only previews what you picked.
           </div>
-          <label for="welcomeTitleSizeInput">Welcome Title Size</label>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <input type="range" id="welcomeTitleSizeInput" min="24" max="120" step="2">
-            <span id="welcomeTitleSizeValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
-          </div>
-          <p style="color:#bbb; margin-top:0;">Theme assets are managed from the controls on the left. A single shared
-            logo now applies to every theme.</p>
-          <div id="stylePreview" class="style-preview" aria-label="Style preview">
-            <div class="style-preview-swatches">
-              <button id="styleAccentSwatch" type="button" class="style-swatch" style="background: var(--accent);"></button>
-              <button id="styleAccent2Swatch" type="button" class="style-swatch secondary"></button>
+          <div class="theme-editor-section">
+            <div class="hidden" aria-hidden="true">
+              <details class="panel-section font-setup-panel">
+                <summary>
+                  <div class="font-setup-summary-copy">
+                    <div class="font-setup-summary-title">Optional Fonts</div>
+                    <div class="font-setup-summary-note">Use one of the suggested pairings if this event needs a different look than the base theme.</div>
+                  </div>
+                </summary>
+                <div class="font-setup-body">
+                  <div class="font-pairing-layout">
+                    <div class="theme-field">
+                      <label for="editorHeadingFontSelect">Heading Font</label>
+                      <select id="editorHeadingFontSelect"></select>
+                      <div id="editorHeadingFontPreview" class="font-preview-box"><span class="font-preview-text">Heading preview</span></div>
+                    </div>
+                    <div class="theme-field">
+                      <label for="editorBodyFontSelect">Body Font</label>
+                      <select id="editorBodyFontSelect"></select>
+                      <div id="editorBodyFontPreview" class="font-preview-box"><span class="font-preview-text">Body preview</span></div>
+                    </div>
+                  </div>
+                  <div class="event-style-recommendations">
+                    <div class="event-style-header">
+                      <div class="event-style-title" id="fontPairingContextLabel">Recommended Fonts</div>
+                      <div class="event-style-note" id="fontPairingContextNote">These suggestions only affect typography, not theme assets.</div>
+                    </div>
+                    <div id="eventStylePairings" class="event-style-cards"></div>
+                  </div>
+                </div>
+              </details>
             </div>
-            <input type="color" id="styleAccentPicker" class="visually-hidden" value="#ffffff">
-            <input type="color" id="styleAccent2Picker" class="visually-hidden" value="#ffffff">
-            <h3 id="stylePreviewHeading" class="style-preview-heading" contenteditable="true" spellcheck="false">Welcome to Fletch Photobooth</h3>
-            <p id="stylePreviewSubheading" class="style-preview-subheading" contenteditable="true" spellcheck="false">Event Title Example</p>
-            <div id="stylePreviewBody" class="style-preview-button preview-capture-button" contenteditable="true" spellcheck="false" role="button" tabindex="0">Take Photo</div>
-            <div id="stylePreviewButton" class="style-preview-button start-button preview-start-button" contenteditable="true" spellcheck="false" role="button" tabindex="0">Touch to start</div>
           </div>
-          <div class="panel" style="margin-top:14px;">
-            <h3 style="margin:0 0 8px;">Event Gallery Link</h3>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" onclick="copyEventGalleryLink()">Copy Link</button>
-              <button type="button" onclick="openEventGalleryLink()">Open Link</button>
+          <div class="preview-controls">
+            <div class="preview-controls-header">
+              <p class="preview-controls-title">Preview Controls</p>
+              <p class="preview-controls-note">Adjust the live preview text sizes here. Theme assets are managed from the
+                left-side controls, and one shared logo applies across themes.</p>
             </div>
-            <div id="eventGalleryLink" style="margin-top:8px; font-size:0.9em; color:#bbb; word-break:break-all;"></div>
-            <small style="display:block; margin-top:6px; color:#888;">Requires Cloudinary and a tag-based image list.</small>
+            <div class="preview-control-grid">
+              <div class="preview-slider">
+                <label for="bannerSizeInput">Banner Size</label>
+                <div class="preview-slider-row">
+                  <input type="range" id="bannerSizeInput" min="24" max="120" step="2">
+                  <span id="bannerSizeValue" class="preview-slider-value"></span>
+                </div>
+              </div>
+              <div class="preview-slider">
+                <label for="welcomeTitleSizeInput">Welcome Title Size</label>
+                <div class="preview-slider-row">
+                  <input type="range" id="welcomeTitleSizeInput" min="24" max="120" step="2">
+                  <span id="welcomeTitleSizeValue" class="preview-slider-value"></span>
+                </div>
+              </div>
+            </div>
           </div>
+          <div id="stylePreviewWrap" class="style-preview-wrap">
+            <div id="stylePreview" class="style-preview" aria-label="Style preview">
+              <h3 id="stylePreviewHeading" class="style-preview-heading" contenteditable="true" spellcheck="false">Welcome to Fletch Photobooth</h3>
+              <p id="stylePreviewSubheading" class="style-preview-subheading" contenteditable="true" spellcheck="false">Event Title Example</p>
+              <div id="stylePreviewBody" class="style-preview-button preview-capture-button" contenteditable="true" spellcheck="false" role="button" tabindex="0">Take Photo</div>
+              <div id="stylePreviewButton" class="style-preview-button start-button preview-start-button" contenteditable="true" spellcheck="false" role="button" tabindex="0">Touch to start</div>
+            </div>
+          </div>
+          <div class="hidden" aria-hidden="true">
+            <div class="theme-editor-group">
+              <div class="theme-field">
+                <label for="themeName">Theme Name</label>
+                <input type="text" id="themeName" placeholder="Theme name">
+              </div>
+              <div class="theme-field hidden">
+                <label for="themeFontSelect">Theme Font</label>
+                <select id="themeFontSelect"></select>
+              </div>
+            </div>
+            <div class="theme-editor-group">
+              <div class="theme-field">
+                <label for="themeWelcomeTitle">Welcome Title</label>
+                <input type="text" id="themeWelcomeTitle" placeholder="Welcome!">
+              </div>
+              <div class="theme-field">
+                <label for="themeWelcomePrompt">Start Prompt</label>
+                <input type="text" id="themeWelcomePrompt" placeholder="Touch to start">
+              </div>
+            </div>
+            <div class="theme-editor-group">
+              <div class="theme-field">
+                <label for="themeAccent">Accent Color</label>
+                <input type="color" id="themeAccent" value="#ff0000">
+              </div>
+            </div>
+            <input type="hidden" id="themeAccent2" value="#ffffff">
+            <div class="btn-row" style="justify-content:flex-start;">
+              <button type="button" id="btnUpdateTheme" onclick="updateSelectedTheme()">Save Theme Changes</button>
+              <button type="button" id="btnSaveTheme" class="hidden" onclick="saveTheme()">Save New Theme</button>
+            </div>
+          </div>
+          <details class="panel-section" style="margin-top:14px;">
+            <summary>Selected Theme Summary</summary>
+            <div class="section-content">
+              <div class="theme-editor-group">
+                <div class="theme-field">
+                  <div id="summaryBackground" style="color:#9aa;"></div>
+                  <div id="summaryLogo" style="color:#9aa;"></div>
+                  <div id="summaryOverlays" style="color:#9aa;"></div>
+                  <div id="summaryTemplates" style="color:#9aa;"></div>
+                </div>
+              </div>
+              <div class="theme-editor-group">
+                <div class="theme-field">
+                  <label>Current Fonts</label>
+                  <div id="currentFont" class="asset-single"></div>
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
 
       </div>
       </div>
-      <details class="panel font-panel">
+      <details class="panel font-panel" id="fontLibrarySection" data-setup-section="capture">
         <summary>Font Library</summary>
-        <p style="color:#9aa; margin:0;">Click the main preview to change fonts. Quick picks are shown on the right.</p>
+        <p style="color:#9aa; margin:0;">Use quick picks when you need a fast event-ready look. The grouped library below is tuned for weddings, expos, community events, and seasonal booths.</p>
+        <div class="btn-row" style="justify-content:flex-end; margin-top:8px;">
+          <button type="button" onclick="closeAdminModal()">Done</button>
+        </div>
+        <div class="quick-picks-header">
+          <span>Quick Picks</span>
+          <button type="button" id="qpToggle" class="button-ghost" onclick="toggleQuickPicks()">show all</button>
+        </div>
+        <div id="quickPicks" class="quick-picks-grid"></div>
+        <div id="quickPicksGrouped" class="quick-pick-groups"></div>
+        <form id="quickPickForm" class="theme-editor-group">
+          <div class="theme-field">
+            <label for="addPairingHeading">Heading Font</label>
+            <input type="text" id="addPairingHeading" list="fontSuggestions">
+          </div>
+          <div class="theme-field">
+            <label for="addPairingBody">Body Font</label>
+            <input type="text" id="addPairingBody" list="fontSuggestions">
+          </div>
+          <div class="theme-field">
+            <label for="addPairingNotes">Notes</label>
+            <input type="text" id="addPairingNotes" placeholder="Optional notes">
+          </div>
+          <div class="theme-field">
+            <label for="addPairingPreview">Preview Text</label>
+            <input type="text" id="addPairingPreview" placeholder="Preview text">
+          </div>
+          <button type="submit" id="addPairingBtn" class="primary">Add Quick Pick</button>
+        </form>
+        <div id="customPairingsList" style="margin-top:10px;"></div>
       </details>
     </div>
   </div>
@@ -2195,8 +3252,8 @@
     <div id="boothHeader">
       <img id="logo" />
       <h1 id="eventTitle">🎃 Happy Halloween!</h1>
-      <button id="adminBtn" onclick="goAdmin()">⚙️</button>
     </div>
+    <button id="adminBtn" onclick="goAdmin()">⚙️</button>
     <div id="boothMain">
       <div id="options"></div>
       <div id="videoWrap" class="view-landscape">
@@ -2205,28 +3262,55 @@
           <img id="lastShot" />
           <img id="liveOverlay" />
           <img id="character" alt="Character">
-          <div id="silhouette">
-            <div class="feet"></div>
-            <div class="label">Stand Here</div>
+          <div id="recordingOverlay">
+            <span class="rec-dot"></span>
+            <span id="recordingTimer">REC 00:00</span>
           </div>
         </div>
-        <button id="captureBtn" class="primary" onclick="capturePhotoFlow()">Take Photo</button>
-      </div>
-      <div id="controls">
-        <button class="mode-btn" onclick="setMode('photo')">
-          <div class="mode-btn-icon">
-            <div class="photo-rep"></div>
+        <button id="captureBtn" class="primary" onclick="handlePrimaryAction()">Take Photo</button>
+        <div id="booth360Panel" class="booth-360-panel hidden">
+          <div id="booth360Status" class="booth-360-status">
+            <div class="booth-360-status-label">360 Workflow</div>
+            <p id="booth360StatusText" class="booth-360-status-text">Ready to start a 360 take</p>
+            <p id="booth360StatusNote" class="booth-360-status-note">Start recording on the iPhone first, then tap Start 360 on the booth.</p>
           </div>
-          <span>Single Photo</span>
-        </button>
-        <button class="mode-btn" onclick="setMode('strip')">
-          <div class="mode-btn-icon strip">
-            <div class="photo-rep"></div>
-            <div class="photo-rep"></div>
-            <div class="photo-rep"></div>
+          <div class="booth-360-actions">
+            <button id="start360Btn" class="primary booth-360-action" type="button">
+              <strong>Start 360</strong>
+              <span>Run countdown and operator timing</span>
+            </button>
+            <button id="triggerZone" class="button-ghost booth-360-action" type="button" aria-label="Secondary 360 trigger">
+              <strong>Quick Trigger</strong>
+              <span>Tap here or press spacebar</span>
+            </button>
           </div>
-          <span>Photo Strip</span>
-        </button>
+        </div>
+        <div id="videoImportPanel" class="video-import-panel hidden">
+          <input type="file" id="videoInput" accept="video/*" style="display:none">
+          <div id="airdropZone" class="airdrop-zone" tabindex="0" role="button" aria-label="AirDrop or tap to upload a video">
+            <p>📲 AirDrop or Tap to Upload<span>Drop a 360 video here or choose it from Files. Processing starts automatically.</span></p>
+          </div>
+          <div id="videoImportStatus" class="video-import-status">Ready for video import.</div>
+        </div>
+        <div id="controls">
+          <button class="mode-btn" onclick="setMode('photo')" aria-label="Single Photo">
+            <div class="mode-btn-icon">
+              <div class="photo-rep"></div>
+            </div>
+          </button>
+          <button class="mode-btn" onclick="setMode('strip')" aria-label="Photo Strip">
+            <div class="mode-btn-icon strip">
+              <div class="photo-rep"></div>
+              <div class="photo-rep"></div>
+              <div class="photo-rep"></div>
+            </div>
+          </button>
+          <button class="mode-btn" onclick="setMode('message')" aria-label="Record Message">
+            <div class="mode-btn-icon video">
+              <div class="rec-dot"></div>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
     <div id="countdownOverlay"></div>
@@ -2235,6 +3319,16 @@
       <div id="finalPreviewContent">
         <video id="finalLive" class="hidden" autoplay muted loop playsinline></video>
         <img id="finalStrip" />
+        <div id="finalPreviewPlaceholder" class="share-placeholder">Share Preview</div>
+        <div id="finalPreviewMock" class="share-mock">
+          <div>
+            <div class="share-mock-photo"></div>
+          </div>
+          <div>
+            <div class="share-mock-qr"></div>
+            <div class="share-mock-label">Scan to Download</div>
+          </div>
+        </div>
         <div id="finalPreviewActions">
           <div id="qrCodeContainer" class="hidden">
             <h2 style="display:flex; align-items:center; gap:10px;">Scan to Download <span id="shareStatus"
@@ -2263,6 +3357,8 @@
               </div>
             </form>
           </div>
+        </div>
+        <div id="finalPreviewButtons">
           <button id="closePreviewBtn" onclick="exitFinalPreview()">✅ Done</button>
           <button id="retakeBtn" onclick="retakePhoto()">🔄 Retake</button>
         </div>
@@ -2278,11 +3374,38 @@
       </div>
     </div>
     <div id="gallery"></div>
+    <div id="adminModalBackdrop" class="admin-modal-backdrop"></div>
+    <button type="button" id="adminModalClose" class="admin-modal-close hidden">Close</button>
+    <div id="editControls" class="edit-controls">
+      <div class="edit-controls-header">
+        <div id="editControlsTitle" class="edit-controls-title">Edit</div>
+        <button type="button" id="editControlsClose">Hide</button>
+      </div>
+      <div class="edit-controls-views">
+        <button type="button" data-edit-view="booth">Booth</button>
+        <button type="button" data-edit-view="welcome">Welcome</button>
+        <button type="button" data-edit-view="countdown">Countdown</button>
+        <button type="button" data-edit-view="share">Share</button>
+      </div>
+      <label for="editScaleInput">Size</label>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <input type="range" id="editScaleInput" min="0.6" max="1.6" step="0.02">
+        <span id="editScaleValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+      </div>
+      <label for="editPositionInput" id="editPositionLabel">Vertical Position</label>
+      <div id="editPositionRow" style="display:flex; align-items:center; gap:10px;">
+        <input type="range" id="editPositionInput" min="-200" max="200" step="2">
+        <span id="editPositionValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+      </div>
+      <div class="btn-row" style="justify-content:flex-start;">
+        <button type="button" id="editModeExitBtn" class="primary">Exit Edit Mode</button>
+      </div>
+    </div>
     <div id="welcomeScreen">
       <img id="welcomeImg" />
-      <div id="welcomeOverlay">
+      <div id="welcomeOverlay" onclick="beginWelcome(event)">
         <h1 id="welcomeTitle">🎃 Happy Halloween!</h1>
-        <button id="startButton" type="button" class="start-button">Touch to start</button>
+        <button id="startButton" type="button" class="start-button" onclick="beginWelcome(event)">Touch to start</button>
       </div>
     </div>
   </div>
@@ -2307,6 +3430,16 @@
             <label for="fontPairingSelect">Pairing Suggestions</label>
             <select id="fontPairingSelect"></select>
           </div>
+          <div class="dual-font-grid">
+            <div class="dual-font-column">
+              <label>Heading Preview</label>
+              <div id="headingFontPreview" class="font-preview-box"><span class="font-preview-text">Heading preview</span></div>
+            </div>
+            <div class="dual-font-column">
+              <label>Body Preview</label>
+              <div id="bodyFontPreview" class="font-preview-box"><span class="font-preview-text">Body preview</span></div>
+            </div>
+          </div>
         </div>
         <details class="font-subsection" open>
           <summary>Add Custom Fonts</summary>
@@ -2325,9 +3458,38 @@
       </div>
     </div>
 
+    <div id="themeTypeModal" class="modal-backdrop">
+      <div class="modal-card">
+        <h3>Create Theme</h3>
+        <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+          <input type="radio" id="themeTypeBase" name="themeType" value="base">
+          Base theme (category)
+        </label>
+        <div id="baseThemeFields" class="theme-field hidden">
+          <label for="baseThemeNameInput">Base Theme Name</label>
+          <input type="text" id="baseThemeNameInput" placeholder="e.g., Summer">
+          <small style="color:#888;">Base themes group sub themes; they do not contain assets.</small>
+        </div>
+        <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+          <input type="radio" id="themeTypeSub" name="themeType" value="sub" checked>
+          Sub theme (inside a base theme)
+        </label>
+        <div id="subThemeFields" class="theme-field">
+          <label for="subThemeNameInput">Sub Theme Name</label>
+          <input type="text" id="subThemeNameInput" placeholder="e.g., Beach Party">
+          <label for="subThemeBaseSelect">Base Theme</label>
+          <select id="subThemeBaseSelect"></select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="themeTypeCancel">Cancel</button>
+          <button type="button" id="themeTypeConfirm" class="primary">Continue</button>
+        </div>
+      </div>
+    </div>
+
     <div id="createThemeModal" class="modal-backdrop">
       <div class="modal-card">
-        <h3>Create New Theme</h3>
+        <h3 id="createThemeTitle">Create Theme</h3>
         <label for="createThemeName">Theme Name</label>
         <input type="text" id="createThemeName" placeholder="My New Theme">
         <div id="createThemeSummary" style="color:#aab; font-size:0.9em;"></div>
@@ -2348,8 +3510,6 @@
         <h3>Event Details</h3>
         <label for="createEventName">Event Name</label>
         <input type="text" id="createEventName" placeholder="e.g., Maddie's Birthday Bonanza">
-        <label for="createEventDate">Event Date</label>
-        <input type="date" id="createEventDate">
         <label class="checkbox-row" for="createEventUseThemeDefaults">
           <input type="checkbox" id="createEventUseThemeDefaults" checked>
           Use theme defaults for text/buttons
@@ -2363,6 +3523,22 @@
           <input type="range" id="createEventWelcomeSize" min="24" max="120" step="2">
           <span id="createEventWelcomeSizeValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
         </div>
+        <label>Character Position</label>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <label for="createEventCharacterX" style="min-width:64px;">Left</label>
+          <input type="range" id="createEventCharacterX" min="0" max="60" step="1">
+          <span id="createEventCharacterXValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
+          <label for="createEventCharacterBottom" style="min-width:64px;">Bottom</label>
+          <input type="range" id="createEventCharacterBottom" min="-10" max="20" step="1">
+          <span id="createEventCharacterBottomValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
+          <label for="createEventCharacterHeight" style="min-width:64px;">Height</label>
+          <input type="range" id="createEventCharacterHeight" min="20" max="110" step="1">
+          <span id="createEventCharacterHeightValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
+        </div>
         <label for="createEventStartText">Start Booth Button Text</label>
         <input type="text" id="createEventStartText" placeholder="Touch to start">
         <label for="createEventCaptureText">Take Photo Button Text</label>
@@ -2371,6 +3547,8 @@
           <h4 style="margin:0 0 8px;">Event-only Assets</h4>
           <label for="createEventBackgrounds">Backgrounds</label>
           <input type="file" id="createEventBackgrounds" accept="image/*" multiple>
+          <label for="createEventGreenBackgrounds">Green Screen Backgrounds</label>
+          <input type="file" id="createEventGreenBackgrounds" accept="image/*" multiple>
           <label for="createEventOverlays">Overlays</label>
           <input type="file" id="createEventOverlays" accept="image/*" multiple>
           <label for="createEventTemplates">Templates</label>
@@ -2383,9 +3561,22 @@
         </div>
       </div>
     </div>
+    <div id="quickStartModal" class="modal-backdrop">
+      <div class="modal-card">
+        <h3>Quick Start</h3>
+        <p style="margin:0 0 10px; color:#66759f;">Choose a theme to start immediately.</p>
+        <label for="quickStartThemeSelect">Theme</label>
+        <select id="quickStartThemeSelect"></select>
+        <div class="modal-footer">
+          <button type="button" id="quickStartCancel">Cancel</button>
+          <button type="button" id="quickStartConfirm" class="primary">Start Booth</button>
+        </div>
+      </div>
+    </div>
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
   <script type="module" src="scripts/app.js"></script>
 </body>
 

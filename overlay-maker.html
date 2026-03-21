@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photobooth Filter Maker</title>
+  <link rel="stylesheet" href="./fonts.css">
+  <style>
+    :root {
+      --bg: #f2f5ff;
+      --panel: rgba(255, 255, 255, 0.9);
+      --line: rgba(120, 138, 184, 0.2);
+      --text: #22314d;
+      --muted: #6a789d;
+      --accent: #ff6b2c;
+      --shadow: 0 28px 60px rgba(78, 97, 141, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body, "Aptos", system-ui, sans-serif);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 107, 44, 0.16), transparent 24%),
+        radial-gradient(circle at top right, rgba(110, 169, 255, 0.18), transparent 28%),
+        linear-gradient(180deg, #eff3ff 0%, #e3ebff 100%);
+    }
+
+    .shell {
+      width: min(1320px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-family: var(--font-heading, "Aptos Display", system-ui, sans-serif);
+      font-size: clamp(2rem, 5vw, 4rem);
+      line-height: 0.95;
+      max-width: 10ch;
+    }
+
+    .hero-copy p:last-child {
+      margin-top: 12px;
+      max-width: 60ch;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: grid;
+      gap: 10px;
+      min-width: 250px;
+      padding: 16px;
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .button,
+    .hero-actions a {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 18px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      font: inherit;
+      transition: transform 160ms ease;
+    }
+
+    .button:hover,
+    .hero-actions a:hover {
+      transform: translateY(-1px);
+    }
+
+    .button-primary,
+    .hero-actions a {
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), #ff935a);
+      box-shadow: 0 16px 28px rgba(255, 107, 44, 0.24);
+    }
+
+    .button-secondary {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.78);
+      border-color: var(--line);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 390px minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .panel {
+      border-radius: 28px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      backdrop-filter: blur(18px);
+    }
+
+    .controls,
+    .preview-panel {
+      display: grid;
+      gap: 16px;
+    }
+
+    .section-head p {
+      margin-top: 6px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(120, 138, 184, 0.24);
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--text);
+      padding: 13px 14px;
+      font: inherit;
+    }
+
+    input[type="range"] {
+      padding: 0;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .size-chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #f6f8ff;
+      border: 1px solid rgba(120, 138, 184, 0.16);
+      color: #4a587d;
+      font-size: 0.9rem;
+    }
+
+    .meta-card,
+    .manifest-box {
+      display: grid;
+      gap: 8px;
+      padding: 16px;
+      border-radius: 20px;
+      background: #f6f8ff;
+      border: 1px dashed rgba(120, 138, 184, 0.28);
+    }
+
+    .meta-card code,
+    .manifest-line {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      word-break: break-word;
+    }
+
+    .preview-stage {
+      display: grid;
+      place-items: center;
+      min-height: 680px;
+      border-radius: 26px;
+      padding: 24px;
+      overflow: auto;
+      border: 1px solid rgba(120, 138, 184, 0.16);
+      background:
+        linear-gradient(45deg, rgba(188, 201, 235, 0.22) 25%, transparent 25%, transparent 75%, rgba(188, 201, 235, 0.22) 75%),
+        linear-gradient(45deg, rgba(188, 201, 235, 0.22) 25%, transparent 25%, transparent 75%, rgba(188, 201, 235, 0.22) 75%),
+        linear-gradient(180deg, rgba(247, 249, 255, 0.96), rgba(232, 238, 252, 0.96));
+      background-position: 0 0, 16px 16px, 0 0;
+      background-size: 32px 32px, 32px 32px, auto;
+    }
+
+    #previewCanvas {
+      display: block;
+      width: min(100%, 540px);
+      height: auto;
+      border-radius: 26px;
+      box-shadow: 0 22px 42px rgba(92, 113, 160, 0.18);
+      background: transparent;
+    }
+
+    .preview-notes {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    @media (max-width: 1024px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        flex-direction: column;
+        align-items: start;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .shell {
+        width: min(100% - 16px, 1320px);
+        padding-top: 16px;
+      }
+
+      .panel {
+        padding: 16px;
+        border-radius: 22px;
+      }
+
+      .preview-stage {
+        min-height: 460px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Filter Builder</p>
+        <h1>Make the overlay feel enhanced, fast.</h1>
+        <p>Pick a vibe, type a line, nudge the color and intensity, then export a transparent PNG for `Decemeberbooth-clean`.</p>
+      </div>
+      <div class="hero-actions">
+        <a href="./index.html">Back to Booth Admin</a>
+        <button id="downloadButton" class="button button-primary" type="button">Download Overlay PNG</button>
+        <button id="copyManifestButton" class="button button-secondary" type="button">Copy Manifest Line</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel controls">
+        <div class="section-head">
+          <h2>Quick Controls</h2>
+          <p>This version is intentionally small. The style preset does most of the design work.</p>
+        </div>
+
+        <div class="field-grid">
+          <label>
+            Overlay name
+            <input id="overlayName" type="text" value="party-pop-filter">
+          </label>
+
+          <label>
+            Filter style
+            <select id="stylePreset">
+              <optgroup label="Wedding Expo">
+                <option value="bridal-soft" selected>Bridal Soft Glow</option>
+                <option value="rose-gold-toast">Rose Gold Toast</option>
+                <option value="something-blue">Something Blue</option>
+                <option value="garden-romance">Garden Romance</option>
+                <option value="black-tie-love">Black Tie Love</option>
+                <option value="champagne-sparkle">Champagne Sparkle</option>
+                <option value="aisle-afterglow">Aisle Afterglow</option>
+                <option value="bride-tribe">Bride Tribe</option>
+                <option value="after-party-bride">After Party Bride</option>
+              </optgroup>
+              <optgroup label="General">
+                <option value="party-pop">Party Pop</option>
+                <option value="dreamy-neon">Dreamy Neon</option>
+                <option value="frosted-glow">Frosted Glow</option>
+                <option value="golden-glam">Golden Glam</option>
+                <option value="game-day-hype">Game Day Hype</option>
+              </optgroup>
+            </select>
+          </label>
+
+          <label>
+            Headline
+            <input id="headline" type="text" value="Let’s Go">
+          </label>
+
+          <label>
+            Accent color
+            <input id="accentColor" type="color" value="#ff6b2c">
+          </label>
+
+          <label>
+            Enhancement intensity
+            <input id="intensity" type="range" min="30" max="100" step="5" value="75">
+          </label>
+        </div>
+
+        <div class="chip-row">
+          <span class="size-chip">Portrait export: `1536 x 2048`</span>
+          <span class="size-chip">Transparent PNG</span>
+        </div>
+
+        <button id="resetButton" class="button button-secondary" type="button">Reset</button>
+
+        <div class="meta-card">
+          <strong>Recommended destination</strong>
+          <code id="suggestedPath">assets/general/wedding/overlays/bridal-soft.png</code>
+          <span>Drop the file into an `overlays/` folder and add it to `overlays.json`.</span>
+        </div>
+      </section>
+
+      <section class="panel preview-panel">
+        <div class="section-head">
+          <h2>Preview</h2>
+          <p>The preview is still transparent. The checkerboard is just there so you can see the filter treatment clearly.</p>
+        </div>
+
+        <div class="preview-stage">
+          <canvas id="previewCanvas" width="540" height="720"></canvas>
+        </div>
+
+        <div class="manifest-box">
+          <strong>Manifest entry</strong>
+          <div id="manifestLine" class="manifest-line">"bridal-soft.png",</div>
+        </div>
+
+        <div class="preview-notes">
+          <p>1. Pick the vibe preset.</p>
+          <p>2. Type a short line.</p>
+          <p>3. Export the PNG and add the filename to the target folder’s `overlays.json`.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const EXPORT_SIZE = { width: 1536, height: 2048 };
+
+    const STYLE_PRESETS = {
+      "party-pop": {
+        headline: "Let’s Go",
+        accent: "#ff6b2c",
+        sparkleCount: 22,
+        confettiCount: 26,
+        ring: false,
+        bandGlow: true,
+        textColor: "#ffffff",
+        subColor: "#fff2d8",
+        sticker: "POP",
+      },
+      "dreamy-neon": {
+        headline: "Glow Up",
+        accent: "#ff4fd8",
+        sparkleCount: 18,
+        confettiCount: 0,
+        ring: true,
+        bandGlow: false,
+        textColor: "#fefbff",
+        subColor: "#9ee7ff",
+        sticker: "NEON",
+      },
+      "frosted-glow": {
+        headline: "Snow Day",
+        accent: "#8fd8ff",
+        sparkleCount: 28,
+        confettiCount: 0,
+        ring: true,
+        bandGlow: false,
+        textColor: "#ffffff",
+        subColor: "#dff7ff",
+        sticker: "COZY",
+      },
+      "golden-glam": {
+        headline: "Golden Hour",
+        accent: "#ffb347",
+        sparkleCount: 20,
+        confettiCount: 12,
+        ring: true,
+        bandGlow: true,
+        textColor: "#fff9ef",
+        subColor: "#ffe1a6",
+        sticker: "VIP",
+      },
+      "game-day-hype": {
+        headline: "Game Day",
+        accent: "#56d46d",
+        sparkleCount: 10,
+        confettiCount: 18,
+        ring: false,
+        bandGlow: true,
+        textColor: "#ffffff",
+        subColor: "#b6ffc1",
+        sticker: "HYPE",
+      },
+      "bridal-soft": {
+        headline: "Bride Vibes",
+        accent: "#ff8fb1",
+        sparkleCount: 24,
+        confettiCount: 8,
+        ring: true,
+        bandGlow: false,
+        textColor: "#fffafd",
+        subColor: "#ffd9e6",
+        sticker: "LOVE",
+        footer: "Wedding Expo",
+      },
+      "rose-gold-toast": {
+        headline: "Sip Sparkle Repeat",
+        accent: "#e8a07c",
+        sparkleCount: 22,
+        confettiCount: 10,
+        ring: true,
+        bandGlow: false,
+        textColor: "#fff8f5",
+        subColor: "#ffd8c8",
+        sticker: "CHEERS",
+        footer: "Wedding Expo",
+      },
+      "something-blue": {
+        headline: "Something Blue",
+        accent: "#86b8ff",
+        sparkleCount: 26,
+        confettiCount: 0,
+        ring: true,
+        bandGlow: false,
+        textColor: "#fdfefe",
+        subColor: "#d9ebff",
+        sticker: "BRIDE",
+        footer: "Wedding Expo",
+      },
+      "garden-romance": {
+        headline: "Meet Me at the Aisle",
+        accent: "#9abf96",
+        sparkleCount: 20,
+        confettiCount: 6,
+        ring: false,
+        bandGlow: true,
+        textColor: "#fffef9",
+        subColor: "#e6f1db",
+        sticker: "BLOOM",
+        footer: "Wedding Expo",
+      },
+      "black-tie-love": {
+        headline: "Black Tie Energy",
+        accent: "#d4b06a",
+        sparkleCount: 12,
+        confettiCount: 4,
+        ring: true,
+        bandGlow: false,
+        textColor: "#fffdf8",
+        subColor: "#ecd8ad",
+        sticker: "FORMAL",
+        footer: "Wedding Expo",
+      },
+      "champagne-sparkle": {
+        headline: "Engaged Era",
+        accent: "#f0c980",
+        sparkleCount: 28,
+        confettiCount: 12,
+        ring: true,
+        bandGlow: true,
+        textColor: "#fffaf0",
+        subColor: "#ffe8bd",
+        sticker: "VIP",
+        footer: "Wedding Expo",
+      },
+      "aisle-afterglow": {
+        headline: "Just Said Yes",
+        accent: "#ffb3c7",
+        sparkleCount: 30,
+        confettiCount: 6,
+        ring: true,
+        bandGlow: true,
+        textColor: "#fffafd",
+        subColor: "#ffe2ea",
+        sticker: "GLOW",
+        footer: "Wedding Expo",
+      },
+      "bride-tribe": {
+        headline: "Bride Tribe",
+        accent: "#c38cff",
+        sparkleCount: 18,
+        confettiCount: 16,
+        ring: false,
+        bandGlow: true,
+        textColor: "#fffaff",
+        subColor: "#ead8ff",
+        sticker: "SQUAD",
+        footer: "Wedding Expo",
+      },
+      "after-party-bride": {
+        headline: "Bride After Dark",
+        accent: "#ff73c5",
+        sparkleCount: 18,
+        confettiCount: 18,
+        ring: true,
+        bandGlow: false,
+        textColor: "#fffaff",
+        subColor: "#ffd5f1",
+        sticker: "PARTY",
+        footer: "Wedding Expo",
+      },
+    };
+
+    const defaults = {
+      overlayName: "bridal-soft",
+      stylePreset: "bridal-soft",
+      headline: "Bride Vibes",
+      accentColor: "#ff8fb1",
+      intensity: 75,
+    };
+
+    const elements = {
+      overlayName: document.getElementById("overlayName"),
+      stylePreset: document.getElementById("stylePreset"),
+      headline: document.getElementById("headline"),
+      accentColor: document.getElementById("accentColor"),
+      intensity: document.getElementById("intensity"),
+      previewCanvas: document.getElementById("previewCanvas"),
+      suggestedPath: document.getElementById("suggestedPath"),
+      manifestLine: document.getElementById("manifestLine"),
+      downloadButton: document.getElementById("downloadButton"),
+      copyManifestButton: document.getElementById("copyManifestButton"),
+      resetButton: document.getElementById("resetButton"),
+    };
+
+    elements.stylePreset.addEventListener("change", applyStylePreset);
+    elements.overlayName.addEventListener("input", syncPreview);
+    elements.headline.addEventListener("input", syncPreview);
+    elements.accentColor.addEventListener("input", syncPreview);
+    elements.intensity.addEventListener("input", syncPreview);
+    elements.downloadButton.addEventListener("click", downloadOverlay);
+    elements.copyManifestButton.addEventListener("click", copyManifestLine);
+    elements.resetButton.addEventListener("click", resetForm);
+
+    resetForm();
+
+    function resetForm() {
+      elements.overlayName.value = defaults.overlayName;
+      elements.stylePreset.value = defaults.stylePreset;
+      elements.headline.value = defaults.headline;
+      elements.accentColor.value = defaults.accentColor;
+      elements.intensity.value = String(defaults.intensity);
+      syncPreview();
+    }
+
+    function applyStylePreset() {
+      const preset = STYLE_PRESETS[elements.stylePreset.value];
+      if (!preset) {
+        return;
+      }
+      elements.overlayName.value = slugify(elements.stylePreset.value);
+      elements.headline.value = preset.headline;
+      elements.accentColor.value = preset.accent;
+      syncPreview();
+    }
+
+    function getState() {
+      const preset = STYLE_PRESETS[elements.stylePreset.value] || STYLE_PRESETS[defaults.stylePreset];
+      return {
+        presetKey: elements.stylePreset.value,
+        overlayName: slugify(elements.overlayName.value || elements.stylePreset.value),
+        headline: (elements.headline.value || preset.headline).trim().slice(0, 26),
+        accentColor: elements.accentColor.value || preset.accent,
+        intensity: clamp(Number(elements.intensity.value) || defaults.intensity, 30, 100),
+        preset,
+      };
+    }
+
+    function syncPreview() {
+      const state = getState();
+      const previewWidth = 540;
+      const previewHeight = Math.round(previewWidth * (EXPORT_SIZE.height / EXPORT_SIZE.width));
+      elements.previewCanvas.width = previewWidth;
+      elements.previewCanvas.height = previewHeight;
+      drawOverlay(elements.previewCanvas.getContext("2d"), previewWidth, previewHeight, state);
+      elements.manifestLine.textContent = `"${state.overlayName}.png",`;
+      elements.suggestedPath.textContent = `${getSuggestedFolder(state.presetKey)}${state.overlayName}.png`;
+    }
+
+    function drawOverlay(context, width, height, state) {
+      context.clearRect(0, 0, width, height);
+
+      const intensity = state.intensity / 100;
+      const accent = state.accentColor;
+      const preset = state.preset;
+      const margin = width * 0.05;
+
+      drawGlowWash(context, width, height, accent, intensity);
+      drawSoftOrbs(context, width, height, accent, intensity, preset);
+
+      if (preset.ring) {
+        drawRing(context, width, height, accent, intensity);
+      }
+
+      if (preset.bandGlow) {
+        drawBands(context, width, height, accent, intensity);
+      }
+
+      drawSparkles(context, width, height, accent, intensity, preset.sparkleCount);
+      drawConfetti(context, width, height, accent, intensity, preset.confettiCount);
+      drawSticker(context, width, height, preset.sticker, accent, intensity, margin);
+      drawHeadline(context, width, height, state.headline, preset, accent, intensity);
+    }
+
+    function drawGlowWash(context, width, height, accent, intensity) {
+      const topGlow = context.createRadialGradient(width * 0.2, height * 0.12, width * 0.03, width * 0.2, height * 0.12, width * 0.42);
+      topGlow.addColorStop(0, withAlpha(accent, 0.28 * intensity));
+      topGlow.addColorStop(1, "rgba(255,255,255,0)");
+      context.fillStyle = topGlow;
+      context.fillRect(0, 0, width, height);
+
+      const bottomGlow = context.createLinearGradient(0, height * 0.7, 0, height);
+      bottomGlow.addColorStop(0, "rgba(255,255,255,0)");
+      bottomGlow.addColorStop(1, withAlpha(accent, 0.22 * intensity));
+      context.fillStyle = bottomGlow;
+      context.fillRect(0, 0, width, height);
+    }
+
+    function drawSoftOrbs(context, width, height, accent, intensity, preset) {
+      const orbColor = withAlpha(accent, 0.14 * intensity);
+      const cyanColor = `rgba(120, 220, 255, ${0.12 * intensity})`;
+      const positions = [
+        [width * 0.16, height * 0.24, width * 0.18, orbColor],
+        [width * 0.82, height * 0.18, width * 0.14, cyanColor],
+        [width * 0.76, height * 0.78, width * 0.2, orbColor],
+      ];
+
+      if (presetKeyNeedsExtraOrb(preset)) {
+        positions.push([width * 0.28, height * 0.84, width * 0.16, cyanColor]);
+      }
+
+      for (const [x, y, radius, color] of positions) {
+        const glow = context.createRadialGradient(x, y, radius * 0.1, x, y, radius);
+        glow.addColorStop(0, color);
+        glow.addColorStop(1, "rgba(255,255,255,0)");
+        context.fillStyle = glow;
+        context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+      }
+    }
+
+    function presetKeyNeedsExtraOrb(preset) {
+      return preset.sticker === "LOVE" || preset.sticker === "COZY";
+    }
+
+    function drawRing(context, width, height, accent, intensity) {
+      context.save();
+      context.lineWidth = width * 0.028;
+      context.strokeStyle = withAlpha(accent, 0.75 * intensity);
+      context.shadowBlur = width * 0.05;
+      context.shadowColor = withAlpha(accent, 0.45 * intensity);
+      roundedRectPath(context, width * 0.06, height * 0.05, width * 0.88, height * 0.9, width * 0.08);
+      context.stroke();
+      context.restore();
+    }
+
+    function drawBands(context, width, height, accent, intensity) {
+      context.save();
+      const bandHeight = height * 0.12;
+      context.fillStyle = withAlpha(accent, 0.16 * intensity);
+      roundRect(context, width * 0.05, height * 0.06, width * 0.9, bandHeight, 28, true, false);
+      roundRect(context, width * 0.07, height * 0.78, width * 0.86, height * 0.13, 30, true, false);
+      context.restore();
+    }
+
+    function drawSparkles(context, width, height, accent, intensity, count) {
+      context.save();
+      context.strokeStyle = withAlpha(accent, 0.75 * intensity);
+      context.fillStyle = withAlpha("#ffffff", 0.9 * intensity);
+      for (let index = 0; index < count; index += 1) {
+        const seed = index + 1;
+        const x = pseudo(seed * 13.1) * width;
+        const y = pseudo(seed * 22.7) * height;
+        const size = width * (0.006 + pseudo(seed * 8.2) * 0.015);
+        drawSparkle(context, x, y, size);
+      }
+      context.restore();
+    }
+
+    function drawSparkle(context, x, y, size) {
+      context.beginPath();
+      context.moveTo(x, y - size);
+      context.lineTo(x, y + size);
+      context.moveTo(x - size, y);
+      context.lineTo(x + size, y);
+      context.stroke();
+      context.beginPath();
+      context.arc(x, y, size * 0.18, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    function drawConfetti(context, width, height, accent, intensity, count) {
+      if (!count) {
+        return;
+      }
+
+      context.save();
+      for (let index = 0; index < count; index += 1) {
+        const seed = index + 1;
+        const x = pseudo(seed * 17.3) * width;
+        const y = pseudo(seed * 29.9) * height;
+        const w = width * (0.008 + pseudo(seed * 7.1) * 0.016);
+        const h = w * (0.4 + pseudo(seed * 9.5));
+        const rotation = pseudo(seed * 5.6) * Math.PI;
+        const color = index % 2 === 0 ? withAlpha(accent, 0.65 * intensity) : `rgba(255,255,255,${0.6 * intensity})`;
+        context.save();
+        context.translate(x, y);
+        context.rotate(rotation);
+        context.fillStyle = color;
+        context.fillRect(-w / 2, -h / 2, w, h);
+        context.restore();
+      }
+      context.restore();
+    }
+
+    function drawSticker(context, width, height, text, accent, intensity, margin) {
+      context.save();
+      const stickerWidth = width * 0.22;
+      const stickerHeight = height * 0.055;
+      const x = width - margin - stickerWidth;
+      const y = margin + height * 0.02;
+      context.fillStyle = `rgba(22, 28, 46, ${0.72 * intensity})`;
+      context.shadowBlur = width * 0.025;
+      context.shadowColor = withAlpha(accent, 0.25 * intensity);
+      roundRect(context, x, y, stickerWidth, stickerHeight, stickerHeight / 2, true, false);
+      context.shadowBlur = 0;
+      context.strokeStyle = withAlpha("#ffffff", 0.24 * intensity);
+      context.lineWidth = 2;
+      roundRect(context, x, y, stickerWidth, stickerHeight, stickerHeight / 2, false, true);
+      context.fillStyle = "#ffffff";
+      context.font = `700 ${Math.round(width * 0.03)}px var(--font-body, sans-serif)`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(text, x + stickerWidth / 2, y + stickerHeight / 2 + 1);
+      context.restore();
+    }
+
+    function drawHeadline(context, width, height, headline, preset, accent, intensity) {
+      const textY = height * 0.84;
+      context.save();
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.lineJoin = "round";
+      context.lineWidth = width * 0.018;
+      context.strokeStyle = withAlpha(accent, 0.5 * intensity);
+      context.fillStyle = preset.textColor;
+      context.shadowBlur = width * 0.045;
+      context.shadowColor = withAlpha(accent, 0.35 * intensity);
+      context.font = `800 ${Math.round(width * 0.085)}px var(--font-heading, sans-serif)`;
+      context.strokeText(headline, width / 2, textY);
+      context.fillText(headline, width / 2, textY);
+      context.shadowBlur = 0;
+      context.fillStyle = preset.subColor;
+      context.font = `700 ${Math.round(width * 0.032)}px var(--font-body, sans-serif)`;
+      context.fillText(preset.footer || "Photobooth Filter", width / 2, height * 0.905);
+      context.restore();
+    }
+
+    async function downloadOverlay() {
+      const state = getState();
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = EXPORT_SIZE.width;
+      exportCanvas.height = EXPORT_SIZE.height;
+      drawOverlay(exportCanvas.getContext("2d"), EXPORT_SIZE.width, EXPORT_SIZE.height, state);
+      const blob = await new Promise((resolve) => exportCanvas.toBlob(resolve, "image/png"));
+      if (!blob) {
+        return;
+      }
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${state.overlayName}.png`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+
+    async function copyManifestLine() {
+      try {
+        await navigator.clipboard.writeText(elements.manifestLine.textContent);
+        elements.copyManifestButton.textContent = "Copied";
+      } catch (_error) {
+        elements.copyManifestButton.textContent = "Copy Failed";
+      }
+
+      setTimeout(() => {
+        elements.copyManifestButton.textContent = "Copy Manifest Line";
+      }, 1200);
+    }
+
+    function roundedRectPath(context, x, y, width, height, radius) {
+      context.beginPath();
+      context.moveTo(x + radius, y);
+      context.arcTo(x + width, y, x + width, y + height, radius);
+      context.arcTo(x + width, y + height, x, y + height, radius);
+      context.arcTo(x, y + height, x, y, radius);
+      context.arcTo(x, y, x + width, y, radius);
+      context.closePath();
+    }
+
+    function roundRect(context, x, y, width, height, radius, fill, stroke) {
+      roundedRectPath(context, x, y, width, height, radius);
+      if (fill) context.fill();
+      if (stroke) context.stroke();
+    }
+
+    function slugify(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "") || "overlay";
+    }
+
+    function getSuggestedFolder(presetKey) {
+      const weddingPresets = new Set([
+        "bridal-soft",
+        "rose-gold-toast",
+        "something-blue",
+        "garden-romance",
+        "black-tie-love",
+        "champagne-sparkle",
+        "aisle-afterglow",
+        "bride-tribe",
+        "after-party-bride",
+      ]);
+
+      if (weddingPresets.has(presetKey)) {
+        return "assets/general/wedding/overlays/";
+      }
+
+      return "assets/holidays/winter/christmas/overlays/";
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function withAlpha(hex, alpha) {
+      const normalized = String(hex || "#ff6b2c").replace("#", "");
+      const expanded = normalized.length === 3 ? normalized.split("").map((part) => part + part).join("") : normalized;
+      const numeric = Number.parseInt(expanded, 16);
+      const red = (numeric >> 16) & 255;
+      const green = (numeric >> 8) & 255;
+      const blue = numeric & 255;
+      return `rgba(${red}, ${green}, ${blue}, ${clamp(alpha, 0, 1)})`;
+    }
+
+    function pseudo(value) {
+      const raw = Math.sin(value * 12.9898) * 43758.5453;
+      return raw - Math.floor(raw);
+    }
+  </script>
+</body>
+</html>

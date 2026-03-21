@@ -1,0 +1,10 @@
+[
+  {
+    "src": "timeless-romance-strip-template.svg",
+    "layout": "photo_strip_3"
+  },
+  {
+    "src": "timeless-romance-single-template.svg",
+    "layout": "single_photo"
+  }
+]

@@ -14,6 +14,7 @@ const os = require('os');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+const HOST = process.env.HOST || "0.0.0.0";
 const DATA_ROOT = process.env.DATA_ROOT || __dirname;
 
 // Directories
@@ -179,12 +180,13 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 // Serve static files from root directory
 app.use(express.static(__dirname));
 
-function startServer(port = PORT) {
-  // Start server - listen on all network interfaces (0.0.0.0)
-  const server = app.listen(port, '0.0.0.0', () => {
+function startServer(port = PORT, host = HOST) {
+  // Start server, defaulting to all interfaces for kiosk/device access.
+  const server = app.listen(port, host, () => {
     const info = server.address();
     const resolvedPort = info && typeof info === 'object' ? info.port : port;
-    const networkAddresses = getNetworkAddresses();
+    const showNetworkAddresses = host === "0.0.0.0" || host === "::";
+    const networkAddresses = showNetworkAddresses ? getNetworkAddresses() : [];
 
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🎉 PHOTOBOOTH SERVER RUNNING');

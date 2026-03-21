@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="2160" viewBox="0 0 720 2160" fill="none">
+<rect width="720" height="2160" fill="#fffdf9"/>
+<rect x="24" y="24" width="672" height="2112" rx="18" fill="#fffefb" stroke="#cfd8cf" stroke-width="4"/>
+<g opacity="0.9">
+<ellipse cx="586" cy="90" rx="26" ry="58" fill="#b8c9b5" transform="rotate(26 586 90)"/>
+<ellipse cx="632" cy="136" rx="22" ry="46" fill="#92a98f" transform="rotate(34 632 136)"/>
+<ellipse cx="546" cy="144" rx="22" ry="48" fill="#d9dfc6" transform="rotate(-8 546 144)"/>
+<path d="M520 42 C560 132 604 178 660 222" stroke="#8fa086" stroke-width="4" fill="none"/>
+<ellipse cx="118" cy="2020" rx="18" ry="38" fill="#b8c9b5" transform="rotate(-28 118 2020)"/>
+<ellipse cx="164" cy="1982" rx="16" ry="32" fill="#92a98f" transform="rotate(-10 164 1982)"/>
+</g>
+<text x="88" y="184" fill="#6f7c67" font-size="60" font-family="Italiana, serif" letter-spacing="10">GARDEN</text>
+<text x="144" y="244" fill="#8ca084" font-size="58" font-style="italic" font-family="Cormorant Garamond, serif">vows</text>
+<text x="88" y="316" fill="#6f7c67" font-size="48" font-family="Cormorant Garamond, serif">Olivia and Nicolas</text>
+<rect x="82" y="432" width="556" height="398" rx="10" fill="none" stroke="#cad7ca" stroke-width="4"/>
+<rect x="82" y="882" width="556" height="398" rx="10" fill="none" stroke="#cad7ca" stroke-width="4"/>
+<rect x="82" y="1332" width="556" height="398" rx="10" fill="none" stroke="#cad7ca" stroke-width="4"/>
+<rect x="82" y="1808" width="556" height="252" rx="10" fill="#f7fbf5"/>
+<text x="360" y="1916" text-anchor="middle" fill="#6f7c67" font-size="52" font-family="Cormorant Garamond, serif">Olivia &amp; Nicolas</text>
+<text x="360" y="1980" text-anchor="middle" fill="#9bac93" font-size="26" font-family="Manrope, Arial, sans-serif" letter-spacing="6">SEPTEMBER 2026</text>
+<text x="360" y="2040" text-anchor="middle" fill="#b0b89e" font-size="24" font-family="Manrope, Arial, sans-serif" letter-spacing="5">GARDEN VOWS</text>
+<rect x="0" y="0" width="720" height="2160" fill="url(#checker)" opacity="0.42"/>
+<defs>
+  <pattern id="checker" width="24" height="24" patternUnits="userSpaceOnUse">
+    <rect width="24" height="24" fill="#ffffff"/>
+    <rect width="12" height="12" fill="#edf1eb"/>
+    <rect x="12" y="12" width="12" height="12" fill="#edf1eb"/>
+  </pattern>
+</defs>
+</svg>

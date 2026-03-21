@@ -1,17 +1,48 @@
 import { buildEventFolderPath } from "./cloudinary-utils.mjs";
 import { clampZoom } from "./camera-utils.mjs";
-import { applyThemeText, getEventTextOverrides, hasEventTextOverrides, mergeUniqueUrls } from "./event-utils.mjs";
+import { applyThemeText, getEventTextOverrides, hasEventTextOverrides, inferThemeEventStyle, mergeUniqueUrls, normalizeEventStyle, pairingSupportsEventStyle } from "./event-utils.mjs";
+import { formatRecordingTime } from "./recording-utils.mjs";
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
+function isLocalDevHost() {
+  const hostname = window.location.hostname || "";
+  return hostname === "localhost" || hostname === "127.0.0.1";
+}
+
+async function clearPhotoboothServiceWorkerState() {
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+  } catch (error) {
+    console.warn("Service worker unregister failed:", error);
+  }
+
+  if (!("caches" in window)) return;
+
+  try {
+    const cacheKeys = await caches.keys();
+    const photoboothCaches = cacheKeys.filter((key) => key.startsWith("pb-"));
+    await Promise.all(photoboothCaches.map((key) => caches.delete(key)));
+  } catch (error) {
+    console.warn("Service worker cache cleanup failed:", error);
+  }
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    if (isLocalDevHost()) {
+      await clearPhotoboothServiceWorkerState();
+      console.log("Service worker disabled for local development.");
+      return;
+    }
+
     try {
-      const swUrl = new URL('sw.js', window.location.href);
+      const swUrl = new URL("sw.js", window.location.href);
       const reg = await navigator.serviceWorker.register(swUrl.href);
       // Nudge the SW to check for updates on load
       try { await reg.update(); } catch (_) { }
-      console.log('SW registered:', reg && reg.scope);
+      console.log("SW registered:", reg && reg.scope);
     } catch (registrationError) {
-      console.warn('SW registration failed:', registrationError);
+      console.warn("SW registration failed:", registrationError);
     }
   });
 }
@@ -22,6 +53,8 @@ let themes = {
     themes: {
       basic: {
         name: "✨ Basic",
+        eventTypes: ["general", "wedding", "expo", "community"],
+        fontPairingStyle: "general",
         accent: "#3f51b5",
         accent2: "#ffffff",
         font: "'Comic Neue', cursive",
@@ -39,6 +72,8 @@ let themes = {
       },
       birthday: {
         name: "🎂 Birthday",
+        eventTypes: ["party", "general"],
+        fontPairingStyle: "party",
         accent: "pink",
         accent2: "white",
         font: "'Comic Neue', cursive",
@@ -56,11 +91,107 @@ let themes = {
       }
     }
   },
+  wedding: {
+    name: "💍 Wedding",
+    themes: {
+      timeless: {
+        name: "🤍 Timeless Romance",
+        eventTypes: ["wedding"],
+        fontPairingStyle: "wedding",
+        accent: "#d7b48a",
+        accent2: "#fffaf4",
+        fontHeading: "'Playfair Display', serif",
+        fontBody: "'Source Sans 3', sans-serif",
+        background: "assets/wedding/timeless-romance/backgrounds/",
+        backgroundFolder: "assets/wedding/timeless-romance/backgrounds/",
+        logo: "",
+        overlaysFolder: "assets/wedding/timeless-romance/overlays/",
+        templatesFolder: "assets/wedding/timeless-romance/templates/",
+        welcome: {
+          title: "Celebrate the Moment",
+          portrait: "",
+          landscape: "",
+          prompt: "Touch to begin"
+        },
+        vibeSummary: "Classic, polished, formal"
+      },
+      romantic: {
+        name: "🌿 Garden Vows",
+        eventTypes: ["wedding"],
+        fontPairingStyle: "wedding",
+        accent: "#93b29b",
+        accent2: "#fffdf8",
+        fontHeading: "'Great Vibes', cursive",
+        fontBody: "'Lora', serif",
+        background: "assets/wedding/garden-vows/backgrounds/",
+        backgroundFolder: "assets/wedding/garden-vows/backgrounds/",
+        logo: "",
+        overlaysFolder: "assets/wedding/garden-vows/overlays/",
+        templatesFolder: "assets/wedding/garden-vows/templates/",
+        welcome: {
+          title: "Love Looks Good Here",
+          portrait: "",
+          landscape: "",
+          prompt: "Touch to start"
+        },
+        vibeSummary: "Soft, romantic, photo-forward"
+      }
+    }
+  },
+  expo: {
+    name: "🎪 Expo",
+    themes: {
+      brandStudio: {
+        name: "📣 Brand Studio",
+        eventTypes: ["expo"],
+        fontPairingStyle: "expo",
+        accent: "#1f5eff",
+        accent2: "#f4f7ff",
+        fontHeading: "'Montserrat', sans-serif",
+        fontBody: "'Inter', sans-serif",
+        background: "assets/general/basic/backgrounds/",
+        backgroundFolder: "assets/general/basic/backgrounds/",
+        logo: "",
+        overlaysFolder: "assets/general/basic/overlays/",
+        templatesFolder: "assets/general/basic/templates/",
+        welcome: {
+          title: "Step In + Share",
+          portrait: "",
+          landscape: "",
+          prompt: "Tap to begin"
+        },
+        vibeSummary: "Clean, branded, high traffic"
+      },
+      leadCapture: {
+        name: "🚀 Lead Capture",
+        eventTypes: ["expo"],
+        fontPairingStyle: "expo",
+        accent: "#0f766e",
+        accent2: "#f5fffd",
+        fontHeading: "'Raleway', sans-serif",
+        fontBody: "'Open Sans', sans-serif",
+        background: "assets/general/basic/backgrounds/",
+        backgroundFolder: "assets/general/basic/backgrounds/",
+        logo: "",
+        overlaysFolder: "assets/general/basic/overlays/",
+        templatesFolder: "assets/general/basic/templates/",
+        welcome: {
+          title: "Fast Photos, Fast Follow-Up",
+          portrait: "",
+          landscape: "",
+          prompt: "Touch to start"
+        },
+        vibeSummary: "Readable, efficient, promo-ready"
+      }
+    }
+  },
   school: {
     name: "🏫 School",
     themes: {
       hawks: {
         name: "🦅 Hawks",
+        eventTypes: ["community"],
+        fontPairingStyle: "community",
         accent: "#041E42",
         accent2: "white",
         font: "'Comic Neue', cursive",
@@ -77,13 +208,15 @@ let themes = {
       },
       ane: {
         name: "🏫 ANE",
+        eventTypes: ["community"],
+        fontPairingStyle: "community",
         accent: "#041E42",
         accent2: "#FFB81C",
         font: "'Comic Neue', cursive",
-        backgroundFolder: "assets/school/ANE/backgrounds/",
+        backgroundFolder: "",
         logo: "",
-        overlaysFolder: "assets/school/ANE/overlays",
-        templatesFolder: "assets/school/ANE/templates",
+        overlaysFolder: "assets/school/ANE/overlays/",
+        templatesFolder: "",
         welcome: {
           title: "ANE",
           portrait: "",
@@ -129,8 +262,8 @@ let themes = {
         templatesFolder: "assets/holidays/winter/christmas/templates/",
         welcome: {
           title: "Merry Christmas!",
-          portrait: "assets/holidays/winter/christmas/welcome/welcome-portrait.jpg",
-          landscape: "assets/holidays/winter/christmas/welcome/welcome-landscape.jpg",
+          portrait: "",
+          landscape: "",
           prompt: "Touch to start the fun!"
         }
       },
@@ -177,14 +310,14 @@ let themes = {
         accent: "#FFD700",
         accent2: "white",
         font: "'Comic Neue', cursive",
-        background: "assets/holidays/winter/newyear/backgrounds/fireworks-background.jpg",
-        logo: "assets/holidays/winter/newyear/logo/newyear-logo.png",
-        overlays: ["assets/holidays/winter/newyear/overlays/newyear-frame-1.png"],
-        templates: [{ src: "assets/holidays/winter/newyear/templates/photostrip-1.png", layout: "double_column" }],
+        background: "assets/holidays/winter/christmas/backgrounds/",
+        logo: "",
+        overlaysFolder: "assets/holidays/winter/christmas/overlays/",
+        templatesFolder: "assets/holidays/winter/christmas/templates/",
         welcome: {
           title: "Happy New Year!",
-          portrait: "assets/holidays/winter/newyear/welcome/welcome-portrait.jpg",
-          landscape: "assets/holidays/winter/newyear/welcome/welcome-landscape.jpg",
+          portrait: "",
+          landscape: "",
           prompt: "Start the countdown!"
         }
       },
@@ -215,7 +348,7 @@ themes.spring = {
       accent2: "white",
       font: "'Comic Neue', cursive",
       backgroundFolder: "assets/holidays/spring/st.patricksday/backgrounds/",
-      overlaysFolder: "assets/holidays/spring/st.patricksday/overlays/",
+      overlaysFolder: "",
       templatesFolder: "assets/holidays/spring/st.patricksday/templates/",
       welcome: {
         title: "Happy St. Patrick's Day!",
@@ -248,6 +381,14 @@ const BUILTIN_THEME_LOCATIONS = (() => {
 // --- DOM Element Cache ---
 const DOM = {
   adminScreen: document.getElementById('adminScreen'),
+  setupStatus: document.getElementById("setupStatus"),
+  statusCamera: document.getElementById("statusCamera"),
+  statusUpload: document.getElementById("statusUpload"),
+  statusSync: document.getElementById("statusSync"),
+  statusQueue: document.getElementById("statusQueue"),
+  setupTabEvent: document.getElementById("setupTabEvent"),
+  setupTabCapture: document.getElementById("setupTabCapture"),
+  setupTabShare: document.getElementById("setupTabShare"),
   boothScreen: document.getElementById('boothScreen'),
   boothHeader: document.getElementById('boothHeader'),
   boothControls: document.getElementById('controls'),
@@ -257,13 +398,53 @@ const DOM = {
   logo: document.getElementById('logo'),
   eventTitle: document.getElementById('eventTitle'),
   eventProfileSelect: document.getElementById("eventProfileSelect"),
+  createPathEventName: document.getElementById("createPathEventName"),
+  createPathEventType: document.getElementById("createPathEventType"),
+  createPathThemeType: document.getElementById("createPathThemeType"),
+  createPathThemeSelect: document.getElementById("createPathThemeSelect"),
+  createPathFontPairingSelect: document.getElementById("createPathFontPairingSelect"),
+  createPathFontNote: document.getElementById("createPathFontNote"),
+  createPathFontPreviewCards: document.getElementById("createPathFontPreviewCards"),
+  createPathAssetSummary: document.getElementById("createPathAssetSummary"),
+  createPathBackgrounds: document.getElementById("createPathBackgrounds"),
+  createPathGreenBackgrounds: document.getElementById("createPathGreenBackgrounds"),
+  createPathOverlays: document.getElementById("createPathOverlays"),
+  createPathTemplates: document.getElementById("createPathTemplates"),
+  createPathLogo: document.getElementById("createPathLogo"),
+  toggleThemeFavoriteBtn: document.getElementById("toggleThemeFavoriteBtn"),
+  eventPathCreateBtn: document.getElementById("eventPathCreateBtn"),
+  eventPathSelectBtn: document.getElementById("eventPathSelectBtn"),
+  eventPathCreatePanel: document.getElementById("eventPathCreatePanel"),
+  eventPathSelectPanel: document.getElementById("eventPathSelectPanel"),
   chooseEventBtn: document.getElementById("chooseEventBtn"),
   createEventBtn: document.getElementById("createEventBtn"),
+  quickStartBtn: document.getElementById("quickStartBtn"),
+  modeToggle: document.getElementById("modeToggle"),
+  quickStartModal: document.getElementById("quickStartModal"),
+  quickStartThemeSelect: document.getElementById("quickStartThemeSelect"),
+  quickStartCancel: document.getElementById("quickStartCancel"),
+  quickStartConfirm: document.getElementById("quickStartConfirm"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
+  lowLightToggle: document.getElementById("lowLightToggle"),
   greenScreenToggle: document.getElementById("greenScreenToggle"),
+  aiBackgroundToggle: document.getElementById("aiBackgroundToggle"),
+  enhancementModeSelect: document.getElementById("enhancementModeSelect"),
   cameraZoomInput: document.getElementById("cameraZoomInput"),
   cameraZoomValue: document.getElementById("cameraZoomValue"),
+  editLayoutBtn: document.getElementById("editLayoutBtn"),
+  editControls: document.getElementById("editControls"),
+  editControlsTitle: document.getElementById("editControlsTitle"),
+  editControlsClose: document.getElementById("editControlsClose"),
+  editScaleInput: document.getElementById("editScaleInput"),
+  editScaleValue: document.getElementById("editScaleValue"),
+  editPositionInput: document.getElementById("editPositionInput"),
+  editPositionValue: document.getElementById("editPositionValue"),
+  editPositionRow: document.getElementById("editPositionRow"),
+  editPositionLabel: document.getElementById("editPositionLabel"),
+  editModeExitBtn: document.getElementById("editModeExitBtn"),
+  adminModalBackdrop: document.getElementById("adminModalBackdrop"),
+  adminModalClose: document.getElementById("adminModalClose"),
   eventDateInput: document.getElementById('eventDateInput'),
   options: document.getElementById('options'),
   videoWrap: document.getElementById('videoWrap'),
@@ -272,6 +453,8 @@ const DOM = {
   liveOverlay: document.getElementById('liveOverlay'),
   character: document.getElementById("character"),
   silhouette: document.getElementById("silhouette"),
+  recordingOverlay: document.getElementById("recordingOverlay"),
+  recordingTimer: document.getElementById("recordingTimer"),
   captureBtn: document.getElementById('captureBtn'),
   countdownOverlay: document.getElementById('countdownOverlay'),
   flashOverlay: document.getElementById('flashOverlay'),
@@ -298,22 +481,32 @@ const DOM = {
   welcomeImg: document.getElementById('welcomeImg'),
   welcomeTitle: document.getElementById('welcomeTitle'),
   startButton: document.getElementById('startButton'),
+  videoInput: document.getElementById("videoInput"),
+  airdropZone: document.getElementById("airdropZone"),
+  videoImportPanel: document.getElementById("videoImportPanel"),
+  videoImportStatus: document.getElementById("videoImportStatus"),
+  booth360Panel: document.getElementById("booth360Panel"),
+  booth360Status: document.getElementById("booth360Status"),
+  booth360StatusText: document.getElementById("booth360StatusText"),
+  booth360StatusNote: document.getElementById("booth360StatusNote"),
+  start360Btn: document.getElementById("start360Btn"),
+  triggerZone: document.getElementById("triggerZone"),
   analytics: document.getElementById('analytics'),
   themeEditor: document.getElementById('themeEditor'),
   themeEditorActive: document.getElementById('themeEditorActive'),
   themeEditorEditing: document.getElementById('themeEditorEditing'),
   stylePreview: document.getElementById('stylePreview'),
+  stylePreviewWrap: document.getElementById('stylePreviewWrap'),
   stylePreviewHeading: document.getElementById('stylePreviewHeading'),
   stylePreviewSubheading: document.getElementById('stylePreviewSubheading'),
   stylePreviewBody: document.getElementById('stylePreviewBody'),
   stylePreviewButton: document.getElementById('stylePreviewButton'),
-  styleAccentSwatch: document.getElementById('styleAccentSwatch'),
-  styleAccent2Swatch: document.getElementById('styleAccent2Swatch'),
-  styleAccentPicker: document.getElementById('styleAccentPicker'),
-  styleAccent2Picker: document.getElementById('styleAccent2Picker'),
   quickPicksGrouped: document.getElementById('quickPicksGrouped'),
+  eventGalleryActions: document.getElementById("eventGalleryActions"),
   eventGalleryLink: document.getElementById('eventGalleryLink'),
   themeVibesSection: document.getElementById("themeVibesSection"),
+  themeSeasonalSection: document.getElementById("themeSeasonalSection"),
+  themeSeasonalContent: document.getElementById("themeSeasonalContent"),
   eventOnlyBackgrounds: document.getElementById("eventOnlyBackgrounds"),
   eventOnlyOverlays: document.getElementById("eventOnlyOverlays"),
   eventOnlyTemplates: document.getElementById("eventOnlyTemplates"),
@@ -324,6 +517,18 @@ const DOM = {
   welcomeTitleSizeInput: document.getElementById("welcomeTitleSizeInput"),
   welcomeTitleSizeValue: document.getElementById("welcomeTitleSizeValue"),
   fontPickerModal: document.getElementById('fontPickerModal'),
+  fontEventStyleSelect: document.getElementById("fontEventStyleSelect"),
+  editorFontPairingSelect: document.getElementById("editorFontPairingSelect"),
+  editorHeadingFontSelect: document.getElementById("editorHeadingFontSelect"),
+  editorBodyFontSelect: document.getElementById("editorBodyFontSelect"),
+  editorHeadingFontPreview: document.getElementById("editorHeadingFontPreview"),
+  editorBodyFontPreview: document.getElementById("editorBodyFontPreview"),
+  fontPairingContextLabel: document.getElementById("fontPairingContextLabel"),
+  fontPairingContextNote: document.getElementById("fontPairingContextNote"),
+  eventStylePairings: document.getElementById("eventStylePairings"),
+  themeStepLabel: document.getElementById("themeStepLabel"),
+  themeStepNote: document.getElementById("themeStepNote"),
+  openFontLibraryBtn: document.getElementById("openFontLibraryBtn"),
   createEventModal: document.getElementById("createEventModal"),
   createEventName: document.getElementById("createEventName"),
   createEventDate: document.getElementById("createEventDate"),
@@ -335,6 +540,7 @@ const DOM = {
   createEventStartText: document.getElementById("createEventStartText"),
   createEventCaptureText: document.getElementById("createEventCaptureText"),
   createEventBackgrounds: document.getElementById("createEventBackgrounds"),
+  createEventGreenBackgrounds: document.getElementById("createEventGreenBackgrounds"),
   createEventOverlays: document.getElementById("createEventOverlays"),
   createEventTemplates: document.getElementById("createEventTemplates"),
   createEventSummary: document.getElementById("createEventSummary"),
@@ -352,7 +558,6 @@ const DOM = {
   emailJsTemplate: document.getElementById('emailJsTemplate'),
   syncNowBtn: document.getElementById('syncNowBtn'),
   syncStatus: document.getElementById('syncStatus'),
-  useCloudflareUploads: document.getElementById('useCloudflareUploads'),
   offlineModeToggle: document.getElementById('offlineModeToggle'),
   sendPendingBtn: document.getElementById('sendPendingBtn'),
   cacheAssetsBtn: document.getElementById('cacheAssetsBtn'),
@@ -373,8 +578,21 @@ const DOM = {
   customPairingsList: document.getElementById('customPairingsList'),
   themeQuickSelect: document.getElementById('themeQuickSelect'),
   themeCharacter: document.getElementById("themeCharacter"),
+  addAssetsBtn: document.getElementById("addAssetsBtn"),
+  bulkAssetsInput: document.getElementById("bulkAssetsInput"),
+  bulkAssetModal: document.getElementById("bulkAssetModal"),
+  bulkAssetSummary: document.getElementById("bulkAssetSummary"),
+  bulkToBackgrounds: document.getElementById("bulkToBackgrounds"),
+  bulkToGreenBackgrounds: document.getElementById("bulkToGreenBackgrounds"),
+  bulkToOverlays: document.getElementById("bulkToOverlays"),
+  bulkToTemplates: document.getElementById("bulkToTemplates"),
+  bulkAssetCancel: document.getElementById("bulkAssetCancel"),
+  bulkAssetApply: document.getElementById("bulkAssetApply"),
   addCharacterBtn: document.getElementById("addCharacterBtn"),
   currentCharacter: document.getElementById("currentCharacter"),
+  themeGreenBackgrounds: document.getElementById("themeGreenBackgrounds"),
+  addGreenBackgroundsBtn: document.getElementById("addGreenBackgroundsBtn"),
+  currentGreenBackgrounds: document.getElementById("currentGreenBackgrounds"),
   characterXInput: document.getElementById("characterXInput"),
   characterXValue: document.getElementById("characterXValue"),
   characterBottomInput: document.getElementById("characterBottomInput"),
@@ -390,6 +608,7 @@ const DOM = {
   addBackgroundsBtn: document.getElementById("addBackgroundsBtn"),
   addOverlaysBtn: document.getElementById("addOverlaysBtn"),
   addTemplatesBtn: document.getElementById("addTemplatesBtn"),
+  eventToSubThemeBtn: document.getElementById("eventToSubThemeBtn"),
   addFontFamily: document.getElementById('addFontFamily'),
   addFontUrl: document.getElementById('addFontUrl'),
   currentFonts: document.getElementById('currentFonts'),
@@ -398,10 +617,8 @@ const DOM = {
   themeBackground: document.getElementById('themeBackground'),
   themeLogo: document.getElementById('themeLogo'),
   themeOverlays: document.getElementById('themeOverlays'),
-  themeOverlaysFolderPicker: document.getElementById('themeOverlaysFolderPicker'),
   themeOverlaysFolder: document.getElementById('themeOverlaysFolder'),
   themeTemplates: document.getElementById('themeTemplates'),
-  themeTemplatesFolderPicker: document.getElementById('themeTemplatesFolderPicker'),
   themeTemplatesFolder: document.getElementById('themeTemplatesFolder'),
   themeWelcomeTitle: document.getElementById('themeWelcomeTitle'),
   themeWelcomePrompt: document.getElementById('themeWelcomePrompt'),
@@ -415,6 +632,12 @@ const DOM = {
   currentAccents: document.getElementById('currentAccents'),
   currentOverlays: document.getElementById('currentOverlays'),
   currentTemplates: document.getElementById('currentTemplates'),
+  currentEventName: document.getElementById('currentEventName'),
+  currentEventDate: document.getElementById('currentEventDate'),
+  currentEventTheme: document.getElementById('currentEventTheme'),
+  currentAssetsContent: document.getElementById("currentAssetsContent"),
+  currentEventAssetsSummary: document.getElementById('currentEventAssetsSummary'),
+  currentThemeAssetsSummary: document.getElementById('currentThemeAssetsSummary'),
   createThemeModal: document.getElementById('createThemeModal'),
   createThemeDropZone: document.getElementById('createThemeDropZone'),
   createThemeName: document.getElementById('createThemeName'),
@@ -425,10 +648,8 @@ const DOM = {
   createThemeFolderInput: document.getElementById('createThemeFolderInput'),
   btnUpdateTheme: document.getElementById('btnUpdateTheme'),
   btnSaveTheme: document.getElementById('btnSaveTheme'),
-  importFile: document.getElementById('importFile'),
-  importZip: document.getElementById('importZip'),
-  deployHookUrl: document.getElementById('deployHookUrl'),
   installBtn: document.getElementById('installBtn'),
+  themeEditorCloseBtn: document.getElementById('themeEditorCloseBtn'),
 };
 
 function setBoothControlsVisible(show) {
@@ -440,7 +661,9 @@ function setBoothControlsVisible(show) {
 // --- State ---
 let activeTheme = null; // Default theme
 let mode = "photo";
+let currentMode = "photo";
 let stream;
+let torchEnabled = false;
 let selectedOverlay = null;
 let pendingTemplate = null;
 let hidePreviewTimer = null;
@@ -454,12 +677,52 @@ let demoMode = false; // Allows running from file:// without camera
 let captureAspectRatio = null; // Override capture aspect (width/height) when set
 const AUTO_ENHANCE_ENABLED = true;
 const AUTO_ENHANCE_FILTER = 'brightness(1.05) contrast(1.08) saturate(1.08)';
+const ENHANCEMENT_MODE_DEFAULT = "bridal-glow";
+const ENHANCEMENT_MODE_CONFIG = {
+  natural: {
+    baseFilter: 'brightness(1.03) contrast(1.05) saturate(1.04)',
+    shadowLift: 10,
+    highlightRollOff: 8,
+    warmthRedBoost: 2,
+    warmthBlueCut: 1,
+    smoothingBlend: 0.12,
+  },
+  "bridal-glow": {
+    baseFilter: 'brightness(1.06) contrast(1.08) saturate(1.07)',
+    shadowLift: 20,
+    highlightRollOff: 14,
+    warmthRedBoost: 4,
+    warmthBlueCut: 3,
+    smoothingBlend: 0.22,
+  },
+  "harsh-light-fix": {
+    baseFilter: 'brightness(1.04) contrast(1.02) saturate(1.03)',
+    shadowLift: 28,
+    highlightRollOff: 24,
+    warmthRedBoost: 2,
+    warmthBlueCut: 2,
+    smoothingBlend: 0.18,
+  },
+};
 const LIVE_PHOTO_DEFAULT = true;
 const LIVE_PHOTO_DURATION_MS = 2000;
+const MESSAGE_DURATION_MS = 60000;
 const CAMERA_ZOOM_DEFAULT = 1;
 const GREEN_SCREEN_DEFAULT = true;
+const AI_BACKGROUND_DEFAULT = false;
 let lastLiveClipUrl = null;
 let lastLiveClipBlob = null;
+let lastShareType = "image";
+let isImporting360Video = false;
+let isRunning360Sequence = false;
+let isMessageRecording = false;
+let messageRecorder = null;
+let messageStopTimer = null;
+let messageStopper = null;
+let aiSegmentation = null;
+let aiSegmentationResolver = null;
+let aiSegmentationPromise = null;
+let pendingBulkAssetFiles = [];
 const ACCENT_PRESET_COLORS = [
   '#ffffff', '#0f1222', '#111827', '#1f2937',
   '#ef4444', '#f97316', '#facc15', '#22c55e',
@@ -472,9 +735,96 @@ let createEventMode = "create";
 let createEventTextOverrides = null;
 // Cache-busting stamp for this session to avoid stale images during editing
 const SESSION_BUST = Date.now();
-function withBust(src) { try { if (!src) return src; return src + (src.includes('?') ? '&' : '?') + 'v=' + SESSION_BUST; } catch (_) { return src; } }
+function withBust(src) {
+  try {
+    if (!src) return src;
+    const lower = String(src).toLowerCase();
+    if (lower.startsWith('data:') || lower.startsWith('blob:')) return src;
+    return src + (src.includes('?') ? '&' : '?') + 'v=' + SESSION_BUST;
+  } catch (_) { return src; }
+}
 
 const GLOBAL_LOGO_STORAGE_KEY = 'photoboothGlobalLogo';
+const THEME_FAVORITES_STORAGE_KEY = "photoboothThemeFavorites";
+const LAST_THEME_KEY_STORAGE = "photoboothLastThemeKey";
+const QUICK_START_SESSION_DATE_KEY = "photoboothQuickStartDate";
+
+function getLocalIsoDate() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getLastThemeKey() {
+  try {
+    return localStorage.getItem(LAST_THEME_KEY_STORAGE) || "";
+  } catch (_) {
+    return "";
+  }
+}
+
+function setLastThemeKey(themeKey) {
+  if (!themeKey) return;
+  try {
+    localStorage.setItem(LAST_THEME_KEY_STORAGE, themeKey);
+  } catch (_) { }
+}
+
+function getQuickStartSessionDate() {
+  try {
+    return localStorage.getItem(QUICK_START_SESSION_DATE_KEY) || "";
+  } catch (_) {
+    return "";
+  }
+}
+
+function setQuickStartSessionDate(dateValue) {
+  const safe = typeof dateValue === "string" ? dateValue.trim() : "";
+  if (!safe) return;
+  try {
+    localStorage.setItem(QUICK_START_SESSION_DATE_KEY, safe);
+  } catch (_) { }
+}
+
+function clearQuickStartSessionDate() {
+  try {
+    localStorage.removeItem(QUICK_START_SESSION_DATE_KEY);
+  } catch (_) { }
+}
+
+function getThemeFavorites() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(THEME_FAVORITES_STORAGE_KEY) || "[]");
+    if (!Array.isArray(raw)) return new Set();
+    return new Set(raw.filter((value) => typeof value === "string" && value));
+  } catch (_) {
+    return new Set();
+  }
+}
+
+function setThemeFavorites(favorites) {
+  const list = Array.from(favorites || []).filter((value) => typeof value === "string" && value);
+  localStorage.setItem(THEME_FAVORITES_STORAGE_KEY, JSON.stringify(list));
+}
+
+function isBuiltinThemeKey(themeKey) {
+  if (!themeKey || typeof themeKey !== "string") return false;
+  if (!themeKey.includes(":")) return !!BUILTIN_THEMES[themeKey];
+  const [rootKey, leafKey] = themeKey.split(":");
+  const group = BUILTIN_THEMES[rootKey];
+  if (!group || typeof group !== "object") return false;
+  if (group.themes && group.themes[leafKey]) return true;
+  if (group.holidays && group.holidays[leafKey]) return true;
+  return false;
+}
+
+function getThemeTypeForKey(themeKey, favorites = getThemeFavorites()) {
+  if (!themeKey) return "standard";
+  if (favorites.has(themeKey)) return "favorite";
+  return isBuiltinThemeKey(themeKey) ? "standard" : "custom";
+}
 
 function renderMissingThumbnail(container, src) {
   if (!container) return;
@@ -517,7 +867,291 @@ function setupEventSelector() {
   DOM.eventSelect.addEventListener('change', handleEventSelectChange);
 }
 
+function updateCreatePathFavoriteButton() {
+  if (!DOM.toggleThemeFavoriteBtn || !DOM.createPathThemeSelect) return;
+  const key = DOM.createPathThemeSelect.value || "";
+  if (!key) {
+    DOM.toggleThemeFavoriteBtn.textContent = "Add to Favorites";
+    DOM.toggleThemeFavoriteBtn.disabled = true;
+    return;
+  }
+  const favorites = getThemeFavorites();
+  const isFavorite = favorites.has(key);
+  DOM.toggleThemeFavoriteBtn.textContent = isFavorite ? "Remove from Favorites" : "Add to Favorites";
+  DOM.toggleThemeFavoriteBtn.disabled = false;
+}
+
+function getSuggestedPairingsForEventType(selectedType, limit = 0) {
+  const pairings = Array.isArray(fontCatalog.pairings) ? fontCatalog.pairings.slice() : [];
+  const filtered = pairings.filter((pairing) => pairingSupportsEventStyle(pairing, selectedType));
+  return limit > 0 ? filtered.slice(0, limit) : filtered;
+}
+
+function getThemeFontPairingLabel(themeKey = "") {
+  const theme = resolveThemeByKey(themeKey) || activeTheme || getSelectedThemeTarget() || {};
+  const heading = primaryFontFamily(theme.fontHeading || theme.font || "") || "Theme heading";
+  const body = primaryFontFamily(theme.fontBody || theme.font || "") || heading;
+  return `${heading} + ${body}`;
+}
+
+function renderCreatePathFontPreviewCards(pairings, themeKey = "") {
+  if (!DOM.createPathFontPreviewCards) return;
+  DOM.createPathFontPreviewCards.innerHTML = "";
+
+  const theme = resolveThemeByKey(themeKey) || activeTheme || getSelectedThemeTarget() || {};
+  const themeHeading = primaryFontFamily(theme.fontHeading || theme.font || "") || "Theme heading";
+  const themeBody = primaryFontFamily(theme.fontBody || theme.font || "") || themeHeading;
+  const makeCard = ({ label, title, notes = "", preview, heading, value = "" }) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "quick-pick-card event-style-card";
+    card.innerHTML = `
+      <div class="quick-pick-label">${label}</div>
+      <div class="quick-pick-title">${title}</div>
+      ${notes ? `<div class="quick-pick-notes">${notes}</div>` : ""}
+      <div class="quick-pick-preview" style="font-family: ${composeFontString(heading)};">${preview}</div>
+    `;
+    card.addEventListener("click", () => {
+      if (DOM.createPathFontPairingSelect) DOM.createPathFontPairingSelect.value = value;
+    });
+    return card;
+  };
+
+  DOM.createPathFontPreviewCards.appendChild(makeCard({
+    label: "Theme Default",
+    title: `${themeHeading} + ${themeBody}`,
+    notes: "Use the selected theme's built-in fonts.",
+    preview: resolveThemeBannerText(),
+    heading: themeHeading,
+    value: ""
+  }));
+
+  pairings.forEach((pairing) => {
+    DOM.createPathFontPreviewCards.appendChild(makeCard({
+      label: "Suggested",
+      title: `${pairing.heading} + ${pairing.body}`,
+      notes: pairing.notes || "",
+      preview: findPairingPreview(pairing),
+      heading: pairing.heading,
+      value: `${pairing.heading}|${pairing.body}`
+    }));
+  });
+}
+
+function populateCreatePathFontPairingSelect(preferredValue = "") {
+  if (!DOM.createPathFontPairingSelect) return;
+  const selectedType = DOM.createPathEventType
+    ? normalizeEventStyle(DOM.createPathEventType.value) || getSelectedEventType()
+    : getSelectedEventType();
+  const pairings = getSuggestedPairingsForEventType(selectedType, 5);
+  const select = DOM.createPathFontPairingSelect;
+  select.innerHTML = "";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = `Use theme fonts (${getThemeFontPairingLabel(DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "")})`;
+  select.appendChild(placeholder);
+
+  pairings.forEach((pairing) => {
+    const option = document.createElement("option");
+    option.value = `${pairing.heading}|${pairing.body}`;
+    option.textContent = pairing.notes
+      ? `${pairing.heading} + ${pairing.body} - ${pairing.notes}`
+      : `${pairing.heading} + ${pairing.body}`;
+    select.appendChild(option);
+  });
+
+  if (preferredValue && Array.from(select.options).some((option) => option.value === preferredValue)) {
+    select.value = preferredValue;
+  } else {
+    select.value = "";
+  }
+
+  if (DOM.createPathFontNote) {
+    const typeLabel = getEventTypeCopy(selectedType).label;
+    DOM.createPathFontNote.textContent = pairings.length
+      ? `${pairings.length} suggested pairings ready for ${typeLabel.toLowerCase()} events.`
+      : `No suggested pairings are set up for ${typeLabel.toLowerCase()} events yet.`;
+  }
+  renderCreatePathFontPreviewCards(pairings, DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "");
+}
+
+function updateCreatePathAssetSummary() {
+  if (!DOM.createPathAssetSummary) return;
+  const parts = [];
+  const countFiles = (input) => input && input.files ? input.files.length : 0;
+  const backgrounds = countFiles(DOM.createPathBackgrounds);
+  const greenBackgrounds = countFiles(DOM.createPathGreenBackgrounds);
+  const overlays = countFiles(DOM.createPathOverlays);
+  const templates = countFiles(DOM.createPathTemplates);
+  const logo = countFiles(DOM.createPathLogo);
+  if (backgrounds) parts.push(`${backgrounds} background${backgrounds === 1 ? "" : "s"}`);
+  if (greenBackgrounds) parts.push(`${greenBackgrounds} green background${greenBackgrounds === 1 ? "" : "s"}`);
+  if (overlays) parts.push(`${overlays} overlay${overlays === 1 ? "" : "s"}`);
+  if (templates) parts.push(`${templates} template${templates === 1 ? "" : "s"}`);
+  if (logo) parts.push("logo");
+  DOM.createPathAssetSummary.textContent = parts.length
+    ? `Selected: ${parts.join(", ")}`
+    : "No event assets selected yet.";
+}
+
+function populateCreatePathThemeSelect(preferredThemeKey) {
+  if (!DOM.createPathThemeSelect) return;
+  const filter = DOM.createPathThemeType ? DOM.createPathThemeType.value : "favorite";
+  const options = Array.from((DOM.eventSelect && DOM.eventSelect.options) || []).filter((opt) => opt && opt.value);
+  const favorites = getThemeFavorites();
+  const selectedType = DOM.createPathEventType
+    ? normalizeEventStyle(DOM.createPathEventType.value) || "general"
+    : getSelectedEventType();
+  const selectedBefore = preferredThemeKey || DOM.createPathThemeSelect.value || "";
+  const filtered = options.filter((opt) => {
+    const key = opt.value;
+    const item = {
+      value: key,
+      theme: resolveThemeByKey(key)
+    };
+    return getThemeTypeForKey(key, favorites) === filter && themeSupportsEventType(item, selectedType);
+  });
+  DOM.createPathThemeSelect.innerHTML = "";
+  if (!filtered.length) {
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = filter === "favorite" ? "No favorite themes yet" : `No ${filter} themes found`;
+    DOM.createPathThemeSelect.appendChild(empty);
+    DOM.createPathThemeSelect.value = "";
+    updateCreatePathFavoriteButton();
+    populateCreatePathFontPairingSelect();
+    return;
+  }
+  filtered.forEach((opt) => {
+    const next = document.createElement("option");
+    next.value = opt.value;
+    next.textContent = opt.textContent || opt.value;
+    DOM.createPathThemeSelect.appendChild(next);
+  });
+  const hasPreferred = filtered.some((opt) => opt.value === selectedBefore);
+  DOM.createPathThemeSelect.value = hasPreferred ? selectedBefore : filtered[0].value;
+  updateCreatePathFavoriteButton();
+  populateCreatePathFontPairingSelect();
+}
+
+function createEventFromPathInputs() {
+  const name = valueFromInput(DOM.createPathEventName);
+  if (!name) {
+    alert("Enter an event name.");
+    return;
+  }
+  const eventType = DOM.createPathEventType
+    ? normalizeEventStyle(DOM.createPathEventType.value) || "general"
+    : getSelectedEventType();
+  const themeKey = DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "";
+  if (!themeKey) {
+    alert("Choose a theme.");
+    return;
+  }
+  const pairingValue = DOM.createPathFontPairingSelect ? DOM.createPathFontPairingSelect.value : "";
+  const [fontHeading = "", fontBody = ""] = pairingValue ? pairingValue.split("|") : ["", ""];
+  const slug = slugifyEventText(name);
+  const id = `${slug || "event"}-${Date.now().toString(36)}`;
+  const newEvent = {
+    id,
+    name,
+    date: "",
+    eventType,
+    themeKey,
+    fontHeading,
+    fontBody,
+    createdAt: new Date().toISOString(),
+    overrides: { backgrounds: [], overlays: [], templates: [], backgroundIndex: 0, greenBackgrounds: [], greenBackgroundIndex: 0 }
+  };
+  const events = getStoredEvents();
+  events.push(newEvent);
+  setStoredEvents(events);
+  setActiveEventId(id);
+  populateEventProfileSelect(id);
+  if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = id;
+  setEventSelection(themeKey);
+  loadTheme(themeKey);
+  syncEventInputsFromActive();
+  updateStylePreview();
+  if (DOM.createPathEventName) DOM.createPathEventName.value = "";
+  if (DOM.createPathFontPairingSelect) DOM.createPathFontPairingSelect.value = "";
+  updateCreatePathAssetSummary();
+  showToast(`Event "${name}" created`);
+}
+
+function quickStartThemeOnly(preferredThemeKey = "") {
+  const preferred = preferredThemeKey || getLastThemeKey() || (DOM.eventSelect && DOM.eventSelect.value) || DEFAULT_THEME_KEY;
+  const themeKey = resolvePreferredThemeKey(preferred);
+  if (!themeKey) return;
+  setActiveEventId("");
+  if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = "";
+  setEventSelection(themeKey);
+  setQuickStartSessionDate(getLocalIsoDate());
+  loadTheme(themeKey);
+  syncEventInputsFromActive();
+  updateEventOverridesSummary();
+  updateStylePreview();
+  showToast("Quick start ready.");
+  startBooth();
+}
+
+function populateQuickStartThemeSelect() {
+  if (!DOM.quickStartThemeSelect) return;
+  const options = Array.from((DOM.eventSelect && DOM.eventSelect.options) || []).filter((opt) => opt && opt.value);
+  DOM.quickStartThemeSelect.innerHTML = "";
+  options.forEach((opt) => {
+    const next = document.createElement("option");
+    next.value = opt.value;
+    next.textContent = opt.textContent || opt.value;
+    DOM.quickStartThemeSelect.appendChild(next);
+  });
+  const preferred = getLastThemeKey() || (DOM.eventSelect && DOM.eventSelect.value) || DEFAULT_THEME_KEY;
+  const resolved = resolvePreferredThemeKey(preferred);
+  if (resolved) DOM.quickStartThemeSelect.value = resolved;
+}
+
+function showQuickStartModal() {
+  populateQuickStartThemeSelect();
+  if (DOM.quickStartModal) DOM.quickStartModal.classList.add("show");
+  if (DOM.quickStartThemeSelect) DOM.quickStartThemeSelect.focus();
+}
+
+function hideQuickStartModal() {
+  if (DOM.quickStartModal) DOM.quickStartModal.classList.remove("show");
+}
+
+function confirmQuickStartFromModal() {
+  const selected = DOM.quickStartThemeSelect ? DOM.quickStartThemeSelect.value : "";
+  hideQuickStartModal();
+  quickStartThemeOnly(selected);
+}
+
 function setupEventProfileControls() {
+  const setEventSetupPath = (path) => {
+    const showCreate = path === "create";
+    const showSelect = path === "select";
+    if (DOM.eventPathCreatePanel) DOM.eventPathCreatePanel.classList.toggle("hidden", !showCreate);
+    if (DOM.eventPathSelectPanel) DOM.eventPathSelectPanel.classList.toggle("hidden", !showSelect);
+    if (DOM.eventPathCreateBtn) {
+      DOM.eventPathCreateBtn.classList.toggle("primary", showCreate);
+      DOM.eventPathCreateBtn.setAttribute("aria-pressed", showCreate ? "true" : "false");
+    }
+    if (DOM.eventPathSelectBtn) {
+      DOM.eventPathSelectBtn.classList.toggle("primary", showSelect);
+      DOM.eventPathSelectBtn.setAttribute("aria-pressed", showSelect ? "true" : "false");
+    }
+  };
+  setEventSetupPath("create");
+  if (DOM.eventPathCreateBtn) {
+    DOM.eventPathCreateBtn.addEventListener("click", () => {
+      setEventSetupPath("create");
+      populateCreatePathThemeSelect((DOM.eventSelect && DOM.eventSelect.value) || "");
+    });
+  }
+  if (DOM.eventPathSelectBtn) {
+    DOM.eventPathSelectBtn.addEventListener("click", () => setEventSetupPath("select"));
+  }
   if (DOM.chooseEventBtn) {
     DOM.chooseEventBtn.addEventListener("click", () => {
       showCreateEventModal("edit");
@@ -525,11 +1159,76 @@ function setupEventProfileControls() {
   }
   if (DOM.createEventBtn) {
     DOM.createEventBtn.addEventListener("click", () => {
-      showCreateEventModal();
+      setEventSetupPath("create");
+      createEventFromPathInputs();
     });
   }
+  if (DOM.quickStartBtn) {
+    DOM.quickStartBtn.addEventListener("click", () => {
+      quickStartThemeOnly();
+    });
+  }
+  if (DOM.quickStartCancel) DOM.quickStartCancel.addEventListener("click", hideQuickStartModal);
+  if (DOM.quickStartConfirm) {
+    DOM.quickStartConfirm.addEventListener("click", confirmQuickStartFromModal);
+  }
+  if (DOM.quickStartModal) {
+    DOM.quickStartModal.addEventListener("click", (event) => {
+      if (event.target === DOM.quickStartModal) hideQuickStartModal();
+    });
+    DOM.quickStartModal.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      confirmQuickStartFromModal();
+    });
+  }
+  if (DOM.createPathThemeType) {
+    const initialType = DOM.createPathThemeType.value || "favorite";
+    DOM.createPathThemeType.value = initialType;
+    DOM.createPathThemeType.addEventListener("change", () => {
+      populateCreatePathThemeSelect();
+    });
+  }
+  if (DOM.createPathEventType) {
+    DOM.createPathEventType.value = getSelectedEventType();
+    DOM.createPathEventType.addEventListener("change", () => {
+      const selectedType = normalizeEventStyle(DOM.createPathEventType.value) || "general";
+      if (DOM.fontEventStyleSelect) DOM.fontEventStyleSelect.value = selectedType;
+      populateCreatePathThemeSelect();
+      populateCreatePathFontPairingSelect();
+    });
+  }
+  if (DOM.createPathThemeSelect) {
+    DOM.createPathThemeSelect.addEventListener("change", () => {
+      updateCreatePathFavoriteButton();
+      const key = DOM.createPathThemeSelect.value || "";
+      if (!key) return;
+      if (DOM.eventSelect) DOM.eventSelect.value = key;
+      loadTheme(key);
+      highlightThemeQuickSelect(key);
+    });
+  }
+  if (DOM.toggleThemeFavoriteBtn) {
+    DOM.toggleThemeFavoriteBtn.addEventListener("click", () => {
+      if (!DOM.createPathThemeSelect) return;
+      const key = DOM.createPathThemeSelect.value || "";
+      if (!key) return;
+      const favorites = getThemeFavorites();
+      if (favorites.has(key)) favorites.delete(key);
+      else favorites.add(key);
+      setThemeFavorites(favorites);
+      const currentFilter = DOM.createPathThemeType ? DOM.createPathThemeType.value : "favorite";
+      const preferred = currentFilter === "favorite" ? "" : key;
+      populateCreatePathThemeSelect(preferred);
+      updateCreatePathFavoriteButton();
+    });
+  }
+  populateCreatePathThemeSelect((DOM.eventSelect && DOM.eventSelect.value) || "");
+  populateCreatePathFontPairingSelect();
+  updateCreatePathAssetSummary();
   if (DOM.eventProfileSelect) {
     DOM.eventProfileSelect.addEventListener("change", (event) => {
+      setEventSetupPath("select");
       const id = event.target.value || "";
       setActiveEventId(id);
       syncEventInputsFromActive();
@@ -588,7 +1287,51 @@ function setupFinalPreviewListeners() {
 }
 
 function setupThemeEditorControls() {
+  if (DOM.themeEditorCloseBtn) DOM.themeEditorCloseBtn.addEventListener('click', closeAdminModal);
   if (DOM.themeEditorModeSelect) DOM.themeEditorModeSelect.addEventListener('change', (e) => setThemeEditorMode(e.target.value));
+  document.querySelectorAll("[data-event-type-tile]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setSelectedEventType(button.dataset.eventTypeTile || "general");
+    });
+  });
+  if (DOM.fontEventStyleSelect) {
+    DOM.fontEventStyleSelect.addEventListener("change", () => {
+      syncEventTypeTiles();
+      renderThemeQuickSelect(DOM.eventSelect);
+      updateEventTypeSetupUI();
+    });
+  }
+  if (DOM.openFontLibraryBtn) DOM.openFontLibraryBtn.addEventListener("click", showFontPickerModal);
+  if (DOM.editorHeadingFontSelect) {
+    DOM.editorHeadingFontSelect.addEventListener("change", () => {
+      if (ignoreFontPickerEvents) return;
+      const heading = DOM.editorHeadingFontSelect.value;
+      const body = DOM.editorBodyFontSelect && DOM.editorBodyFontSelect.value ? DOM.editorBodyFontSelect.value : heading;
+      applyFontSelection(heading, body, { keepPairing: false });
+    });
+  }
+  if (DOM.editorBodyFontSelect) {
+    DOM.editorBodyFontSelect.addEventListener("change", () => {
+      if (ignoreFontPickerEvents) return;
+      const body = DOM.editorBodyFontSelect.value;
+      const heading = DOM.editorHeadingFontSelect && DOM.editorHeadingFontSelect.value ? DOM.editorHeadingFontSelect.value : body;
+      applyFontSelection(heading, body, { keepPairing: false });
+    });
+  }
+  if (DOM.editorFontPairingSelect) {
+    DOM.editorFontPairingSelect.addEventListener("change", () => {
+      if (ignoreFontPickerEvents) return;
+      const value = DOM.editorFontPairingSelect.value;
+      if (!value) return;
+      const [heading, body] = value.split("|");
+      const pairing = (fontCatalog.pairings || []).find((pair) => pair.heading === heading && pair.body === body);
+      applyFontSelection(heading, body, {
+        keepPairing: true,
+        headingPreviewText: findPairingPreview(pairing),
+        bodyPreviewText: getFontPreviewText(body)
+      });
+    });
+  }
   if (DOM.themeName) DOM.themeName.addEventListener('input', updateThemeEditorSummary);
   if (DOM.themeCloneName) DOM.themeCloneName.addEventListener('input', updateThemeEditorSummary);
   if (DOM.createThemeName) DOM.createThemeName.addEventListener('input', updateThemeEditorSummary);
@@ -672,12 +1415,31 @@ function setupThemeEditorControls() {
   });
   if (DOM.cloneThemeBtn) DOM.cloneThemeBtn.addEventListener('click', handleCloneTheme);
   if (DOM.addLogoBtn && DOM.themeLogo) DOM.addLogoBtn.addEventListener('click', () => DOM.themeLogo.click());
+  if (DOM.addAssetsBtn && DOM.bulkAssetsInput) DOM.addAssetsBtn.addEventListener("click", () => DOM.bulkAssetsInput.click());
   if (DOM.addBackgroundsBtn && DOM.themeBackground) DOM.addBackgroundsBtn.addEventListener("click", () => DOM.themeBackground.click());
+  if (DOM.addGreenBackgroundsBtn && DOM.themeGreenBackgrounds) {
+    DOM.addGreenBackgroundsBtn.addEventListener("click", () => DOM.themeGreenBackgrounds.click());
+  }
   if (DOM.addOverlaysBtn && DOM.themeOverlays) DOM.addOverlaysBtn.addEventListener("click", () => DOM.themeOverlays.click());
   if (DOM.addTemplatesBtn && DOM.themeTemplates) DOM.addTemplatesBtn.addEventListener("click", () => DOM.themeTemplates.click());
   if (DOM.addCharacterBtn && DOM.themeCharacter) DOM.addCharacterBtn.addEventListener("click", () => DOM.themeCharacter.click());
+  if (DOM.bulkAssetsInput) DOM.bulkAssetsInput.addEventListener("change", () => openBulkAssetModal(DOM.bulkAssetsInput.files));
+  if (DOM.bulkAssetCancel) DOM.bulkAssetCancel.addEventListener("click", closeBulkAssetModal);
+  if (DOM.bulkAssetApply) DOM.bulkAssetApply.addEventListener("click", () => {
+    applyBulkAssetUpload().catch((err) => {
+      console.error("Bulk asset upload failed", err);
+      showToast("Bulk upload failed.");
+    });
+  });
+  if (DOM.bulkAssetModal) {
+    DOM.bulkAssetModal.addEventListener("click", (event) => {
+      if (event.target === DOM.bulkAssetModal) closeBulkAssetModal();
+    });
+  }
+  if (DOM.eventToSubThemeBtn) DOM.eventToSubThemeBtn.addEventListener("click", createSubThemeFromEvent);
   if (DOM.themeBackground) DOM.themeBackground.addEventListener('change', () => handleThemeAssetInputChange('background'));
   if (DOM.themeLogo) DOM.themeLogo.addEventListener('change', () => handleThemeAssetInputChange('logo'));
+  if (DOM.themeGreenBackgrounds) DOM.themeGreenBackgrounds.addEventListener('change', () => handleThemeAssetInputChange('greenBackgrounds'));
   if (DOM.themeOverlays) DOM.themeOverlays.addEventListener('change', () => handleThemeAssetInputChange('overlay'));
   if (DOM.themeTemplates) DOM.themeTemplates.addEventListener('change', () => handleThemeAssetInputChange('template'));
   if (DOM.themeCharacter) DOM.themeCharacter.addEventListener("change", () => handleThemeAssetInputChange("character"));
@@ -733,28 +1495,6 @@ function setupThemeEditorControls() {
       if (e.target === DOM.fontPickerModal) hideFontPickerModal();
     });
   }
-  if (DOM.styleAccentSwatch && DOM.styleAccentPicker) {
-    DOM.styleAccentSwatch.addEventListener('click', (e) => {
-      e.stopPropagation();
-      DOM.styleAccentPicker.click();
-    });
-    DOM.styleAccentPicker.addEventListener('input', () => {
-      const target = activeTheme || getSelectedThemeTarget();
-      if (!target) return;
-      setThemeAccentValue(target, 'accent', DOM.styleAccentPicker.value);
-    });
-  }
-  if (DOM.styleAccent2Swatch && DOM.styleAccent2Picker) {
-    DOM.styleAccent2Swatch.addEventListener('click', (e) => {
-      e.stopPropagation();
-      DOM.styleAccent2Picker.click();
-    });
-    DOM.styleAccent2Picker.addEventListener('input', () => {
-      const target = activeTheme || getSelectedThemeTarget();
-      if (!target) return;
-      setThemeAccentValue(target, 'accent2', DOM.styleAccent2Picker.value);
-    });
-  }
 }
 
 function handleThemeAssetInputChange(kind) {
@@ -764,8 +1504,106 @@ function handleThemeAssetInputChange(kind) {
   else if (kind === 'overlay') input = DOM.themeOverlays;
   else if (kind === 'template') input = DOM.themeTemplates;
   else if (kind === 'character') input = DOM.themeCharacter;
+  else if (kind === 'greenBackgrounds') input = DOM.themeGreenBackgrounds;
   if (!input || !input.files || input.files.length === 0) return;
-  updateSelectedTheme(kind).catch((err) => console.error('Failed to update theme assets:', err));
+  updateCurrentThemeAssets(kind).catch((err) => console.error('Failed to update theme assets:', err));
+}
+
+function openBulkAssetModal(fileList) {
+  pendingBulkAssetFiles = Array.from(fileList || []).filter(Boolean);
+  if (!pendingBulkAssetFiles.length) return;
+  if (DOM.bulkAssetSummary) {
+    const count = pendingBulkAssetFiles.length;
+    DOM.bulkAssetSummary.textContent = `${count} file${count === 1 ? "" : "s"} selected`;
+  }
+  if (DOM.bulkAssetModal) DOM.bulkAssetModal.classList.remove("hidden");
+}
+
+function closeBulkAssetModal() {
+  pendingBulkAssetFiles = [];
+  if (DOM.bulkAssetsInput) DOM.bulkAssetsInput.value = "";
+  if (DOM.bulkAssetModal) DOM.bulkAssetModal.classList.add("hidden");
+}
+
+function getBulkAssetKinds() {
+  const kinds = [];
+  if (DOM.bulkToBackgrounds && DOM.bulkToBackgrounds.checked) kinds.push("backgrounds");
+  if (DOM.bulkToGreenBackgrounds && DOM.bulkToGreenBackgrounds.checked) kinds.push("greenBackgrounds");
+  if (DOM.bulkToOverlays && DOM.bulkToOverlays.checked) kinds.push("overlays");
+  if (DOM.bulkToTemplates && DOM.bulkToTemplates.checked) kinds.push("templates");
+  return kinds;
+}
+
+function addAssetUrlToTheme(target, kind, url) {
+  if (!target || !url) return;
+  if (kind === "templates") {
+    if (!Array.isArray(target.templates)) target.templates = [];
+    target.templates.push({ src: url, layout: "double_column" });
+    return;
+  }
+  if (kind === "overlays") {
+    if (!Array.isArray(target.overlays)) target.overlays = [];
+    target.overlays.push(url);
+    return;
+  }
+  if (kind === "greenBackgrounds") {
+    if (!Array.isArray(target.greenBackgrounds)) target.greenBackgrounds = [];
+    target.greenBackgrounds.push(url);
+    return;
+  }
+  if (kind === "backgrounds") {
+    if (Array.isArray(target.backgrounds)) {
+      target.backgrounds.push(url);
+    } else if (target.background) {
+      target.backgrounds = [target.background, url];
+      delete target.backgroundIndex;
+    } else {
+      target.background = url;
+    }
+  }
+}
+
+async function applyBulkAssetUpload() {
+  const target = getSelectedThemeTarget();
+  if (!target) {
+    alert("Select a theme first.");
+    closeBulkAssetModal();
+    return;
+  }
+  const files = pendingBulkAssetFiles.slice();
+  if (!files.length) {
+    showToast("Choose files first.");
+    return;
+  }
+  const kinds = getBulkAssetKinds();
+  if (!kinds.length) {
+    showToast("Choose at least one destination.");
+    return;
+  }
+
+  let uploaded = 0;
+  const tasks = [];
+  files.forEach((file) => {
+    kinds.forEach((kind) => {
+      tasks.push(
+        uploadAsset(file, kind).then((url) => {
+          if (!url) return;
+          addAssetUrlToTheme(target, kind, url);
+          uploaded += 1;
+        }),
+      );
+    });
+  });
+  await Promise.all(tasks);
+  if (!uploaded) {
+    showToast("No assets were uploaded.");
+    return;
+  }
+  saveThemesToStorage();
+  const key = DOM.eventSelect && DOM.eventSelect.value;
+  if (key) loadTheme(key);
+  closeBulkAssetModal();
+  showToast(`Added ${uploaded} asset item${uploaded === 1 ? "" : "s"}.`);
 }
 
 function setupCreateThemeModalControls() {
@@ -818,6 +1656,12 @@ function setupCreateEventModalControls() {
       event.target.value = "";
     });
   }
+  if (DOM.createEventGreenBackgrounds) {
+    DOM.createEventGreenBackgrounds.addEventListener("change", (event) => {
+      handleCreateEventFiles("greenBackgrounds", event.target.files);
+      event.target.value = "";
+    });
+  }
   if (DOM.createEventOverlays) {
     DOM.createEventOverlays.addEventListener("change", (event) => {
       handleCreateEventFiles("overlays", event.target.files);
@@ -844,13 +1688,13 @@ function setupCreateEventModalControls() {
 
 function ensureCreateEventAssets() {
   if (!createEventAssets) {
-    createEventAssets = { backgrounds: [], overlays: [], templates: [] };
+    createEventAssets = { backgrounds: [], greenBackgrounds: [], overlays: [], templates: [] };
   }
   return createEventAssets;
 }
 
 function resetCreateEventAssets() {
-  createEventAssets = { backgrounds: [], overlays: [], templates: [] };
+  createEventAssets = { backgrounds: [], greenBackgrounds: [], overlays: [], templates: [] };
 }
 
 function updateCreateEventSummary() {
@@ -858,11 +1702,13 @@ function updateCreateEventSummary() {
   const assets = ensureCreateEventAssets();
   const parts = [];
   if (assets.backgrounds.length) parts.push(`${assets.backgrounds.length} background${assets.backgrounds.length === 1 ? "" : "s"}`);
+  if (assets.greenBackgrounds.length) parts.push(`${assets.greenBackgrounds.length} green BG${assets.greenBackgrounds.length === 1 ? "" : "s"}`);
   if (assets.overlays.length) parts.push(`${assets.overlays.length} overlay${assets.overlays.length === 1 ? "" : "s"}`);
   if (assets.templates.length) parts.push(`${assets.templates.length} template${assets.templates.length === 1 ? "" : "s"}`);
   const existing = getActiveEventOverrides();
   const existingParts = [];
   if (existing.backgrounds.length) existingParts.push(`${existing.backgrounds.length} background${existing.backgrounds.length === 1 ? "" : "s"}`);
+  if (existing.greenBackgrounds.length) existingParts.push(`${existing.greenBackgrounds.length} green BG${existing.greenBackgrounds.length === 1 ? "" : "s"}`);
   if (existing.overlays.length) existingParts.push(`${existing.overlays.length} overlay${existing.overlays.length === 1 ? "" : "s"}`);
   if (existing.templates.length) existingParts.push(`${existing.templates.length} template${existing.templates.length === 1 ? "" : "s"}`);
   const selectedText = parts.length ? `Selected for upload: ${parts.join(", ")}` : "No assets selected yet.";
@@ -955,7 +1801,7 @@ function showCreateEventModal(mode = "create") {
     if (DOM.createEventDate) DOM.createEventDate.value = "";
     createEventTextOverrides = themeDefaults;
     if (DOM.createEventUseThemeDefaults) {
-      DOM.createEventUseThemeDefaults.checked = true;
+      DOM.createEventUseThemeDefaults.checked = false;
     }
   }
   applyCreateEventTextState(!!(DOM.createEventUseThemeDefaults && DOM.createEventUseThemeDefaults.checked));
@@ -973,6 +1819,7 @@ function handleCreateEventFiles(kind, fileList) {
   const assets = ensureCreateEventAssets();
   const files = Array.from(fileList);
   if (kind === "backgrounds") assets.backgrounds.push(...files);
+  if (kind === "greenBackgrounds") assets.greenBackgrounds.push(...files);
   if (kind === "overlays") assets.overlays.push(...files);
   if (kind === "templates") assets.templates.push(...files);
   updateCreateEventSummary();
@@ -1045,6 +1892,9 @@ async function confirmCreateEventModal() {
     assets.backgrounds.forEach((file) => {
       tasks.push(uploadAsset(file, "backgrounds").then((url) => { if (url) overrides.backgrounds.push(url); }));
     });
+    assets.greenBackgrounds.forEach((file) => {
+      tasks.push(uploadAsset(file, "greenBackgrounds").then((url) => { if (url) overrides.greenBackgrounds.push(url); }));
+    });
     assets.overlays.forEach((file) => {
       tasks.push(uploadAsset(file, "overlays").then((url) => { if (url) overrides.overlays.push(url); }));
     });
@@ -1080,11 +1930,6 @@ function setupOfflineControls() {
     flushPendingUploads();
   });
   window.addEventListener('offline', () => updatePendingUI());
-}
-
-function setupFolderPickers() {
-  if (DOM.themeOverlaysFolderPicker) DOM.themeOverlaysFolderPicker.addEventListener('change', handleOverlayFolderPick);
-  if (DOM.themeTemplatesFolderPicker) DOM.themeTemplatesFolderPicker.addEventListener('change', handleTemplateFolderPick);
 }
 
 function getLivePhotoEnabled() {
@@ -1130,6 +1975,26 @@ function setupInstantCaptureToggle() {
   });
 }
 
+function getLowLightEnabled() {
+  try {
+    return localStorage.getItem("photoboothLowLight") === "true";
+  } catch (_) { return false; }
+}
+
+function setLowLightEnabled(enabled) {
+  try {
+    localStorage.setItem("photoboothLowLight", enabled ? "true" : "false");
+  } catch (_) { }
+}
+
+function setupLowLightToggle() {
+  if (!DOM.lowLightToggle) return;
+  DOM.lowLightToggle.checked = getLowLightEnabled();
+  DOM.lowLightToggle.addEventListener("change", () => {
+    setLowLightEnabled(DOM.lowLightToggle.checked);
+  });
+}
+
 function getGreenScreenEnabled() {
   try {
     const stored = localStorage.getItem("photoboothGreenScreen");
@@ -1150,6 +2015,70 @@ function setupGreenScreenToggle() {
   DOM.greenScreenToggle.checked = getGreenScreenEnabled();
   DOM.greenScreenToggle.addEventListener("change", () => {
     setGreenScreenEnabled(DOM.greenScreenToggle.checked);
+  });
+}
+
+function getAiBackgroundEnabled() {
+  try {
+    const stored = localStorage.getItem("photoboothAiBackground");
+    if (stored === "true") return true;
+    if (stored === "false") return false;
+  } catch (_) { }
+  return AI_BACKGROUND_DEFAULT;
+}
+
+function setAiBackgroundEnabled(enabled) {
+  try {
+    localStorage.setItem("photoboothAiBackground", enabled ? "true" : "false");
+  } catch (_) { }
+}
+
+function setupAiBackgroundToggle() {
+  if (!DOM.aiBackgroundToggle) return;
+  DOM.aiBackgroundToggle.checked = getAiBackgroundEnabled();
+  if (DOM.aiBackgroundToggle.checked && DOM.greenScreenToggle) {
+    DOM.greenScreenToggle.checked = false;
+    setGreenScreenEnabled(false);
+  }
+  DOM.aiBackgroundToggle.addEventListener("change", () => {
+    const enabled = DOM.aiBackgroundToggle.checked;
+    if (enabled && (typeof window === "undefined" || typeof window.SelfieSegmentation === "undefined")) {
+      DOM.aiBackgroundToggle.checked = false;
+      setAiBackgroundEnabled(false);
+      showToast("AI background not available yet. Refresh to load.");
+      return;
+    }
+    setAiBackgroundEnabled(enabled);
+    if (enabled && DOM.greenScreenToggle) {
+      DOM.greenScreenToggle.checked = false;
+      setGreenScreenEnabled(false);
+    }
+  });
+}
+
+function getEnhancementMode() {
+  try {
+    const stored = localStorage.getItem("photoboothEnhancementMode");
+    if (stored && ENHANCEMENT_MODE_CONFIG[stored]) {
+      return stored;
+    }
+  } catch (_) { }
+  return ENHANCEMENT_MODE_DEFAULT;
+}
+
+function setEnhancementMode(mode) {
+  const nextMode = ENHANCEMENT_MODE_CONFIG[mode] ? mode : ENHANCEMENT_MODE_DEFAULT;
+  try {
+    localStorage.setItem("photoboothEnhancementMode", nextMode);
+  } catch (_) { }
+}
+
+function setupEnhancementModeSelect() {
+  if (!DOM.enhancementModeSelect) return;
+  DOM.enhancementModeSelect.value = getEnhancementMode();
+  DOM.enhancementModeSelect.addEventListener("change", () => {
+    setEnhancementMode(DOM.enhancementModeSelect.value);
+    showToast(`Enhancement: ${DOM.enhancementModeSelect.options[DOM.enhancementModeSelect.selectedIndex].text}`);
   });
 }
 
@@ -1185,6 +2114,367 @@ function setupCameraZoomControls() {
   });
 }
 
+let activeAdminModal = null;
+
+function openAdminModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (activeAdminModal) activeAdminModal.classList.remove("admin-modal-target");
+  activeAdminModal = el;
+  activeAdminModal.classList.add("admin-modal-target");
+  if (activeAdminModal.tagName === "DETAILS") activeAdminModal.open = true;
+  if (DOM.adminModalBackdrop) DOM.adminModalBackdrop.classList.add("show");
+  if (DOM.adminModalClose) DOM.adminModalClose.classList.remove("hidden");
+}
+
+function closeAdminModal() {
+  if (activeAdminModal) activeAdminModal.classList.remove("admin-modal-target");
+  activeAdminModal = null;
+  if (DOM.adminModalBackdrop) DOM.adminModalBackdrop.classList.remove("show");
+  if (DOM.adminModalClose) DOM.adminModalClose.classList.add("hidden");
+}
+
+function setupAdminModalNavigation() {
+  const buttons = document.querySelectorAll("[data-admin-modal]");
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => openAdminModal(btn.dataset.adminModal));
+  });
+  document.querySelectorAll("#adminScreen details.panel-section, #fontLibrarySection").forEach((panel) => {
+    panel.addEventListener("toggle", () => {
+      if (!panel.open && panel.classList.contains("admin-modal-target")) closeAdminModal();
+    });
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (DOM.fontPickerModal && DOM.fontPickerModal.classList.contains("show")) {
+      hideFontPickerModal();
+      return;
+    }
+    if (activeAdminModal) closeAdminModal();
+  });
+  if (DOM.adminModalBackdrop) DOM.adminModalBackdrop.addEventListener("click", closeAdminModal);
+  if (DOM.adminModalClose) DOM.adminModalClose.addEventListener("click", closeAdminModal);
+}
+
+let activeSetupSection = "event";
+
+function setSetupSection(section = "event") {
+  activeSetupSection = section;
+  document.querySelectorAll("[data-setup-tab]").forEach((btn) => {
+    const isActive = btn.dataset.setupTab === section;
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-selected", isActive ? "true" : "false");
+  });
+  document.querySelectorAll("[data-setup-section]").forEach((panel) => {
+    const show = panel.dataset.setupSection === section;
+    panel.classList.toggle("hidden", !show);
+    if (show && panel.tagName === "DETAILS" && !panel.open) panel.open = true;
+  });
+  closeAdminModal();
+}
+
+function setupSetupTabs() {
+  [DOM.setupTabEvent, DOM.setupTabCapture, DOM.setupTabShare].forEach((btn) => {
+    if (!btn) return;
+    btn.addEventListener("click", () => setSetupSection(btn.dataset.setupTab || "event"));
+  });
+  setSetupSection(activeSetupSection);
+}
+
+function applyViewportProfile() {
+  const width = window.innerWidth || document.documentElement.clientWidth || 0;
+  const next = width < 768 ? "phone" : width < 1180 ? "tablet" : "desktop";
+  document.body.classList.remove("viewport-phone", "viewport-tablet", "viewport-desktop");
+  document.body.classList.add(`viewport-${next}`);
+}
+
+function hasLiveVideoStream() {
+  if (!stream) return false;
+  try {
+    return stream.getVideoTracks().some((track) => track.readyState === "live");
+  } catch (_) {
+    return false;
+  }
+}
+
+function updateSystemStatusStrip() {
+  if (DOM.statusCamera) {
+    DOM.statusCamera.textContent = demoMode ? "Demo Mode" : (hasLiveVideoStream() ? "Ready" : "Not Started");
+  }
+  if (DOM.statusUpload) {
+    const cfg = getCloudinaryConfig();
+    const uploadReady = cfg && cfg.use && cfg.cloud && cfg.preset;
+    DOM.statusUpload.textContent = uploadReady ? "Cloudinary Connected" : "Local Server Upload";
+  }
+  if (DOM.statusSync) {
+    const raw = DOM.syncStatus && DOM.syncStatus.textContent ? DOM.syncStatus.textContent.trim() : "";
+    DOM.statusSync.textContent = raw || "Idle";
+  }
+  if (DOM.statusQueue) {
+    let count = 0;
+    try { count = getPendingUploads().length; } catch (_) { count = 0; }
+    DOM.statusQueue.textContent = `${count} Pending`;
+  }
+}
+
+const EDIT_SCALE_CONFIG = [
+  { id: "header", label: "Header", cssVar: "--edit-header-scale", storageKey: "editScaleHeader", min: 0.6, max: 1.4, posVar: "--edit-header-y", posKey: "editPosHeader", posMin: -200, posMax: 200 },
+  { id: "camera", label: "Camera Preview", cssVar: "--edit-camera-scale", storageKey: "editScaleCamera", min: 0.6, max: 1.4, posVar: "--edit-camera-y", posKey: "editPosCamera", posMin: -200, posMax: 200, defaultValue: 0.9 },
+  { id: "welcomeTitle", label: "Welcome Title", cssVar: "--edit-welcome-title-scale", storageKey: "editScaleWelcomeTitle", min: 0.6, max: 1.6, posVar: "--edit-welcome-title-y", posKey: "editPosWelcomeTitle", posMin: -200, posMax: 200 },
+  { id: "startButton", label: "Start Button", cssVar: "--edit-start-button-scale", storageKey: "editScaleStartButton", min: 0.6, max: 1.6, posVar: "--edit-start-button-y", posKey: "editPosStartButton", posMin: -200, posMax: 200 },
+  { id: "eventTitle", label: "Event Title", cssVar: "--edit-event-title-scale", storageKey: "editScaleEventTitle", min: 0.6, max: 1.6, posVar: "--edit-event-title-y", posKey: "editPosEventTitle", posMin: -200, posMax: 200 },
+  { id: "captureButton", label: "Capture Button", cssVar: "--edit-capture-button-scale", storageKey: "editScaleCaptureButton", min: 0.6, max: 1.6, posVar: "--edit-capture-button-y", posKey: "editPosCaptureButton", posMin: -200, posMax: 200 },
+  { id: "modeButtons", label: "Mode Buttons", cssVar: "--edit-mode-button-scale", storageKey: "editScaleModeButtons", min: 0.6, max: 1.6, posVar: "--edit-mode-buttons-y", posKey: "editPosModeButtons", posMin: -200, posMax: 200 },
+  { id: "options", label: "Overlay/Template Thumbnails", cssVar: "--edit-options-scale", storageKey: "editScaleOptions", min: 0.6, max: 1.6, posVar: "--edit-options-y", posKey: "editPosOptions", posMin: -200, posMax: 200 }
+];
+
+const EDIT_TARGET_MAP = {
+  header: () => [DOM.boothHeader].filter(Boolean),
+  camera: () => [DOM.videoContainer].filter(Boolean),
+  welcomeTitle: () => [DOM.welcomeTitle].filter(Boolean),
+  startButton: () => [DOM.startButton].filter(Boolean),
+  eventTitle: () => [DOM.eventTitle].filter(Boolean),
+  captureButton: () => [DOM.captureBtn].filter(Boolean),
+  modeButtons: () => Array.from(document.querySelectorAll("#controls .mode-btn")),
+  options: () => [DOM.options].filter(Boolean)
+};
+
+let editModeActive = false;
+let activeEditTarget = null;
+
+function getEditScale(storageKey, fallback) {
+  try {
+    const stored = localStorage.getItem(storageKey);
+    if (stored !== null) return clampZoom(parseFloat(stored), 0.6, 1.6);
+  } catch (_) { }
+  return fallback;
+}
+
+function getEditPosition(storageKey, fallback) {
+  try {
+    const stored = localStorage.getItem(storageKey);
+    if (stored !== null) return clampZoom(parseFloat(stored), -200, 200);
+  } catch (_) { }
+  return fallback;
+}
+
+function applyEditScale(target) {
+  const value = clampZoom(target.value, 0.6, 1.6);
+  if (!target.cssVar) return;
+  document.documentElement.style.setProperty(target.cssVar, String(value));
+}
+
+function applyEditPosition(target) {
+  if (!target.posVar) return;
+  const value = clampZoom(target.posValue || 0, target.posMin || -200, target.posMax || 200);
+  document.documentElement.style.setProperty(target.posVar, `${value}px`);
+}
+
+function loadEditScales() {
+  EDIT_SCALE_CONFIG.forEach((cfg) => {
+    const fallback = (typeof cfg.defaultValue === "number") ? cfg.defaultValue : 1;
+    cfg.value = getEditScale(cfg.storageKey, fallback);
+    if (cfg.posVar) cfg.posValue = getEditPosition(cfg.posKey, 0);
+    applyEditScale(cfg);
+    applyEditPosition(cfg);
+  });
+}
+
+function setEditScale(target, value) {
+  const normalized = clampZoom(value, target.min, target.max);
+  target.value = normalized;
+  try {
+    localStorage.setItem(target.storageKey, String(normalized));
+  } catch (_) { }
+  applyEditScale(target);
+  if (DOM.editScaleValue) DOM.editScaleValue.textContent = `${Math.round(normalized * 100)}%`;
+}
+
+function setEditPosition(target, value) {
+  if (!target.posVar) return;
+  const normalized = clampZoom(value, target.posMin || -200, target.posMax || 200);
+  target.posValue = normalized;
+  try {
+    localStorage.setItem(target.posKey, String(normalized));
+  } catch (_) { }
+  applyEditPosition(target);
+  if (DOM.editPositionValue) DOM.editPositionValue.textContent = `${Math.round(normalized)}px`;
+}
+
+function clearEditSelection() {
+  if (activeEditTarget && Array.isArray(activeEditTarget.els)) {
+    activeEditTarget.els.forEach((el) => el.classList.remove("edit-target-active"));
+  }
+  activeEditTarget = null;
+  if (DOM.editControls) DOM.editControls.classList.remove("show");
+}
+
+function selectEditTarget(targetId) {
+  const config = EDIT_SCALE_CONFIG.find((cfg) => cfg.id === targetId);
+  if (!config) return;
+  const els = (EDIT_TARGET_MAP[targetId] && EDIT_TARGET_MAP[targetId]()) || [];
+  clearEditSelection();
+  activeEditTarget = { config, els };
+  els.forEach((el) => el.classList.add("edit-target-active"));
+  if (DOM.editControlsTitle) DOM.editControlsTitle.textContent = config.label;
+  if (DOM.editScaleInput) {
+    DOM.editScaleInput.min = String(config.min);
+    DOM.editScaleInput.max = String(config.max);
+    DOM.editScaleInput.value = String(config.value || 1);
+  }
+  if (DOM.editScaleValue) DOM.editScaleValue.textContent = `${Math.round((config.value || 1) * 100)}%`;
+  if (DOM.editPositionRow && DOM.editPositionInput && DOM.editPositionValue && DOM.editPositionLabel) {
+    if (config.posVar) {
+      DOM.editPositionRow.style.display = "flex";
+      DOM.editPositionLabel.style.display = "block";
+      DOM.editPositionInput.min = String(config.posMin || -200);
+      DOM.editPositionInput.max = String(config.posMax || 200);
+      DOM.editPositionInput.value = String(config.posValue || 0);
+      DOM.editPositionValue.textContent = `${Math.round(config.posValue || 0)}px`;
+    } else {
+      DOM.editPositionRow.style.display = "none";
+      DOM.editPositionLabel.style.display = "none";
+    }
+  }
+  if (DOM.editControls) DOM.editControls.classList.add("show");
+}
+
+function handleEditableClick(targetId, event) {
+  if (!editModeActive) return;
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+  selectEditTarget(targetId);
+}
+
+function applyEditModeState(active) {
+  editModeActive = active;
+  document.body.classList.toggle("edit-mode", editModeActive);
+  if (!editModeActive) clearEditSelection();
+}
+
+function enterEditMode() {
+  applyEditModeState(true);
+  closeAdminModal();
+  if (DOM.adminScreen) DOM.adminScreen.classList.add('hidden');
+  if (DOM.boothScreen) DOM.boothScreen.classList.remove('hidden');
+  document.body.classList.remove('admin-open');
+  document.documentElement.classList.remove('admin-open');
+  startCamera(true);
+  setEditView("booth");
+  setTimeout(() => {
+    if (editModeActive) hideWelcome();
+  }, 600);
+}
+
+function exitEditMode() {
+  applyEditModeState(false);
+  goAdmin();
+}
+
+function setEditView(view) {
+  const mode = view || "booth";
+  if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
+  if (DOM.boothScreen) DOM.boothScreen.classList.remove("share-mode");
+  if (DOM.welcomeScreen) DOM.welcomeScreen.classList.add("faded");
+  if (DOM.finalPreview) DOM.finalPreview.classList.remove("show");
+  if (DOM.countdownOverlay) DOM.countdownOverlay.classList.remove("show");
+  if (mode === "welcome") {
+    if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("faded");
+  } else if (mode === "countdown") {
+    if (DOM.boothScreen) DOM.boothScreen.classList.add("countdown-mode");
+    if (DOM.countdownOverlay) DOM.countdownOverlay.classList.add("show");
+  } else if (mode === "share") {
+    if (DOM.boothScreen) DOM.boothScreen.classList.add("share-mode");
+    if (DOM.finalPreview) DOM.finalPreview.classList.add("show");
+    if (editModeActive && DOM.qrCodeContainer) DOM.qrCodeContainer.classList.remove("hidden");
+    if (editModeActive && DOM.finalStrip) {
+      if (!DOM.finalStrip.dataset.prevSrc) {
+        DOM.finalStrip.dataset.prevSrc = DOM.finalStrip.getAttribute("src") || "";
+      }
+      if (!DOM.finalStrip.getAttribute("src")) {
+        DOM.finalStrip.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+      }
+      DOM.finalStrip.dataset.editPlaceholder = "true";
+    }
+  } else if (editModeActive && DOM.qrCodeContainer) {
+    DOM.qrCodeContainer.classList.add("hidden");
+  }
+  if (editModeActive && mode !== "share" && DOM.finalStrip && DOM.finalStrip.dataset.editPlaceholder === "true") {
+    const prev = DOM.finalStrip.dataset.prevSrc || "";
+    DOM.finalStrip.src = prev;
+    delete DOM.finalStrip.dataset.editPlaceholder;
+    delete DOM.finalStrip.dataset.prevSrc;
+  }
+}
+
+function setupEditModeControls() {
+  const markEditable = (els) => {
+    els.forEach((el) => {
+      if (el) el.setAttribute("data-editable", "true");
+    });
+  };
+  if (DOM.editLayoutBtn) DOM.editLayoutBtn.addEventListener("click", enterEditMode);
+  if (DOM.editModeExitBtn) DOM.editModeExitBtn.addEventListener("click", exitEditMode);
+  if (DOM.editControlsClose) DOM.editControlsClose.addEventListener("click", clearEditSelection);
+  if (DOM.editScaleInput) {
+    DOM.editScaleInput.addEventListener("input", () => {
+      if (!activeEditTarget) return;
+      setEditScale(activeEditTarget.config, parseFloat(DOM.editScaleInput.value));
+    });
+  }
+  if (DOM.editPositionInput) {
+    DOM.editPositionInput.addEventListener("input", () => {
+      if (!activeEditTarget) return;
+      setEditPosition(activeEditTarget.config, parseFloat(DOM.editPositionInput.value));
+    });
+  }
+  if (DOM.videoContainer) {
+    markEditable([DOM.videoContainer]);
+    DOM.videoContainer.addEventListener("click", (e) => handleEditableClick("camera", e), true);
+  }
+  if (DOM.options) {
+    markEditable([DOM.options]);
+    DOM.options.addEventListener("click", (e) => handleEditableClick("options", e), true);
+  }
+  if (DOM.boothHeader) {
+    markEditable([DOM.boothHeader]);
+    DOM.boothHeader.addEventListener("click", (e) => handleEditableClick("header", e), true);
+  }
+  if (DOM.welcomeTitle) {
+    markEditable([DOM.welcomeTitle]);
+    DOM.welcomeTitle.addEventListener("click", (e) => handleEditableClick("welcomeTitle", e), true);
+  }
+  if (DOM.startButton) {
+    markEditable([DOM.startButton]);
+    DOM.startButton.addEventListener("click", (e) => handleEditableClick("startButton", e), true);
+  }
+  if (DOM.eventTitle) {
+    markEditable([DOM.eventTitle]);
+    DOM.eventTitle.addEventListener("click", (e) => handleEditableClick("eventTitle", e), true);
+  }
+  if (DOM.captureBtn) {
+    markEditable([DOM.captureBtn]);
+    DOM.captureBtn.addEventListener("click", (e) => handleEditableClick("captureButton", e), true);
+  }
+  document.querySelectorAll("#controls .mode-btn").forEach((btn) => {
+    markEditable([btn]);
+    btn.addEventListener("click", (e) => handleEditableClick("modeButtons", e), true);
+  });
+  document.querySelectorAll("[data-edit-view]").forEach((btn) => {
+    btn.addEventListener("click", () => setEditView(btn.dataset.editView));
+  });
+  if (DOM.boothScreen) {
+    DOM.boothScreen.addEventListener("click", (e) => {
+      if (!editModeActive) return;
+      if (e.target.closest("#editControls")) return;
+      if (e.target.closest("[data-editable]")) return;
+      clearEditSelection();
+    });
+  }
+  loadEditScales();
+}
+
 function setupEventNameInput() {
   if (!DOM.eventNameInput) return;
   DOM.eventNameInput.addEventListener('input', () => {
@@ -1198,6 +2488,35 @@ function setupEventNameInput() {
     }
     updateStylePreview();
   });
+}
+
+function setupWelcomeInteractions() {
+  const bindWelcomeTarget = (node) => {
+    if (!node || node.dataset.welcomeBound === "true") return;
+    node.dataset.welcomeBound = "true";
+    node.addEventListener("click", beginWelcome);
+    node.addEventListener("pointerup", beginWelcome);
+    node.addEventListener("touchend", beginWelcome, { passive: false });
+    node.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") beginWelcome(event);
+    });
+  };
+  bindWelcomeTarget(DOM.welcomeScreen);
+  bindWelcomeTarget(document.getElementById("welcomeOverlay"));
+  bindWelcomeTarget(DOM.startButton);
+  if (document.body && document.body.dataset.welcomeDelegationBound !== "true") {
+    document.body.dataset.welcomeDelegationBound = "true";
+    const delegatedWelcomeStart = (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (!target.closest("#welcomeScreen, #welcomeOverlay, #startButton")) return;
+      if (!DOM.welcomeScreen || DOM.welcomeScreen.classList.contains("faded")) return;
+      beginWelcome(event);
+    };
+    document.addEventListener("pointerdown", delegatedWelcomeStart, true);
+    document.addEventListener("click", delegatedWelcomeStart, true);
+    document.addEventListener("touchstart", delegatedWelcomeStart, { capture: true, passive: false });
+  }
 }
 
 function setupEventDateInput() {
@@ -1223,30 +2542,40 @@ function init() {
   setupThemeEditorControls();
   setupCreateThemeModalControls();
   setupCreateEventModalControls();
+  setupVideoImportControls();
+  setup360ModeControls();
   setupOfflineControls();
-  setupFolderPickers();
   setupLivePhotoToggle();
   setupInstantCaptureToggle();
+  setupLowLightToggle();
   setupGreenScreenToggle();
+  setupAiBackgroundToggle();
+  setupEnhancementModeSelect();
   setupCameraZoomControls();
+  setupEditModeControls();
   setupCharacterPositionControls();
   setupCustomPairingControls();
   setupEventNameInput();
   setupEventDateInput();
   setupEventProfileControls();
+  setupAdminModalNavigation();
+  setupSetupTabs();
+  setupWelcomeInteractions();
   loadCloudinarySettings();
   setThemeEditorMode(DOM.themeEditorModeSelect ? DOM.themeEditorModeSelect.value : 'edit');
   loadEmailJsSettings();
   updatePendingUI();
   flushPendingUploads();
   applyPreviewOrientation();
+  applyViewportProfile();
+  updateSystemStatusStrip();
+  setInterval(updateSystemStatusStrip, 3000);
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   console.log("DOMContentLoaded event fired.");
   loadThemesFromStorage();
   loadFontsFromStorage();
-  loadDeploySettings();
   try { await setupFontPicker(); } catch (e) { console.warn('Font picker setup failed', e); }
   const initialKey = populateThemeSelector(DEFAULT_THEME_KEY);
   populateEventProfileSelect(getActiveEventId());
@@ -1276,7 +2605,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   ensureRemoteSeed();
   updateThemeEditorSummary();
   updateCountdownFontSize();
-  window.addEventListener("resize", updateCountdownFontSize);
+  applyViewportProfile();
+  window.addEventListener("resize", () => {
+    updateCountdownFontSize();
+    applyViewportProfile();
+    fitBannerTextToViewport();
+    fitWelcomeTitleToViewport();
+  });
 });
 
 // --- Remote sync (Cloudflare Pages Functions) ---
@@ -1287,6 +2622,11 @@ const REMOTE_SYNC_ALLOWLIST = [
 const REMOTE_SYNC_BLOCKLIST = [
   /github\.io$/i
 ];
+const REMOTE_SYNC_DEBOUNCE_MS = 2000;
+let pendingThemesSyncTimer = null;
+let pendingFontsSyncTimer = null;
+let pendingFontsSyncPayload = null;
+let fontsRemoteRequested = false;
 
 function resolveRemoteSyncOverride() {
   try {
@@ -1357,6 +2697,14 @@ async function syncThemesRemote() {
     await fetch('/api/themes', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(themes) });
   } catch (_) { }
 }
+function scheduleThemesRemoteSync() {
+  if (!canSyncRemote()) return;
+  if (pendingThemesSyncTimer) clearTimeout(pendingThemesSyncTimer);
+  pendingThemesSyncTimer = setTimeout(() => {
+    pendingThemesSyncTimer = null;
+    syncThemesRemote().catch(() => { });
+  }, REMOTE_SYNC_DEBOUNCE_MS);
+}
 function mergeFonts(a, b) {
   const out = []; const seen = new Set();
   [...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])].forEach(f => {
@@ -1387,6 +2735,17 @@ async function loadFontsRemote() {
 async function syncFontsRemote(fonts) {
   if (!canSyncRemote()) return;
   try { await fetch('/api/fonts', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fonts || []) }); } catch (_) { }
+}
+function scheduleFontsRemoteSync(fonts) {
+  if (!canSyncRemote()) return;
+  pendingFontsSyncPayload = Array.isArray(fonts) ? fonts.slice() : [];
+  if (pendingFontsSyncTimer) clearTimeout(pendingFontsSyncTimer);
+  pendingFontsSyncTimer = setTimeout(() => {
+    pendingFontsSyncTimer = null;
+    const payload = pendingFontsSyncPayload;
+    pendingFontsSyncPayload = null;
+    syncFontsRemote(payload).catch(() => { });
+  }, REMOTE_SYNC_DEBOUNCE_MS);
 }
 
 // --- Manual sync UI ---
@@ -1556,7 +2915,7 @@ function populateThemeSelector(preferredKey, attempt = 0) {
         const subTheme = subThemes[subThemeKey];
         const option = document.createElement('option');
         option.value = `${themeKey}:${subThemeKey}`;
-        option.textContent = subTheme.name;
+        option.textContent = `${theme.name} > ${subTheme.name}`;
         optgroup.appendChild(option);
         optionCount += 1;
       }
@@ -1588,8 +2947,179 @@ function populateThemeSelector(preferredKey, attempt = 0) {
   }
   const selectedKey = (DOM.eventSelect && DOM.eventSelect.value) || null;
   highlightThemeQuickSelect(selectedKey);
+  populateCreatePathThemeSelect(selectedKey || "");
   updateThemeEditorSummary();
   return selectedKey;
+}
+
+function getSelectedEventType() {
+  if (!DOM.fontEventStyleSelect) return "general";
+  return normalizeEventStyle(DOM.fontEventStyleSelect.value) || "general";
+}
+
+function syncEventTypeTiles() {
+  const selectedType = getSelectedEventType();
+  document.querySelectorAll("[data-event-type-tile]").forEach((button) => {
+    const isActive = normalizeEventStyle(button.dataset.eventTypeTile) === selectedType;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+  if (DOM.createPathEventType) {
+    DOM.createPathEventType.value = selectedType;
+  }
+}
+
+function setSelectedEventType(nextType) {
+  const normalized = normalizeEventStyle(nextType) || "general";
+  if (DOM.fontEventStyleSelect) {
+    DOM.fontEventStyleSelect.value = normalized;
+  }
+  syncEventTypeTiles();
+  renderThemeQuickSelect(DOM.eventSelect);
+  updateEventTypeSetupUI();
+}
+
+function getThemeEventTypePriority(item, selectedType) {
+  if (!item) return 99;
+  const inferredType = inferThemeEventStyle(item.value, item.theme);
+  const normalizedSelected = normalizeEventStyle(selectedType);
+  if (normalizedSelected === "general") {
+    if (inferredType === "general") return 0;
+    if (inferredType === "birthday") return 1;
+    if (inferredType === "community") return 2;
+    return 3;
+  }
+  if (inferredType === normalizedSelected) return 0;
+  if (normalizedSelected === "party" && inferredType === "birthday") return 0;
+  if ((normalizedSelected === "wedding" || normalizedSelected === "expo") && inferredType === "general") return 1;
+  if (normalizedSelected === "community" && inferredType === "general") return 1;
+  if (normalizedSelected === "party" && inferredType === "general") return 1;
+  return 2;
+}
+
+function themeSupportsEventType(item, selectedType) {
+  if (!item || !item.theme) return false;
+  const normalizedSelected = normalizeEventStyle(selectedType);
+  if (normalizedSelected === "general") return true;
+  const explicitTypes = Array.isArray(item.theme.eventTypes)
+    ? item.theme.eventTypes.map((entry) => normalizeEventStyle(entry)).filter(Boolean)
+    : [];
+  if (explicitTypes.length) {
+    if (explicitTypes.includes(normalizedSelected)) return true;
+    if (normalizedSelected === "party" && explicitTypes.includes("birthday")) return true;
+    return false;
+  }
+  const inferredType = inferThemeEventStyle(item.value, item.theme);
+  if (inferredType === normalizedSelected) return true;
+  if (normalizedSelected === "party" && inferredType === "birthday") return true;
+  return inferredType === "general";
+}
+
+function getEventTypeCopy(selectedType) {
+  const normalized = normalizeEventStyle(selectedType);
+  const copy = {
+    wedding: {
+      label: "Wedding",
+      note: "Romantic, polished setups with elegant typography and simple booth visuals.",
+      themeNote: "Showing themes that fit wedding and formal booth setups."
+    },
+    expo: {
+      label: "Expo",
+      note: "Fast-to-read, branded setups for vendor booths, conferences, and lead capture.",
+      themeNote: "Showing themes that fit expo booths, branded activations, and lead capture."
+    },
+    birthday: {
+      label: "Party",
+      note: "Energetic, celebratory setups that feel playful and guest-friendly.",
+      themeNote: "Showing themes that fit parties, birthdays, and high-energy celebrations."
+    },
+    community: {
+      label: "Community",
+      note: "Welcoming, flexible setups for schools, fundraisers, churches, and public events.",
+      themeNote: "Showing themes that fit schools, fundraisers, churches, and community events."
+    },
+    general: {
+      label: "General",
+      note: "Balanced default setups that can be adapted quickly for almost any booth.",
+      themeNote: "Showing versatile themes that can be adapted quickly for most events."
+    }
+  };
+  return copy[normalized] || copy.general;
+}
+
+function updateEventTypeSetupUI() {
+  const selectedType = getSelectedEventType();
+  const pairings = Array.isArray(fontCatalog.pairings) ? fontCatalog.pairings.slice() : [];
+  const filteredPairings = pairings.filter((pairing) => pairingSupportsEventStyle(pairing, selectedType));
+  const themeCopy = getEventTypeCopy(selectedType);
+
+  if (DOM.fontPairingContextLabel) {
+    DOM.fontPairingContextLabel.textContent = `${themeCopy.label} Font Suggestions`;
+  }
+  if (DOM.fontPairingContextNote) {
+    DOM.fontPairingContextNote.textContent = themeCopy.note;
+  }
+  if (DOM.themeStepLabel) {
+    DOM.themeStepLabel.textContent = `${themeCopy.label} Theme`;
+  }
+  if (DOM.themeStepNote) {
+    DOM.themeStepNote.textContent = themeCopy.themeNote;
+  }
+
+  if (DOM.editorFontPairingSelect) {
+    const select = DOM.editorFontPairingSelect;
+    const previous = select.value;
+    select.innerHTML = "";
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = filteredPairings.length ? "-- Choose suggested fonts --" : "-- No suggested fonts yet --";
+    select.appendChild(placeholder);
+    filteredPairings.forEach((pairing) => {
+      const option = document.createElement("option");
+      option.value = `${pairing.heading}|${pairing.body}`;
+      option.textContent = pairing.notes
+        ? `${pairing.heading} + ${pairing.body} - ${pairing.notes}`
+        : `${pairing.heading} + ${pairing.body}`;
+      select.appendChild(option);
+    });
+    if (previous && Array.from(select.options).some((option) => option.value === previous)) {
+      select.value = previous;
+    }
+  }
+
+  if (DOM.eventStylePairings) {
+    DOM.eventStylePairings.innerHTML = "";
+    if (!filteredPairings.length) {
+      const empty = document.createElement("div");
+      empty.className = "quick-pick-empty";
+      empty.textContent = "No font suggestions are set up for this event type yet.";
+      DOM.eventStylePairings.appendChild(empty);
+    } else {
+      filteredPairings.slice(0, 4).forEach((pairing) => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "quick-pick-card event-style-card";
+        const previewText = findPairingPreview(pairing);
+        card.innerHTML = `
+          <div class="quick-pick-label">Suggested</div>
+          <div class="quick-pick-title">${pairing.heading} + ${pairing.body}</div>
+          ${pairing.notes ? `<div class="quick-pick-notes">${pairing.notes}</div>` : ""}
+          <div class="quick-pick-preview" style="font-family: ${composeFontString(pairing.heading)};">${previewText}</div>
+        `;
+        card.addEventListener("click", () => {
+          applyFontSelection(pairing.heading, pairing.body, {
+            keepPairing: true,
+            headingPreviewText: previewText,
+            bodyPreviewText: getFontPreviewText(pairing.body)
+          });
+          if (DOM.editorFontPairingSelect) {
+            DOM.editorFontPairingSelect.value = `${pairing.heading}|${pairing.body}`;
+          }
+        });
+        DOM.eventStylePairings.appendChild(card);
+      });
+    }
+  }
 }
 
 function buildThemeCard(item, options = {}) {
@@ -1662,8 +3192,12 @@ function renderThemeVibesSection(items, selectedKey) {
 
 function renderThemeQuickSelect(selectEl = DOM.eventSelect) {
   const container = DOM.themeQuickSelect;
+  const seasonalSection = DOM.themeSeasonalSection;
+  const seasonalContent = DOM.themeSeasonalContent;
   if (!container || !selectEl) return;
   container.innerHTML = "";
+  if (seasonalContent) seasonalContent.innerHTML = "";
+  if (seasonalSection) seasonalSection.classList.add("hidden");
   const options = Array.from(selectEl.options || []).filter((opt) => opt && opt.value);
   if (!options.length) {
     container.classList.add("hidden");
@@ -1696,30 +3230,44 @@ function renderThemeQuickSelect(selectEl = DOM.eventSelect) {
       holidayOrder: holidayOrderValue
     };
   });
-  const mainItems = items.filter((item) => !(item.theme && item.theme.vibeParentKey));
-  const holidays = mainItems.filter((item) => item.holidayOrder !== null);
-  const others = mainItems.filter((item) => item.holidayOrder === null);
-  holidays.sort((a, b) => (a.holidayOrder || 99) - (b.holidayOrder || 99));
-  others.sort((a, b) => a.label.localeCompare(b.label));
+  const selectedType = getSelectedEventType();
+  const mainItems = items
+    .filter((item) => !(item.theme && item.theme.vibeParentKey))
+    .filter((item) => item.holidayOrder === null)
+    .filter((item) => themeSupportsEventType(item, selectedType))
+    .sort((a, b) => {
+      const aPriority = getThemeEventTypePriority(a, selectedType);
+      const bPriority = getThemeEventTypePriority(b, selectedType);
+      if (aPriority !== bPriority) return aPriority - bPriority;
+      return a.label.localeCompare(b.label);
+    });
+  const holidayItems = items
+    .filter((item) => !(item.theme && item.theme.vibeParentKey))
+    .filter((item) => item.holidayOrder !== null)
+    .sort((a, b) => (a.holidayOrder || 99) - (b.holidayOrder || 99));
 
-  const addSection = (title, list, isHoliday) => {
-    if (!list.length) return;
-    const section = document.createElement("div");
-    section.className = "theme-card-section";
-    const heading = document.createElement("h3");
-    heading.textContent = title;
+  if (!mainItems.length) {
+    container.classList.add("hidden");
+  } else {
     const grid = document.createElement("div");
     grid.className = "theme-card-grid";
-    list.forEach((item) => {
-      grid.appendChild(buildThemeCard(item, { isHoliday, selectEl }));
+    mainItems.forEach((item) => {
+      grid.appendChild(buildThemeCard(item, { isHoliday: false, selectEl }));
     });
-    section.appendChild(heading);
-    section.appendChild(grid);
-    container.appendChild(section);
-  };
+    container.appendChild(grid);
+    container.classList.remove("hidden");
+  }
 
-  addSection("Holidays", holidays, true);
-  addSection("Other", others, false);
+  if (seasonalSection && seasonalContent && holidayItems.length) {
+    seasonalSection.classList.remove("hidden");
+    const grid = document.createElement("div");
+    grid.className = "theme-card-grid";
+    holidayItems.forEach((item) => {
+      grid.appendChild(buildThemeCard(item, { isHoliday: true, selectEl }));
+    });
+    seasonalContent.appendChild(grid);
+  }
+
   highlightThemeQuickSelect(selectEl.value);
   renderThemeVibesSection(items, selectEl.value);
 }
@@ -1738,6 +3286,243 @@ function showToast(message, duration = 2000) {
   t.classList.add('show');
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.classList.remove('show'); }, duration);
+}
+
+function setVideoImportStatus(message) {
+  if (!DOM.videoImportStatus) return;
+  DOM.videoImportStatus.textContent = message || "Ready for video import.";
+  if (DOM.booth360Status && currentMode === "360") {
+    DOM.booth360Status.textContent = message || "360 Mode Active";
+  }
+}
+
+function showMessage(message, duration = 1800) {
+  setVideoImportStatus(message);
+  showToast(message, duration);
+}
+
+function set360Status(title, note = "") {
+  if (DOM.booth360StatusText) DOM.booth360StatusText.textContent = title || "360 Mode Active";
+  if (DOM.booth360StatusNote) DOM.booth360StatusNote.textContent = note || "";
+}
+
+function updateCaptureModeUi() {
+  const is360Mode = currentMode === "360";
+  if (DOM.boothScreen) DOM.boothScreen.classList.toggle("mode-360", is360Mode);
+  if (DOM.modeToggle) {
+    DOM.modeToggle.textContent = is360Mode ? "Switch to Photo Mode" : "Switch to 360 Mode";
+  }
+  if (DOM.captureBtn) DOM.captureBtn.classList.toggle("hidden", is360Mode);
+  if (DOM.controls) DOM.controls.classList.toggle("hidden", is360Mode);
+  if (DOM.options) DOM.options.classList.toggle("hidden", is360Mode);
+  if (DOM.videoImportPanel) DOM.videoImportPanel.classList.toggle("hidden", !is360Mode);
+  if (DOM.booth360Panel) DOM.booth360Panel.classList.toggle("hidden", !is360Mode);
+  if (DOM.booth360Status && is360Mode && !isImporting360Video && !isRunning360Sequence) {
+    set360Status("Ready to start a 360 take", "Start recording on the iPhone first, then tap Start 360 on the booth.");
+  }
+}
+
+function setCaptureMode(nextMode = "photo") {
+  currentMode = nextMode === "360" ? "360" : "photo";
+  updateCaptureModeUi();
+}
+
+async function run360Countdown() {
+  for (let n = 3; n > 0; n -= 1) {
+    await showCountdown(String(n));
+  }
+  await showCountdown("📸");
+}
+
+async function start360Sequence() {
+  if (isRunning360Sequence || currentMode !== "360") return;
+  isRunning360Sequence = true;
+  if (DOM.start360Btn) DOM.start360Btn.disabled = true;
+  if (DOM.triggerZone) DOM.triggerZone.disabled = true;
+  try {
+    set360Status("Get ready", "iPhone should already be recording before the countdown begins.");
+    showMessage("Get ready");
+    await run360Countdown();
+    set360Status("🎥 Spin in progress", "Keep the platform moving while the iPhone records the full take.");
+    setVideoImportStatus("🎥 Recording...");
+    await delay(8000);
+    set360Status("Stop recording on iPhone", "When the spin ends, stop the clip on the phone and send it here.");
+    setVideoImportStatus("Stop recording on iPhone");
+    await delay(1000);
+    set360Status("📲 Send the clip", "AirDrop the video or tap upload. Processing starts automatically.");
+    setVideoImportStatus("📲 AirDrop your video or tap to upload.");
+  } finally {
+    isRunning360Sequence = false;
+    if (DOM.start360Btn) DOM.start360Btn.disabled = false;
+    if (DOM.triggerZone) DOM.triggerZone.disabled = false;
+  }
+}
+
+function isImportableVideoFile(file) {
+  if (!file) return false;
+  if (file.type && file.type.startsWith("video/")) return true;
+  return /\.(mp4|mov|m4v|webm|qt|hevc)$/i.test(file.name || "");
+}
+
+function onFileReceived() {
+  set360Status("📥 Video received", "The booth has the clip now. Processing starts automatically.");
+  showMessage("📥 Video received");
+  window.setTimeout(() => {
+    if (!isImporting360Video) {
+      setVideoImportStatus("🎬 Processing...");
+    }
+  }, 500);
+}
+
+async function process360Video(file) {
+  if (!isImportableVideoFile(file)) {
+    showMessage("Choose a video file.");
+    return;
+  }
+  if (isImporting360Video) {
+    showMessage("Already processing a video.");
+    return;
+  }
+  isImporting360Video = true;
+  const previewPlaceholder = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+  try {
+    set360Status("🎬 Processing clip", "Trimming, building the replay, and preparing the share link.");
+    setVideoImportStatus("🎬 Processing...");
+    setLiveClip(file);
+    showFinal(previewPlaceholder, { shareType: "video", shareBlob: file, skipShare: true });
+    set360Status("☁️ Uploading", "Publishing the finished 360 clip so the QR code can open it.");
+    setVideoImportStatus("☁️ Uploading...");
+    if (DOM.shareStatus) {
+      DOM.shareStatus.textContent = "Uploading video…";
+      DOM.shareStatus.style.display = "inline-flex";
+    }
+    const publicUrl = await publishShareVideo(file);
+    if (!publicUrl) {
+      if (DOM.qrHint) {
+        DOM.qrHint.textContent = cloudinaryEnabled()
+          ? "Upload failed. Try sending the video again."
+          : "Enable Cloudinary in Admin to generate a QR code for videos.";
+        DOM.qrHint.style.display = "block";
+      }
+      if (DOM.shareStatus) DOM.shareStatus.textContent = "Upload failed";
+      setVideoImportStatus("Upload failed");
+      return;
+    }
+
+    lastShareUrl = publicUrl;
+    if (DOM.qrCode) renderQrCode(DOM.qrCode, publicUrl);
+    if (DOM.shareLink) {
+      DOM.shareLink.href = publicUrl;
+      DOM.shareLink.textContent = publicUrl;
+    }
+    if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "flex";
+    if (DOM.qrCodeContainer) DOM.qrCodeContainer.classList.remove("hidden");
+    if (DOM.qrHint) DOM.qrHint.style.display = "none";
+    if (DOM.shareStatus) DOM.shareStatus.textContent = "Link ready";
+    set360Status("Ready to share", "QR code is ready for guests to scan.");
+    setVideoImportStatus("Ready");
+  } catch (error) {
+    console.error("360 video processing failed", error);
+    if (DOM.shareStatus) {
+      DOM.shareStatus.textContent = "Processing failed";
+      DOM.shareStatus.style.display = "inline-flex";
+    }
+    if (DOM.qrHint) {
+      DOM.qrHint.textContent = "Processing failed. Try a shorter clip or re-send the video.";
+      DOM.qrHint.style.display = "block";
+    }
+    set360Status("Processing failed", "Try sending the clip again or use a shorter recording.");
+    setVideoImportStatus("Processing failed");
+  } finally {
+    isImporting360Video = false;
+    if (DOM.videoInput) DOM.videoInput.value = "";
+  }
+}
+
+function handleImportedVideoFile(file) {
+  if (!file) return;
+  onFileReceived();
+  window.setTimeout(() => {
+    process360Video(file).catch((error) => {
+      console.error("Imported video failed", error);
+      setVideoImportStatus("Processing failed");
+    });
+  }, 500);
+}
+
+function setupVideoImportControls() {
+  setVideoImportStatus("Ready for video import.");
+  if (DOM.videoInput) {
+    DOM.videoInput.addEventListener("change", (event) => {
+      const input = event.target;
+      const file = input && input.files ? input.files[0] : null;
+      if (file) handleImportedVideoFile(file);
+    });
+  }
+
+  if (DOM.airdropZone && DOM.videoInput) {
+    DOM.airdropZone.addEventListener("click", () => DOM.videoInput.click());
+    DOM.airdropZone.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        DOM.videoInput.click();
+      }
+    });
+    ["dragenter", "dragover"].forEach((type) => {
+      DOM.airdropZone.addEventListener(type, (event) => {
+        event.preventDefault();
+        DOM.airdropZone.classList.add("drag-active");
+      });
+    });
+    ["dragleave", "drop"].forEach((type) => {
+      DOM.airdropZone.addEventListener(type, () => {
+        DOM.airdropZone.classList.remove("drag-active");
+      });
+    });
+  }
+
+  document.addEventListener("dragover", (event) => {
+    event.preventDefault();
+  });
+  document.addEventListener("drop", (event) => {
+    event.preventDefault();
+    if (DOM.airdropZone) DOM.airdropZone.classList.remove("drag-active");
+    const file = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files[0] : null;
+    if (file) handleImportedVideoFile(file);
+  });
+}
+
+function setup360ModeControls() {
+  if (DOM.modeToggle) {
+    DOM.modeToggle.addEventListener("click", () => {
+      setCaptureMode(currentMode === "360" ? "photo" : "360");
+    });
+  }
+  if (DOM.start360Btn) {
+    DOM.start360Btn.addEventListener("click", () => {
+      start360Sequence();
+    });
+  }
+  if (DOM.triggerZone) {
+    DOM.triggerZone.addEventListener("click", () => {
+      start360Sequence();
+    });
+    DOM.triggerZone.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        start360Sequence();
+      }
+    });
+  }
+  document.addEventListener("keydown", (event) => {
+    if (event.code !== "Space" || currentMode !== "360") return;
+    const target = event.target;
+    const tag = target && target.tagName ? String(target.tagName).toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || tag === "select" || target?.isContentEditable) return;
+    event.preventDefault();
+    start360Sequence();
+  });
+  updateCaptureModeUi();
 }
 
 function setEventSelection(key) {
@@ -1809,9 +3594,54 @@ function applyThemeFontStyles(theme) {
   ensureFontLoadedForFontString(bodyCss);
 }
 
+function resolveHexColorValue(color, fallback = "#7abf92") {
+  if (typeof color === "string" && /^#([0-9a-f]{6})$/i.test(color.trim())) return color.trim();
+  const converted = colorToHex(color || "");
+  if (converted && /^#([0-9a-f]{6})$/i.test(converted)) return converted;
+  return fallback;
+}
+
+function mixRgbValue(a, b, ratio = 0.5) {
+  const safeRatio = Math.max(0, Math.min(1, Number(ratio)));
+  const clamp = (value) => Math.max(0, Math.min(255, Math.round(value)));
+  return {
+    r: clamp(a.r + (b.r - a.r) * safeRatio),
+    g: clamp(a.g + (b.g - a.g) * safeRatio),
+    b: clamp(a.b + (b.b - a.b) * safeRatio)
+  };
+}
+
+function rgbToHexValue(rgb) {
+  const toHex = (value) => Math.max(0, Math.min(255, value)).toString(16).padStart(2, "0");
+  return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
+}
+
+function buildActionPalette(theme) {
+  const accentHex = resolveHexColorValue(theme && theme.accent, "#6fb883");
+  const accent2Hex = resolveHexColorValue(theme && theme.accent2, "#ffffff");
+  const white = { r: 255, g: 255, b: 255 };
+  const base = hexToRgb(accentHex);
+  const secondary = hexToRgb(accent2Hex);
+  const start = rgbToHexValue(mixRgbValue(base, white, 0.62));
+  const mid = rgbToHexValue(mixRgbValue(base, secondary, 0.3));
+  const end = rgbToHexValue(mixRgbValue(secondary, white, 0.2));
+  const border = rgbToHexValue(mixRgbValue(base, white, 0.78));
+  const outline = rgbToHexValue(mixRgbValue(base, { r: 20, g: 40, b: 30 }, 0.24));
+  const textLightness = (base.r * 0.299 + base.g * 0.587 + base.b * 0.114) / 255;
+  const text = textLightness > 0.62 ? "#1f3a28" : "#f7fff9";
+  return { start, mid, end, border, outline, text };
+}
+
 function applyThemeBasics(theme) {
   document.documentElement.style.setProperty('--accent', theme.accent || 'orange');
   document.documentElement.style.setProperty('--accent2', theme.accent2 || 'white');
+  const palette = buildActionPalette(theme);
+  document.documentElement.style.setProperty("--action-grad-start", palette.start);
+  document.documentElement.style.setProperty("--action-grad-mid", palette.mid);
+  document.documentElement.style.setProperty("--action-grad-end", palette.end);
+  document.documentElement.style.setProperty("--action-border", palette.border);
+  document.documentElement.style.setProperty("--action-outline", palette.outline);
+  document.documentElement.style.setProperty("--action-text", palette.text);
   applyThemeFontStyles(theme);
   applyBannerSize(theme);
   applyWelcomeTitleSize(theme);
@@ -1838,7 +3668,7 @@ function refreshBackgroundList(theme) {
   resolveBackgroundListFromFolder(theme).then((list) => {
     if (!Array.isArray(list) || !list.length) return;
     theme.backgroundsTmp = list;
-    const combined = getBackgroundList(theme);
+    const combined = getBaseBackgroundList(theme);
     if (!Array.isArray(theme.backgrounds) || theme.backgrounds.length !== combined.length) {
       theme.backgrounds = combined.slice();
     }
@@ -1979,17 +3809,12 @@ function describeEditingState() {
   const mode = DOM.themeEditorModeSelect ? DOM.themeEditorModeSelect.value : 'edit';
   if (mode === 'create') {
     const name = valueFromInput(DOM.createThemeName) || valueFromInput(DOM.themeName);
-    return name ? `Creating: \"${name}\"` : 'Creating: New theme';
-  }
-  if (mode === 'clone') {
-    const cloneName = valueFromInput(DOM.themeCloneName);
-    const baseName = (activeTheme && activeTheme.name) || (DOM.eventSelect && DOM.eventSelect.value) || 'theme';
-    return cloneName ? `Cloning to \"${cloneName}\"` : `Cloning ${baseName}`;
+    return name ? `Creating Custom Theme: \"${name}\"` : 'Creating Custom Theme';
   }
   const currentKey = DOM.eventSelect && DOM.eventSelect.value;
   const currentTheme = getThemeByKey(currentKey);
   const displayName = valueFromInput(DOM.themeName) || (currentTheme && currentTheme.name) || currentKey || 'Choose a theme';
-  return `Editing: ${displayName}`;
+  return `Using: ${displayName}`;
 }
 
 function syncThemeEditorWithActiveTheme() {
@@ -1998,6 +3823,7 @@ function syncThemeEditorWithActiveTheme() {
   applyThemeEditorColors(activeTheme);
   updateThemeEditorSummaries(activeTheme);
   renderCurrentAssets(activeTheme);
+  updateCurrentEventAssetsPanel(activeTheme);
   syncBannerSizeUI(activeTheme);
   syncWelcomeTitleSizeUI(activeTheme);
   updateThemeEditorSummary();
@@ -2026,16 +3852,13 @@ function updateStylePreview() {
   syncWelcomeText();
   syncCaptureButtonText();
   if (DOM.eventGalleryLink) {
-    const link = getEventGalleryUrl();
-    DOM.eventGalleryLink.textContent = link ? link : 'Set Cloudinary to enable gallery link.';
-  }
-  if (DOM.styleAccentPicker) {
-    const accentHex = colorToHex(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
-    if (accentHex) DOM.styleAccentPicker.value = accentHex;
-  }
-  if (DOM.styleAccent2Picker) {
-    const accent2Hex = colorToHex(getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim());
-    if (accent2Hex) DOM.styleAccent2Picker.value = accent2Hex;
+    const active = getActiveEvent();
+    if (!active) {
+      DOM.eventGalleryLink.textContent = 'Select an event to enable gallery link.';
+    } else {
+      const link = getEventGalleryUrl();
+      DOM.eventGalleryLink.textContent = link ? link : 'Set Cloudinary to enable gallery link.';
+    }
   }
 }
 
@@ -2058,6 +3881,8 @@ function applyThemeEditorColors(theme) {
 }
 
 function updateThemeEditorSummaries(theme) {
+  const baseOverlays = getBaseOverlayList(theme);
+  const baseTemplates = getBaseTemplateList(theme);
   if (DOM.summaryBackground) {
     const hasExplicit = Array.isArray(theme.backgrounds) && theme.backgrounds.length > 0;
     const hasTemp = Array.isArray(theme.backgroundsTmp) && theme.backgroundsTmp.length > 0;
@@ -2065,8 +3890,8 @@ function updateThemeEditorSummaries(theme) {
     DOM.summaryBackground.textContent = hasAny ? 'Current background: set' : 'Current background: none';
   }
   if (DOM.summaryLogo) DOM.summaryLogo.textContent = theme.logo ? 'Current logo: set' : 'Current logo: none';
-  if (DOM.summaryOverlays) DOM.summaryOverlays.textContent = `Existing overlays: ${(theme.overlays || []).length}`;
-  if (DOM.summaryTemplates) DOM.summaryTemplates.textContent = `Templates: ${getTemplateList(theme).length}`;
+  if (DOM.summaryOverlays) DOM.summaryOverlays.textContent = `Existing overlays: ${baseOverlays.length}`;
+  if (DOM.summaryTemplates) DOM.summaryTemplates.textContent = `Templates: ${baseTemplates.length}`;
 }
 
 function setThemeAccentValue(theme, key, color) {
@@ -2094,17 +3919,100 @@ function removeGreen(ctx, width, height) {
   ctx.putImageData(frame, 0, 0);
 }
 
+async function ensureAiSegmentation() {
+  if (aiSegmentation) return aiSegmentation;
+  if (aiSegmentationPromise) return aiSegmentationPromise;
+  if (typeof window === "undefined" || typeof window.SelfieSegmentation === "undefined") return null;
+  aiSegmentationPromise = new Promise((resolve) => {
+    const segmenter = new window.SelfieSegmentation({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+    });
+    segmenter.setOptions({ modelSelection: 1 });
+    segmenter.onResults((results) => {
+      if (typeof aiSegmentationResolver === "function") {
+        aiSegmentationResolver(results);
+      }
+      aiSegmentationResolver = null;
+    });
+    aiSegmentation = segmenter;
+    resolve(segmenter);
+  });
+  return aiSegmentationPromise;
+}
+
+async function getAiSegmentationMask(sourceCanvas) {
+  const segmenter = await ensureAiSegmentation();
+  if (!segmenter) return null;
+  return new Promise((resolve) => {
+    aiSegmentationResolver = (results) => {
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = sourceCanvas.width;
+      maskCanvas.height = sourceCanvas.height;
+      const maskCtx = maskCanvas.getContext("2d");
+      if (maskCtx && results && results.segmentationMask) {
+        maskCtx.drawImage(results.segmentationMask, 0, 0, maskCanvas.width, maskCanvas.height);
+        resolve(maskCanvas);
+      } else {
+        resolve(null);
+      }
+    };
+    segmenter.send({ image: sourceCanvas }).catch(() => resolve(null));
+  });
+}
+
+function applyAiMaskToCanvas(sourceCanvas, maskCanvas) {
+  if (!maskCanvas) return sourceCanvas;
+  const c = document.createElement("canvas");
+  c.width = sourceCanvas.width;
+  c.height = sourceCanvas.height;
+  const ctx = c.getContext("2d");
+  if (!ctx) return sourceCanvas;
+  ctx.drawImage(sourceCanvas, 0, 0);
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.drawImage(maskCanvas, 0, 0, c.width, c.height);
+  ctx.globalCompositeOperation = "source-over";
+  return c;
+}
+
 function renderCurrentAssets(theme) {
   // Helpers
-  const bgList = getBackgroundList(theme);
+  const eventBgList = Array.isArray(getActiveEventOverrides().backgrounds)
+    ? getActiveEventOverrides().backgrounds.filter(Boolean)
+    : [];
+  const removedBackgrounds = new Set(Array.isArray(theme && theme.backgroundsRemoved) ? theme.backgroundsRemoved : []);
+  const baseFolderList = Array.isArray(theme && theme.backgroundsTmp)
+    ? theme.backgroundsTmp.filter((src) => src && !removedBackgrounds.has(src))
+    : [];
+  const baseBgList = getBaseBackgroundList(theme);
+  const bgList = mergeUniqueUrls(eventBgList, baseBgList);
+  const baseGreenList = Array.isArray(theme && theme.greenBackgrounds)
+    ? theme.greenBackgrounds.filter(Boolean)
+    : [];
+  const greenBgList = getGreenBackgroundList(theme);
   const eventOverrides = getActiveEventOverrides();
+  const eventBgSet = new Set(eventBgList);
+  const baseFolderSet = new Set(baseFolderList);
   const hasEventBackgrounds = Array.isArray(eventOverrides.backgrounds) && eventOverrides.backgrounds.length > 0;
+  const useBaseOverride = Number.isFinite(eventOverrides.useBaseBackgroundIndex);
+  const hasEventGreenBackgrounds = Array.isArray(eventOverrides.greenBackgrounds) && eventOverrides.greenBackgrounds.length > 0;
+  const useBaseGreenOverride = Number.isFinite(eventOverrides.useBaseGreenBackgroundIndex);
   const selectedBg = bgList.length
-    ? (hasEventBackgrounds
-      ? Math.min(Math.max(eventOverrides.backgroundIndex || 0, 0), bgList.length - 1)
-      : (typeof theme.backgroundIndex === 'number'
-        ? Math.min(Math.max(theme.backgroundIndex, 0), bgList.length - 1)
-        : 0))
+    ? (useBaseOverride
+      ? Math.min(Math.max(eventOverrides.useBaseBackgroundIndex, 0), baseBgList.length - 1) + eventBgList.length
+      : (hasEventBackgrounds
+        ? Math.min(Math.max(eventOverrides.backgroundIndex || 0, 0), bgList.length - 1)
+        : (typeof theme.backgroundIndex === 'number'
+          ? Math.min(Math.max(theme.backgroundIndex, 0), bgList.length - 1)
+          : 0)))
+    : -1;
+  const selectedGreenBg = greenBgList.length
+    ? (useBaseGreenOverride
+      ? Math.min(Math.max(eventOverrides.useBaseGreenBackgroundIndex, 0), baseGreenList.length - 1) + (hasEventGreenBackgrounds ? eventOverrides.greenBackgrounds.length : 0)
+      : (hasEventGreenBackgrounds
+        ? Math.min(Math.max(eventOverrides.greenBackgroundIndex || 0, 0), greenBgList.length - 1)
+        : (typeof theme.greenBackgroundIndex === 'number'
+          ? Math.min(Math.max(theme.greenBackgroundIndex, 0), greenBgList.length - 1)
+          : 0)))
     : -1;
   const setSingle = (wrap, src, type) => {
     if (!wrap) return;
@@ -2216,6 +4124,8 @@ function renderCurrentAssets(theme) {
       const span = document.createElement('span'); span.style.color = '#888'; span.textContent = 'None'; wrap.appendChild(span);
     } else {
       bgList.forEach((src, idx) => {
+        const isEvent = eventBgSet.has(src);
+        const isFolder = !isEvent && baseFolderSet.has(src);
         const item = document.createElement('div'); item.className = 'asset-item';
         if (idx === selectedBg) item.classList.add('selected');
         const img = document.createElement('img'); img.src = withBust(src); img.onerror = () => renderMissingThumbnail(item, src);
@@ -2236,7 +4146,32 @@ function renderCurrentAssets(theme) {
         item.appendChild(useBtn);
         const remBtn = document.createElement('button');
         remBtn.className = 'asset-remove'; remBtn.textContent = '×'; remBtn.title = 'Remove';
-        remBtn.onclick = () => { if (confirm('Remove this background?')) removeBackgroundAt(idx); };
+        remBtn.title = isEvent ? 'Remove from this event' : (isFolder ? 'Hide from this theme' : 'Remove');
+        remBtn.onclick = () => {
+          const promptText = isEvent ? 'Remove this background from this event?' : (isFolder ? 'Hide this background for this theme?' : 'Remove this background?');
+          if (!confirm(promptText)) return;
+          if (isFolder) removeFolderBackground(src);
+          else removeBackgroundAt(idx);
+        };
+        item.appendChild(remBtn);
+        wrap.appendChild(item);
+      });
+    }
+  }
+  // Green screen backgrounds grid
+  if (DOM.currentGreenBackgrounds) {
+    const wrap = DOM.currentGreenBackgrounds;
+    wrap.innerHTML = '';
+    if (greenBgList.length === 0) {
+      const span = document.createElement('span'); span.style.color = '#888'; span.textContent = 'None'; wrap.appendChild(span);
+    } else {
+      greenBgList.forEach((src, idx) => {
+        const item = document.createElement('div'); item.className = 'asset-item';
+        const img = document.createElement('img'); img.src = withBust(src); img.onerror = () => renderMissingThumbnail(item, src);
+        item.appendChild(img);
+        const remBtn = document.createElement('button');
+        remBtn.className = 'asset-remove'; remBtn.textContent = '×'; remBtn.title = 'Remove';
+        remBtn.onclick = () => { if (confirm('Remove this green screen background?')) removeGreenBackgroundAt(idx); };
         item.appendChild(remBtn);
         wrap.appendChild(item);
       });
@@ -2342,6 +4277,8 @@ function getCharacterPlacement() {
 
 function goAdmin() {
   hideFinal();
+  applyEditModeState(false);
+  if (DOM.boothScreen) DOM.boothScreen.classList.remove("share-mode", "countdown-mode");
   if (DOM.welcomeScreen) DOM.welcomeScreen.classList.add('faded');
   DOM.boothScreen.classList.add('hidden');
   DOM.adminScreen.classList.remove('hidden');
@@ -2351,7 +4288,11 @@ function goAdmin() {
 }
 function applyThemeBackground(theme) {
   if (!theme) return;
-  const bg = getActiveBackground(theme) || '';
+  let bg = getActiveBackground(theme) || '';
+  if (!bg || bg.endsWith('/')) {
+    const list = getBackgroundList(theme);
+    if (list && list.length) bg = list[0];
+  }
   if (bg && !bg.endsWith('/')) {
     DOM.boothScreen.style.backgroundImage = `url(${bg})`;
   } else {
@@ -2363,8 +4304,9 @@ function setMode(m) {
   mode = m;
   DOM.videoWrap.className = 'view-landscape'; // Default to landscape
   // In photo mode, show capture button; strip mode hides it (auto flow)
-  DOM.captureBtn.style.display = (mode === 'photo') ? 'inline-block' : 'none';
-  if (mode === 'photo') {
+  DOM.captureBtn.style.display = (mode === "photo" || mode === "message") ? "inline-block" : "none";
+  DOM.captureBtn.textContent = (mode === "message") ? "Record Message" : "Take Photo";
+  if (mode === 'photo' || mode === "message") {
     setCaptureAspect(null);
   }
   // In strip mode, ensure no photo overlay is shown over the template preview
@@ -2372,16 +4314,66 @@ function setMode(m) {
     selectedOverlay = null;
     if (DOM.liveOverlay) DOM.liveOverlay.src = '';
   }
+  if (mode === "message") {
+    selectedOverlay = null;
+    if (DOM.liveOverlay) DOM.liveOverlay.src = "";
+  }
   renderOptions();
 }
 function renderOptions() {
+  if (mode === "message") {
+    if (DOM.options) DOM.options.innerHTML = "";
+    return;
+  }
   const isPhoto = (mode === 'photo');
   const templates = isPhoto ? [] : getTemplateList(activeTheme);
   const list = isPhoto ? getOverlayList(activeTheme) : templates;
   const container = DOM.options;
   container.innerHTML = '';
+  const addSection = (title) => {
+    const section = document.createElement('div');
+    section.className = 'options-section';
+    if (title) {
+      const heading = document.createElement('div');
+      heading.className = 'options-section-title';
+      heading.textContent = title;
+      section.appendChild(heading);
+    }
+    const grid = document.createElement('div');
+    grid.className = 'options-section-grid';
+    section.appendChild(grid);
+    container.appendChild(section);
+    return grid;
+  };
+  const greenGrid = addSection('Green Screen BGs');
+  const greenList = getGreenBackgroundList(activeTheme);
+  if (!greenList.length) {
+    const note = document.createElement('div');
+    note.style.fontSize = '0.8em';
+    note.style.color = '#888';
+    note.textContent = 'None';
+    greenGrid.appendChild(note);
+  } else {
+    const activeGreen = getActiveGreenBackground(activeTheme);
+    greenList.forEach((src, idx) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'thumb';
+      const img = document.createElement('img');
+      wrap.appendChild(img);
+      img.src = withBust(src);
+      if (activeGreen === src) wrap.classList.add('selected');
+      wrap.onclick = () => {
+        greenGrid.querySelectorAll('.thumb').forEach(t => t.classList.remove('selected'));
+        wrap.classList.add('selected');
+        setGreenBackgroundIndex(idx);
+      };
+      greenGrid.appendChild(wrap);
+    });
+  }
+
   // Add a "No Overlay" option for Photo mode to quickly clear stuck overlays
   if (isPhoto) {
+    const overlayGrid = addSection('Overlays');
     const wrap = document.createElement('div');
     wrap.className = 'thumb';
     const img = document.createElement('img');
@@ -2396,8 +4388,9 @@ function renderOptions() {
       selectedOverlay = null;
       if (DOM.liveOverlay) DOM.liveOverlay.src = '';
     };
-    container.appendChild(wrap);
+    overlayGrid.appendChild(wrap);
   }
+  const targetGrid = isPhoto ? container.querySelector('.options-section:last-child .options-section-grid') : container;
   list.forEach((srcOrObj, idx) => {
     const src = (isPhoto
       ? (typeof srcOrObj === 'string' ? srcOrObj : srcOrObj.src)
@@ -2412,7 +4405,7 @@ function renderOptions() {
       wrap.style.display = 'none'; // Hide instead of remove to prevent breaking layout
     };
     wrap.onclick = async () => {
-      container.querySelectorAll('.thumb').forEach(t => t.classList.remove('selected'));
+      targetGrid.querySelectorAll('.thumb').forEach(t => t.classList.remove('selected'));
       wrap.classList.add('selected');
       if (isPhoto) {
         selectedOverlay = src;
@@ -2430,7 +4423,7 @@ function renderOptions() {
         openConfirm(template.src);
       }
     };
-    container.appendChild(wrap);
+    targetGrid.appendChild(wrap);
   });
 }
 
@@ -2562,9 +4555,13 @@ function confirmTemplate() {
 // Welcome control
 function showWelcome() {
   if (!activeTheme) return;
+  setBoothControlsVisible(false);
+  if (DOM.boothScreen) DOM.boothScreen.classList.add("welcome-active");
+  if (DOM.confirmModal) DOM.confirmModal.style.display = "none";
   // Title + prompt
   DOM.welcomeTitle.textContent = resolveWelcomeTitle();
   DOM.welcomeTitle.style.fontFamily = (activeTheme.fontHeading || activeTheme.fontBody || activeTheme.font || '');
+  fitWelcomeTitleToViewport();
   if (DOM.startButton) DOM.startButton.textContent = resolveStartButtonText();
 
   //  the booth background on the welcome screen and hide standalone images
@@ -2578,25 +4575,46 @@ function showWelcome() {
   const ws = DOM.welcomeScreen;
   if (!ws) return;
   ws.classList.remove('faded');
-  if (DOM.startButton) {
-    DOM.startButton.onclick = () => hideWelcome();
-  } else {
-    ws.onclick = () => hideWelcome();
-  }
+  setupWelcomeInteractions();
 }
+
+function beginWelcome(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  hideWelcome();
+}
+
 function hideWelcome() {
   const ws = DOM.welcomeScreen;
+  if (!ws) return;
+  if (ws.classList.contains("faded")) return;
   ws.classList.add('faded');
+  if (DOM.boothScreen) DOM.boothScreen.classList.remove("welcome-active");
+  if (currentMode !== "360") {
+    setMode(mode === "message" ? "message" : "photo");
+  }
+  updateCaptureModeUi();
+  setBoothControlsVisible(true);
   // show the video smoothly
-  DOM.video.classList.remove('hidden');
-  DOM.video.classList.add('active');
+  if (DOM.video) {
+    DOM.video.classList.remove("hidden");
+    DOM.video.classList.add("active");
+    if (DOM.video.srcObject && typeof DOM.video.play === "function") {
+      DOM.video.play().catch(() => {});
+    }
+  }
+  if (!stream && !demoMode && currentMode !== "360") {
+    startCamera(false);
+  }
 
   // After the welcome screen is hidden, select the first option if in photo mode.
   // This ensures the UI is visible and ready for interaction.
-  if (mode === 'photo') {
+  if (mode === "photo") {
     const overlays = getOverlayList(activeTheme);
     if (Array.isArray(overlays) && overlays.length > 0) {
-      const firstThumb = DOM.options.querySelector('.thumb');
+      const firstThumb = DOM.options ? DOM.options.querySelector(".thumb") : null;
       if (firstThumb) firstThumb.click();
     }
   }
@@ -2676,12 +4694,19 @@ function startBooth() {
 function startBoothFlow() {
   // Theme is now pre-loaded by startCamera()
   allowRetake = DOM.allowRetakes.checked;
+  if (DOM.boothScreen) DOM.boothScreen.classList.remove("share-mode", "countdown-mode");
   DOM.adminScreen.classList.add('hidden');
   DOM.boothScreen.classList.remove('hidden');
+  document.body.classList.remove("admin-open");
+  document.documentElement.classList.remove("admin-open");
   setBoothControlsVisible(true);
   setCaptureAspect(null);
   showWelcome();
   setMode('photo'); // Default to photo mode on start
+  updateCaptureModeUi();
+  if (getInstantCaptureEnabled()) {
+    showToast('Instant Capture is ON');
+  }
 }
 
 const startCameraFlow = (...args) => startCamera(...args);
@@ -2698,6 +4723,53 @@ async function capturePhotoFlow() {
   recordAnalytics('photo', selectedOverlay);
   addToGallery(finalUrl);
 }
+
+async function captureMessageFlow() {
+  if (isMessageRecording) return;
+  lastCaptureFlow = captureMessageFlow;
+  setBoothControlsVisible(false);
+  if (DOM.captureBtn) DOM.captureBtn.disabled = true;
+  try {
+    for (let n = 3; n > 0; n--) { await showCountdown(n); }
+    isMessageRecording = true;
+    if (DOM.captureBtn) {
+      DOM.captureBtn.disabled = false;
+      DOM.captureBtn.textContent = "Stop Recording";
+      DOM.captureBtn.classList.add("recording-stop");
+    }
+    const clip = await captureMessageClip(MESSAGE_DURATION_MS);
+    if (!clip) {
+      showToast("Message recording failed.");
+      setBoothControlsVisible(true);
+      return;
+    }
+    setLiveClip(clip);
+    const posterCanvas = drawToCanvasFromVideo();
+    const posterUrl = posterCanvas.toDataURL("image/jpeg", 0.9);
+    showFinal(posterUrl, { shareType: "video", shareBlob: clip });
+    recordAnalytics("message", "video");
+  } finally {
+    if (DOM.captureBtn) {
+      DOM.captureBtn.textContent = "Record Message";
+      DOM.captureBtn.classList.remove("recording-stop");
+      DOM.captureBtn.disabled = false;
+    }
+    isMessageRecording = false;
+  }
+}
+
+function handlePrimaryAction() {
+  if (DOM.boothScreen && DOM.boothScreen.classList.contains("welcome-active")) return;
+  if (mode === "message") {
+    if (isMessageRecording && typeof messageStopper === "function") {
+      messageStopper();
+      return;
+    }
+    captureMessageFlow();
+    return;
+  }
+  capturePhotoFlow();
+}
 function drawToCanvasFromVideo() {
   const v = DOM.video;
   const c = document.createElement('canvas');
@@ -2705,8 +4777,8 @@ function drawToCanvasFromVideo() {
 
   // Demo or no camera stream ready: draw a placeholder frame
   if (demoMode || !v || !v.videoWidth || !v.videoHeight) {
-    const aspectW = isPortrait ? 9 : 16;
-    const aspectH = isPortrait ? 16 : 9;
+    const aspectW = isPortrait ? 3 : 4;
+    const aspectH = isPortrait ? 4 : 3;
     const base = 900; // arbitrary size
     c.width = Math.round((base * aspectW) / aspectH);
     c.height = base;
@@ -2719,7 +4791,7 @@ function drawToCanvasFromVideo() {
     ctx.font = '28px system-ui';
     ctx.textAlign = 'center';
     ctx.fillText('Demo Mode', c.width / 2, c.height / 2 - 10);
-    ctx.fillText(isPortrait ? '9:16' : '16:9', c.width / 2, c.height / 2 + 26);
+    ctx.fillText(isPortrait ? "3:4" : "4:3", c.width / 2, c.height / 2 + 26);
     return c;
   }
 
@@ -2728,7 +4800,7 @@ function drawToCanvasFromVideo() {
   const zoom = getCameraZoom();
 
   if (isPortrait) {
-    const targetAspect = (typeof captureAspectRatio === 'number' && captureAspectRatio > 0) ? captureAspectRatio : (9 / 16);
+    const targetAspect = (typeof captureAspectRatio === 'number' && captureAspectRatio > 0) ? captureAspectRatio : (3 / 4);
     let sWidth, sHeight, sx, sy;
     sHeight = videoH;
     sWidth = sHeight * targetAspect;
@@ -2749,7 +4821,7 @@ function drawToCanvasFromVideo() {
     ctx.drawImage(v, sx, sy, sWidth, sHeight, 0, 0, c.width, c.height);
   } else {
     // Crop to strict target aspect for landscape to match preview
-    const targetAspect = (typeof captureAspectRatio === 'number' && captureAspectRatio > 0) ? captureAspectRatio : (16 / 9);
+    const targetAspect = (typeof captureAspectRatio === 'number' && captureAspectRatio > 0) ? captureAspectRatio : (4 / 3);
     let sWidth, sHeight, sx, sy;
     sWidth = videoW;
     sHeight = sWidth / targetAspect;
@@ -2774,14 +4846,81 @@ function drawToCanvasFromVideo() {
 
 function applyAutoEnhanceCanvas(canvas) {
   if (!AUTO_ENHANCE_ENABLED || !canvas) return canvas;
+  const enhancement = ENHANCEMENT_MODE_CONFIG[getEnhancementMode()] || ENHANCEMENT_MODE_CONFIG[ENHANCEMENT_MODE_DEFAULT];
   const out = document.createElement('canvas');
   out.width = canvas.width;
   out.height = canvas.height;
   const ctx = out.getContext('2d');
-  ctx.filter = AUTO_ENHANCE_FILTER;
+  ctx.filter = enhancement.baseFilter || AUTO_ENHANCE_FILTER;
   ctx.drawImage(canvas, 0, 0);
   ctx.filter = 'none';
+  applyBeautyLightingPass(ctx, out.width, out.height, enhancement);
   return out;
+}
+
+function applyBeautyLightingPass(ctx, width, height, enhancement) {
+  if (!ctx || !width || !height) return;
+
+  try {
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    const {
+      shadowLift,
+      highlightRollOff,
+      warmthRedBoost,
+      warmthBlueCut,
+      smoothingBlend,
+    } = enhancement || ENHANCEMENT_MODE_CONFIG[ENHANCEMENT_MODE_DEFAULT];
+
+    for (let index = 0; index < data.length; index += 4) {
+      let red = data[index];
+      let green = data[index + 1];
+      let blue = data[index + 2];
+
+      const luminance = (red * 0.299) + (green * 0.587) + (blue * 0.114);
+      const shadowAmount = clampNumber((170 - luminance) / 170, 0, 1);
+      const highlightAmount = clampNumber((luminance - 180) / 75, 0, 1);
+
+      red += shadowLift * shadowAmount;
+      green += shadowLift * 0.92 * shadowAmount;
+      blue += shadowLift * 0.84 * shadowAmount;
+
+      red -= highlightRollOff * 0.55 * highlightAmount;
+      green -= highlightRollOff * 0.5 * highlightAmount;
+      blue -= highlightRollOff * 0.45 * highlightAmount;
+
+      red += warmthRedBoost * (0.35 + shadowAmount * 0.65);
+      blue -= warmthBlueCut * (0.3 + shadowAmount * 0.7);
+
+      data[index] = clampNumber(Math.round(red), 0, 255);
+      data[index + 1] = clampNumber(Math.round(green), 0, 255);
+      data[index + 2] = clampNumber(Math.round(blue), 0, 255);
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+
+    const softened = document.createElement('canvas');
+    softened.width = width;
+    softened.height = height;
+    const softenedCtx = softened.getContext('2d');
+    if (!softenedCtx) return;
+
+    softenedCtx.filter = 'blur(1.8px) brightness(1.02)';
+    softenedCtx.drawImage(ctx.canvas, 0, 0);
+    softenedCtx.filter = 'none';
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = smoothingBlend;
+    ctx.drawImage(softened, 0, 0);
+    ctx.restore();
+  } catch (error) {
+    console.warn('Auto enhance pass failed', error);
+  }
+}
+
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function clearLiveClip() {
@@ -2821,6 +4960,110 @@ function setRecordingHighlight(isRecording) {
   DOM.videoContainer.classList.toggle("recording", !!isRecording);
 }
 
+function setRecordingOverlayVisible(show, remainingMs = 0) {
+  if (!DOM.recordingOverlay || !DOM.recordingTimer) return;
+  DOM.recordingOverlay.classList.toggle("show", !!show);
+  if (show) {
+    DOM.recordingTimer.textContent = `REC ${formatRecordingTime(remainingMs)}`;
+  }
+}
+
+function startRecordingTimer(durationMs) {
+  if (!DOM.recordingTimer || !DOM.recordingOverlay) return () => {};
+  const startedAt = Date.now();
+  const tick = () => {
+    const elapsed = Date.now() - startedAt;
+    const remaining = Math.max(0, durationMs - elapsed);
+    DOM.recordingTimer.textContent = `REC ${formatRecordingTime(remaining)}`;
+    if (remaining <= 0) clearInterval(timer);
+  };
+  setRecordingOverlayVisible(true, durationMs);
+  const timer = setInterval(tick, 250);
+  return () => {
+    clearInterval(timer);
+    setRecordingOverlayVisible(false, 0);
+  };
+}
+
+function stopStreamTracks(targetStream) {
+  if (!targetStream) return;
+  targetStream.getTracks().forEach((track) => track.stop());
+}
+
+async function ensureMessageStream() {
+  if (demoMode) {
+    showToast("Message recording is unavailable in demo mode.");
+    return null;
+  }
+  if (stream && stream.getAudioTracks().length) return stream;
+  try {
+    const nextStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    if (stream && stream !== nextStream) stopStreamTracks(stream);
+    stream = nextStream;
+    if (DOM.video) {
+      DOM.video.srcObject = stream;
+      DOM.video.style.transform = "";
+    }
+    return stream;
+  } catch (err) {
+    console.warn("Microphone access failed", err);
+    showToast("Mic permission denied; recording will be silent.");
+    return stream || null;
+  }
+}
+
+function pickMessageMimeType() {
+  if (typeof MediaRecorder === "undefined") return "";
+  const candidates = [
+    "video/webm;codecs=vp9,opus",
+    "video/webm;codecs=vp8,opus",
+    "video/webm"
+  ];
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || "";
+}
+
+async function captureMessageClip(durationMs) {
+  try {
+    const activeStream = await ensureMessageStream();
+    if (!activeStream || typeof MediaRecorder === "undefined") return null;
+    const mimeType = pickMessageMimeType();
+    const recorder = new MediaRecorder(activeStream, mimeType ? { mimeType } : undefined);
+    messageRecorder = recorder;
+    const chunks = [];
+    recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    const stopped = new Promise((resolve) => {
+      recorder.onstop = () => resolve();
+    });
+    const stopTimer = startRecordingTimer(durationMs);
+    setRecordingHighlight(true);
+    recorder.start();
+    messageStopper = () => {
+      if (recorder.state === "recording") recorder.stop();
+    };
+    messageStopTimer = setTimeout(() => {
+      if (recorder.state === "recording") recorder.stop();
+    }, Math.max(500, durationMs));
+    await stopped;
+    stopTimer();
+    setRecordingHighlight(false);
+    clearTimeout(messageStopTimer);
+    messageStopTimer = null;
+    messageRecorder = null;
+    messageStopper = null;
+    if (!chunks.length) return null;
+    return new Blob(chunks, { type: chunks[0].type || "video/webm" });
+  } catch (e) {
+    console.warn("Message recording failed", e);
+    setRecordingHighlight(false);
+    setRecordingOverlayVisible(false, 0);
+    clearTimeout(messageStopTimer);
+    messageStopTimer = null;
+    messageRecorder = null;
+    messageStopper = null;
+    return null;
+  }
+}
+
 async function captureLiveClip(durationMs) {
   try {
     const stream = DOM.video && DOM.video.srcObject;
@@ -2854,10 +5097,10 @@ function updateCaptureAspect() {
     ratio = captureAspectRatio;
   }
   if (isPortrait) {
-    const aspect = ratio || (9 / 16);
+    const aspect = ratio || (3 / 4);
     DOM.videoContainer.style.aspectRatio = `${aspect} / 1`;
   } else {
-    const aspect = ratio || (16 / 9);
+    const aspect = ratio || (4 / 3);
     DOM.videoContainer.style.aspectRatio = `${aspect} / 1`;
   }
   updateCountdownFontSize();
@@ -2872,11 +5115,28 @@ function setCaptureAspect(aspect) {
   updateCaptureAspect();
 }
 
+const COUNTDOWN_SCALE_KEY = "photoboothCountdownScale";
+
+function getCountdownScale() {
+  try {
+    const stored = localStorage.getItem(COUNTDOWN_SCALE_KEY);
+    if (stored !== null) return clampZoom(parseFloat(stored), 0.5, 1);
+    localStorage.setItem(COUNTDOWN_SCALE_KEY, "0.9");
+  } catch (_) { }
+  return 0.9;
+}
+
+function setCountdownScale(scale) {
+  const normalized = clampZoom(scale, 0.5, 1);
+  try { localStorage.setItem(COUNTDOWN_SCALE_KEY, String(normalized)); } catch (_) { }
+  updateCountdownFontSize();
+}
+
 function updateCountdownFontSize() {
   if (!DOM.videoContainer) return;
   const rect = DOM.videoContainer.getBoundingClientRect();
   if (!rect || !rect.height) return;
-  const size = Math.max(80, Math.round(rect.height * 0.95));
+  const size = Math.max(80, Math.round(rect.height * getCountdownScale()));
   document.documentElement.style.setProperty("--countdown-size", `${size}px`);
 }
 function loadImage(url) {
@@ -3083,11 +5343,35 @@ async function runStripSequence(template) {
   }
 }
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function getVideoTrack() {
+  try {
+    if (!stream) return null;
+    const tracks = stream.getVideoTracks();
+    return tracks && tracks.length ? tracks[0] : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function setTorch(enabled) {
+  const track = getVideoTrack();
+  if (!track || typeof track.getCapabilities !== "function") return false;
+  const caps = track.getCapabilities();
+  if (!caps || !caps.torch) return false;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: !!enabled }] });
+    torchEnabled = !!enabled;
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
 async function showCountdown(text) {
   const co = DOM.countdownOverlay;
   co.textContent = text;
   updateCountdownFontSize();
-  if (DOM.boothScreen) DOM.boothScreen.classList.add("countdown-mode");
+  if (DOM.boothScreen && mode !== "message") DOM.boothScreen.classList.add("countdown-mode");
   co.classList.add('show');
   await delay(800);
   co.classList.remove('show');
@@ -3097,22 +5381,28 @@ async function countdownAndSnap(options = {}) {
   const { live = false, instant = false } = options || {};
   const guide = DOM.silhouette;
   if (guide) guide.style.display = "none";
+  const lowLightEnabled = getLowLightEnabled();
+  const torchUsed = lowLightEnabled ? await setTorch(true) : false;
   if (!instant) {
     for (let n = 3; n > 0; n--) { await showCountdown(n); }
   } else if (DOM.countdownOverlay) {
     DOM.countdownOverlay.classList.remove('show');
     if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
   }
+  if (lowLightEnabled && !torchUsed) triggerFlash();
   if (!live) setRecordingHighlight(false);
   const livePromise = live ? captureLiveClip(LIVE_PHOTO_DURATION_MS) : null;
   const shot = applyAutoEnhanceCanvas(drawToCanvasFromVideo());
-  if (getGreenScreenEnabled()) {
+  if (getAiBackgroundEnabled()) {
+    const mask = await getAiSegmentationMask(shot);
+    if (mask) shot.__aiMask = mask;
+  } else if (getGreenScreenEnabled()) {
     try {
       const ctx = shot.getContext("2d");
       if (ctx) removeGreen(ctx, shot.width, shot.height);
     } catch (_) { }
   }
-  triggerFlash();
+  if (torchUsed) await setTorch(false);
   if (livePromise) {
     const clip = await livePromise;
     setLiveClip(clip);
@@ -3208,8 +5498,9 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
   // Background fill
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, targetW, targetH);
+  const aiEnabled = getAiBackgroundEnabled();
   // Background scene
-  const bg = getActiveBackground(activeTheme) || '';
+  const bg = (aiEnabled || getGreenScreenEnabled()) ? (getActiveGreenBackground(activeTheme) || '') : '';
   if (bg) {
     try {
       const bgImg = await loadImage(bg);
@@ -3237,7 +5528,10 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
     } catch (_) { }
   }
   // Place captured photo with cover (camera fill)
-  drawImageCover(ctx, photoCanvas, 0, 0, targetW, targetH);
+  const photoForPrint = aiEnabled
+    ? applyAiMaskToCanvas(photoCanvas, photoCanvas && photoCanvas.__aiMask)
+    : photoCanvas;
+  drawImageCover(ctx, photoForPrint, 0, 0, targetW, targetH);
   // Optional overlay scaled without cropping
   if (overlaySrc) {
     try {
@@ -3368,12 +5662,23 @@ async function detectMaskRegions(img, hexColor, tolerance) {
 }
 
 // Final preview
-function showFinal(url) {
+function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
   if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
   const img = DOM.finalStrip;
   const prevFit = img ? img.style.objectFit : '';
   if (img) img.style.objectFit = 'contain';
+  if (DOM.finalPreviewContent && DOM.videoContainer) {
+    const rect = DOM.videoContainer.getBoundingClientRect();
+    if (rect && rect.width && rect.height) {
+      DOM.finalPreviewContent.style.setProperty("--review-width", `${Math.round(rect.width)}px`);
+      DOM.finalPreviewContent.style.setProperty("--review-height", `${Math.round(rect.height)}px`);
+    }
+  }
+  const shareType = options.shareType || "image";
+  lastShareType = shareType;
+  const shareBlob = options.shareBlob || null;
+  const skipShare = !!options.skipShare;
   const qrContainer = DOM.qrCodeContainer;
   const qrCanvas = DOM.qrCode;
   const panel = DOM.finalPreview;
@@ -3389,7 +5694,8 @@ function showFinal(url) {
   if (DOM.closePreviewBtn) DOM.closePreviewBtn.style.display = 'block';
 
   img.src = url;
-  if (DOM.finalLive && lastLiveClipUrl) {
+  const useLiveClip = !!(DOM.finalLive && lastLiveClipUrl && !options.forceImage && !getGreenScreenEnabled() && !getAiBackgroundEnabled());
+  if (useLiveClip) {
     DOM.finalLive.src = lastLiveClipUrl;
     DOM.finalLive.poster = url;
     DOM.finalLive.classList.remove('hidden');
@@ -3408,11 +5714,18 @@ function showFinal(url) {
   if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = 'none';
   if (DOM.qrHint) { DOM.qrHint.style.display = 'none'; DOM.qrHint.textContent = ''; }
   if (DOM.shareStatus) { DOM.shareStatus.style.display = 'none'; }
-  if (!offline && cloudinaryEnabled()) {
+  if (!skipShare && !offline && cloudinaryEnabled()) {
     // Prepare a public Cloudinary link, then show QR when ready
     lastShareUrl = null;
     if (DOM.shareStatus) { DOM.shareStatus.textContent = 'Preparing link…'; DOM.shareStatus.style.display = 'inline-flex'; }
-    publishShareImage(url).then((publicUrl) => {
+    const sharePromise = shareType === "video"
+      ? publishShareVideo(shareBlob)
+      : publishShareImage(url);
+    if (!sharePromise) {
+      if (DOM.shareStatus) { DOM.shareStatus.textContent = 'Upload failed'; }
+      return;
+    }
+    sharePromise.then((publicUrl) => {
       lastShareUrl = (publicUrl && /^https?:/i.test(publicUrl)) ? publicUrl : null;
       if (lastShareUrl) {
         renderQrCode(qrCanvas, lastShareUrl);
@@ -3428,7 +5741,7 @@ function showFinal(url) {
       if (DOM.qrHint) { DOM.qrHint.textContent = 'QR disabled: Cloudinary link not available.'; DOM.qrHint.style.display = 'block'; }
       if (DOM.shareStatus) { DOM.shareStatus.textContent = 'Upload failed'; }
     });
-  } else {
+  } else if (!skipShare) {
     // No internet or Cloudinary disabled
     if (offline && DOM.qrHint) { DOM.qrHint.textContent = 'Offline: QR disabled'; DOM.qrHint.style.display = 'block'; }
     if (!cloudinaryEnabled() && DOM.qrHint) { DOM.qrHint.textContent = 'Enable Cloudinary in Admin to show QR'; DOM.qrHint.style.display = 'block'; }
@@ -3531,18 +5844,20 @@ function getActiveEvent() {
 
 function ensureEventOverrides(event) {
   if (!event.overrides || typeof event.overrides !== "object") {
-    event.overrides = { backgrounds: [], overlays: [], templates: [], backgroundIndex: 0 };
+    event.overrides = { backgrounds: [], overlays: [], templates: [], backgroundIndex: 0, greenBackgrounds: [], greenBackgroundIndex: 0 };
   }
   if (!Array.isArray(event.overrides.backgrounds)) event.overrides.backgrounds = [];
   if (!Array.isArray(event.overrides.overlays)) event.overrides.overlays = [];
   if (!Array.isArray(event.overrides.templates)) event.overrides.templates = [];
   if (typeof event.overrides.backgroundIndex !== "number") event.overrides.backgroundIndex = 0;
+  if (!Array.isArray(event.overrides.greenBackgrounds)) event.overrides.greenBackgrounds = [];
+  if (typeof event.overrides.greenBackgroundIndex !== "number") event.overrides.greenBackgroundIndex = 0;
   return event.overrides;
 }
 
 function getActiveEventOverrides() {
   const active = getActiveEvent();
-  if (!active) return { backgrounds: [], overlays: [], templates: [], backgroundIndex: 0 };
+  if (!active) return { backgrounds: [], overlays: [], templates: [], backgroundIndex: 0, greenBackgrounds: [], greenBackgroundIndex: 0 };
   return ensureEventOverrides(active);
 }
 
@@ -3683,20 +5998,104 @@ function updateEventOverridesSummary() {
   if (!DOM.eventOverridesSummary) return;
   if (!getActiveEvent()) {
     DOM.eventOverridesSummary.textContent = "Select an event to add event-only assets.";
+    updateEventDependentControls(false);
+    updateCurrentEventAssetsPanel();
     return;
   }
   const overrides = getActiveEventOverrides();
   const parts = [];
   if (overrides.backgrounds.length) parts.push(`${overrides.backgrounds.length} background${overrides.backgrounds.length === 1 ? "" : "s"}`);
+  if (overrides.greenBackgrounds.length) parts.push(`${overrides.greenBackgrounds.length} green BG${overrides.greenBackgrounds.length === 1 ? "" : "s"}`);
   if (overrides.overlays.length) parts.push(`${overrides.overlays.length} overlay${overrides.overlays.length === 1 ? "" : "s"}`);
   if (overrides.templates.length) parts.push(`${overrides.templates.length} template${overrides.templates.length === 1 ? "" : "s"}`);
   DOM.eventOverridesSummary.textContent = parts.length ? `Event-only assets: ${parts.join(", ")}` : "No event-only assets yet.";
+  updateEventDependentControls(true);
+  updateCurrentEventAssetsPanel();
+}
+
+function updateEventDependentControls(hasActiveEvent = !!getActiveEvent()) {
+  if (DOM.currentAssetsContent) DOM.currentAssetsContent.classList.toggle("hidden", !hasActiveEvent);
+  if (DOM.eventGalleryActions) DOM.eventGalleryActions.classList.toggle("hidden", !hasActiveEvent);
+  if (DOM.currentEventAssetsSummary) DOM.currentEventAssetsSummary.classList.toggle("hidden", !hasActiveEvent);
+  if (DOM.clearEventOverridesBtn) DOM.clearEventOverridesBtn.classList.toggle("hidden", !hasActiveEvent);
+  if (DOM.eventToSubThemeBtn) DOM.eventToSubThemeBtn.classList.toggle("hidden", !hasActiveEvent);
+}
+
+function updateCurrentEventAssetsPanel(theme = null) {
+  if (!DOM.currentEventName || !DOM.currentEventTheme || !DOM.currentEventAssetsSummary || !DOM.currentThemeAssetsSummary) return;
+  const active = getActiveEvent();
+  if (!active) {
+    updateEventDependentControls(false);
+    DOM.currentEventName.textContent = "No event selected";
+    if (DOM.currentEventDate) DOM.currentEventDate.textContent = "";
+    DOM.currentEventTheme.textContent = "";
+    DOM.currentEventAssetsSummary.textContent = "Event-only assets: none";
+    DOM.currentThemeAssetsSummary.textContent = "Theme assets: none";
+    if (DOM.eventGalleryLink) DOM.eventGalleryLink.textContent = "Select an event to enable gallery link.";
+    return;
+  }
+  updateEventDependentControls(true);
+  DOM.currentEventName.textContent = active.name || "Untitled event";
+  if (DOM.currentEventDate) DOM.currentEventDate.textContent = active.date || "";
+  const eventThemeKey = active.themeKey || (DOM.eventSelect && DOM.eventSelect.value) || "";
+  const themeObj = theme || getThemeByKey(eventThemeKey) || activeTheme || getSelectedThemeTarget();
+  DOM.currentEventTheme.textContent = (themeObj && themeObj.name) ? themeObj.name : (eventThemeKey || "None");
+
+  const overrides = getActiveEventOverrides();
+  const eventParts = [];
+  if (overrides.backgrounds.length) eventParts.push(`${overrides.backgrounds.length} background${overrides.backgrounds.length === 1 ? "" : "s"}`);
+  if (overrides.greenBackgrounds.length) eventParts.push(`${overrides.greenBackgrounds.length} green BG${overrides.greenBackgrounds.length === 1 ? "" : "s"}`);
+  if (overrides.overlays.length) eventParts.push(`${overrides.overlays.length} overlay${overrides.overlays.length === 1 ? "" : "s"}`);
+  if (overrides.templates.length) eventParts.push(`${overrides.templates.length} template${overrides.templates.length === 1 ? "" : "s"}`);
+  DOM.currentEventAssetsSummary.textContent = eventParts.length ? `Event-only assets: ${eventParts.join(", ")}` : "Event-only assets: none";
+
+  const baseBackgrounds = themeObj ? getBaseBackgroundList(themeObj) : [];
+  const baseGreen = Array.isArray(themeObj && themeObj.greenBackgrounds) ? themeObj.greenBackgrounds.filter(Boolean) : [];
+  const baseOverlays = themeObj ? getBaseOverlayList(themeObj) : [];
+  const baseTemplates = themeObj ? getBaseTemplateList(themeObj) : [];
+  const baseParts = [];
+  if (baseBackgrounds.length) baseParts.push(`${baseBackgrounds.length} background${baseBackgrounds.length === 1 ? "" : "s"}`);
+  if (baseGreen.length) baseParts.push(`${baseGreen.length} green BG${baseGreen.length === 1 ? "" : "s"}`);
+  if (baseOverlays.length) baseParts.push(`${baseOverlays.length} overlay${baseOverlays.length === 1 ? "" : "s"}`);
+  if (baseTemplates.length) baseParts.push(`${baseTemplates.length} template${baseTemplates.length === 1 ? "" : "s"}`);
+  if (themeObj && themeObj.logo) baseParts.push("logo");
+  if (themeObj && themeObj.character) baseParts.push("character");
+  DOM.currentThemeAssetsSummary.textContent = baseParts.length ? `Theme assets: ${baseParts.join(", ")}` : "Theme assets: none";
 }
 
 async function handleEventOnlyAssetInput(kind, fileList) {
   const active = getActiveEvent();
   if (!active) {
-    alert("Create or select an event first.");
+    const target = getSelectedThemeTarget();
+    if (!target) {
+      alert("Select a theme first.");
+      return;
+    }
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    const tasks = files.map(async (file) => {
+      const url = await uploadAsset(file, kind);
+      if (!url) return;
+      if (kind === "templates") {
+        if (!Array.isArray(target.templates)) target.templates = [];
+        target.templates.push({ src: url, layout: "double_column" });
+      } else if (kind === "overlays") {
+        if (!Array.isArray(target.overlays)) target.overlays = [];
+        target.overlays.push(url);
+      } else if (kind === "backgrounds") {
+        if (Array.isArray(target.backgrounds)) target.backgrounds.push(url);
+        else if (target.background) { target.backgrounds = [target.background, url]; delete target.backgroundIndex; }
+        else target.background = url;
+      } else if (kind === "greenBackgrounds") {
+        if (!Array.isArray(target.greenBackgrounds)) target.greenBackgrounds = [];
+        target.greenBackgrounds.push(url);
+      }
+    });
+    await Promise.all(tasks);
+    saveThemesToStorage();
+    loadTheme(DOM.eventSelect && DOM.eventSelect.value);
+    syncThemeEditorWithActiveTheme();
+    showToast('Added to current theme');
     return;
   }
   if (!fileList || fileList.length === 0) return;
@@ -3729,7 +6128,7 @@ function clearEventOverrides() {
     return;
   }
   if (!confirm("Clear event-only assets?")) return;
-  const overrides = { backgrounds: [], overlays: [], templates: [], backgroundIndex: 0 };
+  const overrides = { backgrounds: [], overlays: [], templates: [], backgroundIndex: 0, greenBackgrounds: [], greenBackgroundIndex: 0 };
   updateActiveEventDetails({ overrides });
   updateEventOverridesSummary();
   renderOptions();
@@ -3831,6 +6230,25 @@ async function uploadImageToCloudinary(blob, options = {}) {
   return '';
 }
 
+async function uploadVideoToCloudinary(blob, options = {}) {
+  const cfg = getCloudinaryConfig();
+  if ((!cfg.use && !options.force) || !cfg.cloud || !cfg.preset) return "";
+  try {
+    const form = new FormData();
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    const baseName = `${options.baseName || "message"}-${ts}.webm`;
+    const file = new File([blob], baseName, { type: blob.type || "video/webm" });
+    form.append("file", file);
+    form.append("upload_preset", cfg.preset);
+    if (options.folder) form.append("folder", options.folder);
+    if (options.tags) form.append("tags", options.tags);
+    const resp = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloud}/video/upload`, { method: "POST", body: form });
+    const json = await resp.json();
+    if (json && json.secure_url) return json.secure_url;
+  } catch (e) { console.warn("Cloudinary video upload failed", e); }
+  return "";
+}
+
 async function uploadEventPhoto(dataUrl, options = {}) {
   const res = await fetch(dataUrl);
   const blob = await res.blob();
@@ -3891,6 +6309,20 @@ async function publishShareImage(dataUrl) {
   active.postMessage({ type: 'store-share', id, buffer, mime: blob.type }, [channel.port2]);
   const reply = await ack; // {ok, url}
   if (reply && reply.ok && reply.url) return new URL(reply.url, location.origin).href;
+  return null;
+}
+
+async function publishShareVideo(blob) {
+  if (!blob) return null;
+  const slug = getEventUploadSlug();
+  const folder = getEventUploadFolderPath();
+  const cloudUrl = await uploadVideoToCloudinary(blob, {
+    baseName: slug || "message",
+    folder,
+    tags: slug,
+    force: true
+  });
+  if (cloudUrl) return cloudUrl;
   return null;
 }
 
@@ -3967,6 +6399,7 @@ function exitFinalPreview() {
 function addToGallery(url) {
   const img = new Image();
   img.src = url;
+  img.addEventListener('click', () => showFinal(url, { skipShare: true, forceImage: true }));
   DOM.gallery.appendChild(img);
 }
 
@@ -3990,8 +6423,13 @@ function sendEmail(event) {
   const sendBtn = DOM.sendBtn;
   const imgUrl = DOM.finalStrip && DOM.finalStrip.src;
   const offline = offlineModeActive();
+  const isVideo = lastShareType === "video";
 
   if (offline) {
+    if (isVideo) {
+      alert("Video sharing requires an internet connection.");
+      return;
+    }
     // Queue locally for later sending
     const ok = queuePendingEmail(email, imgUrl);
     if (ok) {
@@ -4010,9 +6448,10 @@ function sendEmail(event) {
   const cfg = getEmailJsConfig();
   const templateParams = {
     to_email: email,
-    photo_url: lastShareUrl || imgUrl,
+    photo_url: isVideo ? (lastShareUrl || "") : (lastShareUrl || imgUrl),
     link_url: lastShareUrl || '',
-    image_data_url: imgUrl
+    image_data_url: isVideo ? "" : imgUrl,
+    video_url: isVideo ? (lastShareUrl || "") : ""
   };
 
   emailjs.send(cfg.service, cfg.template, templateParams)
@@ -4334,8 +6773,23 @@ async function fileSha256Hex(file) {
 function extFromName(name, fallback) {
   const m = (name || '').match(/\.([a-z0-9]+)$/i); return m ? m[1].toLowerCase() : (fallback || 'png');
 }
-// Upload an asset. If Cloudinary is configured, upload there and return its secure URL.
-// Otherwise, fall back to a local data URL.
+
+async function uploadAssetToLocalApi(file) {
+  try {
+    const form = new FormData();
+    form.append('file', file, file && file.name ? file.name : 'asset.png');
+    const resp = await fetch('/api/upload', { method: 'POST', body: form });
+    if (!resp.ok) return '';
+    const json = await resp.json();
+    if (!json || !json.url) return '';
+    return new URL(json.url, location.origin).href;
+  } catch (_) {
+    return '';
+  }
+}
+
+// Upload an asset to a shared URL.
+// Priority: Cloudinary -> local /api/upload endpoint.
 async function uploadAsset(file, kind) {
   try {
     const index = getAssetIndex();
@@ -4357,9 +6811,15 @@ async function uploadAsset(file, kind) {
       const json = await resp.json();
       if (json && json.secure_url) { index[hash] = json.secure_url; saveThemesToStorage(); return json.secure_url; }
     }
+    const localUrl = await uploadAssetToLocalApi(file);
+    if (localUrl) {
+      index[hash] = localUrl;
+      saveThemesToStorage();
+      return localUrl;
+    }
   } catch (_) { }
-  // Fallback to local embedding
-  try { return await readFileAsDataURL(file); } catch (_) { return ''; }
+  showToast('Upload failed: configure Cloudinary or run the local server for /api/upload.');
+  return '';
 }
 
 function saveThemesToStorage() {
@@ -4371,7 +6831,7 @@ function saveThemesToStorage() {
   try { normalizeAllThemes(); } catch (_e) { }
   localStorage.setItem('photoboothThemes', JSON.stringify(themes));
   // Best-effort remote sync
-  syncThemesRemote().catch(() => { });
+  scheduleThemesRemoteSync();
 }
 
 function cloneThemeValue(val) {
@@ -4507,6 +6967,7 @@ function applyThemeFallbacks(baseLeaf, merged, storedLeaf) {
   applyBackgroundFallback(baseLeaf, merged, storedLeaf);
   applyTemplatesFallback(baseLeaf, merged, storedLeaf);
   applyOverlaysFallback(baseLeaf, merged, storedLeaf);
+  applyArrayFallback(baseLeaf, merged, 'backgroundsRemoved');
   applyArrayFallback(baseLeaf, merged, 'overlaysRemoved');
   applyArrayFallback(baseLeaf, merged, 'templatesRemoved');
   mergeWelcomeAndMeta(baseLeaf, merged);
@@ -4900,19 +7361,22 @@ function getStoredFonts() {
     const raw = localStorage.getItem('photoboothFonts');
     const local = raw ? JSON.parse(raw) : [];
     // Fire-and-forget remote merge so new fonts sync to other devices
-    loadFontsRemote().then(remote => {
-      if (Array.isArray(remote) && remote.length) {
-        const merged = mergeFonts(local, remote);
-        localStorage.setItem('photoboothFonts', JSON.stringify(merged));
-      }
-    }).catch(() => { });
+    if (!fontsRemoteRequested) {
+      fontsRemoteRequested = true;
+      loadFontsRemote().then(remote => {
+        if (Array.isArray(remote) && remote.length) {
+          const merged = mergeFonts(local, remote);
+          localStorage.setItem('photoboothFonts', JSON.stringify(merged));
+        }
+      }).catch(() => { });
+    }
     return local;
   } catch (e) { return []; }
 }
 
 function saveStoredFonts(fonts) {
   localStorage.setItem('photoboothFonts', JSON.stringify(fonts));
-  syncFontsRemote(fonts).catch(() => { });
+  scheduleFontsRemoteSync(fonts);
   queueFontPickerRefresh({ preserveSelection: true });
 }
 
@@ -5080,7 +7544,12 @@ function findPairingPreview(pairing, fonts = fontCatalog.available) {
 
 function populateFontPickerOptions(fonts) {
   const list = Array.isArray(fonts) ? fonts : [];
-  const selects = [DOM.headingFontSelect, DOM.bodyFontSelect];
+  const selects = [
+    DOM.headingFontSelect,
+    DOM.bodyFontSelect,
+    DOM.editorHeadingFontSelect,
+    DOM.editorBodyFontSelect
+  ];
   selects.forEach(sel => {
     if (!sel) return;
     const current = sel.value;
@@ -5120,37 +7589,48 @@ function getFontPickerSelection() {
 }
 
 function updateFontPreviewElements(heading, body, options = {}) {
-  const headingPreview = DOM.headingFontPreview;
-  const bodyPreview = DOM.bodyFontPreview;
+  const welcomeText = resolveWelcomeTitle();
+  const startText = resolveStartButtonText();
   const bannerText = resolveBannerText();
-  const headingText = options.headingPreviewText || bannerText || getFontPreviewText(heading);
-  const bodyText = options.bodyPreviewText || bannerText || getFontPreviewText(body);
-  if (headingPreview) {
-    headingPreview.style.fontFamily = composeFontString(heading || '');
-    const textNode = headingPreview.querySelector('.font-preview-text');
-    if (textNode) textNode.textContent = headingText;
-  }
-  if (bodyPreview) {
-    bodyPreview.style.fontFamily = composeFontString(body || '');
-    const textNode = bodyPreview.querySelector('.font-preview-text');
-    if (textNode) textNode.textContent = bodyText;
-  }
+  const headingText = options.headingPreviewText || welcomeText || bannerText || getFontPreviewText(heading);
+  const bodyText = options.bodyPreviewText || startText || bannerText || getFontPreviewText(body);
+  const applyPreview = (node, family, text) => {
+    if (!node) return;
+    node.style.fontFamily = composeFontString(family || '');
+    const textNode = node.querySelector('.font-preview-text');
+    if (textNode) {
+      textNode.textContent = text;
+    } else {
+      node.textContent = text;
+    }
+  };
+  [
+    DOM.headingFontPreview,
+    DOM.editorHeadingFontPreview
+  ].forEach((node) => applyPreview(node, heading, headingText));
+  [
+    DOM.bodyFontPreview,
+    DOM.editorBodyFontPreview
+  ].forEach((node) => applyPreview(node, body, bodyText));
 }
 
 function setFontPickerSelection(heading, body, options = {}) {
   ignoreFontPickerEvents = true;
-  if (DOM.headingFontSelect && heading) {
-    ensureOptionExists(DOM.headingFontSelect, heading);
-    DOM.headingFontSelect.value = heading;
-  }
-  if (DOM.bodyFontSelect && body) {
-    ensureOptionExists(DOM.bodyFontSelect, body);
-    DOM.bodyFontSelect.value = body;
-  }
+  [DOM.headingFontSelect, DOM.editorHeadingFontSelect].forEach((select) => {
+    if (!select || !heading) return;
+    ensureOptionExists(select, heading);
+    select.value = heading;
+  });
+  [DOM.bodyFontSelect, DOM.editorBodyFontSelect].forEach((select) => {
+    if (!select || !body) return;
+    ensureOptionExists(select, body);
+    select.value = body;
+  });
   ignoreFontPickerEvents = false;
   updateFontPreviewElements(heading, body, options);
-  if (!options.keepPairing && DOM.fontPairingSelect) {
-    DOM.fontPairingSelect.value = '';
+  if (!options.keepPairing) {
+    if (DOM.fontPairingSelect) DOM.fontPairingSelect.value = '';
+    if (DOM.editorFontPairingSelect) DOM.editorFontPairingSelect.value = '';
   }
 }
 
@@ -5375,6 +7855,7 @@ async function reloadFontPickerOptions(options = {}) {
   } else {
     refreshFontPickerUI(targetTheme, { quiet: true });
   }
+  updateEventTypeSetupUI();
 }
 
 function attachFontPickerListeners() {
@@ -5455,18 +7936,15 @@ function populateFontSelect(preselectFamily = '') {
 }
 
 function setThemeEditorMode(mode) {
-  const resolved = mode || (DOM.themeEditorModeSelect ? DOM.themeEditorModeSelect.value : 'edit');
+  let resolved = mode || (DOM.themeEditorModeSelect ? DOM.themeEditorModeSelect.value : 'edit');
+  if (resolved === 'clone') resolved = 'edit';
   if (DOM.themeEditorModeSelect) DOM.themeEditorModeSelect.value = resolved;
   const isCreate = resolved === 'create';
-  const isClone = resolved === 'clone';
 
   if (DOM.btnUpdateTheme) DOM.btnUpdateTheme.style.display = isCreate ? 'none' : 'inline-block';
   if (DOM.btnSaveTheme) DOM.btnSaveTheme.style.display = isCreate ? 'inline-block' : 'none';
-  if (DOM.themeCloneSection) DOM.themeCloneSection.classList.toggle('hidden', !isClone);
-  if (isClone && DOM.themeCloneName && !valueFromInput(DOM.themeCloneName) && activeTheme && activeTheme.name) {
-    DOM.themeCloneName.value = `${activeTheme.name} Copy`;
-  }
-  if (!isClone && DOM.themeCloneName) DOM.themeCloneName.value = '';
+  if (DOM.themeCloneSection) DOM.themeCloneSection.classList.add('hidden');
+  if (DOM.themeCloneName) DOM.themeCloneName.value = '';
 
   if (isCreate) {
     resetCreateThemeModal();
@@ -5526,22 +8004,22 @@ const DEFAULT_FONTS_PAYLOAD = {
     body: 'Montserrat'
   },
   pairings: [
-    { heading: 'Montserrat', body: 'Inter', notes: 'Modern Minimalist', preview: 'Modern & clean for any celebration.' },
-    { heading: 'Roboto', body: 'Open Sans', notes: 'Ultra Readable', preview: 'Crystal-clear on dark backgrounds.' },
-    { heading: 'Raleway', body: 'Open Sans', notes: 'Minimal Harmony', preview: 'Sleek look for promos & tech.' },
-    { heading: 'Playfair Display', body: 'Source Sans 3', notes: 'Timeless Elegance (Weddings/Formal)', preview: 'A timeless moment captured by Fletch Photo.' },
-    { heading: 'Great Vibes', body: 'Montserrat', notes: 'Romantic Flow (Valentine’s/Weddings)', preview: 'Love is in the air at Fletch Photo.' },
-    { heading: 'Abril Fatface', body: 'Lato', notes: 'Chic Impact (Gala/NYE)', preview: 'Ring in the New Year with style ✨' },
-    { heading: 'Great Vibes', body: 'Lora', notes: 'Romantic Elegance (Weddings)', preview: 'Happily ever after starts here.' },
-    { heading: 'Oswald', body: 'Inter', notes: 'Grad Glory (Graduation)', preview: 'Congrats, Grad! 🎓' },
-    { heading: 'Dancing Script', body: 'Poppins', notes: 'Joyful Moments (Birthdays/Family)', preview: 'Happy Birthday from Fletch Photobooth!' },
-    { heading: 'Bangers', body: 'Montserrat', notes: 'Comic Energy (Kids/Spirit)', preview: "Let’s make some noise tonight!" },
-    { heading: 'Sniglet', body: 'Cabin', notes: 'Playtime Fun (Kids)', preview: 'Let’s celebrate with Fletch Photobooth!' },
-    { heading: 'Oswald', body: 'Montserrat', notes: 'Bold Statement (Sports/Birthdays)', preview: 'Big energy for team spirit.' },
-    { heading: 'Poppins', body: 'Lato', notes: 'Friendly Geometric (Elementary)', preview: 'Family Fun Night with Fletch Photo!' },
-    { heading: 'Creepster', body: 'Inter', notes: 'Spooky Season (Halloween)', preview: 'Spooky season starts now!' },
-    { heading: 'Mountains of Christmas', body: 'Inter', notes: 'Festive Cheer (Christmas)', preview: 'Merry Christmas from Fletch Photobooth 🎄' },
-    { heading: 'Raleway', body: 'Lora', notes: 'Warm Whispers (Thanksgiving/Fall)', preview: 'Give thanks with Fletch Photobooth.' }
+    { heading: 'Montserrat', body: 'Inter', notes: 'Modern Minimalist', preview: 'Modern & clean for any celebration.', styles: ['general', 'expo'] },
+    { heading: 'Roboto', body: 'Open Sans', notes: 'Ultra Readable', preview: 'Crystal-clear on dark backgrounds.', styles: ['general', 'expo', 'community'] },
+    { heading: 'Raleway', body: 'Open Sans', notes: 'Minimal Harmony', preview: 'Sleek look for promos & tech.', styles: ['expo'] },
+    { heading: 'Playfair Display', body: 'Source Sans 3', notes: 'Timeless Elegance (Weddings/Formal)', preview: 'A timeless moment captured by Fletch Photo.', styles: ['wedding'] },
+    { heading: 'Great Vibes', body: 'Montserrat', notes: 'Romantic Flow (Valentine’s/Weddings)', preview: 'Love is in the air at Fletch Photo.', styles: ['wedding'] },
+    { heading: 'Abril Fatface', body: 'Lato', notes: 'Chic Impact (Gala/NYE)', preview: 'Ring in the New Year with style ✨', styles: ['wedding', 'newyear'] },
+    { heading: 'Great Vibes', body: 'Lora', notes: 'Romantic Elegance (Weddings)', preview: 'Happily ever after starts here.', styles: ['wedding'] },
+    { heading: 'Oswald', body: 'Inter', notes: 'Grad Glory (Graduation)', preview: 'Congrats, Grad! 🎓', styles: ['community'] },
+    { heading: 'Dancing Script', body: 'Poppins', notes: 'Joyful Moments (Birthdays/Family)', preview: 'Happy Birthday from Fletch Photobooth!', styles: ['birthday', 'community'] },
+    { heading: 'Bangers', body: 'Montserrat', notes: 'Comic Energy (Kids/Spirit)', preview: "Let’s make some noise tonight!", styles: ['birthday', 'community'] },
+    { heading: 'Sniglet', body: 'Cabin', notes: 'Playtime Fun (Kids)', preview: 'Let’s celebrate with Fletch Photobooth!', styles: ['birthday', 'community'] },
+    { heading: 'Oswald', body: 'Montserrat', notes: 'Bold Statement (Sports/Birthdays)', preview: 'Big energy for team spirit.', styles: ['community', 'birthday'] },
+    { heading: 'Poppins', body: 'Lato', notes: 'Friendly Geometric (Elementary)', preview: 'Family Fun Night with Fletch Photo!', styles: ['community'] },
+    { heading: 'Creepster', body: 'Inter', notes: 'Spooky Season (Halloween)', preview: 'Spooky season starts now!', styles: ['halloween'] },
+    { heading: 'Mountains of Christmas', body: 'Inter', notes: 'Festive Cheer (Christmas)', preview: 'Merry Christmas from Fletch Photobooth 🎄', styles: ['christmas'] },
+    { heading: 'Raleway', body: 'Lora', notes: 'Warm Whispers (Thanksgiving/Fall)', preview: 'Give thanks with Fletch Photobooth.', styles: ['general'] }
   ]
 };
 
@@ -5848,8 +8326,79 @@ async function updateSelectedTheme(reason = '') {
   const key = getSelectedThemeKey();
   const target = getSelectedThemeTarget();
   if (!key || !target) { alert('Select a theme first.'); clearThemeFileInputs(); return; }
+  const name = valueFromInput(DOM.themeName) || target.name || 'New Theme';
+  const slug = slugifyThemeName(name);
+  if (!slug) { alert('Enter a valid name for the new sub theme.'); clearThemeFileInputs(); return; }
 
-  applyThemeBasicsFromEditor(target);
+  const location = resolveThemeStorage(key);
+  let parent = location.parent;
+  let bucket = location.bucket;
+  let rootKey = location.root || '';
+  if (!bucket && rootKey && themes[rootKey] && typeof themes[rootKey] === 'object') {
+    parent = themes[rootKey];
+    if (!parent.themes) parent.themes = {};
+    bucket = 'themes';
+  }
+
+  if (bucket) {
+    if (!parent[bucket]) parent[bucket] = {};
+    if (parent[bucket][slug]) {
+      alert('A sub theme with that name already exists.');
+      clearThemeFileInputs();
+      return;
+    }
+  } else if (themes[slug]) {
+    alert('A theme with that name already exists.');
+    clearThemeFileInputs();
+    return;
+  }
+
+  const newTheme = cloneThemeValue(target);
+  applyThemeBasicsFromEditor(newTheme);
+  newTheme.name = name;
+  newTheme.welcome = newTheme.welcome || {};
+  newTheme.welcome.title = newTheme.welcome.title || name;
+
+  const folders = readThemeFolderInputs();
+  let assetChanges = null;
+  try {
+    assetChanges = await uploadThemeAssetsFromEditor(newTheme);
+  } catch (err) {
+    console.error('Failed to upload theme assets', err);
+    clearThemeFileInputs();
+    alert('Could not create the sub theme. Check the console for details.');
+    return;
+  }
+  if (assetChanges && assetChanges.logoUrl) {
+    setGlobalLogo(assetChanges.logoUrl, { quiet: true, skipSave: true });
+  } else {
+    const currentGlobalLogo = getGlobalLogo();
+    if (currentGlobalLogo !== null) applyGlobalLogoToTheme(newTheme, currentGlobalLogo);
+  }
+  applyThemeFolderSettings(newTheme, folders);
+
+  try { normalizeThemeObject(newTheme); } catch (_e) { }
+  if (bucket) {
+    parent[bucket][slug] = newTheme;
+  } else {
+    themes[slug] = newTheme;
+  }
+  saveThemesToStorage();
+
+  const newKey = bucket && rootKey ? `${rootKey}:${slug}` : slug;
+  populateThemeSelector(newKey);
+  setEventSelection(newKey);
+  loadTheme(newKey);
+  clearThemeFileInputs();
+  syncThemeEditorWithActiveTheme();
+  showToast(`Sub theme "${name}" created`);
+}
+
+async function updateCurrentThemeAssets(reason = '') {
+  const key = getSelectedThemeKey();
+  const target = getSelectedThemeTarget();
+  if (!key || !target) { alert('Select a theme first.'); clearThemeFileInputs(); return; }
+
   const folders = readThemeFolderInputs();
   let assetChanges = null;
   try {
@@ -5857,7 +8406,7 @@ async function updateSelectedTheme(reason = '') {
   } catch (err) {
     console.error('Failed to upload theme assets', err);
     clearThemeFileInputs();
-    alert('Could not update the theme. Check the console for details.');
+    alert('Could not update the theme assets. Check the console for details.');
     return;
   }
   if (assetChanges && assetChanges.logoUrl) {
@@ -5879,11 +8428,110 @@ async function updateSelectedTheme(reason = '') {
   showToast(describeThemeUpdate(assetChanges, reason));
 }
 
+function createSubThemeFromEvent() {
+  const active = getActiveEvent();
+  if (!active) {
+    alert("Select an event first.");
+    return;
+  }
+  const overrides = getActiveEventOverrides();
+  const hasOverrides = (overrides.backgrounds && overrides.backgrounds.length)
+    || (overrides.greenBackgrounds && overrides.greenBackgrounds.length)
+    || (overrides.overlays && overrides.overlays.length)
+    || (overrides.templates && overrides.templates.length);
+  if (!hasOverrides) {
+    alert("This event has no custom assets to save as a sub theme.");
+    return;
+  }
+
+  const baseKey = active.themeKey || (DOM.eventSelect && DOM.eventSelect.value) || "";
+  const baseTheme = getThemeByKey(baseKey) || getSelectedThemeTarget();
+  if (!baseTheme) {
+    alert("Select a theme first.");
+    return;
+  }
+
+  const defaultName = `${baseTheme.name || "Theme"} - ${active.name || "Event"}`;
+  const name = (prompt("Name for the new sub theme:", defaultName) || "").trim();
+  if (!name) return;
+  const slug = slugifyThemeName(name);
+  if (!slug) { alert("Enter a valid sub theme name."); return; }
+
+  const location = resolveThemeStorage(baseKey);
+  let parent = location.parent;
+  let bucket = location.bucket;
+  let rootKey = location.root || "";
+  if (!bucket && rootKey && themes[rootKey] && typeof themes[rootKey] === "object") {
+    parent = themes[rootKey];
+    if (!parent.themes) parent.themes = {};
+    bucket = "themes";
+  }
+  if (bucket) {
+    if (!parent[bucket]) parent[bucket] = {};
+    if (parent[bucket][slug]) {
+      alert("A sub theme with that name already exists.");
+      return;
+    }
+  } else if (themes[slug]) {
+    alert("A theme with that name already exists.");
+    return;
+  }
+
+  const newTheme = cloneThemeValue(baseTheme);
+  newTheme.name = name;
+  newTheme.welcome = newTheme.welcome || {};
+  newTheme.welcome.title = newTheme.welcome.title || name;
+
+  const baseBackgrounds = getBaseBackgroundList(baseTheme);
+  const baseGreen = Array.isArray(baseTheme.greenBackgrounds) ? baseTheme.greenBackgrounds.filter(Boolean) : [];
+  const baseOverlays = getBaseOverlayList(baseTheme).map((o) => o.src);
+  const baseTemplates = getBaseTemplateList(baseTheme).map((t) => t);
+
+  if (overrides.backgrounds && overrides.backgrounds.length) {
+    newTheme.backgrounds = mergeUniqueUrls(overrides.backgrounds, baseBackgrounds);
+    newTheme.background = newTheme.backgrounds[0] || newTheme.background || "";
+    newTheme.backgroundIndex = 0;
+  }
+  if (overrides.greenBackgrounds && overrides.greenBackgrounds.length) {
+    newTheme.greenBackgrounds = mergeUniqueUrls(overrides.greenBackgrounds, baseGreen);
+    newTheme.greenBackgroundIndex = 0;
+  }
+  if (overrides.overlays && overrides.overlays.length) {
+    newTheme.overlays = mergeUniqueUrls(overrides.overlays, baseOverlays);
+  }
+  if (overrides.templates && overrides.templates.length) {
+    const mergedTemplates = [];
+    const seen = new Set();
+    const pushTemplate = (t) => {
+      if (!t || !t.src) return;
+      if (seen.has(t.src)) return;
+      seen.add(t.src);
+      mergedTemplates.push({ src: t.src, layout: t.layout || "double_column", slots: t.slots });
+    };
+    overrides.templates.forEach((t) => pushTemplate(typeof t === "string" ? { src: t } : t));
+    baseTemplates.forEach((t) => pushTemplate(t));
+    newTheme.templates = mergedTemplates;
+  }
+
+  if (bucket) parent[bucket][slug] = newTheme;
+  else themes[slug] = newTheme;
+
+  saveThemesToStorage();
+  const newKey = bucket && rootKey ? `${rootKey}:${slug}` : slug;
+  setEventSelection(newKey);
+  loadTheme(newKey);
+  updateActiveEventDetails({ themeKey: newKey, overrides: { backgrounds: [], overlays: [], templates: [], backgroundIndex: 0, greenBackgrounds: [], greenBackgroundIndex: 0 } });
+  showToast(`Sub theme "${name}" created`);
+}
+
 function describeThemeUpdate(changes, reason) {
   if (!changes) return 'Theme updated';
   const parts = [];
   if (changes.backgroundsAdded) {
     parts.push(`Added ${changes.backgroundsAdded} background${changes.backgroundsAdded === 1 ? '' : 's'}`);
+  }
+  if (changes.greenBackgroundsAdded) {
+    parts.push(`Added ${changes.greenBackgroundsAdded} green BG${changes.greenBackgroundsAdded === 1 ? '' : 's'}`);
   }
   if (changes.overlaysAdded) {
     parts.push(`Added ${changes.overlaysAdded} overlay${changes.overlaysAdded === 1 ? '' : 's'}`);
@@ -5912,6 +8560,33 @@ function normalizeBannerText(value) {
     .trim();
 }
 
+function fitTextToBox(node, maxWidth, maxHeight = 0, minSize = 18) {
+  if (!node) return;
+  const availableWidth = Math.max(0, Number(maxWidth) || 0);
+  if (!availableWidth) return;
+  const measured = parseFloat(node.dataset.baseFontSize || node.style.fontSize || window.getComputedStyle(node).fontSize || "0");
+  if (!Number.isFinite(measured) || measured <= 0) return;
+  let nextSize = measured;
+  node.style.fontSize = `${nextSize}px`;
+  while ((node.scrollWidth > availableWidth || (maxHeight > 0 && node.scrollHeight > maxHeight)) && nextSize > minSize) {
+    nextSize -= 1;
+    node.style.fontSize = `${nextSize}px`;
+  }
+}
+
+function fitBannerTextToViewport() {
+  if (!DOM.eventTitle || !DOM.boothHeader) return;
+  const availableWidth = DOM.boothHeader.clientWidth - 140;
+  fitTextToBox(DOM.eventTitle, availableWidth, 0, 18);
+}
+
+function fitWelcomeTitleToViewport() {
+  if (!DOM.welcomeTitle || !DOM.welcomeOverlay) return;
+  const availableWidth = DOM.welcomeOverlay.clientWidth - 72;
+  const availableHeight = Math.min(window.innerHeight * 0.42, 360);
+  fitTextToBox(DOM.welcomeTitle, availableWidth, availableHeight, 18);
+}
+
 function getBannerSize(theme) {
   if (theme && typeof theme.bannerSize === "number" && theme.bannerSize > 0) return theme.bannerSize;
   return 64;
@@ -5919,8 +8594,12 @@ function getBannerSize(theme) {
 
 function applyBannerSize(theme) {
   const size = getBannerSize(theme || activeTheme);
-  if (DOM.eventTitle) DOM.eventTitle.style.fontSize = `${size}px`;
+  if (DOM.eventTitle) {
+    DOM.eventTitle.dataset.baseFontSize = String(size);
+    DOM.eventTitle.style.fontSize = `${size}px`;
+  }
   if (DOM.stylePreviewHeading) DOM.stylePreviewHeading.style.fontSize = `${Math.max(20, Math.round(size * 0.6))}px`;
+  fitBannerTextToViewport();
 }
 
 function syncBannerSizeUI(theme) {
@@ -5949,13 +8628,22 @@ function applyWelcomeTitleSize(theme) {
   const size = resolveWelcomeTitleSize(theme);
   if (size && size > 0) {
     document.documentElement.style.setProperty("--welcome-title-size", `${size}px`);
+    if (DOM.welcomeTitle) {
+      DOM.welcomeTitle.dataset.baseFontSize = String(size);
+      DOM.welcomeTitle.style.fontSize = `${size}px`;
+    }
     if (DOM.stylePreviewSubheading) {
       DOM.stylePreviewSubheading.style.fontSize = `${Math.max(14, Math.round(size * 0.5))}px`;
     }
   } else {
     document.documentElement.style.removeProperty("--welcome-title-size");
+    if (DOM.welcomeTitle) {
+      delete DOM.welcomeTitle.dataset.baseFontSize;
+      DOM.welcomeTitle.style.fontSize = "";
+    }
     if (DOM.stylePreviewSubheading) DOM.stylePreviewSubheading.style.fontSize = "";
   }
+  fitWelcomeTitleToViewport();
 }
 
 function syncWelcomeTitleSizeUI(theme) {
@@ -5980,6 +8668,7 @@ function resolveBannerText() {
 function syncBannerText() {
   const bannerText = resolveBannerText();
   if (DOM.eventTitle) DOM.eventTitle.textContent = bannerText;
+  fitBannerTextToViewport();
 }
 
 function resolveThemeBannerText() {
@@ -6433,6 +9122,7 @@ function ensureArray(target, prop) {
 async function uploadThemeAssetsFromEditor(target) {
   const tasks = [];
   let backgroundsAdded = 0;
+  let greenBackgroundsAdded = 0;
   let overlaysAdded = 0;
   let templatesAdded = 0;
   let logoUrl = '';
@@ -6447,6 +9137,20 @@ async function uploadThemeAssetsFromEditor(target) {
       else target.background = url;
       backgroundsAdded += 1;
     }));
+  }
+
+  const greenBackgroundFiles = DOM.themeGreenBackgrounds && DOM.themeGreenBackgrounds.files
+    ? Array.from(DOM.themeGreenBackgrounds.files)
+    : [];
+  if (greenBackgroundFiles.length) {
+    if (!Array.isArray(target.greenBackgrounds)) target.greenBackgrounds = [];
+    greenBackgroundFiles.forEach((file) => {
+      tasks.push(uploadAsset(file, 'greenBackgrounds').then((url) => {
+        if (!url) return;
+        target.greenBackgrounds.push(url);
+        greenBackgroundsAdded += 1;
+      }));
+    });
   }
 
   const logoFile = DOM.themeLogo && DOM.themeLogo.files ? DOM.themeLogo.files[0] : null;
@@ -6492,12 +9196,13 @@ async function uploadThemeAssetsFromEditor(target) {
   }
 
   await Promise.all(tasks);
-  return { backgroundsAdded, overlaysAdded, templatesAdded, logoUrl, characterUrl };
+  return { backgroundsAdded, greenBackgroundsAdded, overlaysAdded, templatesAdded, logoUrl, characterUrl };
 }
 
 function clearThemeFileInputs() {
   if (DOM.themeBackground) DOM.themeBackground.value = '';
   if (DOM.themeLogo) DOM.themeLogo.value = '';
+  if (DOM.themeGreenBackgrounds) DOM.themeGreenBackgrounds.value = '';
   if (DOM.themeOverlays) DOM.themeOverlays.value = '';
   if (DOM.themeTemplates) DOM.themeTemplates.value = '';
   if (DOM.themeCharacter) DOM.themeCharacter.value = '';
@@ -6702,6 +9407,7 @@ function setBackgroundIndex(index) {
   const eventIndex = eventList.indexOf(selected);
   if (eventIndex >= 0) {
     overrides.backgroundIndex = eventIndex;
+    delete overrides.useBaseBackgroundIndex;
     updateActiveEventDetails({ overrides });
     applyThemeBackground(t);
     renderCurrentAssets(t);
@@ -6710,6 +9416,14 @@ function setBackgroundIndex(index) {
   }
   const baseIndex = baseList.indexOf(selected);
   if (baseIndex < 0) return;
+  if (eventList.length) {
+    overrides.useBaseBackgroundIndex = baseIndex;
+    updateActiveEventDetails({ overrides });
+    applyThemeBackground(t);
+    renderCurrentAssets(t);
+    showToast('Background selected');
+    return;
+  }
   t.backgrounds = baseList.slice();
   t.background = t.backgrounds[baseIndex] || '';
   t.backgroundIndex = baseIndex;
@@ -6773,6 +9487,14 @@ function removeFolderOverlay(src) {
   pushRemoved(key, 'overlay-removed', src, -1);
   saveThemesToStorage(); loadTheme(key);
   showToast('Overlay hidden');
+}
+function removeFolderBackground(src) {
+  const key = DOM.eventSelect.value; const t = getSelectedThemeTarget();
+  if (!t) return; if (!Array.isArray(t.backgroundsRemoved)) t.backgroundsRemoved = [];
+  if (!t.backgroundsRemoved.includes(src)) t.backgroundsRemoved.push(src);
+  pushRemoved(key, 'background-removed', src, -1);
+  saveThemesToStorage(); loadTheme(key);
+  showToast('Background hidden');
 }
 function removeFolderTemplate(src) {
   const key = DOM.eventSelect.value; const t = getSelectedThemeTarget();
@@ -6839,6 +9561,8 @@ function undoLastRemoval() {
     if (Array.isArray(t.overlaysRemoved)) t.overlaysRemoved = t.overlaysRemoved.filter(s => s !== last.item);
   } else if (last.kind === 'template-removed') {
     if (Array.isArray(t.templatesRemoved)) t.templatesRemoved = t.templatesRemoved.filter(s => s !== last.item);
+  } else if (last.kind === 'background-removed') {
+    if (Array.isArray(t.backgroundsRemoved)) t.backgroundsRemoved = t.backgroundsRemoved.filter(s => s !== last.item);
   }
   saveThemesToStorage();
   if (DOM.eventSelect && DOM.eventSelect.value === last.key) {
@@ -6850,8 +9574,11 @@ function undoLastRemoval() {
 
 function getBaseBackgroundList(theme) {
   if (!theme || typeof theme !== 'object') return [];
+  const removed = new Set(Array.isArray(theme.backgroundsRemoved) ? theme.backgroundsRemoved : []);
   const explicit = Array.isArray(theme.backgrounds) ? theme.backgrounds.filter(Boolean) : [];
-  const folder = Array.isArray(theme.backgroundsTmp) ? theme.backgroundsTmp.filter(Boolean) : [];
+  const folder = Array.isArray(theme.backgroundsTmp)
+    ? theme.backgroundsTmp.filter((src) => src && !removed.has(src))
+    : [];
   if (explicit.length || folder.length) return [...folder, ...explicit];
   return (typeof theme.background === 'string' && theme.background.trim()) ? [theme.background] : [];
 }
@@ -6863,17 +9590,126 @@ function getBackgroundList(theme) {
   return mergeUniqueUrls(eventList, baseList);
 }
 
+function getGreenBackgroundList(theme) {
+  const baseList = Array.isArray(theme && theme.greenBackgrounds)
+    ? theme.greenBackgrounds.filter(Boolean)
+    : [];
+  const overrides = getActiveEventOverrides();
+  const eventList = Array.isArray(overrides.greenBackgrounds)
+    ? overrides.greenBackgrounds.filter(Boolean)
+    : [];
+  return mergeUniqueUrls(eventList, baseList);
+}
+
 function getActiveBackground(theme) {
   const overrides = getActiveEventOverrides();
+  const baseList = getBaseBackgroundList(theme);
+  if (Number.isFinite(overrides.useBaseBackgroundIndex)) {
+    const idx = Math.min(Math.max(overrides.useBaseBackgroundIndex, 0), baseList.length - 1);
+    return baseList[idx] || '';
+  }
   if (Array.isArray(overrides.backgrounds) && overrides.backgrounds.length) {
     const idx = (typeof overrides.backgroundIndex === "number")
       ? Math.min(Math.max(overrides.backgroundIndex, 0), overrides.backgrounds.length - 1)
       : 0;
     return overrides.backgrounds[idx];
   }
-  const list = getBackgroundList(theme);
-  if (list.length === 0) return '';
-  const idx = (typeof theme.backgroundIndex === 'number') ? Math.min(Math.max(theme.backgroundIndex, 0), list.length - 1) : 0;
+  if (baseList.length === 0) return '';
+  const idx = (typeof theme.backgroundIndex === 'number')
+    ? Math.min(Math.max(theme.backgroundIndex, 0), baseList.length - 1)
+    : 0;
+  return baseList[idx];
+}
+
+function setGreenBackgroundIndex(idx) {
+  const active = getActiveEvent();
+  const target = activeTheme || getSelectedThemeTarget();
+  if (!target) return;
+  const overrides = getActiveEventOverrides();
+  const eventList = Array.isArray(overrides.greenBackgrounds) ? overrides.greenBackgrounds.filter(Boolean) : [];
+  const baseList = Array.isArray(target.greenBackgrounds) ? target.greenBackgrounds.filter(Boolean) : [];
+  const combined = mergeUniqueUrls(eventList, baseList);
+  if (idx < 0 || idx >= combined.length) return;
+  const selected = combined[idx];
+  const eventIndex = eventList.indexOf(selected);
+  if (active) {
+    const activeOverrides = ensureEventOverrides(active);
+    if (eventIndex >= 0) {
+      activeOverrides.greenBackgroundIndex = eventIndex;
+      delete activeOverrides.useBaseGreenBackgroundIndex;
+    } else {
+      const baseIndex = baseList.indexOf(selected);
+      if (baseIndex < 0) return;
+      if (eventList.length) {
+        activeOverrides.useBaseGreenBackgroundIndex = baseIndex;
+      } else {
+        target.greenBackgroundIndex = baseIndex;
+      }
+    }
+    updateActiveEventDetails({ overrides: activeOverrides });
+  } else {
+    const baseIndex = baseList.indexOf(selected);
+    if (baseIndex < 0) return;
+    target.greenBackgroundIndex = baseIndex;
+    saveThemesToStorage();
+  }
+  renderCurrentAssets(target);
+  renderOptions();
+}
+
+function removeGreenBackgroundAt(idx) {
+  const active = getActiveEvent();
+  const target = activeTheme || getSelectedThemeTarget();
+  if (!target) return;
+  const overrides = getActiveEventOverrides();
+  const eventList = Array.isArray(overrides.greenBackgrounds) ? overrides.greenBackgrounds.filter(Boolean) : [];
+  const baseList = Array.isArray(target.greenBackgrounds) ? target.greenBackgrounds.filter(Boolean) : [];
+  const combined = mergeUniqueUrls(eventList, baseList);
+  if (idx < 0 || idx >= combined.length) return;
+  const selected = combined[idx];
+  const eventIndex = eventList.indexOf(selected);
+  if (active && eventIndex >= 0) {
+    const activeOverrides = ensureEventOverrides(active);
+    activeOverrides.greenBackgrounds.splice(eventIndex, 1);
+    if (activeOverrides.greenBackgroundIndex >= activeOverrides.greenBackgrounds.length) {
+      activeOverrides.greenBackgroundIndex = Math.max(0, activeOverrides.greenBackgrounds.length - 1);
+    }
+    delete activeOverrides.useBaseGreenBackgroundIndex;
+    updateActiveEventDetails({ overrides: activeOverrides });
+    renderCurrentAssets(target);
+    return;
+  }
+  const baseIndex = baseList.indexOf(selected);
+  if (baseIndex < 0) return;
+  if (!Array.isArray(target.greenBackgrounds)) return;
+  target.greenBackgrounds.splice(baseIndex, 1);
+  if (target.greenBackgroundIndex >= target.greenBackgrounds.length) {
+    target.greenBackgroundIndex = Math.max(0, target.greenBackgrounds.length - 1);
+  }
+  saveThemesToStorage();
+  renderCurrentAssets(target);
+}
+
+function getActiveGreenBackground(theme) {
+  const overrides = getActiveEventOverrides();
+  const baseList = Array.isArray(theme && theme.greenBackgrounds)
+    ? theme.greenBackgrounds.filter(Boolean)
+    : [];
+  if (Number.isFinite(overrides.useBaseGreenBackgroundIndex)) {
+    const idx = Math.min(Math.max(overrides.useBaseGreenBackgroundIndex, 0), baseList.length - 1);
+    return baseList[idx] || '';
+  }
+  if (Array.isArray(overrides.greenBackgrounds) && overrides.greenBackgrounds.length) {
+    const idx = (typeof overrides.greenBackgroundIndex === "number")
+      ? Math.min(Math.max(overrides.greenBackgroundIndex, 0), overrides.greenBackgrounds.length - 1)
+      : 0;
+    return overrides.greenBackgrounds[idx];
+  }
+  const list = getGreenBackgroundList(theme);
+  if (!list.length) return '';
+  const idx = (typeof theme.greenBackgroundIndex === 'number')
+    ? Math.min(Math.max(theme.greenBackgroundIndex, 0), list.length - 1)
+    : 0;
   return list[idx];
 }
 
@@ -7015,69 +9851,47 @@ async function resolveTemplatesFromFolder(theme) {
   } catch (_) { return []; }
 }
 
-function exportThemes() {
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(themes));
-  const downloadAnchorNode = document.createElement('a');
-  downloadAnchorNode.setAttribute("href", dataStr);
-  downloadAnchorNode.setAttribute("download", "photobooth-themes.json");
-  document.body.appendChild(downloadAnchorNode); // required for firefox
-  downloadAnchorNode.click();
-  downloadAnchorNode.remove();
-}
-
-function importThemes() {
-  DOM.importFile.click();
-}
-
-function handleImport() {
-  const file = DOM.importFile.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    try {
-      const importedThemes = JSON.parse(event.target.result);
-      themes = { ...themes, ...importedThemes };
-      saveThemesToStorage();
-      const current = DOM.eventSelect && DOM.eventSelect.value;
-      populateThemeSelector(current || DEFAULT_THEME_KEY);
-      alert('Themes imported successfully!');
-    } catch (e) {
-      alert('Error importing themes: ' + e.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
-// --- Deploy Hook (Git-connected projects) ---
-function loadDeploySettings() {
-  if (DOM.deployHookUrl) DOM.deployHookUrl.value = localStorage.getItem('deployHookUrl') || '';
-}
-
-// --- Rebuild manifests helper (local)
-function rebuildManifestsUI() {
-  const cmd = 'npm run update-manifests';
-  try { navigator.clipboard.writeText(cmd); } catch (_) { }
-  alert('To rebuild overlays/templates/backgrounds manifests, run:\n\n' + cmd + '\n\nThen deploy: npm run deploy or use Deploy Now (Git hooks).');
-}
-function saveDeploySettings() {
-  if (DOM.deployHookUrl) localStorage.setItem('deployHookUrl', (DOM.deployHookUrl.value || '').trim());
-  showToast('Deploy hook saved');
-}
-async function triggerDeployHook() {
-  try {
-    const url = (DOM.deployHookUrl && DOM.deployHookUrl.value || '').trim() || localStorage.getItem('deployHookUrl') || '';
-    if (!url) { alert('Set Deploy Hook URL first.'); return; }
-    const r = await fetch(url, { method: 'POST' });
-    if (r.ok) showToast('Deploy triggered'); else showToast('Deploy failed: ' + r.status);
-  } catch (e) { showToast('Deploy error: ' + (e && e.message ? e.message : e)); }
-}
-
 function copyText(s) { try { navigator.clipboard.writeText(s); showToast('Copied'); } catch (_) { alert('Copy: ' + s); } }
-function copyBuildCmd() { copyText('npm ci && node tools/update-manifests.js && echo skip'); }
-function copyShipCmd() { copyText('npm run ship'); }
 
 // Helpers to derive overlay/template lists from theme + folder manifests
+function getBaseOverlayList(theme) {
+  if (!theme || typeof theme !== 'object') return [];
+  const removed = new Set(Array.isArray(theme.overlaysRemoved) ? theme.overlaysRemoved : []);
+  const folderArr = Array.isArray(theme.overlaysTmp)
+    ? theme.overlaysTmp.filter(u => !removed.has(u)).map(u => ({ src: u }))
+    : [];
+  const localArr = Array.isArray(theme.overlays)
+    ? theme.overlays.map(u => (typeof u === 'string' ? { src: u } : u))
+    : [];
+  const seen = new Set();
+  const out = [];
+  for (const o of [...folderArr, ...localArr]) {
+    const k = (o && o.src ? o.src : '').toString().trim();
+    if (!k || seen.has(k)) continue;
+    seen.add(k); out.push(o);
+  }
+  return out;
+}
+
+function getBaseTemplateList(theme) {
+  if (!theme || typeof theme !== 'object') return [];
+  const removed = new Set(Array.isArray(theme.templatesRemoved) ? theme.templatesRemoved : []);
+  const folderArr = Array.isArray(theme.templatesTmp)
+    ? theme.templatesTmp.filter(t => t && t.src && !removed.has(t.src)).map(t => ({ src: t.src, layout: t.layout || 'double_column', slots: t.slots }))
+    : [];
+  const localArr = Array.isArray(theme.templates)
+    ? theme.templates.map(t => ({ src: t.src, layout: t.layout || 'double_column', slots: t.slots }))
+    : [];
+  const seen = new Set();
+  const out = [];
+  for (const t of [...folderArr, ...localArr]) {
+    const k = (t && t.src ? t.src : '').toString().trim();
+    if (!k || seen.has(k)) continue;
+    seen.add(k); out.push(t);
+  }
+  return out;
+}
+
 function getOverlayList(theme) {
   if (!theme || typeof theme !== 'object') return [];
   const overrides = getActiveEventOverrides();
@@ -7162,26 +9976,22 @@ Object.assign(window, {
   clearAnalytics,
   closeConfirm,
   confirmTemplate,
-  copyBuildCmd,
   copyEventGalleryLink,
   copyShareLink,
-  copyShipCmd,
   downloadShareImage,
   exitFinalPreview,
   exportCurrentEvent,
-  exportThemes,
   goAdmin,
+  beginWelcome,
+  hideWelcome,
   startBooth: startBoothFromAdmin,
   startCamera: startCameraFlow,
-  importThemes,
-  handleImport,
+  handlePrimaryAction,
   makeAvailableOffline,
   openShareLink,
   openEventGalleryLink,
-  rebuildManifestsUI,
   retakePhoto,
   saveCloudinarySettings,
-  saveDeploySettings,
   saveEmailJsSettings,
   saveTheme,
   sendEmail,
@@ -7190,7 +10000,6 @@ Object.assign(window, {
   setMode,
   syncNow,
   toggleAnalytics,
-  triggerDeployHook,
   undoLastRemoval,
   updateCurrentThemeFont,
   updateSelectedTheme
