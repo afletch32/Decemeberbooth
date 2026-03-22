@@ -460,6 +460,7 @@ const DOM = {
   flashOverlay: document.getElementById('flashOverlay'),
   finalPreview: document.getElementById('finalPreview'),
   finalPreviewContent: document.getElementById('finalPreviewContent'),
+  finalPreviewActions: document.getElementById('finalPreviewActions'),
   finalStrip: document.getElementById('finalStrip'),
   finalLive: document.getElementById('finalLive'),
   qrCodeContainer: document.getElementById('qrCodeContainer'),
@@ -2205,15 +2206,15 @@ function applyViewportProfile() {
   const height = window.innerHeight || document.documentElement.clientHeight || 0;
   let next = width < 768 ? "phone" : width < 1180 ? "tablet" : "desktop";
   if (height > 0) {
-    if (height < 700) {
+    if (height < 760) {
       next = "phone";
-    } else if (height < 820 && next === "desktop") {
+    } else if (height < 900 && next === "desktop") {
       next = "tablet";
     }
   }
   document.body.classList.remove("viewport-phone", "viewport-tablet", "viewport-desktop", "viewport-short");
   document.body.classList.add(`viewport-${next}`);
-  if (height > 0 && height < 860) {
+  if (height > 0 && height < 980) {
     document.body.classList.add("viewport-short");
   }
 }
@@ -4745,16 +4746,36 @@ function startBoothFlow() {
 const startCameraFlow = (...args) => startCamera(...args);
 const startBoothFromAdmin = (...args) => startBooth(...args);
 
+function clearPreviewFreezeFrame() {
+  if (!DOM.lastShot) return;
+  DOM.lastShot.style.display = "none";
+  DOM.lastShot.removeAttribute("src");
+}
+
+function showPreviewFreezeFrame(canvasOrUrl) {
+  if (!DOM.lastShot || !canvasOrUrl) return;
+  try {
+    DOM.lastShot.src = typeof canvasOrUrl === "string" ? canvasOrUrl : canvasOrUrl.toDataURL("image/png");
+    DOM.lastShot.style.display = "block";
+  } catch (_) { }
+}
+
 // Photo mode capture
 async function capturePhotoFlow() {
   lastCaptureFlow = capturePhotoFlow; // Store this function for retake
   setBoothControlsVisible(false);
-  const photo = await countdownAndSnap({ live: getLivePhotoEnabled(), instant: getInstantCaptureEnabled() });
-  const finalUrl = await finalizeToPrint(photo, selectedOverlay);
-  showFinal(finalUrl);
-  handleCaptureUpload(finalUrl);
-  recordAnalytics('photo', selectedOverlay);
-  addToGallery(finalUrl);
+  const livePhotoEnabled = getLivePhotoEnabled();
+  const photo = await countdownAndSnap({ live: livePhotoEnabled, instant: getInstantCaptureEnabled() });
+  if (!livePhotoEnabled) showPreviewFreezeFrame(photo);
+  try {
+    const finalUrl = await finalizeToPrint(photo, selectedOverlay);
+    showFinal(finalUrl);
+    handleCaptureUpload(finalUrl);
+    recordAnalytics('photo', selectedOverlay);
+    addToGallery(finalUrl);
+  } finally {
+    if (livePhotoEnabled) clearPreviewFreezeFrame();
+  }
 }
 
 async function captureMessageFlow() {
@@ -5170,6 +5191,15 @@ function syncFrameSizeVars() {
     DOM.finalPreviewContent.style.setProperty("--review-width", `${width}px`);
     DOM.finalPreviewContent.style.setProperty("--review-height", `${height}px`);
     DOM.finalPreviewContent.style.setProperty("--review-aspect", `${width} / ${height}`);
+  }
+}
+
+function setFinalPreviewSharePanelVisible(visible) {
+  if (DOM.finalPreviewActions) {
+    DOM.finalPreviewActions.classList.toggle("hidden", !visible);
+  }
+  if (DOM.finalPreviewContent) {
+    DOM.finalPreviewContent.classList.toggle("share-panel-hidden", !visible);
   }
 }
 
@@ -5751,6 +5781,7 @@ function showFinal(url, options = {}) {
   img.src = url;
   const useLiveClip = !!(DOM.finalLive && lastLiveClipUrl && !options.forceImage && !getGreenScreenEnabled() && !getAiBackgroundEnabled());
   if (useLiveClip) {
+    clearPreviewFreezeFrame();
     DOM.finalLive.src = lastLiveClipUrl;
     DOM.finalLive.poster = url;
     DOM.finalLive.classList.remove('hidden');
@@ -5769,6 +5800,7 @@ function showFinal(url, options = {}) {
   if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = 'none';
   if (DOM.qrHint) { DOM.qrHint.style.display = 'none'; DOM.qrHint.textContent = ''; }
   if (DOM.shareStatus) { DOM.shareStatus.style.display = 'none'; }
+  setFinalPreviewSharePanelVisible(false);
   if (!skipShare && !offline && cloudinaryEnabled()) {
     // Prepare a public Cloudinary link, then show QR when ready
     lastShareUrl = null;
@@ -5788,6 +5820,7 @@ function showFinal(url, options = {}) {
         if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = 'flex';
         if (qrContainer) qrContainer.classList.remove('hidden');
         if (DOM.shareStatus) { DOM.shareStatus.textContent = 'Link ready'; }
+        setFinalPreviewSharePanelVisible(true);
       } else {
         if (DOM.qrHint) { DOM.qrHint.textContent = 'QR disabled: Cloudinary link not available.'; DOM.qrHint.style.display = 'block'; }
         if (DOM.shareStatus) { DOM.shareStatus.textContent = 'Upload failed'; }
@@ -6422,8 +6455,10 @@ async function downloadShareImage() {
 }
 
 function hideFinal() {
+  clearPreviewFreezeFrame();
   DOM.finalPreview.classList.remove('show');
   DOM.qrCodeContainer.classList.add('hidden');
+  setFinalPreviewSharePanelVisible(false);
   if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = 'none';
   if (DOM.shareStatus) DOM.shareStatus.style.display = 'none';
   DOM.retakeBtn.style.display = 'none';

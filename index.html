@@ -80,13 +80,13 @@
     }
 
     body.viewport-short.viewport-desktop {
-      --capture-landscape-width: 860px;
+      --capture-landscape-width: 840px;
       --capture-portrait-width: 500px;
     }
 
     body.viewport-short.viewport-tablet {
-      --capture-landscape-width: 700px;
-      --capture-portrait-width: 420px;
+      --capture-landscape-width: 720px;
+      --capture-portrait-width: 430px;
     }
 
     * {
@@ -2742,21 +2742,99 @@
     }
 
     body.viewport-short #boothMain {
-      padding-top: clamp(104px, 12vh, 140px);
-      padding-bottom: clamp(20px, 4vh, 40px);
+      padding-top: clamp(72px, 8vh, 96px);
+      padding-left: clamp(136px, 13vw, 176px);
+      padding-right: clamp(116px, 10vw, 148px);
+      padding-bottom: clamp(10px, 1.75vh, 20px);
     }
 
     body.viewport-short #videoWrap {
-      gap: 12px;
+      gap: 8px;
+      position: relative;
+      max-width: min(100%, calc(var(--capture-landscape-width) + 160px));
+      padding-right: 132px;
     }
 
     body.viewport-short #videoContainer {
-      max-height: min(60svh, calc(100svh - 280px));
+      max-height: min(62svh, calc(100svh - 182px));
+    }
+
+    body.viewport-short #captureBtn {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      z-index: 8;
     }
 
     body.viewport-short #captureBtn.primary {
-      width: clamp(84px, 10vw, 112px);
-      height: clamp(84px, 10vw, 112px);
+      width: clamp(76px, 7.2vw, 98px);
+      height: clamp(76px, 7.2vw, 98px);
+      border-radius: 23px;
+      font-size: clamp(0.86rem, 1.2vw, 1.02rem);
+    }
+
+    body.viewport-short #boothHeader {
+      top: 8px;
+      width: min(93vw, 1010px);
+      padding: 8px 13px;
+      border-radius: 22px;
+    }
+
+    body.viewport-short #eventTitle {
+      font-size: clamp(1.28rem, 2.4vw, 2.1rem);
+      line-height: 1;
+    }
+
+    body.viewport-short #adminBtn {
+      top: 8px;
+      width: 40px;
+      height: 40px;
+    }
+
+    body.viewport-short #options,
+    body.viewport-short #controls {
+      padding: 10px;
+      border-radius: 18px;
+      max-height: 68vh;
+    }
+
+    body.viewport-short #options {
+      top: 76px;
+      bottom: 18px;
+      left: 10px;
+      transform: none;
+      width: clamp(120px, 11vw, 152px);
+      max-height: none;
+    }
+
+    body.viewport-short #options .thumb {
+      max-width: 104px;
+      margin: 4px auto;
+      padding: 3px;
+    }
+
+    body.viewport-short #controls {
+      top: 50%;
+      right: 10px;
+      bottom: auto;
+      transform: translateY(-50%);
+      width: clamp(64px, 5vw, 78px);
+      gap: 5px;
+      max-height: none;
+    }
+
+    body.viewport-short .mode-btn {
+      min-height: 54px;
+      padding: 7px 4px !important;
+    }
+
+    body.viewport-short .mode-btn-label {
+      font-size: 0.6rem;
+    }
+
+    body.viewport-short #captureBtn {
+      right: 0;
+      bottom: 0;
     }
 
     :root {
@@ -3042,6 +3120,16 @@
       align-items: center;
     }
 
+    #finalPreviewContent.share-panel-hidden {
+      grid-template-columns: minmax(0, 1fr) auto;
+      width: min(96vw, 1120px);
+    }
+
+    #finalPreviewContent.share-panel-hidden #finalStrip,
+    #finalPreviewContent.share-panel-hidden #finalLive {
+      justify-self: center;
+    }
+
     #finalStrip,
     #finalLive {
       width: min(var(--frame-preview-width, var(--review-width, 640px)), 92vw);
@@ -3137,6 +3225,10 @@
 
       #finalPreviewContent {
         padding: 12px;
+      }
+
+      #finalPreviewContent.share-panel-hidden {
+        grid-template-columns: 1fr;
       }
 
       #finalPreviewButtons {
