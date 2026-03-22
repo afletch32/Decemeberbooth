@@ -657,6 +657,7 @@ function setBoothControlsVisible(show) {
   if (DOM.options) DOM.options.classList.toggle('hidden', hidden);
   if (DOM.boothHeader) DOM.boothHeader.classList.toggle('hidden', hidden);
   if (DOM.boothControls) DOM.boothControls.classList.toggle('hidden', hidden);
+  if (DOM.captureBtn) DOM.captureBtn.classList.toggle('hidden', hidden);
 }
 // --- State ---
 let activeTheme = null; // Default theme
@@ -897,6 +898,7 @@ function getThemeFontPairingLabel(themeKey = "") {
 function renderCreatePathFontPreviewCards(pairings, themeKey = "") {
   if (!DOM.createPathFontPreviewCards) return;
   DOM.createPathFontPreviewCards.innerHTML = "";
+  const selectedValue = DOM.createPathFontPairingSelect ? DOM.createPathFontPairingSelect.value : "";
 
   const theme = resolveThemeByKey(themeKey) || activeTheme || getSelectedThemeTarget() || {};
   const themeHeading = primaryFontFamily(theme.fontHeading || theme.font || "") || "Theme heading";
@@ -905,6 +907,9 @@ function renderCreatePathFontPreviewCards(pairings, themeKey = "") {
     const card = document.createElement("button");
     card.type = "button";
     card.className = "quick-pick-card event-style-card";
+    const isSelected = value === selectedValue;
+    card.classList.toggle("active", isSelected);
+    card.setAttribute("aria-pressed", isSelected ? "true" : "false");
     card.innerHTML = `
       <div class="quick-pick-label">${label}</div>
       <div class="quick-pick-title">${title}</div>
@@ -912,7 +917,10 @@ function renderCreatePathFontPreviewCards(pairings, themeKey = "") {
       <div class="quick-pick-preview" style="font-family: ${composeFontString(heading)};">${preview}</div>
     `;
     card.addEventListener("click", () => {
-      if (DOM.createPathFontPairingSelect) DOM.createPathFontPairingSelect.value = value;
+      if (DOM.createPathFontPairingSelect) {
+        DOM.createPathFontPairingSelect.value = value;
+      }
+      renderCreatePathFontPreviewCards(pairings, themeKey);
     });
     return card;
   };
@@ -1206,6 +1214,17 @@ function setupEventProfileControls() {
       if (DOM.eventSelect) DOM.eventSelect.value = key;
       loadTheme(key);
       highlightThemeQuickSelect(key);
+    });
+  }
+  if (DOM.createPathFontPairingSelect) {
+    DOM.createPathFontPairingSelect.addEventListener("change", () => {
+      renderCreatePathFontPreviewCards(
+        getSuggestedPairingsForEventType(
+          DOM.createPathEventType ? normalizeEventStyle(DOM.createPathEventType.value) || getSelectedEventType() : getSelectedEventType(),
+          5
+        ),
+        DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : ""
+      );
     });
   }
   if (DOM.toggleThemeFavoriteBtn) {
@@ -2183,9 +2202,20 @@ function setupSetupTabs() {
 
 function applyViewportProfile() {
   const width = window.innerWidth || document.documentElement.clientWidth || 0;
-  const next = width < 768 ? "phone" : width < 1180 ? "tablet" : "desktop";
-  document.body.classList.remove("viewport-phone", "viewport-tablet", "viewport-desktop");
+  const height = window.innerHeight || document.documentElement.clientHeight || 0;
+  let next = width < 768 ? "phone" : width < 1180 ? "tablet" : "desktop";
+  if (height > 0) {
+    if (height < 700) {
+      next = "phone";
+    } else if (height < 820 && next === "desktop") {
+      next = "tablet";
+    }
+  }
+  document.body.classList.remove("viewport-phone", "viewport-tablet", "viewport-desktop", "viewport-short");
   document.body.classList.add(`viewport-${next}`);
+  if (height > 0 && height < 860) {
+    document.body.classList.add("viewport-short");
+  }
 }
 
 function hasLiveVideoStream() {
@@ -2606,11 +2636,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateThemeEditorSummary();
   updateCountdownFontSize();
   applyViewportProfile();
+  requestAnimationFrame(syncFrameSizeVars);
   window.addEventListener("resize", () => {
     updateCountdownFontSize();
     applyViewportProfile();
     fitBannerTextToViewport();
     fitWelcomeTitleToViewport();
+    requestAnimationFrame(syncFrameSizeVars);
   });
 });
 
@@ -4319,6 +4351,7 @@ function setMode(m) {
     if (DOM.liveOverlay) DOM.liveOverlay.src = "";
   }
   renderOptions();
+  requestAnimationFrame(syncFrameSizeVars);
 }
 function renderOptions() {
   if (mode === "message") {
@@ -4770,10 +4803,21 @@ function handlePrimaryAction() {
   }
   capturePhotoFlow();
 }
+
+function getResolvedCaptureAspectRatio() {
+  if (typeof captureAspectRatio === "number" && captureAspectRatio > 0) return captureAspectRatio;
+  const rect = DOM.videoContainer && typeof DOM.videoContainer.getBoundingClientRect === "function"
+    ? DOM.videoContainer.getBoundingClientRect()
+    : null;
+  if (rect && rect.width > 0 && rect.height > 0) return rect.width / rect.height;
+  return DOM.videoWrap && DOM.videoWrap.classList.contains("view-portrait") ? (3 / 4) : (4 / 3);
+}
+
 function drawToCanvasFromVideo() {
   const v = DOM.video;
-  const c = document.createElement('canvas');
-  const isPortrait = DOM.videoWrap.classList.contains('view-portrait');
+  const c = document.createElement("canvas");
+  const isPortrait = DOM.videoWrap.classList.contains("view-portrait");
+  const targetAspect = getResolvedCaptureAspectRatio();
 
   // Demo or no camera stream ready: draw a placeholder frame
   if (demoMode || !v || !v.videoWidth || !v.videoHeight) {
@@ -4782,15 +4826,15 @@ function drawToCanvasFromVideo() {
     const base = 900; // arbitrary size
     c.width = Math.round((base * aspectW) / aspectH);
     c.height = base;
-    const ctx = c.getContext('2d');
+    const ctx = c.getContext("2d");
     // Gradient background placeholder
     const grad = ctx.createLinearGradient(0, 0, c.width, c.height);
-    grad.addColorStop(0, '#222'); grad.addColorStop(1, '#555');
+    grad.addColorStop(0, "#222"); grad.addColorStop(1, "#555");
     ctx.fillStyle = grad; ctx.fillRect(0, 0, c.width, c.height);
-    ctx.fillStyle = '#fff';
-    ctx.font = '28px system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillText('Demo Mode', c.width / 2, c.height / 2 - 10);
+    ctx.fillStyle = "#fff";
+    ctx.font = "28px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText("Demo Mode", c.width / 2, c.height / 2 - 10);
     ctx.fillText(isPortrait ? "3:4" : "4:3", c.width / 2, c.height / 2 + 26);
     return c;
   }
@@ -4800,7 +4844,6 @@ function drawToCanvasFromVideo() {
   const zoom = getCameraZoom();
 
   if (isPortrait) {
-    const targetAspect = (typeof captureAspectRatio === 'number' && captureAspectRatio > 0) ? captureAspectRatio : (3 / 4);
     let sWidth, sHeight, sx, sy;
     sHeight = videoH;
     sWidth = sHeight * targetAspect;
@@ -4817,11 +4860,9 @@ function drawToCanvasFromVideo() {
 
     c.width = sWidth;
     c.height = sHeight;
-    const ctx = c.getContext('2d');
+    const ctx = c.getContext("2d");
     ctx.drawImage(v, sx, sy, sWidth, sHeight, 0, 0, c.width, c.height);
   } else {
-    // Crop to strict target aspect for landscape to match preview
-    const targetAspect = (typeof captureAspectRatio === 'number' && captureAspectRatio > 0) ? captureAspectRatio : (4 / 3);
     let sWidth, sHeight, sx, sy;
     sWidth = videoW;
     sHeight = sWidth / targetAspect;
@@ -4838,7 +4879,7 @@ function drawToCanvasFromVideo() {
 
     c.width = sWidth;
     c.height = sHeight;
-    const ctx = c.getContext('2d');
+    const ctx = c.getContext("2d");
     ctx.drawImage(v, sx, sy, sWidth, sHeight, 0, 0, c.width, c.height);
   }
   return c;
@@ -5104,6 +5145,7 @@ function updateCaptureAspect() {
     DOM.videoContainer.style.aspectRatio = `${aspect} / 1`;
   }
   updateCountdownFontSize();
+  requestAnimationFrame(syncFrameSizeVars);
 }
 
 function setCaptureAspect(aspect) {
@@ -5113,6 +5155,22 @@ function setCaptureAspect(aspect) {
     captureAspectRatio = null;
   }
   updateCaptureAspect();
+}
+
+function syncFrameSizeVars() {
+  if (!DOM.videoContainer) return;
+  const rect = DOM.videoContainer.getBoundingClientRect();
+  if (!rect || !rect.width || !rect.height) return;
+  const width = Math.round(rect.width);
+  const height = Math.round(rect.height);
+  document.documentElement.style.setProperty("--frame-preview-width", `${width}px`);
+  document.documentElement.style.setProperty("--frame-preview-height", `${height}px`);
+  document.documentElement.style.setProperty("--frame-preview-aspect", `${width} / ${height}`);
+  if (DOM.finalPreviewContent) {
+    DOM.finalPreviewContent.style.setProperty("--review-width", `${width}px`);
+    DOM.finalPreviewContent.style.setProperty("--review-height", `${height}px`);
+    DOM.finalPreviewContent.style.setProperty("--review-aspect", `${width} / ${height}`);
+  }
 }
 
 const COUNTDOWN_SCALE_KEY = "photoboothCountdownScale";
@@ -5489,18 +5547,20 @@ async function composeStrip(template, photos) {
 
 // Compose a single photo into a print-safe 4x6 canvas without cropping
 async function finalizeToPrint(photoCanvas, overlaySrc) {
-  const isPortrait = DOM.videoWrap && DOM.videoWrap.classList.contains('view-portrait');
-  const targetW = isPortrait ? 1200 : 1800;
-  const targetH = isPortrait ? 1800 : 1200;
-  const c = document.createElement('canvas');
+  const resolvedAspect = getResolvedCaptureAspectRatio();
+  const isPortrait = resolvedAspect < 1;
+  const longEdge = 1800;
+  const targetW = isPortrait ? Math.round(longEdge * resolvedAspect) : longEdge;
+  const targetH = isPortrait ? longEdge : Math.round(longEdge / resolvedAspect);
+  const c = document.createElement("canvas");
   c.width = targetW; c.height = targetH;
-  const ctx = c.getContext('2d');
+  const ctx = c.getContext("2d");
   // Background fill
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, targetW, targetH);
   const aiEnabled = getAiBackgroundEnabled();
   // Background scene
-  const bg = (aiEnabled || getGreenScreenEnabled()) ? (getActiveGreenBackground(activeTheme) || '') : '';
+  const bg = (aiEnabled || getGreenScreenEnabled()) ? (getActiveGreenBackground(activeTheme) || "") : "";
   if (bg) {
     try {
       const bgImg = await loadImage(bg);
@@ -5540,9 +5600,9 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
         ? createMaskedOverlayCanvas(ov, SPOT_MASK.color, SPOT_MASK.tolerance)
         : ov;
       drawImageContain(ctx, overlayToDraw, 0, 0, targetW, targetH);
-    } catch (e) { console.error('Print overlay load failed', e); }
+    } catch (e) { console.error("Print overlay load failed", e); }
   }
-  return c.toDataURL('image/png');
+  return c.toDataURL("image/png");
 }
 
 /**
@@ -5666,15 +5726,10 @@ function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
   if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
   const img = DOM.finalStrip;
-  const prevFit = img ? img.style.objectFit : '';
-  if (img) img.style.objectFit = 'contain';
-  if (DOM.finalPreviewContent && DOM.videoContainer) {
-    const rect = DOM.videoContainer.getBoundingClientRect();
-    if (rect && rect.width && rect.height) {
-      DOM.finalPreviewContent.style.setProperty("--review-width", `${Math.round(rect.width)}px`);
-      DOM.finalPreviewContent.style.setProperty("--review-height", `${Math.round(rect.height)}px`);
-    }
-  }
+  const previewFit = mode === "strip" ? "contain" : "cover";
+  if (img) img.style.objectFit = previewFit;
+  if (DOM.finalLive) DOM.finalLive.style.objectFit = previewFit;
+  syncFrameSizeVars();
   const shareType = options.shareType || "image";
   lastShareType = shareType;
   const shareBlob = options.shareBlob || null;
@@ -5749,13 +5804,6 @@ function showFinal(url, options = {}) {
   panel.classList.add('show');
   resetIdleTimer();
   hidePreviewTimer = setTimeout(hideFinal, 15000);
-
-  if (img) {
-    panel.addEventListener('transitionend', function once() {
-      img.style.objectFit = prevFit || '';
-      panel.removeEventListener('transitionend', once);
-    });
-  }
 
   // No local-QR fallback: only show QR when a public link is ready (handled above)
 }
@@ -7629,8 +7677,8 @@ function setFontPickerSelection(heading, body, options = {}) {
   ignoreFontPickerEvents = false;
   updateFontPreviewElements(heading, body, options);
   if (!options.keepPairing) {
-    if (DOM.fontPairingSelect) DOM.fontPairingSelect.value = '';
-    if (DOM.editorFontPairingSelect) DOM.editorFontPairingSelect.value = '';
+    if (DOM.fontPairingSelect) DOM.fontPairingSelect.value = "";
+    if (DOM.editorFontPairingSelect) DOM.editorFontPairingSelect.value = "";
   }
 }
 
