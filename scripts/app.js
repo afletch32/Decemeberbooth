@@ -392,6 +392,10 @@ const DOM = {
   boothScreen: document.getElementById('boothScreen'),
   boothHeader: document.getElementById('boothHeader'),
   boothControls: document.getElementById('controls'),
+  mobileSettingsToggle: document.getElementById("mobileSettingsToggle"),
+  mobileSettingsClose: document.getElementById("mobileSettingsClose"),
+  mobileSettingsBackdrop: document.getElementById("mobileSettingsBackdrop"),
+  mobileSettingsSheet: document.getElementById("mobileSettingsSheet"),
   eventSelect: document.getElementById('eventSelect'),
   allowRetakes: document.getElementById('allowRetakes'),
   analyticsData: document.getElementById('analyticsData'),
@@ -659,6 +663,58 @@ function setBoothControlsVisible(show) {
   if (DOM.boothHeader) DOM.boothHeader.classList.toggle('hidden', hidden);
   if (DOM.boothControls) DOM.boothControls.classList.toggle('hidden', hidden);
   if (DOM.captureBtn) DOM.captureBtn.classList.toggle('hidden', hidden);
+  if (!show) {
+    setMobileSettingsOpen(false);
+  }
+  syncMobileSettingsUi();
+}
+
+function isMobileBoothViewport() {
+  return window.matchMedia("(max-width: 760px)").matches || document.body.classList.contains("viewport-phone");
+}
+
+function setMobileSettingsOpen(open) {
+  const shouldOpen = !!open
+    && isMobileBoothViewport()
+    && DOM.boothScreen
+    && !DOM.boothScreen.classList.contains("hidden")
+    && DOM.options
+    && !DOM.options.classList.contains("hidden")
+    && DOM.boothControls
+    && !DOM.boothControls.classList.contains("hidden");
+  if (DOM.boothScreen) {
+    DOM.boothScreen.classList.toggle("mobile-settings-open", shouldOpen);
+  }
+  if (DOM.mobileSettingsSheet) {
+    DOM.mobileSettingsSheet.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
+  }
+  if (DOM.mobileSettingsToggle) {
+    DOM.mobileSettingsToggle.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+  }
+}
+
+function syncMobileSettingsUi() {
+  const available = !!(
+    DOM.mobileSettingsToggle
+    && DOM.options
+    && !DOM.options.classList.contains("hidden")
+    && DOM.boothControls
+    && !DOM.boothControls.classList.contains("hidden")
+  );
+  if (DOM.mobileSettingsToggle) {
+    DOM.mobileSettingsToggle.classList.toggle("hidden", !available);
+  }
+  if (!available || !isMobileBoothViewport()) {
+    setMobileSettingsOpen(false);
+  }
+}
+
+function syncBoothModeButtons() {
+  document.querySelectorAll("#controls .mode-btn").forEach((button) => {
+    const isActive = (button.dataset.mode || "") === mode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
 }
 // --- State ---
 let activeTheme = null; // Default theme
@@ -1285,6 +1341,26 @@ function setupBoothButtons() {
   const startBoothBtn = document.getElementById('startBoothButton');
   if (startBoothBtn) startBoothBtn.addEventListener('click', startBooth);
   else console.warn('Start Booth button not found in DOM.');
+}
+
+function setupMobileSettingsControls() {
+  if (DOM.mobileSettingsToggle) {
+    DOM.mobileSettingsToggle.addEventListener("click", () => {
+      const isOpen = !!(DOM.boothScreen && DOM.boothScreen.classList.contains("mobile-settings-open"));
+      setMobileSettingsOpen(!isOpen);
+    });
+  }
+  if (DOM.mobileSettingsClose) {
+    DOM.mobileSettingsClose.addEventListener("click", () => setMobileSettingsOpen(false));
+  }
+  if (DOM.mobileSettingsBackdrop) {
+    DOM.mobileSettingsBackdrop.addEventListener("click", () => setMobileSettingsOpen(false));
+  }
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      setMobileSettingsOpen(false);
+    }
+  });
 }
 
 function setupVideoListeners() {
@@ -2568,6 +2644,7 @@ function setupEventDateInput() {
 function init() {
   setupEventSelector();
   setupBoothButtons();
+  setupMobileSettingsControls();
   setupVideoListeners();
   setupFinalPreviewListeners();
   setupThemeEditorControls();
@@ -2599,6 +2676,7 @@ function init() {
   flushPendingUploads();
   applyPreviewOrientation();
   applyViewportProfile();
+  syncMobileSettingsUi();
   updateSystemStatusStrip();
   setInterval(updateSystemStatusStrip, 3000);
 }
@@ -2641,6 +2719,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener("resize", () => {
     updateCountdownFontSize();
     applyViewportProfile();
+    syncMobileSettingsUi();
     fitBannerTextToViewport();
     fitWelcomeTitleToViewport();
     requestAnimationFrame(syncFrameSizeVars);
@@ -3346,13 +3425,17 @@ function updateCaptureModeUi() {
     DOM.modeToggle.textContent = is360Mode ? "Switch to Photo Mode" : "Switch to 360 Mode";
   }
   if (DOM.captureBtn) DOM.captureBtn.classList.toggle("hidden", is360Mode);
-  if (DOM.controls) DOM.controls.classList.toggle("hidden", is360Mode);
+  if (DOM.boothControls) DOM.boothControls.classList.toggle("hidden", is360Mode);
   if (DOM.options) DOM.options.classList.toggle("hidden", is360Mode);
   if (DOM.videoImportPanel) DOM.videoImportPanel.classList.toggle("hidden", !is360Mode);
   if (DOM.booth360Panel) DOM.booth360Panel.classList.toggle("hidden", !is360Mode);
   if (DOM.booth360Status && is360Mode && !isImporting360Video && !isRunning360Sequence) {
     set360Status("Ready to start a 360 take", "Start recording on the iPhone first, then tap Start 360 on the booth.");
   }
+  if (is360Mode) {
+    setMobileSettingsOpen(false);
+  }
+  syncMobileSettingsUi();
 }
 
 function setCaptureMode(nextMode = "photo") {
@@ -4352,17 +4435,21 @@ function setMode(m) {
     if (DOM.liveOverlay) DOM.liveOverlay.src = "";
   }
   renderOptions();
+  syncBoothModeButtons();
+  setMobileSettingsOpen(false);
   requestAnimationFrame(syncFrameSizeVars);
 }
 function renderOptions() {
   if (mode === "message") {
     if (DOM.options) DOM.options.innerHTML = "";
+    syncMobileSettingsUi();
     return;
   }
   const isPhoto = (mode === 'photo');
   const templates = isPhoto ? [] : getTemplateList(activeTheme);
   const list = isPhoto ? getOverlayList(activeTheme) : templates;
   const container = DOM.options;
+  if (!container) return;
   container.innerHTML = '';
   const addSection = (title) => {
     const section = document.createElement('div');
@@ -4421,6 +4508,7 @@ function renderOptions() {
       wrap.classList.add('selected');
       selectedOverlay = null;
       if (DOM.liveOverlay) DOM.liveOverlay.src = '';
+      setMobileSettingsOpen(false);
     };
     overlayGrid.appendChild(wrap);
   }
@@ -4445,6 +4533,7 @@ function renderOptions() {
         selectedOverlay = src;
         DOM.liveOverlay.src = withBust(selectedOverlay);
         setViewOrientation(src);
+        setMobileSettingsOpen(false);
       } else {
         // open confirm with larger preview
         // Photo strips are assumed to be landscape for preview purposes
@@ -4455,10 +4544,12 @@ function renderOptions() {
         const template = templates[idx] || { src, layout: 'double_column' };
         pendingTemplate = template;
         openConfirm(template.src);
+        setMobileSettingsOpen(false);
       }
     };
     targetGrid.appendChild(wrap);
   });
+  syncMobileSettingsUi();
 }
 
 async function setViewOrientation(imgSrc) {
@@ -4738,6 +4829,7 @@ function startBoothFlow() {
   showWelcome();
   setMode('photo'); // Default to photo mode on start
   updateCaptureModeUi();
+  syncMobileSettingsUi();
   if (getInstantCaptureEnabled()) {
     showToast('Instant Capture is ON');
   }
