@@ -3430,7 +3430,7 @@ function updateCaptureModeUi() {
   if (DOM.videoImportPanel) DOM.videoImportPanel.classList.toggle("hidden", !is360Mode);
   if (DOM.booth360Panel) DOM.booth360Panel.classList.toggle("hidden", !is360Mode);
   if (DOM.booth360Status && is360Mode && !isImporting360Video && !isRunning360Sequence) {
-    set360Status("Ready to start a 360 take", "Start recording on the iPhone first, then tap Start 360 on the booth.");
+    set360Status("Ready for a remote-triggered 360 take", "Start recording on the iPhone first, then use the arm remote to run the spin while the booth handles countdown and upload.");
   }
   if (is360Mode) {
     setMobileSettingsOpen(false);

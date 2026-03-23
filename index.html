@@ -1533,7 +1533,7 @@
       right: 10px;
       display: flex;
       flex-direction: column;
-      gap: calc(10px + (var(--edit-mode-button-scale, 1) - 1) * 28px);
+      gap: calc(8px + (var(--edit-mode-button-scale, 1) - 1) * 18px);
       transform: translateY(calc(-50% + var(--edit-mode-buttons-y)));
     }
 
@@ -1562,7 +1562,7 @@
     .mode-btn {
       width: 52px;
       height: 52px;
-      border-radius: 16px;
+      border-radius: 22px;
       border: 1px solid #d1f2eb;
       background: linear-gradient(180deg, #ffffff, #effffb);
       display: grid;
@@ -1575,13 +1575,13 @@
     .mode-btn:focus-visible {
       border-color: #7de4d6;
       background: linear-gradient(180deg, #ffffff, #e7fff8);
-      box-shadow: 0 14px 28px rgba(17, 17, 17, 0.1);
+      box-shadow: 0 12px 24px rgba(17, 17, 17, 0.08);
     }
 
     .mode-btn.active {
       border-color: #68dece;
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(222, 250, 244, 0.96) 58%, rgba(191, 243, 232, 0.98));
-      box-shadow: 0 16px 30px rgba(111, 231, 215, 0.14);
+      box-shadow: 0 14px 26px rgba(111, 231, 215, 0.12);
     }
 
     #videoWrap {
@@ -2072,11 +2072,6 @@
     }
 
     #boothScreen.countdown-mode #videoContainer {
-      width: min(100%, var(--frame-preview-width, var(--capture-landscape-width)));
-      height: auto;
-      max-width: 100%;
-      max-height: min(var(--frame-preview-height, 68svh), calc(100svh - 320px));
-      aspect-ratio: var(--frame-preview-aspect, var(--capture-aspect, 4 / 3));
       transform: translateY(var(--edit-countdown-camera-y)) scale(var(--edit-countdown-camera-scale));
     }
 
@@ -3288,25 +3283,49 @@
 
     .mode-btn {
       width: 100%;
-      min-height: 74px;
-      padding: 12px 8px !important;
-      border-radius: 18px;
+      min-height: 64px;
+      padding: 10px 6px !important;
+      border-radius: 20px;
       overflow: hidden;
     }
 
     .mode-btn-label {
-      font-size: 0.72rem;
+      font-size: 0.58rem;
       font-weight: 700;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #455654;
-      line-height: 1.05;
+      color: #5a6b68;
+      line-height: 1;
       text-align: center;
       font-family: var(--font-label);
       display: block;
       width: 100%;
-      white-space: normal;
-      overflow-wrap: anywhere;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mode-btn-icon {
+      min-height: 30px;
+    }
+
+    .mode-btn-icon .photo-rep {
+      width: 18px;
+      height: 24px;
+      border: 2px solid #5fbdb0;
+      border-radius: 5px;
+      background: linear-gradient(180deg, #ffffff, #f4fffc);
+    }
+
+    .mode-btn-icon.strip .photo-rep {
+      width: 16px;
+      height: 12px;
+    }
+
+    .mode-btn-icon.video .rec-dot {
+      width: 14px;
+      height: 14px;
+      box-shadow: 0 0 0 5px rgba(111, 231, 215, 0.18);
     }
 
     #videoWrap {
@@ -3823,7 +3842,7 @@
     <div class="capture-mode-bar">
       <div class="capture-mode-copy">
         <p class="capture-mode-title">Capture Mode</p>
-        <p class="capture-mode-note">Use photo mode for the built-in camera, or switch to 360 mode for the iPhone record and AirDrop workflow.</p>
+        <p class="capture-mode-note">Use photo mode for the built-in camera, or switch to 360 mode for the remote arm workflow and AirDrop upload.</p>
       </div>
       <button type="button" id="modeToggle">Switch to 360 Mode</button>
     </div>
@@ -4360,17 +4379,17 @@
         <div id="booth360Panel" class="booth-360-panel hidden">
           <div id="booth360Status" class="booth-360-status">
             <div class="booth-360-status-label">360 Workflow</div>
-            <p id="booth360StatusText" class="booth-360-status-text">Ready to start a 360 take</p>
-            <p id="booth360StatusNote" class="booth-360-status-note">Start recording on the iPhone first, then tap Start 360 on the booth.</p>
+            <p id="booth360StatusText" class="booth-360-status-text">Ready for a remote-triggered 360 take</p>
+            <p id="booth360StatusNote" class="booth-360-status-note">Start recording on the iPhone, then use the arm remote to run the spin while the booth handles countdown and upload.</p>
           </div>
           <div class="booth-360-actions">
             <button id="start360Btn" class="primary booth-360-action" type="button">
-              <strong>Start 360</strong>
-              <span>Run countdown and operator timing</span>
+              <strong>Begin Countdown</strong>
+              <span>Prep the booth before the remote spin</span>
             </button>
-            <button id="triggerZone" class="button-ghost booth-360-action" type="button" aria-label="Secondary 360 trigger">
-              <strong>Quick Trigger</strong>
-              <span>Tap here or press spacebar</span>
+            <button id="triggerZone" class="button-ghost booth-360-action" type="button" aria-label="Remote-operated 360 arm">
+              <strong>Remote Ready</strong>
+              <span>Use the arm remote for the actual motion</span>
             </button>
           </div>
         </div>
