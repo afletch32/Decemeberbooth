@@ -1692,6 +1692,17 @@
       padding: 12px 14px;
     }
 
+    #captureBtn.primary.message-mode {
+      width: clamp(150px, 18vw, 196px);
+      height: auto;
+      min-height: 112px;
+      border-radius: 30px;
+      font-size: clamp(0.94rem, 1.35vw, 1.08rem);
+      line-height: 0.96;
+      letter-spacing: 0.02em;
+      padding: 16px 18px;
+    }
+
     #captureBtn.recording-stop {
       background: linear-gradient(145deg, #ffb8cb, #ff95b2);
       outline-color: #d37b96;
@@ -1718,9 +1729,11 @@
       display: grid;
       justify-items: center;
       gap: 18px;
-      width: min(92vw, 920px);
+      width: fit-content;
+      max-width: min(92vw, 920px);
+      min-width: min(440px, 72vw);
       text-align: center;
-      padding: 28px 30px;
+      padding: 22px 28px;
       border-radius: 26px;
       border: 1px solid var(--border);
       background:
@@ -1758,7 +1771,7 @@
       color: #111111;
       font-family: var(--font-heading);
       font-size: clamp(2.4rem, 7vw, 5rem);
-      max-width: min(84vw, 14ch);
+      max-width: min(84vw, 12ch);
       max-height: min(44vh, 360px);
       line-height: 1.08;
       overflow-wrap: anywhere;
@@ -1779,8 +1792,8 @@
 
     .start-button {
       width: auto;
-      min-width: clamp(180px, 34vw, 280px);
-      padding: 16px 26px;
+      min-width: clamp(180px, 24vw, 280px);
+      padding: 15px 24px;
       position: relative;
       z-index: 2;
       border-radius: 999px;
@@ -2990,6 +3003,16 @@
       font-size: clamp(0.86rem, 1.2vw, 1.02rem);
     }
 
+    body.viewport-short #captureBtn.primary.message-mode {
+      width: clamp(132px, 14vw, 168px);
+      height: auto;
+      min-height: 88px;
+      border-radius: 26px;
+      font-size: clamp(0.82rem, 0.95vw, 0.94rem);
+      line-height: 0.94;
+      padding: 12px 14px;
+    }
+
     body.viewport-short #boothHeader {
       top: 8px;
       max-width: min(90vw, 620px);
@@ -3463,6 +3486,7 @@
       }
 
       #welcomeOverlay {
+        min-width: min(420px, 88vw);
         width: min(94vw, 760px);
         gap: 14px;
         padding: 24px 22px;
@@ -3689,6 +3713,16 @@
         font-size: clamp(0.92rem, 3vw, 1rem);
       }
 
+      #captureBtn.primary.message-mode {
+        width: clamp(136px, 34vw, 184px);
+        height: auto;
+        min-height: 96px;
+        border-radius: 28px;
+        font-size: clamp(0.84rem, 2.2vw, 0.98rem);
+        line-height: 0.94;
+        padding: 14px 16px;
+      }
+
       #options,
       #controls {
         display: none;
@@ -3780,6 +3814,7 @@
 
       #welcomeOverlay {
         width: min(95vw, 420px);
+        min-width: 0;
         gap: 12px;
         padding: 18px 14px;
         border-radius: 22px;
@@ -3801,6 +3836,14 @@
         width: min(100%, 220px);
         height: 84px;
         border-radius: 28px;
+      }
+
+      #captureBtn.primary.message-mode {
+        width: min(100%, 220px);
+        min-height: 90px;
+        height: auto;
+        border-radius: 26px;
+        padding: 14px 16px;
       }
 
       #finalPreviewButtons {

@@ -4422,6 +4422,7 @@ function setMode(m) {
   // In photo mode, show capture button; strip mode hides it (auto flow)
   DOM.captureBtn.style.display = (mode === "photo" || mode === "message") ? "inline-block" : "none";
   DOM.captureBtn.textContent = (mode === "message") ? "Record Message" : "Take Photo";
+  DOM.captureBtn.classList.toggle("message-mode", mode === "message");
   if (mode === 'photo' || mode === "message") {
     setCaptureAspect(null);
   }
