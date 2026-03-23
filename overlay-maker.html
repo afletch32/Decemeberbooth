@@ -322,6 +322,16 @@
           </label>
 
           <label>
+            Headline size
+            <input id="headlineSize" type="range" min="0.05" max="0.16" step="0.005" value="0.085">
+          </label>
+
+          <label>
+            Headline position
+            <input id="headlineY" type="range" min="0.65" max="0.92" step="0.01" value="0.84">
+          </label>
+
+          <label>
             Accent color
             <input id="accentColor" type="color" value="#ff6b2c">
           </label>
@@ -545,12 +555,16 @@
       headline: "Bride Vibes",
       accentColor: "#ff8fb1",
       intensity: 75,
+      headlineSize: 0.085,
+      headlineY: 0.84,
     };
 
     const elements = {
       overlayName: document.getElementById("overlayName"),
       stylePreset: document.getElementById("stylePreset"),
       headline: document.getElementById("headline"),
+      headlineSize: document.getElementById("headlineSize"),
+      headlineY: document.getElementById("headlineY"),
       accentColor: document.getElementById("accentColor"),
       intensity: document.getElementById("intensity"),
       previewCanvas: document.getElementById("previewCanvas"),
@@ -564,6 +578,8 @@
     elements.stylePreset.addEventListener("change", applyStylePreset);
     elements.overlayName.addEventListener("input", syncPreview);
     elements.headline.addEventListener("input", syncPreview);
+    elements.headlineSize.addEventListener("input", syncPreview);
+    elements.headlineY.addEventListener("input", syncPreview);
     elements.accentColor.addEventListener("input", syncPreview);
     elements.intensity.addEventListener("input", syncPreview);
     elements.downloadButton.addEventListener("click", downloadOverlay);
@@ -576,6 +592,8 @@
       elements.overlayName.value = defaults.overlayName;
       elements.stylePreset.value = defaults.stylePreset;
       elements.headline.value = defaults.headline;
+      elements.headlineSize.value = String(defaults.headlineSize);
+      elements.headlineY.value = String(defaults.headlineY);
       elements.accentColor.value = defaults.accentColor;
       elements.intensity.value = String(defaults.intensity);
       syncPreview();
@@ -598,6 +616,8 @@
         presetKey: elements.stylePreset.value,
         overlayName: slugify(elements.overlayName.value || elements.stylePreset.value),
         headline: (elements.headline.value || preset.headline).trim().slice(0, 26),
+        headlineSize: clamp(Number(elements.headlineSize.value) || defaults.headlineSize, 0.05, 0.16),
+        headlineY: clamp(Number(elements.headlineY.value) || defaults.headlineY, 0.65, 0.92),
         accentColor: elements.accentColor.value || preset.accent,
         intensity: clamp(Number(elements.intensity.value) || defaults.intensity, 30, 100),
         preset,
@@ -637,7 +657,7 @@
       drawSparkles(context, width, height, accent, intensity, preset.sparkleCount);
       drawConfetti(context, width, height, accent, intensity, preset.confettiCount);
       drawSticker(context, width, height, preset.sticker, accent, intensity, margin);
-      drawHeadline(context, width, height, state.headline, preset, accent, intensity);
+      drawHeadline(context, width, height, state, preset, accent, intensity);
     }
 
     function drawGlowWash(context, width, height, accent, intensity) {
@@ -772,8 +792,9 @@
       context.restore();
     }
 
-    function drawHeadline(context, width, height, headline, preset, accent, intensity) {
-      const textY = height * 0.84;
+    function drawHeadline(context, width, height, state, preset, accent, intensity) {
+      const textY = height * state.headlineY;
+      const headline = state.headline;
       context.save();
       context.textAlign = "center";
       context.textBaseline = "middle";
@@ -783,13 +804,13 @@
       context.fillStyle = preset.textColor;
       context.shadowBlur = width * 0.045;
       context.shadowColor = withAlpha(accent, 0.35 * intensity);
-      context.font = `800 ${Math.round(width * 0.085)}px var(--font-heading, sans-serif)`;
+      context.font = `800 ${Math.round(width * state.headlineSize)}px var(--font-heading, sans-serif)`;
       context.strokeText(headline, width / 2, textY);
       context.fillText(headline, width / 2, textY);
       context.shadowBlur = 0;
       context.fillStyle = preset.subColor;
       context.font = `700 ${Math.round(width * 0.032)}px var(--font-body, sans-serif)`;
-      context.fillText(preset.footer || "Photobooth Filter", width / 2, height * 0.905);
+      context.fillText(preset.footer || "Photobooth Filter", width / 2, Math.min(height * 0.94, textY + (width * state.headlineSize * 0.95)));
       context.restore();
     }
 

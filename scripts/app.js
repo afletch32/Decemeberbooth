@@ -5196,10 +5196,11 @@ function syncFrameSizeVars() {
 
 function setFinalPreviewSharePanelVisible(visible) {
   if (DOM.finalPreviewActions) {
-    DOM.finalPreviewActions.classList.toggle("hidden", !visible);
+    DOM.finalPreviewActions.classList.remove("hidden");
+    DOM.finalPreviewActions.classList.toggle("share-panel-empty", !visible);
   }
-  if (DOM.finalPreviewContent) {
-    DOM.finalPreviewContent.classList.toggle("share-panel-hidden", !visible);
+  if (DOM.qrCodeContainer) {
+    DOM.qrCodeContainer.classList.remove("hidden");
   }
 }
 
@@ -5629,7 +5630,7 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
       const overlayToDraw = (SPOT_MASK && SPOT_MASK.enabled)
         ? createMaskedOverlayCanvas(ov, SPOT_MASK.color, SPOT_MASK.tolerance)
         : ov;
-      drawImageContain(ctx, overlayToDraw, 0, 0, targetW, targetH);
+      drawImageCover(ctx, overlayToDraw, 0, 0, targetW, targetH);
     } catch (e) { console.error("Print overlay load failed", e); }
   }
   return c.toDataURL("image/png");

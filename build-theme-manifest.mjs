@@ -85,7 +85,7 @@ function discoverThemes() {
         const ovDir = path.join(abs, "overlays");
         const tpDir = path.join(abs, "templates");
 
-        const urlBase = path.posix.join(URL_PREFIX, ...[ASSETS_ROOT !== "public" ? ASSETS_ROOT : ""].filter(Boolean), ...categoryPathParts, name).replace(/\\/g, "/");
+        const urlBase = path.posix.join(URL_PREFIX, ...categoryPathParts, name).replace(/\\/g, "/");
         const urls = {
           backgrounds: collectImages(bgDir, path.posix.join(urlBase, "backgrounds").replace(/\\/g, "/")),
           overlays: collectImages(ovDir, path.posix.join(urlBase, "overlays").replace(/\\/g, "/")),

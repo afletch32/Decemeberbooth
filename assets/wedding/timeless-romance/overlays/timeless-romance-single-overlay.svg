@@ -10,7 +10,6 @@
 <rect x="140" y="446" width="1520" height="574" rx="10" fill="none" stroke="#d9ccb9" stroke-width="4"/>
 <rect x="140" y="1050" width="1520" height="74" fill="#fffaf4"/>
 <text x="140" y="1098" fill="#8d7c67" font-size="38" font-family="Cormorant Garamond, serif">September 21, 2026</text>
-<text x="1660" y="1098" text-anchor="end" fill="#ad9372" font-size="28" font-family="Manrope, Arial, sans-serif" letter-spacing="4">SINGLE PHOTO TEMPLATE</text>
 <rect x="0" y="0" width="1800" height="1200" fill="url(#checker)" opacity="0.42"/>
 <defs>
   <pattern id="checker" width="24" height="24" patternUnits="userSpaceOnUse">
