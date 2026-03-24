@@ -431,6 +431,7 @@ const DOM = {
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
+  boothInstantCaptureToggle: document.getElementById("boothInstantCaptureToggle"),
   lowLightToggle: document.getElementById("lowLightToggle"),
   greenScreenToggle: document.getElementById("greenScreenToggle"),
   aiBackgroundToggle: document.getElementById("aiBackgroundToggle"),
@@ -2124,12 +2125,22 @@ function setInstantCaptureEnabled(enabled) {
 }
 
 function setupInstantCaptureToggle() {
-  if (!DOM.instantCaptureToggle) return;
-  DOM.instantCaptureToggle.checked = getInstantCaptureEnabled();
+  const toggles = [DOM.instantCaptureToggle, DOM.boothInstantCaptureToggle].filter(Boolean);
+  if (!toggles.length) return;
+  const syncInstantCaptureToggles = (enabled) => {
+    toggles.forEach((toggle) => {
+      toggle.checked = enabled;
+    });
+  };
+  syncInstantCaptureToggles(getInstantCaptureEnabled());
   syncCaptureStatusIndicators();
-  DOM.instantCaptureToggle.addEventListener("change", () => {
-    setInstantCaptureEnabled(DOM.instantCaptureToggle.checked);
-    syncCaptureStatusIndicators();
+  toggles.forEach((toggle) => {
+    toggle.addEventListener("change", () => {
+      const enabled = !!toggle.checked;
+      setInstantCaptureEnabled(enabled);
+      syncInstantCaptureToggles(enabled);
+      syncCaptureStatusIndicators();
+    });
   });
 }
 
