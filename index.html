@@ -3357,7 +3357,7 @@
       border-radius: var(--button-radius);
     }
 
-    .setup-tab,
+    #adminScreen .setup-tab,
     .mode-btn,
     .booth-360-action,
     #closePreviewBtn,
@@ -3372,11 +3372,27 @@
       box-shadow: var(--button-shadow);
     }
 
-    .setup-tab.active {
+    .setup-tab:hover,
+    .setup-tab:focus-visible {
+      border-color: #9fe5da;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(236, 255, 250, 0.96));
+      color: #294640;
+      box-shadow: 0 12px 24px rgba(121, 183, 172, 0.14);
+    }
+
+    #adminScreen .setup-tab:hover,
+    #adminScreen .setup-tab:focus-visible {
+      border-color: #9fe5da;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(236, 255, 250, 0.96));
+      color: #294640;
+      box-shadow: 0 12px 24px rgba(121, 183, 172, 0.14);
+    }
+
+    #adminScreen .setup-tab.active {
       background: var(--button-primary-bg);
       border-color: var(--button-primary-border);
       color: var(--button-primary-text);
-      box-shadow: 0 14px 28px rgba(215, 191, 113, 0.2);
+      box-shadow: 0 14px 28px rgba(121, 183, 172, 0.2);
     }
 
     .booth-360-action.primary,
@@ -3420,26 +3436,31 @@
 
     .mode-btn {
       width: 100%;
-      min-height: 64px;
+      min-height: 82px;
       padding: 10px 6px !important;
       border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       overflow: hidden;
     }
 
     .mode-btn-label {
-      font-size: 0.58rem;
+      font-size: 0.62rem;
       font-weight: 700;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #5a6b68;
-      line-height: 1;
+      line-height: 1.15;
       text-align: center;
       font-family: var(--font-label);
       display: block;
       width: 100%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      text-wrap: balance;
     }
 
     .mode-btn-icon {
@@ -3628,7 +3649,7 @@
       }
 
       .mode-btn {
-        min-height: 76px;
+        min-height: 88px;
         padding: 10px 8px !important;
       }
 
