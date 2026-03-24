@@ -429,6 +429,7 @@ const DOM = {
   quickStartCancel: document.getElementById("quickStartCancel"),
   quickStartConfirm: document.getElementById("quickStartConfirm"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
+  recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
   lowLightToggle: document.getElementById("lowLightToggle"),
   greenScreenToggle: document.getElementById("greenScreenToggle"),
@@ -459,6 +460,9 @@ const DOM = {
   silhouette: document.getElementById("silhouette"),
   recordingOverlay: document.getElementById("recordingOverlay"),
   recordingTimer: document.getElementById("recordingTimer"),
+  captureStatusBar: document.getElementById("captureStatusBar"),
+  livePhotoStatus: document.getElementById("livePhotoStatus"),
+  instantCaptureStatus: document.getElementById("instantCaptureStatus"),
   captureBtn: document.getElementById('captureBtn'),
   countdownOverlay: document.getElementById('countdownOverlay'),
   flashOverlay: document.getElementById('flashOverlay'),
@@ -495,6 +499,7 @@ const DOM = {
   booth360StatusText: document.getElementById("booth360StatusText"),
   booth360StatusNote: document.getElementById("booth360StatusNote"),
   start360Btn: document.getElementById("start360Btn"),
+  recordingModeBtn: document.getElementById("recordingModeBtn"),
   triggerZone: document.getElementById("triggerZone"),
   analytics: document.getElementById('analytics'),
   themeEditor: document.getElementById('themeEditor'),
@@ -715,6 +720,49 @@ function syncBoothModeButtons() {
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
+}
+
+function syncCaptureStatusIndicators() {
+  const showPhotoIndicators = mode === "photo";
+  if (DOM.livePhotoStatus) {
+    DOM.livePhotoStatus.classList.toggle("hidden", !showPhotoIndicators || !getLivePhotoEnabled());
+  }
+  if (DOM.instantCaptureStatus) {
+    DOM.instantCaptureStatus.classList.toggle("hidden", !showPhotoIndicators || !getInstantCaptureEnabled());
+  }
+  if (DOM.captureStatusBar) {
+    const hasVisibleStatus = !!DOM.captureStatusBar.querySelector(".capture-status-pill:not(.hidden)");
+    DOM.captureStatusBar.classList.toggle("hidden", !hasVisibleStatus);
+  }
+}
+
+const RECORDING_MODE_STORAGE_KEY = "photoboothRecordingMode";
+
+function getRecordingModeEnabled() {
+  try {
+    const stored = localStorage.getItem(RECORDING_MODE_STORAGE_KEY);
+    if (stored === "true") return true;
+    if (stored === "false") return false;
+  } catch (_) { }
+  return true;
+}
+
+function setRecordingModeEnabled(enabled) {
+  try {
+    localStorage.setItem(RECORDING_MODE_STORAGE_KEY, enabled ? "true" : "false");
+  } catch (_) { }
+}
+
+function syncRecordingModeAvailability() {
+  const enabled = getRecordingModeEnabled();
+  if (DOM.recordingModeBtn) {
+    DOM.recordingModeBtn.classList.toggle("hidden", !enabled);
+  }
+  if (!enabled && mode === "message") {
+    setMode("photo");
+    return;
+  }
+  syncBoothModeButtons();
 }
 // --- State ---
 let activeTheme = null; // Default theme
@@ -2046,8 +2094,20 @@ function setLivePhotoEnabled(enabled) {
 function setupLivePhotoToggle() {
   if (!DOM.livePhotoToggle) return;
   DOM.livePhotoToggle.checked = getLivePhotoEnabled();
+  syncCaptureStatusIndicators();
   DOM.livePhotoToggle.addEventListener("change", () => {
     setLivePhotoEnabled(DOM.livePhotoToggle.checked);
+    syncCaptureStatusIndicators();
+  });
+}
+
+function setupRecordingModeToggle() {
+  if (!DOM.recordingModeToggle) return;
+  DOM.recordingModeToggle.checked = getRecordingModeEnabled();
+  syncRecordingModeAvailability();
+  DOM.recordingModeToggle.addEventListener("change", () => {
+    setRecordingModeEnabled(DOM.recordingModeToggle.checked);
+    syncRecordingModeAvailability();
   });
 }
 
@@ -2066,8 +2126,10 @@ function setInstantCaptureEnabled(enabled) {
 function setupInstantCaptureToggle() {
   if (!DOM.instantCaptureToggle) return;
   DOM.instantCaptureToggle.checked = getInstantCaptureEnabled();
+  syncCaptureStatusIndicators();
   DOM.instantCaptureToggle.addEventListener("change", () => {
     setInstantCaptureEnabled(DOM.instantCaptureToggle.checked);
+    syncCaptureStatusIndicators();
   });
 }
 
@@ -2654,6 +2716,7 @@ function init() {
   setup360ModeControls();
   setupOfflineControls();
   setupLivePhotoToggle();
+  setupRecordingModeToggle();
   setupInstantCaptureToggle();
   setupLowLightToggle();
   setupGreenScreenToggle();
@@ -4417,6 +4480,9 @@ function applyThemeBackground(theme) {
   if (DOM.welcomeScreen) DOM.welcomeScreen.style.backgroundImage = DOM.boothScreen.style.backgroundImage;
 }
 function setMode(m) {
+  if (m === "message" && !getRecordingModeEnabled()) {
+    m = "photo";
+  }
   mode = m;
   DOM.videoWrap.className = 'view-landscape'; // Default to landscape
   // In photo mode, show capture button; strip mode hides it (auto flow)
@@ -4437,6 +4503,7 @@ function setMode(m) {
   }
   renderOptions();
   syncBoothModeButtons();
+  syncCaptureStatusIndicators();
   setMobileSettingsOpen(false);
   requestAnimationFrame(syncFrameSizeVars);
 }
@@ -4829,6 +4896,7 @@ function startBoothFlow() {
   setCaptureAspect(null);
   showWelcome();
   setMode('photo'); // Default to photo mode on start
+  syncCaptureStatusIndicators();
   updateCaptureModeUi();
   syncMobileSettingsUi();
   if (getInstantCaptureEnabled()) {
@@ -5001,6 +5069,7 @@ function drawToCanvasFromVideo() {
 
 function applyAutoEnhanceCanvas(canvas) {
   if (!AUTO_ENHANCE_ENABLED || !canvas) return canvas;
+  if (canvas.__enhancedMode === getEnhancementMode()) return canvas;
   const enhancement = ENHANCEMENT_MODE_CONFIG[getEnhancementMode()] || ENHANCEMENT_MODE_CONFIG[ENHANCEMENT_MODE_DEFAULT];
   const out = document.createElement('canvas');
   out.width = canvas.width;
@@ -5010,7 +5079,14 @@ function applyAutoEnhanceCanvas(canvas) {
   ctx.drawImage(canvas, 0, 0);
   ctx.filter = 'none';
   applyBeautyLightingPass(ctx, out.width, out.height, enhancement);
+  out.__enhancedMode = getEnhancementMode();
+  if (canvas.__aiMask) out.__aiMask = canvas.__aiMask;
   return out;
+}
+
+function ensureEnhancedCanvas(canvas) {
+  if (!canvas) return canvas;
+  return applyAutoEnhanceCanvas(canvas);
 }
 
 function applyBeautyLightingPass(ctx, width, height, enhancement) {
@@ -5614,6 +5690,7 @@ function triggerFlash() {
 // Compose photostrip
 async function composeStrip(template, photos) {
   const bg = await loadImage(template.src);
+  const enhancedPhotos = Array.isArray(photos) ? photos.map((photo) => ensureEnhancedCanvas(photo)) : [];
   const isPortrait = (template.layout === 'vertical' || template.layout === 'double_column' || template.layout === 'double-column');
   const targetW = isPortrait ? 1200 : 1800; // 4x6 at 300dpi
   const targetH = isPortrait ? 1800 : 1200;
@@ -5635,7 +5712,7 @@ async function composeStrip(template, photos) {
     const slotW = targetW - padding * 2;
     for (let i = 0; i < 3; i++) {
       const x = padding, y = padding + i * (slotH + padding);
-      drawImageContain(ctx, photos[i], x, y, slotW, slotH);
+      drawImageContain(ctx, enhancedPhotos[i], x, y, slotW, slotH);
     }
   } else if (template.layout === 'horizontal') {
     drawImageContain(ctx, bg, 0, 0, targetW, targetH);
@@ -5645,7 +5722,7 @@ async function composeStrip(template, photos) {
     for (let i = 0; i < 3; i++) {
       const x = padding + i * (slotW + padding);
       const y = padding;
-      drawImageContain(ctx, photos[i], x, y, slotW, slotH);
+      drawImageContain(ctx, enhancedPhotos[i], x, y, slotW, slotH);
     }
   } else if (template.layout === 'double_column' || template.layout === 'double-column') {
     // Handled above
@@ -5655,15 +5732,15 @@ async function composeStrip(template, photos) {
     const max = Math.min(photos.length, regions.length);
     for (let i = 0; i < max; i++) {
       const r = regions[i]; if (!r) break;
-      drawImageContain(ctx, photos[i], r.x, r.y, r.w, r.h);
+      drawImageContain(ctx, enhancedPhotos[i], r.x, r.y, r.w, r.h);
     }
     const masked = createMaskedOverlayCanvas(bg, SPOT_MASK.color, SPOT_MASK.tolerance);
     drawImageContain(ctx, masked, 0, 0, targetW, targetH);
   } else if (template.layout === 'custom' && template.slots) {
     drawImageContain(ctx, bg, 0, 0, targetW, targetH);
-    for (let i = 0; i < Math.min(photos.length, template.slots.length); i++) {
+    for (let i = 0; i < Math.min(enhancedPhotos.length, template.slots.length); i++) {
       const s = template.slots[i];
-      drawImageContain(ctx, photos[i], s.x, s.y, s.w, s.h);
+      drawImageContain(ctx, enhancedPhotos[i], s.x, s.y, s.w, s.h);
     }
   }
   return c.toDataURL('image/png');
@@ -5671,6 +5748,7 @@ async function composeStrip(template, photos) {
 
 // Compose a single photo into a print-safe 4x6 canvas without cropping
 async function finalizeToPrint(photoCanvas, overlaySrc) {
+  const enhancedPhotoCanvas = ensureEnhancedCanvas(photoCanvas);
   const resolvedAspect = getResolvedCaptureAspectRatio();
   const isPortrait = resolvedAspect < 1;
   const longEdge = 1800;
@@ -5713,8 +5791,8 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
   }
   // Place captured photo with cover (camera fill)
   const photoForPrint = aiEnabled
-    ? applyAiMaskToCanvas(photoCanvas, photoCanvas && photoCanvas.__aiMask)
-    : photoCanvas;
+    ? applyAiMaskToCanvas(enhancedPhotoCanvas, enhancedPhotoCanvas && enhancedPhotoCanvas.__aiMask)
+    : enhancedPhotoCanvas;
   drawImageCover(ctx, photoForPrint, 0, 0, targetW, targetH);
   // Optional overlay scaled without cropping
   if (overlaySrc) {
