@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1350" height="1800" viewBox="0 0 1350 1800" fill="none">
+  <rect width="1350" height="1800" fill="#f9fffd"/>
+  <rect x="1" y="1" width="1348" height="1798" stroke="#c8efe7" stroke-width="2"/>
+
+  <rect x="0" y="0" width="1350" height="1800" rx="28" fill="#ffffff" fill-opacity="0.18" stroke="#68dece" stroke-width="6"/>
+  <rect x="54" y="54" width="1242" height="1692" rx="26" fill="#ffffff" fill-opacity="0.82" stroke="#68dece" stroke-width="4"/>
+
+  <line x1="54" y1="0" x2="54" y2="1800" stroke="#9fdcd3" stroke-dasharray="12 12"/>
+  <line x1="1296" y1="0" x2="1296" y2="1800" stroke="#9fdcd3" stroke-dasharray="12 12"/>
+  <line x1="0" y1="54" x2="1350" y2="54" stroke="#9fdcd3" stroke-dasharray="12 12"/>
+  <line x1="0" y1="1746" x2="1350" y2="1746" stroke="#9fdcd3" stroke-dasharray="12 12"/>
+
+  <text x="675" y="122" text-anchor="middle" fill="#294640" font-family="Arial, sans-serif" font-size="48" font-weight="700">Single Photo Guide</text>
+  <text x="675" y="184" text-anchor="middle" fill="#4f6d68" font-family="Arial, sans-serif" font-size="24">Artboard 1350 x 1800</text>
+  <text x="675" y="910" text-anchor="middle" fill="#355652" font-family="Arial, sans-serif" font-size="42" font-weight="700">PHOTO AREA</text>
+  <text x="675" y="970" text-anchor="middle" fill="#4f6d68" font-family="Arial, sans-serif" font-size="26">Full frame overlay</text>
+  <text x="675" y="1660" text-anchor="middle" fill="#4f6d68" font-family="Arial, sans-serif" font-size="22">Inner dashed guides mark a 54px safe margin for text, logos, and decorative frames.</text>
+</svg>
