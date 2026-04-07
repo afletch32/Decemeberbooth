@@ -1,682 +1,1071 @@
-<!doctype html>
 <html lang="en" class="h-full">
- <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Photobooth Template Builder</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
-  <style>
-html, body { height: 100%; margin: 0; font-family: "DM Sans", sans-serif; }
-.checkerboard {
-  background-image:
-    linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
-    linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
-    linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
-  background-size: 20px 20px;
-  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-  background-color: #f0f0f0;
-}
-.glass-panel {
-  background: rgba(255,255,255,0.82);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(255,255,255,0.6);
-}
-.control-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8a7f8e; }
-input[type="range"] { accent-color: #a8d5ba; }
-select, input[type="text"], input[type="number"] {
-  font-family: "DM Sans", sans-serif;
-  font-size: 13px;
-  border: 1px solid #e2dce6;
-  border-radius: 10px;
-  padding: 7px 11px;
-  background: #faf8fb;
-  outline: none;
-  transition: border-color 0.2s;
-  width: 100%;
-}
-select:focus, input:focus { border-color: #a8d5ba; }
-.btn-primary {
-  background: linear-gradient(135deg, #a8d5ba 0%, #7ec8a0 100%);
-  color: #fff;
-  font-weight: 600;
-  border-radius: 12px;
-  padding: 9px 18px;
-  font-size: 13px;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.2s;
-}
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(168,213,186,0.4); }
-.btn-secondary {
-  background: #f5f0f7;
-  color: #6b5f70;
-  font-weight: 600;
-  border-radius: 12px;
-  padding: 9px 18px;
-  font-size: 13px;
-  border: 1px solid #e8e0ec;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btn-secondary:hover { background: #ede6f0; }
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #f0faf4;
-  border: 1px solid #c8e6d4;
-  border-radius: 8px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #5a9e74;
-}
-.manifest-box {
-  background: #f9f6fb;
-  border: 1px solid #e2dce6;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-family: "DM Mono", "Courier New", monospace;
-  font-size: 11px;
-  color: #6b5f70;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  background: #333;
-  color: #fff;
-  padding: 10px 24px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 0;
-  transition: all 0.3s ease;
-  z-index: 999;
-  pointer-events: none;
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d4cdd8; border-radius: 3px; }
-body { box-sizing: border-box; }
-  </style>
- </head>
- <body class="h-full overflow-hidden" style="background: #f4f1f6;">
-  <div id="app" class="h-full w-full flex flex-col">
-   <header class="flex items-center justify-between px-6 py-3 border-b" style="border-color: #e8e2ec; background: rgba(255,255,255,0.6); backdrop-filter: blur(12px);">
-    <div class="flex items-center gap-3">
-     <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#a8d5ba,#f2c4c4);display:flex;align-items:center;justify-content:center;">
-      <i data-lucide="aperture" style="width:18px;height:18px;color:#fff;"></i>
-     </div>
-     <h1 id="app-title" style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:#3d3442;">Photobooth Template Builder</h1>
-    </div>
-    <button class="btn-secondary flex items-center gap-2" id="backButton">
-     <i data-lucide="arrow-left" style="width:14px;height:14px;"></i> Back to Booth Admin
-    </button>
-   </header>
-   <div class="flex flex-1 overflow-hidden">
-    <aside class="w-80 flex-shrink-0 overflow-y-auto p-4 space-y-3" style="border-right:1px solid #e8e2ec;">
-     <div class="glass-panel rounded-2xl p-4 space-y-3">
-      <div class="flex items-center gap-2 mb-1">
-       <i data-lucide="tag" style="width:14px;height:14px;color:#a8d5ba;"></i>
-       <span style="font-family:'Fraunces',serif;font-size:14px;font-weight:600;color:#3d3442;">Asset Settings</span>
-      </div>
-      <div>
-       <label class="control-label" for="assetName">Asset Name</label>
-       <input type="text" id="assetName" value="my_overlay">
-      </div>
-      <div>
-       <label class="control-label" for="templateBgColor">Template Background</label>
-       <input type="color" id="templateBgColor" value="#f5e6d3" style="width:36px;height:30px;border:none;border-radius:8px;cursor:pointer;">
-      </div>
-      <div>
-       <label class="control-label" for="templateTextColor">Text Color</label>
-       <input type="color" id="templateTextColor" value="#3d3442" style="width:36px;height:30px;border:none;border-radius:8px;cursor:pointer;">
-      </div>
-      <div>
-       <label class="control-label" for="layoutGuide">Layout</label>
-       <select id="layoutGuide">
-        <option value="single_portrait">Single Photo Portrait</option>
-        <option value="single_landscape">Single Photo Landscape</option>
-        <option value="strip_double_column">Strip Double Column</option>
-       </select>
-      </div>
-     </div>
-
-     <div class="glass-panel rounded-2xl p-4 space-y-3">
-      <div class="flex items-center gap-2 mb-1">
-       <i data-lucide="type" style="width:14px;height:14px;color:#d4a0a0;"></i>
-       <span style="font-family:'Fraunces',serif;font-size:14px;font-weight:600;color:#3d3442;">Text</span>
-      </div>
-      <div>
-       <label class="control-label" for="headline">Headline</label>
-       <input type="text" id="headline" value="OUR PHOTO BOOTH">
-      </div>
-      <div>
-       <label class="control-label" for="headlineSize">Headline Size: <span id="headlineSizeVal">48</span>px</label>
-       <input type="range" id="headlineSize" min="16" max="120" value="48" class="w-full">
-      </div>
-      <div>
-       <label class="control-label" for="footer">Footer</label>
-       <input type="text" id="footer" value="#celebrate">
-      </div>
-      <div>
-       <label class="control-label" for="footerSize">Footer Size: <span id="footerSizeVal">28</span>px</label>
-       <input type="range" id="footerSize" min="10" max="80" value="28" class="w-full">
-      </div>
-     </div>
-
-     <div class="glass-panel rounded-2xl p-4 space-y-3">
-      <div class="flex items-center gap-2 mb-1">
-       <i data-lucide="sparkles" style="width:14px;height:14px;color:#f0a0d0;"></i>
-       <span style="font-family:'Fraunces',serif;font-size:14px;font-weight:600;color:#3d3442;">Graphics</span>
-      </div>
-      <div>
-       <label class="control-label" for="graphicSelect">Add Graphic</label>
-       <select id="graphicSelect">
-        <option value="">None</option>
-        <option value="hearts">Hearts</option>
-        <option value="roses">Rose Bouquets</option>
-        <option value="bubbles">Champagne Bubbles</option>
-        <option value="confetti">Confetti</option>
-        <option value="balloons">Balloons</option>
-        <option value="stars">Star Bursts</option>
-       </select>
-      </div>
-      <div>
-       <label class="control-label" for="graphicPlacement">Graphic Placement</label>
-       <select id="graphicPlacement">
-        <option value="corners">Corners</option>
-        <option value="edges">All Edges</option>
-        <option value="scattered">Scattered</option>
-        <option value="top">Top Only</option>
-        <option value="bottom">Bottom Only</option>
-       </select>
-      </div>
-      <div>
-       <label class="control-label" for="graphicOpacity">Graphic Opacity: <span id="graphicOpacityVal">100</span>%</label>
-       <input type="range" id="graphicOpacity" min="0" max="100" value="100" class="w-full">
-      </div>
-     </div>
-
-     <div class="glass-panel rounded-2xl p-4 space-y-3">
-      <div class="flex items-center gap-2 mb-1">
-       <i data-lucide="palette" style="width:14px;height:14px;color:#c8b4e0;"></i>
-       <span style="font-family:'Fraunces',serif;font-size:14px;font-weight:600;color:#3d3442;">Style</span>
-      </div>
-      <div>
-       <label class="control-label" for="accentColor">Accent Color</label>
-       <div class="flex gap-2 items-center">
-        <input type="color" id="accentColor" value="#a8d5ba" style="width:36px;height:30px;border:none;border-radius:8px;cursor:pointer;">
-        <span id="accentHex" style="font-size:12px;color:#8a7f8e;">#a8d5ba</span>
-       </div>
-      </div>
-      <div class="flex items-center gap-2 mt-1">
-       <input type="checkbox" id="includeGuide" style="accent-color:#a8d5ba;">
-       <label for="includeGuide" style="font-size:12px;color:#6b5f70;">Include guide in export</label>
-      </div>
-
-      <div class="glass-panel rounded-2xl p-4 space-y-2">
-       <div class="flex items-center gap-2 mb-1">
-        <i data-lucide="info" style="width:14px;height:14px;color:#c8b4e0;"></i>
-        <span style="font-family:'Fraunces',serif;font-size:14px;font-weight:600;color:#3d3442;">Export Info</span>
-       </div>
-       <div class="flex items-center gap-2">
-        <span class="chip" id="dimChip">1350 × 1800</span>
-        <span id="typeChip" class="chip" style="background:#f4f0fe;border-color:#c8b4e0;color:#7a5fa0;">Template</span>
-       </div>
-       <div>
-        <label class="control-label">Destination</label>
-        <div id="destPath" style="font-size:11px;color:#6b5f70;margin-top:2px;">assets/templates/my_overlay.png</div>
-       </div>
-       <div>
-        <label class="control-label">Manifest Entry</label>
-        <div class="manifest-box" id="manifestEntry">template: { "src": "my_overlay.png", "layout": "portrait" },</div>
-       </div>
-       <div style="font-size:10px;color:#b0a6b5;margin-top:4px;">
-        <i data-lucide="check-circle" style="width:10px;height:10px;display:inline;vertical-align:middle;color:#a8d5ba;"></i> Compatible with booth firmware v2.0+
-       </div>
-      </div>
-
-      <div class="grid gap-2">
-       <button class="btn-primary" id="downloadButton">Download PNG</button>
-       <button class="btn-secondary" id="copyManifestButton">Copy Manifest</button>
-       <button class="btn-secondary" id="resetButton">Reset</button>
-      </div>
-     </div>
-    </aside>
-
-    <main class="flex-1 flex items-center justify-center overflow-auto p-6" style="background: #f4f1f6;">
-      <div id="previewWrap" class="checkerboard rounded-2xl shadow-lg relative" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
-       <canvas id="preview"></canvas>
-      </div>
-    </main>
-   </div>
-  </div>
-
-  <canvas id="exportCanvas" style="display:none;"></canvas>
-  <div id="toast" class="toast"></div>
-
-  <script>
-const GUIDES = {
-  single_portrait: {
-    w: 1350, h: 1800, type: "template", layout: "portrait",
-    windows: [{ x: 90, y: 90, w: 1170, h: 1440 }],
-    borders: { top: 90, bottom: 180, left: 90, right: 90 },
-    textZone: { x: 90, y: 1530, w: 1170, h: 180 }
-  },
-  single_landscape: {
-    w: 1800, h: 1350, type: "template", layout: "landscape",
-    windows: [{ x: 90, y: 90, w: 1620, h: 1080 }],
-    borders: { top: 60, bottom: 180, left: 90, right: 90 },
-    textZone: { x: 90, y: 1170, w: 1620, h: 180 }
-  },
-  strip_double_column: {
-    w: 1200, h: 1800, type: "template", layout: "double_column",
-    windows: [
-      { x: 60, y: 400, w: 495, h: 380 },
-      { x: 60, y: 835, w: 495, h: 380 },
-      { x: 60, y: 1270, w: 495, h: 380 },
-      { x: 645, y: 400, w: 495, h: 380 },
-      { x: 645, y: 835, w: 495, h: 380 },
-      { x: 645, y: 1270, w: 495, h: 380 }
-    ],
-    leftHeaderZone: { x: 60, y: 90, w: 495, h: 150 },
-    rightHeaderZone: { x: 645, y: 90, w: 495, h: 150 },
-    leftFooterZone: { x: 60, y: 1650, w: 495, h: 120 },
-    rightFooterZone: { x: 645, y: 1650, w: 495, h: 120 }
-  }
-};
-
-function $(id) { return document.getElementById(id); }
-
-function getGuide() {
-  return GUIDES[$("layoutGuide").value] || GUIDES.single_portrait;
-}
-
-function getFilename() {
-  return ($("assetName").value || "my_overlay").replace(/[^a-zA-Z0-9_-]/g, "_") + ".png";
-}
-
-function showToast(msg) {
-  const toast = $("toast");
-  toast.textContent = msg;
-  toast.classList.add("show");
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => toast.classList.remove("show"), 2200);
-}
-
-function updateInfo() {
-  const guide = getGuide();
-  const filename = getFilename();
-  $("dimChip").textContent = guide.w + " × " + guide.h;
-  $("accentHex").textContent = $("accentColor").value;
-  $("destPath").textContent = "assets/templates/" + filename;
-  $("manifestEntry").textContent = "template: { \"src\": \"" + filename + "\", \"layout\": \"" + guide.layout + "\" },";
-}
-
-function drawGraphicShape(ctx, graphic, x, y, size) {
-  if (graphic === "hearts") {
-    ctx.beginPath();
-    ctx.moveTo(x, y + size * 0.3);
-    ctx.bezierCurveTo(x, y, x - size * 0.5, y, x - size * 0.5, y + size * 0.3);
-    ctx.bezierCurveTo(x - size * 0.5, y + size * 0.55, x, y + size * 0.78, x, y + size);
-    ctx.bezierCurveTo(x, y + size * 0.78, x + size * 0.5, y + size * 0.55, x + size * 0.5, y + size * 0.3);
-    ctx.bezierCurveTo(x + size * 0.5, y, x, y, x, y + size * 0.3);
-    ctx.fill();
-    return;
-  }
-
-  if (graphic === "bubbles") {
-    ctx.beginPath();
-    ctx.arc(x, y, size * 0.35, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x + size * 0.35, y - size * 0.2, size * 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    return;
-  }
-
-  if (graphic === "stars") {
-    ctx.beginPath();
-    for (let point = 0; point < 8; point++) {
-      const angle = (Math.PI / 4) * point;
-      const radius = point % 2 === 0 ? size * 0.5 : size * 0.18;
-      const px = x + Math.cos(angle) * radius;
-      const py = y + Math.sin(angle) * radius;
-      if (point === 0) {
-        ctx.moveTo(px, py);
-      } else {
-        ctx.lineTo(px, py);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Photobooth Template Builder</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: "DM Sans", sans-serif;
       }
-    }
-    ctx.closePath();
-    ctx.fill();
-    return;
-  }
+      .checkerboard {
+        background-image: linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+          linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+          linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+        background-size: 20px 20px;
+        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        background-color: #f0f0f0;
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+      }
+      .control-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #8a7f8e;
+      }
+      input[type="range"] {
+        accent-color: #a8d5ba;
+      }
+      select,
+      input[type="text"],
+      input[type="number"] {
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        border: 1px solid #e2dce6;
+        border-radius: 10px;
+        padding: 7px 11px;
+        background: #faf8fb;
+        outline: none;
+        transition: border-color 0.2s;
+        width: 100%;
+      }
+      select:focus,
+      input:focus {
+        border-color: #a8d5ba;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #a8d5ba 0%, #7ec8a0 100%);
+        color: #fff;
+        font-weight: 600;
+        border-radius: 12px;
+        padding: 9px 18px;
+        font-size: 13px;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.15s, box-shadow 0.2s;
+      }
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(168, 213, 186, 0.4);
+      }
+      .btn-secondary {
+        background: #f5f0f7;
+        color: #6b5f70;
+        font-weight: 600;
+        border-radius: 12px;
+        padding: 9px 18px;
+        font-size: 13px;
+        border: 1px solid #e8e0ec;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn-secondary:hover {
+        background: #ede6f0;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #f0faf4;
+        border: 1px solid #c8e6d4;
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #5a9e74;
+      }
+      .manifest-box {
+        background: #f9f6fb;
+        border: 1px solid #e2dce6;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-family: "DM Mono", "Courier New", monospace;
+        font-size: 11px;
+        color: #6b5f70;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: #333;
+        color: #fff;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 500;
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 999;
+        pointer-events: none;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #d4cdd8;
+        border-radius: 3px;
+      }
+      body {
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body class="h-full overflow-hidden" style="background: #f4f1f6">
+    <div id="app" class="h-full w-full flex flex-col">
+      <header
+        class="flex items-center justify-between px-6 py-3 border-b"
+        style="
+          border-color: #e8e2ec;
+          background: rgba(255, 255, 255, 0.6);
+          backdrop-filter: blur(12px);
+        "
+      >
+        <div class="flex items-center gap-3">
+          <div
+            style="
+              width: 32px;
+              height: 32px;
+              border-radius: 10px;
+              background: linear-gradient(135deg, #a8d5ba, #f2c4c4);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <i
+              data-lucide="aperture"
+              style="width: 18px; height: 18px; color: #fff"
+            ></i>
+          </div>
+          <h1
+            id="app-title"
+            style="
+              font-family: 'Fraunces', serif;
+              font-size: 18px;
+              font-weight: 700;
+              color: #3d3442;
+            "
+          >
+            Photobooth Template Builder
+          </h1>
+        </div>
+        <button class="btn-secondary flex items-center gap-2" id="backButton">
+          <i data-lucide="arrow-left" style="width: 14px; height: 14px"></i>
+          Back to Booth Admin
+        </button>
+      </header>
+      <div class="flex flex-1 overflow-hidden">
+        <aside
+          class="w-80 flex-shrink-0 overflow-y-auto p-4 space-y-3"
+          style="border-right: 1px solid #e8e2ec"
+        >
+          <div class="glass-panel rounded-2xl p-4 space-y-3">
+            <div class="flex items-center gap-2 mb-1">
+              <i
+                data-lucide="tag"
+                style="width: 14px; height: 14px; color: #a8d5ba"
+              ></i>
+              <span
+                style="
+                  font-family: 'Fraunces', serif;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #3d3442;
+                "
+                >Asset Settings</span
+              >
+            </div>
+            <div>
+              <label class="control-label" for="assetName">Asset Name</label>
+              <input type="text" id="assetName" value="my_overlay" />
+            </div>
+            <div>
+              <label class="control-label" for="templateBgColor"
+                >Template Background</label
+              >
+              <input
+                type="color"
+                id="templateBgColor"
+                value="#f5e6d3"
+                style="
+                  width: 36px;
+                  height: 30px;
+                  border: none;
+                  border-radius: 8px;
+                  cursor: pointer;
+                "
+              />
+            </div>
+            <div>
+              <label class="control-label" for="templateTextColor"
+                >Text Color</label
+              >
+              <input
+                type="color"
+                id="templateTextColor"
+                value="#3d3442"
+                style="
+                  width: 36px;
+                  height: 30px;
+                  border: none;
+                  border-radius: 8px;
+                  cursor: pointer;
+                "
+              />
+            </div>
+            <div>
+              <label class="control-label" for="layoutGuide">Layout</label>
+              <select id="layoutGuide">
+                <option value="single_portrait">Single Photo Portrait</option>
+                <option value="single_landscape">Single Photo Landscape</option>
+                <option value="strip_double_column">Strip Double Column</option>
+              </select>
+            </div>
+          </div>
 
-  ctx.beginPath();
-  ctx.arc(x, y, size * 0.3, 0, Math.PI * 2);
-  ctx.fill();
-}
+          <div class="glass-panel rounded-2xl p-4 space-y-3">
+            <div class="flex items-center gap-2 mb-1">
+              <i
+                data-lucide="type"
+                style="width: 14px; height: 14px; color: #d4a0a0"
+              ></i>
+              <span
+                style="
+                  font-family: 'Fraunces', serif;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #3d3442;
+                "
+                >Text</span
+              >
+            </div>
+            <div>
+              <label class="control-label" for="headline">Headline</label>
+              <input type="text" id="headline" value="OUR PHOTO BOOTH" />
+            </div>
+            <div>
+              <label class="control-label" for="headlineSize"
+                >Headline Size: <span id="headlineSizeVal">48</span>px</label
+              >
+              <input
+                type="range"
+                id="headlineSize"
+                min="16"
+                max="120"
+                value="48"
+                class="w-full"
+              />
+            </div>
+            <div>
+              <label class="control-label" for="footer">Footer</label>
+              <input type="text" id="footer" value="#celebrate" />
+            </div>
+            <div>
+              <label class="control-label" for="footerSize"
+                >Footer Size: <span id="footerSizeVal">28</span>px</label
+              >
+              <input
+                type="range"
+                id="footerSize"
+                min="10"
+                max="80"
+                value="28"
+                class="w-full"
+              />
+            </div>
+          </div>
 
-function drawGraphics(ctx, w, h, graphic, placement) {
-  if (!graphic) {
-    return;
-  }
+          <div class="glass-panel rounded-2xl p-4 space-y-3">
+            <div class="flex items-center gap-2 mb-1">
+              <i
+                data-lucide="sparkles"
+                style="width: 14px; height: 14px; color: #f0a0d0"
+              ></i>
+              <span
+                style="
+                  font-family: 'Fraunces', serif;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #3d3442;
+                "
+                >Graphics</span
+              >
+            </div>
+            <div>
+              <label class="control-label" for="graphicSelect"
+                >Add Graphic</label
+              >
+              <select id="graphicSelect">
+                <option value="">None</option>
+                <option value="hearts">Hearts</option>
+                <option value="roses">Rose Bouquets</option>
+                <option value="bubbles">Champagne Bubbles</option>
+                <!DOCTYPE html>
+                <option value="confetti">Confetti</option>
+                <option value="balloons">Balloons</option>
+                <option value="stars">Star Bursts</option>
+              </select>
+            </div>
+            <div>
+              <label class="control-label" for="graphicPlacement"
+                >Graphic Placement</label
+              >
+              <select id="graphicPlacement">
+                <option value="corners">Corners</option>
+                <option value="edges">All Edges</option>
+                <option value="scattered">Scattered</option>
+                <option value="top">Top Only</option>
+                <option value="bottom">Bottom Only</option>
+              </select>
+            </div>
+            <div>
+              <label class="control-label" for="graphicOpacity"
+                >Graphic Opacity:
+                <span id="graphicOpacityVal">100</span>%</label
+              >
+              <input
+                type="range"
+                id="graphicOpacity"
+                min="0"
+                max="100"
+                value="100"
+                class="w-full"
+              />
+            </div>
+          </div>
 
-  const positions = [];
-  if (placement === "corners" || placement === "edges") {
-    positions.push([50, 50], [w - 50, 50], [50, h - 50], [w - 50, h - 50]);
-  }
-  if (placement === "top" || placement === "edges") {
-    positions.push([w * 0.25, 40], [w * 0.5, 40], [w * 0.75, 40]);
-  }
-  if (placement === "bottom" || placement === "edges") {
-    positions.push([w * 0.25, h - 40], [w * 0.5, h - 40], [w * 0.75, h - 40]);
-  }
-  if (placement === "scattered") {
-    positions.push([w * 0.18, h * 0.2], [w * 0.82, h * 0.23], [w * 0.2, h * 0.8], [w * 0.78, h * 0.74], [w * 0.5, h * 0.12]);
-  }
+          <div class="glass-panel rounded-2xl p-4 space-y-3">
+            <div class="flex items-center gap-2 mb-1">
+              <i
+                data-lucide="palette"
+                style="width: 14px; height: 14px; color: #c8b4e0"
+              ></i>
+              <span
+                style="
+                  font-family: 'Fraunces', serif;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #3d3442;
+                "
+                >Style</span
+              >
+            </div>
+            <div>
+              <label class="control-label" for="accentColor"
+                >Accent Color</label
+              >
+              <div class="flex gap-2 items-center">
+                <input
+                  type="color"
+                  id="accentColor"
+                  value="#a8d5ba"
+                  style="
+                    width: 36px;
+                    height: 30px;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                  "
+                />
+                <span id="accentHex" style="font-size: 12px; color: #8a7f8e"
+                  >#a8d5ba</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+              <input
+                type="checkbox"
+                id="includeGuide"
+                style="accent-color: #a8d5ba"
+              />
+              <label for="includeGuide" style="font-size: 12px; color: #6b5f70"
+                >Include guide in export</label
+              >
+            </div>
 
-  positions.forEach(([x, y], index) => {
-    drawGraphicShape(ctx, graphic, x, y, 28 + (index % 3) * 8);
-  });
-}
+            <div class="glass-panel rounded-2xl p-4 space-y-2">
+              <div class="flex items-center gap-2 mb-1">
+                <i
+                  data-lucide="info"
+                  style="width: 14px; height: 14px; color: #c8b4e0"
+                ></i>
+                <span
+                  style="
+                    font-family: 'Fraunces', serif;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #3d3442;
+                  "
+                  >Export Info</span
+                >
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="chip" id="dimChip">1350 × 1800</span>
+                <span
+                  id="typeChip"
+                  class="chip"
+                  style="
+                    background: #f4f0fe;
+                    border-color: #c8b4e0;
+                    color: #7a5fa0;
+                  "
+                  >Template</span
+                >
+              </div>
+              <div>
+                <label class="control-label">Destination</label>
+                <div
+                  id="destPath"
+                  style="font-size: 11px; color: #6b5f70; margin-top: 2px"
+                >
+                  assets/templates/my_overlay.png
+                </div>
+              </div>
+              <div>
+                <label class="control-label">Manifest Entry</label>
+                <div class="manifest-box" id="manifestEntry">
+                  template: { "src": "my_overlay.png", "layout": "portrait" },
+                </div>
+              </div>
+              <div style="font-size: 10px; color: #b0a6b5; margin-top: 4px">
+                <i
+                  data-lucide="check-circle"
+                  style="
+                    width: 10px;
+                    height: 10px;
+                    display: inline;
+                    vertical-align: middle;
+                    color: #a8d5ba;
+                  "
+                ></i>
+                Compatible with booth firmware v2.0+
+              </div>
+            </div>
 
-function drawGuideOverlay(ctx, guide) {
-  ctx.save();
-  ctx.setLineDash([18, 10]);
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "rgba(116, 191, 157, 0.85)";
-  guide.windows.forEach(windowBox => {
-    ctx.strokeRect(windowBox.x, windowBox.y, windowBox.w, windowBox.h);
-  });
-  ctx.restore();
-}
+            <div class="grid gap-2">
+              <button class="btn-primary" id="downloadButton">
+                Download PNG
+              </button>
+              <button class="btn-secondary" id="copyManifestButton">
+                Copy Manifest
+              </button>
+              <button class="btn-secondary" id="resetButton">Reset</button>
+            </div>
+          </div>
+        </aside>
 
-function fitFontSize(ctx, text, width, fontFamily, fontWeight, startingSize, minimumSize) {
-  let size = startingSize;
-  ctx.font = fontWeight + " " + size + "px " + fontFamily;
-  while (ctx.measureText(text).width > width && size > minimumSize) {
-    size -= 1;
-    ctx.font = fontWeight + " " + size + "px " + fontFamily;
-  }
-  return size;
-}
+        <main
+          class="flex-1 flex items-center justify-center overflow-auto p-6"
+          style="background: #f4f1f6"
+        >
+          <div
+            id="previewWrap"
+            class="checkerboard rounded-2xl shadow-lg relative"
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+            "
+          >
+            <canvas id="preview"></canvas>
+          </div>
+        </main>
+      </div>
+    </div>
 
-function drawCenteredText(ctx, text, zone, fontFamily, fontWeight, startSize, minSize, alpha, verticalFactor) {
-  if (!text) {
-    return;
-  }
-  ctx.save();
-  ctx.fillStyle = $("templateTextColor").value;
-  ctx.globalAlpha = alpha;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const fontSize = fitFontSize(ctx, text, zone.w - 20, fontFamily, fontWeight, startSize, minSize);
-  ctx.font = fontWeight + " " + fontSize + "px " + fontFamily;
-  ctx.fillText(text, zone.x + zone.w / 2, zone.y + zone.h * verticalFactor);
-  ctx.restore();
-}
+    <canvas id="exportCanvas" style="display: none"></canvas>
+    <div id="toast" class="toast"></div>
 
-function drawSingleLayout(ctx, guide, accent, templateBg) {
-  const headline = $("headline").value;
-  const footer = $("footer").value;
-  const headlineSize = parseInt($("headlineSize").value, 10);
-  const footerSize = parseInt($("footerSize").value, 10);
-  const photoWindow = guide.windows[0];
+    <script>
+      const GUIDES = {
+        single_portrait: {
+          w: 1350,
+          h: 1800,
+          type: "template",
+          layout: "portrait",
+          windows: [{ x: 90, y: 90, w: 1170, h: 1440 }],
+          borders: { top: 90, bottom: 180, left: 90, right: 90 },
+          textZone: { x: 90, y: 1530, w: 1170, h: 180 },
+        },
+        single_landscape: {
+          w: 1800,
+          h: 1350,
+          type: "template",
+          layout: "landscape",
+          windows: [{ x: 90, y: 90, w: 1620, h: 1080 }],
+          borders: { top: 60, bottom: 180, left: 90, right: 90 },
+          textZone: { x: 90, y: 1170, w: 1620, h: 180 },
+        },
+        strip_double_column: {
+          w: 1200,
+          h: 1800,
+          type: "template",
+          layout: "double_column",
+          windows: [
+            { x: 60, y: 400, w: 495, h: 380 },
+            { x: 60, y: 835, w: 495, h: 380 },
+            { x: 60, y: 1270, w: 495, h: 380 },
+            { x: 645, y: 400, w: 495, h: 380 },
+            { x: 645, y: 835, w: 495, h: 380 },
+            { x: 645, y: 1270, w: 495, h: 380 },
+          ],
+          leftHeaderZone: { x: 60, y: 90, w: 495, h: 150 },
+          rightHeaderZone: { x: 645, y: 90, w: 495, h: 150 },
+          leftFooterZone: { x: 60, y: 1650, w: 495, h: 120 },
+          rightFooterZone: { x: 645, y: 1650, w: 495, h: 120 },
+        },
+      };
 
-  ctx.fillStyle = templateBg;
-  ctx.fillRect(0, 0, guide.w, guide.h);
+      function $(id) {
+        return document.getElementById(id);
+      }
 
-  const border = guide.borders;
-  ctx.fillStyle = accent;
-  ctx.globalAlpha = 0.9;
-  ctx.fillRect(0, 0, guide.w, border.top);
-  ctx.fillRect(0, guide.h - border.bottom, guide.w, border.bottom);
-  ctx.fillRect(0, 0, border.left, guide.h);
-  ctx.fillRect(guide.w - border.right, 0, border.right, guide.h);
-  ctx.globalAlpha = 1;
+      function getGuide() {
+        return GUIDES[$("layoutGuide").value] || GUIDES.single_portrait;
+      }
 
-  ctx.strokeStyle = accent;
-  ctx.globalAlpha = 0.45;
-  ctx.lineWidth = 3;
-  ctx.strokeRect(photoWindow.x - 2, photoWindow.y - 2, photoWindow.w + 4, photoWindow.h + 4);
-  ctx.globalAlpha = 1;
+      function getFilename() {
+        return (
+          ($("assetName").value || "my_overlay").replace(
+            /[^a-zA-Z0-9_-]/g,
+            "_"
+          ) + ".png"
+        );
+      }
 
-  ctx.save();
-  ctx.globalCompositeOperation = "destination-out";
-  ctx.fillStyle = "#000";
-  ctx.fillRect(photoWindow.x, photoWindow.y, photoWindow.w, photoWindow.h);
-  ctx.restore();
+      function showToast(msg) {
+        const toast = $("toast");
+        toast.textContent = msg;
+        toast.classList.add("show");
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => toast.classList.remove("show"), 2200);
+      }
 
-  drawCenteredText(ctx, headline, guide.textZone, "\"Fraunces\", serif", "700", headlineSize, 10, 1, 0.34);
-  drawCenteredText(ctx, footer, guide.textZone, "\"DM Sans\", sans-serif", "500", footerSize, 8, 0.8, 0.73);
-}
+      function updateInfo() {
+        const guide = getGuide();
+        const filename = getFilename();
+        $("dimChip").textContent = guide.w + " × " + guide.h;
+        $("accentHex").textContent = $("accentColor").value;
+        $("destPath").textContent = "assets/templates/" + filename;
+        $("manifestEntry").textContent =
+          'template: { "src": "' +
+          filename +
+          '", "layout": "' +
+          guide.layout +
+          '" },';
+      }
 
-function wrapHeadline(ctx, text, maxWidth, fontSize) {
-  const words = text.split(" ");
-  const lines = [];
-  let currentLine = "";
-  ctx.font = "700 " + fontSize + "px \"Fraunces\", serif";
-  words.forEach(word => {
-    const next = currentLine ? currentLine + " " + word : word;
-    if (ctx.measureText(next).width > maxWidth && currentLine) {
-      lines.push(currentLine);
-      currentLine = word;
-    } else {
-      currentLine = next;
-    }
-  });
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-  return lines;
-}
+      function drawGraphicShape(ctx, graphic, x, y, size) {
+        if (graphic === "hearts") {
+          ctx.beginPath();
+          ctx.moveTo(x, y + size * 0.3);
+          ctx.bezierCurveTo(
+            x,
+            y,
+            x - size * 0.5,
+            y,
+            x - size * 0.5,
+            y + size * 0.3
+          );
+          ctx.bezierCurveTo(
+            x - size * 0.5,
+            y + size * 0.55,
+            x,
+            y + size * 0.78,
+            x,
+            y + size
+          );
+          ctx.bezierCurveTo(
+            x,
+            y + size * 0.78,
+            x + size * 0.5,
+            y + size * 0.55,
+            x + size * 0.5,
+            y + size * 0.3
+          );
+          ctx.bezierCurveTo(x + size * 0.5, y, x, y, x, y + size * 0.3);
+          ctx.fill();
+          return;
+        }
 
-function drawStripHeadline(ctx, zone, text, startSize) {
-  if (!text) {
-    return;
-  }
-  let size = startSize;
-  let lines = wrapHeadline(ctx, text, zone.w - 24, size);
-  while (size > 10) {
-    const lineHeight = size * 1.2;
-    const totalHeight = lines.length * lineHeight;
-    const widest = Math.max(...lines.map(line => {
-      ctx.font = "700 " + size + "px \"Fraunces\", serif";
-      return ctx.measureText(line).width;
-    }));
-    if (totalHeight <= zone.h - 12 && widest <= zone.w - 24) {
-      break;
-    }
-    size -= 1;
-    lines = wrapHeadline(ctx, text, zone.w - 24, size);
-  }
+        if (graphic === "bubbles") {
+          ctx.beginPath();
+          ctx.arc(x, y, size * 0.35, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x + size * 0.35, y - size * 0.2, size * 0.2, 0, Math.PI * 2);
+          ctx.fill();
+          return;
+        }
 
-  ctx.save();
-  ctx.fillStyle = $("templateTextColor").value;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.font = "700 " + size + "px \"Fraunces\", serif";
-  const lineHeight = size * 1.2;
-  const totalHeight = lines.length * lineHeight;
-  const startY = zone.y + (zone.h - totalHeight) / 2;
-  lines.forEach((line, index) => {
-    ctx.fillText(line, zone.x + zone.w / 2, startY + index * lineHeight);
-  });
-  ctx.restore();
-}
+        if (graphic === "stars") {
+          ctx.beginPath();
+          for (let point = 0; point < 8; point++) {
+            const angle = (Math.PI / 4) * point;
+            const radius = point % 2 === 0 ? size * 0.5 : size * 0.18;
+            const px = x + Math.cos(angle) * radius;
+            const py = y + Math.sin(angle) * radius;
+            if (point === 0) {
+              ctx.moveTo(px, py);
+            } else {
+              ctx.lineTo(px, py);
+            }
+          }
+          ctx.closePath();
+          ctx.fill();
+          return;
+        }
 
-function drawStripLayout(ctx, guide, templateBg) {
-  const headline = $("headline").value;
-  const footer = $("footer").value;
-  const headlineSize = parseInt($("headlineSize").value, 10);
-  const footerSize = parseInt($("footerSize").value, 10);
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-  ctx.fillStyle = templateBg;
-  ctx.fillRect(0, 0, guide.w, guide.h);
+      function drawGraphics(ctx, w, h, graphic, placement) {
+        if (!graphic) {
+          return;
+        }
 
-  ctx.save();
-  ctx.globalCompositeOperation = "destination-out";
-  ctx.fillStyle = "#000";
-  guide.windows.forEach(windowBox => {
-    ctx.fillRect(windowBox.x, windowBox.y, windowBox.w, windowBox.h);
-  });
-  ctx.restore();
+        const positions = [];
+        if (placement === "corners" || placement === "edges") {
+          positions.push(
+            [50, 50],
+            [w - 50, 50],
+            [50, h - 50],
+            [w - 50, h - 50]
+          );
+        }
+        if (placement === "top" || placement === "edges") {
+          positions.push([w * 0.25, 40], [w * 0.5, 40], [w * 0.75, 40]);
+        }
+        if (placement === "bottom" || placement === "edges") {
+          positions.push(
+            [w * 0.25, h - 40],
+            [w * 0.5, h - 40],
+            [w * 0.75, h - 40]
+          );
+        }
+        if (placement === "scattered") {
+          positions.push(
+            [w * 0.18, h * 0.2],
+            [w * 0.82, h * 0.23],
+            [w * 0.2, h * 0.8],
+            [w * 0.78, h * 0.74],
+            [w * 0.5, h * 0.12]
+          );
+        }
 
-  drawStripHeadline(ctx, guide.leftHeaderZone, headline, headlineSize);
-  drawStripHeadline(ctx, guide.rightHeaderZone, headline, headlineSize);
+        positions.forEach(([x, y], index) => {
+          drawGraphicShape(ctx, graphic, x, y, 28 + (index % 3) * 8);
+        });
+      }
 
-  drawCenteredText(ctx, footer, guide.leftFooterZone, "\"DM Sans\", sans-serif", "500", footerSize, 8, 0.85, 0.5);
-  drawCenteredText(ctx, footer, guide.rightFooterZone, "\"DM Sans\", sans-serif", "500", footerSize, 8, 0.85, 0.5);
-}
+      function drawGuideOverlay(ctx, guide) {
+        ctx.save();
+        ctx.setLineDash([18, 10]);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "rgba(116, 191, 157, 0.85)";
+        guide.windows.forEach((windowBox) => {
+          ctx.strokeRect(windowBox.x, windowBox.y, windowBox.w, windowBox.h);
+        });
+        ctx.restore();
+      }
 
-function drawCanvas(ctx, width, height, drawGuides) {
-  const guide = getGuide();
-  const accent = $("accentColor").value;
-  const templateBg = $("templateBgColor").value;
-  const graphic = $("graphicSelect").value;
-  const graphicPlacement = $("graphicPlacement").value;
-  const graphicOpacity = parseInt($("graphicOpacity").value, 10) / 100;
+      function fitFontSize(
+        ctx,
+        text,
+        width,
+        fontFamily,
+        fontWeight,
+        startingSize,
+        minimumSize
+      ) {
+        let size = startingSize;
+        ctx.font = fontWeight + " " + size + "px " + fontFamily;
+        while (ctx.measureText(text).width > width && size > minimumSize) {
+          size -= 1;
+          ctx.font = fontWeight + " " + size + "px " + fontFamily;
+        }
+        return size;
+      }
 
-  ctx.clearRect(0, 0, width, height);
+      function drawCenteredText(
+        ctx,
+        text,
+        zone,
+        fontFamily,
+        fontWeight,
+        startSize,
+        minSize,
+        alpha,
+        verticalFactor
+      ) {
+        if (!text) {
+          return;
+        }
+        ctx.save();
+        ctx.fillStyle = $("templateTextColor").value;
+        ctx.globalAlpha = alpha;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        const fontSize = fitFontSize(
+          ctx,
+          text,
+          zone.w - 20,
+          fontFamily,
+          fontWeight,
+          startSize,
+          minSize
+        );
+        ctx.font = fontWeight + " " + fontSize + "px " + fontFamily;
+        ctx.fillText(
+          text,
+          zone.x + zone.w / 2,
+          zone.y + zone.h * verticalFactor
+        );
+        ctx.restore();
+      }
 
-  if (guide === GUIDES.strip_double_column) {
-    drawStripLayout(ctx, guide, templateBg);
-  } else {
-    drawSingleLayout(ctx, guide, accent, templateBg);
-  }
+      function drawSingleLayout(ctx, guide, accent, templateBg) {
+        const headline = $("headline").value;
+        const footer = $("footer").value;
+        const headlineSize = parseInt($("headlineSize").value, 10);
+        const footerSize = parseInt($("footerSize").value, 10);
+        const photoWindow = guide.windows[0];
 
-  if (graphic) {
-    ctx.save();
-    ctx.globalAlpha = graphicOpacity;
-    ctx.fillStyle = accent;
-    ctx.strokeStyle = accent;
-    drawGraphics(ctx, width, height, graphic, graphicPlacement);
-    ctx.restore();
-  }
+        ctx.fillStyle = templateBg;
+        ctx.fillRect(0, 0, guide.w, guide.h);
 
-  if (drawGuides) {
-    drawGuideOverlay(ctx, guide);
-  }
-}
+        const border = guide.borders;
+        ctx.fillStyle = accent;
+        ctx.globalAlpha = 0.9;
+        ctx.fillRect(0, 0, guide.w, border.top);
+        ctx.fillRect(0, guide.h - border.bottom, guide.w, border.bottom);
+        ctx.fillRect(0, 0, border.left, guide.h);
+        ctx.fillRect(guide.w - border.right, 0, border.right, guide.h);
+        ctx.globalAlpha = 1;
 
-function updatePreview() {
-  updateInfo();
+        ctx.strokeStyle = accent;
+        ctx.globalAlpha = 0.45;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(
+          photoWindow.x - 2,
+          photoWindow.y - 2,
+          photoWindow.w + 4,
+          photoWindow.h + 4
+        );
+        ctx.globalAlpha = 1;
 
-  const guide = getGuide();
-  const canvas = $("preview");
-  const wrap = $("previewWrap");
-  const areaWidth = wrap.parentElement.clientWidth - 48;
-  const areaHeight = wrap.parentElement.clientHeight - 48;
-  const scale = Math.min(areaWidth / guide.w, areaHeight / guide.h, 1);
-  const displayWidth = Math.round(guide.w * scale);
-  const displayHeight = Math.round(guide.h * scale);
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fillStyle = "#000";
+        ctx.fillRect(
+          photoWindow.x,
+          photoWindow.y,
+          photoWindow.w,
+          photoWindow.h
+        );
+        ctx.restore();
 
-  canvas.width = guide.w;
-  canvas.height = guide.h;
-  canvas.style.width = displayWidth + "px";
-  canvas.style.height = displayHeight + "px";
-  wrap.style.width = displayWidth + "px";
-  wrap.style.height = displayHeight + "px";
+        drawCenteredText(
+          ctx,
+          headline,
+          guide.textZone,
+          '"Fraunces", serif',
+          "700",
+          headlineSize,
+          10,
+          1,
+          0.34
+        );
+        drawCenteredText(
+          ctx,
+          footer,
+          guide.textZone,
+          '"DM Sans", sans-serif',
+          "500",
+          footerSize,
+          8,
+          0.8,
+          0.73
+        );
+      }
 
-  const ctx = canvas.getContext("2d");
-  drawCanvas(ctx, guide.w, guide.h, true);
-}
+      function wrapHeadline(ctx, text, maxWidth, fontSize) {
+        const words = text.split(" ");
+        const lines = [];
+        let currentLine = "";
+        ctx.font = "700 " + fontSize + 'px "Fraunces", serif';
+        words.forEach((word) => {
+          const next = currentLine ? currentLine + " " + word : word;
+          if (ctx.measureText(next).width > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = next;
+          }
+        });
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+        return lines;
+      }
 
-function exportPNG() {
-  const guide = getGuide();
-  const exportCanvas = $("exportCanvas");
-  exportCanvas.width = guide.w;
-  exportCanvas.height = guide.h;
-  const ctx = exportCanvas.getContext("2d");
-  drawCanvas(ctx, guide.w, guide.h, $("includeGuide").checked);
+      function drawStripHeadline(ctx, zone, text, startSize) {
+        if (!text) {
+          return;
+        }
+        let size = startSize;
+        let lines = wrapHeadline(ctx, text, zone.w - 24, size);
+        while (size > 10) {
+          const lineHeight = size * 1.2;
+          const totalHeight = lines.length * lineHeight;
+          const widest = Math.max(
+            ...lines.map((line) => {
+              ctx.font = "700 " + size + 'px "Fraunces", serif';
+              return ctx.measureText(line).width;
+            })
+          );
+          if (totalHeight <= zone.h - 12 && widest <= zone.w - 24) {
+            break;
+          }
+          size -= 1;
+          lines = wrapHeadline(ctx, text, zone.w - 24, size);
+        }
 
-  exportCanvas.toBlob(blob => {
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = getFilename();
-    link.click();
-    URL.revokeObjectURL(link.href);
-    showToast("Exported: " + getFilename());
-  }, "image/png");
-}
+        ctx.save();
+        ctx.fillStyle = $("templateTextColor").value;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.font = "700 " + size + 'px "Fraunces", serif';
+        const lineHeight = size * 1.2;
+        const totalHeight = lines.length * lineHeight;
+        const startY = zone.y + (zone.h - totalHeight) / 2;
+        lines.forEach((line, index) => {
+          ctx.fillText(line, zone.x + zone.w / 2, startY + index * lineHeight);
+        });
+        ctx.restore();
+      }
 
-function copyManifest() {
-  navigator.clipboard.writeText($("manifestEntry").textContent)
-    .then(() => showToast("Manifest line copied"))
-    .catch(() => showToast("Copy failed"));
-}
+      function drawStripLayout(ctx, guide, templateBg) {
+        const headline = $("headline").value;
+        const footer = $("footer").value;
+        const headlineSize = parseInt($("headlineSize").value, 10);
+        const footerSize = parseInt($("footerSize").value, 10);
 
-function resetAll() {
-  $("assetName").value = "my_overlay";
-  $("templateBgColor").value = "#f5e6d3";
-  $("templateTextColor").value = "#3d3442";
-  $("layoutGuide").value = "single_portrait";
-  $("headline").value = "OUR PHOTO BOOTH";
-  $("headlineSize").value = "48";
-  $("headlineSizeVal").textContent = "48";
-  $("footer").value = "#celebrate";
-  $("footerSize").value = "28";
-  $("footerSizeVal").textContent = "28";
-  $("graphicSelect").value = "";
-  $("graphicPlacement").value = "corners";
-  $("graphicOpacity").value = "100";
-  $("graphicOpacityVal").textContent = "100";
-  $("accentColor").value = "#a8d5ba";
-  $("includeGuide").checked = false;
-  updatePreview();
-  showToast("Reset to defaults");
-}
+        ctx.fillStyle = templateBg;
+        ctx.fillRect(0, 0, guide.w, guide.h);
 
-[
-  "assetName",
-  "templateBgColor",
-  "templateTextColor",
-  "layoutGuide",
-  "headline",
-  "footer",
-  "graphicSelect",
-  "graphicPlacement",
-  "accentColor",
-  "includeGuide"
-].forEach(id => {
-  $(id).addEventListener("input", updatePreview);
-  $(id).addEventListener("change", updatePreview);
-});
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fillStyle = "#000";
+        guide.windows.forEach((windowBox) => {
+          ctx.fillRect(windowBox.x, windowBox.y, windowBox.w, windowBox.h);
+        });
+        ctx.restore();
 
-$("headlineSize").addEventListener("input", event => {
-  $("headlineSizeVal").textContent = event.target.value;
-  updatePreview();
-});
+        drawStripHeadline(ctx, guide.leftHeaderZone, headline, headlineSize);
+        drawStripHeadline(ctx, guide.rightHeaderZone, headline, headlineSize);
 
-$("footerSize").addEventListener("input", event => {
-  $("footerSizeVal").textContent = event.target.value;
-  updatePreview();
-});
+        drawCenteredText(
+          ctx,
+          footer,
+          guide.leftFooterZone,
+          '"DM Sans", sans-serif',
+          "500",
+          footerSize,
+          8,
+          0.85,
+          0.5
+        );
+        drawCenteredText(
+          ctx,
+          footer,
+          guide.rightFooterZone,
+          '"DM Sans", sans-serif',
+          "500",
+          footerSize,
+          8,
+          0.85,
+          0.5
+        );
+      }
 
-$("graphicOpacity").addEventListener("input", event => {
-  $("graphicOpacityVal").textContent = event.target.value;
-  updatePreview();
-});
+      function drawCanvas(ctx, width, height, drawGuides) {
+        const guide = getGuide();
+        const accent = $("accentColor").value;
+        const templateBg = $("templateBgColor").value;
+        const graphic = $("graphicSelect").value;
+        const graphicPlacement = $("graphicPlacement").value;
+        const graphicOpacity = parseInt($("graphicOpacity").value, 10) / 100;
 
-$("downloadButton").addEventListener("click", exportPNG);
-$("copyManifestButton").addEventListener("click", copyManifest);
-$("resetButton").addEventListener("click", resetAll);
-$("backButton").addEventListener("click", () => showToast("Navigation: Back to Booth Admin"));
+        ctx.clearRect(0, 0, width, height);
 
-window.addEventListener("resize", updatePreview);
-lucide.createIcons();
-updatePreview();
-  </script>
- </body>
+        if (guide === GUIDES.strip_double_column) {
+          drawStripLayout(ctx, guide, templateBg);
+        } else {
+          drawSingleLayout(ctx, guide, accent, templateBg);
+        }
+
+        if (graphic) {
+          ctx.save();
+          ctx.globalAlpha = graphicOpacity;
+          ctx.fillStyle = accent;
+          ctx.strokeStyle = accent;
+          drawGraphics(ctx, width, height, graphic, graphicPlacement);
+          ctx.restore();
+        }
+
+        if (drawGuides) {
+          drawGuideOverlay(ctx, guide);
+        }
+      }
+
+      function updatePreview() {
+        updateInfo();
+
+        const guide = getGuide();
+        const canvas = $("preview");
+        const wrap = $("previewWrap");
+        const areaWidth = wrap.parentElement.clientWidth - 48;
+        const areaHeight = wrap.parentElement.clientHeight - 48;
+        const scale = Math.min(areaWidth / guide.w, areaHeight / guide.h, 1);
+        const displayWidth = Math.round(guide.w * scale);
+        const displayHeight = Math.round(guide.h * scale);
+
+        canvas.width = guide.w;
+        canvas.height = guide.h;
+        canvas.style.width = displayWidth + "px";
+        canvas.style.height = displayHeight + "px";
+        wrap.style.width = displayWidth + "px";
+        wrap.style.height = displayHeight + "px";
+
+        const ctx = canvas.getContext("2d");
+        drawCanvas(ctx, guide.w, guide.h, true);
+      }
+
+      function exportPNG() {
+        const guide = getGuide();
+        const exportCanvas = $("exportCanvas");
+        exportCanvas.width = guide.w;
+        exportCanvas.height = guide.h;
+        const ctx = exportCanvas.getContext("2d");
+        drawCanvas(ctx, guide.w, guide.h, $("includeGuide").checked);
+
+        exportCanvas.toBlob((blob) => {
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = getFilename();
+          link.click();
+          URL.revokeObjectURL(link.href);
+          showToast("Exported: " + getFilename());
+        }, "image/png");
+      }
+
+      function copyManifest() {
+        navigator.clipboard
+          .writeText($("manifestEntry").textContent)
+          .then(() => showToast("Manifest line copied"))
+          .catch(() => showToast("Copy failed"));
+      }
+
+      function resetAll() {
+        $("assetName").value = "my_overlay";
+        $("templateBgColor").value = "#f5e6d3";
+        $("templateTextColor").value = "#3d3442";
+        $("layoutGuide").value = "single_portrait";
+        $("headline").value = "OUR PHOTO BOOTH";
+        $("headlineSize").value = "48";
+        $("headlineSizeVal").textContent = "48";
+        $("footer").value = "#celebrate";
+        $("footerSize").value = "28";
+        $("footerSizeVal").textContent = "28";
+        $("graphicSelect").value = "";
+        $("graphicPlacement").value = "corners";
+        $("graphicOpacity").value = "100";
+        $("graphicOpacityVal").textContent = "100";
+        $("accentColor").value = "#a8d5ba";
+        $("includeGuide").checked = false;
+        updatePreview();
+        showToast("Reset to defaults");
+      }
+
+      [
+        "assetName",
+        "templateBgColor",
+        "templateTextColor",
+        "layoutGuide",
+        "headline",
+        "footer",
+        "graphicSelect",
+        "graphicPlacement",
+        "accentColor",
+        "includeGuide",
+      ].forEach((id) => {
+        $(id).addEventListener("input", updatePreview);
+        $(id).addEventListener("change", updatePreview);
+      });
+
+      $("headlineSize").addEventListener("input", (event) => {
+        $("headlineSizeVal").textContent = event.target.value;
+        updatePreview();
+      });
+
+      $("footerSize").addEventListener("input", (event) => {
+        $("footerSizeVal").textContent = event.target.value;
+        updatePreview();
+      });
+
+      $("graphicOpacity").addEventListener("input", (event) => {
+        $("graphicOpacityVal").textContent = event.target.value;
+        updatePreview();
+      });
+
+      $("downloadButton").addEventListener("click", exportPNG);
+      $("copyManifestButton").addEventListener("click", copyManifest);
+      $("resetButton").addEventListener("click", resetAll);
+      $("backButton").addEventListener("click", () =>
+        showToast("Navigation: Back to Booth Admin")
+      );
+
+      window.addEventListener("resize", updatePreview);
+      lucide.createIcons();
+      updatePreview();
+    </script>
+  </body>
 </html>
