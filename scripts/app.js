@@ -772,6 +772,7 @@ let currentMode = "photo";
 let stream;
 let torchEnabled = false;
 let selectedOverlay = null;
+let lastPhotoOverlay = null;
 let pendingTemplate = null;
 let hidePreviewTimer = null;
 let allowRetake = true;
@@ -2332,7 +2333,7 @@ function setSetupSection(section = "event") {
   document.querySelectorAll("[data-setup-tab]").forEach((btn) => {
     const isActive = btn.dataset.setupTab === section;
     btn.classList.toggle("active", isActive);
-    btn.setAttribute("aria-selected", isActive ? "true" : "false");
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
   document.querySelectorAll("[data-setup-section]").forEach((panel) => {
     const show = panel.dataset.setupSection === section;
@@ -3917,6 +3918,7 @@ function syncAdminUiWithTheme(themeKey, theme) {
     }
   }
   selectedOverlay = null;
+  lastPhotoOverlay = null;
   if (DOM.liveOverlay) DOM.liveOverlay.src = '';
   refreshFontSelectForTheme(theme);
   if (DOM.options) renderOptions();
@@ -4505,12 +4507,21 @@ function setMode(m) {
   }
   // In strip mode, ensure no photo overlay is shown over the template preview
   if (mode === 'strip') {
+    if (selectedOverlay) lastPhotoOverlay = selectedOverlay;
     selectedOverlay = null;
     if (DOM.liveOverlay) DOM.liveOverlay.src = '';
   }
   if (mode === "message") {
+    if (selectedOverlay) lastPhotoOverlay = selectedOverlay;
     selectedOverlay = null;
     if (DOM.liveOverlay) DOM.liveOverlay.src = "";
+  }
+  if (mode === "photo" && !selectedOverlay && lastPhotoOverlay) {
+    selectedOverlay = lastPhotoOverlay;
+    if (DOM.liveOverlay) DOM.liveOverlay.src = withBust(selectedOverlay);
+    setViewOrientation(selectedOverlay).catch(() => {
+      if (DOM.videoWrap) DOM.videoWrap.className = "view-landscape";
+    });
   }
   renderOptions();
   syncBoothModeButtons();
@@ -4525,7 +4536,7 @@ function renderOptions() {
     return;
   }
   const isPhoto = (mode === 'photo');
-  const templates = isPhoto ? [] : getTemplateList(activeTheme);
+  const templates = isPhoto ? [] : getTemplateList(activeTheme).filter((template) => isStripTemplateLayout(template && template.layout));
   const list = isPhoto ? getOverlayList(activeTheme) : templates;
   const container = DOM.options;
   if (!container) return;
@@ -4586,9 +4597,11 @@ function renderOptions() {
       container.querySelectorAll('.thumb').forEach(t => t.classList.remove('selected'));
       wrap.classList.add('selected');
       selectedOverlay = null;
+      lastPhotoOverlay = null;
       if (DOM.liveOverlay) DOM.liveOverlay.src = '';
       setMobileSettingsOpen(false);
     };
+    if (!selectedOverlay) wrap.classList.add("selected");
     overlayGrid.appendChild(wrap);
   }
   const targetGrid = isPhoto ? container.querySelector('.options-section:last-child .options-section-grid') : container;
@@ -4601,6 +4614,7 @@ function renderOptions() {
     const img = document.createElement('img');
     wrap.appendChild(img);
     img.src = withBust(src);
+    if (isPhoto && selectedOverlay === src) wrap.classList.add("selected");
     img.onerror = () => {
       console.error('Failed to load thumbnail:', src);
       wrap.style.display = 'none'; // Hide instead of remove to prevent breaking layout
@@ -4610,6 +4624,7 @@ function renderOptions() {
       wrap.classList.add('selected');
       if (isPhoto) {
         selectedOverlay = src;
+        lastPhotoOverlay = src;
         DOM.liveOverlay.src = withBust(selectedOverlay);
         setViewOrientation(src);
         setMobileSettingsOpen(false);
@@ -4620,7 +4635,7 @@ function renderOptions() {
         // Clear any existing overlay so template preview is clean
         selectedOverlay = null;
         if (DOM.liveOverlay) DOM.liveOverlay.src = '';
-        const template = templates[idx] || { src, layout: 'double_column' };
+        const template = templates[idx] || { src, layout: "double_column" };
         pendingTemplate = template;
         openConfirm(template.src);
         setMobileSettingsOpen(false);
@@ -4639,9 +4654,9 @@ async function setViewOrientation(imgSrc) {
 }
 
 function orientationFromTemplate(template) {
-  const layout = (template && template.layout ? template.layout : '').toLowerCase();
-  if (layout === 'double_column' || layout === 'double-column' || layout === 'vertical') return 'view-portrait';
-  return 'view-landscape';
+  const layout = normalizeTemplateLayout(template && template.layout);
+  if (layout === "double_column" || layout === "vertical" || layout === "photo_strip_3") return "view-portrait";
+  return "view-landscape";
 }
 
 function applyPreviewOrientation() {
@@ -4696,7 +4711,8 @@ async function getStripTemplateMetrics(template) {
   if (template.__slotMetrics) return template.__slotMetrics;
   const metrics = {};
   const img = await loadImage(template.src);
-  const slots = detectDoubleColumnSlots(img, 3);
+  const columnCount = getTemplateColumnCount(template && template.layout);
+  const slots = detectTransparentColumnSlots(img, 3, columnCount);
   if (slots) metrics.slots = slots;
   const headerPct = Math.max(0, Math.min(0.5, toNumber(template && (template.headerPct || template.header_percent), 0.2)));
   const columnPadPct = Math.max(0, Math.min(0.2, toNumber(template && template.columnPadPct, 0.055)));
@@ -4709,7 +4725,7 @@ async function getStripTemplateMetrics(template) {
   if (slots && slots[0] && slots[0][0]) {
     metrics.aspect = Math.max(0.1, slots[0][0].w / slots[0][0].h);
   } else {
-    const cols = 2;
+    const cols = columnCount;
     const columnW = 1 / cols;
     const slotWRel = columnW - columnPadPct * columnW * 2;
     const slotHRel = (1 - headerPct - footerPct - slotSpacingPct * (3 + 1)) / 3;
@@ -5463,7 +5479,31 @@ function toNumber(val, fallback) {
   return Number.isFinite(num) ? num : fallback;
 }
 
-function detectDoubleColumnSlots(img, rows) {
+function normalizeTemplateLayout(layout) {
+  const value = String(layout || "").trim().toLowerCase().replace(/_/g, "-");
+  if (!value) return "double_column";
+  if (value === "double-column") return "double_column";
+  if (value === "photo-strip-3" || value === "strip-3" || value === "strip") return "photo_strip_3";
+  if (value === "single-photo") return "single_photo";
+  return value.replace(/-/g, "_");
+}
+
+function isStripTemplateLayout(layout) {
+  const normalized = normalizeTemplateLayout(layout);
+  return normalized === "double_column"
+    || normalized === "vertical"
+    || normalized === "horizontal"
+    || normalized === "photo_strip_3"
+    || normalized === "spot_mask"
+    || normalized === "custom";
+}
+
+function getTemplateColumnCount(layout) {
+  const normalized = normalizeTemplateLayout(layout);
+  return normalized === "double_column" ? 2 : 1;
+}
+
+function detectTransparentColumnSlots(img, rows, cols = 2) {
   try {
     const w = img.naturalWidth || img.width;
     const h = img.naturalHeight || img.height;
@@ -5473,7 +5513,6 @@ function detectDoubleColumnSlots(img, rows) {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
     const data = ctx.getImageData(0, 0, w, h).data;
-    const cols = 2;
     const colWidth = w / cols;
     const marginX = Math.max(2, Math.floor(colWidth * 0.08));
     const stepX = Math.max(1, Math.floor(colWidth / 80));
@@ -5537,7 +5576,7 @@ function detectDoubleColumnSlots(img, rows) {
     }
     return null;
   } catch (e) {
-    console.warn('Slot detection failed', e);
+    console.warn("Slot detection failed", e);
     return null;
   }
 }
@@ -5702,9 +5741,17 @@ function triggerFlash() {
 async function composeStrip(template, photos) {
   const bg = await loadImage(template.src);
   const enhancedPhotos = Array.isArray(photos) ? photos.map((photo) => ensureEnhancedCanvas(photo)) : [];
-  const isPortrait = (template.layout === 'vertical' || template.layout === 'double_column' || template.layout === 'double-column');
-  const targetW = isPortrait ? 1200 : 1800; // 4x6 at 300dpi
-  const targetH = isPortrait ? 1800 : 1200;
+  const layout = normalizeTemplateLayout(template && template.layout);
+  const bgAspect = (bg.naturalWidth || bg.width || 1) / (bg.naturalHeight || bg.height || 1);
+  let targetW = 1800;
+  let targetH = 1200;
+  if (layout === "photo_strip_3") {
+    targetW = 1200;
+    targetH = Math.max(1800, Math.round(targetW / Math.max(bgAspect, 0.1)));
+  } else if (layout === "vertical" || layout === "double_column") {
+    targetW = 1200;
+    targetH = 1800;
+  }
   const c = document.createElement('canvas');
   c.width = targetW; c.height = targetH;
   const ctx = c.getContext('2d');
@@ -5712,10 +5759,12 @@ async function composeStrip(template, photos) {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, targetW, targetH);
 
-  if (template.layout === 'double_column' || template.layout === 'double-column') {
+  if (layout === "double_column") {
     // Two identical 2x6 strips on a 4x6 sheet
     renderDoubleColumn(c, photos, bg, template);
-  } else if (template.layout === 'vertical') {
+  } else if (layout === "photo_strip_3") {
+    renderSingleColumnStrip(c, enhancedPhotos, bg, template);
+  } else if (layout === "vertical") {
     // Draw template first
     drawImageContain(ctx, bg, 0, 0, targetW, targetH);
     const padding = Math.round(targetH * 0.03);
@@ -5725,7 +5774,7 @@ async function composeStrip(template, photos) {
       const x = padding, y = padding + i * (slotH + padding);
       drawImageContain(ctx, enhancedPhotos[i], x, y, slotW, slotH);
     }
-  } else if (template.layout === 'horizontal') {
+  } else if (layout === "horizontal") {
     drawImageContain(ctx, bg, 0, 0, targetW, targetH);
     const padding = Math.round(targetW * 0.03);
     const slotW = Math.floor((targetW - padding * 5) / 4); // 3 slots + one decorative column
@@ -5735,9 +5784,7 @@ async function composeStrip(template, photos) {
       const y = padding;
       drawImageContain(ctx, enhancedPhotos[i], x, y, slotW, slotH);
     }
-  } else if (template.layout === 'double_column' || template.layout === 'double-column') {
-    // Handled above
-  } else if (template.layout === 'spot-mask' || template.layout === 'spotmask') {
+  } else if (layout === "spot_mask" || layout === "spotmask") {
     drawImageContain(ctx, bg, 0, 0, targetW, targetH);
     const regions = await detectMaskRegions(bg, SPOT_MASK.color, SPOT_MASK.tolerance);
     const max = Math.min(photos.length, regions.length);
@@ -5747,12 +5794,14 @@ async function composeStrip(template, photos) {
     }
     const masked = createMaskedOverlayCanvas(bg, SPOT_MASK.color, SPOT_MASK.tolerance);
     drawImageContain(ctx, masked, 0, 0, targetW, targetH);
-  } else if (template.layout === 'custom' && template.slots) {
+  } else if (layout === "custom" && template.slots) {
     drawImageContain(ctx, bg, 0, 0, targetW, targetH);
     for (let i = 0; i < Math.min(enhancedPhotos.length, template.slots.length); i++) {
       const s = template.slots[i];
       drawImageContain(ctx, enhancedPhotos[i], s.x, s.y, s.w, s.h);
     }
+  } else {
+    drawImageContain(ctx, bg, 0, 0, targetW, targetH);
   }
   return c.toDataURL('image/png');
 }
@@ -5847,7 +5896,7 @@ function renderDoubleColumn(canvas, photos, overlayImage, template) {
   const startY = headerH + slotSpacing;
 
   const cachedSlots = template && template.__slotMetrics && template.__slotMetrics.slots;
-  const detectedSlots = cachedSlots || detectDoubleColumnSlots(overlayImage, rows);
+  const detectedSlots = cachedSlots || detectTransparentColumnSlots(overlayImage, rows, cols);
   if (detectedSlots) {
     const scaleX = canvas.width / (overlayImage.naturalWidth || overlayImage.width || 1);
     const scaleY = canvas.height / (overlayImage.naturalHeight || overlayImage.height || 1);
@@ -5878,6 +5927,46 @@ function renderDoubleColumn(canvas, photos, overlayImage, template) {
 
   // 2) Draw the full 4x6 double-strip overlay last so its frames sit on top
   drawImageContain(ctx, overlayImage, 0, 0, canvas.width, canvas.height);
+}
+
+function renderSingleColumnStrip(canvas, photos, overlayImage, template) {
+  const ctx = canvas.getContext("2d");
+  const rows = 3;
+  const headerPct = Math.max(0, Math.min(0.5, toNumber(template && (template.headerPct || template.header_percent), 0.2)));
+  const columnPadPct = Math.max(0, Math.min(0.2, toNumber(template && template.columnPadPct, 0.11)));
+  const slotSpacingPct = Math.max(0, Math.min(0.2, toNumber(template && template.slotSpacingPct, 0.024)));
+  const footerPct = Math.max(0, Math.min(0.3, toNumber(template && template.footerPct, 0.05)));
+  const cachedSlots = template && template.__slotMetrics && template.__slotMetrics.slots;
+  const detectedSlots = cachedSlots || detectTransparentColumnSlots(overlayImage, rows, 1);
+
+  if (detectedSlots && detectedSlots[0] && detectedSlots[0].length === rows) {
+    const scaleX = canvas.width / (overlayImage.naturalWidth || overlayImage.width || 1);
+    const scaleY = canvas.height / (overlayImage.naturalHeight || overlayImage.height || 1);
+    for (let row = 0; row < rows; row++) {
+      const photo = photos[row];
+      const slot = detectedSlots[0][row];
+      if (!photo || !slot) continue;
+      drawImageContain(ctx, photo, slot.x * scaleX, slot.y * scaleY, slot.w * scaleX, slot.h * scaleY);
+    }
+  } else {
+    const padX = canvas.width * columnPadPct;
+    const slotW = Math.max(1, canvas.width - padX * 2);
+    const headerH = canvas.height * headerPct;
+    const footerH = canvas.height * footerPct;
+    const slotSpacing = canvas.height * slotSpacingPct;
+    const usableH = canvas.height - headerH - footerH - slotSpacing * (rows + 1);
+    const slotH = Math.max(1, usableH / rows);
+    const x = Math.round(padX);
+    const startY = headerH + slotSpacing;
+    for (let row = 0; row < rows; row++) {
+      const photo = photos[row];
+      if (!photo) continue;
+      const y = Math.round(startY + row * (slotH + slotSpacing));
+      drawImageContain(ctx, photo, x, y, slotW, slotH);
+    }
+  }
+
+  ctx.drawImage(overlayImage, 0, 0, canvas.width, canvas.height);
 }
 
 // Detect contiguous regions matching the mask color; returns array of {x,y,w,h} in image coords
@@ -10109,8 +10198,8 @@ async function resolveTemplatesFromFolder(theme) {
     const out = [];
     if (Array.isArray(json)) {
       for (const it of json) {
-        if (typeof it === 'string') out.push({ src: folder + it, layout: 'double_column' });
-        else if (it && typeof it === 'object' && typeof it.src === 'string') out.push({ src: folder + it.src, layout: it.layout || 'double_column', slots: it.slots });
+        if (typeof it === "string") out.push({ src: folder + it, layout: "double_column" });
+        else if (it && typeof it === "object" && typeof it.src === "string") out.push({ src: folder + it.src, layout: normalizeTemplateLayout(it.layout), slots: it.slots });
       }
     }
     return out;
@@ -10143,10 +10232,10 @@ function getBaseTemplateList(theme) {
   if (!theme || typeof theme !== 'object') return [];
   const removed = new Set(Array.isArray(theme.templatesRemoved) ? theme.templatesRemoved : []);
   const folderArr = Array.isArray(theme.templatesTmp)
-    ? theme.templatesTmp.filter(t => t && t.src && !removed.has(t.src)).map(t => ({ src: t.src, layout: t.layout || 'double_column', slots: t.slots }))
+    ? theme.templatesTmp.filter(t => t && t.src && !removed.has(t.src)).map(t => ({ src: t.src, layout: normalizeTemplateLayout(t.layout), slots: t.slots }))
     : [];
   const localArr = Array.isArray(theme.templates)
-    ? theme.templates.map(t => ({ src: t.src, layout: t.layout || 'double_column', slots: t.slots }))
+    ? theme.templates.map(t => ({ src: t.src, layout: normalizeTemplateLayout(t.layout), slots: t.slots }))
     : [];
   const seen = new Set();
   const out = [];
@@ -10188,17 +10277,17 @@ function getTemplateList(theme) {
     ? overrides.templates.map((t) => {
       if (typeof t === "string") return { src: t, layout: "double_column", __event: true };
       if (t && typeof t === "object" && t.src) {
-        return { src: t.src, layout: t.layout || "double_column", slots: t.slots, __event: true };
+        return { src: t.src, layout: normalizeTemplateLayout(t.layout), slots: t.slots, __event: true };
       }
       return null;
     }).filter(Boolean)
     : [];
   const removed = new Set(Array.isArray(theme.templatesRemoved) ? theme.templatesRemoved : []);
   const folderArr = Array.isArray(theme.templatesTmp)
-    ? theme.templatesTmp.filter(t => t && t.src && !removed.has(t.src)).map(t => ({ src: t.src, layout: t.layout || 'double_column', slots: t.slots, __folder: true }))
+    ? theme.templatesTmp.filter(t => t && t.src && !removed.has(t.src)).map(t => ({ src: t.src, layout: normalizeTemplateLayout(t.layout), slots: t.slots, __folder: true }))
     : [];
   const localArr = Array.isArray(theme.templates)
-    ? theme.templates.map(t => ({ src: t.src, layout: t.layout || 'double_column', slots: t.slots }))
+    ? theme.templates.map(t => ({ src: t.src, layout: normalizeTemplateLayout(t.layout), slots: t.slots }))
     : [];
   const seen = new Set();
   const out = [];

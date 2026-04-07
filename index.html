@@ -294,12 +294,26 @@
       font-size: 1rem;
     }
 
-    .setup-tabs {
+    .setup-command-bar {
       max-width: 1220px;
       width: min(1220px, 100%);
       margin: 0 auto 14px;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px 16px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .setup-tabs {
+      width: auto;
+      max-width: none;
+      margin: 0;
+      display: flex;
+      flex: 0 1 auto;
+      flex-wrap: wrap;
       gap: 10px;
       position: relative;
       z-index: 1;
@@ -307,15 +321,17 @@
 
     .setup-tab {
       min-width: 0;
-      padding: 14px 16px;
-      border-radius: 16px;
+      min-height: 50px;
+      padding: 12px 18px;
+      border-radius: 999px;
       border: 1px solid var(--border);
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(239, 255, 251, 0.88));
       color: var(--text-muted);
       font-weight: 700;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       box-shadow: 0 10px 22px rgba(17, 17, 17, 0.05);
+      flex: 0 0 auto;
     }
 
     .setup-tab.active {
@@ -323,6 +339,31 @@
       color: var(--action-text);
       border-color: #73e0d1;
       box-shadow: 0 18px 34px rgba(111, 231, 215, 0.18);
+    }
+
+    .setup-install {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex: 0 0 auto;
+      min-width: 0;
+      margin-left: auto;
+    }
+
+    #installBtn {
+      min-width: 0;
+      padding-inline: 22px;
+      white-space: nowrap;
+    }
+
+    .event-path-switcher {
+      justify-content: flex-start;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .event-path-switcher > * {
+      flex: 0 1 280px;
     }
 
     #quickStartBtn {
@@ -2153,7 +2194,6 @@
         overflow: visible;
         padding-right: 0;
       }
-      .setup-tabs { grid-template-columns: 1fr; }
       .theme-editor-summary { grid-template-columns: 1fr; }
       .video-import-panel {
         position: static;
@@ -2193,6 +2233,20 @@
       .font-pairing-layout { grid-template-columns: 1fr; }
       #adminScreen .btn-row > * { flex: 1 1 100%; }
       .start-booth-hero { min-width: 0; }
+      .setup-command-bar {
+        align-items: stretch;
+      }
+      .setup-tabs {
+        flex: 1 1 auto;
+      }
+      .setup-install {
+        margin-left: 0;
+        width: 100%;
+      }
+      #installBtn {
+        width: 100%;
+        min-width: 0;
+      }
       #finalPreviewButtons {
         right: 50%;
         bottom: max(12px, env(safe-area-inset-bottom, 0px));
@@ -3683,9 +3737,18 @@
 
     @media (max-width: 760px) {
       .setup-status,
+      .setup-command-bar,
       .setup-tabs,
       .capture-mode-bar {
         width: 100%;
+      }
+
+      .setup-tabs {
+        max-width: none;
+      }
+
+      .setup-tab {
+        flex: 1 1 120px;
       }
 
       .capture-mode-bar {
@@ -3956,8 +4019,9 @@
       }
 
       .setup-tab {
-        padding: 12px 10px;
-        font-size: 0.84rem;
+        flex: 1 1 92px;
+        padding: 11px 10px;
+        font-size: 0.8rem;
       }
 
       #boothMain {
@@ -4057,20 +4121,22 @@
       </div>
       <button type="button" id="modeToggle">Switch to 360 Mode</button>
     </div>
-    <div class="setup-tabs" role="tablist" aria-label="Setup Sections">
-      <button type="button" id="setupTabEvent" class="setup-tab active" data-setup-tab="event">Settings</button>
-      <button type="button" id="setupTabCapture" class="setup-tab" data-setup-tab="capture">Capture</button>
-      <button type="button" id="setupTabShare" class="setup-tab" data-setup-tab="share">Share</button>
+    <div class="setup-command-bar">
+      <div class="setup-tabs" aria-label="Setup Sections">
+        <button type="button" id="setupTabEvent" class="setup-tab active" data-setup-tab="event" aria-pressed="true">Settings</button>
+        <button type="button" id="setupTabCapture" class="setup-tab" data-setup-tab="capture" aria-pressed="false">Capture</button>
+        <button type="button" id="setupTabShare" class="setup-tab" data-setup-tab="share" aria-pressed="false">Share</button>
+      </div>
+      <div class="setup-install">
+        <button id="installBtn" class="primary hidden" type="button">Install App</button>
+      </div>
     </div>
     <div class="admin-container">
       <div class="admin-left panel">
-        <div class="btn-row" style="justify-content:center; margin-top:0;">
-          <button id="installBtn" class="primary hidden" type="button">Install App</button>
-        </div>
         <details class="panel-section" id="eventBasicsSection" data-setup-section="event" open>
           <summary>Event Setup</summary>
           <div class="section-content">
-            <div class="btn-row" style="justify-content:flex-start; gap:8px; margin-bottom:10px;">
+            <div class="btn-row event-path-switcher">
               <button type="button" id="eventPathCreateBtn">Path 1: Create Event</button>
               <button type="button" id="eventPathSelectBtn">Path 2: Existing Event</button>
             </div>

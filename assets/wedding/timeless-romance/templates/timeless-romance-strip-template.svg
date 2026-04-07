@@ -7,11 +7,11 @@
 <text x="360" y="334" text-anchor="middle" fill="#7d6a55" font-size="68" font-family="Cormorant Garamond, serif" letter-spacing="10">DANIEL</text>
 <text x="360" y="392" text-anchor="middle" fill="#ad9372" font-size="28" font-family="Manrope, Arial, sans-serif" letter-spacing="6">09 . 21 . 2026</text>
 <rect x="78" y="460" width="564" height="396" rx="8" fill="none" stroke="#d9ccb9" stroke-width="4"/>
-<rect x="86" y="468" width="548" height="380" rx="4" fill="#f8f3ec"/>
+<rect x="86" y="468" width="548" height="380" rx="4" fill="none"/>
 <rect x="78" y="904" width="564" height="396" rx="8" fill="none" stroke="#d9ccb9" stroke-width="4"/>
-<rect x="86" y="912" width="548" height="380" rx="4" fill="#f8f3ec"/>
+<rect x="86" y="912" width="548" height="380" rx="4" fill="none"/>
 <rect x="78" y="1348" width="564" height="396" rx="8" fill="none" stroke="#d9ccb9" stroke-width="4"/>
-<rect x="86" y="1356" width="548" height="380" rx="4" fill="#f8f3ec"/>
+<rect x="86" y="1356" width="548" height="380" rx="4" fill="none"/>
 <rect x="58" y="1812" width="604" height="248" rx="0" fill="#fffaf4"/>
 <line x1="110" y1="1858" x2="610" y2="1858" stroke="#cbb48f" stroke-width="2"/>
 <text x="120" y="1972" fill="#2b2622" font-size="176" font-family="Cormorant Garamond, serif">A</text>

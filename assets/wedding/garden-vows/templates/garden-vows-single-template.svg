@@ -13,7 +13,7 @@
 <text x="254" y="250" fill="#8ca084" font-size="86" font-style="italic" font-family="Cormorant Garamond, serif">vows</text>
 <text x="146" y="340" fill="#6f7c67" font-size="60" font-family="Cormorant Garamond, serif">Olivia and Nicolas</text>
 <rect x="146" y="430" width="1508" height="586" rx="12" fill="none" stroke="#cad7ca" stroke-width="4"/>
-<rect x="154" y="438" width="1492" height="570" rx="8" fill="#f6faf4"/>
+<rect x="154" y="438" width="1492" height="570" rx="8" fill="none"/>
 <text x="146" y="1086" fill="#8ca084" font-size="38" font-family="Cormorant Garamond, serif">September 2026</text>
 <text x="1654" y="1086" text-anchor="end" fill="#b0b89e" font-size="28" font-family="Manrope, Arial, sans-serif" letter-spacing="5">GARDEN VOWS</text>
 <defs>

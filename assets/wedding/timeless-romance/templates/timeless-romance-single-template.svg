@@ -8,7 +8,7 @@
 <text x="1410" y="166" text-anchor="end" fill="#ad9372" font-size="30" font-family="Manrope, Arial, sans-serif" letter-spacing="6">TIMELESS ROMANCE</text>
 <line x1="140" y1="390" x2="1660" y2="390" stroke="#d8c6a7" stroke-width="2"/>
 <rect x="140" y="446" width="1520" height="574" rx="10" fill="none" stroke="#d9ccb9" stroke-width="4"/>
-<rect x="148" y="454" width="1504" height="558" rx="6" fill="#f8f3ec"/>
+<rect x="148" y="454" width="1504" height="558" rx="6" fill="none"/>
 <rect x="140" y="1050" width="1520" height="74" fill="#fffaf4"/>
 <text x="140" y="1098" fill="#8d7c67" font-size="38" font-family="Cormorant Garamond, serif">September 21, 2026</text>
 <defs>
