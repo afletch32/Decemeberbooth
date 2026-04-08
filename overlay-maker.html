@@ -1,8 +1,9 @@
+<!DOCTYPE html>
 <html lang="en" class="h-full">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Photobooth Template Builder</title>
+    <title>Photobooth Overlay & Template Builder</title>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
     <link
@@ -180,7 +181,7 @@
               color: #3d3442;
             "
           >
-            Photobooth Template Builder
+            Photobooth Overlay & Template Builder
           </h1>
         </div>
         <button class="btn-secondary flex items-center gap-2" id="backButton">
@@ -212,6 +213,13 @@
             <div>
               <label class="control-label" for="assetName">Asset Name</label>
               <input type="text" id="assetName" value="my_overlay" />
+            </div>
+            <div>
+              <label class="control-label" for="assetType">Asset Type</label>
+              <select id="assetType">
+                <option value="overlay">Overlay</option>
+                <option value="template">Template</option>
+              </select>
             </div>
             <div>
               <label class="control-label" for="templateBgColor"
@@ -326,19 +334,47 @@
               >
             </div>
             <div>
+              <label class="control-label" for="graphicSource"
+                >Graphic Source</label
+              >
+              <select id="graphicSource">
+                <option value="library">Built-In Library</option>
+                <option value="upload">Upload PNG</option>
+              </select>
+            </div>
+            <div>
               <label class="control-label" for="graphicSelect"
-                >Add Graphic</label
+                >Built-In Graphic</label
               >
               <select id="graphicSelect">
                 <option value="">None</option>
                 <option value="hearts">Hearts</option>
                 <option value="roses">Rose Bouquets</option>
                 <option value="bubbles">Champagne Bubbles</option>
-                <!DOCTYPE html>
                 <option value="confetti">Confetti</option>
                 <option value="balloons">Balloons</option>
                 <option value="stars">Star Bursts</option>
               </select>
+            </div>
+            <div>
+              <label class="control-label" for="graphicUpload"
+                >Upload Custom PNG</label
+              >
+              <input type="file" id="graphicUpload" accept="image/png" />
+              <div
+                id="graphicUploadStatus"
+                style="font-size: 11px; color: #8a7f8e; margin-top: 6px"
+              >
+                No custom PNG selected.
+              </div>
+              <button
+                type="button"
+                class="btn-secondary"
+                id="clearGraphicUpload"
+                style="margin-top: 8px; width: 100%"
+              >
+                Clear Custom PNG
+              </button>
             </div>
             <div>
               <label class="control-label" for="graphicPlacement"
@@ -439,11 +475,11 @@
                   id="typeChip"
                   class="chip"
                   style="
-                    background: #f4f0fe;
-                    border-color: #c8b4e0;
-                    color: #7a5fa0;
+                    background: #f0faf4;
+                    border-color: #c8e6d4;
+                    color: #5a9e74;
                   "
-                  >Template</span
+                  >Overlay</span
                 >
               </div>
               <div>
@@ -452,13 +488,13 @@
                   id="destPath"
                   style="font-size: 11px; color: #6b5f70; margin-top: 2px"
                 >
-                  assets/templates/my_overlay.png
+                  assets/&lt;theme&gt;/overlays/my_overlay.png
                 </div>
               </div>
               <div>
                 <label class="control-label">Manifest Entry</label>
                 <div class="manifest-box" id="manifestEntry">
-                  template: { "src": "my_overlay.png", "layout": "portrait" },
+                  "my_overlay.png",
                 </div>
               </div>
               <div style="font-size: 10px; color: #b0a6b5; margin-top: 4px">
@@ -472,7 +508,7 @@
                     color: #a8d5ba;
                   "
                 ></i>
-                Compatible with booth firmware v2.0+
+                Use `overlays.json` for overlays and `templates.json` for templates.
               </div>
             </div>
 
@@ -550,6 +586,119 @@
           rightFooterZone: { x: 645, y: 1650, w: 495, h: 120 },
         },
       };
+      const GRAPHIC_LIBRARY_BUILDERS = {
+        hearts(accent) {
+          return createGraphicSvgDataUrl(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+              <defs>
+                <linearGradient id="heartFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="${accent}" />
+                  <stop offset="100%" stop-color="#ffffff" stop-opacity="0.55" />
+                </linearGradient>
+              </defs>
+              <path d="M160 278c-21-18-38-31-51-42C69 205 46 181 46 142c0-34 24-58 56-58 23 0 41 13 58 35 17-22 35-35 58-35 32 0 56 24 56 58 0 39-23 63-63 94-13 11-30 24-51 42z" fill="url(#heartFill)" stroke="#ffffff" stroke-opacity="0.9" stroke-width="9" />
+              <circle cx="112" cy="126" r="11" fill="#ffffff" fill-opacity="0.45" />
+              <circle cx="208" cy="118" r="9" fill="#ffffff" fill-opacity="0.35" />
+            </svg>
+          `);
+        },
+        roses(accent) {
+          return createGraphicSvgDataUrl(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M118 292c13-46 28-88 42-124" stroke="#537c52" stroke-width="10" />
+                <path d="M198 292c-11-43-23-82-35-117" stroke="#537c52" stroke-width="10" />
+                <path d="M130 216c-16-8-25-18-31-34 18 2 31 8 42 20" stroke="#6ea96a" stroke-width="8" />
+                <path d="M192 214c18-10 27-20 33-36-19 3-33 10-44 22" stroke="#6ea96a" stroke-width="8" />
+              </g>
+              <g>
+                <path d="M119 122c0-24 19-43 43-43 14 0 28 7 36 19 6 8 8 18 8 28 0 23-19 42-44 42-24 0-43-19-43-46z" fill="${accent}" />
+                <path d="M130 123c8-20 26-28 45-21-5 9-14 16-26 22 12 2 21 7 28 15-20 10-42 6-58-10 3-4 7-7 11-6z" fill="#ffffff" fill-opacity="0.34" />
+              </g>
+              <g transform="translate(54 44) scale(0.74)">
+                <path d="M119 122c0-24 19-43 43-43 14 0 28 7 36 19 6 8 8 18 8 28 0 23-19 42-44 42-24 0-43-19-43-46z" fill="${accent}" fill-opacity="0.92" />
+                <path d="M130 123c8-20 26-28 45-21-5 9-14 16-26 22 12 2 21 7 28 15-20 10-42 6-58-10 3-4 7-7 11-6z" fill="#ffffff" fill-opacity="0.26" />
+              </g>
+            </svg>
+          `);
+        },
+        bubbles(accent) {
+          return createGraphicSvgDataUrl(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+              <g fill="${accent}" fill-opacity="0.36" stroke="#ffffff" stroke-opacity="0.84" stroke-width="8">
+                <circle cx="118" cy="166" r="68" />
+                <circle cx="208" cy="126" r="42" />
+                <circle cx="198" cy="230" r="28" />
+                <circle cx="84" cy="90" r="26" />
+              </g>
+              <g fill="#ffffff" fill-opacity="0.45">
+                <circle cx="95" cy="141" r="10" />
+                <circle cx="194" cy="111" r="7" />
+                <circle cx="190" cy="219" r="5" />
+              </g>
+            </svg>
+          `);
+        },
+        confetti(accent) {
+          return createGraphicSvgDataUrl(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+              <rect x="34" y="48" width="26" height="10" rx="5" transform="rotate(-28 34 48)" fill="${accent}" />
+              <rect x="92" y="42" width="14" height="14" rx="3" transform="rotate(18 92 42)" fill="#ffffff" fill-opacity="0.82" />
+              <rect x="146" y="80" width="36" height="12" rx="6" transform="rotate(-42 146 80)" fill="${accent}" fill-opacity="0.86" />
+              <rect x="218" y="52" width="16" height="16" rx="4" transform="rotate(22 218 52)" fill="#ffd166" />
+              <rect x="242" y="116" width="30" height="10" rx="5" transform="rotate(-26 242 116)" fill="#ffffff" fill-opacity="0.74" />
+              <rect x="68" y="136" width="30" height="12" rx="6" transform="rotate(36 68 136)" fill="#f497b6" />
+              <rect x="120" y="188" width="16" height="16" rx="4" transform="rotate(-16 120 188)" fill="${accent}" />
+              <rect x="188" y="180" width="34" height="10" rx="5" transform="rotate(28 188 180)" fill="#ffd166" />
+              <rect x="246" y="212" width="18" height="18" rx="4" transform="rotate(-14 246 212)" fill="#ffffff" fill-opacity="0.86" />
+              <circle cx="76" cy="238" r="10" fill="${accent}" />
+              <circle cx="162" cy="248" r="8" fill="#ffffff" fill-opacity="0.8" />
+              <circle cx="222" cy="262" r="11" fill="#f497b6" />
+              <path d="M40 188c22 12 36 32 42 58" stroke="${accent}" stroke-width="10" stroke-linecap="round" fill="none" />
+            </svg>
+          `);
+        },
+        balloons(accent) {
+          return createGraphicSvgDataUrl(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+              <g>
+                <path d="M106 78c30 0 54 25 54 57 0 34-28 69-54 92-26-23-54-58-54-92 0-32 24-57 54-57z" fill="${accent}" />
+                <path d="M214 58c28 0 50 23 50 52 0 30-23 62-50 84-27-22-50-54-50-84 0-29 22-52 50-52z" fill="#ffd166" />
+                <path d="M173 116c24 0 42 19 42 44 0 25-19 52-42 70-23-18-42-45-42-70 0-25 18-44 42-44z" fill="#f497b6" />
+              </g>
+              <g fill="#ffffff" fill-opacity="0.33">
+                <ellipse cx="91" cy="112" rx="12" ry="24" transform="rotate(18 91 112)" />
+                <ellipse cx="202" cy="92" rx="11" ry="21" transform="rotate(18 202 92)" />
+                <ellipse cx="160" cy="145" rx="10" ry="19" transform="rotate(18 160 145)" />
+              </g>
+              <g stroke="#8b6f8c" stroke-width="5" stroke-linecap="round" fill="none">
+                <path d="M106 226c8 18 6 37-4 58" />
+                <path d="M214 194c6 23 4 53-10 90" />
+                <path d="M173 186c8 25 8 52 1 82" />
+              </g>
+            </svg>
+          `);
+        },
+        stars(accent) {
+          return createGraphicSvgDataUrl(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+              <g fill="${accent}">
+                <path d="M160 34l20 54 58 5-44 38 14 57-48-29-48 29 14-57-44-38 58-5z" />
+                <path d="M70 152l10 28 30 3-23 18 7 30-24-15-24 15 7-30-23-18 30-3z" fill-opacity="0.82" />
+                <path d="M250 166l9 24 27 2-20 16 6 27-22-13-22 13 6-27-20-16 27-2z" fill-opacity="0.88" />
+              </g>
+              <g fill="#ffffff" fill-opacity="0.45">
+                <circle cx="146" cy="102" r="10" />
+                <circle cx="63" cy="194" r="6" />
+                <circle cx="238" cy="202" r="7" />
+              </g>
+            </svg>
+          `);
+        },
+      };
+      const graphicImageCache = new Map();
+      let customGraphicObjectUrl = "";
+      let previewRenderId = 0;
 
       function $(id) {
         return document.getElementById(id);
@@ -559,6 +708,10 @@
         return GUIDES[$("layoutGuide").value] || GUIDES.single_portrait;
       }
 
+      function getAssetType() {
+        return $("assetType").value === "template" ? "template" : "overlay";
+      }
+
       function getFilename() {
         return (
           ($("assetName").value || "my_overlay").replace(
@@ -566,6 +719,123 @@
             "_"
           ) + ".png"
         );
+      }
+
+      function getAssetFolder(assetType) {
+        return assetType === "template" ? "templates" : "overlays";
+      }
+
+      function createGraphicSvgDataUrl(svg) {
+        return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+      }
+
+      function getGraphicSource() {
+        return $("graphicSource").value === "upload" ? "upload" : "library";
+      }
+
+      function revokeCustomGraphicUrl() {
+        if (!customGraphicObjectUrl) {
+          return;
+        }
+        graphicImageCache.delete(customGraphicObjectUrl);
+        URL.revokeObjectURL(customGraphicObjectUrl);
+        customGraphicObjectUrl = "";
+      }
+
+      function updateGraphicUploadStatus(message) {
+        $("graphicUploadStatus").textContent = message;
+      }
+
+      function updateGraphicControlState() {
+        const useUpload = getGraphicSource() === "upload";
+        $("graphicSelect").disabled = useUpload;
+        $("graphicUpload").disabled = !useUpload;
+        $("clearGraphicUpload").disabled = !useUpload || !customGraphicObjectUrl;
+        if (!useUpload) {
+          updateGraphicUploadStatus("Built-in library is active.");
+        } else if (customGraphicObjectUrl) {
+          updateGraphicUploadStatus("Custom PNG loaded.");
+        } else {
+          updateGraphicUploadStatus("No custom PNG selected.");
+        }
+      }
+
+      function getManifestLine(filename, guide, assetType) {
+        if (assetType === "template") {
+          return (
+            '{ "src": "' +
+            filename +
+            '", "layout": "' +
+            guide.layout +
+            '" },'
+          );
+        }
+        return '"' + filename + '",';
+      }
+
+      function getSelectedGraphicUrl() {
+        if (getGraphicSource() === "upload") {
+          return customGraphicObjectUrl || "";
+        }
+        const graphic = $("graphicSelect").value;
+        if (!graphic) {
+          return "";
+        }
+        const builder = GRAPHIC_LIBRARY_BUILDERS[graphic];
+        return typeof builder === "function" ? builder($("accentColor").value) : "";
+      }
+
+      function loadGraphicImage(src) {
+        if (!src) {
+          return Promise.resolve(null);
+        }
+        if (src.startsWith("data:image/svg+xml")) {
+          return new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error("Failed to load graphic asset."));
+            image.src = src;
+          });
+        }
+        if (graphicImageCache.has(src)) {
+          return graphicImageCache.get(src);
+        }
+        const promise = new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error("Failed to load graphic asset."));
+          image.src = src;
+        });
+        graphicImageCache.set(src, promise);
+        return promise;
+      }
+
+      async function resolveSelectedGraphicImage() {
+        const src = getSelectedGraphicUrl();
+        if (!src) {
+          return null;
+        }
+        try {
+          return await loadGraphicImage(src);
+        } catch (error) {
+          console.error(error);
+          showToast("Graphic could not be loaded.");
+          return null;
+        }
+      }
+
+      function updateTypeChip(assetType) {
+        const typeChip = $("typeChip");
+        typeChip.textContent = assetType === "template" ? "Template" : "Overlay";
+        if (assetType === "template") {
+          typeChip.style.background = "#f4f0fe";
+          typeChip.style.borderColor = "#c8b4e0";
+          typeChip.style.color = "#7a5fa0";
+          return;
+        }
+        typeChip.style.background = "#f0faf4";
+        typeChip.style.borderColor = "#c8e6d4";
+        typeChip.style.color = "#5a9e74";
       }
 
       function showToast(msg) {
@@ -579,85 +849,45 @@
       function updateInfo() {
         const guide = getGuide();
         const filename = getFilename();
+        const assetType = getAssetType();
+        const folder = getAssetFolder(assetType);
         $("dimChip").textContent = guide.w + " × " + guide.h;
         $("accentHex").textContent = $("accentColor").value;
-        $("destPath").textContent = "assets/templates/" + filename;
-        $("manifestEntry").textContent =
-          'template: { "src": "' +
-          filename +
-          '", "layout": "' +
-          guide.layout +
-          '" },';
+        updateTypeChip(assetType);
+        $("destPath").textContent = "assets/<theme>/" + folder + "/" + filename;
+        $("manifestEntry").textContent = getManifestLine(
+          filename,
+          guide,
+          assetType
+        );
       }
 
-      function drawGraphicShape(ctx, graphic, x, y, size) {
-        if (graphic === "hearts") {
-          ctx.beginPath();
-          ctx.moveTo(x, y + size * 0.3);
-          ctx.bezierCurveTo(
-            x,
-            y,
-            x - size * 0.5,
-            y,
-            x - size * 0.5,
-            y + size * 0.3
-          );
-          ctx.bezierCurveTo(
-            x - size * 0.5,
-            y + size * 0.55,
-            x,
-            y + size * 0.78,
-            x,
-            y + size
-          );
-          ctx.bezierCurveTo(
-            x,
-            y + size * 0.78,
-            x + size * 0.5,
-            y + size * 0.55,
-            x + size * 0.5,
-            y + size * 0.3
-          );
-          ctx.bezierCurveTo(x + size * 0.5, y, x, y, x, y + size * 0.3);
-          ctx.fill();
+      function drawGraphicImage(ctx, image, x, y, size) {
+        if (!image) {
           return;
         }
-
-        if (graphic === "bubbles") {
-          ctx.beginPath();
-          ctx.arc(x, y, size * 0.35, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(x + size * 0.35, y - size * 0.2, size * 0.2, 0, Math.PI * 2);
-          ctx.fill();
-          return;
+        const naturalWidth = image.naturalWidth || image.width || 1;
+        const naturalHeight = image.naturalHeight || image.height || 1;
+        const aspect = naturalWidth / naturalHeight;
+        const maxDimension = size * 2.2;
+        let drawWidth = maxDimension;
+        let drawHeight = maxDimension;
+        if (aspect >= 1) {
+          drawHeight = drawWidth / aspect;
+        } else {
+          drawWidth = drawHeight * aspect;
         }
-
-        if (graphic === "stars") {
-          ctx.beginPath();
-          for (let point = 0; point < 8; point++) {
-            const angle = (Math.PI / 4) * point;
-            const radius = point % 2 === 0 ? size * 0.5 : size * 0.18;
-            const px = x + Math.cos(angle) * radius;
-            const py = y + Math.sin(angle) * radius;
-            if (point === 0) {
-              ctx.moveTo(px, py);
-            } else {
-              ctx.lineTo(px, py);
-            }
-          }
-          ctx.closePath();
-          ctx.fill();
-          return;
-        }
-
-        ctx.beginPath();
-        ctx.arc(x, y, size * 0.3, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.drawImage(
+          image,
+          x - drawWidth / 2,
+          y - drawHeight / 2,
+          drawWidth,
+          drawHeight
+        );
       }
 
-      function drawGraphics(ctx, w, h, graphic, placement) {
-        if (!graphic) {
+      function drawGraphics(ctx, w, h, image, placement) {
+        if (!image) {
           return;
         }
 
@@ -691,7 +921,7 @@
         }
 
         positions.forEach(([x, y], index) => {
-          drawGraphicShape(ctx, graphic, x, y, 28 + (index % 3) * 8);
+          drawGraphicImage(ctx, image, x, y, 28 + (index % 3) * 8);
         });
       }
 
@@ -926,11 +1156,10 @@
         );
       }
 
-      function drawCanvas(ctx, width, height, drawGuides) {
+      function drawCanvas(ctx, width, height, drawGuides, graphicImage) {
         const guide = getGuide();
         const accent = $("accentColor").value;
         const templateBg = $("templateBgColor").value;
-        const graphic = $("graphicSelect").value;
         const graphicPlacement = $("graphicPlacement").value;
         const graphicOpacity = parseInt($("graphicOpacity").value, 10) / 100;
 
@@ -942,12 +1171,10 @@
           drawSingleLayout(ctx, guide, accent, templateBg);
         }
 
-        if (graphic) {
+        if (graphicImage) {
           ctx.save();
           ctx.globalAlpha = graphicOpacity;
-          ctx.fillStyle = accent;
-          ctx.strokeStyle = accent;
-          drawGraphics(ctx, width, height, graphic, graphicPlacement);
+          drawGraphics(ctx, width, height, graphicImage, graphicPlacement);
           ctx.restore();
         }
 
@@ -956,8 +1183,9 @@
         }
       }
 
-      function updatePreview() {
+      async function updatePreview() {
         updateInfo();
+        updateGraphicControlState();
 
         const guide = getGuide();
         const canvas = $("preview");
@@ -976,16 +1204,28 @@
         wrap.style.height = displayHeight + "px";
 
         const ctx = canvas.getContext("2d");
-        drawCanvas(ctx, guide.w, guide.h, true);
+        const renderId = ++previewRenderId;
+        const graphicImage = await resolveSelectedGraphicImage();
+        if (renderId !== previewRenderId) {
+          return;
+        }
+        drawCanvas(ctx, guide.w, guide.h, true, graphicImage);
       }
 
-      function exportPNG() {
+      async function exportPNG() {
         const guide = getGuide();
         const exportCanvas = $("exportCanvas");
         exportCanvas.width = guide.w;
         exportCanvas.height = guide.h;
         const ctx = exportCanvas.getContext("2d");
-        drawCanvas(ctx, guide.w, guide.h, $("includeGuide").checked);
+        const graphicImage = await resolveSelectedGraphicImage();
+        drawCanvas(
+          ctx,
+          guide.w,
+          guide.h,
+          $("includeGuide").checked,
+          graphicImage
+        );
 
         exportCanvas.toBlob((blob) => {
           const link = document.createElement("a");
@@ -1004,8 +1244,24 @@
           .catch(() => showToast("Copy failed"));
       }
 
+      function goBackToBoothAdmin() {
+        if (window.history.length > 1 && document.referrer) {
+          try {
+            const referrerUrl = new URL(document.referrer, window.location.href);
+            if (referrerUrl.origin === window.location.origin) {
+              window.history.back();
+              return;
+            }
+          } catch (error) {
+            console.warn("Unable to inspect referrer:", error);
+          }
+        }
+        window.location.href = "./index.html";
+      }
+
       function resetAll() {
         $("assetName").value = "my_overlay";
+        $("assetType").value = "overlay";
         $("templateBgColor").value = "#f5e6d3";
         $("templateTextColor").value = "#3d3442";
         $("layoutGuide").value = "single_portrait";
@@ -1015,7 +1271,10 @@
         $("footer").value = "#celebrate";
         $("footerSize").value = "28";
         $("footerSizeVal").textContent = "28";
+        $("graphicSource").value = "library";
         $("graphicSelect").value = "";
+        revokeCustomGraphicUrl();
+        $("graphicUpload").value = "";
         $("graphicPlacement").value = "corners";
         $("graphicOpacity").value = "100";
         $("graphicOpacityVal").textContent = "100";
@@ -1027,11 +1286,13 @@
 
       [
         "assetName",
+        "assetType",
         "templateBgColor",
         "templateTextColor",
         "layoutGuide",
         "headline",
         "footer",
+        "graphicSource",
         "graphicSelect",
         "graphicPlacement",
         "accentColor",
@@ -1055,16 +1316,36 @@
         $("graphicOpacityVal").textContent = event.target.value;
         updatePreview();
       });
+      $("graphicUpload").addEventListener("change", (event) => {
+        const [file] = Array.from(event.target.files || []);
+        revokeCustomGraphicUrl();
+        if (!file) {
+          updateGraphicUploadStatus("No custom PNG selected.");
+          updateGraphicControlState();
+          updatePreview();
+          return;
+        }
+        customGraphicObjectUrl = URL.createObjectURL(file);
+        updateGraphicUploadStatus("Custom PNG: " + file.name);
+        updateGraphicControlState();
+        updatePreview();
+      });
+      $("clearGraphicUpload").addEventListener("click", () => {
+        revokeCustomGraphicUrl();
+        $("graphicUpload").value = "";
+        updateGraphicControlState();
+        updatePreview();
+      });
 
       $("downloadButton").addEventListener("click", exportPNG);
       $("copyManifestButton").addEventListener("click", copyManifest);
       $("resetButton").addEventListener("click", resetAll);
-      $("backButton").addEventListener("click", () =>
-        showToast("Navigation: Back to Booth Admin")
-      );
+      $("backButton").addEventListener("click", goBackToBoothAdmin);
+      window.addEventListener("beforeunload", revokeCustomGraphicUrl);
 
       window.addEventListener("resize", updatePreview);
       lucide.createIcons();
+      updateGraphicControlState();
       updatePreview();
     </script>
   </body>
