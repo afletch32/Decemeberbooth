@@ -1689,8 +1689,7 @@
     }
 
     #video,
-    #lastShot,
-    #liveOverlay {
+    #lastShot {
       width: 100%;
       height: 100%;
       display: block;
@@ -1708,13 +1707,29 @@
 
     #video.active { opacity: 1; }
 
+    #liveOverlay {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      border-radius: 18px;
+    }
+
     #lastShot,
     #liveOverlay {
       position: absolute;
       inset: 0;
       pointer-events: none;
+    }
+
+    #lastShot {
       -webkit-transform: scaleX(1) scale(var(--camera-zoom));
       transform: scaleX(1) scale(var(--camera-zoom));
+    }
+
+    #liveOverlay {
+      -webkit-transform: none;
+      transform: none;
     }
 
     #captureBtn {
@@ -2341,7 +2356,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       z-index: -1;
     }
 
@@ -2562,7 +2577,7 @@
       border-radius: 28px;
       box-shadow: 0 22px 50px rgba(110, 132, 150, 0.2);
       background: #fff;
-      object-fit: cover;
+      object-fit: contain;
     }
     #finalLive {
       width: min(100%, 1160px);
@@ -4143,7 +4158,7 @@
             <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Path 1 is for fast event setup. Path 2 is only for loading something you already made.</p>
             <div class="panel hidden" id="eventPathCreatePanel" style="margin-bottom:10px;">
               <h3 style="margin:0 0 6px;">Path 1: Create New Event</h3>
-              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Start a brand new event with its own name, text, and assets.</p>
+              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Create a new event from a theme. The theme stays reusable, and this event gets its own editable setup after creation.</p>
               <label for="createPathEventName">Event Name</label>
               <input type="text" id="createPathEventName" placeholder="e.g., Winter Gala 2026">
               <label for="createPathEventType">Event Type</label>
@@ -4185,12 +4200,12 @@
             </div>
             <div class="panel hidden" id="eventPathSelectPanel">
               <h3 style="margin:0 0 6px;">Path 2: Select Existing Event</h3>
-              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Pick an existing event to edit or export.</p>
+              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Load an existing event, then keep all event-specific edits in the setup panel below.</p>
               <label for="eventProfileSelect">Existing Event</label>
               <select id="eventProfileSelect"></select>
               <div id="eventOverridesSummary" style="color:#9aa; font-size:0.9em;"></div>
               <div class="btn-row">
-                <button type="button" id="chooseEventBtn">Edit Selected Event</button>
+                <button type="button" id="chooseEventBtn">Open Event Setup</button>
                 <button type="button" onclick="exportCurrentEvent()">Export Event</button>
               </div>
             </div>
@@ -4324,6 +4339,78 @@
 	                <div id="currentThemeAssetsSummary" style="color:#9aa; margin-top:4px;"></div>
 	              </div>
             </div>
+            <div class="panel" style="margin-bottom:12px;">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
+                <div>
+                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Event Setup</div>
+                  <div style="font-weight:700; font-size:1.02em;">Edit this event without changing the base theme</div>
+                </div>
+                <div style="max-width:280px; color:#9aa; font-size:0.9em;">
+                  Theme edits stay in Theme Library. This panel is the normal place to change this event’s text, logo, overlays, templates, and other event-level visuals.
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
+                <div class="theme-field">
+                  <label for="eventNameInput">Event Name</label>
+                  <input type="text" id="eventNameInput" placeholder="Event name">
+                </div>
+                <div class="theme-field">
+                  <label for="eventDateInput">Event Date</label>
+                  <input type="text" id="eventDateInput" placeholder="e.g., April 2026">
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
+                <div class="theme-field">
+                  <label for="eventBannerTextInput">Banner Text</label>
+                  <input type="text" id="eventBannerTextInput" placeholder="Top booth banner">
+                </div>
+                <div class="theme-field">
+                  <label for="eventWelcomeTitleInput">Welcome Title</label>
+                  <input type="text" id="eventWelcomeTitleInput" placeholder="Welcome screen title">
+                </div>
+                <div class="theme-field">
+                  <label for="eventStartButtonTextInput">Start Button Text</label>
+                  <input type="text" id="eventStartButtonTextInput" placeholder="Touch to start">
+                </div>
+                <div class="theme-field">
+                  <label for="eventCaptureLabelInput">Capture Button Text</label>
+                  <input type="text" id="eventCaptureLabelInput" placeholder="Take Photo">
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
+                <div class="theme-field">
+                  <label for="eventBannerSizeInput">Banner Size</label>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <input type="range" id="eventBannerSizeInput" min="24" max="120" step="2">
+                    <span id="eventBannerSizeValue" style="color:#9aa; min-width:48px; text-align:right;"></span>
+                  </div>
+                </div>
+                <div class="theme-field">
+                  <label for="eventWelcomeTitleSizeInput">Welcome Title Size</label>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <input type="range" id="eventWelcomeTitleSizeInput" min="24" max="120" step="2">
+                    <span id="eventWelcomeTitleSizeValue" style="color:#9aa; min-width:48px; text-align:right;"></span>
+                  </div>
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+                <div>
+                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Base Theme</div>
+                  <div id="eventBaseThemeName" style="font-weight:600;"></div>
+                  <div id="eventBaseThemeAssetsSummary" style="color:#9aa; margin-top:4px; font-size:0.92em;"></div>
+                </div>
+                <div>
+                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Theme Reference</div>
+                  <div id="eventThemeReferenceText" style="color:#9aa; font-size:0.92em;">This event inherits from its chosen theme until you add event-only assets or text here.</div>
+                </div>
+              </div>
+              <div class="btn-row" style="justify-content:flex-start; margin-top:12px;">
+                <button type="button" id="resetEventTextToThemeBtn">Use Theme Text</button>
+                <button type="button" id="resetEventSizesToThemeBtn">Use Theme Sizes</button>
+                <button type="button" id="resetEventLogoToThemeBtn">Use Theme Logo</button>
+                <button type="button" id="resetEventCharacterToThemeBtn">Use Theme Character</button>
+              </div>
+            </div>
             <div class="asset-actions">
               <button type="button" id="addLogoBtn">Add Logo</button>
               <button type="button" id="addAssetsBtn">Add Assets</button>
@@ -4450,10 +4537,10 @@
           </div>
           <div id="stylePreviewWrap" class="style-preview-wrap">
             <div id="stylePreview" class="style-preview" aria-label="Style preview">
-              <h3 id="stylePreviewHeading" class="style-preview-heading" contenteditable="true" spellcheck="false">Welcome to Fletch Photobooth</h3>
-              <p id="stylePreviewSubheading" class="style-preview-subheading" contenteditable="true" spellcheck="false">Event Title Example</p>
-              <div id="stylePreviewBody" class="style-preview-button preview-capture-button" contenteditable="true" spellcheck="false" role="button" tabindex="0">Take Photo</div>
-              <div id="stylePreviewButton" class="style-preview-button start-button preview-start-button" contenteditable="true" spellcheck="false" role="button" tabindex="0">Touch to start</div>
+              <h3 id="stylePreviewHeading" class="style-preview-heading">Welcome to Fletch Photobooth</h3>
+              <p id="stylePreviewSubheading" class="style-preview-subheading">Event Title Example</p>
+              <div id="stylePreviewBody" class="style-preview-button preview-capture-button" role="presentation">Take Photo</div>
+              <div id="stylePreviewButton" class="style-preview-button start-button preview-start-button" role="presentation">Touch to start</div>
             </div>
           </div>
           <div class="theme-editor-section">

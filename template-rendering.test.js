@@ -9,6 +9,7 @@ function readProjectFile(...parts) {
 
 test("template rendering logic preserves photo overlays across strip mode and supports strip aliases", () => {
   const appScript = readProjectFile("scripts", "app.js");
+  const html = readProjectFile("index.html");
 
   assert.ok(
     appScript.includes('let lastPhotoOverlay = null;'),
@@ -29,6 +30,18 @@ test("template rendering logic preserves photo overlays across strip mode and su
   assert.ok(
     appScript.includes('renderSingleColumnStrip(c, enhancedPhotos, bg, template);'),
     "single-column strip templates should render in strip mode"
+  );
+  assert.ok(
+    appScript.includes('drawImageContain(ctx, overlayToDraw, 0, 0, canvas.width, canvas.height);'),
+    "single-photo overlays should be composited without cropping their edges"
+  );
+  assert.ok(
+    html.includes("#liveOverlay {\n      width: 100%;\n      height: 100%;\n      display: block;\n      object-fit: contain;"),
+    "live overlay preview should fit fully inside the frame"
+  );
+  assert.ok(
+    html.includes("#liveOverlay {\n      -webkit-transform: none;\n      transform: none;"),
+    "live overlay preview should not inherit camera zoom scaling"
   );
 });
 

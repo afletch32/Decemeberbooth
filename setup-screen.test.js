@@ -45,3 +45,53 @@ test("setup section state updates button and panel accessibility attributes", ()
     "setup panels should still be filtered by section"
   );
 });
+
+test("event setup owns the day-to-day event editing controls", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes('id="eventBannerTextInput"'),
+    "event setup should expose a dedicated event banner text field"
+  );
+  assert.ok(
+    html.includes('id="eventWelcomeTitleInput"'),
+    "event setup should expose a dedicated welcome title field"
+  );
+  assert.ok(
+    html.includes('id="eventStartButtonTextInput"'),
+    "event setup should expose a dedicated start button text field"
+  );
+  assert.ok(
+    html.includes('id="eventCaptureLabelInput"'),
+    "event setup should expose a dedicated capture label field"
+  );
+  assert.ok(
+    html.includes('id="eventBaseThemeName"'),
+    "event setup should show the chosen base theme as reference"
+  );
+  assert.ok(
+    !html.includes('id="stylePreviewHeading" class="style-preview-heading" contenteditable="true"'),
+    "style preview should no longer act as an editable text surface"
+  );
+  assert.ok(
+    appScript.includes('buildEventFromThemeDefaults(theme, {'),
+    "new events should be initialized from theme defaults"
+  );
+  assert.ok(
+    appScript.includes('alert("Create or select an event first.");'),
+    "event-only asset uploads should require an active event"
+  );
+  assert.ok(
+    appScript.includes('if (hasOwnEventTextValue(active, "welcomeTitle")) return active.welcomeTitle.trim();'),
+    "blank event text should remain event-owned instead of snapping back to the theme default"
+  );
+  assert.ok(
+    appScript.includes('title: DOM.themeWelcomeTitle ? DOM.themeWelcomeTitle.value : "Welcome!",'),
+    "new themes should allow an intentionally blank welcome title"
+  );
+  assert.ok(
+    appScript.includes('if (DOM.themeWelcomeTitle) target.welcome.title = DOM.themeWelcomeTitle.value;'),
+    "theme updates should preserve intentionally blank welcome titles"
+  );
+});

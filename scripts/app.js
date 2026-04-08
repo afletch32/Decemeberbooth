@@ -1,6 +1,6 @@
 import { buildEventFolderPath } from "./cloudinary-utils.mjs";
 import { clampZoom } from "./camera-utils.mjs";
-import { applyThemeText, getEventTextOverrides, hasEventTextOverrides, inferThemeEventStyle, mergeUniqueUrls, normalizeEventStyle, pairingSupportsEventStyle } from "./event-utils.mjs";
+import { applyThemeText, buildEventFromThemeDefaults, getEventTextOverrides, hasEventTextOverrides, inferThemeEventStyle, mergeUniqueUrls, normalizeEventStyle, pairingSupportsEventStyle } from "./event-utils.mjs";
 import { formatRecordingTime } from "./recording-utils.mjs";
 
 function isLocalDevHost() {
@@ -523,6 +523,21 @@ const DOM = {
   eventOnlyTemplates: document.getElementById("eventOnlyTemplates"),
   eventOverridesSummary: document.getElementById("eventOverridesSummary"),
   clearEventOverridesBtn: document.getElementById("clearEventOverridesBtn"),
+  eventBannerTextInput: document.getElementById("eventBannerTextInput"),
+  eventWelcomeTitleInput: document.getElementById("eventWelcomeTitleInput"),
+  eventStartButtonTextInput: document.getElementById("eventStartButtonTextInput"),
+  eventCaptureLabelInput: document.getElementById("eventCaptureLabelInput"),
+  eventBannerSizeInput: document.getElementById("eventBannerSizeInput"),
+  eventBannerSizeValue: document.getElementById("eventBannerSizeValue"),
+  eventWelcomeTitleSizeInput: document.getElementById("eventWelcomeTitleSizeInput"),
+  eventWelcomeTitleSizeValue: document.getElementById("eventWelcomeTitleSizeValue"),
+  eventBaseThemeName: document.getElementById("eventBaseThemeName"),
+  eventBaseThemeAssetsSummary: document.getElementById("eventBaseThemeAssetsSummary"),
+  eventThemeReferenceText: document.getElementById("eventThemeReferenceText"),
+  resetEventTextToThemeBtn: document.getElementById("resetEventTextToThemeBtn"),
+  resetEventSizesToThemeBtn: document.getElementById("resetEventSizesToThemeBtn"),
+  resetEventLogoToThemeBtn: document.getElementById("resetEventLogoToThemeBtn"),
+  resetEventCharacterToThemeBtn: document.getElementById("resetEventCharacterToThemeBtn"),
   bannerSizeInput: document.getElementById("bannerSizeInput"),
   bannerSizeValue: document.getElementById("bannerSizeValue"),
   welcomeTitleSizeInput: document.getElementById("welcomeTitleSizeInput"),
@@ -646,6 +661,7 @@ const DOM = {
   currentEventName: document.getElementById('currentEventName'),
   currentEventDate: document.getElementById('currentEventDate'),
   currentEventTheme: document.getElementById('currentEventTheme'),
+  currentAssetsSection: document.getElementById("currentAssetsSection"),
   currentAssetsContent: document.getElementById("currentAssetsContent"),
   currentEventAssetsSummary: document.getElementById('currentEventAssetsSummary'),
   currentThemeAssetsSummary: document.getElementById('currentThemeAssetsSummary'),
@@ -1150,7 +1166,58 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
   populateCreatePathFontPairingSelect();
 }
 
-function createEventFromPathInputs() {
+function getCreatePathAssetInputs() {
+  return [
+    DOM.createPathBackgrounds,
+    DOM.createPathGreenBackgrounds,
+    DOM.createPathOverlays,
+    DOM.createPathTemplates,
+    DOM.createPathLogo
+  ].filter(Boolean);
+}
+
+function resetCreatePathAssetInputs() {
+  getCreatePathAssetInputs().forEach((input) => {
+    input.value = "";
+  });
+  updateCreatePathAssetSummary();
+}
+
+async function addCreatePathAssetsToEvent(event) {
+  if (!event) return;
+  const overrides = ensureEventOverrides(event);
+  const tasks = [];
+  const queueUploads = (files, kind, onComplete) => {
+    Array.from(files || []).filter(Boolean).forEach((file) => {
+      tasks.push(
+        uploadAsset(file, kind).then((url) => {
+          if (!url) return;
+          onComplete(url);
+        }),
+      );
+    });
+  };
+
+  queueUploads(DOM.createPathBackgrounds && DOM.createPathBackgrounds.files, "backgrounds", (url) => {
+    overrides.backgrounds.push(url);
+  });
+  queueUploads(DOM.createPathGreenBackgrounds && DOM.createPathGreenBackgrounds.files, "greenBackgrounds", (url) => {
+    overrides.greenBackgrounds.push(url);
+  });
+  queueUploads(DOM.createPathOverlays && DOM.createPathOverlays.files, "overlays", (url) => {
+    overrides.overlays.push(url);
+  });
+  queueUploads(DOM.createPathTemplates && DOM.createPathTemplates.files, "templates", (url) => {
+    overrides.templates.push({ src: url, layout: "double_column" });
+  });
+  queueUploads(DOM.createPathLogo && DOM.createPathLogo.files, "logo", (url) => {
+    event.logo = url;
+  });
+
+  if (tasks.length) await Promise.all(tasks);
+}
+
+async function createEventFromPathInputs() {
   const name = valueFromInput(DOM.createPathEventName);
   if (!name) {
     alert("Enter an event name.");
@@ -1164,11 +1231,16 @@ function createEventFromPathInputs() {
     alert("Choose a theme.");
     return;
   }
+  const theme = resolveThemeByKey(themeKey);
+  if (!theme) {
+    alert("Theme not found.");
+    return;
+  }
   const pairingValue = DOM.createPathFontPairingSelect ? DOM.createPathFontPairingSelect.value : "";
   const [fontHeading = "", fontBody = ""] = pairingValue ? pairingValue.split("|") : ["", ""];
   const slug = slugifyEventText(name);
   const id = `${slug || "event"}-${Date.now().toString(36)}`;
-  const newEvent = {
+  const newEvent = buildEventFromThemeDefaults(theme, {
     id,
     name,
     date: "",
@@ -1176,9 +1248,9 @@ function createEventFromPathInputs() {
     themeKey,
     fontHeading,
     fontBody,
-    createdAt: new Date().toISOString(),
-    overrides: { backgrounds: [], overlays: [], templates: [], backgroundIndex: 0, greenBackgrounds: [], greenBackgroundIndex: 0 }
-  };
+    createdAt: new Date().toISOString()
+  });
+  await addCreatePathAssetsToEvent(newEvent);
   const events = getStoredEvents();
   events.push(newEvent);
   setStoredEvents(events);
@@ -1191,7 +1263,7 @@ function createEventFromPathInputs() {
   updateStylePreview();
   if (DOM.createPathEventName) DOM.createPathEventName.value = "";
   if (DOM.createPathFontPairingSelect) DOM.createPathFontPairingSelect.value = "";
-  updateCreatePathAssetSummary();
+  resetCreatePathAssetInputs();
   showToast(`Event "${name}" created`);
 }
 
@@ -1243,6 +1315,12 @@ function confirmQuickStartFromModal() {
 }
 
 function setupEventProfileControls() {
+  const focusCurrentEventSetup = () => {
+    if (DOM.currentAssetsSection) DOM.currentAssetsSection.open = true;
+    if (DOM.currentAssetsSection && typeof DOM.currentAssetsSection.scrollIntoView === "function") {
+      DOM.currentAssetsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
   const setEventSetupPath = (path) => {
     const showCreate = path === "create";
     const showSelect = path === "select";
@@ -1269,13 +1347,23 @@ function setupEventProfileControls() {
   }
   if (DOM.chooseEventBtn) {
     DOM.chooseEventBtn.addEventListener("click", () => {
-      showCreateEventModal("edit");
+      const active = getActiveEvent();
+      if (!active) {
+        alert("Choose an event first.");
+        return;
+      }
+      focusCurrentEventSetup();
     });
   }
   if (DOM.createEventBtn) {
     DOM.createEventBtn.addEventListener("click", () => {
       setEventSetupPath("create");
-      createEventFromPathInputs();
+      createEventFromPathInputs().then(() => {
+        focusCurrentEventSetup();
+      }).catch((err) => {
+        console.error("Failed to create event from theme", err);
+        alert("Failed to create the event. See console for details.");
+      });
     });
   }
   if (DOM.quickStartBtn) {
@@ -1323,6 +1411,9 @@ function setupEventProfileControls() {
       highlightThemeQuickSelect(key);
     });
   }
+  getCreatePathAssetInputs().forEach((input) => {
+    input.addEventListener("change", updateCreatePathAssetSummary);
+  });
   if (DOM.createPathFontPairingSelect) {
     DOM.createPathFontPairingSelect.addEventListener("change", () => {
       renderCreatePathFontPreviewCards(
@@ -1483,6 +1574,10 @@ function setupThemeEditorControls() {
   if (DOM.createThemeName) DOM.createThemeName.addEventListener('input', updateThemeEditorSummary);
   if (DOM.bannerSizeInput) {
     DOM.bannerSizeInput.addEventListener("input", () => {
+      if (getActiveEvent()) {
+        syncBannerSizeUI(activeTheme || getSelectedThemeTarget());
+        return;
+      }
       const target = activeTheme || getSelectedThemeTarget();
       if (!target) return;
       const size = parseInt(DOM.bannerSizeInput.value, 10);
@@ -1495,6 +1590,10 @@ function setupThemeEditorControls() {
   }
   if (DOM.welcomeTitleSizeInput) {
     DOM.welcomeTitleSizeInput.addEventListener("input", () => {
+      if (getActiveEvent()) {
+        syncWelcomeTitleSizeUI(activeTheme || getSelectedThemeTarget());
+        return;
+      }
       const target = activeTheme || getSelectedThemeTarget();
       if (!target) return;
       const size = parseInt(DOM.welcomeTitleSizeInput.value, 10);
@@ -1505,60 +1604,6 @@ function setupThemeEditorControls() {
       saveThemesToStorage();
     });
   }
-  const attachPreviewEditable = (node, onCommit) => {
-    if (!node) return;
-    node.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        node.blur();
-      }
-    });
-    node.addEventListener("blur", () => {
-      const next = normalizeBannerText(node.textContent || "");
-      onCommit(next, true);
-      updateStylePreview();
-    });
-    node.addEventListener("input", () => {
-      const next = normalizeBannerText(node.textContent || "");
-      onCommit(next, false);
-    });
-  };
-  attachPreviewEditable(DOM.stylePreviewHeading, (value) => {
-    const active = getActiveEvent();
-    if (active) {
-      updateActiveEventDetails({ bannerText: value });
-    } else {
-      const target = activeTheme || getSelectedThemeTarget();
-      if (!target) return;
-      applyThemeText(target, { bannerText: value });
-      saveThemesToStorage();
-    }
-    syncBannerText();
-  });
-  attachPreviewEditable(DOM.stylePreviewSubheading, (value) => {
-    const active = getActiveEvent();
-    if (active) {
-      updateActiveEventDetails({ welcomeTitle: value || "Welcome!" });
-    } else {
-      const target = activeTheme || getSelectedThemeTarget();
-      if (!target) return;
-      applyThemeText(target, { welcomeTitle: value || "Welcome!" });
-      saveThemesToStorage();
-    }
-    syncWelcomeText();
-  });
-  attachPreviewEditable(DOM.stylePreviewBody, (value) => {
-    const active = getActiveEvent();
-    if (active) {
-      updateActiveEventDetails({ captureLabel: value || "Take Photo" });
-    } else {
-      const target = activeTheme || getSelectedThemeTarget();
-      if (!target) return;
-      applyThemeText(target, { captureLabel: value || "Take Photo" });
-      saveThemesToStorage();
-    }
-    syncCaptureButtonText();
-  });
   if (DOM.cloneThemeBtn) DOM.cloneThemeBtn.addEventListener('click', handleCloneTheme);
   if (DOM.addLogoBtn && DOM.themeLogo) DOM.addLogoBtn.addEventListener('click', () => DOM.themeLogo.click());
   if (DOM.addAssetsBtn && DOM.bulkAssetsInput) DOM.addAssetsBtn.addEventListener("click", () => DOM.bulkAssetsInput.click());
@@ -1600,41 +1645,6 @@ function setupThemeEditorControls() {
       showFontPickerModal();
     });
   }
-  if (DOM.stylePreviewButton) {
-    DOM.stylePreviewButton.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        DOM.stylePreviewButton.blur();
-      }
-    });
-    DOM.stylePreviewButton.addEventListener("blur", () => {
-      const next = normalizeBannerText(DOM.stylePreviewButton.textContent || "");
-      const active = getActiveEvent();
-      if (active) {
-        updateActiveEventDetails({ startButtonText: next || "Touch to start" });
-      } else {
-        const target = activeTheme || getSelectedThemeTarget();
-        if (target) {
-          applyThemeText(target, { startButtonText: next || "Touch to start" });
-          saveThemesToStorage();
-        }
-      }
-      updateStylePreview();
-    });
-    DOM.stylePreviewButton.addEventListener("input", () => {
-      const next = normalizeBannerText(DOM.stylePreviewButton.textContent || "");
-      const active = getActiveEvent();
-      if (active) {
-        updateActiveEventDetails({ startButtonText: next || "Touch to start" });
-      } else {
-        const target = activeTheme || getSelectedThemeTarget();
-        if (target) {
-          applyThemeText(target, { startButtonText: next || "Touch to start" });
-          saveThemesToStorage();
-        }
-      }
-    });
-  }
   if (DOM.closeFontPicker) DOM.closeFontPicker.addEventListener('click', hideFontPickerModal);
   if (DOM.fontPickerModal) {
     DOM.fontPickerModal.addEventListener('click', (e) => {
@@ -1652,6 +1662,32 @@ function handleThemeAssetInputChange(kind) {
   else if (kind === 'character') input = DOM.themeCharacter;
   else if (kind === 'greenBackgrounds') input = DOM.themeGreenBackgrounds;
   if (!input || !input.files || input.files.length === 0) return;
+  const active = getActiveEvent();
+  if (active) {
+    if (kind === "logo" || kind === "character") {
+      handleEventSingleAssetInput(kind, input.files).catch((err) => {
+        console.error("Failed to update event assets:", err);
+      }).finally(() => {
+        input.value = "";
+      });
+      return;
+    }
+    const kindMap = {
+      background: "backgrounds",
+      overlay: "overlays",
+      template: "templates",
+      greenBackgrounds: "greenBackgrounds"
+    };
+    const eventKind = kindMap[kind];
+    if (eventKind) {
+      handleEventOnlyAssetInput(eventKind, input.files).catch((err) => {
+        console.error("Failed to update event assets:", err);
+      }).finally(() => {
+        input.value = "";
+      });
+      return;
+    }
+  }
   updateCurrentThemeAssets(kind).catch((err) => console.error('Failed to update theme assets:', err));
 }
 
@@ -1710,12 +1746,6 @@ function addAssetUrlToTheme(target, kind, url) {
 }
 
 async function applyBulkAssetUpload() {
-  const target = getSelectedThemeTarget();
-  if (!target) {
-    alert("Select a theme first.");
-    closeBulkAssetModal();
-    return;
-  }
   const files = pendingBulkAssetFiles.slice();
   if (!files.length) {
     showToast("Choose files first.");
@@ -1727,6 +1757,42 @@ async function applyBulkAssetUpload() {
     return;
   }
 
+  const active = getActiveEvent();
+  if (active) {
+    const overrides = ensureEventOverrides(active);
+    let uploadedCount = 0;
+    const tasks = [];
+    files.forEach((file) => {
+      kinds.forEach((kind) => {
+        tasks.push(
+          uploadAsset(file, kind).then((url) => {
+            if (!url) return;
+            if (kind === "backgrounds") overrides.backgrounds.push(url);
+            if (kind === "greenBackgrounds") overrides.greenBackgrounds.push(url);
+            if (kind === "overlays") overrides.overlays.push(url);
+            if (kind === "templates") overrides.templates.push({ src: url, layout: "double_column" });
+            uploadedCount += 1;
+          }),
+        );
+      });
+    });
+    await Promise.all(tasks);
+    if (!uploadedCount) {
+      showToast("No assets were uploaded.");
+      return;
+    }
+    updateActiveEventDetails({ overrides });
+    closeBulkAssetModal();
+    showToast(`Added ${uploadedCount} event asset item${uploadedCount === 1 ? "" : "s"}.`);
+    return;
+  }
+
+  const target = getSelectedThemeTarget();
+  if (!target) {
+    alert("Select a theme first.");
+    closeBulkAssetModal();
+    return;
+  }
   let uploaded = 0;
   const tasks = [];
   files.forEach((file) => {
@@ -2671,6 +2737,45 @@ function setupEventNameInput() {
   });
 }
 
+function setupEventVisualEditorControls() {
+  const bindTextInput = (node, key) => {
+    if (!node) return;
+    node.addEventListener("input", () => {
+      const active = getActiveEvent();
+      if (!active) return;
+      const nextValue = node.value.trim();
+      updateActiveEventDetails({ [key]: nextValue });
+    });
+  };
+
+  bindTextInput(DOM.eventBannerTextInput, "bannerText");
+  bindTextInput(DOM.eventWelcomeTitleInput, "welcomeTitle");
+  bindTextInput(DOM.eventStartButtonTextInput, "startButtonText");
+  bindTextInput(DOM.eventCaptureLabelInput, "captureLabel");
+
+  if (DOM.eventBannerSizeInput) {
+    DOM.eventBannerSizeInput.addEventListener("input", () => {
+      const active = getActiveEvent();
+      if (!active) return;
+      const size = parseInt(DOM.eventBannerSizeInput.value, 10);
+      if (!Number.isFinite(size)) return;
+      if (DOM.eventBannerSizeValue) DOM.eventBannerSizeValue.textContent = `${size}px`;
+      updateActiveEventDetails({ bannerSize: size });
+    });
+  }
+
+  if (DOM.eventWelcomeTitleSizeInput) {
+    DOM.eventWelcomeTitleSizeInput.addEventListener("input", () => {
+      const active = getActiveEvent();
+      if (!active) return;
+      const size = parseInt(DOM.eventWelcomeTitleSizeInput.value, 10);
+      if (!Number.isFinite(size)) return;
+      if (DOM.eventWelcomeTitleSizeValue) DOM.eventWelcomeTitleSizeValue.textContent = `${size}px`;
+      updateActiveEventDetails({ welcomeTitleSize: size });
+    });
+  }
+}
+
 function setupWelcomeInteractions() {
   const bindWelcomeTarget = (node) => {
     if (!node || node.dataset.welcomeBound === "true") return;
@@ -2739,6 +2844,7 @@ function init() {
   setupCharacterPositionControls();
   setupCustomPairingControls();
   setupEventNameInput();
+  setupEventVisualEditorControls();
   setupEventDateInput();
   setupEventProfileControls();
   setupAdminModalNavigation();
@@ -3909,8 +4015,9 @@ function syncAdminUiWithTheme(themeKey, theme) {
   syncBannerText();
   renderThemeQuickSelect(DOM.eventSelect);
   if (DOM.logo) {
-    if (theme.logo) {
-      DOM.logo.src = theme.logo;
+    const logoSrc = resolveEventLogo(theme);
+    if (logoSrc) {
+      DOM.logo.src = logoSrc;
       DOM.logo.classList.remove('hidden');
     } else {
       DOM.logo.src = '';
@@ -4168,6 +4275,8 @@ function applyAiMaskToCanvas(sourceCanvas, maskCanvas) {
 
 function renderCurrentAssets(theme) {
   // Helpers
+  const active = getActiveEvent();
+  const lockBaseThemeAssets = !!active;
   const eventBgList = Array.isArray(getActiveEventOverrides().backgrounds)
     ? getActiveEventOverrides().backgrounds.filter(Boolean)
     : [];
@@ -4206,22 +4315,30 @@ function renderCurrentAssets(theme) {
           ? Math.min(Math.max(theme.greenBackgroundIndex, 0), greenBgList.length - 1)
           : 0)))
     : -1;
-  const setSingle = (wrap, src, type) => {
+  const setSingle = (wrap, src, type, isEventOwned = false) => {
     if (!wrap) return;
     wrap.innerHTML = '';
     if (src) {
       const item = createAssetTile(src);
-      const btn = document.createElement('button');
-      btn.className = 'asset-remove';
-      btn.textContent = '×';
-      btn.title = 'Remove';
-      btn.onclick = () => {
-        if (!confirm('Remove this ' + type + '?')) return;
-        if (type === 'background') removeBackground();
-        if (type === 'logo') removeLogo();
-        if (type === 'character') removeCharacter();
-      };
-      item.appendChild(btn);
+      if (!lockBaseThemeAssets || isEventOwned) {
+        const btn = document.createElement('button');
+        btn.className = 'asset-remove';
+        btn.textContent = '×';
+        btn.title = isEventOwned ? 'Remove from this event' : 'Remove';
+        btn.onclick = () => {
+          if (!confirm('Remove this ' + type + '?')) return;
+          if (type === 'background') removeBackground();
+          if (type === 'logo') {
+            if (isEventOwned) updateActiveEventDetails({ logo: "" });
+            else removeLogo();
+          }
+          if (type === 'character') {
+            if (isEventOwned) updateActiveEventDetails({ character: "" });
+            else removeCharacter();
+          }
+        };
+        item.appendChild(btn);
+      }
       wrap.appendChild(item);
     } else {
       const span = document.createElement('span');
@@ -4253,28 +4370,30 @@ function renderCurrentAssets(theme) {
       const localIndex = getLocalIndex(kind, src);
       const badge = (withBadge && typeof entry === 'object' && entry.layout) ? entry.layout : null;
       const item = createAssetTile(src, { badge });
-      item.draggable = allowReorder && !fromFolder && !isEvent && localIndex >= 0;
+      item.draggable = allowReorder && !lockBaseThemeAssets && !fromFolder && !isEvent && localIndex >= 0;
       item.dataset.index = localIndex;
-      const btn = document.createElement('button');
-      btn.className = 'asset-remove';
-      btn.textContent = '×';
-      btn.title = isEvent ? 'Remove from this event' : (fromFolder ? 'Hide from this theme' : 'Remove');
-      btn.onclick = () => {
-        const promptText = isEvent ? 'Remove this item from this event?' : (fromFolder ? 'Hide this item for this theme?' : 'Remove this item?');
-        if (!confirm(promptText)) return;
-        if (kind === 'overlay') {
-          if (isEvent) removeEventOverlay(src);
-          else if (fromFolder) removeFolderOverlay(src);
-          else if (localIndex >= 0) removeOverlay(localIndex);
-        } else if (kind === 'template') {
-          if (isEvent) removeEventTemplate(src);
-          else if (fromFolder) removeFolderTemplate(src);
-          else if (localIndex >= 0) removeTemplate(localIndex);
-        }
-      };
-      item.appendChild(btn);
+      if (!lockBaseThemeAssets || isEvent) {
+        const btn = document.createElement('button');
+        btn.className = 'asset-remove';
+        btn.textContent = '×';
+        btn.title = isEvent ? 'Remove from this event' : (fromFolder ? 'Hide from this theme' : 'Remove');
+        btn.onclick = () => {
+          const promptText = isEvent ? 'Remove this item from this event?' : (fromFolder ? 'Hide this item for this theme?' : 'Remove this item?');
+          if (!confirm(promptText)) return;
+          if (kind === 'overlay') {
+            if (isEvent) removeEventOverlay(src);
+            else if (fromFolder) removeFolderOverlay(src);
+            else if (localIndex >= 0) removeOverlay(localIndex);
+          } else if (kind === 'template') {
+            if (isEvent) removeEventTemplate(src);
+            else if (fromFolder) removeFolderTemplate(src);
+            else if (localIndex >= 0) removeTemplate(localIndex);
+          }
+        };
+        item.appendChild(btn);
+      }
       // Drag & drop reordering
-      if (allowReorder && !fromFolder && !isEvent && localIndex >= 0) {
+      if (allowReorder && !lockBaseThemeAssets && !fromFolder && !isEvent && localIndex >= 0) {
         item.addEventListener('dragstart', (ev) => {
           ev.dataTransfer.setData('text/plain', String(localIndex));
           ev.dataTransfer.effectAllowed = 'move';
@@ -4337,15 +4456,17 @@ function renderCurrentAssets(theme) {
         });
         item.appendChild(useBtn);
         const remBtn = document.createElement('button');
-        remBtn.className = 'asset-remove'; remBtn.textContent = '×'; remBtn.title = 'Remove';
-        remBtn.title = isEvent ? 'Remove from this event' : (isFolder ? 'Hide from this theme' : 'Remove');
-        remBtn.onclick = () => {
-          const promptText = isEvent ? 'Remove this background from this event?' : (isFolder ? 'Hide this background for this theme?' : 'Remove this background?');
-          if (!confirm(promptText)) return;
-          if (isFolder) removeFolderBackground(src);
-          else removeBackgroundAt(idx);
-        };
-        item.appendChild(remBtn);
+        if (!lockBaseThemeAssets || isEvent) {
+          remBtn.className = 'asset-remove'; remBtn.textContent = '×'; remBtn.title = 'Remove';
+          remBtn.title = isEvent ? 'Remove from this event' : (isFolder ? 'Hide from this theme' : 'Remove');
+          remBtn.onclick = () => {
+            const promptText = isEvent ? 'Remove this background from this event?' : (isFolder ? 'Hide this background for this theme?' : 'Remove this background?');
+            if (!confirm(promptText)) return;
+            if (isFolder) removeFolderBackground(src);
+            else removeBackgroundAt(idx);
+          };
+          item.appendChild(remBtn);
+        }
         wrap.appendChild(item);
       });
     }
@@ -4358,19 +4479,22 @@ function renderCurrentAssets(theme) {
       const span = document.createElement('span'); span.style.color = '#888'; span.textContent = 'None'; wrap.appendChild(span);
     } else {
       greenBgList.forEach((src, idx) => {
+        const isEvent = Array.isArray(eventOverrides.greenBackgrounds) && eventOverrides.greenBackgrounds.includes(src);
         const item = document.createElement('div'); item.className = 'asset-item';
         const img = document.createElement('img'); img.src = withBust(src); img.onerror = () => renderMissingThumbnail(item, src);
         item.appendChild(img);
-        const remBtn = document.createElement('button');
-        remBtn.className = 'asset-remove'; remBtn.textContent = '×'; remBtn.title = 'Remove';
-        remBtn.onclick = () => { if (confirm('Remove this green screen background?')) removeGreenBackgroundAt(idx); };
-        item.appendChild(remBtn);
+        if (!lockBaseThemeAssets || isEvent) {
+          const remBtn = document.createElement('button');
+          remBtn.className = 'asset-remove'; remBtn.textContent = '×'; remBtn.title = 'Remove';
+          remBtn.onclick = () => { if (confirm('Remove this green screen background?')) removeGreenBackgroundAt(idx); };
+          item.appendChild(remBtn);
+        }
         wrap.appendChild(item);
       });
     }
   }
-  setSingle(DOM.currentLogo, theme.logo, 'logo');
-  setSingle(DOM.currentCharacter, theme.character, 'character');
+  setSingle(DOM.currentLogo, resolveEventLogo(theme), 'logo', !!(active && active.logo));
+  setSingle(DOM.currentCharacter, resolveEventCharacter(theme), 'character', !!(active && active.character));
   // Font preview
   if (DOM.currentFont) {
     DOM.currentFont.innerHTML = '';
@@ -5448,8 +5572,7 @@ async function applyOverlay(canvas, overlaySrc) {
     const ctx = canvas.getContext('2d');
     // Optionally mask spot color to transparency
     const overlayToDraw = SPOT_MASK.enabled ? createMaskedOverlayCanvas(ov, SPOT_MASK.color, SPOT_MASK.tolerance) : ov;
-    // Default preview behavior used to be 'cover'; switch to 'contain' for print-safety helpers below
-    drawImageCover(ctx, overlayToDraw, 0, 0, canvas.width, canvas.height);
+    drawImageContain(ctx, overlayToDraw, 0, 0, canvas.width, canvas.height);
   } catch (e) {
     console.error("Failed to apply overlay:", overlaySrc, e);
   }
@@ -5861,7 +5984,7 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
       const overlayToDraw = (SPOT_MASK && SPOT_MASK.enabled)
         ? createMaskedOverlayCanvas(ov, SPOT_MASK.color, SPOT_MASK.tolerance)
         : ov;
-      drawImageCover(ctx, overlayToDraw, 0, 0, targetW, targetH);
+      drawImageContain(ctx, overlayToDraw, 0, 0, targetW, targetH);
     } catch (e) { console.error("Print overlay load failed", e); }
   }
   return c.toDataURL("image/png");
@@ -6214,7 +6337,125 @@ function getActiveEventOverrides() {
   return ensureEventOverrides(active);
 }
 
-function updateActiveEventDetails({ name, date, themeKey, overrides, bannerText, welcomeTitle, welcomeTitleSize, startButtonText, captureLabel }) {
+function hasOwnEventTextValue(active, key) {
+  return !!(active && Object.prototype.hasOwnProperty.call(active, key) && typeof active[key] === "string");
+}
+
+function describeAssetSummaryCounts({ backgrounds = 0, greenBackgrounds = 0, overlays = 0, templates = 0, hasLogo = false, hasCharacter = false } = {}) {
+  const parts = [];
+  if (backgrounds) parts.push(`${backgrounds} background${backgrounds === 1 ? "" : "s"}`);
+  if (greenBackgrounds) parts.push(`${greenBackgrounds} green BG${greenBackgrounds === 1 ? "" : "s"}`);
+  if (overlays) parts.push(`${overlays} overlay${overlays === 1 ? "" : "s"}`);
+  if (templates) parts.push(`${templates} template${templates === 1 ? "" : "s"}`);
+  if (hasLogo) parts.push("logo");
+  if (hasCharacter) parts.push("character");
+  return parts.length ? parts.join(", ") : "none";
+}
+
+function getEventEditorTheme(theme = null) {
+  const active = getActiveEvent();
+  const eventThemeKey = (active && active.themeKey) || (DOM.eventSelect && DOM.eventSelect.value) || "";
+  return theme || resolveThemeByKey(eventThemeKey) || activeTheme || getSelectedThemeTarget() || null;
+}
+
+function getEventEditorTextValue(active, key, fallback = "") {
+  if (hasOwnEventTextValue(active, key)) return active[key];
+  return fallback;
+}
+
+function syncEventSetupEditor(theme = null) {
+  const active = getActiveEvent();
+  const themeObj = getEventEditorTheme(theme);
+  const hasActiveEvent = !!active;
+  const setDisabled = (node) => {
+    if (!node) return;
+    node.disabled = !hasActiveEvent;
+  };
+
+  if (DOM.eventNameInput) DOM.eventNameInput.value = hasActiveEvent ? (active.name || "") : "";
+  if (DOM.eventDateInput) DOM.eventDateInput.value = hasActiveEvent ? (active.date || "") : "";
+  if (DOM.eventBannerTextInput) {
+    DOM.eventBannerTextInput.value = hasActiveEvent ? getEventEditorTextValue(active, "bannerText", resolveThemeBannerText()) : "";
+    setDisabled(DOM.eventBannerTextInput);
+  }
+  if (DOM.eventWelcomeTitleInput) {
+    DOM.eventWelcomeTitleInput.value = hasActiveEvent ? getEventEditorTextValue(active, "welcomeTitle", resolveThemeWelcomeTitle()) : "";
+    setDisabled(DOM.eventWelcomeTitleInput);
+  }
+  if (DOM.eventStartButtonTextInput) {
+    DOM.eventStartButtonTextInput.value = hasActiveEvent ? getEventEditorTextValue(active, "startButtonText", resolveThemeStartButtonText()) : "";
+    setDisabled(DOM.eventStartButtonTextInput);
+  }
+  if (DOM.eventCaptureLabelInput) {
+    DOM.eventCaptureLabelInput.value = hasActiveEvent ? getEventEditorTextValue(active, "captureLabel", resolveThemeCaptureLabel()) : "";
+    setDisabled(DOM.eventCaptureLabelInput);
+  }
+  const bannerSize = getBannerSize(themeObj);
+  if (DOM.eventBannerSizeInput) {
+    DOM.eventBannerSizeInput.value = String(bannerSize);
+    DOM.eventBannerSizeInput.disabled = !hasActiveEvent;
+  }
+  if (DOM.eventBannerSizeValue) DOM.eventBannerSizeValue.textContent = `${bannerSize}px`;
+  const welcomeSize = resolveWelcomeTitleSize(themeObj);
+  if (DOM.eventWelcomeTitleSizeInput) {
+    DOM.eventWelcomeTitleSizeInput.value = String(welcomeSize);
+    DOM.eventWelcomeTitleSizeInput.disabled = !hasActiveEvent;
+  }
+  if (DOM.eventWelcomeTitleSizeValue) DOM.eventWelcomeTitleSizeValue.textContent = `${welcomeSize}px`;
+
+  if (DOM.eventBaseThemeName) {
+    const eventThemeKey = hasActiveEvent ? active.themeKey : "";
+    DOM.eventBaseThemeName.textContent = themeObj && themeObj.name ? themeObj.name : (eventThemeKey || "No base theme selected");
+  }
+  if (DOM.eventBaseThemeAssetsSummary) {
+    const themeBackgrounds = themeObj ? getBaseBackgroundList(themeObj).length : 0;
+    const themeGreenBackgrounds = Array.isArray(themeObj && themeObj.greenBackgrounds) ? themeObj.greenBackgrounds.filter(Boolean).length : 0;
+    const themeOverlays = themeObj ? getBaseOverlayList(themeObj).length : 0;
+    const themeTemplates = themeObj ? getBaseTemplateList(themeObj).length : 0;
+    DOM.eventBaseThemeAssetsSummary.textContent = `Inherited assets: ${describeAssetSummaryCounts({
+      backgrounds: themeBackgrounds,
+      greenBackgrounds: themeGreenBackgrounds,
+      overlays: themeOverlays,
+      templates: themeTemplates,
+      hasLogo: !!(themeObj && themeObj.logo),
+      hasCharacter: !!(themeObj && themeObj.character)
+    })}`;
+  }
+  if (DOM.eventThemeReferenceText) {
+    if (!hasActiveEvent) {
+      DOM.eventThemeReferenceText.textContent = "Select or create an event first. Theme blueprints stay read-only in this setup flow.";
+    } else {
+      const overrides = ensureEventOverrides(active);
+      const eventSpecific = describeAssetSummaryCounts({
+        backgrounds: overrides.backgrounds.length,
+        greenBackgrounds: overrides.greenBackgrounds.length,
+        overlays: overrides.overlays.length,
+        templates: overrides.templates.length,
+        hasLogo: !!active.logo,
+        hasCharacter: !!active.character
+      });
+      DOM.eventThemeReferenceText.textContent = `Base theme: ${(themeObj && themeObj.name) ? themeObj.name : "None"}. Event-only assets: ${eventSpecific}.`;
+    }
+  }
+}
+
+function updateActiveEventDetails({
+  name,
+  date,
+  themeKey,
+  overrides,
+  bannerText,
+  welcomeTitle,
+  welcomeTitleSize,
+  startButtonText,
+  captureLabel,
+  bannerSize,
+  logo,
+  character,
+  characterX,
+  characterBottom,
+  characterHeight
+}) {
   const events = getStoredEvents();
   const id = getActiveEventId();
   if (!id) return;
@@ -6232,22 +6473,43 @@ function updateActiveEventDetails({ name, date, themeKey, overrides, bannerText,
   } else if (welcomeTitleSize === null) {
     delete target.welcomeTitleSize;
   }
+  if (typeof bannerSize === "number" && bannerSize > 0) {
+    target.bannerSize = bannerSize;
+  } else if (bannerSize === null) {
+    delete target.bannerSize;
+  }
   if (typeof startButtonText === "string") target.startButtonText = startButtonText;
   if (typeof captureLabel === "string") target.captureLabel = captureLabel;
+  if (typeof logo === "string") {
+    if (logo) target.logo = logo;
+    else delete target.logo;
+  }
+  if (typeof character === "string") {
+    if (character) target.character = character;
+    else delete target.character;
+  }
+  if (typeof characterX === "number") target.characterX = characterX;
+  if (typeof characterBottom === "number") target.characterBottom = characterBottom;
+  if (typeof characterHeight === "number") target.characterHeight = characterHeight;
   setStoredEvents(events);
   populateEventProfileSelect(id);
   updateEventOverridesSummary();
-  applyWelcomeTitleSize(activeTheme);
+  const themeObj = getEventEditorTheme();
+  applyThemeBasics(themeObj || activeTheme || getSelectedThemeTarget() || {});
+  syncEventSetupEditor(themeObj);
+  renderCurrentAssets(themeObj);
+  updateCurrentEventAssetsPanel(themeObj);
+  updateStylePreview();
 }
 
 function syncEventInputsFromActive() {
   const active = getActiveEvent();
   if (!active) {
     updateEventOverridesSummary();
+    syncEventSetupEditor();
     return;
   }
-  if (DOM.eventNameInput) DOM.eventNameInput.value = active.name || "";
-  if (DOM.eventDateInput) DOM.eventDateInput.value = active.date || "";
+  syncEventSetupEditor(getEventEditorTheme());
   updateEventOverridesSummary();
 }
 
@@ -6349,19 +6611,23 @@ function createNewEventFromSelection() {
 
 function updateEventOverridesSummary() {
   if (!DOM.eventOverridesSummary) return;
-  if (!getActiveEvent()) {
+  const active = getActiveEvent();
+  if (!active) {
     DOM.eventOverridesSummary.textContent = "Select an event to add event-only assets.";
     updateEventDependentControls(false);
     updateCurrentEventAssetsPanel();
     return;
   }
   const overrides = getActiveEventOverrides();
-  const parts = [];
-  if (overrides.backgrounds.length) parts.push(`${overrides.backgrounds.length} background${overrides.backgrounds.length === 1 ? "" : "s"}`);
-  if (overrides.greenBackgrounds.length) parts.push(`${overrides.greenBackgrounds.length} green BG${overrides.greenBackgrounds.length === 1 ? "" : "s"}`);
-  if (overrides.overlays.length) parts.push(`${overrides.overlays.length} overlay${overrides.overlays.length === 1 ? "" : "s"}`);
-  if (overrides.templates.length) parts.push(`${overrides.templates.length} template${overrides.templates.length === 1 ? "" : "s"}`);
-  DOM.eventOverridesSummary.textContent = parts.length ? `Event-only assets: ${parts.join(", ")}` : "No event-only assets yet.";
+  const summary = describeAssetSummaryCounts({
+    backgrounds: overrides.backgrounds.length,
+    greenBackgrounds: overrides.greenBackgrounds.length,
+    overlays: overrides.overlays.length,
+    templates: overrides.templates.length,
+    hasLogo: !!active.logo,
+    hasCharacter: !!active.character
+  });
+  DOM.eventOverridesSummary.textContent = summary === "none" ? "No event-only assets yet." : `Event-only assets: ${summary}`;
   updateEventDependentControls(true);
   updateCurrentEventAssetsPanel();
 }
@@ -6385,6 +6651,7 @@ function updateCurrentEventAssetsPanel(theme = null) {
     DOM.currentEventAssetsSummary.textContent = "Event-only assets: none";
     DOM.currentThemeAssetsSummary.textContent = "Theme assets: none";
     if (DOM.eventGalleryLink) DOM.eventGalleryLink.textContent = "Select an event to enable gallery link.";
+    syncEventSetupEditor();
     return;
   }
   updateEventDependentControls(true);
@@ -6395,60 +6662,36 @@ function updateCurrentEventAssetsPanel(theme = null) {
   DOM.currentEventTheme.textContent = (themeObj && themeObj.name) ? themeObj.name : (eventThemeKey || "None");
 
   const overrides = getActiveEventOverrides();
-  const eventParts = [];
-  if (overrides.backgrounds.length) eventParts.push(`${overrides.backgrounds.length} background${overrides.backgrounds.length === 1 ? "" : "s"}`);
-  if (overrides.greenBackgrounds.length) eventParts.push(`${overrides.greenBackgrounds.length} green BG${overrides.greenBackgrounds.length === 1 ? "" : "s"}`);
-  if (overrides.overlays.length) eventParts.push(`${overrides.overlays.length} overlay${overrides.overlays.length === 1 ? "" : "s"}`);
-  if (overrides.templates.length) eventParts.push(`${overrides.templates.length} template${overrides.templates.length === 1 ? "" : "s"}`);
-  DOM.currentEventAssetsSummary.textContent = eventParts.length ? `Event-only assets: ${eventParts.join(", ")}` : "Event-only assets: none";
+  const eventSummary = describeAssetSummaryCounts({
+    backgrounds: overrides.backgrounds.length,
+    greenBackgrounds: overrides.greenBackgrounds.length,
+    overlays: overrides.overlays.length,
+    templates: overrides.templates.length,
+    hasLogo: !!active.logo,
+    hasCharacter: !!active.character
+  });
+  DOM.currentEventAssetsSummary.textContent = `Event-only assets: ${eventSummary}`;
 
   const baseBackgrounds = themeObj ? getBaseBackgroundList(themeObj) : [];
   const baseGreen = Array.isArray(themeObj && themeObj.greenBackgrounds) ? themeObj.greenBackgrounds.filter(Boolean) : [];
   const baseOverlays = themeObj ? getBaseOverlayList(themeObj) : [];
   const baseTemplates = themeObj ? getBaseTemplateList(themeObj) : [];
-  const baseParts = [];
-  if (baseBackgrounds.length) baseParts.push(`${baseBackgrounds.length} background${baseBackgrounds.length === 1 ? "" : "s"}`);
-  if (baseGreen.length) baseParts.push(`${baseGreen.length} green BG${baseGreen.length === 1 ? "" : "s"}`);
-  if (baseOverlays.length) baseParts.push(`${baseOverlays.length} overlay${baseOverlays.length === 1 ? "" : "s"}`);
-  if (baseTemplates.length) baseParts.push(`${baseTemplates.length} template${baseTemplates.length === 1 ? "" : "s"}`);
-  if (themeObj && themeObj.logo) baseParts.push("logo");
-  if (themeObj && themeObj.character) baseParts.push("character");
-  DOM.currentThemeAssetsSummary.textContent = baseParts.length ? `Theme assets: ${baseParts.join(", ")}` : "Theme assets: none";
+  const themeSummary = describeAssetSummaryCounts({
+    backgrounds: baseBackgrounds.length,
+    greenBackgrounds: baseGreen.length,
+    overlays: baseOverlays.length,
+    templates: baseTemplates.length,
+    hasLogo: !!(themeObj && themeObj.logo),
+    hasCharacter: !!(themeObj && themeObj.character)
+  });
+  DOM.currentThemeAssetsSummary.textContent = `Theme assets: ${themeSummary}`;
+  syncEventSetupEditor(themeObj);
 }
 
 async function handleEventOnlyAssetInput(kind, fileList) {
   const active = getActiveEvent();
   if (!active) {
-    const target = getSelectedThemeTarget();
-    if (!target) {
-      alert("Select a theme first.");
-      return;
-    }
-    if (!fileList || fileList.length === 0) return;
-    const files = Array.from(fileList);
-    const tasks = files.map(async (file) => {
-      const url = await uploadAsset(file, kind);
-      if (!url) return;
-      if (kind === "templates") {
-        if (!Array.isArray(target.templates)) target.templates = [];
-        target.templates.push({ src: url, layout: "double_column" });
-      } else if (kind === "overlays") {
-        if (!Array.isArray(target.overlays)) target.overlays = [];
-        target.overlays.push(url);
-      } else if (kind === "backgrounds") {
-        if (Array.isArray(target.backgrounds)) target.backgrounds.push(url);
-        else if (target.background) { target.backgrounds = [target.background, url]; delete target.backgroundIndex; }
-        else target.background = url;
-      } else if (kind === "greenBackgrounds") {
-        if (!Array.isArray(target.greenBackgrounds)) target.greenBackgrounds = [];
-        target.greenBackgrounds.push(url);
-      }
-    });
-    await Promise.all(tasks);
-    saveThemesToStorage();
-    loadTheme(DOM.eventSelect && DOM.eventSelect.value);
-    syncThemeEditorWithActiveTheme();
-    showToast('Added to current theme');
+    alert("Create or select an event first.");
     return;
   }
   if (!fileList || fileList.length === 0) return;
@@ -6463,6 +6706,8 @@ async function handleEventOnlyAssetInput(kind, fileList) {
       overrides.overlays.push(url);
     } else if (kind === "backgrounds") {
       overrides.backgrounds.push(url);
+    } else if (kind === "greenBackgrounds") {
+      overrides.greenBackgrounds.push(url);
     }
   });
   await Promise.all(tasks);
@@ -6471,6 +6716,21 @@ async function handleEventOnlyAssetInput(kind, fileList) {
   if (kind === "templates" && DOM.eventOnlyTemplates) DOM.eventOnlyTemplates.value = "";
   if (kind === "overlays" && DOM.eventOnlyOverlays) DOM.eventOnlyOverlays.value = "";
   if (kind === "backgrounds" && DOM.eventOnlyBackgrounds) DOM.eventOnlyBackgrounds.value = "";
+  renderOptions();
+}
+
+async function handleEventSingleAssetInput(kind, fileList) {
+  const active = getActiveEvent();
+  if (!active) {
+    alert("Create or select an event first.");
+    return;
+  }
+  const file = fileList && fileList[0];
+  if (!file) return;
+  const url = await uploadAsset(file, kind);
+  if (!url) return;
+  if (kind === "logo") updateActiveEventDetails({ logo: url });
+  if (kind === "character") updateActiveEventDetails({ character: url });
   renderOptions();
 }
 
@@ -7047,10 +7307,10 @@ function saveTheme() {
     overlays: [],
     templates: [],
     welcome: {
-      title: DOM.themeWelcomeTitle.value || "Welcome!",
+      title: DOM.themeWelcomeTitle ? DOM.themeWelcomeTitle.value : "Welcome!",
       portrait: "",
       landscape: "",
-      prompt: DOM.themeWelcomePrompt.value || "Touch to start"
+      prompt: DOM.themeWelcomePrompt ? DOM.themeWelcomePrompt.value : "Touch to start"
     }
   };
 
@@ -8867,6 +9127,23 @@ function createSubThemeFromEvent() {
     baseTemplates.forEach((t) => pushTemplate(t));
     newTheme.templates = mergedTemplates;
   }
+  if (active.logo) newTheme.logo = active.logo;
+  if (active.character) newTheme.character = active.character;
+  if (typeof active.bannerText === "string" && active.bannerText) newTheme.bannerText = active.bannerText;
+  if (typeof active.welcomeTitle === "string" && active.welcomeTitle) {
+    newTheme.welcome = newTheme.welcome || {};
+    newTheme.welcome.title = active.welcomeTitle;
+  }
+  if (typeof active.startButtonText === "string" && active.startButtonText) {
+    newTheme.welcome = newTheme.welcome || {};
+    newTheme.welcome.prompt = active.startButtonText;
+  }
+  if (typeof active.captureLabel === "string" && active.captureLabel) newTheme.captureLabel = active.captureLabel;
+  if (typeof active.bannerSize === "number" && active.bannerSize > 0) newTheme.bannerSize = active.bannerSize;
+  if (typeof active.welcomeTitleSize === "number" && active.welcomeTitleSize > 0) newTheme.welcomeTitleSize = active.welcomeTitleSize;
+  if (typeof active.characterX === "number") newTheme.characterX = active.characterX;
+  if (typeof active.characterBottom === "number") newTheme.characterBottom = active.characterBottom;
+  if (typeof active.characterHeight === "number") newTheme.characterHeight = active.characterHeight;
 
   if (bucket) parent[bucket][slug] = newTheme;
   else themes[slug] = newTheme;
@@ -8943,6 +9220,8 @@ function fitWelcomeTitleToViewport() {
 }
 
 function getBannerSize(theme) {
+  const active = getActiveEvent();
+  if (active && typeof active.bannerSize === "number" && active.bannerSize > 0) return active.bannerSize;
   if (theme && typeof theme.bannerSize === "number" && theme.bannerSize > 0) return theme.bannerSize;
   return 64;
 }
@@ -9015,8 +9294,7 @@ function isPreviewEditing(node) {
 
 function resolveBannerText() {
   const active = getActiveEvent();
-  const eventText = active && typeof active.bannerText === "string" ? normalizeBannerText(active.bannerText) : "";
-  if (eventText) return eventText;
+  if (hasOwnEventTextValue(active, "bannerText")) return normalizeBannerText(active.bannerText);
   return resolveThemeBannerText();
 }
 
@@ -9039,9 +9317,7 @@ function resolveThemeBannerText() {
 
 function resolveCaptureLabel() {
   const active = getActiveEvent();
-  if (active && typeof active.captureLabel === "string" && active.captureLabel.trim()) {
-    return active.captureLabel.trim();
-  }
+  if (hasOwnEventTextValue(active, "captureLabel")) return active.captureLabel.trim();
   return resolveThemeCaptureLabel();
 }
 
@@ -9059,17 +9335,13 @@ function resolveThemeCaptureLabel() {
 
 function resolveWelcomeTitle() {
   const active = getActiveEvent();
-  if (active && typeof active.welcomeTitle === "string" && active.welcomeTitle.trim()) {
-    return active.welcomeTitle.trim();
-  }
+  if (hasOwnEventTextValue(active, "welcomeTitle")) return active.welcomeTitle.trim();
   return resolveThemeWelcomeTitle();
 }
 
 function resolveStartButtonText() {
   const active = getActiveEvent();
-  if (active && typeof active.startButtonText === "string" && active.startButtonText.trim()) {
-    return active.startButtonText.trim();
-  }
+  if (hasOwnEventTextValue(active, "startButtonText")) return active.startButtonText.trim();
   return resolveThemeStartButtonText();
 }
 
@@ -9381,13 +9653,15 @@ function applyThemeBasicsFromEditor(target) {
   }
   target.font = composeFontString(picker.body || picker.heading || primaryFontFamily(target.font || '') || 'Comic Neue');
   target.welcome = target.welcome || {};
-  target.welcome.title = valueFromInput(DOM.themeWelcomeTitle) || target.welcome.title || '';
-  target.welcome.prompt = valueFromInput(DOM.themeWelcomePrompt) || target.welcome.prompt || '';
+  if (DOM.themeWelcomeTitle) target.welcome.title = DOM.themeWelcomeTitle.value;
+  else if (typeof target.welcome.title !== "string") target.welcome.title = "";
+  if (DOM.themeWelcomePrompt) target.welcome.prompt = DOM.themeWelcomePrompt.value;
+  else if (typeof target.welcome.prompt !== "string") target.welcome.prompt = "";
 }
 
 function applyThemeCharacter(theme) {
   if (!DOM.character) return;
-  const src = theme && theme.character ? theme.character : '';
+  const src = resolveEventCharacter(theme);
   if (src) {
     DOM.character.src = withBust(src);
     DOM.character.classList.remove("hidden");
@@ -9397,10 +9671,29 @@ function applyThemeCharacter(theme) {
   }
 }
 
+function resolveEventLogo(theme) {
+  const active = getActiveEvent();
+  if (active && typeof active.logo === "string" && active.logo) return active.logo;
+  return (theme && theme.logo) ? theme.logo : "";
+}
+
+function resolveEventCharacter(theme) {
+  const active = getActiveEvent();
+  if (active && typeof active.character === "string" && active.character) return active.character;
+  return (theme && theme.character) ? theme.character : "";
+}
+
 function getCharacterPosition(theme) {
-  const left = (theme && typeof theme.characterX === "number") ? theme.characterX : 12;
-  const bottom = (theme && typeof theme.characterBottom === "number") ? theme.characterBottom : 0;
-  const height = (theme && typeof theme.characterHeight === "number") ? theme.characterHeight : 75;
+  const active = getActiveEvent();
+  const left = (active && typeof active.characterX === "number")
+    ? active.characterX
+    : ((theme && typeof theme.characterX === "number") ? theme.characterX : 12);
+  const bottom = (active && typeof active.characterBottom === "number")
+    ? active.characterBottom
+    : ((theme && typeof theme.characterBottom === "number") ? theme.characterBottom : 0);
+  const height = (active && typeof active.characterHeight === "number")
+    ? active.characterHeight
+    : ((theme && typeof theme.characterHeight === "number") ? theme.characterHeight : 75);
   return {
     left: Math.min(60, Math.max(0, left)),
     bottom: Math.min(20, Math.max(-10, bottom)),
@@ -9423,11 +9716,20 @@ function applyCharacterPosition(theme) {
 
 function setupCharacterPositionControls() {
   const update = () => {
-    const target = activeTheme || getSelectedThemeTarget();
-    if (!target) return;
+    const active = getActiveEvent();
     const left = DOM.characterXInput ? parseInt(DOM.characterXInput.value, 10) : NaN;
     const bottom = DOM.characterBottomInput ? parseInt(DOM.characterBottomInput.value, 10) : NaN;
     const height = DOM.characterHeightInput ? parseInt(DOM.characterHeightInput.value, 10) : NaN;
+    if (active) {
+      updateActiveEventDetails({
+        characterX: Number.isFinite(left) ? left : active.characterX,
+        characterBottom: Number.isFinite(bottom) ? bottom : active.characterBottom,
+        characterHeight: Number.isFinite(height) ? height : active.characterHeight
+      });
+      return;
+    }
+    const target = activeTheme || getSelectedThemeTarget();
+    if (!target) return;
     if (Number.isFinite(left)) target.characterX = left;
     if (Number.isFinite(bottom)) target.characterBottom = bottom;
     if (Number.isFinite(height)) target.characterHeight = height;

@@ -27,6 +27,12 @@ async function loadGetEventTextOverrides() {
   return mod.getEventTextOverrides;
 }
 
+async function loadBuildEventFromThemeDefaults() {
+  const moduleUrl = pathToFileURL(join(process.cwd(), "scripts/event-utils.mjs"));
+  const mod = await import(moduleUrl.href);
+  return mod.buildEventFromThemeDefaults;
+}
+
 async function loadHasEventTextOverrides() {
   const moduleUrl = pathToFileURL(join(process.cwd(), "scripts/event-utils.mjs"));
   const mod = await import(moduleUrl.href);
@@ -106,6 +112,50 @@ test("hasEventTextOverrides detects non-empty override values", async () => {
   assert.equal(hasEventTextOverrides({}), false);
   assert.equal(hasEventTextOverrides({ bannerText: "Party" }), true);
   assert.equal(hasEventTextOverrides({ welcomeTitleSize: 48 }), true);
+});
+
+test("buildEventFromThemeDefaults snapshots theme text and sizing into a new event", async () => {
+  const buildEventFromThemeDefaults = await loadBuildEventFromThemeDefaults();
+  const event = buildEventFromThemeDefaults({
+    bannerText: "Party Time",
+    welcomeTitleSize: 62,
+    bannerSize: 74,
+    captureLabel: "Snap It",
+    characterX: 18,
+    characterBottom: 4,
+    characterHeight: 82,
+    fontHeading: "'Playfair Display', serif",
+    fontBody: "'Lora', serif",
+    welcome: {
+      title: "Welcome Friends",
+      prompt: "Touch to begin"
+    }
+  }, {
+    id: "event-1",
+    name: "Launch Party"
+  });
+
+  assert.equal(event.id, "event-1");
+  assert.equal(event.name, "Launch Party");
+  assert.equal(event.bannerText, "Party Time");
+  assert.equal(event.welcomeTitle, "Welcome Friends");
+  assert.equal(event.startButtonText, "Touch to begin");
+  assert.equal(event.captureLabel, "Snap It");
+  assert.equal(event.bannerSize, 74);
+  assert.equal(event.welcomeTitleSize, 62);
+  assert.equal(event.characterX, 18);
+  assert.equal(event.characterBottom, 4);
+  assert.equal(event.characterHeight, 82);
+  assert.equal(event.fontHeading, "'Playfair Display', serif");
+  assert.equal(event.fontBody, "'Lora', serif");
+  assert.deepEqual(event.overrides, {
+    backgrounds: [],
+    overlays: [],
+    templates: [],
+    backgroundIndex: 0,
+    greenBackgrounds: [],
+    greenBackgroundIndex: 0
+  });
 });
 
 test("normalizeEventStyle collapses aliases to supported setup styles", async () => {
