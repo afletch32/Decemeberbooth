@@ -58,3 +58,65 @@ test("resolveTemplateTextRect converts percentage-based fields into canvas pixel
 
   assert.deepEqual(rect, { x: 120, y: 360, w: 600, h: 270 });
 });
+
+test("validateCreatePathEventDetails requires names and date for weddings", async () => {
+  const { validateCreatePathEventDetails } = await loadTemplateTextUtils();
+
+  assert.deepEqual(
+    validateCreatePathEventDetails("wedding", {
+      partner1: "Alex",
+      partner2: "",
+      date: "June 14, 2026",
+    }),
+    {
+      ok: false,
+      message: "Enter both partner names for a wedding event.",
+    }
+  );
+
+  assert.deepEqual(
+    validateCreatePathEventDetails("wedding", {
+      partner1: "Alex",
+      partner2: "Jordan",
+      date: "",
+    }),
+    {
+      ok: false,
+      message: "Enter the wedding date.",
+    }
+  );
+});
+
+test("validateCreatePathEventDetails requires name and date for birthdays", async () => {
+  const { validateCreatePathEventDetails } = await loadTemplateTextUtils();
+
+  assert.deepEqual(
+    validateCreatePathEventDetails("birthday", {
+      birthdayName: "",
+      date: "April 27, 2026",
+    }),
+    {
+      ok: false,
+      message: "Enter the birthday name.",
+    }
+  );
+
+  assert.deepEqual(
+    validateCreatePathEventDetails("birthday", {
+      birthdayName: "Maddie",
+      date: "",
+    }),
+    {
+      ok: false,
+      message: "Enter the birthday date.",
+    }
+  );
+
+  assert.deepEqual(
+    validateCreatePathEventDetails("birthday", {
+      birthdayName: "Maddie",
+      date: "April 27, 2026",
+    }),
+    { ok: true, message: "" }
+  );
+});

@@ -131,3 +131,43 @@ export function resolveTemplateTextRect(field, width, height) {
     h: Math.round(normalized.hPct * height),
   };
 }
+
+export function validateCreatePathEventDetails(style, details = {}) {
+  const normalizedStyle = normalizeKey(style);
+  const partner1 = cleanText(details.partner1);
+  const partner2 = cleanText(details.partner2);
+  const birthdayName = cleanText(details.birthdayName);
+  const date = cleanText(details.date);
+
+  if (normalizedStyle === "wedding") {
+    if (!partner1 || !partner2) {
+      return {
+        ok: false,
+        message: "Enter both partner names for a wedding event.",
+      };
+    }
+    if (!date) {
+      return {
+        ok: false,
+        message: "Enter the wedding date.",
+      };
+    }
+  }
+
+  if (normalizedStyle === "birthday") {
+    if (!birthdayName) {
+      return {
+        ok: false,
+        message: "Enter the birthday name.",
+      };
+    }
+    if (!date) {
+      return {
+        ok: false,
+        message: "Enter the birthday date.",
+      };
+    }
+  }
+
+  return { ok: true, message: "" };
+}

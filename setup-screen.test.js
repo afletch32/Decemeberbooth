@@ -94,6 +94,14 @@ test("setup flow is theme-first and quick start is a demo action", () => {
     appScript.includes("date: dateValue,"),
     "new events should persist the date entered during the fast create flow"
   );
+  assert.ok(
+    appScript.includes("validateCreatePathEventDetails(eventType, {"),
+    "create flow should validate required reusable event details before saving"
+  );
+  assert.ok(
+    appScript.includes("alert(detailValidation.message);"),
+    "validation failures should be shown immediately in the fast create flow"
+  );
 });
 
 test("demo booth mode showcases wedding, birthday, and general looks", () => {

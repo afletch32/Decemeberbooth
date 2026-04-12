@@ -20,6 +20,7 @@ import {
   normalizeTemplateTextFields,
   resolveTemplateTextRect,
   resolveTemplateTextValue,
+  validateCreatePathEventDetails,
 } from "./template-text-utils.mjs";
 import { formatRecordingTime } from "./recording-utils.mjs";
 import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
@@ -1604,6 +1605,19 @@ async function createEventFromPathInputs() {
     ? pairingValue.split("|")
     : ["", ""];
   const dateValue = valueFromInput(DOM.createPathEventDate);
+  const partner1 = valueFromInput(DOM.createPathPartner1);
+  const partner2 = valueFromInput(DOM.createPathPartner2);
+  const birthdayName = valueFromInput(DOM.createPathBirthdayName);
+  const detailValidation = validateCreatePathEventDetails(eventType, {
+    partner1,
+    partner2,
+    birthdayName,
+    date: dateValue,
+  });
+  if (!detailValidation.ok) {
+    alert(detailValidation.message);
+    return;
+  }
   const slug = slugifyEventText(name);
   const id = `${slug || "event"}-${Date.now().toString(36)}`;
   const newEvent = buildEventFromThemeDefaults(theme, {
@@ -1614,9 +1628,9 @@ async function createEventFromPathInputs() {
     themeKey,
     fontHeading,
     fontBody,
-    partner1: valueFromInput(DOM.createPathPartner1),
-    partner2: valueFromInput(DOM.createPathPartner2),
-    birthdayName: valueFromInput(DOM.createPathBirthdayName),
+    partner1,
+    partner2,
+    birthdayName,
     expoCompany: valueFromInput(DOM.createPathExpoCompany),
     createdAt: new Date().toISOString(),
   });

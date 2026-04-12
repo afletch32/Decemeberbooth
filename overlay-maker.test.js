@@ -114,6 +114,10 @@ test("overlay builder supports a built-in graphic library and custom PNG uploads
     "builder preview should show reusable autofill content"
   );
   assert.ok(
+    overlayMaker.includes('option value="event_date"'),
+    "builder should let any reusable overlay include the event date"
+  );
+  assert.ok(
     overlayMaker.includes("splitFooterZones(zone)"),
     "builder should split footer space when multiple autofill fields are configured"
   );
