@@ -89,6 +89,18 @@ test("overlay builder supports a built-in graphic library and custom PNG uploads
     overlayMaker.includes("function drawGraphicImage(ctx, image, x, y, size) {"),
     "graphics should render as images on the canvas"
   );
+  assert.ok(
+    overlayMaker.includes('id="uploadCloudinaryButton"'),
+    "builder should offer direct Cloudinary upload"
+  );
+  assert.ok(
+    overlayMaker.includes('localStorage.getItem("cloudinaryCloudName")'),
+    "builder should reuse saved booth Cloudinary settings"
+  );
+  assert.ok(
+    overlayMaker.includes('https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload'),
+    "builder should upload PNG exports directly to Cloudinary"
+  );
 });
 
 test("overlay builder navigation and markup avoid known broken states", () => {

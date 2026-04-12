@@ -516,9 +516,18 @@
               <button class="btn-primary" id="downloadButton">
                 Download PNG
               </button>
+              <button class="btn-primary" id="uploadCloudinaryButton">
+                Upload to Cloudinary
+              </button>
               <button class="btn-secondary" id="copyManifestButton">
                 Copy Manifest
               </button>
+              <div
+                id="cloudinaryUploadStatus"
+                style="font-size: 11px; color: #8a7f8e; margin-top: 2px"
+              >
+                Cloudinary upload is ready when booth settings are configured.
+              </div>
               <button class="btn-secondary" id="resetButton">Reset</button>
             </div>
           </div>
@@ -860,6 +869,24 @@
         toast.classList.add("show");
         clearTimeout(toast._timer);
         toast._timer = setTimeout(() => toast.classList.remove("show"), 2200);
+      }
+
+      function getCloudinaryConfig() {
+        const cloud = localStorage.getItem("cloudinaryCloudName") || "";
+        const preset = localStorage.getItem("cloudinaryUploadPreset") || "";
+        const folderBase = localStorage.getItem("cloudinaryFolderBase") || "photobooth/events";
+        const use = (localStorage.getItem("cloudinaryUse") || "").toString() !== "false";
+        return { cloud, preset, folderBase, use };
+      }
+
+      function getCloudinaryUploadFolder(layoutType) {
+        const cfg = getCloudinaryConfig();
+        const folder = getAssetFolder(layoutType);
+        return `${(cfg.folderBase || "photobooth/events").replace(/\/+$/g, "")}/layout-builder/${folder}`;
+      }
+
+      function updateCloudinaryUploadStatus(message) {
+        $("cloudinaryUploadStatus").textContent = message;
       }
 
       function updateInfo() {
@@ -1253,6 +1280,60 @@
         }, "image/png");
       }
 
+      async function uploadToCloudinary() {
+        const guide = getGuide();
+        const layoutType = getLayoutType();
+        const cfg = getCloudinaryConfig();
+        if (!cfg.cloud || !cfg.preset || !cfg.use) {
+          updateCloudinaryUploadStatus("Set Cloudinary in booth admin before uploading.");
+          showToast("Cloudinary is not configured.");
+          return;
+        }
+        const exportCanvas = $("exportCanvas");
+        exportCanvas.width = guide.w;
+        exportCanvas.height = guide.h;
+        const ctx = exportCanvas.getContext("2d");
+        const graphicImage = await resolveSelectedGraphicImage();
+        drawCanvas(
+          ctx,
+          guide.w,
+          guide.h,
+          $("includeGuide").checked,
+          graphicImage
+        );
+
+        updateCloudinaryUploadStatus("Uploading to Cloudinary...");
+        exportCanvas.toBlob(async (blob) => {
+          if (!blob) {
+            updateCloudinaryUploadStatus("Export failed before upload.");
+            showToast("Export failed.");
+            return;
+          }
+          const form = new FormData();
+          const filename = getFilename();
+          form.append("file", new File([blob], filename, { type: "image/png" }));
+          form.append("upload_preset", cfg.preset);
+          form.append("folder", getCloudinaryUploadFolder(layoutType));
+          try {
+            const resp = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`, {
+              method: "POST",
+              body: form,
+            });
+            const json = await resp.json();
+            if (!json || !json.secure_url) {
+              updateCloudinaryUploadStatus("Cloudinary upload failed.");
+              showToast("Cloudinary upload failed.");
+              return;
+            }
+            updateCloudinaryUploadStatus(json.secure_url);
+            showToast("Uploaded to Cloudinary");
+          } catch (_error) {
+            updateCloudinaryUploadStatus("Cloudinary upload failed.");
+            showToast("Cloudinary upload failed.");
+          }
+        }, "image/png");
+      }
+
       function copyManifest() {
         navigator.clipboard
           .writeText($("manifestEntry").textContent)
@@ -1354,6 +1435,7 @@
       });
 
       $("downloadButton").addEventListener("click", exportPNG);
+      $("uploadCloudinaryButton").addEventListener("click", uploadToCloudinary);
       $("copyManifestButton").addEventListener("click", copyManifest);
       $("resetButton").addEventListener("click", resetAll);
       $("backButton").addEventListener("click", goBackToBoothAdmin);
