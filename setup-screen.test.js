@@ -46,6 +46,70 @@ test("setup section state updates button and panel accessibility attributes", ()
   );
 });
 
+test("setup flow is theme-first and quick start is a demo action", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes('id="quickStartBtn">Demo Booth Now</button>'),
+    "quick start should read as a one-tap booth demo action"
+  );
+  assert.ok(
+    html.includes('<label for="createPathEventType">Theme Filter (optional)</label>'),
+    "create flow should present event type as an optional theme filter"
+  );
+  assert.ok(
+    html.includes('<option value="all">All Themes</option>'),
+    "create flow should allow browsing all themes without picking a type first"
+  );
+  assert.ok(
+    appScript.includes('DOM.createPathEventType.value = "all";'),
+    "create flow should default to showing all themes"
+  );
+  assert.ok(
+    appScript.includes('const selectedType = inferThemeEventStyle(themeKey, theme);'),
+    "font suggestions should follow the selected theme"
+  );
+  assert.ok(
+    appScript.includes('const eventType = inferThemeEventStyle(themeKey, theme);'),
+    "new events should infer their type from the chosen theme"
+  );
+});
+
+test("demo booth mode showcases wedding, birthday, and general looks", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes('id="demoThemeBar" class="demo-theme-bar"'),
+    "welcome screen should expose a dedicated demo theme switcher"
+  );
+  assert.ok(
+    html.includes('data-demo-theme="wedding"'),
+    "demo theme switcher should include a wedding showcase"
+  );
+  assert.ok(
+    html.includes('data-demo-theme="birthday"'),
+    "demo theme switcher should include a birthday showcase"
+  );
+  assert.ok(
+    html.includes('data-demo-theme="general"'),
+    "demo theme switcher should include a general showcase"
+  );
+  assert.ok(
+    appScript.includes('const SHOWCASE_DEMO_THEME_CANDIDATES = {'),
+    "app should define curated showcase demo themes"
+  );
+  assert.ok(
+    appScript.includes('function startShowcaseDemo()'),
+    "demo button should launch a curated showcase flow"
+  );
+  assert.ok(
+    appScript.includes('cycleShowcaseDemoTheme();'),
+    "showcase demo should rotate to the next look on idle return"
+  );
+});
+
 test("event setup owns the day-to-day event editing controls", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");

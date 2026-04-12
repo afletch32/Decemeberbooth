@@ -168,6 +168,42 @@ app.put('/api/themes', (req, res) => {
   }
 });
 
+// API: GET /api/events
+app.get('/api/events', (req, res) => {
+  try {
+    const events = readJsonFile('events.json', { events: [], activeEventId: '' });
+    if (Array.isArray(events)) {
+      res.json({ events, activeEventId: '' });
+      return;
+    }
+    res.json({
+      events: Array.isArray(events.events) ? events.events : [],
+      activeEventId: typeof events.activeEventId === 'string' ? events.activeEventId : ''
+    });
+  } catch (err) {
+    console.error('Error reading events:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API: PUT /api/events
+app.put('/api/events', (req, res) => {
+  try {
+    const data = req.body;
+    const payload = Array.isArray(data)
+      ? { events: data, activeEventId: '' }
+      : {
+          events: Array.isArray(data && data.events) ? data.events : [],
+          activeEventId: typeof (data && data.activeEventId) === 'string' ? data.activeEventId : ''
+        };
+    writeJsonFile('events.json', payload);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error saving events:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // API: POST /api/upload (file upload)
 app.post('/api/upload', upload.single('file'), (req, res) => {
   try {
@@ -247,6 +283,7 @@ function startServer(port = PORT, host = HOST) {
     console.log('✅ API Endpoints:');
     console.log('   GET/PUT  /api/fonts');
     console.log('   GET/PUT  /api/themes');
+    console.log('   GET/PUT  /api/events');
     console.log('   POST     /api/upload');
     console.log('   DELETE   /api/upload');
     console.log('');

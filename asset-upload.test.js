@@ -37,3 +37,16 @@ test("asset migration UI is exposed from the Cloudinary settings section", () =>
     "the migration workflow should be exported for inline button handlers"
   );
 });
+
+test("quick start uploads use a QS(date) Cloudinary folder", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes('return date ? `QS(${date})` : "";'),
+    "quick start sessions should format their folder label as QS(date)"
+  );
+  assert.ok(
+    appScript.includes('if (quickStartFolder) return `${base}/${quickStartFolder}`;'),
+    "quick start capture uploads should write into their dedicated QS(date) folder"
+  );
+});

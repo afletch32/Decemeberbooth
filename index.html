@@ -1889,6 +1889,37 @@
       box-shadow: 0 22px 40px rgba(121, 183, 172, 0.22);
     }
 
+    .demo-theme-bar {
+      display: none;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      width: min(100%, 560px);
+      position: relative;
+      z-index: 2;
+    }
+
+    .demo-theme-bar.show {
+      display: grid;
+    }
+
+    .demo-theme-chip {
+      min-height: 52px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.38);
+      background: rgba(17, 17, 17, 0.34);
+      color: #f7fffc;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      box-shadow: 0 12px 28px rgba(17, 17, 17, 0.12);
+    }
+
+    .demo-theme-chip.active {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(222, 250, 244, 0.92));
+      color: #111111;
+      border-color: rgba(255, 255, 255, 0.72);
+    }
+
     #countdownOverlay {
       position: absolute;
       inset: 0;
@@ -4083,6 +4114,14 @@
         padding: 13px 18px;
       }
 
+      .demo-theme-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .demo-theme-chip {
+        min-height: 48px;
+      }
+
       #captureBtn.primary {
         width: min(100%, 220px);
         height: 84px;
@@ -4122,7 +4161,7 @@
 <body>
   <div id="adminScreen">
     <h1 class="admin-title">Photobooth Setup</h1>
-    <p class="admin-subtitle">Set the event vibe, confirm capture settings, and launch a booth that looks camera-ready from the first screen.</p>
+    <p class="admin-subtitle">Choose a theme, confirm capture settings, and launch a booth that looks camera-ready from the first screen.</p>
     <div class="setup-status" id="setupStatus">
       <div class="status-pill">Camera: <strong id="statusCamera">Not Started</strong></div>
       <div class="status-pill">Uploads: <strong id="statusUpload">Checking</strong></div>
@@ -4130,7 +4169,7 @@
       <div class="status-pill">Queue: <strong id="statusQueue">0 Pending</strong></div>
     </div>
     <div class="btn-row admin-actions">
-      <button type="button" id="quickStartBtn">Quick Start Now</button>
+      <button type="button" id="quickStartBtn">Demo Booth Now</button>
       <button type="button" id="startBoothButton" class="start-booth-hero">Start Booth</button>
     </div>
     <div class="capture-mode-bar">
@@ -4159,15 +4198,15 @@
               <button type="button" id="eventPathCreateBtn">Path 1: Create Event</button>
               <button type="button" id="eventPathSelectBtn">Path 2: Existing Event</button>
             </div>
-            <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Path 1 is for fast event setup. Path 2 is only for loading something you already made.</p>
+            <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Path 1 is for fast setup from a theme. Path 2 is only for loading something you already made.</p>
             <div class="panel hidden" id="eventPathCreatePanel" style="margin-bottom:10px;">
               <h3 style="margin:0 0 6px;">Path 1: Create New Event</h3>
-              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Create a new event from a theme. The theme stays reusable, and this event gets its own editable setup after creation.</p>
+              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Create a new event from a theme. Pick the look first, then fine-tune the event after creation.</p>
               <label for="createPathEventName">Event Name</label>
               <input type="text" id="createPathEventName" placeholder="e.g., Winter Gala 2026">
-              <label for="createPathEventType">Event Type</label>
+              <label for="createPathEventType">Theme Filter (optional)</label>
               <select id="createPathEventType">
-                <option value="general">General</option>
+                <option value="all">All Themes</option>
                 <option value="wedding">Wedding</option>
                 <option value="expo">Expo</option>
                 <option value="party">Party</option>
@@ -4182,7 +4221,7 @@
               <select id="createPathThemeSelect"></select>
               <label for="createPathFontPairingSelect" class="hidden" aria-hidden="true">Choose Font Pairing</label>
               <select id="createPathFontPairingSelect" class="hidden" aria-hidden="true"></select>
-              <p id="createPathFontNote" style="margin:0; color:#9aa; font-size:0.9em;">Five suggested pairings will appear based on the event type.</p>
+              <p id="createPathFontNote" style="margin:0; color:#9aa; font-size:0.9em;">Theme-based font suggestions will update when you choose a theme.</p>
               <div id="createPathFontPreviewCards" class="event-style-cards"></div>
               <label for="createPathBackgrounds">Backgrounds</label>
               <input type="file" id="createPathBackgrounds" accept="image/*" multiple>
@@ -4877,6 +4916,11 @@
       <div id="welcomeOverlay" onclick="beginWelcome(event)">
         <h1 id="welcomeTitle">🎃 Happy Halloween!</h1>
         <button id="startButton" type="button" class="start-button" onclick="beginWelcome(event)">Touch to start</button>
+        <div id="demoThemeBar" class="demo-theme-bar">
+          <button type="button" class="demo-theme-chip" data-demo-theme="wedding">Wedding Demo</button>
+          <button type="button" class="demo-theme-chip" data-demo-theme="birthday">Birthday Demo</button>
+          <button type="button" class="demo-theme-chip" data-demo-theme="general">General Demo</button>
+        </div>
       </div>
     </div>
   </div>

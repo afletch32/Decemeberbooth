@@ -18,8 +18,13 @@ function withTempEnv(fn) {
   };
 }
 
+function loadServerModule() {
+  delete require.cache[require.resolve("./server")];
+  return require("./server");
+}
+
 async function startTempServer(t) {
-  const { startServer } = require("./server");
+  const { startServer } = loadServerModule();
   const server = startServer(0, "127.0.0.1");
   const waitForServer = new Promise((resolve, reject) => {
     server.once("listening", resolve);
@@ -52,7 +57,7 @@ async function uploadFixture(port, contents = "hello", name = "greeting.txt") {
 }
 
 test("uploads are stored and served via /api/upload", withTempEnv(async (_tmp, t) => {
-  const { UPLOADS_DIR } = require("./server");
+  const { UPLOADS_DIR } = loadServerModule();
   const server = await startTempServer(t);
   if (!server) return;
   try {
@@ -66,7 +71,7 @@ test("uploads are stored and served via /api/upload", withTempEnv(async (_tmp, t
 }));
 
 test("resolveUploadFilepath only accepts direct /uploads references", withTempEnv(async () => {
-  const { resolveUploadFilepath, UPLOADS_DIR } = require("./server");
+  const { resolveUploadFilepath, UPLOADS_DIR } = loadServerModule();
   assert.equal(
     resolveUploadFilepath("/uploads/test.png"),
     path.join(UPLOADS_DIR, "test.png")
@@ -81,7 +86,7 @@ test("resolveUploadFilepath only accepts direct /uploads references", withTempEn
 }));
 
 test("local uploads can be deleted through /api/upload", withTempEnv(async (_tmp, t) => {
-  const { UPLOADS_DIR } = require("./server");
+  const { UPLOADS_DIR } = loadServerModule();
   const server = await startTempServer(t);
   if (!server) return;
   try {
@@ -98,6 +103,35 @@ test("local uploads can be deleted through /api/upload", withTempEnv(async (_tmp
     const json = await delResp.json();
     assert.equal(json.ok, true);
     await assert.rejects(fs.readFile(path.join(UPLOADS_DIR, upload.filename), "utf8"));
+  } finally {
+    await new Promise((resolve) => server.close(() => resolve()));
+  }
+}));
+
+test("events payloads are stored and loaded via /api/events", withTempEnv(async (_tmp, t) => {
+  const server = await startTempServer(t);
+  if (!server) return;
+  try {
+    const { port } = server.address();
+    const payload = {
+      events: [{ id: "spring-fair-1", name: "Spring Fair", themeKey: "general:basic" }],
+      activeEventId: "spring-fair-1",
+    };
+
+    const putResp = await fetch(`http://127.0.0.1:${port}/api/events`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    assert.equal(putResp.status, 200);
+    const putJson = await putResp.json();
+    assert.equal(putJson.ok, true);
+
+    const getResp = await fetch(`http://127.0.0.1:${port}/api/events`);
+    assert.equal(getResp.status, 200);
+    const getJson = await getResp.json();
+    assert.deepEqual(getJson, payload);
   } finally {
     await new Promise((resolve) => server.close(() => resolve()));
   }

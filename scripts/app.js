@@ -430,6 +430,7 @@ const DOM = {
   quickStartThemeSelect: document.getElementById("quickStartThemeSelect"),
   quickStartCancel: document.getElementById("quickStartCancel"),
   quickStartConfirm: document.getElementById("quickStartConfirm"),
+  demoThemeBar: document.getElementById("demoThemeBar"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
@@ -801,6 +802,8 @@ let removedStack = []; // For undo of removed assets in session
 let toastTimer = null;
 let lastShareUrl = null; // Public share URL served by SW
 let demoMode = false; // Allows running from file:// without camera
+let showcaseDemoActive = false;
+let showcaseDemoCurrentKey = "";
 let captureAspectRatio = null; // Override capture aspect (width/height) when set
 const AUTO_ENHANCE_ENABLED = true;
 const AUTO_ENHANCE_FILTER = 'brightness(1.05) contrast(1.08) saturate(1.08)';
@@ -875,6 +878,11 @@ const GLOBAL_LOGO_STORAGE_KEY = 'photoboothGlobalLogo';
 const THEME_FAVORITES_STORAGE_KEY = "photoboothThemeFavorites";
 const LAST_THEME_KEY_STORAGE = "photoboothLastThemeKey";
 const QUICK_START_SESSION_DATE_KEY = "photoboothQuickStartDate";
+const SHOWCASE_DEMO_THEME_CANDIDATES = {
+  wedding: ["wedding:timeless", "wedding:romantic"],
+  birthday: ["general:birthday"],
+  general: ["general:basic", DEFAULT_THEME_KEY]
+};
 
 function getLocalIsoDate() {
   const now = new Date();
@@ -919,6 +927,72 @@ function clearQuickStartSessionDate() {
   try {
     localStorage.removeItem(QUICK_START_SESSION_DATE_KEY);
   } catch (_) { }
+}
+
+function getShowcaseDemoThemeKey(kind) {
+  const normalized = (kind || "").toString().trim().toLowerCase();
+  const options = Array.from((DOM.eventSelect && DOM.eventSelect.options) || []).filter((opt) => opt && opt.value);
+  const candidates = SHOWCASE_DEMO_THEME_CANDIDATES[normalized] || [];
+  const direct = candidates.find((key) => options.some((opt) => opt.value === key));
+  if (direct) return direct;
+  const inferred = options.find((opt) => inferThemeEventStyle(opt.value, resolveThemeByKey(opt.value)) === normalized);
+  return inferred ? inferred.value : "";
+}
+
+function updateShowcaseDemoUi() {
+  const buttons = Array.from(document.querySelectorAll("[data-demo-theme]"));
+  if (DOM.demoThemeBar) DOM.demoThemeBar.classList.toggle("show", showcaseDemoActive);
+  buttons.forEach((button) => {
+    const key = getShowcaseDemoThemeKey(button.dataset.demoTheme);
+    const isActive = !!key && key === showcaseDemoCurrentKey;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+    button.disabled = !key;
+  });
+}
+
+function disableShowcaseDemo() {
+  showcaseDemoActive = false;
+  showcaseDemoCurrentKey = "";
+  updateShowcaseDemoUi();
+}
+
+function applyShowcaseDemoTheme(kind) {
+  const themeKey = getShowcaseDemoThemeKey(kind);
+  if (!themeKey) return false;
+  showcaseDemoActive = true;
+  showcaseDemoCurrentKey = themeKey;
+  setActiveEventId("");
+  if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = "";
+  setQuickStartSessionDate(getLocalIsoDate());
+  setEventSelection(themeKey);
+  loadTheme(themeKey);
+  syncEventInputsFromActive();
+  updateEventOverridesSummary();
+  updateStylePreview();
+  updateShowcaseDemoUi();
+  return true;
+}
+
+function startShowcaseDemo() {
+  const order = ["wedding", "birthday", "general"];
+  const kind = order.find((entry) => !!getShowcaseDemoThemeKey(entry));
+  if (!kind) return;
+  if (!applyShowcaseDemoTheme(kind)) return;
+  showToast("Demo showcase ready.");
+  startBooth();
+}
+
+function cycleShowcaseDemoTheme() {
+  if (!showcaseDemoActive) return false;
+  const order = ["wedding", "birthday", "general"];
+  const currentKind = inferThemeEventStyle(showcaseDemoCurrentKey, resolveThemeByKey(showcaseDemoCurrentKey));
+  const currentIndex = Math.max(0, order.indexOf(currentKind));
+  for (let offset = 1; offset <= order.length; offset += 1) {
+    const nextKind = order[(currentIndex + offset) % order.length];
+    if (applyShowcaseDemoTheme(nextKind)) return true;
+  }
+  return false;
 }
 
 function getThemeFavorites() {
@@ -982,6 +1056,7 @@ function resetIdleTimer() {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
     hideFinal();
+    cycleShowcaseDemoTheme();
     showWelcome();
   }, IDLE_TIMEOUT_MS);
 }
@@ -1074,9 +1149,9 @@ function renderCreatePathFontPreviewCards(pairings, themeKey = "") {
 
 function populateCreatePathFontPairingSelect(preferredValue = "") {
   if (!DOM.createPathFontPairingSelect) return;
-  const selectedType = DOM.createPathEventType
-    ? normalizeEventStyle(DOM.createPathEventType.value) || getSelectedEventType()
-    : getSelectedEventType();
+  const themeKey = DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "";
+  const theme = resolveThemeByKey(themeKey);
+  const selectedType = inferThemeEventStyle(themeKey, theme);
   const pairings = getSuggestedPairingsForEventType(selectedType, 5);
   const select = DOM.createPathFontPairingSelect;
   select.innerHTML = "";
@@ -1104,10 +1179,10 @@ function populateCreatePathFontPairingSelect(preferredValue = "") {
   if (DOM.createPathFontNote) {
     const typeLabel = getEventTypeCopy(selectedType).label;
     DOM.createPathFontNote.textContent = pairings.length
-      ? `${pairings.length} suggested pairings ready for ${typeLabel.toLowerCase()} events.`
-      : `No suggested pairings are set up for ${typeLabel.toLowerCase()} events yet.`;
+      ? `${pairings.length} suggested pairings ready for this ${typeLabel.toLowerCase()} theme.`
+      : `No suggested pairings are set up for this theme yet.`;
   }
-  renderCreatePathFontPreviewCards(pairings, DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "");
+  renderCreatePathFontPreviewCards(pairings, themeKey);
 }
 
 function updateCreatePathAssetSummary() {
@@ -1134,9 +1209,8 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
   const filter = DOM.createPathThemeType ? DOM.createPathThemeType.value : "favorite";
   const options = Array.from((DOM.eventSelect && DOM.eventSelect.options) || []).filter((opt) => opt && opt.value);
   const favorites = getThemeFavorites();
-  const selectedType = DOM.createPathEventType
-    ? normalizeEventStyle(DOM.createPathEventType.value) || "general"
-    : getSelectedEventType();
+  const selectedTypeRaw = DOM.createPathEventType ? (DOM.createPathEventType.value || "all") : "all";
+  const selectedType = normalizeEventStyle(selectedTypeRaw);
   const selectedBefore = preferredThemeKey || DOM.createPathThemeSelect.value || "";
   const filtered = options.filter((opt) => {
     const key = opt.value;
@@ -1144,7 +1218,9 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
       value: key,
       theme: resolveThemeByKey(key)
     };
-    return getThemeTypeForKey(key, favorites) === filter && themeSupportsEventType(item, selectedType);
+    if (getThemeTypeForKey(key, favorites) !== filter) return false;
+    if (selectedTypeRaw === "all") return true;
+    return themeSupportsEventType(item, selectedType);
   });
   DOM.createPathThemeSelect.innerHTML = "";
   if (!filtered.length) {
@@ -1226,9 +1302,6 @@ async function createEventFromPathInputs() {
     alert("Enter an event name.");
     return;
   }
-  const eventType = DOM.createPathEventType
-    ? normalizeEventStyle(DOM.createPathEventType.value) || "general"
-    : getSelectedEventType();
   const themeKey = DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "";
   if (!themeKey) {
     alert("Choose a theme.");
@@ -1239,6 +1312,7 @@ async function createEventFromPathInputs() {
     alert("Theme not found.");
     return;
   }
+  const eventType = inferThemeEventStyle(themeKey, theme);
   const pairingValue = DOM.createPathFontPairingSelect ? DOM.createPathFontPairingSelect.value : "";
   const [fontHeading = "", fontBody = ""] = pairingValue ? pairingValue.split("|") : ["", ""];
   const slug = slugifyEventText(name);
@@ -1271,6 +1345,7 @@ async function createEventFromPathInputs() {
 }
 
 function quickStartThemeOnly(preferredThemeKey = "") {
+  disableShowcaseDemo();
   const preferred = preferredThemeKey || getLastThemeKey() || (DOM.eventSelect && DOM.eventSelect.value) || DEFAULT_THEME_KEY;
   const themeKey = resolvePreferredThemeKey(preferred);
   if (!themeKey) return;
@@ -1341,12 +1416,16 @@ function setupEventProfileControls() {
   setEventSetupPath("create");
   if (DOM.eventPathCreateBtn) {
     DOM.eventPathCreateBtn.addEventListener("click", () => {
+      disableShowcaseDemo();
       setEventSetupPath("create");
       populateCreatePathThemeSelect((DOM.eventSelect && DOM.eventSelect.value) || "");
     });
   }
   if (DOM.eventPathSelectBtn) {
-    DOM.eventPathSelectBtn.addEventListener("click", () => setEventSetupPath("select"));
+    DOM.eventPathSelectBtn.addEventListener("click", () => {
+      disableShowcaseDemo();
+      setEventSetupPath("select");
+    });
   }
   if (DOM.chooseEventBtn) {
     DOM.chooseEventBtn.addEventListener("click", () => {
@@ -1371,7 +1450,7 @@ function setupEventProfileControls() {
   }
   if (DOM.quickStartBtn) {
     DOM.quickStartBtn.addEventListener("click", () => {
-      quickStartThemeOnly();
+      startShowcaseDemo();
     });
   }
   if (DOM.quickStartCancel) DOM.quickStartCancel.addEventListener("click", hideQuickStartModal);
@@ -1396,16 +1475,15 @@ function setupEventProfileControls() {
     });
   }
   if (DOM.createPathEventType) {
-    DOM.createPathEventType.value = getSelectedEventType();
+    DOM.createPathEventType.value = "all";
     DOM.createPathEventType.addEventListener("change", () => {
-      const selectedType = normalizeEventStyle(DOM.createPathEventType.value) || "general";
-      if (DOM.fontEventStyleSelect) DOM.fontEventStyleSelect.value = selectedType;
       populateCreatePathThemeSelect();
       populateCreatePathFontPairingSelect();
     });
   }
   if (DOM.createPathThemeSelect) {
     DOM.createPathThemeSelect.addEventListener("change", () => {
+      disableShowcaseDemo();
       updateCreatePathFavoriteButton();
       const key = DOM.createPathThemeSelect.value || "";
       if (!key) return;
@@ -1417,11 +1495,24 @@ function setupEventProfileControls() {
   getCreatePathAssetInputs().forEach((input) => {
     input.addEventListener("change", updateCreatePathAssetSummary);
   });
+  document.querySelectorAll("[data-demo-theme]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (applyShowcaseDemoTheme(button.dataset.demoTheme)) {
+        showToast(`${button.textContent} ready.`);
+        showWelcome();
+      }
+    });
+  });
   if (DOM.createPathFontPairingSelect) {
     DOM.createPathFontPairingSelect.addEventListener("change", () => {
       renderCreatePathFontPreviewCards(
         getSuggestedPairingsForEventType(
-          DOM.createPathEventType ? normalizeEventStyle(DOM.createPathEventType.value) || getSelectedEventType() : getSelectedEventType(),
+          inferThemeEventStyle(
+            DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "",
+            resolveThemeByKey(DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "")
+          ),
           5
         ),
         DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : ""
@@ -1448,6 +1539,7 @@ function setupEventProfileControls() {
   updateCreatePathAssetSummary();
   if (DOM.eventProfileSelect) {
     DOM.eventProfileSelect.addEventListener("change", (event) => {
+      disableShowcaseDemo();
       setEventSetupPath("select");
       const id = event.target.value || "";
       setActiveEventId(id);
@@ -1463,6 +1555,7 @@ function setupEventProfileControls() {
 }
 
 function handleEventSelectChange(event) {
+  disableShowcaseDemo();
   const key = event.target.value;
   loadTheme(key);
   highlightThemeQuickSelect(key);
@@ -2868,6 +2961,7 @@ function init() {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log("DOMContentLoaded event fired.");
   loadThemesFromStorage();
+  loadEventsFromStorage();
   loadFontsFromStorage();
   try { await setupFontPicker(); } catch (e) { console.warn('Font picker setup failed', e); }
   const initialKey = populateThemeSelector(DEFAULT_THEME_KEY);
@@ -2913,6 +3007,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // --- Remote sync ---
 const REMOTE_SYNC_DEBOUNCE_MS = 2000;
 let pendingThemesSyncTimer = null;
+let pendingEventsSyncTimer = null;
 let pendingFontsSyncTimer = null;
 let pendingFontsSyncPayload = null;
 let fontsRemoteRequested = false;
@@ -2968,6 +3063,60 @@ async function loadThemesRemote() {
     updateSyncStatus('Synced from server');
   } catch (_) { }
 }
+function hasStoredEventsPayload(payload) {
+  return !!(
+    payload &&
+    typeof payload === "object" &&
+    Array.isArray(payload.events)
+  );
+}
+function getStoredEventsPayload() {
+  return {
+    events: getStoredEvents(),
+    activeEventId: getActiveEventId()
+  };
+}
+function normalizeEventsRemotePayload(payload) {
+  if (Array.isArray(payload)) {
+    return { events: payload, activeEventId: "" };
+  }
+  if (!payload || typeof payload !== "object") {
+    return { events: [], activeEventId: "" };
+  }
+  return {
+    events: Array.isArray(payload.events) ? payload.events : [],
+    activeEventId: typeof payload.activeEventId === "string" ? payload.activeEventId : ""
+  };
+}
+async function loadEventsRemote() {
+  if (!canSyncRemote()) return;
+  try {
+    const resp = await fetch("/api/events", { cache: "no-store" });
+    if (!resp.ok) return;
+    const remote = normalizeEventsRemotePayload(await resp.json());
+    const local = getStoredEventsPayload();
+    const remoteEmpty = !remote.events.length && !remote.activeEventId;
+    if (remoteEmpty && (local.events.length || local.activeEventId)) {
+      updateSyncStatus("Using local events");
+      return;
+    }
+    setStoredEvents(remote.events, { skipRemoteSync: true });
+    const resolvedActiveId = remote.activeEventId && remote.events.some((event) => event && event.id === remote.activeEventId)
+      ? remote.activeEventId
+      : "";
+    setActiveEventId(resolvedActiveId, { skipRemoteSync: true });
+    populateEventProfileSelect(resolvedActiveId);
+    const activeEvent = getActiveEvent();
+    if (activeEvent && activeEvent.themeKey) {
+      setEventSelection(activeEvent.themeKey);
+      loadTheme(activeEvent.themeKey);
+    } else {
+      syncEventInputsFromActive();
+      updateStylePreview();
+    }
+    updateSyncStatus("Events synced from server");
+  } catch (_) { }
+}
 async function syncThemesRemote() {
   if (!canSyncRemote()) return;
   try {
@@ -2980,6 +3129,24 @@ function scheduleThemesRemoteSync() {
   pendingThemesSyncTimer = setTimeout(() => {
     pendingThemesSyncTimer = null;
     syncThemesRemote().catch(() => { });
+  }, REMOTE_SYNC_DEBOUNCE_MS);
+}
+async function syncEventsRemote() {
+  if (!canSyncRemote()) return;
+  try {
+    await fetch("/api/events", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(getStoredEventsPayload())
+    });
+  } catch (_) { }
+}
+function scheduleEventsRemoteSync() {
+  if (!canSyncRemote()) return;
+  if (pendingEventsSyncTimer) clearTimeout(pendingEventsSyncTimer);
+  pendingEventsSyncTimer = setTimeout(() => {
+    pendingEventsSyncTimer = null;
+    syncEventsRemote().catch(() => {});
   }, REMOTE_SYNC_DEBOUNCE_MS);
 }
 function mergeFonts(a, b) {
@@ -3031,11 +3198,13 @@ async function syncNow() {
   if (!canSyncRemote()) { alert("Remote sync is unavailable on this host."); return; }
   try {
     updateSyncStatus('Syncing…');
-    // Push current local themes and fonts
+    // Push current local themes, events, and fonts
     await syncThemesRemote();
+    await syncEventsRemote();
     await syncFontsRemote(getStoredFonts());
     // Reload from server to confirm and merge
     await loadThemesRemote();
+    await loadEventsRemote();
     const remoteFonts = await loadFontsRemote();
     if (Array.isArray(remoteFonts) && remoteFonts.length) {
       const merged = mergeFonts(getStoredFonts(), remoteFonts);
@@ -3055,8 +3224,9 @@ async function ensureRemoteSeed() {
   if (!canSyncRemote()) return;
   try {
     if (localStorage.getItem('kvSeeded') === 'true') return;
-    const [tRes, fRes] = await Promise.all([
+    const [tRes, eRes, fRes] = await Promise.all([
       fetch('/api/themes', { cache: 'no-store' }),
+      fetch("/api/events", { cache: "no-store" }),
       fetch('/api/fonts', { cache: 'no-store' })
     ]);
     let needSeed = false;
@@ -3064,12 +3234,17 @@ async function ensureRemoteSeed() {
       const t = await tRes.text();
       if (!t || t.trim() === '' || t.trim() === '{}') needSeed = true;
     }
+    if (eRes.ok) {
+      const e = await eRes.text();
+      if (!e || e.trim() === "" || e.trim() === "{}" || e.trim() === '{"events":[],"activeEventId":""}') needSeed = true;
+    }
     if (fRes.ok) {
       const f = await fRes.text();
       if (!f || f.trim() === '' || f.trim() === '[]') needSeed = true;
     }
     if (needSeed) {
       await syncThemesRemote();
+      await syncEventsRemote();
       await syncFontsRemote(getStoredFonts());
       localStorage.setItem('kvSeeded', 'true');
       updateSyncStatus('Seeded to server');
@@ -4883,6 +5058,7 @@ function confirmTemplate() {
 // Welcome control
 function showWelcome() {
   if (!activeTheme) return;
+  updateShowcaseDemoUi();
   setBoothControlsVisible(false);
   if (DOM.boothScreen) DOM.boothScreen.classList.add("welcome-active");
   if (DOM.confirmModal) DOM.confirmModal.style.display = "none";
@@ -4890,7 +5066,7 @@ function showWelcome() {
   DOM.welcomeTitle.textContent = resolveWelcomeTitle();
   DOM.welcomeTitle.style.fontFamily = (activeTheme.fontHeading || activeTheme.fontBody || activeTheme.font || '');
   fitWelcomeTitleToViewport();
-  if (DOM.startButton) DOM.startButton.textContent = resolveStartButtonText();
+  if (DOM.startButton) DOM.startButton.textContent = showcaseDemoActive ? "Try This Demo" : resolveStartButtonText();
 
   //  the booth background on the welcome screen and hide standalone images
   const boothBg = DOM.boothScreen ? DOM.boothScreen.style.backgroundImage : '';
@@ -6272,7 +6448,7 @@ function getStoredEvents() {
   }
 }
 
-function setStoredEvents(events) {
+function setStoredEvents(events, options = {}) {
   const list = Array.isArray(events) ? events.slice() : [];
   list.sort((a, b) => {
     const ad = (a && a.date) ? new Date(a.date).getTime() : 0;
@@ -6283,16 +6459,18 @@ function setStoredEvents(events) {
     return an.localeCompare(bn);
   });
   localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(list));
+  if (!options.skipRemoteSync) scheduleEventsRemoteSync();
 }
 
 function getActiveEventId() {
   return localStorage.getItem(ACTIVE_EVENT_KEY) || "";
 }
 
-function setActiveEventId(id) {
+function setActiveEventId(id, options = {}) {
   if (id) localStorage.setItem(ACTIVE_EVENT_KEY, id);
   else localStorage.removeItem(ACTIVE_EVENT_KEY);
   if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = id || "";
+  if (!options.skipRemoteSync) scheduleEventsRemoteSync();
 }
 
 function getActiveEvent() {
@@ -6551,7 +6729,23 @@ function getEventDateForUploads() {
   return key ? getStoredEventDate(key) : '';
 }
 
+function getQuickStartFolderDate() {
+  const active = getActiveEvent();
+  if (active) return "";
+  const raw = getQuickStartSessionDate();
+  const safe = (raw || "").toString().trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(safe)) return "";
+  return safe;
+}
+
+function getQuickStartFolderLabel() {
+  const date = getQuickStartFolderDate();
+  return date ? `QS(${date})` : "";
+}
+
 function getEventUploadSlug() {
+  const quickStartDate = getQuickStartFolderDate();
+  if (quickStartDate) return `qs-${quickStartDate}`;
   const name = slugifyEventText(getEventNameForUploads());
   const date = slugifyEventText(getEventDateForUploads());
   if (name && date) return `${name}-${date}`;
@@ -6738,6 +6932,8 @@ function getEventFolderBase() {
 
 function getEventUploadFolderPath() {
   const base = getEventFolderBase();
+  const quickStartFolder = getQuickStartFolderLabel();
+  if (quickStartFolder) return `${base}/${quickStartFolder}`;
   const name = slugifyEventText(getEventNameForUploads());
   const date = slugifyEventText(getEventDateForUploads());
   const fallback = getCurrentEventSlug() || "event";
@@ -8046,6 +8242,11 @@ function loadThemesFromStorage() {
   if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
   // Attempt remote load and prefer remote if available
   loadThemesRemote().catch(() => { });
+}
+
+function loadEventsFromStorage() {
+  populateEventProfileSelect(getActiveEventId());
+  loadEventsRemote().catch(() => { });
 }
 
 // Folder import (device-only) helpers
