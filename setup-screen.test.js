@@ -63,6 +63,18 @@ test("setup flow is theme-first and quick start is a demo action", () => {
     "create flow should allow browsing all themes without picking a type first"
   );
   assert.ok(
+    html.includes('id="createPathEventDate"'),
+    "fast event creation should collect a reusable event date when needed"
+  );
+  assert.ok(
+    html.includes('id="createPathBirthdayName"'),
+    "birthday creation should collect the birthday name up front"
+  );
+  assert.ok(
+    html.includes('id="createPathPartner1"') && html.includes('id="createPathPartner2"'),
+    "wedding creation should collect couple names up front"
+  );
+  assert.ok(
     appScript.includes('DOM.createPathEventType.value = "all";'),
     "create flow should default to showing all themes"
   );
@@ -73,6 +85,14 @@ test("setup flow is theme-first and quick start is a demo action", () => {
   assert.ok(
     appScript.includes('const eventType = inferThemeEventStyle(themeKey, theme);'),
     "new events should infer their type from the chosen theme"
+  );
+  assert.ok(
+    appScript.includes("updateCreatePathDetailFields("),
+    "create flow should toggle style-specific detail prompts from the chosen theme"
+  );
+  assert.ok(
+    appScript.includes("date: dateValue,"),
+    "new events should persist the date entered during the fast create flow"
   );
 });
 
@@ -147,7 +167,7 @@ test("event setup owns the day-to-day event editing controls", () => {
     "event-only asset uploads should require an active event"
   );
   assert.ok(
-    appScript.includes('if (hasOwnEventTextValue(active, "welcomeTitle")) return active.welcomeTitle.trim();'),
+    appScript.includes('if (hasOwnEventTextValue(active, key)) return active[key];'),
     "blank event text should remain event-owned instead of snapping back to the theme default"
   );
   assert.ok(

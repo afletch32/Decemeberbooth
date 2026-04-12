@@ -256,11 +256,15 @@
               />
             </div>
             <div>
-              <label class="control-label" for="layoutGuide">Layout Style</label>
+              <label class="control-label" for="layoutGuide"
+                >Layout Style</label
+              >
               <select id="layoutGuide">
                 <option value="single_portrait">Single Photo Portrait</option>
                 <option value="single_landscape">Single Photo Landscape</option>
-                <option value="strip_double_column">Photo Strip Double Column</option>
+                <option value="strip_double_column">
+                  Photo Strip Double Column
+                </option>
               </select>
             </div>
           </div>
@@ -315,6 +319,35 @@
                 class="w-full"
               />
             </div>
+            <div>
+              <label class="control-label" for="autofillField"
+                >Primary Autofill</label
+              >
+              <select id="autofillField">
+                <option value="">None</option>
+                <option value="couple_names">Couple Names</option>
+                <option value="birthday_name">Birthday Name</option>
+                <option value="expo_company">Expo Company</option>
+                <option value="event_name">Event Name</option>
+                <option value="event_date">Event Date</option>
+              </select>
+              <p style="margin: 6px 0 0; color: #7a6f7f; font-size: 12px">
+                Add the main reusable text value for the footer area.
+              </p>
+            </div>
+            <div>
+              <label class="control-label" for="secondaryAutofillField"
+                >Secondary Autofill</label
+              >
+              <select id="secondaryAutofillField">
+                <option value="">None</option>
+                <option value="event_date">Event Date</option>
+                <option value="event_name">Event Name</option>
+              </select>
+              <p style="margin: 6px 0 0; color: #7a6f7f; font-size: 12px">
+                Add an optional second line like the event date.
+              </p>
+            </div>
           </div>
 
           <div class="glass-panel rounded-2xl p-4 space-y-3">
@@ -354,6 +387,9 @@
                 <option value="confetti">Confetti</option>
                 <option value="balloons">Balloons</option>
                 <option value="stars">Star Bursts</option>
+                <option value="rings">Wedding Rings</option>
+                <option value="partyHat">Party Hat</option>
+                <option value="cake">Celebration Cake</option>
               </select>
             </div>
             <div>
@@ -508,7 +544,8 @@
                     color: #a8d5ba;
                   "
                 ></i>
-                Single photo exports use `overlays.json`. Photo strip exports use `templates.json`.
+                Single photo exports use `overlays.json`. Photo strip exports
+                use `templates.json`.
               </div>
             </div>
 
@@ -704,6 +741,53 @@
             </svg>
           `);
         },
+        rings(accent) {
+          return createGraphicSvgDataUrl(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+              <defs>
+                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="${accent}" />
+                  <stop offset="100%" stop-color="#ffffff" stop-opacity="0.4" />
+                </linearGradient>
+              </defs>
+              <g fill="none" stroke-width="16">
+                <circle cx="125" cy="160" r="62" stroke="url(#ringGrad)" />
+                <circle cx="195" cy="160" r="62" stroke="url(#ringGrad)" />
+              </g>
+              <path d="M90 130 Q 110 110 130 130" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.5" />
+              <path d="M190 130 Q 210 110 230 130" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.5" />
+            </svg>
+          `);
+        },
+        partyHat(accent) {
+          return createGraphicSvgDataUrl(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+              <path d="M160 50 L250 270 Q 160 290 70 270 Z" fill="${accent}" />
+              <circle cx="160" cy="50" r="18" fill="#ffffff" fill-opacity="0.9" />
+              <g fill="#ffffff" fill-opacity="0.3">
+                <circle cx="130" cy="160" r="10" />
+                <circle cx="190" cy="200" r="12" />
+                <circle cx="150" cy="230" r="8" />
+                <circle cx="170" cy="120" r="7" />
+              </g>
+              <path d="M70 270 Q 160 290 250 270" fill="none" stroke="#ffffff" stroke-opacity="0.4" stroke-width="8" />
+            </svg>
+          `);
+        },
+        cake(accent) {
+          return createGraphicSvgDataUrl(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+              <rect x="60" y="180" width="200" height="80" rx="10" fill="${accent}" />
+              <rect x="90" y="110" width="140" height="70" rx="8" fill="${accent}" fill-opacity="0.85" />
+              <rect x="155" y="50" width="10" height="60" fill="#ffd166" />
+              <path d="M160 30 Q 170 45 160 60 Q 150 45 160 30" fill="#ff9f1c" />
+              <g fill="#ffffff" fill-opacity="0.3">
+                <rect x="60" y="180" width="200" height="15" />
+                <rect x="90" y="110" width="140" height="12" />
+              </g>
+            </svg>
+          `);
+        },
       };
       const graphicImageCache = new Map();
       let customGraphicObjectUrl = "";
@@ -714,16 +798,26 @@
       }
 
       function syncLayoutGuideOptions() {
-        const layoutType = $("layoutType").value === "photo_strip" ? "photo_strip" : "single_photo";
+        const layoutType =
+          $("layoutType").value === "photo_strip"
+            ? "photo_strip"
+            : "single_photo";
         const select = $("layoutGuide");
         Array.from(select.options).forEach((option) => {
           const isPhotoStrip = option.value === "strip_double_column";
-          option.hidden = layoutType === "photo_strip" ? !isPhotoStrip : isPhotoStrip;
+          option.hidden =
+            layoutType === "photo_strip" ? !isPhotoStrip : isPhotoStrip;
         });
-        if (layoutType === "photo_strip" && select.value !== "strip_double_column") {
+        if (
+          layoutType === "photo_strip" &&
+          select.value !== "strip_double_column"
+        ) {
           select.value = "strip_double_column";
         }
-        if (layoutType === "single_photo" && select.value === "strip_double_column") {
+        if (
+          layoutType === "single_photo" &&
+          select.value === "strip_double_column"
+        ) {
           select.value = "single_portrait";
         }
       }
@@ -734,7 +828,9 @@
       }
 
       function getLayoutType() {
-        return $("layoutType").value === "photo_strip" ? "photo_strip" : "single_photo";
+        return $("layoutType").value === "photo_strip"
+          ? "photo_strip"
+          : "single_photo";
       }
 
       function getFilename() {
@@ -775,7 +871,8 @@
         const useUpload = getGraphicSource() === "upload";
         $("graphicSelect").disabled = useUpload;
         $("graphicUpload").disabled = !useUpload;
-        $("clearGraphicUpload").disabled = !useUpload || !customGraphicObjectUrl;
+        $("clearGraphicUpload").disabled =
+          !useUpload || !customGraphicObjectUrl;
         if (!useUpload) {
           updateGraphicUploadStatus("Built-in library is active.");
         } else if (customGraphicObjectUrl) {
@@ -786,16 +883,105 @@
       }
 
       function getManifestLine(filename, guide, layoutType) {
+        const autofillFields = getAutofillFields(guide);
+        const manifest = { src: filename };
         if (layoutType === "photo_strip") {
-          return (
-            '{ "src": "' +
-            filename +
-            '", "layout": "' +
-            guide.layout +
-            '" },'
-          );
+          manifest.layout = guide.layout;
         }
-        return '"' + filename + '",';
+        if (autofillFields.length) {
+          manifest.textFields = autofillFields;
+        }
+        if (layoutType !== "photo_strip" && !autofillFields.length) {
+          return '"' + filename + '",';
+        }
+        return JSON.stringify(manifest) + ",";
+      }
+
+      function getAutofillSampleText(key) {
+        const map = {
+          couple_names: "Alex & Jordan",
+          birthday_name: "Maddie",
+          expo_company: "Acme Booths",
+          event_name: "Spring Showcase",
+          event_date: "April 2026",
+        };
+        return map[key] || "";
+      }
+
+      function zoneToField(zone, key, sizeOverride) {
+        return {
+          key,
+          xPct: Number((zone.x / getGuide().w).toFixed(4)),
+          yPct: Number((zone.y / getGuide().h).toFixed(4)),
+          wPct: Number((zone.w / getGuide().w).toFixed(4)),
+          hPct: Number((zone.h / getGuide().h).toFixed(4)),
+          fontFamily: '"DM Sans", sans-serif',
+          fontWeight: "600",
+          fontSize:
+            typeof sizeOverride === "number"
+              ? sizeOverride
+              : parseInt($("footerSize").value, 10),
+          minFontSize: 10,
+          color: $("templateTextColor").value,
+          align: "center",
+        };
+      }
+
+      function splitFooterZones(zone) {
+        const gap = Math.max(6, Math.round(zone.h * 0.04));
+        const primaryHeight = Math.round(zone.h * 0.54);
+        const secondaryHeight = Math.max(24, zone.h - primaryHeight - gap);
+        return {
+          primary: {
+            x: zone.x,
+            y: zone.y,
+            w: zone.w,
+            h: primaryHeight,
+          },
+          secondary: {
+            x: zone.x,
+            y: zone.y + primaryHeight + gap,
+            w: zone.w,
+            h: secondaryHeight,
+          },
+        };
+      }
+
+      function getAutofillFields(guide) {
+        const primaryKey = $("autofillField").value;
+        const secondaryKey = $("secondaryAutofillField").value;
+        if (!primaryKey && !secondaryKey) return [];
+        const footerSize = parseInt($("footerSize").value, 10);
+        const secondarySize = Math.max(12, Math.round(footerSize * 0.72));
+        const buildFields = (zone) => {
+          const fields = [];
+          if (primaryKey && secondaryKey) {
+            const split = splitFooterZones(zone);
+            fields.push(zoneToField(split.primary, primaryKey, footerSize));
+            fields.push(zoneToField(split.secondary, secondaryKey, secondarySize));
+            return fields;
+          }
+          if (primaryKey) {
+            fields.push(zoneToField(zone, primaryKey, footerSize));
+          }
+          if (secondaryKey) {
+            fields.push(zoneToField(zone, secondaryKey, secondarySize));
+          }
+          return fields;
+        };
+        if (guide === GUIDES.strip_double_column) {
+          return [
+            ...buildFields(guide.leftFooterZone),
+            ...buildFields(guide.rightFooterZone),
+          ];
+        }
+        const zone = {
+          x: guide.textZone.x,
+          y: guide.textZone.y + guide.textZone.h * 0.46,
+          w: guide.textZone.w,
+          h: guide.textZone.h * 0.38,
+        };
+        return buildFields(zone);
       }
 
       function getSelectedGraphicUrl() {
@@ -807,7 +993,9 @@
           return "";
         }
         const builder = GRAPHIC_LIBRARY_BUILDERS[graphic];
-        return typeof builder === "function" ? builder($("accentColor").value) : "";
+        return typeof builder === "function"
+          ? builder($("accentColor").value)
+          : "";
       }
 
       function loadGraphicImage(src) {
@@ -818,7 +1006,8 @@
           return new Promise((resolve, reject) => {
             const image = new Image();
             image.onload = () => resolve(image);
-            image.onerror = () => reject(new Error("Failed to load graphic asset."));
+            image.onerror = () =>
+              reject(new Error("Failed to load graphic asset."));
             image.src = src;
           });
         }
@@ -828,7 +1017,8 @@
         const promise = new Promise((resolve, reject) => {
           const image = new Image();
           image.onload = () => resolve(image);
-          image.onerror = () => reject(new Error("Failed to load graphic asset."));
+          image.onerror = () =>
+            reject(new Error("Failed to load graphic asset."));
           image.src = src;
         });
         graphicImageCache.set(src, promise);
@@ -851,7 +1041,8 @@
 
       function updateTypeChip(layoutType) {
         const typeChip = $("typeChip");
-        typeChip.textContent = layoutType === "photo_strip" ? "Photo Strip" : "Single Photo";
+        typeChip.textContent =
+          layoutType === "photo_strip" ? "Photo Strip" : "Single Photo";
         if (layoutType === "photo_strip") {
           typeChip.style.background = "#f4f0fe";
           typeChip.style.borderColor = "#c8b4e0";
@@ -874,15 +1065,20 @@
       function getCloudinaryConfig() {
         const cloud = localStorage.getItem("cloudinaryCloudName") || "";
         const preset = localStorage.getItem("cloudinaryUploadPreset") || "";
-        const folderBase = localStorage.getItem("cloudinaryFolderBase") || "photobooth/events";
-        const use = (localStorage.getItem("cloudinaryUse") || "").toString() !== "false";
+        const folderBase =
+          localStorage.getItem("cloudinaryFolderBase") || "photobooth/events";
+        const use =
+          (localStorage.getItem("cloudinaryUse") || "").toString() !== "false";
         return { cloud, preset, folderBase, use };
       }
 
       function getCloudinaryUploadFolder(layoutType) {
         const cfg = getCloudinaryConfig();
         const folder = getAssetFolder(layoutType);
-        return `${(cfg.folderBase || "photobooth/events").replace(/\/+$/g, "")}/layout-builder/${folder}`;
+        return `${(cfg.folderBase || "photobooth/events").replace(
+          /\/+$/g,
+          ""
+        )}/layout-builder/${folder}`;
       }
 
       function updateCloudinaryUploadStatus(message) {
@@ -1034,9 +1230,50 @@
         ctx.restore();
       }
 
+      function drawAutofillText(ctx, zone, text, startSize) {
+        if (!text) {
+          return;
+        }
+        ctx.save();
+        ctx.fillStyle = $("templateTextColor").value;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        const fontSize = fitFontSize(
+          ctx,
+          text,
+          zone.w - 20,
+          '"DM Sans", sans-serif',
+          "600",
+          startSize,
+          10
+        );
+        ctx.font = "600 " + fontSize + 'px "DM Sans", sans-serif';
+        ctx.fillText(text, zone.x + zone.w / 2, zone.y + zone.h / 2);
+        ctx.restore();
+      }
+
+      function drawAutofillLines(ctx, zone, primaryText, secondaryText, primarySize) {
+        if (primaryText && secondaryText) {
+          const split = splitFooterZones(zone);
+          drawAutofillText(ctx, split.primary, primaryText, primarySize);
+          drawAutofillText(
+            ctx,
+            split.secondary,
+            secondaryText,
+            Math.max(12, Math.round(primarySize * 0.72))
+          );
+          return;
+        }
+        drawAutofillText(ctx, zone, primaryText || secondaryText, primarySize);
+      }
+
       function drawSingleLayout(ctx, guide, accent, templateBg) {
         const headline = $("headline").value;
         const footer = $("footer").value;
+        const autofillText = getAutofillSampleText($("autofillField").value);
+        const secondaryAutofillText = getAutofillSampleText(
+          $("secondaryAutofillField").value
+        );
         const headlineSize = parseInt($("headlineSize").value, 10);
         const footerSize = parseInt($("footerSize").value, 10);
         const photoWindow = guide.windows[0];
@@ -1086,17 +1323,32 @@
           1,
           0.34
         );
-        drawCenteredText(
-          ctx,
-          footer,
-          guide.textZone,
-          '"DM Sans", sans-serif',
-          "500",
-          footerSize,
-          8,
-          0.8,
-          0.73
-        );
+        if (autofillText || secondaryAutofillText) {
+          drawAutofillLines(
+            ctx,
+            {
+              x: guide.textZone.x,
+              y: guide.textZone.y + guide.textZone.h * 0.46,
+              w: guide.textZone.w,
+              h: guide.textZone.h * 0.38,
+            },
+            autofillText,
+            secondaryAutofillText,
+            footerSize
+          );
+        } else {
+          drawCenteredText(
+            ctx,
+            footer,
+            guide.textZone,
+            '"DM Sans", sans-serif',
+            "500",
+            footerSize,
+            8,
+            0.8,
+            0.73
+          );
+        }
       }
 
       function wrapHeadline(ctx, text, maxWidth, fontSize) {
@@ -1158,6 +1410,10 @@
       function drawStripLayout(ctx, guide, templateBg) {
         const headline = $("headline").value;
         const footer = $("footer").value;
+        const autofillText = getAutofillSampleText($("autofillField").value);
+        const secondaryAutofillText = getAutofillSampleText(
+          $("secondaryAutofillField").value
+        );
         const headlineSize = parseInt($("headlineSize").value, 10);
         const footerSize = parseInt($("footerSize").value, 10);
 
@@ -1175,28 +1431,45 @@
         drawStripHeadline(ctx, guide.leftHeaderZone, headline, headlineSize);
         drawStripHeadline(ctx, guide.rightHeaderZone, headline, headlineSize);
 
-        drawCenteredText(
-          ctx,
-          footer,
-          guide.leftFooterZone,
-          '"DM Sans", sans-serif',
-          "500",
-          footerSize,
-          8,
-          0.85,
-          0.5
-        );
-        drawCenteredText(
-          ctx,
-          footer,
-          guide.rightFooterZone,
-          '"DM Sans", sans-serif',
-          "500",
-          footerSize,
-          8,
-          0.85,
-          0.5
-        );
+        if (autofillText || secondaryAutofillText) {
+          drawAutofillLines(
+            ctx,
+            guide.leftFooterZone,
+            autofillText,
+            secondaryAutofillText,
+            footerSize
+          );
+          drawAutofillLines(
+            ctx,
+            guide.rightFooterZone,
+            autofillText,
+            secondaryAutofillText,
+            footerSize
+          );
+        } else {
+          drawCenteredText(
+            ctx,
+            footer,
+            guide.leftFooterZone,
+            '"DM Sans", sans-serif',
+            "500",
+            footerSize,
+            8,
+            0.85,
+            0.5
+          );
+          drawCenteredText(
+            ctx,
+            footer,
+            guide.rightFooterZone,
+            '"DM Sans", sans-serif',
+            "500",
+            footerSize,
+            8,
+            0.85,
+            0.5
+          );
+        }
       }
 
       function drawCanvas(ctx, width, height, drawGuides, graphicImage) {
@@ -1285,7 +1558,9 @@
         const layoutType = getLayoutType();
         const cfg = getCloudinaryConfig();
         if (!cfg.cloud || !cfg.preset || !cfg.use) {
-          updateCloudinaryUploadStatus("Set Cloudinary in booth admin before uploading.");
+          updateCloudinaryUploadStatus(
+            "Set Cloudinary in booth admin before uploading."
+          );
           showToast("Cloudinary is not configured.");
           return;
         }
@@ -1311,14 +1586,20 @@
           }
           const form = new FormData();
           const filename = getFilename();
-          form.append("file", new File([blob], filename, { type: "image/png" }));
+          form.append(
+            "file",
+            new File([blob], filename, { type: "image/png" })
+          );
           form.append("upload_preset", cfg.preset);
           form.append("folder", getCloudinaryUploadFolder(layoutType));
           try {
-            const resp = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`, {
-              method: "POST",
-              body: form,
-            });
+            const resp = await fetch(
+              `https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`,
+              {
+                method: "POST",
+                body: form,
+              }
+            );
             const json = await resp.json();
             if (!json || !json.secure_url) {
               updateCloudinaryUploadStatus("Cloudinary upload failed.");
@@ -1344,7 +1625,10 @@
       function goBackToBoothAdmin() {
         if (window.history.length > 1 && document.referrer) {
           try {
-            const referrerUrl = new URL(document.referrer, window.location.href);
+            const referrerUrl = new URL(
+              document.referrer,
+              window.location.href
+            );
             if (referrerUrl.origin === window.location.origin) {
               window.history.back();
               return;
@@ -1368,6 +1652,8 @@
         $("footer").value = "#celebrate";
         $("footerSize").value = "28";
         $("footerSizeVal").textContent = "28";
+        $("autofillField").value = "";
+        $("secondaryAutofillField").value = "";
         $("graphicSource").value = "library";
         $("graphicSelect").value = "";
         revokeCustomGraphicUrl();
@@ -1389,6 +1675,8 @@
         "layoutGuide",
         "headline",
         "footer",
+        "autofillField",
+        "secondaryAutofillField",
         "graphicSource",
         "graphicSelect",
         "graphicPlacement",

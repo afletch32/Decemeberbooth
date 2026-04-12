@@ -4220,6 +4220,25 @@
               </select>
               <label for="createPathThemeSelect">Theme</label>
               <select id="createPathThemeSelect"></select>
+              <div id="createPathWeddingFields" class="hidden p-3 bg-purple-50/50 rounded-2xl border border-purple-100 space-y-2 mt-2">
+                <span class="control-label block" style="font-size: 10px; color: #a090b0;">Wedding Details</span>
+                <div class="grid grid-cols-2 gap-2">
+                  <input type="text" id="createPathPartner1" placeholder="Partner 1" style="font-size: 13px;">
+                  <input type="text" id="createPathPartner2" placeholder="Partner 2" style="font-size: 13px;">
+                </div>
+              </div>
+              <div id="createPathBirthdayFields" class="hidden p-3 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-2 mt-2">
+                <span class="control-label block" style="font-size: 10px; color: #90a0b0;">Birthday Details</span>
+                <input type="text" id="createPathBirthdayName" placeholder="Birthday Person's Name" style="font-size: 13px;">
+              </div>
+              <div id="createPathDateFields" class="hidden p-3 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-2 mt-2">
+                <span class="control-label block" style="font-size: 10px; color: #9b7a3c;">Event Date</span>
+                <input type="text" id="createPathEventDate" placeholder="e.g., April 27, 2026" style="font-size: 13px;">
+              </div>
+              <div id="createPathExpoFields" class="hidden p-3 bg-green-50/50 rounded-2xl border border-green-100 space-y-2 mt-2">
+                <span class="control-label block" style="font-size: 10px; color: #5c8a67;">Expo Details</span>
+                <input type="text" id="createPathExpoCompany" placeholder="Company Name" style="font-size: 13px;">
+              </div>
               <label for="createPathFontPairingSelect" class="hidden" aria-hidden="true">Choose Font Pairing</label>
               <select id="createPathFontPairingSelect" class="hidden" aria-hidden="true"></select>
               <p id="createPathFontNote" style="margin:0; color:#9aa; font-size:0.9em;">Theme-based font suggestions will update when you choose a theme.</p>
@@ -4402,6 +4421,22 @@
                 <div class="theme-field">
                   <label for="eventDateInput">Event Date</label>
                   <input type="text" id="eventDateInput" placeholder="e.g., April 2026">
+                </div>
+                <div class="theme-field">
+                  <label for="eventPartner1Input">Partner 1</label>
+                  <input type="text" id="eventPartner1Input" placeholder="Name">
+                </div>
+                <div class="theme-field">
+                  <label for="eventPartner2Input">Partner 2</label>
+                  <input type="text" id="eventPartner2Input" placeholder="Name">
+                </div>
+                <div class="theme-field">
+                  <label for="eventBirthdayNameInput">Birthday Name</label>
+                  <input type="text" id="eventBirthdayNameInput" placeholder="Name">
+                </div>
+                <div class="theme-field">
+                  <label for="eventExpoCompanyInput">Company Name</label>
+                  <input type="text" id="eventExpoCompanyInput" placeholder="Name">
                 </div>
               </div>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">

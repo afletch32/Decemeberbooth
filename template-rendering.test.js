@@ -24,12 +24,20 @@ test("template rendering logic preserves photo overlays across strip mode and su
     "returning to photo mode should restore the selected overlay"
   );
   assert.ok(
-    appScript.includes('if (value === "photo-strip-3" || value === "strip-3" || value === "strip") return "photo_strip_3";'),
+    appScript.includes('value === "photo-strip-3" || value === "strip-3" || value === "strip"'),
     "strip aliases should normalize to the supported strip layout"
   );
   assert.ok(
     appScript.includes('renderSingleColumnStrip(c, enhancedPhotos, bg, template);'),
     "single-column strip templates should render in strip mode"
+  );
+  assert.ok(
+    appScript.includes("drawTemplateTextFields("),
+    "rendering should support manifest-driven autofill text fields"
+  );
+  assert.ok(
+    appScript.includes("overlayDefinition && overlayDefinition.textFields"),
+    "single photo rendering should resolve overlay autofill metadata"
   );
   assert.ok(
     appScript.includes('drawImageContain(ctx, overlayToDraw, 0, 0, canvas.width, canvas.height);'),

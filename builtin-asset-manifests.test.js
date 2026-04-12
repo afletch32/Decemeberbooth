@@ -28,3 +28,13 @@ test("getBuiltinAssetManifest returns cloned objects", async () => {
 
   assert.equal(second[0].src, "birthday banner.png");
 });
+
+test("wedding overlays stay plain unless reusable text is added explicitly", async () => {
+  const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
+  const entries = getBuiltinAssetManifest("assets/wedding/timeless-romance/overlays/");
+
+  assert.deepEqual(entries, [
+    "timeless-romance-strip-overlay.svg",
+    "timeless-romance-single-overlay.svg"
+  ]);
+});

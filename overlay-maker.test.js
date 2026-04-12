@@ -53,8 +53,12 @@ test("overlay builder uses clear layout-first terminology for exports", () => {
     "single photo exports should copy a filename-only manifest line"
   );
   assert.ok(
-    overlayMaker.includes(`'", "layout": "' +`),
+    overlayMaker.includes("manifest.layout = guide.layout;"),
     "photo strip exports should include the layout metadata"
+  );
+  assert.ok(
+    overlayMaker.includes("manifest.textFields = autofillFields;"),
+    "builder should emit autofill metadata for reusable text zones"
   );
   assert.ok(
     overlayMaker.includes('assets/<theme>/'),
@@ -98,6 +102,22 @@ test("overlay builder supports a built-in graphic library and custom PNG uploads
     "builder should reuse saved booth Cloudinary settings"
   );
   assert.ok(
+    overlayMaker.includes('id="autofillField"'),
+    "builder should expose an autofill field selector"
+  );
+  assert.ok(
+    overlayMaker.includes('id="secondaryAutofillField"'),
+    "builder should support a secondary autofill line like the event date"
+  );
+  assert.ok(
+    overlayMaker.includes("getAutofillSampleText($("),
+    "builder preview should show reusable autofill content"
+  );
+  assert.ok(
+    overlayMaker.includes("splitFooterZones(zone)"),
+    "builder should split footer space when multiple autofill fields are configured"
+  );
+  assert.ok(
     overlayMaker.includes('https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload'),
     "builder should upload PNG exports directly to Cloudinary"
   );
@@ -124,7 +144,7 @@ test("overlay builder navigation and markup avoid known broken states", () => {
     "uploaded graphics should be cleaned up when the page unloads"
   );
   assert.ok(
-    overlayMaker.includes('option.hidden = layoutType === "photo_strip" ? !isPhotoStrip : isPhotoStrip;'),
+    overlayMaker.includes('layoutType === "photo_strip" ? !isPhotoStrip : isPhotoStrip'),
     "layout style options should stay in sync with the selected layout type"
   );
 });

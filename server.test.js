@@ -9,11 +9,14 @@ function withTempEnv(fn) {
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "photobooth-server-"));
     const prev = process.env.DATA_ROOT;
     process.env.DATA_ROOT = tmp;
+    t.after(async () => {
+      process.env.DATA_ROOT = prev;
+      await fs.rm(tmp, { recursive: true, force: true });
+    });
     try {
       return await fn(tmp, t);
     } finally {
-      process.env.DATA_ROOT = prev;
-      await fs.rm(tmp, { recursive: true, force: true });
+      // Cleanup is registered with the test runner so early skips still restore env.
     }
   };
 }
