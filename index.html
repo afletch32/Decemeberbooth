@@ -1758,8 +1758,10 @@
       text-transform: uppercase;
       text-align: center;
       white-space: normal;
-      overflow-wrap: anywhere;
-      word-break: break-word;
+      overflow-wrap: normal;
+      word-break: normal;
+      hyphens: none;
+      text-wrap: balance;
       padding: 12px 14px;
     }
 
@@ -3528,7 +3530,9 @@
       display: block;
       width: 100%;
       white-space: normal;
-      overflow-wrap: anywhere;
+      overflow-wrap: normal;
+      word-break: normal;
+      hyphens: none;
       text-wrap: balance;
     }
 
@@ -4289,6 +4293,7 @@
             <input type="text" id="emailJsTemplate" placeholder="template_...">
             <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
               <button type="button" onclick="saveCloudinarySettings()">Save Cloudinary Settings</button>
+              <button type="button" id="migrateAssetsBtn" onclick="saveCloudinarySettings(); migrateAllManagedLocalAssets()">Migrate Local Assets</button>
               <button type="button" onclick="saveEmailJsSettings()">Save Email Settings</button>
               <button type="button" onclick="sendTestEmail()">Send Test Email</button>
               <button type="button" id="syncNowBtn" onclick="syncNow()">Sync Now</button>

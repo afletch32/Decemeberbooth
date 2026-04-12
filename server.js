@@ -106,6 +106,22 @@ function writeJsonFile(filename, data) {
   fs.writeFileSync(filepath, JSON.stringify(data, null, 2), 'utf8');
 }
 
+function resolveUploadFilepath(reference) {
+  if (typeof reference !== "string" || !reference.trim()) return null;
+  let pathname = "";
+  try {
+    pathname = new URL(reference, "http://localhost").pathname || "";
+  } catch (_err) {
+    return null;
+  }
+  if (!pathname.startsWith("/uploads/")) return null;
+  const filename = decodeURIComponent(pathname.slice("/uploads/".length));
+  if (!filename || filename !== path.basename(filename) || filename === "." || filename === "..") {
+    return null;
+  }
+  return path.join(UPLOADS_DIR, filename);
+}
+
 // API: GET /api/fonts
 app.get('/api/fonts', (req, res) => {
   try {
@@ -174,6 +190,25 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
   }
 });
 
+// API: DELETE /api/upload (delete local upload)
+app.delete('/api/upload', (req, res) => {
+  try {
+    const reference = (req.body && (req.body.url || req.body.filename)) || "";
+    const filepath = resolveUploadFilepath(reference);
+    if (!filepath) {
+      return res.status(400).json({ ok: false, error: 'Invalid upload reference' });
+    }
+    if (!fs.existsSync(filepath)) {
+      return res.status(404).json({ ok: false, error: 'Upload not found' });
+    }
+    fs.unlinkSync(filepath);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error deleting upload:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // Serve uploads directory
 app.use('/uploads', express.static(UPLOADS_DIR));
 
@@ -213,6 +248,7 @@ function startServer(port = PORT, host = HOST) {
     console.log('   GET/PUT  /api/fonts');
     console.log('   GET/PUT  /api/themes');
     console.log('   POST     /api/upload');
+    console.log('   DELETE   /api/upload');
     console.log('');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('⚠️  Press Ctrl+C to stop the server');
@@ -226,4 +262,4 @@ if (require.main === module) {
   startServer();
 }
 
-module.exports = { app, startServer, UPLOADS_DIR, LOCAL_DATA_DIR };
+module.exports = { app, startServer, UPLOADS_DIR, LOCAL_DATA_DIR, resolveUploadFilepath };

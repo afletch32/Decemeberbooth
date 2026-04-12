@@ -9,3 +9,19 @@ export function buildEventFolderPath({ base, name, date, fallback }) {
   if (!suffix) return safeBase;
   return `${safeBase}/${suffix}`;
 }
+
+export function buildEventAssetFolderPath({ base, name, date, fallback, kind }) {
+  const eventFolder = buildEventFolderPath({ base, name, date, fallback });
+  const cleanKind = (kind || "").toString().replace(/^\/+|\/+$/g, "");
+  if (!cleanKind) return eventFolder;
+  if (!eventFolder) return cleanKind;
+  return `${eventFolder}/${cleanKind}`;
+}
+
+export function buildAssetIndexKey({ hash, folder }) {
+  const cleanHash = (hash || "").toString().trim();
+  const cleanFolder = (folder || "").toString().replace(/\/+$/g, "");
+  if (!cleanFolder) return cleanHash;
+  if (!cleanHash) return cleanFolder;
+  return `${cleanFolder}::${cleanHash}`;
+}

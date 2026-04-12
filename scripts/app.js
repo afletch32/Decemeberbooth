@@ -1,7 +1,9 @@
-import { buildEventFolderPath } from "./cloudinary-utils.mjs";
+import { buildAssetIndexKey, buildEventAssetFolderPath, buildEventFolderPath } from "./cloudinary-utils.mjs";
+import { getBuiltinAssetManifest } from "./builtin-asset-manifests.mjs";
 import { clampZoom } from "./camera-utils.mjs";
 import { applyThemeText, buildEventFromThemeDefaults, getEventTextOverrides, hasEventTextOverrides, inferThemeEventStyle, mergeUniqueUrls, normalizeEventStyle, pairingSupportsEventStyle } from "./event-utils.mjs";
 import { formatRecordingTime } from "./recording-utils.mjs";
+import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
 
 function isLocalDevHost() {
   const hostname = window.location.hostname || "";
@@ -579,6 +581,7 @@ const DOM = {
   cloudPresetInput: document.getElementById('cloudPresetInput'),
   cloudFolderInput: document.getElementById('cloudFolderInput'),
   cloudUseToggle: document.getElementById('cloudUseToggle'),
+  migrateAssetsBtn: document.getElementById('migrateAssetsBtn'),
   emailJsPublic: document.getElementById('emailJsPublic'),
   emailJsService: document.getElementById('emailJsService'),
   emailJsTemplate: document.getElementById('emailJsTemplate'),
@@ -1190,7 +1193,7 @@ async function addCreatePathAssetsToEvent(event) {
   const queueUploads = (files, kind, onComplete) => {
     Array.from(files || []).filter(Boolean).forEach((file) => {
       tasks.push(
-        uploadAsset(file, kind).then((url) => {
+        uploadAsset(file, kind, getEventAssetUploadOptions(event, kind)).then((url) => {
           if (!url) return;
           onComplete(url);
         }),
@@ -1765,7 +1768,7 @@ async function applyBulkAssetUpload() {
     files.forEach((file) => {
       kinds.forEach((kind) => {
         tasks.push(
-          uploadAsset(file, kind).then((url) => {
+          uploadAsset(file, kind, getEventAssetUploadOptions(active, kind)).then((url) => {
             if (!url) return;
             if (kind === "backgrounds") overrides.backgrounds.push(url);
             if (kind === "greenBackgrounds") overrides.greenBackgrounds.push(url);
@@ -2102,16 +2105,16 @@ async function confirmCreateEventModal() {
     const overrides = ensureEventOverrides(targetEvent);
     const tasks = [];
     assets.backgrounds.forEach((file) => {
-      tasks.push(uploadAsset(file, "backgrounds").then((url) => { if (url) overrides.backgrounds.push(url); }));
+      tasks.push(uploadAsset(file, "backgrounds", getEventAssetUploadOptions(targetEvent, "backgrounds")).then((url) => { if (url) overrides.backgrounds.push(url); }));
     });
     assets.greenBackgrounds.forEach((file) => {
-      tasks.push(uploadAsset(file, "greenBackgrounds").then((url) => { if (url) overrides.greenBackgrounds.push(url); }));
+      tasks.push(uploadAsset(file, "greenBackgrounds", getEventAssetUploadOptions(targetEvent, "greenBackgrounds")).then((url) => { if (url) overrides.greenBackgrounds.push(url); }));
     });
     assets.overlays.forEach((file) => {
-      tasks.push(uploadAsset(file, "overlays").then((url) => { if (url) overrides.overlays.push(url); }));
+      tasks.push(uploadAsset(file, "overlays", getEventAssetUploadOptions(targetEvent, "overlays")).then((url) => { if (url) overrides.overlays.push(url); }));
     });
     assets.templates.forEach((file) => {
-      tasks.push(uploadAsset(file, "templates").then((url) => { if (url) overrides.templates.push({ src: url, layout: "double_column" }); }));
+      tasks.push(uploadAsset(file, "templates", getEventAssetUploadOptions(targetEvent, "templates")).then((url) => { if (url) overrides.templates.push({ src: url, layout: "double_column" }); }));
     });
     if (tasks.length) await Promise.all(tasks);
     updateActiveEventDetails({ overrides });
@@ -2907,14 +2910,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-// --- Remote sync (Cloudflare Pages Functions) ---
-const REMOTE_SYNC_ALLOWLIST = [
-  /\.pages\.dev$/i,
-  /\.workers\.dev$/i
-];
-const REMOTE_SYNC_BLOCKLIST = [
-  /github\.io$/i
-];
+// --- Remote sync ---
 const REMOTE_SYNC_DEBOUNCE_MS = 2000;
 let pendingThemesSyncTimer = null;
 let pendingFontsSyncTimer = null;
@@ -2933,25 +2929,13 @@ function resolveRemoteSyncOverride() {
   return null;
 }
 
-function hostMatches(list, host) {
-  if (!Array.isArray(list) || !host) return false;
-  return list.some((rule) => {
-    if (typeof rule === 'string') return host === rule;
-    if (rule && typeof rule.test === 'function') return rule.test(host);
-    return false;
-  });
-}
-
 function canSyncRemote() {
   if (typeof location === 'undefined') return false;
-  const protocol = (location && location.protocol) || '';
+  const protocol = (location && location.protocol) || "";
+  const host = (location && location.hostname && location.hostname.toLowerCase()) || "";
   if (!protocol.startsWith('http')) return false;
   const override = resolveRemoteSyncOverride();
-  if (override !== null) return override;
-  const host = (location && location.hostname && location.hostname.toLowerCase()) || '';
-  if (!host) return false;
-  if (hostMatches(REMOTE_SYNC_BLOCKLIST, host)) return false;
-  return hostMatches(REMOTE_SYNC_ALLOWLIST, host);
+  return shouldEnableRemoteSync({ protocol, host, override });
 }
 async function loadThemesRemote() {
   if (!canSyncRemote()) return;
@@ -3044,7 +3028,7 @@ function scheduleFontsRemoteSync(fonts) {
 // --- Manual sync UI ---
 function updateSyncStatus(text) { if (DOM.syncStatus) DOM.syncStatus.textContent = text || ''; }
 async function syncNow() {
-  if (!canSyncRemote()) { alert('Open over HTTPS to sync'); return; }
+  if (!canSyncRemote()) { alert("Remote sync is unavailable on this host."); return; }
   try {
     updateSyncStatus('Syncing…');
     // Push current local themes and fonts
@@ -6698,7 +6682,7 @@ async function handleEventOnlyAssetInput(kind, fileList) {
   const overrides = ensureEventOverrides(active);
   const files = Array.from(fileList);
   const tasks = files.map(async (file) => {
-    const url = await uploadAsset(file, kind);
+    const url = await uploadAsset(file, kind, getEventAssetUploadOptions(active, kind));
     if (!url) return;
     if (kind === "templates") {
       overrides.templates.push({ src: url, layout: "double_column" });
@@ -6727,7 +6711,7 @@ async function handleEventSingleAssetInput(kind, fileList) {
   }
   const file = fileList && fileList[0];
   if (!file) return;
-  const url = await uploadAsset(file, kind);
+  const url = await uploadAsset(file, kind, getEventAssetUploadOptions(active, kind));
   if (!url) return;
   if (kind === "logo") updateActiveEventDetails({ logo: url });
   if (kind === "character") updateActiveEventDetails({ character: url });
@@ -6760,9 +6744,26 @@ function getEventUploadFolderPath() {
   return buildEventFolderPath({ base, name, date, fallback });
 }
 
+function getThemeAssetUploadFolderPath(kind = "") {
+  const base = getEventFolderBase();
+  const themeSlug = getCurrentEventSlug() || "event";
+  const cleanKind = (kind || "misc").toString().replace(/^\/+|\/+$/g, "");
+  return `${base}/${themeSlug}/${cleanKind}`;
+}
+
+function getEventAssetUploadOptions(event = getActiveEvent(), kind = "") {
+  const base = getEventFolderBase();
+  const name = slugifyEventText(event && event.name);
+  const date = slugifyEventText(event && event.date);
+  const fallback = slugifyEventText(event && event.id) || getCurrentEventSlug() || "event";
+  return {
+    folder: buildEventAssetFolderPath({ base, name, date, fallback, kind }),
+  };
+}
+
 function getEventGalleryUrl() {
   const cfg = getCloudinaryConfig();
-  if (!cfg || !cfg.cloud) return '';
+  if (!cfg || !cfg.cloud) return "";
   const tag = getEventUploadSlug();
   const title = encodeURIComponent(`${getEventNameForUploads()}${getEventDateForUploads() ? ' (' + getEventDateForUploads() + ')' : ''}`);
   const cloud = encodeURIComponent(cfg.cloud);
@@ -7379,6 +7380,330 @@ function getAssetIndex() {
   if (!themes._meta.assetIndex) themes._meta.assetIndex = {};
   return themes._meta.assetIndex;
 }
+
+function normalizeManagedLocalAssetReference(value) {
+  if (typeof value !== "string" || !value.trim() || typeof location === "undefined") return "";
+  try {
+    const resolved = new URL(value, location.origin);
+    if (resolved.origin !== location.origin) return "";
+    if (!resolved.pathname.startsWith("/uploads/")) return "";
+    const filename = decodeURIComponent(resolved.pathname.slice("/uploads/".length));
+    if (!filename || filename.includes("/") || filename.includes("\\")) return "";
+    return `/uploads/${filename}`;
+  } catch (_err) {
+    return "";
+  }
+}
+
+function objectReferencesLocalAsset(node, targetPath) {
+  if (!targetPath) return false;
+  if (typeof node === "string") return normalizeManagedLocalAssetReference(node) === targetPath;
+  if (Array.isArray(node)) return node.some((item) => objectReferencesLocalAsset(item, targetPath));
+  if (!node || typeof node !== "object") return false;
+  return Object.values(node).some((value) => objectReferencesLocalAsset(value, targetPath));
+}
+
+function localAssetStillReferenced(targetPath) {
+  if (!targetPath) return false;
+  return objectReferencesLocalAsset(themes, targetPath) || objectReferencesLocalAsset(getStoredEvents(), targetPath);
+}
+
+function pruneAssetIndexForUrl(targetPath) {
+  if (!targetPath) return false;
+  const index = getAssetIndex();
+  let changed = false;
+  Object.keys(index).forEach((key) => {
+    if (normalizeManagedLocalAssetReference(index[key]) === targetPath) {
+      delete index[key];
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+async function cleanupUnusedLocalAsset(reference) {
+  const targetPath = normalizeManagedLocalAssetReference(reference);
+  if (!targetPath) return false;
+  if (localAssetStillReferenced(targetPath)) return false;
+  try {
+    const resp = await fetch("/api/upload", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: targetPath })
+    });
+    if (!resp.ok) return false;
+    const pruned = pruneAssetIndexForUrl(targetPath);
+    if (pruned) saveThemesToStorage();
+    return true;
+  } catch (_err) {
+    return false;
+  }
+}
+
+function scheduleLocalAssetCleanup(reference) {
+  cleanupUnusedLocalAsset(reference).catch(() => {});
+}
+
+function slugifyThemeAssetScope(value) {
+  return (value || "")
+    .toString()
+    .toLowerCase()
+    .replace(/[^a-z0-9:_\-]+/g, "-")
+    .replace(/:+/g, "-")
+    .replace(/^-+|-+$/g, "") || "theme";
+}
+
+function getThemeAssetUploadOptionsForKey(themeKey = "", kind = "") {
+  const base = getEventFolderBase();
+  const scope = slugifyThemeAssetScope(themeKey);
+  const cleanKind = (kind || "misc").toString().replace(/^\/+|\/+$/g, "");
+  return { folder: `${base}/${scope}/${cleanKind}` };
+}
+
+function getManagedLocalAssetFilename(reference, fallback = "asset.png") {
+  const normalized = normalizeManagedLocalAssetReference(reference);
+  if (!normalized) return fallback;
+  const filename = normalized.slice("/uploads/".length);
+  return filename || fallback;
+}
+
+const managedLocalAssetMigrationCache = new Map();
+
+async function migrateManagedLocalAsset(reference, kind, options = {}) {
+  const normalized = normalizeManagedLocalAssetReference(reference);
+  if (!normalized) return reference;
+  if (managedLocalAssetMigrationCache.has(normalized)) {
+    return managedLocalAssetMigrationCache.get(normalized);
+  }
+  const pending = (async () => {
+    try {
+      const resp = await fetch(normalized, { cache: "reload" });
+      if (!resp.ok) return reference;
+      const blob = await resp.blob();
+      const filename = getManagedLocalAssetFilename(normalized, `${kind || "asset"}.png`);
+      const file = new File([blob], filename, { type: blob.type || "application/octet-stream" });
+      const uploaded = await uploadAsset(file, kind, options);
+      return uploaded || reference;
+    } catch (_err) {
+      return reference;
+    }
+  })();
+  managedLocalAssetMigrationCache.set(normalized, pending);
+  return pending;
+}
+
+async function migrateManagedLocalStringList(list, kind, options) {
+  if (!Array.isArray(list) || !list.length) return { list: Array.isArray(list) ? list : [], changed: 0, cleanup: [] };
+  let changed = 0;
+  const cleanup = [];
+  const next = await Promise.all(list.map(async (item) => {
+    const migrated = await migrateManagedLocalAsset(item, kind, options);
+    if (migrated !== item && normalizeManagedLocalAssetReference(item)) {
+      changed += 1;
+      cleanup.push(item);
+    }
+    return migrated;
+  }));
+  return { list: next, changed, cleanup };
+}
+
+async function migrateManagedLocalTemplateList(list, kind, options) {
+  if (!Array.isArray(list) || !list.length) return { list: Array.isArray(list) ? list : [], changed: 0, cleanup: [] };
+  let changed = 0;
+  const cleanup = [];
+  const next = await Promise.all(list.map(async (item) => {
+    if (typeof item === "string") {
+      const migrated = await migrateManagedLocalAsset(item, kind, options);
+      if (migrated !== item && normalizeManagedLocalAssetReference(item)) {
+        changed += 1;
+        cleanup.push(item);
+      }
+      return migrated;
+    }
+    if (!item || typeof item !== "object" || typeof item.src !== "string") return item;
+    const migratedSrc = await migrateManagedLocalAsset(item.src, kind, options);
+    if (migratedSrc !== item.src && normalizeManagedLocalAssetReference(item.src)) {
+      changed += 1;
+      cleanup.push(item.src);
+      return { ...item, src: migratedSrc };
+    }
+    return item;
+  }));
+  return { list: next, changed, cleanup };
+}
+
+async function migrateManagedLocalSingle(reference, kind, options) {
+  if (typeof reference !== "string" || !reference) return { value: reference, changed: 0, cleanup: [] };
+  const migrated = await migrateManagedLocalAsset(reference, kind, options);
+  if (migrated !== reference && normalizeManagedLocalAssetReference(reference)) {
+    return { value: migrated, changed: 1, cleanup: [reference] };
+  }
+  return { value: migrated, changed: 0, cleanup: [] };
+}
+
+async function migrateThemeManagedLocalAssets(theme, themeKey) {
+  if (!theme || typeof theme !== "object") return { changed: 0, cleanup: [] };
+  const cleanup = [];
+  let changed = 0;
+  const backgroundOptions = getThemeAssetUploadOptionsForKey(themeKey, "backgrounds");
+  const greenOptions = getThemeAssetUploadOptionsForKey(themeKey, "greenBackgrounds");
+  const overlayOptions = getThemeAssetUploadOptionsForKey(themeKey, "overlays");
+  const templateOptions = getThemeAssetUploadOptionsForKey(themeKey, "templates");
+  const logoOptions = getThemeAssetUploadOptionsForKey(themeKey, "logo");
+  const characterOptions = getThemeAssetUploadOptionsForKey(themeKey, "character");
+
+  const backgroundSingle = await migrateManagedLocalSingle(theme.background, "backgrounds", backgroundOptions);
+  theme.background = backgroundSingle.value || "";
+  changed += backgroundSingle.changed;
+  cleanup.push(...backgroundSingle.cleanup);
+
+  const backgrounds = await migrateManagedLocalStringList(theme.backgrounds, "backgrounds", backgroundOptions);
+  if (Array.isArray(theme.backgrounds)) theme.backgrounds = backgrounds.list;
+  changed += backgrounds.changed;
+  cleanup.push(...backgrounds.cleanup);
+
+  const greenBackgrounds = await migrateManagedLocalStringList(theme.greenBackgrounds, "greenBackgrounds", greenOptions);
+  if (Array.isArray(theme.greenBackgrounds)) theme.greenBackgrounds = greenBackgrounds.list;
+  changed += greenBackgrounds.changed;
+  cleanup.push(...greenBackgrounds.cleanup);
+
+  const overlays = await migrateManagedLocalStringList(theme.overlays, "overlays", overlayOptions);
+  if (Array.isArray(theme.overlays)) theme.overlays = overlays.list;
+  changed += overlays.changed;
+  cleanup.push(...overlays.cleanup);
+
+  const templates = await migrateManagedLocalTemplateList(theme.templates, "templates", templateOptions);
+  if (Array.isArray(theme.templates)) theme.templates = templates.list;
+  changed += templates.changed;
+  cleanup.push(...templates.cleanup);
+
+  const logo = await migrateManagedLocalSingle(theme.logo, "logo", logoOptions);
+  if (typeof theme.logo === "string" || logo.changed) theme.logo = logo.value || "";
+  changed += logo.changed;
+  cleanup.push(...logo.cleanup);
+
+  const character = await migrateManagedLocalSingle(theme.character, "character", characterOptions);
+  if (typeof theme.character === "string" || character.changed) theme.character = character.value || "";
+  changed += character.changed;
+  cleanup.push(...character.cleanup);
+
+  return { changed, cleanup };
+}
+
+async function migrateEventManagedLocalAssets(event) {
+  if (!event || typeof event !== "object") return { changed: 0, cleanup: [] };
+  const cleanup = [];
+  let changed = 0;
+  const overrides = ensureEventOverrides(event);
+
+  const backgroundSingle = await migrateManagedLocalSingle(event.background, "backgrounds", getEventAssetUploadOptions(event, "backgrounds"));
+  if (typeof event.background === "string" || backgroundSingle.changed) event.background = backgroundSingle.value || "";
+  changed += backgroundSingle.changed;
+  cleanup.push(...backgroundSingle.cleanup);
+
+  const backgrounds = await migrateManagedLocalStringList(overrides.backgrounds, "backgrounds", getEventAssetUploadOptions(event, "backgrounds"));
+  overrides.backgrounds = backgrounds.list;
+  changed += backgrounds.changed;
+  cleanup.push(...backgrounds.cleanup);
+
+  const greenBackgrounds = await migrateManagedLocalStringList(overrides.greenBackgrounds, "greenBackgrounds", getEventAssetUploadOptions(event, "greenBackgrounds"));
+  overrides.greenBackgrounds = greenBackgrounds.list;
+  changed += greenBackgrounds.changed;
+  cleanup.push(...greenBackgrounds.cleanup);
+
+  const overlays = await migrateManagedLocalStringList(overrides.overlays, "overlays", getEventAssetUploadOptions(event, "overlays"));
+  overrides.overlays = overlays.list;
+  changed += overlays.changed;
+  cleanup.push(...overlays.cleanup);
+
+  const templates = await migrateManagedLocalTemplateList(overrides.templates, "templates", getEventAssetUploadOptions(event, "templates"));
+  overrides.templates = templates.list;
+  changed += templates.changed;
+  cleanup.push(...templates.cleanup);
+
+  const logo = await migrateManagedLocalSingle(event.logo, "logo", getEventAssetUploadOptions(event, "logo"));
+  if (typeof event.logo === "string" || logo.changed) {
+    if (logo.value) event.logo = logo.value;
+    else delete event.logo;
+  }
+  changed += logo.changed;
+  cleanup.push(...logo.cleanup);
+
+  const character = await migrateManagedLocalSingle(event.character, "character", getEventAssetUploadOptions(event, "character"));
+  if (typeof event.character === "string" || character.changed) {
+    if (character.value) event.character = character.value;
+    else delete event.character;
+  }
+  changed += character.changed;
+  cleanup.push(...character.cleanup);
+
+  return { changed, cleanup };
+}
+
+async function migrateAllManagedLocalAssets() {
+  if (!cloudinaryConfigured()) {
+    alert("Configure Cloudinary first.");
+    return;
+  }
+  if (DOM.migrateAssetsBtn) DOM.migrateAssetsBtn.disabled = true;
+  updateSyncStatus("Migrating assets…");
+  try {
+    managedLocalAssetMigrationCache.clear();
+    const cleanup = new Set();
+    let changed = 0;
+
+    const globalLogo = getGlobalLogo();
+    if (normalizeManagedLocalAssetReference(globalLogo)) {
+      const migratedLogo = await migrateManagedLocalAsset(globalLogo, "logo", getThemeAssetUploadOptionsForKey("global", "logo"));
+      if (migratedLogo !== globalLogo) {
+        changed += 1;
+        cleanup.add(globalLogo);
+        setGlobalLogo(migratedLogo, { quiet: true, skipSave: true });
+      }
+    }
+
+    const themeTasks = [];
+    forEachThemeEntry((theme, themeKey) => {
+      themeTasks.push(migrateThemeManagedLocalAssets(theme, themeKey));
+    });
+    const themeResults = await Promise.all(themeTasks);
+    themeResults.forEach((result) => {
+      changed += result.changed;
+      result.cleanup.forEach((item) => cleanup.add(item));
+    });
+
+    const events = getStoredEvents();
+    const eventResults = await Promise.all(events.map((event) => migrateEventManagedLocalAssets(event)));
+    eventResults.forEach((result) => {
+      changed += result.changed;
+      result.cleanup.forEach((item) => cleanup.add(item));
+    });
+
+    normalizeAllThemes();
+    saveThemesToStorage();
+    setStoredEvents(events);
+    syncEventInputsFromActive();
+    if (activeTheme) renderCurrentAssets(activeTheme);
+    updateStylePreview();
+
+    for (const reference of cleanup) {
+      await cleanupUnusedLocalAsset(reference);
+    }
+
+    const message = changed
+      ? `Migrated ${changed} local asset${changed === 1 ? "" : "s"} to Cloudinary`
+      : "No local assets found to migrate";
+    updateSyncStatus(changed ? "Migration complete" : "No local assets found");
+    showToast(message);
+  } catch (error) {
+    console.error("Asset migration failed", error);
+    updateSyncStatus("Migration failed");
+    alert("Asset migration failed. Check Cloudinary settings and try again.");
+  } finally {
+    if (DOM.migrateAssetsBtn) DOM.migrateAssetsBtn.disabled = false;
+  }
+}
+
 async function fileSha256Hex(file) {
   const buf = await file.arrayBuffer();
   const hash = await crypto.subtle.digest('SHA-256', buf);
@@ -7389,52 +7714,32 @@ function extFromName(name, fallback) {
   const m = (name || '').match(/\.([a-z0-9]+)$/i); return m ? m[1].toLowerCase() : (fallback || 'png');
 }
 
-async function uploadAssetToLocalApi(file) {
-  try {
-    const form = new FormData();
-    form.append('file', file, file && file.name ? file.name : 'asset.png');
-    const resp = await fetch('/api/upload', { method: 'POST', body: form });
-    if (!resp.ok) return '';
-    const json = await resp.json();
-    if (!json || !json.url) return '';
-    return new URL(json.url, location.origin).href;
-  } catch (_) {
-    return '';
-  }
-}
-
-// Upload an asset to a shared URL.
-// Priority: Cloudinary -> local /api/upload endpoint.
-async function uploadAsset(file, kind) {
+// Upload an asset to a shared Cloudinary URL.
+async function uploadAsset(file, kind, options = {}) {
   try {
     const index = getAssetIndex();
     const hash = await fileSha256Hex(file);
-    if (index[hash]) return index[hash];
+    const folder = (options.folder || getThemeAssetUploadFolderPath(kind)).replace(/\/+$/g, "");
+    const indexKey = buildAssetIndexKey({ hash, folder });
+    if (index[indexKey]) return index[indexKey];
     const cfg = getCloudinaryConfig();
-    if (cfg.use && cfg.cloud && cfg.preset) {
-      const form = new FormData();
-      const evSlug = (typeof getCurrentEventSlug === 'function') ? getCurrentEventSlug() : 'event';
-      const ts = new Date().toISOString().replace(/[:.]/g, '-');
-      const base = (cfg.folderBase || 'photobooth/events').replace(/\/$/, '');
-      const folder = `${base}/${evSlug}/${kind || 'misc'}`;
-      const fname = `${kind || 'file'}-${hash}.${extFromName(file && file.name, 'png')}`;
-      const wrapped = new File([file], fname, { type: file.type || 'application/octet-stream' });
-      form.append('file', wrapped);
-      form.append('upload_preset', cfg.preset);
-      form.append('folder', folder);
-      const resp = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`, { method: 'POST', body: form });
-      const json = await resp.json();
-      if (json && json.secure_url) { index[hash] = json.secure_url; saveThemesToStorage(); return json.secure_url; }
-    }
-    const localUrl = await uploadAssetToLocalApi(file);
-    if (localUrl) {
-      index[hash] = localUrl;
+    if (!cfg.use || !cfg.cloud || !cfg.preset) return "";
+    const form = new FormData();
+    const fname = `${kind || "file"}-${hash}.${extFromName(file && file.name, "png")}`;
+    const wrapped = new File([file], fname, { type: file.type || "application/octet-stream" });
+    form.append("file", wrapped);
+    form.append("upload_preset", cfg.preset);
+    form.append("folder", folder);
+    const resp = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`, { method: "POST", body: form });
+    const json = await resp.json();
+    if (json && json.secure_url) {
+      index[indexKey] = json.secure_url;
       saveThemesToStorage();
-      return localUrl;
+      return json.secure_url;
     }
   } catch (_) { }
-  showToast('Upload failed: configure Cloudinary or run the local server for /api/upload.');
-  return '';
+  showToast("Upload failed: configure Cloudinary to store assets.");
+  return "";
 }
 
 function saveThemesToStorage() {
@@ -9744,10 +10049,12 @@ function setupCharacterPositionControls() {
 function removeCharacter() {
   const target = getSelectedThemeTarget();
   if (!target) return;
+  const removed = target.character || "";
   if (target.character) delete target.character;
   applyThemeCharacter(target);
   saveThemesToStorage();
   renderCurrentAssets(target);
+  scheduleLocalAssetCleanup(removed);
 }
 
 function normalizeFolderInput(raw) {
@@ -10002,6 +10309,7 @@ function removeBackground() {
     updateActiveEventDetails({ overrides });
     applyThemeBackground(t);
     renderCurrentAssets(t);
+    scheduleLocalAssetCleanup(selected);
     showToast("Event background removed");
     return;
   }
@@ -10017,6 +10325,7 @@ function removeBackground() {
     t.background = t.backgrounds[t.backgroundIndex] || '';
   }
   saveThemesToStorage(); loadTheme(key);
+  scheduleLocalAssetCleanup(selected);
   showToast('Background removed');
 }
 function removeBackgroundAt(index) {
@@ -10034,6 +10343,7 @@ function removeBackgroundAt(index) {
     updateActiveEventDetails({ overrides });
     applyThemeBackground(t);
     renderCurrentAssets(t);
+    scheduleLocalAssetCleanup(selected);
     showToast("Event background removed");
     return;
   }
@@ -10051,6 +10361,7 @@ function removeBackgroundAt(index) {
     t.background = t.backgrounds[t.backgroundIndex] || '';
   }
   saveThemesToStorage(); loadTheme(key);
+  scheduleLocalAssetCleanup(selected);
 }
 function setBackgroundIndex(index) {
   const key = DOM.eventSelect.value; const t = getSelectedThemeTarget();
@@ -10101,16 +10412,17 @@ function removeLogo() {
   setGlobalLogo('', { quiet: true, skipSave: true });
   saveThemesToStorage();
   loadTheme(key);
+  scheduleLocalAssetCleanup(currentLogo);
   showToast('Logo removed from all themes');
 }
 function removeOverlay(index) {
   const key = DOM.eventSelect.value; const t = getSelectedThemeTarget();
-  if (!t || !Array.isArray(t.overlays)) return; const removed = t.overlays.splice(index, 1)[0]; pushRemoved(key, 'overlay', removed, index); saveThemesToStorage(); loadTheme(key);
+  if (!t || !Array.isArray(t.overlays)) return; const removed = t.overlays.splice(index, 1)[0]; pushRemoved(key, 'overlay', removed, index); saveThemesToStorage(); loadTheme(key); scheduleLocalAssetCleanup(removed);
   showToast('Overlay removed');
 }
 function removeTemplate(index) {
   const key = DOM.eventSelect.value; const t = getSelectedThemeTarget();
-  if (!t || !Array.isArray(t.templates)) return; const removed = t.templates.splice(index, 1)[0]; pushRemoved(key, 'template', removed, index); saveThemesToStorage(); loadTheme(key);
+  if (!t || !Array.isArray(t.templates)) return; const removed = t.templates.splice(index, 1)[0]; pushRemoved(key, 'template', removed, index); saveThemesToStorage(); loadTheme(key); scheduleLocalAssetCleanup(typeof removed === "string" ? removed : removed && removed.src);
   showToast('Template removed');
 }
 
@@ -10122,6 +10434,7 @@ function removeEventOverlay(src) {
   updateActiveEventDetails({ overrides });
   renderOptions();
   renderCurrentAssets(activeTheme);
+  scheduleLocalAssetCleanup(src);
   showToast("Event overlay removed");
 }
 
@@ -10133,6 +10446,7 @@ function removeEventTemplate(src) {
   updateActiveEventDetails({ overrides });
   renderOptions();
   renderCurrentAssets(activeTheme);
+  scheduleLocalAssetCleanup(src);
   showToast("Event template removed");
 }
 
@@ -10334,6 +10648,7 @@ function removeGreenBackgroundAt(idx) {
     delete activeOverrides.useBaseGreenBackgroundIndex;
     updateActiveEventDetails({ overrides: activeOverrides });
     renderCurrentAssets(target);
+    scheduleLocalAssetCleanup(selected);
     return;
   }
   const baseIndex = baseList.indexOf(selected);
@@ -10345,6 +10660,7 @@ function removeGreenBackgroundAt(idx) {
   }
   saveThemesToStorage();
   renderCurrentAssets(target);
+  scheduleLocalAssetCleanup(selected);
 }
 
 function getActiveGreenBackground(theme) {
@@ -10433,28 +10749,54 @@ async function resolveBackgroundFromFolder(theme) {
 
 // Try to load a list of backgrounds from a folder via backgrounds.json.
 // backgrounds.json format: ["file1.jpg", "file2.png", ...] or [{"src":"file1.jpg"}, ...]
+function getBuiltinFolderStrings(folder) {
+  return getBuiltinAssetManifest(folder)
+    .filter((it) => typeof it === "string")
+    .map((it) => folder + it);
+}
+
+function getBuiltinTemplateEntries(folder) {
+  return getBuiltinAssetManifest(folder).map((it) => {
+    if (typeof it === "string") return { src: folder + it, layout: "double_column" };
+    if (it && typeof it === "object" && typeof it.src === "string") {
+      const entry = { ...it, src: folder + it.src };
+      entry.layout = normalizeTemplateLayout(entry.layout);
+      return entry;
+    }
+    return null;
+  }).filter(Boolean);
+}
+
 async function resolveBackgroundListFromFolder(theme) {
   try {
     const path = resolveBackgroundFolderPath(theme);
-    if (!path || !path.endsWith('/')) return [];
+    if (!path || !path.endsWith("/")) return [];
     const cached = Array.isArray(theme && theme.backgroundsTmp) ? theme.backgroundsTmp.filter(Boolean) : [];
     if (cached.length) return cached.slice();
+    const builtin = getBuiltinFolderStrings(path);
     // Only try fetching manifest under http(s). Browsers restrict file:// fetch.
-    if (!String(location.protocol).startsWith('http')) return [];
-    const manifestUrl = path + 'backgrounds.json';
-    const resp = await fetch(manifestUrl, { cache: 'reload' });
-    if (!resp.ok) return [];
+    if (!String(location.protocol).startsWith("http")) {
+      if (theme && typeof theme === "object") theme.backgroundsTmp = builtin.slice();
+      return builtin;
+    }
+    const manifestUrl = path + "backgrounds.json";
+    const resp = await fetch(manifestUrl, { cache: "reload" });
+    if (!resp.ok) return builtin;
     const json = await resp.json();
     const out = [];
     if (Array.isArray(json)) {
       for (const it of json) {
-        if (typeof it === 'string') out.push(path + it);
-        else if (it && typeof it === 'object' && typeof it.src === 'string') out.push(path + it.src);
+        if (typeof it === "string") out.push(path + it);
+        else if (it && typeof it === "object" && typeof it.src === "string") out.push(path + it.src);
       }
     }
-    if (theme && typeof theme === 'object') theme.backgroundsTmp = out.slice();
-    return out;
-  } catch (_) { return []; }
+    const resolved = out.length ? out : builtin;
+    if (theme && typeof theme === "object") theme.backgroundsTmp = resolved.slice();
+    return resolved;
+  } catch (_) {
+    const path = resolveBackgroundFolderPath(theme);
+    return getBuiltinFolderStrings(path);
+  }
 }
 
 function probeImage(url) {
@@ -10469,33 +10811,38 @@ function probeImage(url) {
 // Load overlays from a folder using overlays.json manifest (HTTP/HTTPS only)
 async function resolveOverlaysFromFolder(theme) {
   try {
-    const folder = (theme && typeof theme.overlaysFolder === 'string') ? theme.overlaysFolder : '';
-    if (!folder || !folder.endsWith('/')) return [];
-    if (!String(location.protocol).startsWith('http')) return [];
-    const url = folder + 'overlays.json';
-    const resp = await fetch(url, { cache: 'reload' });
-    if (!resp.ok) return [];
+    const folder = (theme && typeof theme.overlaysFolder === "string") ? theme.overlaysFolder : "";
+    if (!folder || !folder.endsWith("/")) return [];
+    const builtin = getBuiltinFolderStrings(folder);
+    if (!String(location.protocol).startsWith("http")) return builtin;
+    const url = folder + "overlays.json";
+    const resp = await fetch(url, { cache: "reload" });
+    if (!resp.ok) return builtin;
     const json = await resp.json();
     const out = [];
     if (Array.isArray(json)) {
       for (const it of json) {
-        if (typeof it === 'string') out.push(folder + it);
-        else if (it && typeof it === 'object' && typeof it.src === 'string') out.push(folder + it.src);
+        if (typeof it === "string") out.push(folder + it);
+        else if (it && typeof it === "object" && typeof it.src === "string") out.push(folder + it.src);
       }
     }
-    return out;
-  } catch (_) { return []; }
+    return out.length ? out : builtin;
+  } catch (_) {
+    const folder = (theme && typeof theme.overlaysFolder === "string") ? theme.overlaysFolder : "";
+    return getBuiltinFolderStrings(folder);
+  }
 }
 
 // Load templates from a folder using templates.json manifest (HTTP/HTTPS only)
 async function resolveTemplatesFromFolder(theme) {
   try {
-    const folder = (theme && typeof theme.templatesFolder === 'string') ? theme.templatesFolder : '';
-    if (!folder || !folder.endsWith('/')) return [];
-    if (!String(location.protocol).startsWith('http')) return [];
-    const url = folder + 'templates.json';
-    const resp = await fetch(url, { cache: 'reload' });
-    if (!resp.ok) return [];
+    const folder = (theme && typeof theme.templatesFolder === "string") ? theme.templatesFolder : "";
+    if (!folder || !folder.endsWith("/")) return [];
+    const builtin = getBuiltinTemplateEntries(folder);
+    if (!String(location.protocol).startsWith("http")) return builtin;
+    const url = folder + "templates.json";
+    const resp = await fetch(url, { cache: "reload" });
+    if (!resp.ok) return builtin;
     const json = await resp.json();
     const out = [];
     if (Array.isArray(json)) {
@@ -10504,8 +10851,11 @@ async function resolveTemplatesFromFolder(theme) {
         else if (it && typeof it === "object" && typeof it.src === "string") out.push({ src: folder + it.src, layout: normalizeTemplateLayout(it.layout), slots: it.slots });
       }
     }
-    return out;
-  } catch (_) { return []; }
+    return out.length ? out : builtin;
+  } catch (_) {
+    const folder = (theme && typeof theme.templatesFolder === "string") ? theme.templatesFolder : "";
+    return getBuiltinTemplateEntries(folder);
+  }
 }
 
 function copyText(s) { try { navigator.clipboard.writeText(s); showToast('Copied'); } catch (_) { alert('Copy: ' + s); } }
@@ -10645,6 +10995,7 @@ Object.assign(window, {
   startCamera: startCameraFlow,
   handlePrimaryAction,
   makeAvailableOffline,
+  migrateAllManagedLocalAssets,
   openShareLink,
   openEventGalleryLink,
   retakePhoto,

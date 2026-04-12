@@ -95,3 +95,20 @@ test("event setup owns the day-to-day event editing controls", () => {
     "theme updates should preserve intentionally blank welcome titles"
   );
 });
+
+test("booth button labels do not split words when wrapping", () => {
+  const html = readProjectFile("index.html");
+
+  assert.ok(
+    html.includes("      overflow-wrap: normal;\n      word-break: normal;\n      hyphens: none;\n      text-wrap: balance;"),
+    "capture button text should wrap only at normal word boundaries"
+  );
+  assert.ok(
+    html.includes(".mode-btn-label {\n      font-size: 0.62rem;"),
+    "mode button label styles should exist"
+  );
+  assert.ok(
+    html.includes("      width: 100%;\n      white-space: normal;\n      overflow-wrap: normal;\n      word-break: normal;\n      hyphens: none;\n      text-wrap: balance;"),
+    "mode button labels should avoid mid-word wrapping"
+  );
+});

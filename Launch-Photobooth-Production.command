@@ -2,7 +2,7 @@
 # Photobooth Production - Local Server Launcher
 # Starts a Node.js server accessible from other devices on the network
 
-PHOTOBOOTH_DIR="/Users/ashleyfletcher/Library/Mobile Documents/com~apple~CloudDocs/Photo Booth Master Folder/photobooth-production"
+PHOTOBOOTH_DIR="$(cd "$(dirname "$0")" && pwd)"
 PORT=8000
 URL="http://localhost:$PORT"
 
