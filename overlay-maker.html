@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Photobooth Overlay & Template Builder</title>
+    <title>Photobooth Layout Builder</title>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
     <link
@@ -181,7 +181,7 @@
               color: #3d3442;
             "
           >
-            Photobooth Overlay & Template Builder
+            Photobooth Layout Builder
           </h1>
         </div>
         <button class="btn-secondary flex items-center gap-2" id="backButton">
@@ -207,7 +207,7 @@
                   font-weight: 600;
                   color: #3d3442;
                 "
-                >Asset Settings</span
+                >Layout Settings</span
               >
             </div>
             <div>
@@ -215,15 +215,15 @@
               <input type="text" id="assetName" value="my_overlay" />
             </div>
             <div>
-              <label class="control-label" for="assetType">Asset Type</label>
-              <select id="assetType">
-                <option value="overlay">Overlay</option>
-                <option value="template">Template</option>
+              <label class="control-label" for="layoutType">Layout Type</label>
+              <select id="layoutType">
+                <option value="single_photo">Single Photo</option>
+                <option value="photo_strip">Photo Strip</option>
               </select>
             </div>
             <div>
               <label class="control-label" for="templateBgColor"
-                >Template Background</label
+                >Canvas Background</label
               >
               <input
                 type="color"
@@ -256,11 +256,11 @@
               />
             </div>
             <div>
-              <label class="control-label" for="layoutGuide">Layout</label>
+              <label class="control-label" for="layoutGuide">Layout Style</label>
               <select id="layoutGuide">
                 <option value="single_portrait">Single Photo Portrait</option>
                 <option value="single_landscape">Single Photo Landscape</option>
-                <option value="strip_double_column">Strip Double Column</option>
+                <option value="strip_double_column">Photo Strip Double Column</option>
               </select>
             </div>
           </div>
@@ -479,7 +479,7 @@
                     border-color: #c8e6d4;
                     color: #5a9e74;
                   "
-                  >Overlay</span
+                  >Single Photo</span
                 >
               </div>
               <div>
@@ -508,7 +508,7 @@
                     color: #a8d5ba;
                   "
                 ></i>
-                Use `overlays.json` for overlays and `templates.json` for templates.
+                Single photo exports use `overlays.json`. Photo strip exports use `templates.json`.
               </div>
             </div>
 
@@ -704,12 +704,28 @@
         return document.getElementById(id);
       }
 
+      function syncLayoutGuideOptions() {
+        const layoutType = $("layoutType").value === "photo_strip" ? "photo_strip" : "single_photo";
+        const select = $("layoutGuide");
+        Array.from(select.options).forEach((option) => {
+          const isPhotoStrip = option.value === "strip_double_column";
+          option.hidden = layoutType === "photo_strip" ? !isPhotoStrip : isPhotoStrip;
+        });
+        if (layoutType === "photo_strip" && select.value !== "strip_double_column") {
+          select.value = "strip_double_column";
+        }
+        if (layoutType === "single_photo" && select.value === "strip_double_column") {
+          select.value = "single_portrait";
+        }
+      }
+
       function getGuide() {
+        syncLayoutGuideOptions();
         return GUIDES[$("layoutGuide").value] || GUIDES.single_portrait;
       }
 
-      function getAssetType() {
-        return $("assetType").value === "template" ? "template" : "overlay";
+      function getLayoutType() {
+        return $("layoutType").value === "photo_strip" ? "photo_strip" : "single_photo";
       }
 
       function getFilename() {
@@ -721,8 +737,8 @@
         );
       }
 
-      function getAssetFolder(assetType) {
-        return assetType === "template" ? "templates" : "overlays";
+      function getAssetFolder(layoutType) {
+        return layoutType === "photo_strip" ? "templates" : "overlays";
       }
 
       function createGraphicSvgDataUrl(svg) {
@@ -760,8 +776,8 @@
         }
       }
 
-      function getManifestLine(filename, guide, assetType) {
-        if (assetType === "template") {
+      function getManifestLine(filename, guide, layoutType) {
+        if (layoutType === "photo_strip") {
           return (
             '{ "src": "' +
             filename +
@@ -824,10 +840,10 @@
         }
       }
 
-      function updateTypeChip(assetType) {
+      function updateTypeChip(layoutType) {
         const typeChip = $("typeChip");
-        typeChip.textContent = assetType === "template" ? "Template" : "Overlay";
-        if (assetType === "template") {
+        typeChip.textContent = layoutType === "photo_strip" ? "Photo Strip" : "Single Photo";
+        if (layoutType === "photo_strip") {
           typeChip.style.background = "#f4f0fe";
           typeChip.style.borderColor = "#c8b4e0";
           typeChip.style.color = "#7a5fa0";
@@ -849,16 +865,16 @@
       function updateInfo() {
         const guide = getGuide();
         const filename = getFilename();
-        const assetType = getAssetType();
-        const folder = getAssetFolder(assetType);
+        const layoutType = getLayoutType();
+        const folder = getAssetFolder(layoutType);
         $("dimChip").textContent = guide.w + " × " + guide.h;
         $("accentHex").textContent = $("accentColor").value;
-        updateTypeChip(assetType);
+        updateTypeChip(layoutType);
         $("destPath").textContent = "assets/<theme>/" + folder + "/" + filename;
         $("manifestEntry").textContent = getManifestLine(
           filename,
           guide,
-          assetType
+          layoutType
         );
       }
 
@@ -1261,7 +1277,7 @@
 
       function resetAll() {
         $("assetName").value = "my_overlay";
-        $("assetType").value = "overlay";
+        $("layoutType").value = "single_photo";
         $("templateBgColor").value = "#f5e6d3";
         $("templateTextColor").value = "#3d3442";
         $("layoutGuide").value = "single_portrait";
@@ -1286,7 +1302,7 @@
 
       [
         "assetName",
-        "assetType",
+        "layoutType",
         "templateBgColor",
         "templateTextColor",
         "layoutGuide",

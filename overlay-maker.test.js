@@ -16,7 +16,7 @@ test("overlay builder is exposed from admin and uses a full HTML document", () =
   const overlayMaker = readProjectFile("overlay-maker.html");
 
   assert.ok(
-    indexHtml.includes("Overlay &amp; Template Builder"),
+    indexHtml.includes("Layout Builder"),
     "admin setup should link to the expanded builder"
   );
   assert.ok(
@@ -24,29 +24,37 @@ test("overlay builder is exposed from admin and uses a full HTML document", () =
     "builder page should declare a proper HTML document"
   );
   assert.ok(
-    overlayMaker.includes("Photobooth Overlay & Template Builder"),
+    overlayMaker.includes("Photobooth Layout Builder"),
     "builder page should identify itself clearly"
   );
 });
 
-test("overlay builder export info supports both overlay and template manifests", () => {
+test("overlay builder uses clear layout-first terminology for exports", () => {
   const overlayMaker = readProjectFile("overlay-maker.html");
 
   assert.ok(
-    overlayMaker.includes('id="assetType"'),
-    "builder should let the user choose overlay vs template export mode"
+    overlayMaker.includes('id="layoutType"'),
+    "builder should let the user choose a layout type first"
   );
   assert.ok(
-    overlayMaker.includes('return assetType === "template" ? "templates" : "overlays";'),
-    "destination folder should switch based on asset type"
+    overlayMaker.includes('return layoutType === "photo_strip" ? "templates" : "overlays";'),
+    "destination folder should switch based on layout type"
+  );
+  assert.ok(
+    overlayMaker.includes('Layout Type'),
+    "builder should label the main workflow around layout type"
+  );
+  assert.ok(
+    overlayMaker.includes('Single Photo') && overlayMaker.includes('Photo Strip'),
+    "builder should use single photo and photo strip as the primary choices"
   );
   assert.ok(
     overlayMaker.includes(`return '"' + filename + '",';`),
-    "overlay exports should copy a filename-only manifest line"
+    "single photo exports should copy a filename-only manifest line"
   );
   assert.ok(
     overlayMaker.includes(`'", "layout": "' +`),
-    "template exports should include the layout metadata"
+    "photo strip exports should include the layout metadata"
   );
   assert.ok(
     overlayMaker.includes('assets/<theme>/'),
@@ -102,5 +110,9 @@ test("overlay builder navigation and markup avoid known broken states", () => {
   assert.ok(
     overlayMaker.includes("window.addEventListener(\"beforeunload\", revokeCustomGraphicUrl);"),
     "uploaded graphics should be cleaned up when the page unloads"
+  );
+  assert.ok(
+    overlayMaker.includes('option.hidden = layoutType === "photo_strip" ? !isPhotoStrip : isPhotoStrip;'),
+    "layout style options should stay in sync with the selected layout type"
   );
 });
