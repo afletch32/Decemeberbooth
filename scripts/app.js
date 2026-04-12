@@ -1490,6 +1490,38 @@ function resetCreatePathAssetInputs() {
   updateCreatePathAssetSummary();
 }
 
+function readCreatePathEventDetails() {
+  return {
+    name: valueFromInput(DOM.createPathEventName),
+    themeKey: DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "",
+    date: valueFromInput(DOM.createPathEventDate),
+    partner1: valueFromInput(DOM.createPathPartner1),
+    partner2: valueFromInput(DOM.createPathPartner2),
+    birthdayName: valueFromInput(DOM.createPathBirthdayName),
+    expoCompany: valueFromInput(DOM.createPathExpoCompany),
+    pairingValue: DOM.createPathFontPairingSelect
+      ? DOM.createPathFontPairingSelect.value
+      : "",
+  };
+}
+
+function resetCreatePathForm() {
+  [
+    DOM.createPathEventName,
+    DOM.createPathPartner1,
+    DOM.createPathPartner2,
+    DOM.createPathBirthdayName,
+    DOM.createPathEventDate,
+    DOM.createPathExpoCompany,
+    DOM.createPathFontPairingSelect,
+  ]
+    .filter(Boolean)
+    .forEach((input) => {
+      input.value = "";
+    });
+  resetCreatePathAssetInputs();
+}
+
 function updateCreatePathDetailFields(style = "") {
   const normalized = normalizeEventStyle(style);
   if (DOM.createPathWeddingFields) {
@@ -1579,82 +1611,64 @@ async function addCreatePathAssetsToEvent(event) {
   if (tasks.length) await Promise.all(tasks);
 }
 
+function buildCreatePathEvent(theme, details, eventType) {
+  const [fontHeading = "", fontBody = ""] = details.pairingValue
+    ? details.pairingValue.split("|")
+    : ["", ""];
+  const slug = slugifyEventText(details.name);
+  const id = `${slug || "event"}-${Date.now().toString(36)}`;
+
+  return buildEventFromThemeDefaults(theme, {
+    id,
+    name: details.name,
+    date: details.date,
+    eventType,
+    themeKey: details.themeKey,
+    fontHeading,
+    fontBody,
+    partner1: details.partner1,
+    partner2: details.partner2,
+    birthdayName: details.birthdayName,
+    expoCompany: details.expoCompany,
+    createdAt: new Date().toISOString(),
+  });
+}
+
 async function createEventFromPathInputs() {
-  const name = valueFromInput(DOM.createPathEventName);
-  if (!name) {
+  const details = readCreatePathEventDetails();
+  if (!details.name) {
     alert("Enter an event name.");
     return;
   }
-  const themeKey = DOM.createPathThemeSelect
-    ? DOM.createPathThemeSelect.value
-    : "";
-  if (!themeKey) {
+  if (!details.themeKey) {
     alert("Choose a theme.");
     return;
   }
-  const theme = resolveThemeByKey(themeKey);
+  const theme = resolveThemeByKey(details.themeKey);
   if (!theme) {
     alert("Theme not found.");
     return;
   }
-  const eventType = inferThemeEventStyle(themeKey, theme);
-  const pairingValue = DOM.createPathFontPairingSelect
-    ? DOM.createPathFontPairingSelect.value
-    : "";
-  const [fontHeading = "", fontBody = ""] = pairingValue
-    ? pairingValue.split("|")
-    : ["", ""];
-  const dateValue = valueFromInput(DOM.createPathEventDate);
-  const partner1 = valueFromInput(DOM.createPathPartner1);
-  const partner2 = valueFromInput(DOM.createPathPartner2);
-  const birthdayName = valueFromInput(DOM.createPathBirthdayName);
-  const detailValidation = validateCreatePathEventDetails(eventType, {
-    partner1,
-    partner2,
-    birthdayName,
-    date: dateValue,
-  });
+  const eventType = inferThemeEventStyle(details.themeKey, theme);
+  const detailValidation = validateCreatePathEventDetails(eventType, details);
   if (!detailValidation.ok) {
     alert(detailValidation.message);
     return;
   }
-  const slug = slugifyEventText(name);
-  const id = `${slug || "event"}-${Date.now().toString(36)}`;
-  const newEvent = buildEventFromThemeDefaults(theme, {
-    id,
-    name,
-    date: dateValue,
-    eventType,
-    themeKey,
-    fontHeading,
-    fontBody,
-    partner1,
-    partner2,
-    birthdayName,
-    expoCompany: valueFromInput(DOM.createPathExpoCompany),
-    createdAt: new Date().toISOString(),
-  });
+  const newEvent = buildCreatePathEvent(theme, details, eventType);
   await addCreatePathAssetsToEvent(newEvent);
   const events = getStoredEvents();
   events.push(newEvent);
   setStoredEvents(events);
-  setActiveEventId(id);
-  populateEventProfileSelect(id);
-  if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = id;
-  setEventSelection(themeKey);
-  loadTheme(themeKey);
+  setActiveEventId(newEvent.id);
+  populateEventProfileSelect(newEvent.id);
+  if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = newEvent.id;
+  setEventSelection(details.themeKey);
+  loadTheme(details.themeKey);
   syncEventInputsFromActive();
   updateStylePreview();
-  if (DOM.createPathEventName) DOM.createPathEventName.value = "";
-  if (DOM.createPathPartner1) DOM.createPathPartner1.value = "";
-  if (DOM.createPathPartner2) DOM.createPathPartner2.value = "";
-  if (DOM.createPathBirthdayName) DOM.createPathBirthdayName.value = "";
-  if (DOM.createPathEventDate) DOM.createPathEventDate.value = "";
-  if (DOM.createPathExpoCompany) DOM.createPathExpoCompany.value = "";
-  if (DOM.createPathFontPairingSelect)
-    DOM.createPathFontPairingSelect.value = "";
-  resetCreatePathAssetInputs();
-  showToast(`Event "${name}" created`);
+  resetCreatePathForm();
+  showToast(`Event "${details.name}" created`);
 }
 
 function quickStartThemeOnly(preferredThemeKey = "") {

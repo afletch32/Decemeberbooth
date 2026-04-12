@@ -83,7 +83,7 @@ test("setup flow is theme-first and quick start is a demo action", () => {
     "font suggestions should follow the selected theme"
   );
   assert.ok(
-    appScript.includes('const eventType = inferThemeEventStyle(themeKey, theme);'),
+    appScript.includes("const eventType = inferThemeEventStyle(details.themeKey, theme);"),
     "new events should infer their type from the chosen theme"
   );
   assert.ok(
@@ -91,11 +91,19 @@ test("setup flow is theme-first and quick start is a demo action", () => {
     "create flow should toggle style-specific detail prompts from the chosen theme"
   );
   assert.ok(
-    appScript.includes("date: dateValue,"),
-    "new events should persist the date entered during the fast create flow"
+    appScript.includes("function readCreatePathEventDetails()"),
+    "create flow should read fast-create inputs through a dedicated helper"
   );
   assert.ok(
-    appScript.includes("validateCreatePathEventDetails(eventType, {"),
+    appScript.includes("function buildCreatePathEvent(theme, details, eventType)"),
+    "new events should be assembled through a focused create-path event helper"
+  );
+  assert.ok(
+    appScript.includes("function resetCreatePathForm()"),
+    "create flow should reset the form through a dedicated helper"
+  );
+  assert.ok(
+    appScript.includes("validateCreatePathEventDetails(eventType, details)"),
     "create flow should validate required reusable event details before saving"
   );
   assert.ok(

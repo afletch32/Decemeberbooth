@@ -23,6 +23,42 @@ async function getAlerts(page) {
   return page.evaluate(() => window.__testAlerts || []);
 }
 
+async function expectCreatePathValidation(page, options) {
+  const {
+    themePattern,
+    eventName,
+    visibleFieldSelectors,
+    firstMessage,
+    fillBetweenAlerts,
+    secondMessage,
+  } = options;
+
+  await installAlertSpy(page);
+  await page.goto("/index.html");
+
+  const themeValue = await getOptionValue(
+    page,
+    "#createPathThemeSelect",
+    themePattern
+  );
+  await expect(themeValue).not.toBe("");
+
+  await page.fill("#createPathEventName", eventName);
+  await page.selectOption("#createPathThemeSelect", themeValue);
+
+  for (const selector of visibleFieldSelectors) {
+    await expect(page.locator(selector)).not.toHaveClass(/hidden/);
+  }
+
+  await page.locator("#createEventBtn").click();
+  await expect.poll(() => getAlerts(page)).toContain(firstMessage);
+
+  await fillBetweenAlerts(page);
+
+  await page.locator("#createEventBtn").click();
+  await expect.poll(() => getAlerts(page)).toContain(secondMessage);
+}
+
 test("overlay builder emits reusable text metadata for any overlay", async ({
   page,
 }) => {
@@ -40,56 +76,30 @@ test("overlay builder emits reusable text metadata for any overlay", async ({
 test("fast wedding event creation requires couple names and date", async ({
   page,
 }) => {
-  await installAlertSpy(page);
-  await page.goto("/index.html");
-
-  const weddingValue = await getOptionValue(page, "#createPathThemeSelect", /wedding:/);
-  await expect(weddingValue).not.toBe("");
-
-  await page.fill("#createPathEventName", "Jordan and Alex");
-  await page.selectOption("#createPathThemeSelect", weddingValue);
-
-  await expect(page.locator("#createPathWeddingFields")).not.toHaveClass(/hidden/);
-  await expect(page.locator("#createPathDateFields")).not.toHaveClass(/hidden/);
-
-  await page.locator("#createEventBtn").click();
-  await expect.poll(() => getAlerts(page)).toContain(
-    "Enter both partner names for a wedding event."
-  );
-
-  await page.fill("#createPathPartner1", "Jordan");
-  await page.fill("#createPathPartner2", "Alex");
-
-  await page.locator("#createEventBtn").click();
-  await expect.poll(() => getAlerts(page)).toContain("Enter the wedding date.");
+  await expectCreatePathValidation(page, {
+    themePattern: /wedding:/,
+    eventName: "Jordan and Alex",
+    visibleFieldSelectors: ["#createPathWeddingFields", "#createPathDateFields"],
+    firstMessage: "Enter both partner names for a wedding event.",
+    fillBetweenAlerts: async (nextPage) => {
+      await nextPage.fill("#createPathPartner1", "Jordan");
+      await nextPage.fill("#createPathPartner2", "Alex");
+    },
+    secondMessage: "Enter the wedding date.",
+  });
 });
 
 test("fast birthday event creation requires birthday name and date", async ({
   page,
 }) => {
-  await installAlertSpy(page);
-  await page.goto("/index.html");
-
-  const birthdayValue = await getOptionValue(
-    page,
-    "#createPathThemeSelect",
-    /birthday/
-  );
-  await expect(birthdayValue).not.toBe("");
-
-  await page.fill("#createPathEventName", "Maddie Birthday Bash");
-  await page.selectOption("#createPathThemeSelect", birthdayValue);
-
-  await expect(page.locator("#createPathBirthdayFields")).not.toHaveClass(
-    /hidden/
-  );
-  await expect(page.locator("#createPathDateFields")).not.toHaveClass(/hidden/);
-
-  await page.locator("#createEventBtn").click();
-  await expect.poll(() => getAlerts(page)).toContain("Enter the birthday name.");
-
-  await page.fill("#createPathBirthdayName", "Maddie");
-
-  await page.locator("#createEventBtn").click();
-  await expect.poll(() => getAlerts(page)).toContain("Enter the birthday date.");
+  await expectCreatePathValidation(page, {
+    themePattern: /birthday/,
+    eventName: "Maddie Birthday Bash",
+    visibleFieldSelectors: ["#createPathBirthdayFields", "#createPathDateFields"],
+    firstMessage: "Enter the birthday name.",
+    fillBetweenAlerts: async (nextPage) => {
+      await nextPage.fill("#createPathBirthdayName", "Maddie");
+    },
+    secondMessage: "Enter the birthday date.",
+  });
 });

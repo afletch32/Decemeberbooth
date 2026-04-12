@@ -15,6 +15,42 @@ function cleanText(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+const TEMPLATE_TEXT_ALIASES = {
+  birthdayname: "birthday_name",
+  birthday_name: "birthday_name",
+  expocompany: "expo_company",
+  expo_company: "expo_company",
+  eventname: "event_name",
+  event_name: "event_name",
+  eventdate: "event_date",
+  event_date: "event_date",
+  couplenames: "couple_names",
+  couple_names: "couple_names",
+};
+
+const CREATE_PATH_DETAIL_RULES = {
+  wedding: [
+    {
+      isMissing: ({ partner1, partner2 }) => !partner1 || !partner2,
+      message: "Enter both partner names for a wedding event.",
+    },
+    {
+      isMissing: ({ date }) => !date,
+      message: "Enter the wedding date.",
+    },
+  ],
+  birthday: [
+    {
+      isMissing: ({ birthdayName }) => !birthdayName,
+      message: "Enter the birthday name.",
+    },
+    {
+      isMissing: ({ date }) => !date,
+      message: "Enter the birthday date.",
+    },
+  ],
+};
+
 export function buildTemplateTextMap(event = {}) {
   const partner1 = cleanText(event.partner1);
   const partner2 = cleanText(event.partner2);
@@ -39,19 +75,7 @@ export function buildTemplateTextMap(event = {}) {
 export function resolveTemplateTextValue(key, event = {}) {
   const normalized = normalizeKey(key);
   const values = buildTemplateTextMap(event);
-  const aliases = {
-    birthdayname: "birthday_name",
-    birthday_name: "birthday_name",
-    expocompany: "expo_company",
-    expo_company: "expo_company",
-    eventname: "event_name",
-    event_name: "event_name",
-    eventdate: "event_date",
-    event_date: "event_date",
-    couplenames: "couple_names",
-    couple_names: "couple_names",
-  };
-  const resolvedKey = aliases[normalized] || normalized;
+  const resolvedKey = TEMPLATE_TEXT_ALIASES[normalized] || normalized;
   return values[resolvedKey] || "";
 }
 
@@ -134,37 +158,18 @@ export function resolveTemplateTextRect(field, width, height) {
 
 export function validateCreatePathEventDetails(style, details = {}) {
   const normalizedStyle = normalizeKey(style);
-  const partner1 = cleanText(details.partner1);
-  const partner2 = cleanText(details.partner2);
-  const birthdayName = cleanText(details.birthdayName);
-  const date = cleanText(details.date);
-
-  if (normalizedStyle === "wedding") {
-    if (!partner1 || !partner2) {
+  const normalizedDetails = {
+    partner1: cleanText(details.partner1),
+    partner2: cleanText(details.partner2),
+    birthdayName: cleanText(details.birthdayName),
+    date: cleanText(details.date),
+  };
+  const rules = CREATE_PATH_DETAIL_RULES[normalizedStyle] || [];
+  for (const rule of rules) {
+    if (rule.isMissing(normalizedDetails)) {
       return {
         ok: false,
-        message: "Enter both partner names for a wedding event.",
-      };
-    }
-    if (!date) {
-      return {
-        ok: false,
-        message: "Enter the wedding date.",
-      };
-    }
-  }
-
-  if (normalizedStyle === "birthday") {
-    if (!birthdayName) {
-      return {
-        ok: false,
-        message: "Enter the birthday name.",
-      };
-    }
-    if (!date) {
-      return {
-        ok: false,
-        message: "Enter the birthday date.",
+        message: rule.message,
       };
     }
   }
