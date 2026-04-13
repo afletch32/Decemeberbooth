@@ -4257,6 +4257,13 @@
               <div class="btn-row hidden" style="justify-content:flex-start; margin-bottom:10px;" aria-hidden="true">
                 <button type="button" id="toggleThemeFavoriteBtn">Add to Favorites</button>
               </div>
+              <div
+                id="createPathValidationMessage"
+                class="hidden"
+                role="alert"
+                aria-live="polite"
+                style="margin:0 0 10px; padding:10px 12px; border-radius:12px; border:1px solid #f1b7c3; background:#fff3f6; color:#9f2442; font-size:0.92em;"
+              ></div>
               <div class="btn-row">
                 <button type="button" id="createEventBtn" class="primary">Create New Event</button>
               </div>
@@ -4353,6 +4360,7 @@
             <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
               <button type="button" onclick="saveCloudinarySettings()">Save Cloudinary Settings</button>
               <button type="button" id="migrateAssetsBtn" onclick="saveCloudinarySettings(); migrateAllManagedLocalAssets()">Migrate Local Assets</button>
+              <button type="button" onclick="connectMotorRelay()">Connect Motor Relay</button>
               <button type="button" onclick="saveEmailJsSettings()">Save Email Settings</button>
               <button type="button" onclick="sendTestEmail()">Send Test Email</button>
               <button type="button" id="syncNowBtn" onclick="syncNow()">Sync Now</button>

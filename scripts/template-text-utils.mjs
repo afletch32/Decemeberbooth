@@ -33,20 +33,24 @@ const CREATE_PATH_DETAIL_RULES = {
     {
       isMissing: ({ partner1, partner2 }) => !partner1 || !partner2,
       message: "Enter both partner names for a wedding event.",
+      fields: ["partner1", "partner2"],
     },
     {
       isMissing: ({ date }) => !date,
       message: "Enter the wedding date.",
+      fields: ["date"],
     },
   ],
   birthday: [
     {
       isMissing: ({ birthdayName }) => !birthdayName,
       message: "Enter the birthday name.",
+      fields: ["birthdayName"],
     },
     {
       isMissing: ({ date }) => !date,
       message: "Enter the birthday date.",
+      fields: ["date"],
     },
   ],
 };
@@ -170,9 +174,10 @@ export function validateCreatePathEventDetails(style, details = {}) {
       return {
         ok: false,
         message: rule.message,
+        fields: Array.isArray(rule.fields) ? rule.fields.slice() : [],
       };
     }
   }
 
-  return { ok: true, message: "" };
+  return { ok: true, message: "", fields: [] };
 }

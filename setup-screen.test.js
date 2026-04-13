@@ -91,6 +91,10 @@ test("setup flow is theme-first and quick start is a demo action", () => {
     "create flow should toggle style-specific detail prompts from the chosen theme"
   );
   assert.ok(
+    html.includes('id="createPathValidationMessage"'),
+    "create flow should expose an inline validation message area"
+  );
+  assert.ok(
     appScript.includes("function readCreatePathEventDetails()"),
     "create flow should read fast-create inputs through a dedicated helper"
   );
@@ -107,8 +111,12 @@ test("setup flow is theme-first and quick start is a demo action", () => {
     "create flow should validate required reusable event details before saving"
   );
   assert.ok(
-    appScript.includes("alert(detailValidation.message);"),
-    "validation failures should be shown immediately in the fast create flow"
+    appScript.includes("showCreatePathValidation(detailValidation.message, detailValidation.fields);"),
+    "validation failures should be shown inline in the fast create flow"
+  );
+  assert.ok(
+    appScript.includes("if (created) focusCurrentEventSetup();"),
+    "create flow should only advance into event setup after a successful create"
   );
 });
 

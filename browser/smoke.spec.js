@@ -10,19 +10,6 @@ async function getOptionValue(page, selector, matcher) {
   }, matcher.source);
 }
 
-async function installAlertSpy(page) {
-  await page.addInitScript(() => {
-    window.__testAlerts = [];
-    window.alert = (message) => {
-      window.__testAlerts.push(String(message));
-    };
-  });
-}
-
-async function getAlerts(page) {
-  return page.evaluate(() => window.__testAlerts || []);
-}
-
 async function expectCreatePathValidation(page, options) {
   const {
     themePattern,
@@ -31,9 +18,10 @@ async function expectCreatePathValidation(page, options) {
     firstMessage,
     fillBetweenAlerts,
     secondMessage,
+    firstInvalidSelectors,
+    secondInvalidSelectors,
   } = options;
 
-  await installAlertSpy(page);
   await page.goto("/index.html");
 
   const themeValue = await getOptionValue(
@@ -51,12 +39,22 @@ async function expectCreatePathValidation(page, options) {
   }
 
   await page.locator("#createEventBtn").click();
-  await expect.poll(() => getAlerts(page)).toContain(firstMessage);
+  await expect(page.locator("#createPathValidationMessage")).toHaveText(
+    firstMessage
+  );
+  for (const selector of firstInvalidSelectors || []) {
+    await expect(page.locator(selector)).toHaveAttribute("aria-invalid", "true");
+  }
 
   await fillBetweenAlerts(page);
 
   await page.locator("#createEventBtn").click();
-  await expect.poll(() => getAlerts(page)).toContain(secondMessage);
+  await expect(page.locator("#createPathValidationMessage")).toHaveText(
+    secondMessage
+  );
+  for (const selector of secondInvalidSelectors || []) {
+    await expect(page.locator(selector)).toHaveAttribute("aria-invalid", "true");
+  }
 }
 
 test("overlay builder emits reusable text metadata for any overlay", async ({
@@ -81,11 +79,13 @@ test("fast wedding event creation requires couple names and date", async ({
     eventName: "Jordan and Alex",
     visibleFieldSelectors: ["#createPathWeddingFields", "#createPathDateFields"],
     firstMessage: "Enter both partner names for a wedding event.",
+    firstInvalidSelectors: ["#createPathPartner1", "#createPathPartner2"],
     fillBetweenAlerts: async (nextPage) => {
       await nextPage.fill("#createPathPartner1", "Jordan");
       await nextPage.fill("#createPathPartner2", "Alex");
     },
     secondMessage: "Enter the wedding date.",
+    secondInvalidSelectors: ["#createPathEventDate"],
   });
 });
 
@@ -97,9 +97,11 @@ test("fast birthday event creation requires birthday name and date", async ({
     eventName: "Maddie Birthday Bash",
     visibleFieldSelectors: ["#createPathBirthdayFields", "#createPathDateFields"],
     firstMessage: "Enter the birthday name.",
+    firstInvalidSelectors: ["#createPathBirthdayName"],
     fillBetweenAlerts: async (nextPage) => {
       await nextPage.fill("#createPathBirthdayName", "Maddie");
     },
     secondMessage: "Enter the birthday date.",
+    secondInvalidSelectors: ["#createPathEventDate"],
   });
 });

@@ -71,6 +71,7 @@ test("validateCreatePathEventDetails requires names and date for weddings", asyn
     {
       ok: false,
       message: "Enter both partner names for a wedding event.",
+      fields: ["partner1", "partner2"],
     }
   );
 
@@ -83,6 +84,7 @@ test("validateCreatePathEventDetails requires names and date for weddings", asyn
     {
       ok: false,
       message: "Enter the wedding date.",
+      fields: ["date"],
     }
   );
 });
@@ -98,6 +100,7 @@ test("validateCreatePathEventDetails requires name and date for birthdays", asyn
     {
       ok: false,
       message: "Enter the birthday name.",
+      fields: ["birthdayName"],
     }
   );
 
@@ -109,6 +112,7 @@ test("validateCreatePathEventDetails requires name and date for birthdays", asyn
     {
       ok: false,
       message: "Enter the birthday date.",
+      fields: ["date"],
     }
   );
 
@@ -117,6 +121,6 @@ test("validateCreatePathEventDetails requires name and date for birthdays", asyn
       birthdayName: "Maddie",
       date: "April 27, 2026",
     }),
-    { ok: true, message: "" }
+    { ok: true, message: "", fields: [] }
   );
 });

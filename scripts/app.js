@@ -16,12 +16,6 @@ import {
   normalizeEventStyle,
   pairingSupportsEventStyle,
 } from "./event-utils.mjs";
-import {
-  normalizeTemplateTextFields,
-  resolveTemplateTextRect,
-  resolveTemplateTextValue,
-  validateCreatePathEventDetails,
-} from "./template-text-utils.mjs";
 import { formatRecordingTime } from "./recording-utils.mjs";
 import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
 
@@ -48,6 +42,7 @@ const APP_CONFIG = {
 
 // --- USB Relay Automation (Web Serial) ---
 let relayPort = null;
+let spinAbortController = null;
 const RELAY_COMMANDS = {
   ON: new Uint8Array([0xa0, 0x01, 0x01, 0xa2]),
   OFF: new Uint8Array([0xa0, 0x01, 0x00, 0xa1]),
@@ -100,6 +95,13 @@ async function clearPhotoboothServiceWorkerState() {
     console.warn("Service worker cache cleanup failed:", error);
   }
 }
+
+// --- Safety: Stop Motor on Close ---
+window.addEventListener("beforeunload", () => {
+  if (relayPort && relayPort.writable) {
+    setMotorPower(false);
+  }
+});
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
@@ -502,8 +504,6 @@ const DOM = {
   createPathPartner2: document.getElementById("createPathPartner2"),
   createPathBirthdayFields: document.getElementById("createPathBirthdayFields"),
   createPathBirthdayName: document.getElementById("createPathBirthdayName"),
-  createPathDateFields: document.getElementById("createPathDateFields"),
-  createPathEventDate: document.getElementById("createPathEventDate"),
   createPathExpoFields: document.getElementById("createPathExpoFields"),
   createPathExpoCompany: document.getElementById("createPathExpoCompany"),
   toggleThemeFavoriteBtn: document.getElementById("toggleThemeFavoriteBtn"),
@@ -1467,10 +1467,6 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
     : filtered[0].value;
   updateCreatePathFavoriteButton();
   populateCreatePathFontPairingSelect();
-  const selectedTheme = resolveThemeByKey(DOM.createPathThemeSelect.value || "");
-  updateCreatePathDetailFields(
-    inferThemeEventStyle(DOM.createPathThemeSelect.value || "", selectedTheme)
-  );
 }
 
 function getCreatePathAssetInputs() {
@@ -1488,69 +1484,6 @@ function resetCreatePathAssetInputs() {
     input.value = "";
   });
   updateCreatePathAssetSummary();
-}
-
-function readCreatePathEventDetails() {
-  return {
-    name: valueFromInput(DOM.createPathEventName),
-    themeKey: DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "",
-    date: valueFromInput(DOM.createPathEventDate),
-    partner1: valueFromInput(DOM.createPathPartner1),
-    partner2: valueFromInput(DOM.createPathPartner2),
-    birthdayName: valueFromInput(DOM.createPathBirthdayName),
-    expoCompany: valueFromInput(DOM.createPathExpoCompany),
-    pairingValue: DOM.createPathFontPairingSelect
-      ? DOM.createPathFontPairingSelect.value
-      : "",
-  };
-}
-
-function resetCreatePathForm() {
-  [
-    DOM.createPathEventName,
-    DOM.createPathPartner1,
-    DOM.createPathPartner2,
-    DOM.createPathBirthdayName,
-    DOM.createPathEventDate,
-    DOM.createPathExpoCompany,
-    DOM.createPathFontPairingSelect,
-  ]
-    .filter(Boolean)
-    .forEach((input) => {
-      input.value = "";
-    });
-  resetCreatePathAssetInputs();
-}
-
-function updateCreatePathDetailFields(style = "") {
-  const normalized = normalizeEventStyle(style);
-  if (DOM.createPathWeddingFields) {
-    DOM.createPathWeddingFields.classList.toggle(
-      "hidden",
-      normalized !== "wedding"
-    );
-  }
-  if (DOM.createPathBirthdayFields) {
-    DOM.createPathBirthdayFields.classList.toggle(
-      "hidden",
-      normalized !== "birthday"
-    );
-  }
-  if (DOM.createPathExpoFields) {
-    DOM.createPathExpoFields.classList.toggle("hidden", normalized !== "expo");
-  }
-  const showDate = normalized === "wedding" || normalized === "birthday";
-  if (DOM.createPathDateFields) {
-    DOM.createPathDateFields.classList.toggle("hidden", !showDate);
-  }
-  if (DOM.createPathEventDate) {
-    DOM.createPathEventDate.placeholder =
-      normalized === "wedding"
-        ? "e.g., June 14, 2026"
-        : normalized === "birthday"
-        ? "e.g., April 27, 2026"
-        : "e.g., April 27, 2026";
-  }
 }
 
 async function addCreatePathAssetsToEvent(event) {
@@ -1611,64 +1544,65 @@ async function addCreatePathAssetsToEvent(event) {
   if (tasks.length) await Promise.all(tasks);
 }
 
-function buildCreatePathEvent(theme, details, eventType) {
-  const [fontHeading = "", fontBody = ""] = details.pairingValue
-    ? details.pairingValue.split("|")
-    : ["", ""];
-  const slug = slugifyEventText(details.name);
-  const id = `${slug || "event"}-${Date.now().toString(36)}`;
-
-  return buildEventFromThemeDefaults(theme, {
-    id,
-    name: details.name,
-    date: details.date,
-    eventType,
-    themeKey: details.themeKey,
-    fontHeading,
-    fontBody,
-    partner1: details.partner1,
-    partner2: details.partner2,
-    birthdayName: details.birthdayName,
-    expoCompany: details.expoCompany,
-    createdAt: new Date().toISOString(),
-  });
-}
-
 async function createEventFromPathInputs() {
-  const details = readCreatePathEventDetails();
-  if (!details.name) {
+  const name = valueFromInput(DOM.createPathEventName);
+  if (!name) {
     alert("Enter an event name.");
     return;
   }
-  if (!details.themeKey) {
+  const themeKey = DOM.createPathThemeSelect
+    ? DOM.createPathThemeSelect.value
+    : "";
+  if (!themeKey) {
     alert("Choose a theme.");
     return;
   }
-  const theme = resolveThemeByKey(details.themeKey);
+  const theme = resolveThemeByKey(themeKey);
   if (!theme) {
     alert("Theme not found.");
     return;
   }
-  const eventType = inferThemeEventStyle(details.themeKey, theme);
-  const detailValidation = validateCreatePathEventDetails(eventType, details);
-  if (!detailValidation.ok) {
-    alert(detailValidation.message);
-    return;
-  }
-  const newEvent = buildCreatePathEvent(theme, details, eventType);
+  const eventType = inferThemeEventStyle(themeKey, theme);
+  const pairingValue = DOM.createPathFontPairingSelect
+    ? DOM.createPathFontPairingSelect.value
+    : "";
+  const [fontHeading = "", fontBody = ""] = pairingValue
+    ? pairingValue.split("|")
+    : ["", ""];
+  const slug = slugifyEventText(name);
+  const id = `${slug || "event"}-${Date.now().toString(36)}`;
+  const newEvent = buildEventFromThemeDefaults(theme, {
+    id,
+    name,
+    date: "",
+    eventType,
+    themeKey,
+    fontHeading,
+    fontBody,
+    partner1: valueFromInput(DOM.createPathPartner1),
+    partner2: valueFromInput(DOM.createPathPartner2),
+    createdAt: new Date().toISOString(),
+  });
   await addCreatePathAssetsToEvent(newEvent);
   const events = getStoredEvents();
   events.push(newEvent);
   setStoredEvents(events);
-  setActiveEventId(newEvent.id);
-  populateEventProfileSelect(newEvent.id);
-  if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = newEvent.id;
-  setEventSelection(details.themeKey);
-  loadTheme(details.themeKey);
+  setActiveEventId(id);
+  populateEventProfileSelect(id);
+  if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = id;
+  setEventSelection(themeKey);
+  loadTheme(themeKey);
   syncEventInputsFromActive();
   updateStylePreview();
-  resetCreatePathForm();
-  showToast(`Event "${details.name}" created`);
+  if (DOM.createPathEventName) DOM.createPathEventName.value = "";
+  if (DOM.createPathPartner1) DOM.createPathPartner1.value = "";
+  if (DOM.createPathPartner2) DOM.createPathPartner2.value = "";
+  if (DOM.createPathBirthdayName) DOM.createPathBirthdayName.value = "";
+  if (DOM.createPathExpoCompany) DOM.createPathExpoCompany.value = "";
+  if (DOM.createPathFontPairingSelect)
+    DOM.createPathFontPairingSelect.value = "";
+  resetCreatePathAssetInputs();
+  showToast(`Event "${name}" created`);
 }
 
 function quickStartThemeOnly(preferredThemeKey = "") {
@@ -1846,7 +1780,21 @@ function setupEventProfileControls() {
       if (!key) return;
       const theme = resolveThemeByKey(key);
       const style = inferThemeEventStyle(key, theme);
-      updateCreatePathDetailFields(style);
+      if (DOM.createPathWeddingFields) {
+        DOM.createPathWeddingFields.classList.toggle(
+          "hidden",
+          style !== "wedding"
+        );
+      }
+      if (DOM.createPathBirthdayFields) {
+        DOM.createPathBirthdayFields.classList.toggle(
+          "hidden",
+          style !== "birthday"
+        );
+      }
+      if (DOM.createPathExpoFields) {
+        DOM.createPathExpoFields.classList.toggle("hidden", style !== "expo");
+      }
       if (DOM.eventSelect) DOM.eventSelect.value = key;
       loadTheme(key);
       highlightThemeQuickSelect(key);
@@ -4805,33 +4753,44 @@ function playStopAlert() {
   } catch (_) {}
 }
 
-async function run360Countdown() {
+async function run360Countdown(signal) {
   for (let n = 3; n > 0; n -= 1) {
-    await showCountdown(String(n));
+    await showCountdown(String(n), signal);
   }
-  await showCountdown("GO");
+  await showCountdown("GO", signal);
 }
 
 async function start360Sequence() {
-  if (isRunning360Sequence || currentMode !== "360") return;
-  isRunning360Sequence = true;
+  if (currentMode !== "360") return;
+
+  // If already spinning, the next remote press stops the arm immediately
+  if (isRunning360Sequence) {
+    if (spinAbortController) spinAbortController.abort();
+    return;
+  }
+
   if (DOM.start360Btn) DOM.start360Btn.disabled = true;
   if (DOM.triggerZone) DOM.triggerZone.disabled = true;
+
+  isRunning360Sequence = true;
+  spinAbortController = new AbortController();
+  const { signal } = spinAbortController;
+
   try {
     set360Status(
       "Get ready",
       "iPhone should already be recording before the countdown begins."
     );
     showMessage("Get ready");
-    await run360Countdown();
+    await run360Countdown(signal);
     set360Status(
       "🎥 Spin in progress",
       "Keep the platform moving while the iPhone records the full take."
     );
     setVideoImportStatus("🎥 Recording...");
     await setMotorPower(true); // START THE MOTOR
-    await delay(APP_CONFIG.TIMERS.SPIN_DURATION);
-    await setMotorPower(false); // STOP THE MOTOR AUTOMATICALLY
+    await delay(APP_CONFIG.TIMERS.SPIN_DURATION, signal);
+    await setMotorPower(false); // STOP THE MOTOR
     playStopAlert();
     set360Status(
       "🛑 STOP ARM",
@@ -4845,8 +4804,15 @@ async function start360Sequence() {
       "AirDrop the video or tap upload. Processing starts automatically."
     );
     setVideoImportStatus("📲 AirDrop your video or tap to upload.");
+  } catch (err) {
+    if (err.name === "AbortError") {
+      set360Status("🛑 MANUAL STOP", "Operator stopped the spin early.");
+      setVideoImportStatus("Spin stopped manually.");
+    }
   } finally {
+    await setMotorPower(false); // Safety: Always ensure motor is cut
     isRunning360Sequence = false;
+    spinAbortController = null;
     if (DOM.start360Btn) DOM.start360Btn.disabled = false;
     if (DOM.triggerZone) DOM.triggerZone.disabled = false;
   }
@@ -7152,115 +7118,6 @@ function loadImage(url) {
     img.src = url;
   });
 }
-
-function getThemeHeadingFont(theme) {
-  return theme?.fontHeading || theme?.font || "serif";
-}
-
-function getThemeBodyFont(theme) {
-  return theme?.fontBody || theme?.font || "sans-serif";
-}
-
-function resolveCanvasTextFamily(field, theme) {
-  if (field.fontFamily) return field.fontFamily;
-  return field.key === "couple_names"
-    ? getThemeHeadingFont(theme)
-    : getThemeBodyFont(theme);
-}
-
-function wrapCanvasText(ctx, text, maxWidth) {
-  const words = (text || "").split(/\s+/).filter(Boolean);
-  if (!words.length) return [];
-  const lines = [];
-  let currentLine = "";
-  words.forEach((word) => {
-    const nextLine = currentLine ? `${currentLine} ${word}` : word;
-    if (ctx.measureText(nextLine).width > maxWidth && currentLine) {
-      lines.push(currentLine);
-      currentLine = word;
-    } else {
-      currentLine = nextLine;
-    }
-  });
-  if (currentLine) lines.push(currentLine);
-  return lines;
-}
-
-function fitCanvasText(ctx, text, rect, family, weight, startSize, minSize) {
-  let size = Math.max(minSize, startSize);
-  while (size >= minSize) {
-    ctx.font = `${weight} ${size}px ${family}`;
-    const lines = wrapCanvasText(ctx, text, Math.max(20, rect.w - 16));
-    const lineHeight = size * 1.14;
-    const blockHeight = lines.length * lineHeight;
-    const widest = Math.max(0, ...lines.map((line) => ctx.measureText(line).width));
-    if (widest <= rect.w - 16 && blockHeight <= rect.h - 10) {
-      return { size, lines, lineHeight };
-    }
-    size -= 1;
-  }
-  ctx.font = `${weight} ${minSize}px ${family}`;
-  return {
-    size: minSize,
-    lines: wrapCanvasText(ctx, text, Math.max(20, rect.w - 16)),
-    lineHeight: minSize * 1.14,
-  };
-}
-
-function drawTemplateTextFields(ctx, width, height, fields, event, theme) {
-  const normalized = normalizeTemplateTextFields(fields);
-  if (!normalized.length || !event) return false;
-  let drewText = false;
-  normalized.forEach((field) => {
-    const rawValue = resolveTemplateTextValue(field.key, event);
-    const text = field.uppercase ? rawValue.toUpperCase() : rawValue;
-    if (!text) return;
-    const rect = resolveTemplateTextRect(field, width, height);
-    if (!rect || rect.w <= 0 || rect.h <= 0) return;
-    const family = resolveCanvasTextFamily(field, theme);
-    const weight = field.fontWeight || "600";
-    const startSize =
-      field.fontSize || Math.max(18, Math.round(Math.min(width, height) * 0.03));
-    const minSize =
-      field.minFontSize || Math.max(10, Math.round(startSize * 0.5));
-    const metrics = fitCanvasText(
-      ctx,
-      text,
-      rect,
-      family,
-      weight,
-      startSize,
-      minSize
-    );
-    if (!metrics.lines.length) return;
-    ctx.save();
-    ctx.fillStyle = field.color || theme?.accent2 || "#ffffff";
-    ctx.textBaseline = "top";
-    ctx.textAlign =
-      field.align === "left"
-        ? "left"
-        : field.align === "right"
-        ? "right"
-        : "center";
-    ctx.font = `${weight} ${metrics.size}px ${family}`;
-    const totalHeight = metrics.lines.length * metrics.lineHeight;
-    const x =
-      field.align === "left"
-        ? rect.x + 8
-        : field.align === "right"
-        ? rect.x + rect.w - 8
-        : rect.x + rect.w / 2;
-    let y = rect.y + (rect.h - totalHeight) / 2;
-    metrics.lines.forEach((line) => {
-      ctx.fillText(line, x, y);
-      y += metrics.lineHeight;
-    });
-    ctx.restore();
-    drewText = true;
-  });
-  return drewText;
-}
-
 async function getOrientationFromImage(imgSrc) {
   const img = await loadImage(imgSrc);
   if (img.naturalHeight > img.naturalWidth) return "portrait";
@@ -7610,8 +7467,8 @@ function drawDynamicEventText(
   const date = event?.date || "";
 
   ctx.save();
-  const headingFont = getThemeHeadingFont(theme);
-  const bodyFont = getThemeBodyFont(theme);
+  const headingFont = theme?.fontHeading || theme?.font || "serif";
+  const bodyFont = theme?.fontBody || theme?.font || "sans-serif";
   const textColor = theme?.accent2 || "#ffffff";
 
   ctx.fillStyle = textColor;
@@ -7714,22 +7571,7 @@ async function composeStrip(template, photos) {
 
   // Auto-fill names for strips
   const active = getActiveEvent();
-  const renderedTemplateText = drawTemplateTextFields(
-    ctx,
-    targetW,
-    targetH,
-    template && template.textFields,
-    active,
-    activeTheme
-  );
-  if (
-    !renderedTemplateText &&
-    active &&
-    (active.partner1 ||
-      active.partner2 ||
-      active.birthdayName ||
-      active.expoCompany)
-  ) {
+  if (active && (active.partner1 || active.partner2)) {
     drawDynamicEventText(ctx, targetW, targetH, active, activeTheme, true);
   }
 
@@ -7811,25 +7653,7 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
 
   // Auto-fill names for single photos
   const active = getActiveEvent();
-  const overlayDefinition = getOverlayList(activeTheme).find(
-    (item) => item && item.src === overlaySrc
-  );
-  const renderedTemplateText = drawTemplateTextFields(
-    ctx,
-    targetW,
-    targetH,
-    overlayDefinition && overlayDefinition.textFields,
-    active,
-    activeTheme
-  );
-  if (
-    !renderedTemplateText &&
-    active &&
-    (active.partner1 ||
-      active.partner2 ||
-      active.birthdayName ||
-      active.expoCompany)
-  ) {
+  if (active && (active.partner1 || active.partner2)) {
     drawDynamicEventText(ctx, targetW, targetH, active, activeTheme);
   }
 
@@ -9015,10 +8839,6 @@ function exportCurrentEvent() {
           name: active.name,
           date: active.date,
           themeKey: active.themeKey,
-          partner1: active.partner1,
-          partner2: active.partner2,
-          birthdayName: active.birthdayName,
-          expoCompany: active.expoCompany,
           overrides: active.overrides,
         }
       : null,
@@ -12496,7 +12316,6 @@ function createSubThemeFromEvent() {
         src: t.src,
         layout: t.layout || "double_column",
         slots: t.slots,
-        textFields: normalizeTemplateTextFields(t.textFields),
       });
     };
     overrides.templates.forEach((t) =>
@@ -13512,23 +13331,6 @@ function arrayUniqueStrings(arr) {
   }
   return out;
 }
-function arrayUniqueOverlays(arr) {
-  if (!Array.isArray(arr)) return [];
-  const seen = new Set();
-  const out = [];
-  for (const entry of arr) {
-    const src =
-      typeof entry === "string"
-        ? entry.trim()
-        : entry && typeof entry.src === "string"
-        ? entry.src.trim()
-        : "";
-    if (!src || seen.has(src)) continue;
-    seen.add(src);
-    out.push(typeof entry === "string" ? src : { ...entry, src });
-  }
-  return out;
-}
 function arrayUniqueTemplates(arr) {
   if (!Array.isArray(arr)) return [];
   const seen = new Set();
@@ -13539,19 +13341,14 @@ function arrayUniqueTemplates(arr) {
     if (!s) continue;
     if (!seen.has(s)) {
       seen.add(s);
-      out.push({
-        src: s,
-        layout: t.layout || "double_column",
-        slots: t.slots,
-        textFields: normalizeTemplateTextFields(t.textFields),
-      });
+      out.push({ src: s, layout: t.layout || "double_column", slots: t.slots });
     }
   }
   return out;
 }
 function normalizeThemeObject(t) {
   if (!t || typeof t !== "object") return;
-  if (Array.isArray(t.overlays)) t.overlays = arrayUniqueOverlays(t.overlays);
+  if (Array.isArray(t.overlays)) t.overlays = arrayUniqueStrings(t.overlays);
   if (Array.isArray(t.templates))
     t.templates = arrayUniqueTemplates(t.templates);
   // Background normalization: ensure index in range
@@ -14322,19 +14119,7 @@ async function resolveOverlaysFromFolder(theme) {
         ? theme.overlaysFolder
         : "";
     if (!folder || !folder.endsWith("/")) return [];
-    const builtin = getBuiltinAssetManifest(folder)
-      .map((it) => {
-        if (typeof it === "string") return { src: folder + it };
-        if (it && typeof it === "object" && typeof it.src === "string") {
-          return {
-            ...it,
-            src: folder + it.src,
-            textFields: normalizeTemplateTextFields(it.textFields),
-          };
-        }
-        return null;
-      })
-      .filter(Boolean);
+    const builtin = getBuiltinFolderStrings(folder);
     if (!String(location.protocol).startsWith("http")) return builtin;
     const url = folder + "overlays.json";
     const resp = await fetch(url, { cache: "reload" });
@@ -14343,13 +14128,9 @@ async function resolveOverlaysFromFolder(theme) {
     const out = [];
     if (Array.isArray(json)) {
       for (const it of json) {
-        if (typeof it === "string") out.push({ src: folder + it });
+        if (typeof it === "string") out.push(folder + it);
         else if (it && typeof it === "object" && typeof it.src === "string")
-          out.push({
-            ...it,
-            src: folder + it.src,
-            textFields: normalizeTemplateTextFields(it.textFields),
-          });
+          out.push(folder + it.src);
       }
     }
     return out.length ? out : builtin;
@@ -14358,19 +14139,7 @@ async function resolveOverlaysFromFolder(theme) {
       theme && typeof theme.overlaysFolder === "string"
         ? theme.overlaysFolder
         : "";
-    return getBuiltinAssetManifest(folder)
-      .map((it) => {
-        if (typeof it === "string") return { src: folder + it };
-        if (it && typeof it === "object" && typeof it.src === "string") {
-          return {
-            ...it,
-            src: folder + it.src,
-            textFields: normalizeTemplateTextFields(it.textFields),
-          };
-        }
-        return null;
-      })
-      .filter(Boolean);
+    return getBuiltinFolderStrings(folder);
   }
 }
 
@@ -14398,7 +14167,6 @@ async function resolveTemplatesFromFolder(theme) {
             src: folder + it.src,
             layout: normalizeTemplateLayout(it.layout),
             slots: it.slots,
-            textFields: normalizeTemplateTextFields(it.textFields),
           });
       }
     }
@@ -14428,9 +14196,7 @@ function getBaseOverlayList(theme) {
     Array.isArray(theme.overlaysRemoved) ? theme.overlaysRemoved : []
   );
   const folderArr = Array.isArray(theme.overlaysTmp)
-    ? theme.overlaysTmp
-        .filter((entry) => entry && entry.src && !removed.has(entry.src))
-        .map((entry) => ({ ...entry }))
+    ? theme.overlaysTmp.filter((u) => !removed.has(u)).map((u) => ({ src: u }))
     : [];
   const localArr = Array.isArray(theme.overlays)
     ? theme.overlays.map((u) => (typeof u === "string" ? { src: u } : u))
@@ -14458,7 +14224,6 @@ function getBaseTemplateList(theme) {
           src: t.src,
           layout: normalizeTemplateLayout(t.layout),
           slots: t.slots,
-          textFields: normalizeTemplateTextFields(t.textFields),
         }))
     : [];
   const localArr = Array.isArray(theme.templates)
@@ -14466,7 +14231,6 @@ function getBaseTemplateList(theme) {
         src: t.src,
         layout: normalizeTemplateLayout(t.layout),
         slots: t.slots,
-        textFields: normalizeTemplateTextFields(t.textFields),
       }))
     : [];
   const seen = new Set();
@@ -14491,8 +14255,8 @@ function getOverlayList(theme) {
   );
   const folderArr = Array.isArray(theme.overlaysTmp)
     ? theme.overlaysTmp
-        .filter((entry) => entry && entry.src && !removed.has(entry.src))
-        .map((entry) => ({ ...entry, __folder: true }))
+        .filter((u) => !removed.has(u))
+        .map((u) => ({ src: u, __folder: true }))
     : [];
   const localArr = Array.isArray(theme.overlays)
     ? theme.overlays.map((u) => (typeof u === "string" ? { src: u } : u))
@@ -14521,7 +14285,6 @@ function getTemplateList(theme) {
               src: t.src,
               layout: normalizeTemplateLayout(t.layout),
               slots: t.slots,
-              textFields: normalizeTemplateTextFields(t.textFields),
               __event: true,
             };
           }
@@ -14539,7 +14302,6 @@ function getTemplateList(theme) {
           src: t.src,
           layout: normalizeTemplateLayout(t.layout),
           slots: t.slots,
-          textFields: normalizeTemplateTextFields(t.textFields),
           __folder: true,
         }))
     : [];
@@ -14548,7 +14310,6 @@ function getTemplateList(theme) {
         src: t.src,
         layout: normalizeTemplateLayout(t.layout),
         slots: t.slots,
-        textFields: normalizeTemplateTextFields(t.textFields),
       }))
     : [];
   const seen = new Set();
@@ -14598,6 +14359,7 @@ Object.assign(window, {
   closeConfirm,
   confirmTemplate,
   copyEventGalleryLink,
+  connectMotorRelay,
   copyShareLink,
   downloadShareImage,
   exitFinalPreview,
