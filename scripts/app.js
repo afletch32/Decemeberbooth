@@ -16,6 +16,12 @@ import {
   normalizeEventStyle,
   pairingSupportsEventStyle,
 } from "./event-utils.mjs";
+import {
+  normalizeTemplateTextFields,
+  resolveTemplateTextRect,
+  resolveTemplateTextValue,
+  validateCreatePathEventDetails,
+} from "./template-text-utils.mjs";
 import { formatRecordingTime } from "./recording-utils.mjs";
 import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
 
@@ -490,6 +496,9 @@ const DOM = {
   createPathFontNote: document.getElementById("createPathFontNote"),
   createPathFontPreviewCards: document.getElementById(
     "createPathFontPreviewCards"
+  ),
+  createPathValidationMessage: document.getElementById(
+    "createPathValidationMessage"
   ),
   createPathAssetSummary: document.getElementById("createPathAssetSummary"),
   createPathBackgrounds: document.getElementById("createPathBackgrounds"),
@@ -1453,6 +1462,7 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
     DOM.createPathThemeSelect.value = "";
     updateCreatePathFavoriteButton();
     populateCreatePathFontPairingSelect();
+    updateCreatePathDetailFields("");
     return;
   }
   filtered.forEach((opt) => {
@@ -1467,6 +1477,10 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
     : filtered[0].value;
   updateCreatePathFavoriteButton();
   populateCreatePathFontPairingSelect();
+  const selectedTheme = resolveThemeByKey(DOM.createPathThemeSelect.value || "");
+  updateCreatePathDetailFields(
+    inferThemeEventStyle(DOM.createPathThemeSelect.value || "", selectedTheme)
+  );
 }
 
 function getCreatePathAssetInputs() {
@@ -1484,6 +1498,122 @@ function resetCreatePathAssetInputs() {
     input.value = "";
   });
   updateCreatePathAssetSummary();
+}
+
+const CREATE_PATH_VALIDATION_FIELDS = {
+  name: () => DOM.createPathEventName,
+  themeKey: () => DOM.createPathThemeSelect,
+  partner1: () => DOM.createPathPartner1,
+  partner2: () => DOM.createPathPartner2,
+  birthdayName: () => DOM.createPathBirthdayName,
+  date: () => DOM.createPathEventDate,
+  expoCompany: () => DOM.createPathExpoCompany,
+};
+
+function setCreatePathFieldInvalid(field, invalid) {
+  if (!field) return;
+  if (invalid) {
+    field.setAttribute("aria-invalid", "true");
+    field.style.borderColor = "#d74b6a";
+    field.style.boxShadow = "0 0 0 3px rgba(215, 75, 106, 0.15)";
+    return;
+  }
+  field.removeAttribute("aria-invalid");
+  field.style.borderColor = "";
+  field.style.boxShadow = "";
+}
+
+function clearCreatePathValidation() {
+  Object.values(CREATE_PATH_VALIDATION_FIELDS).forEach((getField) => {
+    setCreatePathFieldInvalid(getField(), false);
+  });
+  if (DOM.createPathValidationMessage) {
+    DOM.createPathValidationMessage.textContent = "";
+    DOM.createPathValidationMessage.classList.add("hidden");
+  }
+}
+
+function showCreatePathValidation(message, fieldKeys = []) {
+  clearCreatePathValidation();
+  if (DOM.createPathValidationMessage) {
+    DOM.createPathValidationMessage.textContent = message;
+    DOM.createPathValidationMessage.classList.remove("hidden");
+  }
+  const invalidFields = fieldKeys
+    .map((key) =>
+      Object.prototype.hasOwnProperty.call(CREATE_PATH_VALIDATION_FIELDS, key)
+        ? CREATE_PATH_VALIDATION_FIELDS[key]()
+        : null
+    )
+    .filter(Boolean);
+  invalidFields.forEach((field) => {
+    setCreatePathFieldInvalid(field, true);
+  });
+  if (invalidFields[0]) invalidFields[0].focus();
+}
+
+function readCreatePathEventDetails() {
+  return {
+    name: valueFromInput(DOM.createPathEventName),
+    themeKey: DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "",
+    date: valueFromInput(DOM.createPathEventDate),
+    partner1: valueFromInput(DOM.createPathPartner1),
+    partner2: valueFromInput(DOM.createPathPartner2),
+    birthdayName: valueFromInput(DOM.createPathBirthdayName),
+    expoCompany: valueFromInput(DOM.createPathExpoCompany),
+    pairingValue: DOM.createPathFontPairingSelect
+      ? DOM.createPathFontPairingSelect.value
+      : "",
+  };
+}
+
+function resetCreatePathForm() {
+  clearCreatePathValidation();
+  [
+    DOM.createPathEventName,
+    DOM.createPathPartner1,
+    DOM.createPathPartner2,
+    DOM.createPathBirthdayName,
+    DOM.createPathEventDate,
+    DOM.createPathExpoCompany,
+    DOM.createPathFontPairingSelect,
+  ]
+    .filter(Boolean)
+    .forEach((input) => {
+      input.value = "";
+    });
+  resetCreatePathAssetInputs();
+}
+
+function updateCreatePathDetailFields(style = "") {
+  const normalized = normalizeEventStyle(style);
+  if (DOM.createPathWeddingFields) {
+    DOM.createPathWeddingFields.classList.toggle(
+      "hidden",
+      normalized !== "wedding"
+    );
+  }
+  if (DOM.createPathBirthdayFields) {
+    DOM.createPathBirthdayFields.classList.toggle(
+      "hidden",
+      normalized !== "birthday"
+    );
+  }
+  if (DOM.createPathExpoFields) {
+    DOM.createPathExpoFields.classList.toggle("hidden", normalized !== "expo");
+  }
+  const showDate = normalized === "wedding" || normalized === "birthday";
+  if (DOM.createPathDateFields) {
+    DOM.createPathDateFields.classList.toggle("hidden", !showDate);
+  }
+  if (DOM.createPathEventDate) {
+    DOM.createPathEventDate.placeholder =
+      normalized === "wedding"
+        ? "e.g., June 14, 2026"
+        : normalized === "birthday"
+        ? "e.g., April 27, 2026"
+        : "e.g., April 27, 2026";
+  }
 }
 
 async function addCreatePathAssetsToEvent(event) {
@@ -1544,65 +1674,66 @@ async function addCreatePathAssetsToEvent(event) {
   if (tasks.length) await Promise.all(tasks);
 }
 
-async function createEventFromPathInputs() {
-  const name = valueFromInput(DOM.createPathEventName);
-  if (!name) {
-    alert("Enter an event name.");
-    return;
-  }
-  const themeKey = DOM.createPathThemeSelect
-    ? DOM.createPathThemeSelect.value
-    : "";
-  if (!themeKey) {
-    alert("Choose a theme.");
-    return;
-  }
-  const theme = resolveThemeByKey(themeKey);
-  if (!theme) {
-    alert("Theme not found.");
-    return;
-  }
-  const eventType = inferThemeEventStyle(themeKey, theme);
-  const pairingValue = DOM.createPathFontPairingSelect
-    ? DOM.createPathFontPairingSelect.value
-    : "";
-  const [fontHeading = "", fontBody = ""] = pairingValue
-    ? pairingValue.split("|")
+function buildCreatePathEvent(theme, details, eventType) {
+  const [fontHeading = "", fontBody = ""] = details.pairingValue
+    ? details.pairingValue.split("|")
     : ["", ""];
-  const slug = slugifyEventText(name);
+  const slug = slugifyEventText(details.name);
   const id = `${slug || "event"}-${Date.now().toString(36)}`;
-  const newEvent = buildEventFromThemeDefaults(theme, {
+
+  return buildEventFromThemeDefaults(theme, {
     id,
-    name,
-    date: "",
+    name: details.name,
+    date: details.date,
     eventType,
-    themeKey,
+    themeKey: details.themeKey,
     fontHeading,
     fontBody,
-    partner1: valueFromInput(DOM.createPathPartner1),
-    partner2: valueFromInput(DOM.createPathPartner2),
+    partner1: details.partner1,
+    partner2: details.partner2,
+    birthdayName: details.birthdayName,
+    expoCompany: details.expoCompany,
     createdAt: new Date().toISOString(),
   });
+}
+
+async function createEventFromPathInputs() {
+  clearCreatePathValidation();
+  const details = readCreatePathEventDetails();
+  if (!details.name) {
+    showCreatePathValidation("Enter an event name.", ["name"]);
+    return false;
+  }
+  if (!details.themeKey) {
+    showCreatePathValidation("Choose a theme.", ["themeKey"]);
+    return false;
+  }
+  const theme = resolveThemeByKey(details.themeKey);
+  if (!theme) {
+    showCreatePathValidation("Theme not found.", ["themeKey"]);
+    return false;
+  }
+  const eventType = inferThemeEventStyle(details.themeKey, theme);
+  const detailValidation = validateCreatePathEventDetails(eventType, details);
+  if (!detailValidation.ok) {
+    showCreatePathValidation(detailValidation.message, detailValidation.fields);
+    return false;
+  }
+  const newEvent = buildCreatePathEvent(theme, details, eventType);
   await addCreatePathAssetsToEvent(newEvent);
   const events = getStoredEvents();
   events.push(newEvent);
   setStoredEvents(events);
-  setActiveEventId(id);
-  populateEventProfileSelect(id);
-  if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = id;
-  setEventSelection(themeKey);
-  loadTheme(themeKey);
+  setActiveEventId(newEvent.id);
+  populateEventProfileSelect(newEvent.id);
+  if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = newEvent.id;
+  setEventSelection(details.themeKey);
+  loadTheme(details.themeKey);
   syncEventInputsFromActive();
   updateStylePreview();
-  if (DOM.createPathEventName) DOM.createPathEventName.value = "";
-  if (DOM.createPathPartner1) DOM.createPathPartner1.value = "";
-  if (DOM.createPathPartner2) DOM.createPathPartner2.value = "";
-  if (DOM.createPathBirthdayName) DOM.createPathBirthdayName.value = "";
-  if (DOM.createPathExpoCompany) DOM.createPathExpoCompany.value = "";
-  if (DOM.createPathFontPairingSelect)
-    DOM.createPathFontPairingSelect.value = "";
-  resetCreatePathAssetInputs();
-  showToast(`Event "${name}" created`);
+  resetCreatePathForm();
+  showToast(`Event "${details.name}" created`);
+  return true;
 }
 
 function quickStartThemeOnly(preferredThemeKey = "") {
@@ -1729,8 +1860,8 @@ function setupEventProfileControls() {
     DOM.createEventBtn.addEventListener("click", () => {
       setEventSetupPath("create");
       createEventFromPathInputs()
-        .then(() => {
-          focusCurrentEventSetup();
+        .then((created) => {
+          if (created) focusCurrentEventSetup();
         })
         .catch((err) => {
           console.error("Failed to create event from theme", err);
@@ -1738,6 +1869,20 @@ function setupEventProfileControls() {
         });
     });
   }
+  [
+    DOM.createPathEventName,
+    DOM.createPathThemeSelect,
+    DOM.createPathPartner1,
+    DOM.createPathPartner2,
+    DOM.createPathBirthdayName,
+    DOM.createPathEventDate,
+    DOM.createPathExpoCompany,
+  ]
+    .filter(Boolean)
+    .forEach((input) => {
+      input.addEventListener("input", clearCreatePathValidation);
+      input.addEventListener("change", clearCreatePathValidation);
+    });
   if (DOM.quickStartBtn) {
     DOM.quickStartBtn.addEventListener("click", () => {
       startShowcaseDemo();
@@ -1777,24 +1922,11 @@ function setupEventProfileControls() {
       disableShowcaseDemo();
       updateCreatePathFavoriteButton();
       const key = DOM.createPathThemeSelect.value || "";
-      if (!key) return;
       const theme = resolveThemeByKey(key);
       const style = inferThemeEventStyle(key, theme);
-      if (DOM.createPathWeddingFields) {
-        DOM.createPathWeddingFields.classList.toggle(
-          "hidden",
-          style !== "wedding"
-        );
-      }
-      if (DOM.createPathBirthdayFields) {
-        DOM.createPathBirthdayFields.classList.toggle(
-          "hidden",
-          style !== "birthday"
-        );
-      }
-      if (DOM.createPathExpoFields) {
-        DOM.createPathExpoFields.classList.toggle("hidden", style !== "expo");
-      }
+      updateCreatePathDetailFields(style);
+      populateCreatePathFontPairingSelect();
+      if (!key) return;
       if (DOM.eventSelect) DOM.eventSelect.value = key;
       loadTheme(key);
       highlightThemeQuickSelect(key);
@@ -7449,6 +7581,113 @@ function triggerFlash() {
   setTimeout(cleanup, 600);
 }
 
+function getThemeHeadingFont(theme) {
+  return theme?.fontHeading || theme?.font || "serif";
+}
+
+function getThemeBodyFont(theme) {
+  return theme?.fontBody || theme?.font || "sans-serif";
+}
+
+function resolveCanvasTextFamily(field, theme) {
+  const family = field.fontFamily || "";
+  if (family) return family;
+  return field.key === "event_date"
+    ? getThemeBodyFont(theme)
+    : getThemeHeadingFont(theme);
+}
+
+function wrapCanvasText(ctx, text, maxWidth) {
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  const lines = [];
+  let current = words.shift() || "";
+  words.forEach((word) => {
+    const next = `${current} ${word}`;
+    if (ctx.measureText(next).width <= maxWidth) {
+      current = next;
+    } else {
+      lines.push(current);
+      current = word;
+    }
+  });
+  if (current) lines.push(current);
+  return lines;
+}
+
+function fitCanvasText(ctx, text, rect, family, weight, startSize, minSize) {
+  let size = startSize;
+  while (size > minSize) {
+    ctx.font = `${weight} ${size}px ${family}`;
+    const lines = wrapCanvasText(ctx, text, Math.max(20, rect.w - 16));
+    const lineHeight = size * 1.14;
+    if (lines.length * lineHeight <= rect.h) {
+      return { size, lines, lineHeight };
+    }
+    size -= 1;
+  }
+  ctx.font = `${weight} ${minSize}px ${family}`;
+  return {
+    size: minSize,
+    lines: wrapCanvasText(ctx, text, Math.max(20, rect.w - 16)),
+    lineHeight: minSize * 1.14,
+  };
+}
+
+function drawTemplateTextFields(ctx, width, height, fields, event, theme) {
+  const normalized = normalizeTemplateTextFields(fields);
+  if (!normalized.length || !event) return false;
+  let drewText = false;
+  normalized.forEach((field) => {
+    const rawValue = resolveTemplateTextValue(field.key, event);
+    const text = field.uppercase ? rawValue.toUpperCase() : rawValue;
+    if (!text) return;
+    const rect = resolveTemplateTextRect(field, width, height);
+    if (!rect || rect.w <= 0 || rect.h <= 0) return;
+    const family = resolveCanvasTextFamily(field, theme);
+    const weight = field.fontWeight || "600";
+    const startSize =
+      field.fontSize || Math.max(18, Math.round(Math.min(width, height) * 0.03));
+    const minSize =
+      field.minFontSize || Math.max(10, Math.round(startSize * 0.5));
+    const metrics = fitCanvasText(
+      ctx,
+      text,
+      rect,
+      family,
+      weight,
+      startSize,
+      minSize
+    );
+    if (!metrics.lines.length) return;
+    ctx.save();
+    ctx.fillStyle = field.color || theme?.accent2 || "#ffffff";
+    ctx.textBaseline = "top";
+    ctx.textAlign =
+      field.align === "left"
+        ? "left"
+        : field.align === "right"
+        ? "right"
+        : "center";
+    ctx.font = `${weight} ${metrics.size}px ${family}`;
+    const totalHeight = metrics.lines.length * metrics.lineHeight;
+    const x =
+      field.align === "left"
+        ? rect.x + 8
+        : field.align === "right"
+        ? rect.x + rect.w - 8
+        : rect.x + rect.w / 2;
+    let y = rect.y + (rect.h - totalHeight) / 2;
+    metrics.lines.forEach((line) => {
+      ctx.fillText(line, x, y);
+      y += metrics.lineHeight;
+    });
+    ctx.restore();
+    drewText = true;
+  });
+  return drewText;
+}
+
 function drawDynamicEventText(
   ctx,
   width,
@@ -7467,8 +7706,8 @@ function drawDynamicEventText(
   const date = event?.date || "";
 
   ctx.save();
-  const headingFont = theme?.fontHeading || theme?.font || "serif";
-  const bodyFont = theme?.fontBody || theme?.font || "sans-serif";
+  const headingFont = getThemeHeadingFont(theme);
+  const bodyFont = getThemeBodyFont(theme);
   const textColor = theme?.accent2 || "#ffffff";
 
   ctx.fillStyle = textColor;
@@ -7571,7 +7810,22 @@ async function composeStrip(template, photos) {
 
   // Auto-fill names for strips
   const active = getActiveEvent();
-  if (active && (active.partner1 || active.partner2)) {
+  const renderedTemplateText = drawTemplateTextFields(
+    ctx,
+    targetW,
+    targetH,
+    template && template.textFields,
+    active,
+    activeTheme
+  );
+  if (
+    !renderedTemplateText &&
+    active &&
+    (active.partner1 ||
+      active.partner2 ||
+      active.birthdayName ||
+      active.expoCompany)
+  ) {
     drawDynamicEventText(ctx, targetW, targetH, active, activeTheme, true);
   }
 
@@ -7653,7 +7907,25 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
 
   // Auto-fill names for single photos
   const active = getActiveEvent();
-  if (active && (active.partner1 || active.partner2)) {
+  const overlayDefinition = getOverlayList(activeTheme).find(
+    (item) => item && item.src === overlaySrc
+  );
+  const renderedTemplateText = drawTemplateTextFields(
+    ctx,
+    targetW,
+    targetH,
+    overlayDefinition && overlayDefinition.textFields,
+    active,
+    activeTheme
+  );
+  if (
+    !renderedTemplateText &&
+    active &&
+    (active.partner1 ||
+      active.partner2 ||
+      active.birthdayName ||
+      active.expoCompany)
+  ) {
     drawDynamicEventText(ctx, targetW, targetH, active, activeTheme);
   }
 
@@ -14130,7 +14402,10 @@ async function resolveOverlaysFromFolder(theme) {
       for (const it of json) {
         if (typeof it === "string") out.push(folder + it);
         else if (it && typeof it === "object" && typeof it.src === "string")
-          out.push(folder + it.src);
+          out.push({
+            src: folder + it.src,
+            textFields: normalizeTemplateTextFields(it.textFields),
+          });
       }
     }
     return out.length ? out : builtin;
@@ -14167,6 +14442,7 @@ async function resolveTemplatesFromFolder(theme) {
             src: folder + it.src,
             layout: normalizeTemplateLayout(it.layout),
             slots: it.slots,
+            textFields: normalizeTemplateTextFields(it.textFields),
           });
       }
     }
@@ -14196,10 +14472,28 @@ function getBaseOverlayList(theme) {
     Array.isArray(theme.overlaysRemoved) ? theme.overlaysRemoved : []
   );
   const folderArr = Array.isArray(theme.overlaysTmp)
-    ? theme.overlaysTmp.filter((u) => !removed.has(u)).map((u) => ({ src: u }))
+    ? theme.overlaysTmp
+        .map((item) => {
+          if (typeof item === "string") return { src: item };
+          if (item && typeof item === "object" && item.src) {
+            return {
+              src: item.src,
+              textFields: normalizeTemplateTextFields(item.textFields),
+            };
+          }
+          return null;
+        })
+        .filter((item) => item && !removed.has(item.src))
     : [];
   const localArr = Array.isArray(theme.overlays)
-    ? theme.overlays.map((u) => (typeof u === "string" ? { src: u } : u))
+    ? theme.overlays.map((item) =>
+        typeof item === "string"
+          ? { src: item }
+          : {
+              ...item,
+              textFields: normalizeTemplateTextFields(item.textFields),
+            }
+      )
     : [];
   const seen = new Set();
   const out = [];
@@ -14224,6 +14518,7 @@ function getBaseTemplateList(theme) {
           src: t.src,
           layout: normalizeTemplateLayout(t.layout),
           slots: t.slots,
+          textFields: normalizeTemplateTextFields(t.textFields),
         }))
     : [];
   const localArr = Array.isArray(theme.templates)
@@ -14231,6 +14526,7 @@ function getBaseTemplateList(theme) {
         src: t.src,
         layout: normalizeTemplateLayout(t.layout),
         slots: t.slots,
+        textFields: normalizeTemplateTextFields(t.textFields),
       }))
     : [];
   const seen = new Set();
@@ -14248,18 +14544,47 @@ function getOverlayList(theme) {
   if (!theme || typeof theme !== "object") return [];
   const overrides = getActiveEventOverrides();
   const eventArr = Array.isArray(overrides.overlays)
-    ? overrides.overlays.filter(Boolean).map((u) => ({ src: u, __event: true }))
+    ? overrides.overlays
+        .map((item) => {
+          if (typeof item === "string") return { src: item, __event: true };
+          if (item && typeof item === "object" && item.src) {
+            return {
+              ...item,
+              textFields: normalizeTemplateTextFields(item.textFields),
+              __event: true,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean)
     : [];
   const removed = new Set(
     Array.isArray(theme.overlaysRemoved) ? theme.overlaysRemoved : []
   );
   const folderArr = Array.isArray(theme.overlaysTmp)
     ? theme.overlaysTmp
-        .filter((u) => !removed.has(u))
-        .map((u) => ({ src: u, __folder: true }))
+        .map((item) => {
+          if (typeof item === "string") return { src: item, __folder: true };
+          if (item && typeof item === "object" && item.src) {
+            return {
+              src: item.src,
+              textFields: normalizeTemplateTextFields(item.textFields),
+              __folder: true,
+            };
+          }
+          return null;
+        })
+        .filter((item) => item && !removed.has(item.src))
     : [];
   const localArr = Array.isArray(theme.overlays)
-    ? theme.overlays.map((u) => (typeof u === "string" ? { src: u } : u))
+    ? theme.overlays.map((item) =>
+        typeof item === "string"
+          ? { src: item }
+          : {
+              ...item,
+              textFields: normalizeTemplateTextFields(item.textFields),
+            }
+      )
     : [];
   const seen = new Set();
   const out = [];
@@ -14285,6 +14610,7 @@ function getTemplateList(theme) {
               src: t.src,
               layout: normalizeTemplateLayout(t.layout),
               slots: t.slots,
+              textFields: normalizeTemplateTextFields(t.textFields),
               __event: true,
             };
           }
@@ -14302,6 +14628,7 @@ function getTemplateList(theme) {
           src: t.src,
           layout: normalizeTemplateLayout(t.layout),
           slots: t.slots,
+          textFields: normalizeTemplateTextFields(t.textFields),
           __folder: true,
         }))
     : [];
@@ -14310,6 +14637,7 @@ function getTemplateList(theme) {
         src: t.src,
         layout: normalizeTemplateLayout(t.layout),
         slots: t.slots,
+        textFields: normalizeTemplateTextFields(t.textFields),
       }))
     : [];
   const seen = new Set();
@@ -14352,6 +14680,42 @@ function setupInstallPrompt() {
 Object.assign(window, {
   addFontByFamily,
   addFontByUrl,
+  __photoboothTest: {
+    composeStrip,
+    finalizeToPrint,
+    getActiveEvent: () => getActiveEvent(),
+    getOverlayList: () => getOverlayList(activeTheme),
+    getActiveTheme: () => activeTheme,
+    patchActiveTheme: (patch = {}) => {
+      if (!activeTheme || !patch || typeof patch !== "object") return null;
+      Object.assign(activeTheme, patch);
+      return activeTheme;
+    },
+    probeOverlayAutofill: (overlaySrc, width = 1800, height = 1350) => {
+      const overlayDefinition = getOverlayList(activeTheme).find(
+        (item) => item && item.src === overlaySrc
+      );
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      const calls = [];
+      const originalFillText = ctx.fillText.bind(ctx);
+      ctx.fillText = (text, ...args) => {
+        calls.push(String(text));
+        return originalFillText(text, ...args);
+      };
+      drawTemplateTextFields(
+        ctx,
+        width,
+        height,
+        overlayDefinition && overlayDefinition.textFields,
+        getActiveEvent(),
+        activeTheme
+      );
+      return calls;
+    },
+  },
   appendEmailText,
   cancelHideTimer,
   capturePhotoFlow,

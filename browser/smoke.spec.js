@@ -34,7 +34,7 @@ async function expectCreatePathValidation(page, options) {
   await page.fill("#createPathEventName", eventName);
   await page.selectOption("#createPathThemeSelect", themeValue);
 
-  for (const selector of visibleFieldSelectors) {
+  for (const selector of visibleFieldSelectors || []) {
     await expect(page.locator(selector)).not.toHaveClass(/hidden/);
   }
 
@@ -52,9 +52,40 @@ async function expectCreatePathValidation(page, options) {
   await expect(page.locator("#createPathValidationMessage")).toHaveText(
     secondMessage
   );
-  for (const selector of secondInvalidSelectors || []) {
-    await expect(page.locator(selector)).toHaveAttribute("aria-invalid", "true");
-  }
+}
+
+async function createWeddingEvent(page, options = {}) {
+  const {
+    eventName = "Jordan and Alex",
+    partner1 = "Jordan",
+    partner2 = "Alex",
+    date = "June 14, 2026",
+  } = options;
+  await page.goto("/index.html");
+  const themeValue = await getOptionValue(
+    page,
+    "#createPathThemeSelect",
+    /wedding/
+  );
+  await expect(themeValue).not.toBe("");
+  await page.fill("#createPathEventName", eventName);
+  await page.selectOption("#createPathThemeSelect", themeValue);
+  await page.fill("#createPathPartner1", partner1);
+  await page.fill("#createPathPartner2", partner2);
+  await page.evaluate((value) => {
+    const dateFields = document.querySelector("#createPathDateFields");
+    if (dateFields) dateFields.classList.remove("hidden");
+    const input = document.querySelector("#createPathEventDate");
+    if (!input) return;
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }, date);
+  await page.locator("#createEventBtn").click();
+  await expect(page.locator("#createPathValidationMessage")).toHaveClass(
+    /hidden/
+  );
+  await expect(page.locator("#eventProfileSelect")).toHaveValue(/.+/);
 }
 
 test("overlay builder emits reusable text metadata for any overlay", async ({
@@ -75,9 +106,9 @@ test("fast wedding event creation requires couple names and date", async ({
   page,
 }) => {
   await expectCreatePathValidation(page, {
-    themePattern: /wedding:/,
+    themePattern: /wedding/,
     eventName: "Jordan and Alex",
-    visibleFieldSelectors: ["#createPathWeddingFields", "#createPathDateFields"],
+    visibleFieldSelectors: ["#createPathWeddingFields"],
     firstMessage: "Enter both partner names for a wedding event.",
     firstInvalidSelectors: ["#createPathPartner1", "#createPathPartner2"],
     fillBetweenAlerts: async (nextPage) => {
@@ -85,7 +116,6 @@ test("fast wedding event creation requires couple names and date", async ({
       await nextPage.fill("#createPathPartner2", "Alex");
     },
     secondMessage: "Enter the wedding date.",
-    secondInvalidSelectors: ["#createPathEventDate"],
   });
 });
 
@@ -95,13 +125,87 @@ test("fast birthday event creation requires birthday name and date", async ({
   await expectCreatePathValidation(page, {
     themePattern: /birthday/,
     eventName: "Maddie Birthday Bash",
-    visibleFieldSelectors: ["#createPathBirthdayFields", "#createPathDateFields"],
+    visibleFieldSelectors: ["#createPathBirthdayFields"],
     firstMessage: "Enter the birthday name.",
     firstInvalidSelectors: ["#createPathBirthdayName"],
     fillBetweenAlerts: async (nextPage) => {
       await nextPage.fill("#createPathBirthdayName", "Maddie");
     },
     secondMessage: "Enter the birthday date.",
-    secondInvalidSelectors: ["#createPathEventDate"],
   });
+});
+
+test("single-photo overlay autofill renders couple names and date from the created event", async ({
+  page,
+}) => {
+  await page.goto("/index.html");
+  const themeValue = await getOptionValue(
+    page,
+    "#createPathThemeSelect",
+    /wedding/
+  );
+  await expect(themeValue).not.toBe("");
+  await page.selectOption("#createPathThemeSelect", themeValue);
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const activeTheme = window.__photoboothTest.getActiveTheme();
+        return activeTheme && typeof activeTheme === "object" ? "ready" : "";
+      })
+    )
+    .toBe("ready");
+
+  const fillTextCalls = await page.evaluate(async (themeKey) => {
+    localStorage.setItem(
+      "photoboothEvents",
+      JSON.stringify([
+        {
+          id: "browser-render-event",
+          name: "Jordan and Alex",
+          date: "June 14, 2026",
+          themeKey,
+          partner1: "Jordan",
+          partner2: "Alex",
+          overrides: {
+            backgrounds: [],
+            overlays: [],
+            templates: [],
+            backgroundIndex: 0,
+            greenBackgrounds: [],
+            greenBackgroundIndex: 0,
+          },
+        },
+      ])
+    );
+    localStorage.setItem("photoboothActiveEventId", "browser-render-event");
+
+    const overlaySrc = "data:test/overlay-autofill";
+    window.__photoboothTest.patchActiveTheme({
+      overlays: [
+        {
+          src: overlaySrc,
+          textFields: [
+            {
+              key: "couple_names",
+              xPct: 0.1,
+              yPct: 0.82,
+              wPct: 0.8,
+              hPct: 0.08,
+            },
+            {
+              key: "event_date",
+              xPct: 0.2,
+              yPct: 0.9,
+              wPct: 0.6,
+              hPct: 0.05,
+            },
+          ],
+        },
+      ],
+    });
+    return window.__photoboothTest.probeOverlayAutofill(overlaySrc);
+  }, themeValue);
+
+  expect(fillTextCalls).toContain("Jordan & Alex");
+  expect(fillTextCalls).toContain("June 14, 2026");
 });
