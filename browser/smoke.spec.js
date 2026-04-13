@@ -209,3 +209,65 @@ test("single-photo overlay autofill renders couple names and date from the creat
   expect(fillTextCalls).toContain("Jordan & Alex");
   expect(fillTextCalls).toContain("June 14, 2026");
 });
+
+test("strip template autofill renders couple names and date from the active event", async ({
+  page,
+}) => {
+  await page.goto("/index.html");
+  const themeValue = await getOptionValue(
+    page,
+    "#createPathThemeSelect",
+    /wedding/
+  );
+  await expect(themeValue).not.toBe("");
+  await page.selectOption("#createPathThemeSelect", themeValue);
+
+  const fillTextCalls = await page.evaluate(async (themeKey) => {
+    localStorage.setItem(
+      "photoboothEvents",
+      JSON.stringify([
+        {
+          id: "browser-strip-event",
+          name: "Jordan and Alex",
+          date: "June 14, 2026",
+          themeKey,
+          partner1: "Jordan",
+          partner2: "Alex",
+          overrides: {
+            backgrounds: [],
+            overlays: [],
+            templates: [],
+            backgroundIndex: 0,
+            greenBackgrounds: [],
+            greenBackgroundIndex: 0,
+          },
+        },
+      ])
+    );
+    localStorage.setItem("photoboothActiveEventId", "browser-strip-event");
+
+    return window.__photoboothTest.probeTemplateAutofill({
+      src: "data:test/template-autofill",
+      layout: "photo_strip_3",
+      textFields: [
+        {
+          key: "couple_names",
+          xPct: 0.1,
+          yPct: 0.86,
+          wPct: 0.8,
+          hPct: 0.06,
+        },
+        {
+          key: "event_date",
+          xPct: 0.2,
+          yPct: 0.93,
+          wPct: 0.6,
+          hPct: 0.04,
+        },
+      ],
+    });
+  }, themeValue);
+
+  expect(fillTextCalls).toContain("Jordan & Alex");
+  expect(fillTextCalls).toContain("June 14, 2026");
+});

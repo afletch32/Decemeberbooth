@@ -14715,6 +14715,27 @@ Object.assign(window, {
       );
       return calls;
     },
+    probeTemplateAutofill: (template, width = 1200, height = 1800) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      const calls = [];
+      const originalFillText = ctx.fillText.bind(ctx);
+      ctx.fillText = (text, ...args) => {
+        calls.push(String(text));
+        return originalFillText(text, ...args);
+      };
+      drawTemplateTextFields(
+        ctx,
+        width,
+        height,
+        template && template.textFields,
+        getActiveEvent(),
+        activeTheme
+      );
+      return calls;
+    },
   },
   appendEmailText,
   cancelHideTimer,
