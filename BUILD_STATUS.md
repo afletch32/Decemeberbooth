@@ -1,60 +1,24 @@
-# Build Status
+Current goal
+- Fix theme asset switching so the selected theme always shows its own assets, and keep holiday themes out of wedding flows.
 
-## Current focus
-Improve the template / overlay builder UX so templates are easier to style, preview, save, and reuse.
+What is done
+- Reusable overlay/template autofill is implemented and covered by Node plus browser tests.
+- Fast event creation validates wedding and birthday reusable fields inline.
+- Browser harness covers builder metadata and autofill render probes.
+- Wedding theme selection now excludes holiday themes in the shared selector.
+- The selected-theme asset panel now renders base theme assets instead of event-only overlays/templates.
+- Remote README/local network notes and local-data health check updates from `origin/main` are included.
 
-## Next step: template styling controls
-Add selected-overlay controls for:
+What is in progress
+- Rebasing local booth setup work on top of `origin/main`.
 
-- text color
-- border color
-- font size
-- font family
-- text alignment
-- border width
-- border radius
-- background color
-- opacity
+Next steps
+- Continue replaying local commits, then run tests after the rebase completes.
 
-### Expected behavior
-- Controls live in the existing selected-overlay settings panel.
-- Irrelevant controls are hidden by overlay type.
-- Preview updates immediately while editing.
-- Save/reload preserves all styling values.
-- Export/render output matches the live preview.
-- Old saved templates continue working through safe defaults.
+Known bugs/blockers
+- `npm run deploy` can fail when `CLOUDFLARE_API_TOKEN` is invalid in the shell environment.
 
-### Recommended fields
-- `textColor`
-- `fontSize`
-- `fontFamily`
-- `textAlign`
-- `borderColor`
-- `borderWidth`
-- `borderRadius`
-- `backgroundColor`
-- `opacity`
-
-### Suggested defaults
-- `textColor`: existing value or `#fff`
-- `fontSize`: existing value or `32`
-- `fontFamily`: existing/default sans-serif
-- `textAlign`: `center`
-- `borderColor`: existing value or `#fff`
-- `borderWidth`: `0`
-- `borderRadius`: `0`
-- `backgroundColor`: `transparent`
-- `opacity`: `1`
-
-### Keep this targeted
-Do not add heavy dependencies, rewrite the builder, change API routes unless required, or break saved templates.
-
-## QA checklist
-- Select a text overlay.
-- Change text color and font size.
-- Save, reload, and verify values persist.
-- Select a border/frame overlay.
-- Change border color, width, and radius.
-- Save, reload, and verify values persist.
-- Change opacity/background if supported by overlay type.
-- Export/render final output and confirm it matches preview.
+Important decisions
+- Event-only assets stay editable in the event setup panel.
+- The selected-theme asset panel stays theme-pure.
+- Holiday themes are hidden for wedding selections instead of being remapped.

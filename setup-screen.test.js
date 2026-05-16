@@ -91,6 +91,14 @@ test("setup flow is theme-first and quick start is a demo action", () => {
     "create flow should toggle style-specific detail prompts from the chosen theme"
   );
   assert.ok(
+    appScript.includes("function shouldIncludeThemeForSelectedType(themeKey, theme, selectedType)"),
+    "theme selection should be filtered through a shared event-type helper"
+  );
+  assert.ok(
+    appScript.includes('normalizedSelected === "wedding" && isHolidayThemeKey(themeKey)'),
+    "wedding selections should exclude holiday themes"
+  );
+  assert.ok(
     html.includes('id="createPathValidationMessage"'),
     "create flow should expose an inline validation message area"
   );
@@ -189,6 +197,14 @@ test("event setup owns the day-to-day event editing controls", () => {
   assert.ok(
     appScript.includes('alert("Create or select an event first.");'),
     "event-only asset uploads should require an active event"
+  );
+  assert.ok(
+    appScript.includes("setGrid(\n    DOM.currentOverlays,\n    getBaseOverlayList(theme),"),
+    "current asset panel should render base theme overlays instead of event overlays"
+  );
+  assert.ok(
+    appScript.includes("setGrid(\n    DOM.currentTemplates,\n    getBaseTemplateList(theme),"),
+    "current asset panel should render base theme templates instead of event templates"
   );
   assert.ok(
     appScript.includes('if (hasOwnEventTextValue(active, key)) return active[key];'),

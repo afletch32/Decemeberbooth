@@ -2088,7 +2088,7 @@ function setupThemeEditorControls() {
   if (DOM.fontEventStyleSelect) {
     DOM.fontEventStyleSelect.addEventListener("change", () => {
       syncEventTypeTiles();
-      renderThemeQuickSelect(DOM.eventSelect);
+      populateThemeSelector((DOM.eventSelect && DOM.eventSelect.value) || "");
       updateEventTypeSetupUI();
     });
   }
@@ -4356,6 +4356,7 @@ function populateThemeSelector(preferredKey, attempt = 0) {
   const select = DOM.eventSelect;
   if (!select) return null;
   select.innerHTML = "";
+  const selectedType = getSelectedEventType();
   let optionCount = 0;
   for (const themeKey in themes) {
     if (themeKey.startsWith("_")) continue; // skip meta buckets
@@ -4363,6 +4364,7 @@ function populateThemeSelector(preferredKey, attempt = 0) {
     if (theme.themes || theme.holidays) {
       const optgroup = document.createElement("optgroup");
       optgroup.label = theme.name;
+      let groupCount = 0;
       const subThemes = theme.themes || theme.holidays;
       for (const subThemeKey in subThemes) {
         const loc = BUILTIN_THEME_LOCATIONS[subThemeKey];
@@ -4374,14 +4376,28 @@ function populateThemeSelector(preferredKey, attempt = 0) {
           continue;
         }
         const subTheme = subThemes[subThemeKey];
+        const optionValue = `${themeKey}:${subThemeKey}`;
+        if (
+          !shouldIncludeThemeForSelectedType(
+            optionValue,
+            subTheme,
+            selectedType
+          )
+        ) {
+          continue;
+        }
         const option = document.createElement("option");
-        option.value = `${themeKey}:${subThemeKey}`;
+        option.value = optionValue;
         option.textContent = `${theme.name} > ${subTheme.name}`;
         optgroup.appendChild(option);
         optionCount += 1;
+        groupCount += 1;
       }
-      select.appendChild(optgroup);
+      if (groupCount) select.appendChild(optgroup);
     } else {
+      if (!shouldIncludeThemeForSelectedType(themeKey, theme, selectedType)) {
+        continue;
+      }
       const option = document.createElement("option");
       option.value = themeKey;
       option.textContent = theme.name;
@@ -4439,7 +4455,7 @@ function setSelectedEventType(nextType) {
     DOM.fontEventStyleSelect.value = normalized;
   }
   syncEventTypeTiles();
-  renderThemeQuickSelect(DOM.eventSelect);
+  populateThemeSelector((DOM.eventSelect && DOM.eventSelect.value) || "");
   updateEventTypeSetupUI();
 }
 
@@ -4486,6 +4502,20 @@ function themeSupportsEventType(item, selectedType) {
   if (normalizedSelected === "party" && inferredType === "birthday")
     return true;
   return inferredType === "general";
+}
+
+function isHolidayThemeKey(themeKey) {
+  if (!themeKey) return false;
+  return resolveThemeStorage(themeKey).bucket === "holidays";
+}
+
+function shouldIncludeThemeForSelectedType(themeKey, theme, selectedType) {
+  const normalizedSelected = normalizeEventStyle(selectedType);
+  if (!theme) return false;
+  if (normalizedSelected === "wedding" && isHolidayThemeKey(themeKey)) {
+    return false;
+  }
+  return themeSupportsEventType({ value: themeKey, theme }, normalizedSelected);
 }
 
 function getEventTypeCopy(selectedType) {
@@ -4742,7 +4772,9 @@ function renderThemeQuickSelect(selectEl = DOM.eventSelect) {
   const mainItems = items
     .filter((item) => !(item.theme && item.theme.vibeParentKey))
     .filter((item) => item.holidayOrder === null)
-    .filter((item) => themeSupportsEventType(item, selectedType))
+    .filter((item) =>
+      shouldIncludeThemeForSelectedType(item.value, item.theme, selectedType)
+    )
     .sort((a, b) => {
       const aPriority = getThemeEventTypePriority(a, selectedType);
       const bPriority = getThemeEventTypePriority(b, selectedType);
@@ -4752,6 +4784,9 @@ function renderThemeQuickSelect(selectEl = DOM.eventSelect) {
   const holidayItems = items
     .filter((item) => !(item.theme && item.theme.vibeParentKey))
     .filter((item) => item.holidayOrder !== null)
+    .filter((item) =>
+      shouldIncludeThemeForSelectedType(item.value, item.theme, selectedType)
+    )
     .sort((a, b) => (a.holidayOrder || 99) - (b.holidayOrder || 99));
 
   if (!mainItems.length) {
@@ -5725,9 +5760,6 @@ function renderCurrentAssets(theme) {
   // Helpers
   const active = getActiveEvent();
   const lockBaseThemeAssets = !!active;
-  const eventBgList = Array.isArray(getActiveEventOverrides().backgrounds)
-    ? getActiveEventOverrides().backgrounds.filter(Boolean)
-    : [];
   const removedBackgrounds = new Set(
     Array.isArray(theme && theme.backgroundsRemoved)
       ? theme.backgroundsRemoved
@@ -5737,53 +5769,39 @@ function renderCurrentAssets(theme) {
     ? theme.backgroundsTmp.filter((src) => src && !removedBackgrounds.has(src))
     : [];
   const baseBgList = getBaseBackgroundList(theme);
-  const bgList = mergeUniqueUrls(eventBgList, baseBgList);
+  const bgList = baseBgList;
   const baseGreenList = Array.isArray(theme && theme.greenBackgrounds)
     ? theme.greenBackgrounds.filter(Boolean)
     : [];
-  const greenBgList = getGreenBackgroundList(theme);
+  const greenBgList = baseGreenList;
   const eventOverrides = getActiveEventOverrides();
-  const eventBgSet = new Set(eventBgList);
   const baseFolderSet = new Set(baseFolderList);
   const hasEventBackgrounds =
     Array.isArray(eventOverrides.backgrounds) &&
     eventOverrides.backgrounds.length > 0;
-  const useBaseOverride = Number.isFinite(
-    eventOverrides.useBaseBackgroundIndex
-  );
   const hasEventGreenBackgrounds =
     Array.isArray(eventOverrides.greenBackgrounds) &&
     eventOverrides.greenBackgrounds.length > 0;
-  const useBaseGreenOverride = Number.isFinite(
-    eventOverrides.useBaseGreenBackgroundIndex
-  );
   const selectedBg = bgList.length
-    ? useBaseOverride
+    ? Number.isFinite(eventOverrides.useBaseBackgroundIndex)
       ? Math.min(
           Math.max(eventOverrides.useBaseBackgroundIndex, 0),
           baseBgList.length - 1
-        ) + eventBgList.length
-      : hasEventBackgrounds
-      ? Math.min(
-          Math.max(eventOverrides.backgroundIndex || 0, 0),
-          bgList.length - 1
         )
+      : hasEventBackgrounds
+      ? -1
       : typeof theme.backgroundIndex === "number"
       ? Math.min(Math.max(theme.backgroundIndex, 0), bgList.length - 1)
       : 0
     : -1;
   const selectedGreenBg = greenBgList.length
-    ? useBaseGreenOverride
+    ? Number.isFinite(eventOverrides.useBaseGreenBackgroundIndex)
       ? Math.min(
           Math.max(eventOverrides.useBaseGreenBackgroundIndex, 0),
           baseGreenList.length - 1
-        ) +
-        (hasEventGreenBackgrounds ? eventOverrides.greenBackgrounds.length : 0)
-      : hasEventGreenBackgrounds
-      ? Math.min(
-          Math.max(eventOverrides.greenBackgroundIndex || 0, 0),
-          greenBgList.length - 1
         )
+      : hasEventGreenBackgrounds
+      ? -1
       : typeof theme.greenBackgroundIndex === "number"
       ? Math.min(
           Math.max(theme.greenBackgroundIndex, 0),
@@ -5947,8 +5965,7 @@ function renderCurrentAssets(theme) {
       wrap.appendChild(span);
     } else {
       bgList.forEach((src, idx) => {
-        const isEvent = eventBgSet.has(src);
-        const isFolder = !isEvent && baseFolderSet.has(src);
+        const isFolder = baseFolderSet.has(src);
         const item = document.createElement("div");
         item.className = "asset-item";
         if (idx === selectedBg) item.classList.add("selected");
@@ -5971,19 +5988,12 @@ function renderCurrentAssets(theme) {
         });
         item.appendChild(useBtn);
         const remBtn = document.createElement("button");
-        if (!lockBaseThemeAssets || isEvent) {
+        if (!lockBaseThemeAssets) {
           remBtn.className = "asset-remove";
           remBtn.textContent = "×";
-          remBtn.title = "Remove";
-          remBtn.title = isEvent
-            ? "Remove from this event"
-            : isFolder
-            ? "Hide from this theme"
-            : "Remove";
+          remBtn.title = isFolder ? "Hide from this theme" : "Remove";
           remBtn.onclick = () => {
-            const promptText = isEvent
-              ? "Remove this background from this event?"
-              : isFolder
+            const promptText = isFolder
               ? "Hide this background for this theme?"
               : "Remove this background?";
             if (!confirm(promptText)) return;
@@ -6007,16 +6017,13 @@ function renderCurrentAssets(theme) {
       wrap.appendChild(span);
     } else {
       greenBgList.forEach((src, idx) => {
-        const isEvent =
-          Array.isArray(eventOverrides.greenBackgrounds) &&
-          eventOverrides.greenBackgrounds.includes(src);
         const item = document.createElement("div");
         item.className = "asset-item";
         const img = document.createElement("img");
         img.src = withBust(src);
         img.onerror = () => renderMissingThumbnail(item, src);
         item.appendChild(img);
-        if (!lockBaseThemeAssets || isEvent) {
+        if (!lockBaseThemeAssets) {
           const remBtn = document.createElement("button");
           remBtn.className = "asset-remove";
           remBtn.textContent = "×";
@@ -6031,17 +6038,11 @@ function renderCurrentAssets(theme) {
       });
     }
   }
-  setSingle(
-    DOM.currentLogo,
-    resolveEventLogo(theme),
-    "logo",
-    !!(active && active.logo)
-  );
+  setSingle(DOM.currentLogo, theme && theme.logo ? theme.logo : "", "logo");
   setSingle(
     DOM.currentCharacter,
-    resolveEventCharacter(theme),
-    "character",
-    !!(active && active.character)
+    theme && theme.character ? theme.character : "",
+    "character"
   );
   // Font preview
   if (DOM.currentFont) {
@@ -6132,10 +6133,16 @@ function renderCurrentAssets(theme) {
     addColor("Accent", "accent", theme.accent || cssAccent || "#ff7a18");
     addColor("Accent 2", "accent2", theme.accent2 || cssAccent2 || "#ffffff");
   }
-  setGrid(DOM.currentOverlays, getOverlayList(theme), false, "overlay", false);
+  setGrid(
+    DOM.currentOverlays,
+    getBaseOverlayList(theme),
+    false,
+    "overlay",
+    false
+  );
   setGrid(
     DOM.currentTemplates,
-    getTemplateList(theme),
+    getBaseTemplateList(theme),
     true,
     "template",
     false
@@ -14474,11 +14481,12 @@ function getBaseOverlayList(theme) {
   const folderArr = Array.isArray(theme.overlaysTmp)
     ? theme.overlaysTmp
         .map((item) => {
-          if (typeof item === "string") return { src: item };
+          if (typeof item === "string") return { src: item, __folder: true };
           if (item && typeof item === "object" && item.src) {
             return {
               src: item.src,
               textFields: normalizeTemplateTextFields(item.textFields),
+              __folder: true,
             };
           }
           return null;
@@ -14519,6 +14527,7 @@ function getBaseTemplateList(theme) {
           layout: normalizeTemplateLayout(t.layout),
           slots: t.slots,
           textFields: normalizeTemplateTextFields(t.textFields),
+          __folder: true,
         }))
     : [];
   const localArr = Array.isArray(theme.templates)

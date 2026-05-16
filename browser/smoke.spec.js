@@ -10,6 +10,14 @@ async function getOptionValue(page, selector, matcher) {
   }, matcher.source);
 }
 
+async function getOptionTexts(page, selector) {
+  return page.locator(selector).evaluate((node) =>
+    Array.from(node.options || []).map(
+      (option) => `${option.value} ${option.textContent || ""}`.trim()
+    )
+  );
+}
+
 async function expectCreatePathValidation(page, options) {
   const {
     themePattern,
@@ -133,6 +141,25 @@ test("fast birthday event creation requires birthday name and date", async ({
     },
     secondMessage: "Enter the birthday date.",
   });
+});
+
+test("wedding theme filtering hides holiday themes in the shared selector", async ({
+  page,
+}) => {
+  await page.goto("/index.html");
+  await page.evaluate(() => {
+    const select = document.querySelector("#fontEventStyleSelect");
+    if (!select) return;
+    select.value = "wedding";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+
+  const options = await getOptionTexts(page, "#eventSelect");
+  const joined = options.join(" ").toLowerCase();
+
+  expect(joined).not.toContain("halloween");
+  expect(joined).not.toContain("christmas");
+  expect(joined).not.toContain("valentine");
 });
 
 test("single-photo overlay autofill renders couple names and date from the created event", async ({
