@@ -1,0 +1,32 @@
+/* Final preview sizing fix for Decemberbooth
+   Add this CSS after the existing styles, or paste it near the end of the <style> block in index.html.
+   Purpose: display the completed final template + photos at its natural output shape instead of forcing it into the camera/frame preview ratio. */
+
+#finalPreviewContent {
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
+
+#finalStrip,
+#finalLive {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 92vw);
+  max-height: 82svh;
+  aspect-ratio: auto;
+  object-fit: contain;
+  margin-inline: auto;
+}
+
+#finalPreviewContent img,
+#finalPreviewContent canvas,
+#finalPreviewContent video {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 92vw);
+  max-height: 82svh;
+  object-fit: contain;
+}
