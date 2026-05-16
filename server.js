@@ -16,6 +16,14 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 const HOST = process.env.HOST || "0.0.0.0";
 const DATA_ROOT = process.env.DATA_ROOT || __dirname;
+const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_BYTES || 15 * 1024 * 1024);
+const ALLOWED_UPLOAD_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/svg+xml'
+]);
 
 // Directories
 const LOCAL_DATA_DIR = path.join(DATA_ROOT, 'local-data');
@@ -45,7 +53,17 @@ const storage = multer.diskStorage({
     cb(null, `${timestamp}-${safeName}`);
   }
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_UPLOAD_BYTES },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_UPLOAD_MIME_TYPES.has(file.mimetype)) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error(`Unsupported upload type: ${file.mimetype || 'unknown'}`));
+  }
+});
 
 // Default fonts payload (from functions/api/fonts.js)
 const DEFAULT_FONTS_PAYLOAD = {
@@ -103,7 +121,9 @@ function readJsonFile(filename, defaultValue = {}) {
 // Helper: Write JSON file
 function writeJsonFile(filename, data) {
   const filepath = path.join(LOCAL_DATA_DIR, filename);
-  fs.writeFileSync(filepath, JSON.stringify(data, null, 2), 'utf8');
+  const tempPath = `${filepath}.${process.pid}.tmp`;
+  fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf8');
+  fs.renameSync(tempPath, filepath);
 }
 
 function resolveUploadFilepath(reference) {
@@ -121,6 +141,16 @@ function resolveUploadFilepath(reference) {
   }
   return path.join(UPLOADS_DIR, filename);
 }
+
+// API: GET /api/health
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: true,
+    app: 'photobooth-production',
+    time: new Date().toISOString(),
+    dataRoot: DATA_ROOT
+  });
+});
 
 // API: GET /api/fonts
 app.get('/api/fonts', (req, res) => {
@@ -205,25 +235,30 @@ app.put('/api/events', (req, res) => {
 });
 
 // API: POST /api/upload (file upload)
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ ok: false, error: 'No file uploaded' });
-    }
+app.post('/api/upload', (req, res) => {
+  upload.single('file')(req, res, err => {
+    try {
+      if (err) {
+        return res.status(400).json({ ok: false, error: err.message });
+      }
+      if (!req.file) {
+        return res.status(400).json({ ok: false, error: 'No file uploaded' });
+      }
 
-    // Return the URL path to the uploaded file
-    const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({
-      ok: true,
-      url: fileUrl,
-      filename: req.file.filename,
-      originalName: req.file.originalname,
-      size: req.file.size
-    });
-  } catch (err) {
-    console.error('Error uploading file:', err);
-    res.status(500).json({ ok: false, error: err.message });
-  }
+      // Return the URL path to the uploaded file
+      const fileUrl = `/uploads/${req.file.filename}`;
+      res.json({
+        ok: true,
+        url: fileUrl,
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        size: req.file.size
+      });
+    } catch (uploadErr) {
+      console.error('Error uploading file:', uploadErr);
+      res.status(500).json({ ok: false, error: uploadErr.message });
+    }
+  });
 });
 
 // API: DELETE /api/upload (delete local upload)
@@ -238,7 +273,7 @@ app.delete('/api/upload', (req, res) => {
       return res.status(404).json({ ok: false, error: 'Upload not found' });
     }
     fs.unlinkSync(filepath);
-    res.json({ ok: true });
+    res.json({ ok: true, deleted: path.basename(filepath) });
   } catch (err) {
     console.error('Error deleting upload:', err);
     res.status(500).json({ ok: false, error: err.message });
@@ -281,6 +316,7 @@ function startServer(port = PORT, host = HOST) {
     console.log(`📤 Uploads:   ${UPLOADS_DIR}`);
     console.log('');
     console.log('✅ API Endpoints:');
+    console.log('   GET      /api/health');
     console.log('   GET/PUT  /api/fonts');
     console.log('   GET/PUT  /api/themes');
     console.log('   GET/PUT  /api/events');
@@ -299,4 +335,4 @@ if (require.main === module) {
   startServer();
 }
 
-module.exports = { app, startServer, UPLOADS_DIR, LOCAL_DATA_DIR, resolveUploadFilepath };
+module.exports = { app, startServer, UPLOADS_DIR, LOCAL_DATA_DIR, resolveUploadFilepath, readJsonFile, writeJsonFile };
