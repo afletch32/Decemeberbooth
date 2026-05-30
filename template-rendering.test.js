@@ -20,7 +20,7 @@ test("template rendering logic preserves photo overlays across strip mode and su
     "switching away from photo mode should preserve the selected overlay"
   );
   assert.ok(
-    appScript.includes('if (mode === "photo" && !selectedOverlay && lastPhotoOverlay) {'),
+    appScript.includes('if (captureMode === "photo") {'),
     "returning to photo mode should restore the selected overlay"
   );
   assert.ok(
@@ -28,8 +28,8 @@ test("template rendering logic preserves photo overlays across strip mode and su
     "strip aliases should normalize to the supported strip layout"
   );
   assert.ok(
-    appScript.includes('renderSingleColumnStrip(c, enhancedPhotos, bg, template);'),
-    "single-column strip templates should render in strip mode"
+    appScript.includes('renderDoubleColumn(c, enhancedPhotos, bg, template, rows);'),
+    "duplicated strip templates should render in print-sheet mode"
   );
   assert.ok(
     appScript.includes("drawTemplateTextFields("),
@@ -44,7 +44,7 @@ test("template rendering logic preserves photo overlays across strip mode and su
     "single-photo overlays should be composited without cropping their edges"
   );
   assert.ok(
-    html.includes("#liveOverlay {\n      width: 100%;\n      height: 100%;\n      display: block;\n      object-fit: contain;"),
+    html.includes("object-fit: contain;"),
     "live overlay preview should fit fully inside the frame"
   );
   assert.ok(

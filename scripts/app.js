@@ -529,6 +529,32 @@ const DOM = {
   quickStartCancel: document.getElementById("quickStartCancel"),
   quickStartConfirm: document.getElementById("quickStartConfirm"),
   demoThemeBar: document.getElementById("demoThemeBar"),
+  boothBackBtn: document.getElementById("boothBackBtn"),
+  launchEventName: document.getElementById("launchEventName"),
+  launchLayoutMode: document.getElementById("launchLayoutMode"),
+  launchOverlayName: document.getElementById("launchOverlayName"),
+  launchFontStatus: document.getElementById("launchFontStatus"),
+  launchCameraStatus: document.getElementById("launchCameraStatus"),
+  launchOutputStatus: document.getElementById("launchOutputStatus"),
+  launchOverlayCount: document.getElementById("launchOverlayCount"),
+  launchStripStatus: document.getElementById("launchStripStatus"),
+  launchWarning: document.getElementById("launchWarning"),
+  launchModeSingleBtn: document.getElementById("launchModeSingleBtn"),
+  launchModeStripBtn: document.getElementById("launchModeStripBtn"),
+  launchConfirmModal: document.getElementById("launchConfirmModal"),
+  launchConfirmEventName: document.getElementById("launchConfirmEventName"),
+  launchConfirmLayoutMode: document.getElementById("launchConfirmLayoutMode"),
+  launchConfirmOverlayName: document.getElementById("launchConfirmOverlayName"),
+  launchConfirmFontStatus: document.getElementById("launchConfirmFontStatus"),
+  launchConfirmCameraStatus: document.getElementById("launchConfirmCameraStatus"),
+  launchConfirmOutputStatus: document.getElementById("launchConfirmOutputStatus"),
+  launchConfirmOverlayCount: document.getElementById(
+    "launchConfirmOverlayCount"
+  ),
+  launchConfirmStripStatus: document.getElementById("launchConfirmStripStatus"),
+  launchConfirmWarning: document.getElementById("launchConfirmWarning"),
+  launchConfirmCancel: document.getElementById("launchConfirmCancel"),
+  launchConfirmStart: document.getElementById("launchConfirmStart"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
@@ -558,6 +584,8 @@ const DOM = {
   options: document.getElementById("options"),
   videoWrap: document.getElementById("videoWrap"),
   videoContainer: document.getElementById("videoContainer"),
+  overlayBackground: document.getElementById("overlayBackground"),
+  photoSlotLayer: document.getElementById("photoSlotLayer"),
   video: document.getElementById("video"),
   liveOverlay: document.getElementById("liveOverlay"),
   character: document.getElementById("character"),
@@ -591,6 +619,11 @@ const DOM = {
   gallery: document.getElementById("gallery"),
   toast: document.getElementById("toast"),
   welcomeScreen: document.getElementById("welcomeScreen"),
+  welcomeOverlay: document.getElementById("welcomeOverlay"),
+  welcomeEyebrow: document.getElementById("welcomeEyebrow"),
+  welcomeDemoStep: document.getElementById("welcomeDemoStep"),
+  welcomeIdleStep: document.getElementById("welcomeIdleStep"),
+  welcomeModeStep: document.getElementById("welcomeModeStep"),
   welcomeImg: document.getElementById("welcomeImg"),
   welcomeTitle: document.getElementById("welcomeTitle"),
   startButton: document.getElementById("startButton"),
@@ -784,6 +817,28 @@ const DOM = {
   currentAccents: document.getElementById("currentAccents"),
   currentOverlays: document.getElementById("currentOverlays"),
   currentTemplates: document.getElementById("currentTemplates"),
+  overlayThumbnailsPanel: document.getElementById("overlayThumbnailsPanel"),
+  overlayThumbnailsHeader: document.getElementById("overlayThumbnailsHeader"),
+  overlayThumbnailsSelected: document.getElementById("launchOverlayCount"),
+  overlayThumbnailsCount: document.getElementById("launchOverlayCount"),
+  overlayThumbnailsAction: null,
+  overlayThumbnailsBody: document.getElementById("overlayThumbnailsBody"),
+  overlayThumbnailsLoading: document.getElementById(
+    "overlayThumbnailsLoading"
+  ),
+  overlayThumbnailsError: document.getElementById("overlayThumbnailsError"),
+  templateThumbnailsPanel: document.getElementById("templateThumbnailsPanel"),
+  templateThumbnailsHeader: document.getElementById(
+    "templateThumbnailsHeader"
+  ),
+  templateThumbnailsSelected: document.getElementById("launchStripStatus"),
+  templateThumbnailsCount: document.getElementById("launchStripStatus"),
+  templateThumbnailsAction: null,
+  templateThumbnailsBody: document.getElementById("templateThumbnailsBody"),
+  templateThumbnailsLoading: document.getElementById(
+    "templateThumbnailsLoading"
+  ),
+  templateThumbnailsError: document.getElementById("templateThumbnailsError"),
   currentEventName: document.getElementById("currentEventName"),
   currentEventDate: document.getElementById("currentEventDate"),
   currentEventTheme: document.getElementById("currentEventTheme"),
@@ -809,16 +864,204 @@ const DOM = {
   themeEditorCloseBtn: document.getElementById("themeEditorCloseBtn"),
 };
 
+let createPathEventTypeFilter = "all";
+
 function setBoothControlsVisible(show) {
   const hidden = !show;
   if (DOM.options) DOM.options.classList.toggle("hidden", hidden);
   if (DOM.boothHeader) DOM.boothHeader.classList.toggle("hidden", hidden);
   if (DOM.boothControls) DOM.boothControls.classList.toggle("hidden", hidden);
+  if (DOM.boothBackBtn) DOM.boothBackBtn.classList.toggle("hidden", hidden);
   if (DOM.captureBtn) DOM.captureBtn.classList.toggle("hidden", hidden);
+  if (DOM.boothScreen) {
+    DOM.boothScreen.classList.toggle("booth-ready", !!show);
+  }
   if (!show) {
     setMobileSettingsOpen(false);
   }
   syncMobileSettingsUi();
+}
+
+function normalizeBoothModeValue(value) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (!normalized || normalized === "photo") return "live-photo";
+  if (normalized === "live-photo" || normalized === "still-photo") {
+    return normalized;
+  }
+  if (normalized === "strip" || normalized === "photo-strip") return "strip";
+  if (normalized === "layout" || normalized === "collage") return "layout";
+  if (normalized === "message" || normalized === "recording") return "message";
+  return "live-photo";
+}
+
+function getSelectedCaptureMode(value = mode) {
+  const normalized = normalizeBoothModeValue(value);
+  if (normalized === "live-photo" || normalized === "still-photo") {
+    return "photo";
+  }
+  if (normalized === "strip" || normalized === "layout") return normalized;
+  if (normalized === "message") return "message";
+  return "photo";
+}
+
+function applyBoothModeClass(nextMode = mode) {
+  const normalizedMode = normalizeBoothModeValue(nextMode);
+  const captureMode = getSelectedCaptureMode(normalizedMode);
+  const classes = [
+    "mode-live-photo",
+    "mode-still-photo",
+    "mode-strip",
+    "mode-message",
+    "mode-layout",
+  ];
+  if (DOM.boothScreen) {
+    DOM.boothScreen.classList.remove(...classes);
+    DOM.boothScreen.classList.add(`mode-${normalizedMode}`);
+    DOM.boothScreen.dataset.mode = normalizedMode;
+    DOM.boothScreen.dataset.captureMode = captureMode;
+  }
+  return { normalizedMode, captureMode };
+}
+
+function getLiveCameraAspectValue() {
+  return 4 / 3;
+}
+
+function getLiveCameraWidthValue() {
+  return isMobileBoothViewport() ? "86vw" : "860px";
+}
+
+function applyLiveCameraSizing() {
+  if (DOM.boothScreen) {
+    DOM.boothScreen.style.setProperty(
+      "--live-camera-width",
+      getLiveCameraWidthValue()
+    );
+    DOM.boothScreen.style.setProperty(
+      "--live-camera-aspect",
+      "4 / 3"
+    );
+  }
+  if (DOM.videoContainer) {
+    DOM.videoContainer.style.width = "";
+    DOM.videoContainer.style.aspectRatio = "";
+  }
+}
+
+function getSelectionDebugSummary(targetMode = mode) {
+  const captureMode = getSelectedCaptureMode(targetMode);
+  const activeOverlay = getActivePhotoOverlay();
+  const template =
+    captureMode === "strip" || captureMode === "layout"
+      ? pendingTemplate ||
+        getTemplateList(activeTheme).find(
+          (item) => getAssetCaptureType(item) === captureMode
+        ) ||
+        null
+      : null;
+  return {
+    mode: normalizeBoothModeValue(targetMode),
+    captureMode,
+    selectedOverlay: activeOverlay
+      ? {
+          id: activeOverlay.id || null,
+          name: activeOverlay.name || activeOverlay.id || activeOverlay.src || "",
+          type: activeOverlay.type || "photo",
+        }
+      : null,
+    selectedTemplate: template
+      ? {
+          id: template.id || null,
+          name: template.name || template.id || template.src || "",
+          type: template.type || getAssetCaptureType(template) || "strip",
+          layout: template.layout || null,
+        }
+      : null,
+    liveCameraAspect: getLiveCameraAspectValue(),
+    finalExportAspect:
+      typeof captureAspectRatio === "number" && captureAspectRatio > 0
+        ? captureAspectRatio
+        : null,
+  };
+}
+
+function logBoothFrameState(reason, targetMode = mode) {
+  try {
+    console.log("[booth-frame]", reason, getSelectionDebugSummary(targetMode));
+  } catch (_) {}
+}
+
+function isStripLikeSlotGrid(slots) {
+  if (!Array.isArray(slots) || slots.length < 2) return false;
+  const first = slots[0];
+  if (!first) return false;
+  const sameX = slots.every(
+    (slot) => Math.abs((slot.x || 0) - (first.x || 0)) <= 0.08
+  );
+  const sameWidth = slots.every(
+    (slot) => Math.abs((slot.width || 0) - (first.width || 0)) <= 0.08
+  );
+  const verticalOrder = slots.every((slot, index) => {
+    if (index === 0) return true;
+    return (slot.y || 0) >= (slots[index - 1].y || 0);
+  });
+  return sameX && sameWidth && verticalOrder;
+}
+
+function getAssetCaptureType(asset) {
+  if (!asset) return "photo";
+  const rawType = String(
+    asset.captureType || asset.layoutType || asset.type || ""
+  )
+    .trim()
+    .toLowerCase();
+  const rawLayout = normalizeTemplateLayout(
+    asset && (asset.layout || asset.layoutType)
+  );
+  const rawName = [
+    asset.id,
+    asset.name,
+    asset.src,
+    asset.renderSrc,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (rawType.includes("message")) return "message";
+  if (rawType.includes("layout") || rawType.includes("collage")) return "layout";
+  if (rawType.includes("strip")) return "strip";
+  if (
+    rawLayout === "double_column" ||
+    rawLayout === "vertical" ||
+    rawLayout === "photo_strip_2" ||
+    rawLayout === "photo_strip_3" ||
+    rawLayout === "photo_strip_4"
+  ) {
+    return "strip";
+  }
+  if (Array.isArray(asset.photoSlots) && asset.photoSlots.length > 1) {
+    return isStripLikeSlotGrid(asset.photoSlots) ? "strip" : "layout";
+  }
+  if (rawName.includes("strip")) return "strip";
+  if (rawName.includes("layout") || rawName.includes("collage")) {
+    return "layout";
+  }
+  return "photo";
+}
+
+function filterAssetsForMode(assets, modeValue) {
+  const captureMode = getSelectedCaptureMode(modeValue);
+  return Array.isArray(assets)
+    ? assets.filter((asset) => {
+        const assetType = getAssetCaptureType(asset);
+        if (captureMode === "photo") return assetType === "photo";
+        if (captureMode === "strip") return assetType === "strip";
+        if (captureMode === "layout") return assetType === "layout";
+        return false;
+      })
+    : [];
 }
 
 function isMobileBoothViewport() {
@@ -831,13 +1074,8 @@ function isMobileBoothViewport() {
 function setMobileSettingsOpen(open) {
   const shouldOpen =
     !!open &&
-    isMobileBoothViewport() &&
     DOM.boothScreen &&
-    !DOM.boothScreen.classList.contains("hidden") &&
-    DOM.options &&
-    !DOM.options.classList.contains("hidden") &&
-    DOM.boothControls &&
-    !DOM.boothControls.classList.contains("hidden");
+    !DOM.boothScreen.classList.contains("hidden");
   if (DOM.boothScreen) {
     DOM.boothScreen.classList.toggle("mobile-settings-open", shouldOpen);
   }
@@ -858,15 +1096,14 @@ function setMobileSettingsOpen(open) {
 function syncMobileSettingsUi() {
   const available = !!(
     DOM.mobileSettingsToggle &&
-    DOM.options &&
-    !DOM.options.classList.contains("hidden") &&
-    DOM.boothControls &&
-    !DOM.boothControls.classList.contains("hidden")
+    DOM.boothScreen &&
+    !DOM.boothScreen.classList.contains("hidden") &&
+    isMobileBoothViewport()
   );
   if (DOM.mobileSettingsToggle) {
     DOM.mobileSettingsToggle.classList.toggle("hidden", !available);
   }
-  if (!available || !isMobileBoothViewport()) {
+  if (!available) {
     setMobileSettingsOpen(false);
   }
 }
@@ -880,7 +1117,7 @@ function syncBoothModeButtons() {
 }
 
 function syncCaptureStatusIndicators() {
-  const showPhotoIndicators = mode === "photo";
+  const showPhotoIndicators = getSelectedCaptureMode() === "photo";
   if (DOM.livePhotoStatus) {
     DOM.livePhotoStatus.classList.toggle(
       "hidden",
@@ -927,14 +1164,14 @@ function syncRecordingModeAvailability() {
     DOM.recordingModeBtn.classList.toggle("hidden", !enabled);
   }
   if (!enabled && mode === "message") {
-    setMode("photo");
+    setMode("live-photo");
     return;
   }
   syncBoothModeButtons();
 }
 // --- State ---
 let activeTheme = null; // Default theme
-let mode = "photo";
+let mode = "live-photo";
 let currentMode = "photo";
 let stream;
 let torchEnabled = false;
@@ -951,7 +1188,11 @@ let lastShareUrl = null; // Public share URL served by SW
 let demoMode = false; // Allows running from file:// without camera
 let showcaseDemoActive = false;
 let showcaseDemoCurrentKey = "";
+let welcomeFlowStep = "demo";
 let captureAspectRatio = null; // Override capture aspect (width/height) when set
+const SETUP_LAUNCH_MODE_STORAGE_KEY = "photoboothSetupLaunchMode";
+let setupLaunchMode = "single_photo";
+let launchSummaryRevision = 0;
 const AUTO_ENHANCE_ENABLED = true;
 const AUTO_ENHANCE_FILTER = "brightness(1.05) contrast(1.08) saturate(1.08)";
 const ENHANCEMENT_MODE_DEFAULT = "bridal-glow";
@@ -1108,8 +1349,10 @@ function getShowcaseDemoThemeKey(kind) {
 
 function updateShowcaseDemoUi() {
   const buttons = Array.from(document.querySelectorAll("[data-demo-theme]"));
-  if (DOM.demoThemeBar)
-    DOM.demoThemeBar.classList.toggle("show", showcaseDemoActive);
+  const hasChoices = buttons.some((button) =>
+    !!getShowcaseDemoThemeKey(button.dataset.demoTheme)
+  );
+  if (DOM.demoThemeBar) DOM.demoThemeBar.classList.toggle("show", hasChoices);
   buttons.forEach((button) => {
     const key = getShowcaseDemoThemeKey(button.dataset.demoTheme);
     const isActive = !!key && key === showcaseDemoCurrentKey;
@@ -1117,6 +1360,40 @@ function updateShowcaseDemoUi() {
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
     button.disabled = !key;
   });
+}
+
+function hasShowcaseDemoChoices() {
+  return ["wedding", "birthday", "general"].some((kind) =>
+    !!getShowcaseDemoThemeKey(kind)
+  );
+}
+
+function resolveInitialWelcomeStep() {
+  return showcaseDemoActive && hasShowcaseDemoChoices() ? "demo" : "idle";
+}
+
+function updateWelcomeFlowUi() {
+  const step = welcomeFlowStep || resolveInitialWelcomeStep();
+  if (DOM.welcomeOverlay) DOM.welcomeOverlay.dataset.step = step;
+  if (DOM.welcomeDemoStep)
+    DOM.welcomeDemoStep.classList.toggle("hidden", step !== "demo");
+  if (DOM.welcomeIdleStep)
+    DOM.welcomeIdleStep.classList.toggle("hidden", step !== "idle");
+  if (DOM.welcomeModeStep)
+    DOM.welcomeModeStep.classList.toggle("hidden", step !== "mode");
+  if (DOM.welcomeEyebrow) {
+    DOM.welcomeEyebrow.textContent =
+      step === "demo"
+        ? "Choose your demo"
+        : step === "mode"
+        ? "Choose your photo style"
+        : "Touch to begin";
+  }
+}
+
+function setWelcomeFlowStep(step) {
+  welcomeFlowStep = step || resolveInitialWelcomeStep();
+  updateWelcomeFlowUi();
 }
 
 function disableShowcaseDemo() {
@@ -1204,6 +1481,17 @@ function getThemeTypeForKey(themeKey, favorites = getThemeFavorites()) {
 
 function renderMissingThumbnail(container, src) {
   if (!container) return;
+  const panel = container.closest("[data-asset-panel]");
+  if (panel && panel.dataset.assetPanel) {
+    const kind = panel.dataset.assetPanel === "template" ? "template" : "overlay";
+    setAssetPanelMessage(
+      kind,
+      "error",
+      kind === "template"
+        ? "Couldn’t load template thumbnails."
+        : "Couldn’t load overlay thumbnails."
+    );
+  }
   container.remove();
 }
 
@@ -1221,6 +1509,139 @@ function createAssetTile(src, options = {}) {
     item.appendChild(badgeEl);
   }
   return item;
+}
+
+const ASSET_PANEL_STATE_KEY = "photoboothAssetPanels";
+
+function getAssetPanelKind(kind) {
+  return kind === "template" ? "template" : "overlay";
+}
+
+function readAssetPanelState() {
+  try {
+    const raw = localStorage.getItem(ASSET_PANEL_STATE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function writeAssetPanelState(state) {
+  try {
+    localStorage.setItem(ASSET_PANEL_STATE_KEY, JSON.stringify(state || {}));
+  } catch (_) {}
+}
+
+function getAssetPanelControls(kind) {
+  const resolved = getAssetPanelKind(kind);
+  if (resolved === "template") {
+    return {
+      panel: DOM.templateThumbnailsPanel,
+      header: DOM.templateThumbnailsHeader,
+      selected: DOM.templateThumbnailsSelected,
+      count: DOM.templateThumbnailsCount,
+      action: DOM.templateThumbnailsAction,
+      body: DOM.templateThumbnailsBody,
+      loading: DOM.templateThumbnailsLoading,
+      error: DOM.templateThumbnailsError,
+    };
+  }
+  return {
+    panel: DOM.overlayThumbnailsPanel,
+    header: DOM.overlayThumbnailsHeader,
+    selected: DOM.overlayThumbnailsSelected,
+    count: DOM.overlayThumbnailsCount,
+    action: DOM.overlayThumbnailsAction,
+    body: DOM.overlayThumbnailsBody,
+    loading: DOM.overlayThumbnailsLoading,
+    error: DOM.overlayThumbnailsError,
+  };
+}
+
+function normalizeAssetDisplayName(value, fallback = "None") {
+  const raw =
+    typeof value === "string"
+      ? value
+      : value && typeof value === "object"
+      ? value.name || value.id || value.src || ""
+      : "";
+  const trimmed = raw.toString().trim();
+  if (!trimmed) return fallback;
+  const cleaned = trimmed.split("?")[0].split("#")[0];
+  const fileName = cleaned.split("/").pop() || cleaned;
+  return fileName.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim() || fallback;
+}
+
+function syncAssetPanelHeader(kind, list = [], selectedValue = "") {
+  const controls = getAssetPanelControls(kind);
+  const resolved = getAssetPanelKind(kind);
+  const count = Array.isArray(list) ? list.length : 0;
+  const selectedText = !count
+    ? `No ${resolved === "template" ? "templates" : "overlays"} uploaded yet`
+    : `${count} ${resolved === "template" ? "template" : "overlay"}${
+        count === 1 ? "" : "s"
+      } assigned`;
+  if (controls.selected) {
+    controls.selected.textContent = selectedText;
+  }
+  if (controls.count && controls.count !== controls.selected) {
+    controls.count.textContent = `${count} ${
+      resolved === "template" ? "template" : "overlay"
+    }${count === 1 ? "" : "s"}`;
+  }
+  if (controls.action) {
+    const isOpen = !!(controls.panel && controls.panel.classList.contains("open"));
+    controls.action.textContent = isOpen ? "Hide" : "View all";
+  }
+}
+
+function setAssetPanelMessage(kind, state, message) {
+  const controls = getAssetPanelControls(kind);
+  if (controls.loading) controls.loading.classList.add("hidden");
+  if (controls.error) controls.error.classList.add("hidden");
+  if (!state) return;
+  const target = state === "loading" ? controls.loading : controls.error;
+  if (!target) return;
+  target.textContent = message || target.textContent;
+  target.classList.remove("hidden");
+}
+
+function setAssetPanelOpen(kind, open, options = {}) {
+  const controls = getAssetPanelControls(kind);
+  if (!controls.panel || !controls.header) return;
+  const resolved = getAssetPanelKind(kind);
+  controls.panel.classList.toggle("open", !!open);
+  controls.header.setAttribute("aria-expanded", !!open ? "true" : "false");
+  if (controls.action) controls.action.textContent = open ? "Hide" : "View all";
+  if (options.persist !== false) {
+    const state = readAssetPanelState();
+    state[resolved] = !!open;
+    writeAssetPanelState(state);
+  }
+}
+
+function restoreAssetPanelState() {
+  const state = readAssetPanelState();
+  ["overlay", "template"].forEach((kind) => {
+    setAssetPanelOpen(kind, !!state[getAssetPanelKind(kind)], {
+      persist: false,
+    });
+  });
+}
+
+function setupAssetPanelControls() {
+  const bind = (kind) => {
+    const controls = getAssetPanelControls(kind);
+    if (!controls.header) return;
+    controls.header.addEventListener("click", () => {
+      const next = !controls.panel.classList.contains("open");
+      setAssetPanelOpen(kind, next);
+    });
+  };
+  bind("overlay");
+  bind("template");
+  restoreAssetPanelState();
 }
 
 // --- Idle Timeout ---
@@ -1434,9 +1855,10 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
     (DOM.eventSelect && DOM.eventSelect.options) || []
   ).filter((opt) => opt && opt.value);
   const favorites = getThemeFavorites();
-  const selectedTypeRaw = DOM.createPathEventType
-    ? DOM.createPathEventType.value || "all"
-    : "all";
+  const selectedTypeRaw =
+    (DOM.createPathEventType && DOM.createPathEventType.value) ||
+    createPathEventTypeFilter ||
+    "all";
   const selectedType = normalizeEventStyle(selectedTypeRaw);
   const selectedBefore =
     preferredThemeKey || DOM.createPathThemeSelect.value || "";
@@ -1448,7 +1870,7 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
     };
     if (getThemeTypeForKey(key, favorites) !== filter) return false;
     if (selectedTypeRaw === "all") return true;
-    return themeSupportsEventType(item, selectedType);
+    return shouldIncludeCreatePathTheme(key, item.theme, selectedType);
   });
   DOM.createPathThemeSelect.innerHTML = "";
   if (!filtered.length) {
@@ -1586,7 +2008,16 @@ function resetCreatePathForm() {
 }
 
 function updateCreatePathDetailFields(style = "") {
-  const normalized = normalizeEventStyle(style);
+  const selectedFilter = normalizeEventStyle(
+    (DOM.createPathEventType && DOM.createPathEventType.value) ||
+      createPathEventTypeFilter ||
+      ""
+  );
+  const inferredStyle = normalizeEventStyle(style);
+  const normalized =
+    [inferredStyle, selectedFilter].find(
+      (value) => value && value !== "general"
+    ) || inferredStyle || selectedFilter || "general";
   if (DOM.createPathWeddingFields) {
     DOM.createPathWeddingFields.classList.toggle(
       "hidden",
@@ -1602,9 +2033,19 @@ function updateCreatePathDetailFields(style = "") {
   if (DOM.createPathExpoFields) {
     DOM.createPathExpoFields.classList.toggle("hidden", normalized !== "expo");
   }
-  const showDate = normalized === "wedding" || normalized === "birthday";
   if (DOM.createPathDateFields) {
-    DOM.createPathDateFields.classList.toggle("hidden", !showDate);
+    DOM.createPathDateFields.classList.remove("hidden");
+  }
+  if (DOM.createPathDateFields) {
+    const label = DOM.createPathDateFields.querySelector("span");
+    if (label) {
+      label.textContent =
+        normalized === "wedding"
+          ? "Wedding Date"
+          : normalized === "birthday"
+          ? "Birthday Date"
+          : "Event Date";
+    }
   }
   if (DOM.createPathEventDate) {
     DOM.createPathEventDate.placeholder =
@@ -1913,6 +2354,8 @@ function setupEventProfileControls() {
   if (DOM.createPathEventType) {
     DOM.createPathEventType.value = "all";
     DOM.createPathEventType.addEventListener("change", () => {
+      createPathEventTypeFilter =
+        DOM.createPathEventType.value || createPathEventTypeFilter || "all";
       populateCreatePathThemeSelect();
       populateCreatePathFontPairingSelect();
     });
@@ -1941,8 +2384,13 @@ function setupEventProfileControls() {
       event.stopPropagation();
       if (applyShowcaseDemoTheme(button.dataset.demoTheme)) {
         showToast(`${button.textContent} ready.`);
-        showWelcome();
+        showWelcome("idle");
       }
+    });
+  });
+  document.querySelectorAll("[data-welcome-mode]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      beginModeSelection(button.dataset.welcomeMode, event);
     });
   });
   if (DOM.createPathFontPairingSelect) {
@@ -2015,6 +2463,23 @@ function handleEventSelectChange(event) {
       (active && active.name) || getStoredEventName(key) || "";
   }
   updateThemeEditorSummary();
+  updateLaunchSummary();
+}
+
+function openBoothLaunchConfirm() {
+  const modal = document.getElementById("launchConfirmModal");
+  if (modal) modal.style.display = "flex";
+  updateLaunchSummary();
+}
+
+function closeBoothLaunchConfirm() {
+  const modal = document.getElementById("launchConfirmModal");
+  if (modal) modal.style.display = "none";
+}
+
+function confirmBoothLaunch() {
+  closeBoothLaunchConfirm();
+  startBooth();
 }
 
 function setupBoothButtons() {
@@ -2023,8 +2488,34 @@ function setupBoothButtons() {
   else console.warn("Start Camera button not found in DOM.");
 
   const startBoothBtn = document.getElementById("startBoothButton");
-  if (startBoothBtn) startBoothBtn.addEventListener("click", startBooth);
+  if (startBoothBtn) {
+    startBoothBtn.addEventListener("click", startBooth);
+  }
   else console.warn("Start Booth button not found in DOM.");
+
+  if (DOM.launchConfirmCancel) {
+    DOM.launchConfirmCancel.addEventListener("click", closeBoothLaunchConfirm);
+  }
+  if (DOM.launchConfirmStart) {
+    DOM.launchConfirmStart.addEventListener("click", confirmBoothLaunch);
+  }
+  if (DOM.launchConfirmModal) {
+    DOM.launchConfirmModal.addEventListener("click", (event) => {
+      if (event.target === DOM.launchConfirmModal) {
+        closeBoothLaunchConfirm();
+      }
+    });
+  }
+  if (DOM.launchModeSingleBtn) {
+    DOM.launchModeSingleBtn.addEventListener("click", () =>
+      setSetupLaunchMode("single_photo")
+    );
+  }
+  if (DOM.launchModeStripBtn) {
+    DOM.launchModeStripBtn.addEventListener("click", () =>
+      setSetupLaunchMode("strip")
+    );
+  }
 }
 
 function setupMobileSettingsControls() {
@@ -3218,12 +3709,36 @@ function setSetupSection(section = "event") {
   closeAdminModal();
 }
 
+function focusSetupElement(selector) {
+  const el = document.querySelector(selector);
+  if (!el) return;
+  if (typeof el.scrollIntoView === "function") {
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+  if (typeof el.focus === "function") {
+    try {
+      el.focus({ preventScroll: true });
+    } catch (_) {
+      el.focus();
+    }
+  }
+}
+
 function setupSetupTabs() {
   [DOM.setupTabEvent, DOM.setupTabCapture, DOM.setupTabShare].forEach((btn) => {
     if (!btn) return;
     btn.addEventListener("click", () =>
       setSetupSection(btn.dataset.setupTab || "event")
     );
+  });
+  document.querySelectorAll("[data-session-action]").forEach((card) => {
+    const activate = () => routeSetupSessionCard(card.dataset.sessionAction);
+    card.addEventListener("click", activate);
+    card.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      activate();
+    });
   });
   setSetupSection(activeSetupSection);
 }
@@ -3292,6 +3807,274 @@ function updateSystemStatusStrip() {
     }
     DOM.statusQueue.textContent = `${count} Pending`;
   }
+  updateLaunchSummary();
+}
+
+function loadSetupLaunchMode() {
+  try {
+    const stored = localStorage.getItem(SETUP_LAUNCH_MODE_STORAGE_KEY);
+    if (stored === "strip" || stored === "single_photo") {
+      return stored;
+    }
+  } catch (_) {}
+  return "single_photo";
+}
+
+function setSetupLaunchMode(modeValue) {
+  setupLaunchMode = modeValue === "strip" ? "strip" : "single_photo";
+  try {
+    localStorage.setItem(SETUP_LAUNCH_MODE_STORAGE_KEY, setupLaunchMode);
+  } catch (_) {}
+  syncSetupLaunchModeUi();
+  updateLaunchSummary();
+}
+
+function routeSetupSessionCard(action) {
+  const key = String(action || "").trim();
+  if (!key) return;
+  if (key === "event") {
+    setSetupSection("event");
+    requestAnimationFrame(() => focusSetupElement("#eventPathCreateBtn"));
+    return;
+  }
+  if (key === "capture") {
+    setSetupSection("capture");
+    requestAnimationFrame(() => focusSetupElement("#startCameraButton"));
+    return;
+  }
+  if (key === "theme") {
+    setSetupSection("event");
+    requestAnimationFrame(() => focusSetupElement("#createPathThemeSelect"));
+    return;
+  }
+  if (key === "font") {
+    setSetupSection("capture");
+    const panel = document.getElementById("fontLibrarySection");
+    if (panel && panel.tagName === "DETAILS") {
+      panel.open = true;
+    }
+    requestAnimationFrame(() => focusSetupElement("#addPairingBtn"));
+    return;
+  }
+  if (key === "camera") {
+    setSetupSection("capture");
+    requestAnimationFrame(() => focusSetupElement("#startCameraButton"));
+    return;
+  }
+  if (key === "save") {
+    setSetupSection("share");
+    return;
+  }
+  if (key === "overlays") {
+    setSetupSection("event");
+    const panel = document.getElementById("currentAssetsSection");
+    if (panel && panel.tagName === "DETAILS") {
+      panel.open = true;
+    }
+    requestAnimationFrame(() => focusSetupElement("#addOverlaysBtn"));
+    return;
+  }
+  if (key === "templates") {
+    setSetupSection("event");
+    const panel = document.getElementById("currentAssetsSection");
+    if (panel && panel.tagName === "DETAILS") {
+      panel.open = true;
+    }
+    requestAnimationFrame(() => focusSetupElement("#addTemplatesBtn"));
+    return;
+  }
+}
+
+function syncSetupLaunchModeUi() {
+  const isStrip = setupLaunchMode === "strip";
+  if (DOM.launchModeSingleBtn) {
+    DOM.launchModeSingleBtn.classList.toggle("active", !isStrip);
+    DOM.launchModeSingleBtn.setAttribute(
+      "aria-pressed",
+      (!isStrip).toString()
+    );
+  }
+  if (DOM.launchModeStripBtn) {
+    DOM.launchModeStripBtn.classList.toggle("active", isStrip);
+    DOM.launchModeStripBtn.setAttribute("aria-pressed", isStrip.toString());
+  }
+}
+
+function getLaunchThemeName() {
+  const active = getActiveEvent();
+  if (active && active.name) return active.name;
+  if (DOM.eventSelect && DOM.eventSelect.selectedOptions.length) {
+    return DOM.eventSelect.selectedOptions[0].textContent || "No event selected";
+  }
+  return "No event selected";
+}
+
+function getLaunchThemeLabel() {
+  const themeName =
+    (activeTheme && activeTheme.name) ||
+    (DOM.eventSelect &&
+      DOM.eventSelect.selectedOptions[0] &&
+      DOM.eventSelect.selectedOptions[0].textContent) ||
+    "No theme selected";
+  return themeName;
+}
+
+function getLaunchFontLabel() {
+  const theme = activeTheme || getSelectedThemeTarget() || {};
+  const heading =
+    primaryFontFamily(theme.fontHeading || theme.font || "") || "";
+  const body =
+    primaryFontFamily(theme.fontBody || theme.font || "") || heading;
+  if (!heading && !body) return "Use theme fonts";
+  if (heading && body && heading !== body) {
+    return `${heading} + ${body}`;
+  }
+  return heading || body || "Use theme fonts";
+}
+
+function getLaunchOverlayCountLabel() {
+  const overlayCount = getOverlayList(activeTheme).length;
+  if (!overlayCount) return "No overlays assigned";
+  return `${overlayCount} overlay${overlayCount === 1 ? "" : "s"} assigned`;
+}
+
+function getLaunchTemplateCountLabel() {
+  const templateCount = getTemplateList(activeTheme).length;
+  if (!templateCount) return "No templates assigned";
+  return `${templateCount} template${templateCount === 1 ? "" : "s"} assigned`;
+}
+
+function getLaunchStripTemplate() {
+  const templates = getTemplateList(activeTheme).filter((template) =>
+    isStripTemplateLayout(template && template.layout)
+  );
+  return templates.length ? templates[0] : null;
+}
+
+function getLaunchCameraLabel() {
+  if (demoMode) return "Demo mode";
+  if (hasLiveVideoStream()) return "Ready";
+  if (!navigator.permissions || typeof navigator.permissions.query !== "function") {
+    return "Not started yet";
+  }
+  return "Checking camera permission...";
+}
+
+function getLaunchOutputLabel() {
+  const uploadReady = cloudinaryConfigured();
+  const pending = (() => {
+    try {
+      return getPendingUploads().length;
+    } catch (_) {
+      return 0;
+    }
+  })();
+  if (uploadReady) {
+    return pending ? `Cloudinary ready · ${pending} pending` : "Cloudinary ready";
+  }
+  return pending ? `Local uploads · ${pending} pending` : "Local uploads";
+}
+
+function getLaunchWarning() {
+  const warnings = [];
+  if (!getLaunchStripTemplate()) {
+    warnings.push(
+      "No strip preset is available yet. Guests can still choose photo mode in the booth, but strip selection will be empty until templates are added."
+    );
+  }
+  if (!selectedOverlay) {
+    const overlayCount = getOverlayList(activeTheme).length;
+    warnings.push(
+      overlayCount
+        ? `Guests can choose from ${overlayCount} overlays on the booth screen, and the booth will still open with a plain camera layout.`
+        : "No booth overlays are available yet. The booth will open with a plain camera layout until overlays are added."
+    );
+  }
+  return warnings.join(" ");
+}
+
+function setLaunchSummaryText(targetIds, value) {
+  targetIds.forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) node.textContent = value;
+  });
+}
+
+async function refreshLaunchCameraStatus() {
+  if (demoMode) return "Demo mode";
+  if (hasLiveVideoStream()) return "Ready";
+  if (!navigator.permissions || typeof navigator.permissions.query !== "function") {
+    return "Not started yet";
+  }
+  try {
+    const status = await navigator.permissions.query({ name: "camera" });
+    if (status && status.state === "granted") {
+      return "Permission granted, camera not started yet";
+    }
+    if (status && status.state === "denied") {
+      return "Camera permission blocked in the browser";
+    }
+    return "Camera permission needed";
+  } catch (_) {
+    return "Not started yet";
+  }
+}
+
+async function updateLaunchSummary() {
+  const revision = ++launchSummaryRevision;
+  const eventName = getLaunchThemeName();
+  const layoutMode = currentMode === "360" ? "360 Mode" : "Normal Mode";
+  const themeLabel = getLaunchThemeLabel();
+  const fontLabel = getLaunchFontLabel();
+  const overlayCountLabel = getLaunchOverlayCountLabel();
+  const templateCountLabel = getLaunchTemplateCountLabel();
+  const outputLabel = getLaunchOutputLabel();
+  const warning = getLaunchWarning();
+
+  setLaunchSummaryText(
+    ["launchEventName", "launchConfirmEventName"],
+    eventName
+  );
+  setLaunchSummaryText(
+    ["launchLayoutMode", "launchConfirmLayoutMode"],
+    layoutMode
+  );
+  setLaunchSummaryText(
+    ["launchOverlayName", "launchConfirmOverlayName"],
+    themeLabel
+  );
+  setLaunchSummaryText(
+    ["launchFontStatus", "launchConfirmFontStatus"],
+    fontLabel
+  );
+  setLaunchSummaryText(
+    ["launchOverlayCount", "launchConfirmOverlayCount"],
+    overlayCountLabel
+  );
+  setLaunchSummaryText(
+    ["launchStripStatus", "launchConfirmStripStatus"],
+    templateCountLabel
+  );
+  setLaunchSummaryText(
+    ["launchOutputStatus", "launchConfirmOutputStatus"],
+    outputLabel
+  );
+
+  if (DOM.launchWarning) {
+    DOM.launchWarning.textContent = warning;
+    DOM.launchWarning.classList.toggle("hidden", !warning);
+  }
+  if (DOM.launchConfirmWarning) {
+    DOM.launchConfirmWarning.textContent = warning;
+    DOM.launchConfirmWarning.classList.toggle("hidden", !warning);
+  }
+
+  const cameraLabel = await refreshLaunchCameraStatus();
+  if (revision !== launchSummaryRevision) return;
+  setLaunchSummaryText(
+    ["launchCameraStatus", "launchConfirmCameraStatus"],
+    cameraLabel
+  );
 }
 
 const EDIT_SCALE_CONFIG = [
@@ -3785,8 +4568,6 @@ function setupWelcomeInteractions() {
       if (event.key === "Enter" || event.key === " ") beginWelcome(event);
     });
   };
-  bindWelcomeTarget(DOM.welcomeScreen);
-  bindWelcomeTarget(document.getElementById("welcomeOverlay"));
   bindWelcomeTarget(DOM.startButton);
   if (
     document.body &&
@@ -3796,7 +4577,12 @@ function setupWelcomeInteractions() {
     const delegatedWelcomeStart = (event) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
-      if (!target.closest("#welcomeScreen, #welcomeOverlay, #startButton"))
+      if (
+        !target.closest("#welcomeScreen, #welcomeOverlay, #startButton") ||
+        target.closest(
+          "[data-demo-theme], .welcome-mode-btn, .welcome-back-button"
+        )
+      )
         return;
       if (!DOM.welcomeScreen || DOM.welcomeScreen.classList.contains("faded"))
         return;
@@ -3827,6 +4613,8 @@ function setupEventDateInput() {
 }
 
 function init() {
+  setupLaunchMode = loadSetupLaunchMode();
+  syncSetupLaunchModeUi();
   setupEventSelector();
   setupBoothButtons();
   setupMobileSettingsControls();
@@ -3853,6 +4641,7 @@ function init() {
   setupEventVisualEditorControls();
   setupEventDateInput();
   setupEventProfileControls();
+  setupAssetPanelControls();
   setupAdminModalNavigation();
   setupSetupTabs();
   setupWelcomeInteractions();
@@ -3867,6 +4656,7 @@ function init() {
   applyViewportProfile();
   syncMobileSettingsUi();
   updateSystemStatusStrip();
+  updateLaunchSummary();
   setInterval(updateSystemStatusStrip, 3000);
 }
 
@@ -4446,6 +5236,9 @@ function syncEventTypeTiles() {
   });
   if (DOM.createPathEventType) {
     DOM.createPathEventType.value = selectedType;
+    if (!createPathEventTypeFilter || createPathEventTypeFilter === "all") {
+      createPathEventTypeFilter = selectedType;
+    }
   }
 }
 
@@ -4516,6 +5309,34 @@ function shouldIncludeThemeForSelectedType(themeKey, theme, selectedType) {
     return false;
   }
   return themeSupportsEventType({ value: themeKey, theme }, normalizedSelected);
+}
+
+function shouldIncludeCreatePathTheme(themeKey, theme, selectedType) {
+  const normalizedSelected = normalizeEventStyle(selectedType);
+  if (!theme) return false;
+  if (normalizedSelected !== "wedding") {
+    return shouldIncludeThemeForSelectedType(themeKey, theme, normalizedSelected);
+  }
+  if (isHolidayThemeKey(themeKey)) return false;
+  const themeText = [
+    themeKey,
+    theme.name,
+    theme.vibeSummary,
+    theme.welcome && theme.welcome.title,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (/(halloween|christmas|valentine|santa|new year|spooky|boo|winter wonderland)/.test(themeText)) {
+    return false;
+  }
+  const explicitTypes = Array.isArray(theme.eventTypes)
+    ? theme.eventTypes
+        .map((entry) => normalizeEventStyle(entry))
+        .filter(Boolean)
+    : [];
+  if (explicitTypes.includes("wedding")) return true;
+  return inferThemeEventStyle(themeKey, theme) === "wedding";
 }
 
 function getEventTypeCopy(selectedType) {
@@ -5860,9 +6681,13 @@ function renderCurrentAssets(theme) {
     list,
     withBadge = false,
     kind = "",
-    allowReorder = true
+    allowReorder = true,
+    selectedValue = ""
   ) => {
     if (!wrap) return;
+    if (kind === "overlay" || kind === "template") {
+      setAssetPanelMessage(kind, null);
+    }
     wrap.innerHTML = "";
     let shown = 0;
     (list || []).forEach((entry, idx) => {
@@ -5875,6 +6700,9 @@ function renderCurrentAssets(theme) {
           ? entry.layout
           : null;
       const item = createAssetTile(src, { badge });
+      if (selectedValue && src === selectedValue) {
+        item.classList.add("selected");
+      }
       item.draggable =
         allowReorder &&
         !lockBaseThemeAssets &&
@@ -5940,8 +6768,9 @@ function renderCurrentAssets(theme) {
     });
     if ((list || []).length === 0 || shown === 0) {
       const span = document.createElement("span");
-      span.style.color = "#888";
-      span.textContent = "None";
+      span.className = "asset-panel-state";
+      span.textContent =
+        wrap.dataset.emptyText || "No items available.";
       wrap.appendChild(span);
     }
   };
@@ -6138,15 +6967,30 @@ function renderCurrentAssets(theme) {
     getBaseOverlayList(theme),
     false,
     "overlay",
-    false
+    false,
+    selectedOverlay || lastPhotoOverlay || ""
   );
   setGrid(
     DOM.currentTemplates,
     getBaseTemplateList(theme),
     true,
     "template",
-    false
+    false,
+    pendingTemplate && pendingTemplate.src ? pendingTemplate.src : ""
   );
+  syncAssetPanelHeader(
+    "overlay",
+    getBaseOverlayList(theme),
+    selectedOverlay || lastPhotoOverlay || ""
+  );
+  syncAssetPanelHeader(
+    "template",
+    getBaseTemplateList(theme),
+    pendingTemplate && pendingTemplate.src ? pendingTemplate.src : ""
+  );
+  setAssetPanelMessage("overlay", null);
+  setAssetPanelMessage("template", null);
+  restoreAssetPanelState();
 }
 
 function getCharacterPlacement() {
@@ -6191,61 +7035,195 @@ function applyThemeBackground(theme) {
     DOM.welcomeScreen.style.backgroundImage =
       DOM.boothScreen.style.backgroundImage;
 }
+
+function getActivePhotoOverlay() {
+  if (!selectedOverlay && !lastPhotoOverlay) return null;
+  const src = selectedOverlay || lastPhotoOverlay;
+  const overlays = getOverlayList(activeTheme);
+  return (
+    overlays.find((item) => item && item.src === src) ||
+    normalizeOverlayDefinition({ src })
+  );
+}
+
+function clearPhotoSlotLayer() {
+  if (DOM.photoSlotLayer) {
+    DOM.photoSlotLayer.innerHTML = "";
+    DOM.photoSlotLayer.dataset.overlaySrc = "";
+    DOM.photoSlotLayer.dataset.mode = "";
+  }
+}
+
+function resolveStillPhotoUrl(source) {
+  if (!source) return "";
+  if (typeof source === "string") return source;
+  if (typeof source.toDataURL === "function") {
+    try {
+      return source.toDataURL("image/png");
+    } catch (_) {
+      return "";
+    }
+  }
+  return "";
+}
+
+function applyOverlayBackgroundLayer(overlay) {
+  if (!DOM.overlayBackground) return;
+  const background = overlay && overlay.background;
+  DOM.overlayBackground.style.backgroundImage = "";
+  DOM.overlayBackground.style.backgroundColor = "";
+  if (!background) return;
+  if (background.type === "color") {
+    DOM.overlayBackground.style.backgroundColor = background.value || "#ffffff";
+  } else if (background.type === "image" && background.src) {
+    DOM.overlayBackground.style.backgroundImage = `url(${withBust(
+      background.src
+    )})`;
+  }
+}
+
+function applyOverlayForegroundLayer(overlay) {
+  if (!DOM.liveOverlay) return;
+  const src = overlay ? resolveOverlayRenderSrc(activeTheme, overlay.src) : "";
+  if (!src) {
+    DOM.liveOverlay.src = "";
+    DOM.liveOverlay.style.display = "none";
+    return;
+  }
+  DOM.liveOverlay.src = withBust(src);
+  DOM.liveOverlay.style.display = "block";
+}
+
+function renderOverlayPhotoSlots(overlay, options = {}) {
+  const layer = DOM.photoSlotLayer;
+  if (!layer) return;
+  const slots = overlayUsesPhotoSlots(overlay) ? overlay.photoSlots : [];
+  layer.innerHTML = "";
+  layer.dataset.overlaySrc = overlay && overlay.src ? overlay.src : "";
+  layer.dataset.mode = options.mode || "live";
+  if (!slots.length) return;
+  const isLive = options.mode === "live";
+  const stillUrl = resolveStillPhotoUrl(options.source);
+  slots.forEach((slot) => {
+    const slotEl = document.createElement("div");
+    slotEl.className = "photo-slot";
+    slotEl.style.left = `${slot.x * 100}%`;
+    slotEl.style.top = `${slot.y * 100}%`;
+    slotEl.style.width = `${slot.width * 100}%`;
+    slotEl.style.height = `${slot.height * 100}%`;
+    if (slot.borderRadius > 0) {
+      slotEl.style.borderRadius = `${slot.borderRadius * 100}%`;
+    }
+    if (Number.isFinite(slot.rotation) && slot.rotation !== 0) {
+      slotEl.style.transform = `rotate(${slot.rotation}deg)`;
+    }
+    const media = document.createElement(isLive ? "video" : "img");
+    media.className = "photo-slot-media";
+    media.style.objectFit = slot.objectFit || "cover";
+    media.style.objectPosition = slot.objectPosition || "center";
+    if (isLive) {
+      media.autoplay = true;
+      media.playsInline = true;
+      media.muted = true;
+      if (stream) {
+        try {
+          media.srcObject = stream;
+        } catch (_) {}
+        if (typeof media.play === "function") {
+          media.play().catch(() => {});
+        }
+      }
+    } else if (stillUrl) {
+      media.alt = "";
+      media.src = stillUrl;
+    } else {
+      slotEl.classList.add("is-empty");
+    }
+    slotEl.appendChild(media);
+    layer.appendChild(slotEl);
+  });
+}
+
+function syncOverlayPreviewSurface(options = {}) {
+  const overlay = options.overlay || getActivePhotoOverlay();
+  const slotsEnabled = overlayUsesPhotoSlots(overlay);
+  if (DOM.video) {
+    DOM.video.classList.toggle("hidden", slotsEnabled);
+    DOM.video.style.display = slotsEnabled ? "none" : "";
+  }
+  if (DOM.lastShot && !options.keepLastShot) {
+    DOM.lastShot.style.display = "none";
+    DOM.lastShot.removeAttribute("src");
+  }
+  applyOverlayBackgroundLayer(overlay);
+  applyOverlayForegroundLayer(overlay);
+  if (slotsEnabled) {
+    renderOverlayPhotoSlots(overlay, {
+      mode: options.mode || "live",
+      source: options.source || null,
+    });
+  } else {
+    clearPhotoSlotLayer();
+  }
+}
+
+function clearOverlayPreviewSurface() {
+  clearPhotoSlotLayer();
+  if (DOM.overlayBackground) {
+    DOM.overlayBackground.style.backgroundImage = "";
+    DOM.overlayBackground.style.backgroundColor = "";
+  }
+  if (DOM.liveOverlay) {
+    DOM.liveOverlay.src = "";
+    DOM.liveOverlay.style.display = "none";
+  }
+  if (DOM.video) {
+    DOM.video.classList.remove("hidden");
+    DOM.video.style.display = "";
+  }
+}
+
 function setMode(m) {
   if (m === "message" && !getRecordingModeEnabled()) {
-    m = "photo";
+    m = "live-photo";
   }
-  mode = m;
-  DOM.videoWrap.className = "view-landscape"; // Default to landscape
-  // In photo mode, show capture button; strip mode hides it (auto flow)
-  DOM.captureBtn.style.display =
-    mode === "photo" || mode === "message" ? "inline-block" : "none";
-  DOM.captureBtn.textContent =
-    mode === "message" ? "Record Message" : "Take Photo";
-  DOM.captureBtn.classList.toggle("message-mode", mode === "message");
-  if (mode === "photo" || mode === "message") {
-    setCaptureAspect(null);
+  mode = normalizeBoothModeValue(m);
+  const captureMode = getSelectedCaptureMode(mode);
+  applyBoothModeClass(mode);
+  if (DOM.captureBtn) {
+    DOM.captureBtn.textContent = resolveBoothCaptureButtonLabel(mode);
+    DOM.captureBtn.classList.toggle("message-mode", mode === "message");
+    DOM.captureBtn.disabled = false;
   }
-  // In strip mode, ensure no photo overlay is shown over the template preview
-  if (mode === "strip") {
+  // In strip/layout/message mode, ensure no photo overlay is shown over the template preview.
+  if (captureMode === "strip" || captureMode === "layout" || mode === "message") {
     if (selectedOverlay) lastPhotoOverlay = selectedOverlay;
     selectedOverlay = null;
-    if (DOM.liveOverlay) DOM.liveOverlay.src = "";
+    clearOverlayPreviewSurface();
   }
-  if (mode === "message") {
-    if (selectedOverlay) lastPhotoOverlay = selectedOverlay;
-    selectedOverlay = null;
-    if (DOM.liveOverlay) DOM.liveOverlay.src = "";
+  if (captureMode === "photo") {
+    if (!selectedOverlay && lastPhotoOverlay) {
+      selectedOverlay = lastPhotoOverlay;
+    }
+    syncOverlayPreviewSurface({ mode: "live" });
   }
-  if (mode === "photo" && !selectedOverlay && lastPhotoOverlay) {
-    selectedOverlay = lastPhotoOverlay;
-    if (DOM.liveOverlay) DOM.liveOverlay.src = withBust(selectedOverlay);
-    setViewOrientation(selectedOverlay).catch(() => {
-      if (DOM.videoWrap) DOM.videoWrap.className = "view-landscape";
-    });
-  }
-  renderOptions();
+  applyPreviewOrientation();
+  logBoothFrameState("mode-change", mode);
+  renderOptionsForMode(mode);
   syncBoothModeButtons();
   syncCaptureStatusIndicators();
   setMobileSettingsOpen(false);
   requestAnimationFrame(syncFrameSizeVars);
 }
-function renderOptions() {
-  if (mode === "message") {
-    if (DOM.options) DOM.options.innerHTML = "";
-    syncMobileSettingsUi();
-    return;
-  }
-  const isPhoto = mode === "photo";
-  const templates = isPhoto
-    ? []
-    : getTemplateList(activeTheme).filter((template) =>
-        isStripTemplateLayout(template && template.layout)
-      );
-  const list = isPhoto ? getOverlayList(activeTheme) : templates;
+function renderOptionsForMode(targetMode = mode) {
+  const captureMode = getSelectedCaptureMode(targetMode);
   const container = DOM.options;
   if (!container) return;
   container.innerHTML = "";
+  if (captureMode === "message") {
+    syncMobileSettingsUi();
+    return;
+  }
   const addSection = (title) => {
     const section = document.createElement("div");
     section.className = "options-section";
@@ -6267,7 +7245,7 @@ function renderOptions() {
     const note = document.createElement("div");
     note.style.fontSize = "0.8em";
     note.style.color = "#888";
-    note.textContent = "None";
+    note.textContent = "No backgrounds added";
     greenGrid.appendChild(note);
   } else {
     const activeGreen = getActiveGreenBackground(activeTheme);
@@ -6289,83 +7267,156 @@ function renderOptions() {
     });
   }
 
-  // Add a "No Overlay" option for Photo mode to quickly clear stuck overlays
-  if (isPhoto) {
-    const overlayGrid = addSection("Overlays");
-    const wrap = document.createElement("div");
-    wrap.className = "thumb";
-    const img = document.createElement("img");
-    // Simple placeholder tile
+  if (captureMode === "photo") {
+    const overlayGrid = addSection("Choose Your Overlay");
+    const noOverlay = document.createElement("div");
+    noOverlay.className = "thumb";
+    noOverlay.dataset.overlayNone = "true";
     const blank = document.createElement("canvas");
     blank.width = 120;
     blank.height = 80;
-    img.src = blank.toDataURL("image/png");
-    wrap.appendChild(img);
-    wrap.title = "No Overlay";
-    wrap.onclick = () => {
+    const blankImg = document.createElement("img");
+    blankImg.src = blank.toDataURL("image/png");
+    noOverlay.appendChild(blankImg);
+    noOverlay.title = "No Overlay";
+    noOverlay.onclick = () => {
       container
+        .querySelectorAll(".thumb")
+        .forEach((t) => t.classList.remove("selected"));
+      noOverlay.classList.add("selected");
+      selectedOverlay = null;
+      lastPhotoOverlay = null;
+      clearOverlayPreviewSurface();
+      setMobileSettingsOpen(false);
+    };
+    if (!selectedOverlay) noOverlay.classList.add("selected");
+    overlayGrid.appendChild(noOverlay);
+
+    const photoOverlays = filterAssetsForMode(
+      getOverlayList(activeTheme),
+      "photo"
+    );
+    if (!photoOverlays.length) {
+      const note = document.createElement("div");
+      note.style.fontSize = "0.8em";
+      note.style.color = "#888";
+      note.textContent = "No overlays added";
+      overlayGrid.appendChild(note);
+    } else {
+      photoOverlays.forEach((overlay) => {
+        const src = overlay && overlay.src ? overlay.src : "";
+        const wrap = document.createElement("div");
+        wrap.className = "thumb";
+        if (src) wrap.dataset.overlaySrc = src;
+        const img = document.createElement("img");
+        wrap.appendChild(img);
+        img.src = withBust(
+          overlay && overlay.renderSrc ? overlay.renderSrc : src
+        );
+        if (selectedOverlay === src) wrap.classList.add("selected");
+        img.onerror = () => {
+          console.error("Failed to load thumbnail:", src);
+          wrap.style.display = "none";
+        };
+        wrap.onclick = () => {
+          overlayGrid
+            .querySelectorAll(".thumb")
+            .forEach((t) => t.classList.remove("selected"));
+        wrap.classList.add("selected");
+        selectedOverlay = src;
+        lastPhotoOverlay = src;
+        syncOverlayPreviewSurface({ mode: "live" });
+        applyPreviewOrientation();
+        logBoothFrameState("overlay-selected", mode);
+        setMobileSettingsOpen(false);
+      };
+      overlayGrid.appendChild(wrap);
+    });
+    }
+    syncMobileSettingsUi();
+    return;
+  }
+
+  const templateKind = captureMode === "layout" ? "layout" : "strip";
+  const templates = filterAssetsForMode(
+    getTemplateList(activeTheme),
+    templateKind
+  );
+  const templateGrid = addSection(
+    captureMode === "layout" ? "Choose Your Layout" : "Choose Your Strip"
+  );
+  if (!templates.length) {
+    const note = document.createElement("div");
+    note.style.fontSize = "0.8em";
+    note.style.color = "#888";
+    note.textContent = "No templates added";
+    templateGrid.appendChild(note);
+    syncMobileSettingsUi();
+    return;
+  }
+  templates.forEach((template) => {
+    const src = template && template.src ? template.src : "";
+    const wrap = document.createElement("div");
+    wrap.className = "thumb";
+    if (src) wrap.dataset.templateSrc = src;
+    const img = document.createElement("img");
+    wrap.appendChild(img);
+    img.src = withBust(
+      template && template.renderSrc ? template.renderSrc : src
+    );
+    img.onerror = () => {
+      console.error("Failed to load thumbnail:", src);
+      wrap.style.display = "none";
+    };
+    wrap.onclick = () => {
+      templateGrid
         .querySelectorAll(".thumb")
         .forEach((t) => t.classList.remove("selected"));
       wrap.classList.add("selected");
       selectedOverlay = null;
-      lastPhotoOverlay = null;
-      if (DOM.liveOverlay) DOM.liveOverlay.src = "";
+      clearOverlayPreviewSurface();
+      pendingTemplate = template || { src, layout: "double_column" };
+      if (pendingTemplate && pendingTemplate.src) {
+        openConfirm(pendingTemplate.src);
+      }
+      logBoothFrameState("template-selected", mode);
       setMobileSettingsOpen(false);
     };
-    if (!selectedOverlay) wrap.classList.add("selected");
-    overlayGrid.appendChild(wrap);
-  }
-  const targetGrid = isPhoto
-    ? container.querySelector(
-        ".options-section:last-child .options-section-grid"
-      )
-    : container;
-  list.forEach((srcOrObj, idx) => {
-    const src = isPhoto
-      ? typeof srcOrObj === "string"
-        ? srcOrObj
-        : srcOrObj.src
-      : (srcOrObj && srcOrObj.src) || "";
-    const wrap = document.createElement("div");
-    wrap.className = "thumb";
-    const img = document.createElement("img");
-    wrap.appendChild(img);
-    img.src = withBust(src);
-    if (isPhoto && selectedOverlay === src) wrap.classList.add("selected");
-    img.onerror = () => {
-      console.error("Failed to load thumbnail:", src);
-      wrap.style.display = "none"; // Hide instead of remove to prevent breaking layout
-    };
-    wrap.onclick = async () => {
-      targetGrid
-        .querySelectorAll(".thumb")
-        .forEach((t) => t.classList.remove("selected"));
-      wrap.classList.add("selected");
-      if (isPhoto) {
-        selectedOverlay = src;
-        lastPhotoOverlay = src;
-        DOM.liveOverlay.src = withBust(selectedOverlay);
-        setViewOrientation(src);
-        setMobileSettingsOpen(false);
-      } else {
-        // open confirm with larger preview
-        // Photo strips are assumed to be landscape for preview purposes
-        DOM.videoWrap.className = "view-landscape";
-        // Clear any existing overlay so template preview is clean
-        selectedOverlay = null;
-        if (DOM.liveOverlay) DOM.liveOverlay.src = "";
-        const template = templates[idx] || { src, layout: "double_column" };
-        pendingTemplate = template;
-        openConfirm(template.src);
-        setMobileSettingsOpen(false);
-      }
-    };
-    targetGrid.appendChild(wrap);
+    templateGrid.appendChild(wrap);
   });
   syncMobileSettingsUi();
 }
 
-async function setViewOrientation(imgSrc) {
+function renderOptions() {
+  renderOptionsForMode(mode);
+}
+
+async function setViewOrientation(target) {
+  const overlay =
+    target && typeof target === "object" && !Array.isArray(target)
+      ? target
+      : null;
+  const aspectRatio = getOverlayAspectRatio(overlay);
+  if (aspectRatio) {
+    DOM.videoWrap.className =
+      aspectRatio >= 1 ? "view-landscape" : "view-portrait";
+    setCaptureAspect(aspectRatio);
+    return;
+  }
+  const imgSrc =
+    typeof target === "string"
+      ? target
+      : overlay && overlay.foreground && overlay.foreground.type === "image"
+      ? overlay.foreground.src
+      : overlay && overlay.renderSrc
+      ? overlay.renderSrc
+      : "";
+  if (!imgSrc) {
+    DOM.videoWrap.className = "view-landscape";
+    setCaptureAspect(null);
+    updateCaptureAspect();
+    return;
+  }
   const orientation = await getOrientationFromImage(imgSrc);
   DOM.videoWrap.className = `view-${orientation}`;
   setCaptureAspect(null);
@@ -6385,52 +7436,50 @@ function orientationFromTemplate(template) {
 
 function applyPreviewOrientation() {
   if (!DOM.videoWrap) return;
-  if (mode === "strip") {
+  const captureMode = getSelectedCaptureMode();
+  if (captureMode === "strip" || captureMode === "layout") {
     const templates = getTemplateList(activeTheme);
     const template =
-      pendingTemplate || (Array.isArray(templates) ? templates[0] : null);
+      pendingTemplate ||
+      templates.find((item) => getAssetCaptureType(item) === captureMode) ||
+      (Array.isArray(templates) ? templates[0] : null);
     DOM.videoWrap.className = orientationFromTemplate(template);
-    return;
-  }
-  const overlays = getOverlayList(activeTheme);
-  const firstOverlay =
-    Array.isArray(overlays) && overlays.length ? overlays[0] : null;
-  const overlaySrc =
-    selectedOverlay ||
-    (firstOverlay &&
-      (typeof firstOverlay === "string" ? firstOverlay : firstOverlay.src));
-  if (overlaySrc) {
-    setViewOrientation(overlaySrc).catch(() => {
-      DOM.videoWrap.className = "view-landscape";
+    applyLiveCameraSizing();
+    if (!template || !template.src) {
       setCaptureAspect(null);
       updateCaptureAspect();
-    });
-  } else {
-    DOM.videoWrap.className = "view-landscape";
-    setCaptureAspect(null);
-    updateCaptureAspect();
+    }
+    return;
   }
+  DOM.videoWrap.className = isMobileBoothViewport()
+    ? "view-portrait"
+    : "view-landscape";
+  applyLiveCameraSizing();
+  setCaptureAspect(null);
+  updateCaptureAspect();
 }
 
 function capturePreviewState() {
   return {
-    overlaySrc: DOM.liveOverlay ? DOM.liveOverlay.src : "",
-    overlayOpacity: DOM.liveOverlay ? DOM.liveOverlay.style.opacity : "",
-    overlayDisplay: DOM.liveOverlay ? DOM.liveOverlay.style.display : "",
+    selectedOverlay,
+    lastPhotoOverlay,
     videoClass: DOM.videoWrap ? DOM.videoWrap.className : "view-landscape",
   };
 }
 
 function restorePreviewState(state) {
   if (!state) return;
-  if (DOM.liveOverlay) {
-    DOM.liveOverlay.src = state.overlaySrc || "";
-    DOM.liveOverlay.style.opacity = state.overlayOpacity || "";
-    DOM.liveOverlay.style.display = state.overlayDisplay || "";
-    DOM.liveOverlay.style.filter = "";
-  }
-  if (DOM.videoWrap)
+  selectedOverlay = state.selectedOverlay || null;
+  lastPhotoOverlay = state.lastPhotoOverlay || null;
+  if (DOM.videoWrap) {
     DOM.videoWrap.className = state.videoClass || "view-landscape";
+  }
+  const captureMode = getSelectedCaptureMode();
+  if (captureMode === "photo" || captureMode === "message") {
+    syncOverlayPreviewSurface({ mode: "live" });
+  } else {
+    clearOverlayPreviewSurface();
+  }
 }
 
 async function getStripTemplateMetrics(template) {
@@ -6439,7 +7488,13 @@ async function getStripTemplateMetrics(template) {
   const metrics = {};
   const img = await loadImage(template.src);
   const columnCount = getTemplateColumnCount(template && template.layout);
-  const slots = detectTransparentColumnSlots(img, 3, columnCount);
+  const rows = getTemplateRowCount(
+    template && template.layout,
+    template && template.slots
+  );
+  const slots =
+    normalizeTemplateSlots(template && template.slots, columnCount) ||
+    detectTransparentColumnSlots(img, rows, columnCount);
   if (slots) metrics.slots = slots;
   const headerPct = Math.max(
     0,
@@ -6470,20 +7525,17 @@ async function getStripTemplateMetrics(template) {
     const cols = columnCount;
     const columnW = 1 / cols;
     const slotWRel = columnW - columnPadPct * columnW * 2;
-    const slotHRel = (1 - headerPct - footerPct - slotSpacingPct * (3 + 1)) / 3;
+    const slotHRel = (1 - headerPct - footerPct - slotSpacingPct * (rows + 1)) / rows;
     metrics.aspect = Math.max(0.1, slotWRel / slotHRel);
   }
+  metrics.rows = rows;
   template.__slotMetrics = metrics;
   return metrics;
 }
 
 async function prepareStripCapture(template) {
   const state = capturePreviewState();
-  if (DOM.liveOverlay) {
-    DOM.liveOverlay.src = "";
-    DOM.liveOverlay.style.display = "none";
-    DOM.liveOverlay.style.opacity = "0";
-  }
+  clearOverlayPreviewSurface();
   if (DOM.videoWrap)
     DOM.videoWrap.className = orientationFromTemplate(template);
   const prevAspect = captureAspectRatio;
@@ -6516,7 +7568,7 @@ function confirmTemplate() {
 }
 
 // Welcome control
-function showWelcome() {
+function showWelcome(step = null) {
   if (!activeTheme) return;
   updateShowcaseDemoUi();
   setBoothControlsVisible(false);
@@ -6528,9 +7580,7 @@ function showWelcome() {
     activeTheme.fontHeading || activeTheme.fontBody || activeTheme.font || "";
   fitWelcomeTitleToViewport();
   if (DOM.startButton)
-    DOM.startButton.textContent = showcaseDemoActive
-      ? "Try This Demo"
-      : resolveStartButtonText();
+    DOM.startButton.textContent = resolveStartButtonText();
 
   //  the booth background on the welcome screen and hide standalone images
   const boothBg = DOM.boothScreen ? DOM.boothScreen.style.backgroundImage : "";
@@ -6543,15 +7593,54 @@ function showWelcome() {
   const ws = DOM.welcomeScreen;
   if (!ws) return;
   ws.classList.remove("faded");
+  setWelcomeFlowStep(step || resolveInitialWelcomeStep());
   setupWelcomeInteractions();
 }
 
 function beginWelcome(event) {
+  if (welcomeFlowStep !== "idle") return;
   if (event) {
     event.preventDefault();
     event.stopPropagation();
   }
+  setWelcomeFlowStep("mode");
+}
+
+function beginModeSelection(nextMode, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  setMode(nextMode);
   hideWelcome();
+}
+
+function goBackFromWelcome(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  if (welcomeFlowStep === "mode") {
+    setWelcomeFlowStep("idle");
+    return;
+  }
+  if (
+    welcomeFlowStep === "idle" &&
+    showcaseDemoActive &&
+    hasShowcaseDemoChoices()
+  ) {
+    setWelcomeFlowStep("demo");
+    return;
+  }
+  goAdmin();
+}
+
+function goBackFromBooth(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  showWelcome("mode");
 }
 
 function hideWelcome() {
@@ -6561,7 +7650,7 @@ function hideWelcome() {
   ws.classList.add("faded");
   if (DOM.boothScreen) DOM.boothScreen.classList.remove("welcome-active");
   if (currentMode !== "360") {
-    setMode(mode === "message" ? "message" : "photo");
+    setMode(resolveBoothLaunchMode());
   }
   updateCaptureModeUi();
   setBoothControlsVisible(true);
@@ -6576,19 +7665,16 @@ function hideWelcome() {
   if (!stream && !demoMode && currentMode !== "360") {
     startCamera(false);
   }
-
-  // After the welcome screen is hidden, select the first option if in photo mode.
-  // This ensures the UI is visible and ready for interaction.
-  if (mode === "photo") {
-    const overlays = getOverlayList(activeTheme);
-    if (Array.isArray(overlays) && overlays.length > 0) {
-      const firstThumb = DOM.options
-        ? DOM.options.querySelector(".thumb")
-        : null;
-      if (firstThumb) firstThumb.click();
-    }
-  }
   resetIdleTimer(); // Start the idle timer now that the booth is active.
+}
+
+function resolveBoothLaunchMode() {
+  if (mode === "message" || mode === "strip" || mode === "layout") {
+    return mode;
+  }
+  if (mode === "still-photo") return "still-photo";
+  if (mode === "live-photo") return "live-photo";
+  return "live-photo";
 }
 
 // Camera
@@ -6661,6 +7747,7 @@ async function startCamera(autoStartBooth = false) {
           DOM.video.srcObject = s;
           DOM.video.style.transform = "";
         }
+        syncOverlayPreviewSurface({ mode: "live" });
         showToast("Camera permission granted");
         if (autoStartBooth) startBoothFlow();
       })
@@ -6680,8 +7767,12 @@ async function startCamera(autoStartBooth = false) {
 }
 
 function startBooth() {
-  // Ensure camera is initialized; auto-enter booth when ready
-  startCamera(true);
+  if (DOM.eventSelect && DOM.eventSelect.value) {
+    loadTheme(DOM.eventSelect.value);
+  }
+  startBoothFlow();
+  // Start camera after the booth view is already visible so setup cannot stall.
+  startCamera(false);
 }
 
 function startBoothFlow() {
@@ -6696,7 +7787,7 @@ function startBoothFlow() {
   setBoothControlsVisible(true);
   setCaptureAspect(null);
   showWelcome();
-  setMode("photo"); // Default to photo mode on start
+  setMode(resolveBoothLaunchMode());
   syncCaptureStatusIndicators();
   updateCaptureModeUi();
   syncMobileSettingsUi();
@@ -6712,15 +7803,26 @@ function clearPreviewFreezeFrame() {
   if (!DOM.lastShot) return;
   DOM.lastShot.style.display = "none";
   DOM.lastShot.removeAttribute("src");
+  if (overlayUsesPhotoSlots(getActivePhotoOverlay())) {
+    syncOverlayPreviewSurface({ mode: "live" });
+  }
 }
 
 function showPreviewFreezeFrame(canvasOrUrl) {
-  if (!DOM.lastShot || !canvasOrUrl) return;
+  const stillUrl = resolveStillPhotoUrl(canvasOrUrl);
+  const overlay = getActivePhotoOverlay();
+  if (overlayUsesPhotoSlots(overlay)) {
+    syncOverlayPreviewSurface({
+      overlay,
+      mode: "still",
+      source: stillUrl,
+      keepLastShot: true,
+    });
+    return;
+  }
+  if (!DOM.lastShot || !stillUrl) return;
   try {
-    DOM.lastShot.src =
-      typeof canvasOrUrl === "string"
-        ? canvasOrUrl
-        : canvasOrUrl.toDataURL("image/png");
+    DOM.lastShot.src = stillUrl;
     DOM.lastShot.style.display = "block";
   } catch (_) {}
 }
@@ -6797,7 +7899,12 @@ function handlePrimaryAction() {
 }
 
 function getResolvedCaptureAspectRatio() {
-  if (typeof captureAspectRatio === "number" && captureAspectRatio > 0)
+  const captureMode = getSelectedCaptureMode();
+  if (
+    (captureMode === "strip" || captureMode === "layout") &&
+    typeof captureAspectRatio === "number" &&
+    captureAspectRatio > 0
+  )
     return captureAspectRatio;
   const rect =
     DOM.videoContainer &&
@@ -7055,6 +8162,7 @@ async function ensureMessageStream() {
       DOM.video.srcObject = stream;
       DOM.video.style.transform = "";
     }
+    syncOverlayPreviewSurface({ mode: "live" });
     return stream;
   } catch (err) {
     console.warn("Microphone access failed", err);
@@ -7157,18 +8265,6 @@ async function captureLiveClip(durationMs) {
 }
 function updateCaptureAspect() {
   if (!DOM.videoContainer) return;
-  const isPortrait = DOM.videoWrap.classList.contains("view-portrait");
-  let ratio = null;
-  if (typeof captureAspectRatio === "number" && captureAspectRatio > 0) {
-    ratio = captureAspectRatio;
-  }
-  if (isPortrait) {
-    const aspect = ratio || 3 / 4;
-    DOM.videoContainer.style.aspectRatio = `${aspect} / 1`;
-  } else {
-    const aspect = ratio || 4 / 3;
-    DOM.videoContainer.style.aspectRatio = `${aspect} / 1`;
-  }
   updateCountdownFontSize();
   requestAnimationFrame(syncFrameSizeVars);
 }
@@ -7266,7 +8362,7 @@ async function getOrientationFromImage(imgSrc) {
 async function applyOverlay(canvas, overlaySrc) {
   if (!overlaySrc) return canvas;
   try {
-    const ov = await loadImage(overlaySrc);
+    const ov = await loadImage(resolveOverlayRenderSrc(activeTheme, overlaySrc));
     const ctx = canvas.getContext("2d");
     // Optionally mask spot color to transparency
     const overlayToDraw = SPOT_MASK.enabled
@@ -7280,9 +8376,12 @@ async function applyOverlay(canvas, overlaySrc) {
 }
 
 // Draw image/canvas into a destination rect using CSS-like object-fit: cover math
-function drawImageCover(ctx, img, dx, dy, dw, dh) {
+function drawCoverInRect(ctx, source, dx, dy, dw, dh) {
+  if (!source) return;
+  const img = source;
   const iw = img.naturalWidth || img.width;
   const ih = img.naturalHeight || img.height;
+  if (!iw || !ih || !dw || !dh) return;
   const scale = Math.max(dw / iw, dh / ih);
   const rw = iw * scale;
   const rh = ih * scale;
@@ -7291,16 +8390,108 @@ function drawImageCover(ctx, img, dx, dy, dw, dh) {
   ctx.drawImage(img, rx, ry, rw, rh);
 }
 
+function drawImageCover(ctx, img, dx, dy, dw, dh) {
+  drawCoverInRect(ctx, img, dx, dy, dw, dh);
+}
+
 // Draw image/canvas into a destination rect preserving aspect without cropping
 function drawImageContain(ctx, img, dx, dy, dw, dh) {
   const iw = img.naturalWidth || img.width;
   const ih = img.naturalHeight || img.height;
+  if (!iw || !ih || !dw || !dh) return;
   const scale = Math.min(dw / iw, dh / ih);
   const rw = iw * scale;
   const rh = ih * scale;
   const rx = dx + (dw - rw) / 2;
   const ry = dy + (dh - rh) / 2;
   ctx.drawImage(img, rx, ry, rw, rh);
+}
+
+function roundedRectPath(ctx, x, y, w, h, radius = 0) {
+  const safeRadius = Math.max(0, Math.min(radius || 0, Math.min(w, h) / 2));
+  ctx.beginPath();
+  if (!safeRadius) {
+    ctx.rect(x, y, w, h);
+    return;
+  }
+  ctx.moveTo(x + safeRadius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, safeRadius);
+  ctx.arcTo(x + w, y + h, x, y + h, safeRadius);
+  ctx.arcTo(x, y + h, x, y, safeRadius);
+  ctx.arcTo(x, y, x + w, y, safeRadius);
+  ctx.closePath();
+}
+
+function normalizeSlotRect(slot, outputW, outputH) {
+  return {
+    x: Math.round((slot.x || 0) * outputW),
+    y: Math.round((slot.y || 0) * outputH),
+    w: Math.round((slot.width || 0) * outputW),
+    h: Math.round((slot.height || 0) * outputH),
+  };
+}
+
+function drawPhotoSlot(ctx, source, slot, outputW, outputH) {
+  if (!ctx || !source || !slot) return;
+  const img = source;
+  const rect = normalizeSlotRect(slot, outputW, outputH);
+  if (rect.w <= 0 || rect.h <= 0) return;
+  ctx.save();
+  if (Number.isFinite(slot.rotation) && slot.rotation !== 0) {
+    ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
+    ctx.rotate((slot.rotation * Math.PI) / 180);
+    ctx.translate(-(rect.x + rect.w / 2), -(rect.y + rect.h / 2));
+  }
+  roundedRectPath(
+    ctx,
+    rect.x,
+    rect.y,
+    rect.w,
+    rect.h,
+    Math.min(rect.w, rect.h) * clamp01(slot.borderRadius || 0)
+  );
+  ctx.clip();
+  drawCoverInRect(ctx, img, rect.x, rect.y, rect.w, rect.h);
+  ctx.restore();
+}
+
+async function renderOverlayToCanvas(ctx, overlay, sources, outputW, outputH) {
+  if (!ctx || !overlay) return;
+  const sourcePhoto =
+    sources && sources.photo ? sources.photo : sources && sources.image;
+  const sourcePhotos = Array.isArray(sources && sources.photos)
+    ? sources.photos
+    : [];
+  const background = overlay.background;
+  if (background) {
+    if (background.type === "color") {
+      ctx.save();
+      ctx.fillStyle = background.value || "#ffffff";
+      ctx.fillRect(0, 0, outputW, outputH);
+      ctx.restore();
+    } else if (background.type === "image" && background.src) {
+      try {
+        const bgImage = await loadImage(background.src);
+        drawImageCover(ctx, bgImage, 0, 0, outputW, outputH);
+      } catch (_) {}
+    }
+  }
+  const slots = overlayUsesPhotoSlots(overlay)
+    ? overlay.photoSlots
+    : normalizeOverlayPhotoSlots({});
+  const usePhotos = sourcePhotos.length ? sourcePhotos : [sourcePhoto];
+  slots.forEach((slot, index) => {
+    const photo = slot.sourceIndex != null ? usePhotos[slot.sourceIndex] : usePhotos[index] || usePhotos[0];
+    if (!photo) return;
+    drawPhotoSlot(ctx, photo, slot, outputW, outputH);
+  });
+  const foreground = overlay.foreground;
+  if (foreground && foreground.type === "image" && foreground.src) {
+    try {
+      const fgImage = await loadImage(foreground.src);
+      drawImageContain(ctx, fgImage, 0, 0, outputW, outputH);
+    } catch (_) {}
+  }
 }
 
 function toNumber(val, fallback) {
@@ -7328,6 +8519,8 @@ function isStripTemplateLayout(layout) {
     normalized === "vertical" ||
     normalized === "horizontal" ||
     normalized === "photo_strip_3" ||
+    normalized === "photo_strip_2" ||
+    normalized === "photo_strip_4" ||
     normalized === "spot_mask" ||
     normalized === "custom"
   );
@@ -7336,6 +8529,44 @@ function isStripTemplateLayout(layout) {
 function getTemplateColumnCount(layout) {
   const normalized = normalizeTemplateLayout(layout);
   return normalized === "double_column" ? 2 : 1;
+}
+
+function getTemplateRowCount(layout, slots) {
+  const normalized = normalizeTemplateLayout(layout);
+  if (normalized === "photo_strip_2") return 2;
+  if (normalized === "photo_strip_3") return 3;
+  if (normalized === "photo_strip_4") return 4;
+  if (Array.isArray(slots) && slots[0] && Array.isArray(slots[0])) {
+    return Math.max(1, slots[0].length);
+  }
+  return 3;
+}
+
+function normalizeTemplateSlots(slots, columnCount = 1) {
+  const normalized = normalizeAssetSlots(slots);
+  if (!normalized.length) return null;
+  if (columnCount <= 1) return [normalized];
+  const groups = Array.from({ length: columnCount }, () => []);
+  const sorted = normalized.slice().sort((a, b) => {
+    if (Math.abs(a.x - b.x) > 4) return a.x - b.x;
+    return a.y - b.y;
+  });
+  sorted.forEach((slot) => {
+    const centerX = slot.x + slot.w / 2;
+    let targetIndex = 0;
+    let bestDistance = Infinity;
+    for (let index = 0; index < columnCount; index++) {
+      const expectedCenter = (index + 0.5) / columnCount;
+      const distance = Math.abs(centerX - expectedCenter);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        targetIndex = index;
+      }
+    }
+    groups[targetIndex].push(slot);
+  });
+  groups.forEach((group) => group.sort((a, b) => a.y - b.y));
+  return groups.every((group) => group.length) ? groups : [normalized];
 }
 
 function detectTransparentColumnSlots(img, rows, cols = 2) {
@@ -7527,7 +8758,7 @@ async function showCountdown(text) {
   const co = DOM.countdownOverlay;
   co.textContent = text;
   updateCountdownFontSize();
-  if (DOM.boothScreen && mode !== "message")
+  if (DOM.boothScreen && getSelectedCaptureMode() !== "message")
     DOM.boothScreen.classList.add("countdown-mode");
   co.classList.add("show");
   await delay(800);
@@ -7739,16 +8970,23 @@ async function composeStrip(template, photos) {
     ? photos.map((photo) => ensureEnhancedCanvas(photo))
     : [];
   const layout = normalizeTemplateLayout(template && template.layout);
+  const rows =
+    (template && template.__slotMetrics && template.__slotMetrics.rows) ||
+    getTemplateRowCount(layout, template && template.slots) ||
+    Math.max(1, enhancedPhotos.length);
   const bgAspect =
     (bg.naturalWidth || bg.width || 1) / (bg.naturalHeight || bg.height || 1);
-  let targetW = 1800;
-  let targetH = 1200;
-  if (layout === "photo_strip_3") {
+  let targetW = bg.naturalWidth || bg.width || 1800;
+  let targetH = bg.naturalHeight || bg.height || 1200;
+  if (layout === "double_column") {
     targetW = 1200;
-    targetH = Math.max(1800, Math.round(targetW / Math.max(bgAspect, 0.1)));
-  } else if (layout === "vertical" || layout === "double_column") {
+    targetH = bg.naturalHeight || bg.height || 1800;
+  } else if (layout === "vertical") {
     targetW = 1200;
     targetH = 1800;
+  } else if (layout === "custom" && Array.isArray(template && template.slots)) {
+    targetW = bg.naturalWidth || bg.width || targetW;
+    targetH = bg.naturalHeight || bg.height || targetH;
   }
   const c = CanvasBuffer.get("strip-composer", targetW, targetH);
   const ctx = c.getContext("2d");
@@ -7757,10 +8995,10 @@ async function composeStrip(template, photos) {
   ctx.fillRect(0, 0, targetW, targetH);
 
   if (layout === "double_column") {
-    // Two identical 2x6 strips on a 4x6 sheet
-    renderDoubleColumn(c, photos, bg, template);
-  } else if (layout === "photo_strip_3") {
-    renderSingleColumnStrip(c, enhancedPhotos, bg, template);
+    // Two identical strips on one print sheet
+    renderDoubleColumn(c, enhancedPhotos, bg, template, rows);
+  } else if (layout === "photo_strip_2" || layout === "photo_strip_3" || layout === "photo_strip_4") {
+    renderSingleColumnStrip(c, enhancedPhotos, bg, template, rows);
   } else if (layout === "vertical") {
     // Draw template first
     drawImageContain(ctx, bg, 0, 0, targetW, targetH);
@@ -7852,6 +9090,12 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
   const targetH = isPortrait ? longEdge : Math.round(longEdge / resolvedAspect);
   const c = CanvasBuffer.get("print-finalizer", targetW, targetH);
   const ctx = c.getContext("2d");
+  const resolvedOverlaySrc = overlaySrc
+    ? resolveOverlayRenderSrc(activeTheme, overlaySrc)
+    : "";
+  const overlayDefinition = overlaySrc
+    ? getOverlayEntryBySrc(activeTheme, overlaySrc)
+    : null;
   // Background fill
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, targetW, targetH);
@@ -7888,40 +9132,39 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
         const y = Math.round(targetH - h);
         ctx.drawImage(charImg, x, y, w, h);
       }
-    } catch (_) {}
+  } catch (_) {}
   }
-  // Place captured photo with cover (camera fill)
   const photoForPrint = aiEnabled
     ? applyAiMaskToCanvas(
         enhancedPhotoCanvas,
         enhancedPhotoCanvas && enhancedPhotoCanvas.__aiMask
       )
     : enhancedPhotoCanvas;
-  drawImageCover(ctx, photoForPrint, 0, 0, targetW, targetH);
-  // Optional overlay scaled without cropping
-  if (overlaySrc) {
-    try {
-      const ov = await loadImage(overlaySrc);
-      const overlayToDraw =
-        SPOT_MASK && SPOT_MASK.enabled
-          ? createMaskedOverlayCanvas(ov, SPOT_MASK.color, SPOT_MASK.tolerance)
-          : ov;
-      drawImageContain(ctx, overlayToDraw, 0, 0, targetW, targetH);
-    } catch (e) {
-      console.error("Print overlay load failed", e);
-    }
+  const overlayBundle =
+    overlayDefinition ||
+    (resolvedOverlaySrc ? normalizeOverlayDefinition({ src: resolvedOverlaySrc }) : null);
+  if (overlayBundle) {
+    await renderOverlayToCanvas(
+      ctx,
+      overlayBundle,
+      { photo: photoForPrint },
+      targetW,
+      targetH
+    );
+  } else {
+    drawCoverInRect(ctx, photoForPrint, 0, 0, targetW, targetH);
   }
 
   // Auto-fill names for single photos
   const active = getActiveEvent();
-  const overlayDefinition = getOverlayList(activeTheme).find(
+  const overlayTextDefinition = getOverlayList(activeTheme).find(
     (item) => item && item.src === overlaySrc
   );
   const renderedTemplateText = drawTemplateTextFields(
     ctx,
     targetW,
     targetH,
-    overlayDefinition && overlayDefinition.textFields,
+    overlayTextDefinition && overlayTextDefinition.textFields,
     active,
     activeTheme
   );
@@ -7942,17 +9185,11 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
 }
 
 /**
- * Render 3 photos into a duplicated 2-column strip behind a 3-slot overlay.
- * End result = two identical columns of 3 photos each.
- *
- * @param {HTMLCanvasElement} canvas
- * @param {(HTMLImageElement|HTMLCanvasElement)[]} photos - exactly 3 captured photos
- * @param {HTMLImageElement} overlayImage - PNG with 3 transparent slots in one column
+ * Render a duplicated two-column strip sheet with shared geometry.
  */
-function renderDoubleColumn(canvas, photos, overlayImage, template) {
+function renderDoubleColumn(canvas, photos, overlayImage, template, rows = 3) {
   const ctx = canvas.getContext("2d");
   const cols = 2; // duplicate columns
-  const rows = 3; // three slots
   // Reserve a header area at the top for graphics/logo on the template
   const headerPct = Math.max(
     0,
@@ -8018,13 +9255,12 @@ function renderDoubleColumn(canvas, photos, overlayImage, template) {
     }
   }
 
-  // 2) Draw the full 4x6 double-strip overlay last so its frames sit on top
+  // Draw the overlay last so its frames sit on top
   drawImageContain(ctx, overlayImage, 0, 0, canvas.width, canvas.height);
 }
 
-function renderSingleColumnStrip(canvas, photos, overlayImage, template) {
+function renderSingleColumnStrip(canvas, photos, overlayImage, template, rows = 3) {
   const ctx = canvas.getContext("2d");
-  const rows = 3;
   const headerPct = Math.max(
     0,
     Math.min(
@@ -8171,7 +9407,7 @@ function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
   if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
   const img = DOM.finalStrip;
-  const previewFit = mode === "strip" ? "contain" : "cover";
+  const previewFit = getSelectedCaptureMode() === "strip" ? "contain" : "cover";
   if (img) img.style.objectFit = previewFit;
   if (DOM.finalLive) DOM.finalLive.style.objectFit = previewFit;
   syncFrameSizeVars();
@@ -8184,10 +9420,11 @@ function showFinal(url, options = {}) {
   const panel = DOM.finalPreview;
 
   // Reset form from previous use
-  DOM.emailInput.value = "";
-  const sendBtn = DOM.sendBtn;
-  sendBtn.textContent = "Send";
-  sendBtn.disabled = false;
+  if (DOM.emailInput) DOM.emailInput.value = "";
+  if (DOM.sendBtn) {
+    DOM.sendBtn.textContent = "Send";
+    DOM.sendBtn.disabled = false;
+  }
 
   DOM.retakeBtn.style.display = allowRetake ? "block" : "none";
   DOM.retakeBtn.disabled = !lastCaptureFlow;
@@ -8254,10 +9491,10 @@ function showFinal(url, options = {}) {
             DOM.shareLink.href = lastShareUrl;
             DOM.shareLink.textContent = lastShareUrl;
           }
-          if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "flex";
           if (qrContainer) qrContainer.classList.remove("hidden");
           if (DOM.shareStatus) {
             DOM.shareStatus.textContent = "Link ready";
+            DOM.shareStatus.style.display = "none";
           }
           setFinalPreviewSharePanelVisible(true);
         } else {
@@ -9371,7 +10608,7 @@ function cancelHideTimer() {
 
 function startHideTimerIfIdle() {
   // If email input is empty, restart the hide timer
-  if (DOM.emailInput.value.trim() === "") {
+  if (!DOM.emailInput || DOM.emailInput.value.trim() === "") {
     cancelHideTimer();
     hidePreviewTimer = setTimeout(hideFinal, 4000);
   }
@@ -9379,6 +10616,7 @@ function startHideTimerIfIdle() {
 
 function sendEmail(event) {
   event.preventDefault();
+  if (!DOM.emailInput || !DOM.sendBtn) return;
   cancelHideTimer();
   const email = DOM.emailInput.value;
   const sendBtn = DOM.sendBtn;
@@ -9451,6 +10689,7 @@ function formatEmailError(err) {
 
 function appendEmailText(text) {
   const emailInput = DOM.emailInput;
+  if (!emailInput) return;
   emailInput.value += text;
   emailInput.focus(); // Keep the input focused for a smooth flow
 }
@@ -10715,6 +11954,13 @@ function loadThemesFromStorage() {
   if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
   // Attempt remote load and prefer remote if available
   loadThemesRemote().catch(() => {});
+}
+
+function openLayoutBuilder() {
+  const url = new URL("./overlay-maker.html", window.location.href);
+  const themeKey = (DOM.eventSelect && DOM.eventSelect.value) || "";
+  if (themeKey) url.searchParams.set("themeKey", themeKey);
+  window.open(url.toString(), "_blank", "noopener");
 }
 
 function loadEventsFromStorage() {
@@ -12461,10 +13707,14 @@ async function updateCurrentThemeAssets(reason = "") {
 
   const folders = readThemeFolderInputs();
   let assetChanges = null;
+  setAssetPanelMessage("overlay", "loading", "Loading overlays…");
+  setAssetPanelMessage("template", "loading", "Loading templates…");
   try {
     assetChanges = await uploadThemeAssetsFromEditor(target);
   } catch (err) {
     console.error("Failed to upload theme assets", err);
+    setAssetPanelMessage("overlay", "error", "Couldn’t load overlay thumbnails.");
+    setAssetPanelMessage("template", "error", "Couldn’t load template thumbnails.");
     clearThemeFileInputs();
     alert("Could not update the theme assets. Check the console for details.");
     return;
@@ -12488,6 +13738,14 @@ async function updateCurrentThemeAssets(reason = "") {
   loadTheme(key);
   clearThemeFileInputs();
   syncThemeEditorWithActiveTheme();
+  if (assetChanges && assetChanges.overlaysAdded > 0) {
+    setAssetPanelOpen("overlay", true);
+  }
+  if (assetChanges && assetChanges.templatesAdded > 0) {
+    setAssetPanelOpen("template", true);
+  }
+  setAssetPanelMessage("overlay", null);
+  setAssetPanelMessage("template", null);
   showToast(describeThemeUpdate(assetChanges, reason));
 }
 
@@ -12861,10 +14119,7 @@ function resolveThemeBannerText() {
 }
 
 function resolveCaptureLabel() {
-  const active = getActiveEvent();
-  if (hasOwnEventTextValue(active, "captureLabel"))
-    return active.captureLabel.trim();
-  return resolveThemeCaptureLabel();
+  return resolveBoothCaptureButtonLabel(mode);
 }
 
 function syncCaptureButtonText() {
@@ -12881,6 +14136,27 @@ function resolveThemeCaptureLabel() {
     return target.captureLabel.trim();
   }
   return "Take Photo";
+}
+
+function resolveBoothCaptureButtonLabel(targetMode = mode) {
+  const normalizedMode = normalizeBoothModeValue(targetMode);
+  if (normalizedMode === "message") {
+    return isMessageRecording ? "Stop Recording" : "Start Recording";
+  }
+  if (normalizedMode === "strip") return "Start Strip";
+  if (normalizedMode === "layout") return "Start Layout";
+  if (normalizedMode === "live-photo") return "Take Live Photo";
+  if (normalizedMode === "still-photo") return "Take Photo";
+  return "Take Photo";
+}
+
+function resolveBoothHelperText(targetMode = mode) {
+  return "";
+}
+
+function syncBoothHelperText() {
+  if (!DOM.boothHelperText) return;
+  DOM.boothHelperText.textContent = resolveBoothHelperText(mode);
 }
 
 function resolveWelcomeTitle() {
@@ -14344,6 +15620,244 @@ function getBuiltinTemplateEntries(folder) {
     .filter(Boolean);
 }
 
+function normalizeAssetSlots(slots) {
+  if (!Array.isArray(slots)) return [];
+  return slots
+    .map((slot) => {
+      if (!slot || typeof slot !== "object") return null;
+      const x = toNumber(slot.x, NaN);
+      const y = toNumber(slot.y, NaN);
+      const w = toNumber(slot.w, NaN);
+      const h = toNumber(slot.h, NaN);
+      if (![x, y, w, h].every((value) => Number.isFinite(value))) return null;
+      if (w <= 0 || h <= 0) return null;
+      return { x, y, w, h };
+    })
+    .filter(Boolean);
+}
+
+function clamp01(value) {
+  return Math.min(1, Math.max(0, value));
+}
+
+function parseAspectRatioValue(value) {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return value;
+  }
+  const text = String(value || "").trim();
+  if (!text) return null;
+  if (text.includes(":")) {
+    const parts = text.split(":").map((part) => Number.parseFloat(part));
+    if (
+      parts.length === 2 &&
+      Number.isFinite(parts[0]) &&
+      Number.isFinite(parts[1]) &&
+      parts[0] > 0 &&
+      parts[1] > 0
+    ) {
+      return parts[0] / parts[1];
+    }
+  }
+  const numeric = Number.parseFloat(text);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+}
+
+function buildOverlayIdFromSrc(src) {
+  return String(src || "")
+    .split(/[\\/]/)
+    .pop()
+    .replace(/\.[^.]+$/, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase();
+}
+
+function normalizeOverlayLayerDescriptor(layer, fallbackSrc = "") {
+  if (!layer && !fallbackSrc) return null;
+  if (typeof layer === "string") {
+    return { type: "image", src: layer };
+  }
+  if (!layer || typeof layer !== "object") {
+    return fallbackSrc ? { type: "image", src: fallbackSrc } : null;
+  }
+  if (layer.type === "color") {
+    return {
+      type: "color",
+      value: String(layer.value || layer.color || "#ffffff"),
+    };
+  }
+  if (layer.type === "image" || layer.src || fallbackSrc) {
+    return {
+      type: "image",
+      src: String(layer.src || layer.value || fallbackSrc || "").trim(),
+    };
+  }
+  return null;
+}
+
+function normalizePhotoSlotDescriptor(slot, index = 0) {
+  if (!slot || typeof slot !== "object") return null;
+  const x = Number(slot.x);
+  const y = Number(slot.y);
+  const width = Number(slot.width ?? slot.w);
+  const height = Number(slot.height ?? slot.h);
+  if (![x, y, width, height].every((value) => Number.isFinite(value))) {
+    return null;
+  }
+  const photoSlot = {
+    x: clamp01(x),
+    y: clamp01(y),
+    width: clamp01(width),
+    height: clamp01(height),
+    borderRadius: clamp01(Number(slot.borderRadius || 0)),
+    objectFit: slot.objectFit === "contain" ? "contain" : "cover",
+    objectPosition: String(slot.objectPosition || "center").trim() || "center",
+  };
+  if (Number.isFinite(Number(slot.rotation))) {
+    photoSlot.rotation = Number(slot.rotation);
+  }
+  if (slot.mask) {
+    photoSlot.mask = slot.mask;
+  }
+  if (Number.isFinite(Number(slot.sourceIndex))) {
+    photoSlot.sourceIndex = Math.max(0, Math.floor(Number(slot.sourceIndex)));
+  } else {
+    photoSlot.sourceIndex = index;
+  }
+  return photoSlot;
+}
+
+function normalizeOverlayPhotoSlots(entry) {
+  const source = Array.isArray(entry && entry.photoSlots)
+    ? entry.photoSlots
+    : Array.isArray(entry && entry.slots)
+    ? entry.slots
+    : [];
+  const normalized = source
+    .map((slot, index) => normalizePhotoSlotDescriptor(slot, index))
+    .filter(Boolean);
+  if (normalized.length) return normalized;
+  return [
+    {
+      x: 0,
+      y: 0,
+      width: 1,
+      height: 1,
+      borderRadius: 0,
+      objectFit: "cover",
+      objectPosition: "center",
+      sourceIndex: 0,
+    },
+  ];
+}
+
+function normalizeOverlayDefinition(entry) {
+  if (!entry) return null;
+  if (typeof entry === "string") {
+    const src = entry.trim();
+    if (!src) return null;
+    return {
+      id: buildOverlayIdFromSrc(src),
+      name: buildOverlayIdFromSrc(src) || src,
+      type: "overlay",
+      category: "general",
+      aspectRatio: null,
+      background: null,
+      foreground: { type: "image", src },
+      photoSlots: normalizeOverlayPhotoSlots({}),
+      src,
+      renderSrc: src,
+    };
+  }
+  if (typeof entry !== "object") return null;
+  const src = String(entry.src || entry.renderSrc || "").trim();
+  if (!src) return null;
+  const renderSrc = String(entry.renderSrc || src).trim();
+  const photoSlots = normalizeOverlayPhotoSlots(entry);
+  const aspectRatio =
+    parseAspectRatioValue(entry.aspectRatio) ||
+    parseAspectRatioValue(entry.layoutAspectRatio) ||
+    null;
+  const foreground = normalizeOverlayLayerDescriptor(
+    entry.foreground,
+    renderSrc
+  );
+  const background = normalizeOverlayLayerDescriptor(entry.background, "");
+  if (
+    foreground &&
+    foreground.type === "image" &&
+    renderSrc &&
+    foreground.src === src &&
+    renderSrc !== src
+  ) {
+    foreground.src = renderSrc;
+  }
+  const isStrip =
+    photoSlots.length > 1 ||
+    String(entry.type || entry.layout || src).toLowerCase().includes("strip");
+  return {
+    ...entry,
+    id: String(entry.id || buildOverlayIdFromSrc(src) || src),
+    name: String(entry.name || entry.id || buildOverlayIdFromSrc(src) || src),
+    type: String(entry.type || (isStrip ? "photo-strip-layout" : "overlay")),
+    category: String(entry.category || "general"),
+    aspectRatio: aspectRatio ? String(entry.aspectRatio || "") : "",
+    background,
+    foreground: foreground || { type: "image", src: renderSrc },
+    photoSlots,
+    src,
+    renderSrc,
+    slots: Array.isArray(entry.slots) ? entry.slots : undefined,
+    textFields: normalizeTemplateTextFields(entry.textFields),
+  };
+}
+
+function overlayUsesPhotoSlots(overlay) {
+  return Array.isArray(overlay && overlay.photoSlots) && overlay.photoSlots.length > 0;
+}
+
+function getOverlayAspectRatio(overlay) {
+  const parsed = parseAspectRatioValue(overlay && overlay.aspectRatio);
+  if (parsed) return parsed;
+  return null;
+}
+
+function getOverlayEntryBySrc(theme, src) {
+  if (!src) return null;
+  const list = getOverlayList(theme);
+  return (
+    list.find((item) => {
+      if (!item) return false;
+      if (typeof item === "string") return item === src;
+      return item.src === src;
+    }) || null
+  );
+}
+
+function resolveOverlayRenderSrc(theme, src) {
+  const entry = getOverlayEntryBySrc(theme, src);
+  if (
+    entry &&
+    typeof entry === "object" &&
+    entry.foreground &&
+    entry.foreground.type === "image" &&
+    entry.foreground.src
+  ) {
+    return entry.foreground.src;
+  }
+  if (entry && typeof entry === "object" && entry.renderSrc) {
+    return entry.renderSrc;
+  }
+  return src;
+}
+
+function resolveOverlaySlots(theme, src) {
+  const entry = getOverlayEntryBySrc(theme, src);
+  if (!entry || typeof entry !== "object") return [];
+  return Array.isArray(entry.photoSlots) ? entry.photoSlots : [];
+}
+
 async function resolveBackgroundListFromFolder(theme) {
   try {
     const path = resolveBackgroundFolderPath(theme);
@@ -14390,6 +15904,158 @@ function probeImage(url) {
   });
 }
 
+const overlaySvgFixCache = new Map();
+
+function readSvgTagAttr(tag, attrName) {
+  if (!tag || !attrName) return "";
+  const pattern = new RegExp(`${attrName}="([^"]*)"`, "i");
+  const match = tag.match(pattern);
+  return match ? match[1].trim() : "";
+}
+
+function readSvgNumericAttr(tag, attrName) {
+  const value = readSvgTagAttr(tag, attrName);
+  if (!value) return null;
+  const numeric = Number.parseFloat(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function readSvgOpacity(tag) {
+  const opacity = readSvgNumericAttr(tag, "opacity");
+  if (opacity !== null) return opacity;
+  const fillOpacity = readSvgNumericAttr(tag, "fill-opacity");
+  if (fillOpacity !== null) return fillOpacity;
+  return 1;
+}
+
+function getSvgCanvasSize(svgMarkup) {
+  if (typeof svgMarkup !== "string" || !svgMarkup.trim()) return null;
+  const svgTagMatch = svgMarkup.match(/<svg\b[^>]*>/i);
+  const svgTag = svgTagMatch ? svgTagMatch[0] : "";
+  if (!svgTag) return null;
+  const viewBox = readSvgTagAttr(svgTag, "viewBox");
+  if (viewBox) {
+    const values = viewBox
+      .split(/[\s,]+/)
+      .map((part) => Number.parseFloat(part))
+      .filter((part) => Number.isFinite(part));
+    if (values.length === 4) {
+      return { width: values[2], height: values[3] };
+    }
+  }
+  const width = readSvgNumericAttr(svgTag, "width");
+  const height = readSvgNumericAttr(svgTag, "height");
+  if (width !== null && height !== null) {
+    return { width, height };
+  }
+  return null;
+}
+
+function isOpaqueSvgFill(fillValue) {
+  const fill = String(fillValue || "").trim().toLowerCase();
+  if (!fill) return false;
+  if (fill === "none" || fill === "transparent") return false;
+  if (fill === "rgba(0,0,0,0)" || fill === "rgba(0, 0, 0, 0)") return false;
+  return true;
+}
+
+function rectLooksLikePhotoBlockingCover(tag, canvas) {
+  const width = readSvgNumericAttr(tag, "width");
+  const height = readSvgNumericAttr(tag, "height");
+  const x = readSvgNumericAttr(tag, "x") || 0;
+  const y = readSvgNumericAttr(tag, "y") || 0;
+  const fill = readSvgTagAttr(tag, "fill");
+  const stroke = readSvgTagAttr(tag, "stroke");
+  if (width === null || height === null) return false;
+  const widthRatio = width / canvas.width;
+  const heightRatio = height / canvas.height;
+  if (widthRatio < 0.85 || heightRatio < 0.85) return false;
+  if (Math.abs(x) > canvas.width * 0.1 || Math.abs(y) > canvas.height * 0.1) {
+    return false;
+  }
+  if (!isOpaqueSvgFill(fill)) return false;
+  return {
+    hasStroke: !!(stroke && stroke.toLowerCase() !== "none"),
+    opacity: readSvgOpacity(tag),
+  };
+}
+
+function svgNeedsPhotoWindowFix(svgMarkup) {
+  const canvas = getSvgCanvasSize(svgMarkup);
+  if (!canvas) return false;
+  const rects = svgMarkup.match(/<rect\b[^>]*>/gi) || [];
+  return rects.some((tag) => {
+    const cover = rectLooksLikePhotoBlockingCover(tag, canvas);
+    return !!(cover && cover.opacity > 0.2);
+  });
+}
+
+function sanitizeSvgOverlayMarkup(svgMarkup) {
+  const canvas = getSvgCanvasSize(svgMarkup);
+  if (!canvas) return svgMarkup;
+  return svgMarkup.replace(/<rect\b[^>]*>/gi, (tag) => {
+    const cover = rectLooksLikePhotoBlockingCover(tag, canvas);
+    if (!cover || cover.opacity <= 0.2) return tag;
+    if (!cover.hasStroke) return "";
+    if (/fill="/i.test(tag)) {
+      return tag.replace(/fill="[^"]*"/i, 'fill="none"');
+    }
+    return tag.replace(/^<rect/i, '<rect fill="none"');
+  });
+}
+
+function buildSanitizedSvgDataUrl(svgMarkup) {
+  return (
+    "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svgMarkup)
+  );
+}
+
+async function getOverlayFixedAsset(entry) {
+  const src =
+    typeof entry === "string" ? entry : entry && typeof entry.src === "string"
+      ? entry.src
+      : "";
+  if (!src) return entry;
+  if (!/\.svg(?:[?#].*)?$/i.test(src)) return entry;
+  if (overlaySvgFixCache.has(src)) {
+    const cached = overlaySvgFixCache.get(src);
+    return typeof entry === "string"
+      ? cached.renderSrc === src
+        ? src
+        : { src, renderSrc: cached.renderSrc }
+      : { ...entry, renderSrc: cached.renderSrc };
+  }
+  try {
+    const resp = await fetch(src, { cache: "reload" });
+    if (!resp.ok) {
+      overlaySvgFixCache.set(src, { renderSrc: src });
+      return entry;
+    }
+    const svgMarkup = await resp.text();
+    const renderSrc = svgNeedsPhotoWindowFix(svgMarkup)
+      ? buildSanitizedSvgDataUrl(sanitizeSvgOverlayMarkup(svgMarkup))
+      : src;
+    overlaySvgFixCache.set(src, { renderSrc });
+    return typeof entry === "string"
+      ? renderSrc === src
+        ? src
+        : { src, renderSrc }
+      : { ...entry, renderSrc };
+  } catch (_) {
+    overlaySvgFixCache.set(src, { renderSrc: src });
+    return entry;
+  }
+}
+
+async function fixOverlayEntries(entries) {
+  const source = Array.isArray(entries) ? entries : [];
+  const fixed = [];
+  for (const entry of source) {
+    fixed.push(await getOverlayFixedAsset(entry));
+  }
+  return fixed;
+}
+
 // Load overlays from a folder using overlays.json manifest (HTTP/HTTPS only)
 async function resolveOverlaysFromFolder(theme) {
   try {
@@ -14399,10 +16065,12 @@ async function resolveOverlaysFromFolder(theme) {
         : "";
     if (!folder || !folder.endsWith("/")) return [];
     const builtin = getBuiltinFolderStrings(folder);
-    if (!String(location.protocol).startsWith("http")) return builtin;
+    if (!String(location.protocol).startsWith("http")) {
+      return fixOverlayEntries(builtin);
+    }
     const url = folder + "overlays.json";
     const resp = await fetch(url, { cache: "reload" });
-    if (!resp.ok) return builtin;
+    if (!resp.ok) return fixOverlayEntries(builtin);
     const json = await resp.json();
     const out = [];
     if (Array.isArray(json)) {
@@ -14411,17 +16079,25 @@ async function resolveOverlaysFromFolder(theme) {
         else if (it && typeof it === "object" && typeof it.src === "string")
           out.push({
             src: folder + it.src,
+            id: it.id,
+            name: it.name,
+            type: it.type,
+            category: it.category,
+            aspectRatio: it.aspectRatio,
+            background: it.background,
+            foreground: it.foreground,
+            photoSlots: it.photoSlots || it.slots,
             textFields: normalizeTemplateTextFields(it.textFields),
           });
       }
     }
-    return out.length ? out : builtin;
+    return fixOverlayEntries(out.length ? out : builtin);
   } catch (_) {
     const folder =
       theme && typeof theme.overlaysFolder === "string"
         ? theme.overlaysFolder
         : "";
-    return getBuiltinFolderStrings(folder);
+    return fixOverlayEntries(getBuiltinFolderStrings(folder));
   }
 }
 
@@ -14480,28 +16156,11 @@ function getBaseOverlayList(theme) {
   );
   const folderArr = Array.isArray(theme.overlaysTmp)
     ? theme.overlaysTmp
-        .map((item) => {
-          if (typeof item === "string") return { src: item, __folder: true };
-          if (item && typeof item === "object" && item.src) {
-            return {
-              src: item.src,
-              textFields: normalizeTemplateTextFields(item.textFields),
-              __folder: true,
-            };
-          }
-          return null;
-        })
+        .map((item) => normalizeOverlayDefinition(item))
         .filter((item) => item && !removed.has(item.src))
     : [];
   const localArr = Array.isArray(theme.overlays)
-    ? theme.overlays.map((item) =>
-        typeof item === "string"
-          ? { src: item }
-          : {
-              ...item,
-              textFields: normalizeTemplateTextFields(item.textFields),
-            }
-      )
+    ? theme.overlays.map((item) => normalizeOverlayDefinition(item))
     : [];
   const seen = new Set();
   const out = [];
@@ -14553,47 +16212,18 @@ function getOverlayList(theme) {
   if (!theme || typeof theme !== "object") return [];
   const overrides = getActiveEventOverrides();
   const eventArr = Array.isArray(overrides.overlays)
-    ? overrides.overlays
-        .map((item) => {
-          if (typeof item === "string") return { src: item, __event: true };
-          if (item && typeof item === "object" && item.src) {
-            return {
-              ...item,
-              textFields: normalizeTemplateTextFields(item.textFields),
-              __event: true,
-            };
-          }
-          return null;
-        })
-        .filter(Boolean)
+    ? overrides.overlays.map((item) => normalizeOverlayDefinition(item)).filter(Boolean)
     : [];
   const removed = new Set(
     Array.isArray(theme.overlaysRemoved) ? theme.overlaysRemoved : []
   );
   const folderArr = Array.isArray(theme.overlaysTmp)
     ? theme.overlaysTmp
-        .map((item) => {
-          if (typeof item === "string") return { src: item, __folder: true };
-          if (item && typeof item === "object" && item.src) {
-            return {
-              src: item.src,
-              textFields: normalizeTemplateTextFields(item.textFields),
-              __folder: true,
-            };
-          }
-          return null;
-        })
+        .map((item) => normalizeOverlayDefinition(item))
         .filter((item) => item && !removed.has(item.src))
     : [];
   const localArr = Array.isArray(theme.overlays)
-    ? theme.overlays.map((item) =>
-        typeof item === "string"
-          ? { src: item }
-          : {
-              ...item,
-              textFields: normalizeTemplateTextFields(item.textFields),
-            }
-      )
+    ? theme.overlays.map((item) => normalizeOverlayDefinition(item))
     : [];
   const seen = new Set();
   const out = [];
@@ -14686,6 +16316,34 @@ function setupInstallPrompt() {
     };
 }
 
+window.addEventListener("storage", (event) => {
+  if (!event || event.key !== STORAGE_KEYS.THEMES) return;
+  loadThemesFromStorage();
+  const selectedKey = (DOM.eventSelect && DOM.eventSelect.value) || "";
+  const preferredKey = selectedKey || DEFAULT_THEME_KEY;
+  const resolvedKey = populateThemeSelector(preferredKey);
+  if (resolvedKey) {
+    setEventSelection(resolvedKey);
+    loadTheme(resolvedKey);
+  }
+});
+
+window.addEventListener("message", (event) => {
+  if (!event || event.origin !== window.location.origin) return;
+  const data = event.data || {};
+  if (data.type !== "photobooth-assets-updated") return;
+  loadThemesFromStorage();
+  const preferredKey =
+    (typeof data.themeKey === "string" && data.themeKey) ||
+    ((DOM.eventSelect && DOM.eventSelect.value) || DEFAULT_THEME_KEY);
+  const resolvedKey = populateThemeSelector(preferredKey);
+  if (resolvedKey) {
+    setEventSelection(resolvedKey);
+    loadTheme(resolvedKey);
+  }
+  showToast("Builder asset added");
+});
+
 Object.assign(window, {
   addFontByFamily,
   addFontByUrl,
@@ -14698,7 +16356,30 @@ Object.assign(window, {
     patchActiveTheme: (patch = {}) => {
       if (!activeTheme || !patch || typeof patch !== "object") return null;
       Object.assign(activeTheme, patch);
+      applyThemeBasics(activeTheme);
+      renderCurrentAssets(activeTheme);
+      updateCurrentEventAssetsPanel(activeTheme);
+      renderOptions();
+      updateStylePreview();
       return activeTheme;
+    },
+    getOverlayFixedAsset,
+    normalizeOverlayDefinition: (entry) => normalizeOverlayDefinition(entry),
+    setTestOverlays: (overlays = []) => {
+      if (!activeTheme || typeof activeTheme !== "object") return [];
+      activeTheme.overlays = Array.isArray(overlays)
+        ? overlays
+            .map((item) => normalizeOverlayDefinition(item))
+            .filter(Boolean)
+        : [];
+      activeTheme.overlaysTmp = [];
+      selectedOverlay = activeTheme.overlays[0]
+        ? activeTheme.overlays[0].src
+        : null;
+      lastPhotoOverlay = selectedOverlay;
+      renderOptions();
+      syncOverlayPreviewSurface({ mode: "live" });
+      return activeTheme.overlays;
     },
     probeOverlayAutofill: (overlaySrc, width = 1800, height = 1350) => {
       const overlayDefinition = getOverlayList(activeTheme).find(
@@ -14767,7 +16448,9 @@ Object.assign(window, {
   makeAvailableOffline,
   migrateAllManagedLocalAssets,
   openShareLink,
+  openLayoutBuilder,
   openEventGalleryLink,
+  openBoothLaunchConfirm,
   retakePhoto,
   saveCloudinarySettings,
   saveEmailJsSettings,
@@ -14776,7 +16459,10 @@ Object.assign(window, {
   sendPendingNow,
   sendTestEmail,
   setMode,
+  setSetupLaunchMode,
   syncNow,
+  closeBoothLaunchConfirm,
+  confirmBoothLaunch,
   toggleAnalytics,
   undoLastRemoval,
   updateCurrentThemeFont,

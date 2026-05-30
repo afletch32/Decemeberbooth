@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Great+Vibes&display=swap"
       rel="stylesheet"
     />
     <style>
@@ -186,7 +186,7 @@
         </div>
         <button class="btn-secondary flex items-center gap-2" id="backButton">
           <i data-lucide="arrow-left" style="width: 14px; height: 14px"></i>
-          Back to Booth Admin
+          Back to Booth Setup
         </button>
       </header>
       <div class="flex flex-1 overflow-hidden">
@@ -215,9 +215,28 @@
               <input type="text" id="assetName" value="my_overlay" />
             </div>
             <div>
+              <label class="control-label" for="templateFamily"
+                >Template Family</label
+              >
+              <select id="templateFamily">
+                <option value="minimal">Minimal</option>
+                <option value="minimal_dark">Minimal Dark</option>
+                <option value="signature_polaroid">
+                  Signature / Polaroid
+                </option>
+                <option value="feathers">Feathers</option>
+                <option value="seasonal_event">Seasonal / Event Frame</option>
+              </select>
+            </div>
+            <div>
+              <label class="control-label" for="templateVariant">Variant</label>
+              <select id="templateVariant"></select>
+            </div>
+            <div>
               <label class="control-label" for="layoutType">Layout Type</label>
               <select id="layoutType">
-                <option value="single_photo">Single Photo</option>
+                <option value="single_vertical">Single Vertical</option>
+                <option value="single_horizontal">Single Horizontal</option>
                 <option value="photo_strip">Photo Strip</option>
               </select>
             </div>
@@ -255,15 +274,22 @@
                 "
               />
             </div>
-            <div>
+            <div style="display: none">
               <label class="control-label" for="layoutGuide"
                 >Layout Style</label
               >
               <select id="layoutGuide">
-                <option value="single_portrait">Single Photo Portrait</option>
-                <option value="single_landscape">Single Photo Landscape</option>
-                <option value="strip_double_column">
-                  Photo Strip Double Column
+                <option value="single_portrait">
+                  Single Photo (Portrait)
+                </option>
+                <option value="single_landscape">
+                  Single Photo (Landscape)
+                </option>
+                <option value="strip_2">2-Photo Strip</option>
+                <option value="strip_3">3-Photo Strip</option>
+                <option value="strip_4">4-Photo Strip</option>
+                <option value="strip_double_column" hidden>
+                  Legacy Double Column Strip
                 </option>
               </select>
             </div>
@@ -286,7 +312,7 @@
               >
             </div>
             <div>
-              <label class="control-label" for="headline">Headline</label>
+              <label class="control-label" for="headline">Primary Text</label>
               <input type="text" id="headline" value="OUR PHOTO BOOTH" />
             </div>
             <div>
@@ -303,7 +329,7 @@
               />
             </div>
             <div>
-              <label class="control-label" for="footer">Footer</label>
+              <label class="control-label" for="footer">Secondary Text</label>
               <input type="text" id="footer" value="#celebrate" />
             </div>
             <div>
@@ -348,9 +374,58 @@
                 Add an optional second line like the event date.
               </p>
             </div>
+            <div class="glass-panel rounded-2xl p-4 space-y-3" style="display: none">
+              <div class="flex items-center gap-2 mb-1">
+                <i
+                  data-lucide="scan"
+                  style="width: 14px; height: 14px; color: #c8b4e0"
+                ></i>
+                <span
+                  style="
+                    font-family: 'Fraunces', serif;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #3d3442;
+                  "
+                  >Photo Boxes</span
+                >
+              </div>
+              <div class="flex items-center gap-2 mt-1">
+                <input
+                  type="checkbox"
+                  id="customSlotsEnabled"
+                  style="accent-color: #a8d5ba"
+                />
+                <label
+                  for="customSlotsEnabled"
+                  style="font-size: 12px; color: #6b5f70"
+                  >Draw custom photo boxes</label
+                >
+              </div>
+              <div>
+                <label class="control-label" for="slotEditorIndex"
+                  >Photo Box</label
+                >
+                <select id="slotEditorIndex" disabled></select>
+              </div>
+              <p style="margin: 0; color: #7a6f7f; font-size: 12px">
+                Pick a box, then drag on the preview to place the photo area.
+              </p>
+              <button
+                type="button"
+                class="btn-secondary"
+                id="resetSlotsButton"
+                disabled
+              >
+                Reset Photo Boxes
+              </button>
+            </div>
           </div>
 
-          <div class="glass-panel rounded-2xl p-4 space-y-3">
+          <div
+            class="glass-panel rounded-2xl p-4 space-y-3"
+            style="display: none"
+          >
             <div class="flex items-center gap-2 mb-1">
               <i
                 data-lucide="sparkles"
@@ -437,6 +512,45 @@
                 value="100"
                 class="w-full"
               />
+            </div>
+          </div>
+
+          <div class="glass-panel rounded-2xl p-4 space-y-3">
+            <div class="flex items-center gap-2 mb-1">
+              <i
+                data-lucide="badge"
+                style="width: 14px; height: 14px; color: #f0a0d0"
+              ></i>
+              <span
+                style="
+                  font-family: 'Fraunces', serif;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #3d3442;
+                "
+                >Logo</span
+              >
+            </div>
+            <div>
+              <label class="control-label" for="logoUpload">Upload Logo</label>
+              <input type="file" id="logoUpload" accept="image/png,image/webp,image/jpeg" />
+              <div
+                id="logoUploadStatus"
+                style="font-size: 11px; color: #8a7f8e; margin-top: 6px"
+              >
+                No logo selected.
+              </div>
+              <p style="margin: 6px 0 0; color: #7a6f7f; font-size: 12px">
+                Logos render once in a fixed slot based on the selected layout.
+              </p>
+              <button
+                type="button"
+                class="btn-secondary"
+                id="clearLogoUpload"
+                style="margin-top: 8px; width: 100%"
+              >
+                Clear Logo
+              </button>
             </div>
           </div>
 
@@ -533,6 +647,19 @@
                   "my_overlay.png",
                 </div>
               </div>
+              <div>
+                <label class="control-label" for="targetThemeKey"
+                  >Add To Theme</label
+                >
+                <select id="targetThemeKey"></select>
+                <div
+                  id="targetThemeStatus"
+                  style="font-size: 11px; color: #8a7f8e; margin-top: 6px"
+                >
+                  Choose which photobooth theme should receive this finished
+                  asset.
+                </div>
+              </div>
               <div style="font-size: 10px; color: #b0a6b5; margin-top: 4px">
                 <i
                   data-lucide="check-circle"
@@ -555,6 +682,9 @@
               </button>
               <button class="btn-primary" id="uploadCloudinaryButton">
                 Upload to Cloudinary
+              </button>
+              <button class="btn-primary" id="addToBoothAssetsButton">
+                Add To Booth Assets
               </button>
               <button class="btn-secondary" id="copyManifestButton">
                 Copy Manifest
@@ -594,6 +724,67 @@
     <div id="toast" class="toast"></div>
 
     <script>
+      function clampNumber(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function buildDuplicatedStripGuide({
+        w,
+        h,
+        rows,
+        headerHeight,
+        footerHeight,
+        topMargin,
+        bottomMargin,
+        sideMargin,
+        columnGap,
+        slotGap,
+      }) {
+        const stripWidth = Math.round(
+          (w - sideMargin * 2 - columnGap) / 2
+        );
+        const leftX = sideMargin;
+        const rightX = leftX + stripWidth + columnGap;
+        const headerH = clampNumber(headerHeight, 60, Math.round(h * 0.22));
+        const footerH = clampNumber(footerHeight, 60, Math.round(h * 0.18));
+        const topY = topMargin;
+        const footerY = h - bottomMargin - footerH;
+        const availableH =
+          h - topY - bottomMargin - headerH - footerH - slotGap * (rows + 1);
+        const slotH = Math.max(1, Math.floor(availableH / rows));
+        const startY = topY + headerH + slotGap;
+        const makeStrip = (x) => {
+          const windows = Array.from({ length: rows }, (_, index) => ({
+            x,
+            y: Math.round(startY + index * (slotH + slotGap)),
+            w: stripWidth,
+            h: slotH,
+          }));
+          return {
+            x,
+            w: stripWidth,
+            headerZone: { x, y: topY, w: stripWidth, h: headerH },
+            footerZone: { x, y: footerY, w: stripWidth, h: footerH },
+            windows,
+          };
+        };
+        const leftStrip = makeStrip(leftX);
+        const rightStrip = makeStrip(rightX);
+        return {
+          w,
+          h,
+          type: "strip",
+          layout: "double_column",
+          rows,
+          columns: 2,
+          windows: [...leftStrip.windows, ...rightStrip.windows],
+          leftHeaderZone: leftStrip.headerZone,
+          rightHeaderZone: rightStrip.headerZone,
+          leftFooterZone: leftStrip.footerZone,
+          rightFooterZone: rightStrip.footerZone,
+        };
+      }
+
       const GUIDES = {
         single_portrait: {
           w: 1350,
@@ -613,213 +804,174 @@
           borders: { top: 60, bottom: 180, left: 90, right: 90 },
           textZone: { x: 90, y: 1170, w: 1620, h: 180 },
         },
-        strip_double_column: {
+        strip_double_column: buildDuplicatedStripGuide({
           w: 1200,
           h: 1800,
-          type: "template",
-          layout: "double_column",
-          windows: [
-            { x: 60, y: 400, w: 495, h: 380 },
-            { x: 60, y: 835, w: 495, h: 380 },
-            { x: 60, y: 1270, w: 495, h: 380 },
-            { x: 645, y: 400, w: 495, h: 380 },
-            { x: 645, y: 835, w: 495, h: 380 },
-            { x: 645, y: 1270, w: 495, h: 380 },
-          ],
-          leftHeaderZone: { x: 60, y: 90, w: 495, h: 150 },
-          rightHeaderZone: { x: 645, y: 90, w: 495, h: 150 },
-          leftFooterZone: { x: 60, y: 1650, w: 495, h: 120 },
-          rightFooterZone: { x: 645, y: 1650, w: 495, h: 120 },
+          rows: 3,
+          headerHeight: 150,
+          footerHeight: 120,
+          topMargin: 90,
+          bottomMargin: 60,
+          sideMargin: 60,
+          columnGap: 90,
+          slotGap: 55,
+        }),
+        strip_2: buildDuplicatedStripGuide({
+          w: 1200,
+          h: 1600,
+          rows: 2,
+          headerHeight: 130,
+          footerHeight: 120,
+          topMargin: 90,
+          bottomMargin: 60,
+          sideMargin: 60,
+          columnGap: 90,
+          slotGap: 42,
+        }),
+        strip_3: buildDuplicatedStripGuide({
+          w: 1200,
+          h: 1800,
+          rows: 3,
+          headerHeight: 150,
+          footerHeight: 120,
+          topMargin: 90,
+          bottomMargin: 60,
+          sideMargin: 60,
+          columnGap: 90,
+          slotGap: 55,
+        }),
+        strip_4: buildDuplicatedStripGuide({
+          w: 1200,
+          h: 2400,
+          rows: 4,
+          headerHeight: 140,
+          footerHeight: 130,
+          topMargin: 90,
+          bottomMargin: 60,
+          sideMargin: 60,
+          columnGap: 90,
+          slotGap: 45,
+        }),
+      };
+      const LAYOUT_GUIDE_BY_TYPE = {
+        single_vertical: "single_portrait",
+        single_horizontal: "single_landscape",
+        photo_strip: "strip_3",
+      };
+      const LOGO_SLOTS = {
+        single_vertical: { xPct: 0.76, yPct: 0.04, wPct: 0.17, hPct: 0.09 },
+        single_horizontal: { xPct: 0.81, yPct: 0.04, wPct: 0.13, hPct: 0.12 },
+        photo_strip: { xPct: 0.76, yPct: 0.035, wPct: 0.16, hPct: 0.055 },
+      };
+      const TEMPLATE_FAMILIES = {
+        minimal: {
+          variants: {
+            classic: {
+              label: "Classic",
+              defaults: {
+                background: "#f6efe7",
+                text: "#3d3442",
+                accent: "#d7c4b0",
+                headline: "Olivia + James",
+                footer: "June 23, 2026",
+              },
+            },
+          },
+        },
+        minimal_dark: {
+          variants: {
+            noir: {
+              label: "Noir",
+              defaults: {
+                background: "#241f24",
+                text: "#f7f2eb",
+                accent: "#b89d7c",
+                headline: "Olivia + James",
+                footer: "June 23, 2026",
+              },
+            },
+          },
+        },
+        signature_polaroid: {
+          variants: {
+            signature: {
+              label: "Signature",
+              defaults: {
+                background: "#ebe4db",
+                text: "#2d262c",
+                accent: "#ffffff",
+                headline: "Gen + Charles",
+                footer: "01.18.26",
+              },
+            },
+          },
+        },
+        feathers: {
+          variants: {
+            soft_feathers: {
+              label: "Soft Feathers",
+              defaults: {
+                background: "#fff8f5",
+                text: "#4d3c40",
+                accent: "#f2b26d",
+                headline: "Happy Birthday Emma",
+                footer: "12.03.25",
+              },
+            },
+          },
+        },
+        seasonal_event: {
+          variants: {
+            birthday_balloons: {
+              label: "Birthday Balloons",
+              defaults: {
+                background: "#fff8f1",
+                text: "#8b5c2f",
+                accent: "#f39aa7",
+                headline: "Happy 18th Birthday",
+                footer: "22.09.2025",
+              },
+            },
+            easter: {
+              label: "Easter",
+              defaults: {
+                background: "#edf6e8",
+                text: "#ffffff",
+                accent: "#4f9a43",
+                headline: "Happy Easter",
+                footer: "Spring Celebration",
+              },
+            },
+            retro_party: {
+              label: "Retro Party",
+              defaults: {
+                background: "#ffd8d1",
+                text: "#fff4df",
+                accent: "#f07d3f",
+                headline: "70's Party",
+                footer: "Let's Celebrate",
+              },
+            },
+          },
         },
       };
-      const GRAPHIC_LIBRARY_BUILDERS = {
-        hearts(accent) {
-          return createGraphicSvgDataUrl(`
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
-              <defs>
-                <linearGradient id="heartFill" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="${accent}" />
-                  <stop offset="100%" stop-color="#ffffff" stop-opacity="0.55" />
-                </linearGradient>
-              </defs>
-              <path d="M160 278c-21-18-38-31-51-42C69 205 46 181 46 142c0-34 24-58 56-58 23 0 41 13 58 35 17-22 35-35 58-35 32 0 56 24 56 58 0 39-23 63-63 94-13 11-30 24-51 42z" fill="url(#heartFill)" stroke="#ffffff" stroke-opacity="0.9" stroke-width="9" />
-              <circle cx="112" cy="126" r="11" fill="#ffffff" fill-opacity="0.45" />
-              <circle cx="208" cy="118" r="9" fill="#ffffff" fill-opacity="0.35" />
-            </svg>
-          `);
-        },
-        roses(accent) {
-          return createGraphicSvgDataUrl(`
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
-              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M118 292c13-46 28-88 42-124" stroke="#537c52" stroke-width="10" />
-                <path d="M198 292c-11-43-23-82-35-117" stroke="#537c52" stroke-width="10" />
-                <path d="M130 216c-16-8-25-18-31-34 18 2 31 8 42 20" stroke="#6ea96a" stroke-width="8" />
-                <path d="M192 214c18-10 27-20 33-36-19 3-33 10-44 22" stroke="#6ea96a" stroke-width="8" />
-              </g>
-              <g>
-                <path d="M119 122c0-24 19-43 43-43 14 0 28 7 36 19 6 8 8 18 8 28 0 23-19 42-44 42-24 0-43-19-43-46z" fill="${accent}" />
-                <path d="M130 123c8-20 26-28 45-21-5 9-14 16-26 22 12 2 21 7 28 15-20 10-42 6-58-10 3-4 7-7 11-6z" fill="#ffffff" fill-opacity="0.34" />
-              </g>
-              <g transform="translate(54 44) scale(0.74)">
-                <path d="M119 122c0-24 19-43 43-43 14 0 28 7 36 19 6 8 8 18 8 28 0 23-19 42-44 42-24 0-43-19-43-46z" fill="${accent}" fill-opacity="0.92" />
-                <path d="M130 123c8-20 26-28 45-21-5 9-14 16-26 22 12 2 21 7 28 15-20 10-42 6-58-10 3-4 7-7 11-6z" fill="#ffffff" fill-opacity="0.26" />
-              </g>
-            </svg>
-          `);
-        },
-        bubbles(accent) {
-          return createGraphicSvgDataUrl(`
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
-              <g fill="${accent}" fill-opacity="0.36" stroke="#ffffff" stroke-opacity="0.84" stroke-width="8">
-                <circle cx="118" cy="166" r="68" />
-                <circle cx="208" cy="126" r="42" />
-                <circle cx="198" cy="230" r="28" />
-                <circle cx="84" cy="90" r="26" />
-              </g>
-              <g fill="#ffffff" fill-opacity="0.45">
-                <circle cx="95" cy="141" r="10" />
-                <circle cx="194" cy="111" r="7" />
-                <circle cx="190" cy="219" r="5" />
-              </g>
-            </svg>
-          `);
-        },
-        confetti(accent) {
-          return createGraphicSvgDataUrl(`
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
-              <rect x="34" y="48" width="26" height="10" rx="5" transform="rotate(-28 34 48)" fill="${accent}" />
-              <rect x="92" y="42" width="14" height="14" rx="3" transform="rotate(18 92 42)" fill="#ffffff" fill-opacity="0.82" />
-              <rect x="146" y="80" width="36" height="12" rx="6" transform="rotate(-42 146 80)" fill="${accent}" fill-opacity="0.86" />
-              <rect x="218" y="52" width="16" height="16" rx="4" transform="rotate(22 218 52)" fill="#ffd166" />
-              <rect x="242" y="116" width="30" height="10" rx="5" transform="rotate(-26 242 116)" fill="#ffffff" fill-opacity="0.74" />
-              <rect x="68" y="136" width="30" height="12" rx="6" transform="rotate(36 68 136)" fill="#f497b6" />
-              <rect x="120" y="188" width="16" height="16" rx="4" transform="rotate(-16 120 188)" fill="${accent}" />
-              <rect x="188" y="180" width="34" height="10" rx="5" transform="rotate(28 188 180)" fill="#ffd166" />
-              <rect x="246" y="212" width="18" height="18" rx="4" transform="rotate(-14 246 212)" fill="#ffffff" fill-opacity="0.86" />
-              <circle cx="76" cy="238" r="10" fill="${accent}" />
-              <circle cx="162" cy="248" r="8" fill="#ffffff" fill-opacity="0.8" />
-              <circle cx="222" cy="262" r="11" fill="#f497b6" />
-              <path d="M40 188c22 12 36 32 42 58" stroke="${accent}" stroke-width="10" stroke-linecap="round" fill="none" />
-            </svg>
-          `);
-        },
-        balloons(accent) {
-          return createGraphicSvgDataUrl(`
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
-              <g>
-                <path d="M106 78c30 0 54 25 54 57 0 34-28 69-54 92-26-23-54-58-54-92 0-32 24-57 54-57z" fill="${accent}" />
-                <path d="M214 58c28 0 50 23 50 52 0 30-23 62-50 84-27-22-50-54-50-84 0-29 22-52 50-52z" fill="#ffd166" />
-                <path d="M173 116c24 0 42 19 42 44 0 25-19 52-42 70-23-18-42-45-42-70 0-25 18-44 42-44z" fill="#f497b6" />
-              </g>
-              <g fill="#ffffff" fill-opacity="0.33">
-                <ellipse cx="91" cy="112" rx="12" ry="24" transform="rotate(18 91 112)" />
-                <ellipse cx="202" cy="92" rx="11" ry="21" transform="rotate(18 202 92)" />
-                <ellipse cx="160" cy="145" rx="10" ry="19" transform="rotate(18 160 145)" />
-              </g>
-              <g stroke="#8b6f8c" stroke-width="5" stroke-linecap="round" fill="none">
-                <path d="M106 226c8 18 6 37-4 58" />
-                <path d="M214 194c6 23 4 53-10 90" />
-                <path d="M173 186c8 25 8 52 1 82" />
-              </g>
-            </svg>
-          `);
-        },
-        stars(accent) {
-          return createGraphicSvgDataUrl(`
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
-              <g fill="${accent}">
-                <path d="M160 34l20 54 58 5-44 38 14 57-48-29-48 29 14-57-44-38 58-5z" />
-                <path d="M70 152l10 28 30 3-23 18 7 30-24-15-24 15 7-30-23-18 30-3z" fill-opacity="0.82" />
-                <path d="M250 166l9 24 27 2-20 16 6 27-22-13-22 13 6-27-20-16 27-2z" fill-opacity="0.88" />
-              </g>
-              <g fill="#ffffff" fill-opacity="0.45">
-                <circle cx="146" cy="102" r="10" />
-                <circle cx="63" cy="194" r="6" />
-                <circle cx="238" cy="202" r="7" />
-              </g>
-            </svg>
-          `);
-        },
-        rings(accent) {
-          return createGraphicSvgDataUrl(`
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
-              <defs>
-                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="${accent}" />
-                  <stop offset="100%" stop-color="#ffffff" stop-opacity="0.4" />
-                </linearGradient>
-              </defs>
-              <g fill="none" stroke-width="16">
-                <circle cx="125" cy="160" r="62" stroke="url(#ringGrad)" />
-                <circle cx="195" cy="160" r="62" stroke="url(#ringGrad)" />
-              </g>
-              <path d="M90 130 Q 110 110 130 130" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.5" />
-              <path d="M190 130 Q 210 110 230 130" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.5" />
-            </svg>
-          `);
-        },
-        partyHat(accent) {
-          return createGraphicSvgDataUrl(`
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
-              <path d="M160 50 L250 270 Q 160 290 70 270 Z" fill="${accent}" />
-              <circle cx="160" cy="50" r="18" fill="#ffffff" fill-opacity="0.9" />
-              <g fill="#ffffff" fill-opacity="0.3">
-                <circle cx="130" cy="160" r="10" />
-                <circle cx="190" cy="200" r="12" />
-                <circle cx="150" cy="230" r="8" />
-                <circle cx="170" cy="120" r="7" />
-              </g>
-              <path d="M70 270 Q 160 290 250 270" fill="none" stroke="#ffffff" stroke-opacity="0.4" stroke-width="8" />
-            </svg>
-          `);
-        },
-        cake(accent) {
-          return createGraphicSvgDataUrl(`
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
-              <rect x="60" y="180" width="200" height="80" rx="10" fill="${accent}" />
-              <rect x="90" y="110" width="140" height="70" rx="8" fill="${accent}" fill-opacity="0.85" />
-              <rect x="155" y="50" width="10" height="60" fill="#ffd166" />
-              <path d="M160 30 Q 170 45 160 60 Q 150 45 160 30" fill="#ff9f1c" />
-              <g fill="#ffffff" fill-opacity="0.3">
-                <rect x="60" y="180" width="200" height="15" />
-                <rect x="90" y="110" width="140" height="12" />
-              </g>
-            </svg>
-          `);
-        },
-      };
-      const graphicImageCache = new Map();
-      let customGraphicObjectUrl = "";
+      const uploadedImageCache = new Map();
+      let customLogoObjectUrl = "";
       let previewRenderId = 0;
+      let customSlots = null;
+      let slotDraft = null;
+      let pointerSlotState = null;
+      const STORAGE_THEME_KEY = "photoboothThemes";
 
       function $(id) {
         return document.getElementById(id);
       }
 
       function syncLayoutGuideOptions() {
-        const layoutType =
-          $("layoutType").value === "photo_strip"
-            ? "photo_strip"
-            : "single_photo";
-        const select = $("layoutGuide");
-        Array.from(select.options).forEach((option) => {
-          const isPhotoStrip = option.value === "strip_double_column";
-          option.hidden =
-            layoutType === "photo_strip" ? !isPhotoStrip : isPhotoStrip;
-        });
-        if (
-          layoutType === "photo_strip" &&
-          select.value !== "strip_double_column"
-        ) {
-          select.value = "strip_double_column";
-        }
-        if (
-          layoutType === "single_photo" &&
-          select.value === "strip_double_column"
-        ) {
-          select.value = "single_portrait";
-        }
+        const layoutType = getLayoutType();
+        const nextGuideKey =
+          LAYOUT_GUIDE_BY_TYPE[layoutType] || LAYOUT_GUIDE_BY_TYPE.single_vertical;
+        $("layoutGuide").value = nextGuideKey;
       }
 
       function getGuide() {
@@ -828,9 +980,123 @@
       }
 
       function getLayoutType() {
-        return $("layoutType").value === "photo_strip"
-          ? "photo_strip"
-          : "single_photo";
+        const value = $("layoutType").value;
+        if (value === "photo_strip") {
+          return "photo_strip";
+        }
+        if (value === "single_horizontal") {
+          return "single_horizontal";
+        }
+        return "single_vertical";
+      }
+
+      function getSelectedFamilyKey() {
+        return TEMPLATE_FAMILIES[$("templateFamily").value]
+          ? $("templateFamily").value
+          : "minimal";
+      }
+
+      function getSelectedVariantKey() {
+        const family = TEMPLATE_FAMILIES[getSelectedFamilyKey()];
+        return family && family.variants[$("templateVariant").value]
+          ? $("templateVariant").value
+          : Object.keys(family.variants)[0];
+      }
+
+      function getSelectedTemplateVariant() {
+        const family = TEMPLATE_FAMILIES[getSelectedFamilyKey()];
+        return family.variants[getSelectedVariantKey()];
+      }
+
+      function populateTemplateVariantSelect() {
+        const family = TEMPLATE_FAMILIES[getSelectedFamilyKey()];
+        const select = $("templateVariant");
+        const previous = select.value;
+        const options = Object.entries(family.variants).map(([key, value]) => {
+          return `<option value="${key}">${value.label}</option>`;
+        });
+        select.innerHTML = options.join("");
+        if (family.variants[previous]) {
+          select.value = previous;
+        }
+      }
+
+      function applyTemplateDefaults() {
+        const defaults = getSelectedTemplateVariant().defaults;
+        $("templateBgColor").value = defaults.background;
+        $("templateTextColor").value = defaults.text;
+        $("accentColor").value = defaults.accent;
+        $("headline").value = defaults.headline;
+        $("footer").value = defaults.footer;
+      }
+
+      function cloneSlots(slots) {
+        return Array.isArray(slots)
+          ? slots.map((slot) => ({
+              x: slot.x,
+              y: slot.y,
+              w: slot.w,
+              h: slot.h,
+            }))
+          : [];
+      }
+
+      function normalizeSlot(slot, guide) {
+        if (!slot || !guide) {
+          return null;
+        }
+        const x = Math.max(0, Math.min(guide.w, Math.round(slot.x)));
+        const y = Math.max(0, Math.min(guide.h, Math.round(slot.y)));
+        const maxW = guide.w - x;
+        const maxH = guide.h - y;
+        const w = Math.max(1, Math.min(maxW, Math.round(slot.w)));
+        const h = Math.max(1, Math.min(maxH, Math.round(slot.h)));
+        if (w < 8 || h < 8) {
+          return null;
+        }
+        return { x, y, w, h };
+      }
+
+      function getDefaultSlots(guide) {
+        return cloneSlots(guide && guide.windows);
+      }
+
+      function getEditableSlots(guide) {
+        return getDefaultSlots(guide);
+      }
+
+      function syncSlotEditorOptions() {
+        const guide = getGuide();
+        const select = $("slotEditorIndex");
+        const slots = getEditableSlots(guide);
+        const previous = select.value;
+        select.innerHTML = slots
+          .map(
+            (_slot, index) =>
+              `<option value="${index}">Photo Box ${index + 1}</option>`
+          )
+          .join("");
+        if (slots.length) {
+          const nextValue =
+            previous && Number(previous) < slots.length ? previous : "0";
+          select.value = nextValue;
+        }
+        const enabled = $("customSlotsEnabled").checked && slots.length > 0;
+        select.disabled = !enabled;
+        $("resetSlotsButton").disabled = !enabled;
+      }
+
+      function getSelectedSlotIndex() {
+        return Math.max(0, parseInt($("slotEditorIndex").value || "0", 10) || 0);
+      }
+
+      function getManifestSlots(guide) {
+        if (guide && guide.type === "strip") {
+          return getEditableSlots(guide)
+            .map((slot) => normalizeSlot(slot, guide))
+            .filter(Boolean);
+        }
+        return [];
       }
 
       function getFilename() {
@@ -846,55 +1112,86 @@
         return layoutType === "photo_strip" ? "templates" : "overlays";
       }
 
-      function createGraphicSvgDataUrl(svg) {
-        return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+      function getRequestedThemeKey() {
+        try {
+          return (
+            new URLSearchParams(window.location.search).get("themeKey") || ""
+          ).trim();
+        } catch (_error) {
+          return "";
+        }
       }
 
-      function getGraphicSource() {
-        return $("graphicSource").value === "upload" ? "upload" : "library";
-      }
-
-      function revokeCustomGraphicUrl() {
-        if (!customGraphicObjectUrl) {
+      function revokeCustomLogoUrl() {
+        if (!customLogoObjectUrl) {
           return;
         }
-        graphicImageCache.delete(customGraphicObjectUrl);
-        URL.revokeObjectURL(customGraphicObjectUrl);
-        customGraphicObjectUrl = "";
+        uploadedImageCache.delete(customLogoObjectUrl);
+        URL.revokeObjectURL(customLogoObjectUrl);
+        customLogoObjectUrl = "";
       }
 
-      function updateGraphicUploadStatus(message) {
-        $("graphicUploadStatus").textContent = message;
+      function updateLogoUploadStatus(message) {
+        $("logoUploadStatus").textContent = message;
       }
 
-      function updateGraphicControlState() {
-        const useUpload = getGraphicSource() === "upload";
-        $("graphicSelect").disabled = useUpload;
-        $("graphicUpload").disabled = !useUpload;
-        $("clearGraphicUpload").disabled =
-          !useUpload || !customGraphicObjectUrl;
-        if (!useUpload) {
-          updateGraphicUploadStatus("Built-in library is active.");
-        } else if (customGraphicObjectUrl) {
-          updateGraphicUploadStatus("Custom PNG loaded.");
-        } else {
-          updateGraphicUploadStatus("No custom PNG selected.");
+      function updateLogoControlState() {
+        $("clearLogoUpload").disabled = !customLogoObjectUrl;
+        if (customLogoObjectUrl) {
+          updateLogoUploadStatus("Logo ready for export.");
+          return;
         }
+        updateLogoUploadStatus("No logo selected.");
       }
 
       function getManifestLine(filename, guide, layoutType) {
+        const manifest = buildManifestEntry(filename, guide, layoutType);
+        if (typeof manifest === "string") {
+          return '"' + manifest + '",';
+        }
+        return JSON.stringify(manifest) + ",";
+      }
+
+      function buildManifestEntry(filename, guide, layoutType, assetSrc) {
         const autofillFields = getAutofillFields(guide);
-        const manifest = { src: filename };
+        const slots = getManifestSlots(guide);
+        const manifest = { src: assetSrc || filename };
+        manifest.templateFamily = getSelectedFamilyKey();
+        manifest.templateVariant = getSelectedVariantKey();
+        manifest.layoutClass = layoutType;
+        manifest.background = {
+          type: "color",
+          value: $("templateBgColor").value,
+        };
+        manifest.foreground = {
+          type: "image",
+          src: assetSrc || filename,
+        };
+        if (customLogoObjectUrl) {
+          manifest.logoSlot = getLogoSlotRect(guide, layoutType);
+        }
         if (layoutType === "photo_strip") {
           manifest.layout = guide.layout;
+        }
+        if (slots.length) {
+          manifest.slots = slots;
+          manifest.photoSlots = slots.map((slot) => ({
+            x: Number((slot.x / guide.w).toFixed(4)),
+            y: Number((slot.y / guide.h).toFixed(4)),
+            width: Number((slot.w / guide.w).toFixed(4)),
+            height: Number((slot.h / guide.h).toFixed(4)),
+            borderRadius: 0.02,
+            objectFit: "cover",
+            objectPosition: "center",
+          }));
         }
         if (autofillFields.length) {
           manifest.textFields = autofillFields;
         }
-        if (layoutType !== "photo_strip" && !autofillFields.length) {
-          return '"' + filename + '",';
+        if (layoutType !== "photo_strip" && !autofillFields.length && !slots.length) {
+          return assetSrc || filename;
         }
-        return JSON.stringify(manifest) + ",";
+        return manifest;
       }
 
       function getAutofillSampleText(key) {
@@ -969,72 +1266,58 @@
           }
           return fields;
         };
-        if (guide === GUIDES.strip_double_column) {
+        if (guide && guide.type === "strip" && guide.leftFooterZone) {
           return [
             ...buildFields(guide.leftFooterZone),
             ...buildFields(guide.rightFooterZone),
           ];
         }
-        const zone = {
-          x: guide.textZone.x,
-          y: guide.textZone.y + guide.textZone.h * 0.46,
-          w: guide.textZone.w,
-          h: guide.textZone.h * 0.38,
-        };
-        return buildFields(zone);
+        const zone = guide && guide.footerZone ? guide.footerZone : guide.textZone;
+        if (!zone) return [];
+        return buildFields(
+          guide && guide.type === "strip" && guide.footerZone
+            ? zone
+            : {
+                x: zone.x,
+                y: zone.y + zone.h * 0.46,
+                w: zone.w,
+                h: zone.h * 0.38,
+              }
+        );
       }
 
-      function getSelectedGraphicUrl() {
-        if (getGraphicSource() === "upload") {
-          return customGraphicObjectUrl || "";
-        }
-        const graphic = $("graphicSelect").value;
-        if (!graphic) {
-          return "";
-        }
-        const builder = GRAPHIC_LIBRARY_BUILDERS[graphic];
-        return typeof builder === "function"
-          ? builder($("accentColor").value)
-          : "";
+      function getSelectedLogoUrl() {
+        return customLogoObjectUrl || "";
       }
 
-      function loadGraphicImage(src) {
+      function loadUploadedImage(src) {
         if (!src) {
           return Promise.resolve(null);
         }
-        if (src.startsWith("data:image/svg+xml")) {
-          return new Promise((resolve, reject) => {
-            const image = new Image();
-            image.onload = () => resolve(image);
-            image.onerror = () =>
-              reject(new Error("Failed to load graphic asset."));
-            image.src = src;
-          });
-        }
-        if (graphicImageCache.has(src)) {
-          return graphicImageCache.get(src);
+        if (uploadedImageCache.has(src)) {
+          return uploadedImageCache.get(src);
         }
         const promise = new Promise((resolve, reject) => {
           const image = new Image();
           image.onload = () => resolve(image);
           image.onerror = () =>
-            reject(new Error("Failed to load graphic asset."));
+            reject(new Error("Failed to load uploaded asset."));
           image.src = src;
         });
-        graphicImageCache.set(src, promise);
+        uploadedImageCache.set(src, promise);
         return promise;
       }
 
-      async function resolveSelectedGraphicImage() {
-        const src = getSelectedGraphicUrl();
+      async function resolveSelectedLogoImage() {
+        const src = getSelectedLogoUrl();
         if (!src) {
           return null;
         }
         try {
-          return await loadGraphicImage(src);
+          return await loadUploadedImage(src);
         } catch (error) {
           console.error(error);
-          showToast("Graphic could not be loaded.");
+          showToast("Logo could not be loaded.");
           return null;
         }
       }
@@ -1042,7 +1325,11 @@
       function updateTypeChip(layoutType) {
         const typeChip = $("typeChip");
         typeChip.textContent =
-          layoutType === "photo_strip" ? "Photo Strip" : "Single Photo";
+          layoutType === "photo_strip"
+            ? "Photo Strip"
+            : layoutType === "single_horizontal"
+              ? "Single Horizontal"
+              : "Single Vertical";
         if (layoutType === "photo_strip") {
           typeChip.style.background = "#f4f0fe";
           typeChip.style.borderColor = "#c8b4e0";
@@ -1085,6 +1372,161 @@
         $("cloudinaryUploadStatus").textContent = message;
       }
 
+      function updateTargetThemeStatus(message) {
+        $("targetThemeStatus").textContent = message;
+      }
+
+      function readStoredThemes() {
+        const readFromWindow = (win) => {
+          try {
+            const raw =
+              win && win.localStorage
+                ? win.localStorage.getItem(STORAGE_THEME_KEY)
+                : "";
+            return raw ? JSON.parse(raw) : {};
+          } catch (_error) {
+            return {};
+          }
+        };
+        const ownThemes = readFromWindow(window);
+        if (Object.keys(ownThemes).length) {
+          return ownThemes;
+        }
+        try {
+          if (window.opener && window.opener !== window) {
+            const openerThemes = readFromWindow(window.opener);
+            if (Object.keys(openerThemes).length) {
+              return openerThemes;
+            }
+          }
+        } catch (_error) {}
+        try {
+          const raw = localStorage.getItem(STORAGE_THEME_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch (_error) {
+          return {};
+        }
+      }
+
+      function saveStoredThemes(themes) {
+        const payload = JSON.stringify(themes);
+        try {
+          localStorage.setItem(STORAGE_THEME_KEY, payload);
+        } catch (_error) {}
+        try {
+          if (window.opener && window.opener !== window) {
+            window.opener.localStorage.setItem(STORAGE_THEME_KEY, payload);
+          }
+        } catch (_error) {}
+      }
+
+      function flattenThemeOptions(themes) {
+        const out = [];
+        const walk = (collection, prefix) => {
+          Object.keys(collection || {}).forEach((key) => {
+            if (key === "_meta") {
+              return;
+            }
+            const value = collection[key];
+            if (!value || typeof value !== "object") {
+              return;
+            }
+            if (value.themes || value.holidays) {
+              if (value.themes) {
+                walk(value.themes, key);
+              }
+              if (value.holidays) {
+                walk(value.holidays, key);
+              }
+              return;
+            }
+            const themeKey = prefix ? `${prefix}:${key}` : key;
+            out.push({
+              key: themeKey,
+              label: value.name || themeKey,
+            });
+          });
+        };
+        walk(themes, "");
+        return out.sort((a, b) => a.label.localeCompare(b.label));
+      }
+
+      function populateTargetThemeSelect() {
+        const select = $("targetThemeKey");
+        const themes = readStoredThemes();
+        const options = flattenThemeOptions(themes);
+        select.innerHTML = options
+          .map(
+            (option) =>
+              `<option value="${option.key}">${option.label}</option>`
+          )
+          .join("");
+        const requested = getRequestedThemeKey();
+        if (requested && options.some((option) => option.key === requested)) {
+          select.value = requested;
+        }
+        if (!select.value && options.length) {
+          select.value = options[0].key;
+        }
+        updateTargetThemeStatus(
+          select.value
+            ? "Finished assets can be added straight into this theme."
+            : "No saved themes found in this browser yet."
+        );
+      }
+
+      function resolveThemeTarget(themes, key) {
+        if (!themes || !key) return null;
+        if (!key.includes(":")) {
+          return themes[key] || null;
+        }
+        const [rootKey, leafKey] = key.split(":");
+        const root = themes[rootKey];
+        if (!root || typeof root !== "object") {
+          return null;
+        }
+        if (root.themes && root.themes[leafKey]) {
+          return root.themes[leafKey];
+        }
+        if (root.holidays && root.holidays[leafKey]) {
+          return root.holidays[leafKey];
+        }
+        return null;
+      }
+
+      function cloneManifestValue(value) {
+        return value && typeof value === "object"
+          ? JSON.parse(JSON.stringify(value))
+          : value;
+      }
+
+      function addManifestEntryToTheme(theme, layoutType, manifestEntry) {
+        if (!theme || !manifestEntry) {
+          return;
+        }
+        if (layoutType === "photo_strip") {
+          if (!Array.isArray(theme.templates)) {
+            theme.templates = [];
+          }
+          const templateSrc =
+            typeof manifestEntry === "string" ? manifestEntry : manifestEntry.src;
+          theme.templates = theme.templates.filter((entry) => {
+            return (typeof entry === "string" ? entry : entry && entry.src) !== templateSrc;
+          });
+          theme.templates.push(cloneManifestValue(manifestEntry));
+          return;
+        }
+        if (!Array.isArray(theme.overlays)) {
+          theme.overlays = [];
+        }
+        const overlaySrc =
+          typeof manifestEntry === "string" ? manifestEntry : manifestEntry.src;
+        theme.overlays = theme.overlays.filter((entry) => {
+          return (typeof entry === "string" ? entry : entry && entry.src) !== overlaySrc;
+        });
+        theme.overlays.push(cloneManifestValue(manifestEntry));
+      }
+
       function updateInfo() {
         const guide = getGuide();
         const filename = getFilename();
@@ -1101,75 +1543,13 @@
         );
       }
 
-      function drawGraphicImage(ctx, image, x, y, size) {
-        if (!image) {
-          return;
-        }
-        const naturalWidth = image.naturalWidth || image.width || 1;
-        const naturalHeight = image.naturalHeight || image.height || 1;
-        const aspect = naturalWidth / naturalHeight;
-        const maxDimension = size * 2.2;
-        let drawWidth = maxDimension;
-        let drawHeight = maxDimension;
-        if (aspect >= 1) {
-          drawHeight = drawWidth / aspect;
-        } else {
-          drawWidth = drawHeight * aspect;
-        }
-        ctx.drawImage(
-          image,
-          x - drawWidth / 2,
-          y - drawHeight / 2,
-          drawWidth,
-          drawHeight
-        );
-      }
-
-      function drawGraphics(ctx, w, h, image, placement) {
-        if (!image) {
-          return;
-        }
-
-        const positions = [];
-        if (placement === "corners" || placement === "edges") {
-          positions.push(
-            [50, 50],
-            [w - 50, 50],
-            [50, h - 50],
-            [w - 50, h - 50]
-          );
-        }
-        if (placement === "top" || placement === "edges") {
-          positions.push([w * 0.25, 40], [w * 0.5, 40], [w * 0.75, 40]);
-        }
-        if (placement === "bottom" || placement === "edges") {
-          positions.push(
-            [w * 0.25, h - 40],
-            [w * 0.5, h - 40],
-            [w * 0.75, h - 40]
-          );
-        }
-        if (placement === "scattered") {
-          positions.push(
-            [w * 0.18, h * 0.2],
-            [w * 0.82, h * 0.23],
-            [w * 0.2, h * 0.8],
-            [w * 0.78, h * 0.74],
-            [w * 0.5, h * 0.12]
-          );
-        }
-
-        positions.forEach(([x, y], index) => {
-          drawGraphicImage(ctx, image, x, y, 28 + (index % 3) * 8);
-        });
-      }
-
       function drawGuideOverlay(ctx, guide) {
+        const slots = getEditableSlots(guide);
         ctx.save();
         ctx.setLineDash([18, 10]);
         ctx.lineWidth = 3;
         ctx.strokeStyle = "rgba(116, 191, 157, 0.85)";
-        guide.windows.forEach((windowBox) => {
+        slots.forEach((windowBox) => {
           ctx.strokeRect(windowBox.x, windowBox.y, windowBox.w, windowBox.h);
         });
         ctx.restore();
@@ -1267,7 +1647,252 @@
         drawAutofillText(ctx, zone, primaryText || secondaryText, primarySize);
       }
 
-      function drawSingleLayout(ctx, guide, accent, templateBg) {
+      function fillRoundedRect(ctx, x, y, w, h, radius, color) {
+        const safeRadius = Math.max(0, Math.min(radius, w / 2, h / 2));
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x + safeRadius, y);
+        ctx.arcTo(x + w, y, x + w, y + h, safeRadius);
+        ctx.arcTo(x + w, y + h, x, y + h, safeRadius);
+        ctx.arcTo(x, y + h, x, y, safeRadius);
+        ctx.arcTo(x, y, x + w, y, safeRadius);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function strokePhotoWindows(ctx, guide, strokeStyle, lineWidth) {
+        ctx.save();
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        getEditableSlots(guide).forEach((windowBox) => {
+          ctx.strokeRect(
+            windowBox.x - lineWidth / 2,
+            windowBox.y - lineWidth / 2,
+            windowBox.w + lineWidth,
+            windowBox.h + lineWidth
+          );
+        });
+        ctx.restore();
+      }
+
+      function cutPhotoWindows(ctx, guide) {
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fillStyle = "#000";
+        getEditableSlots(guide).forEach((windowBox) => {
+          ctx.fillRect(windowBox.x, windowBox.y, windowBox.w, windowBox.h);
+        });
+        ctx.restore();
+      }
+
+      function getStripPanels(guide) {
+        const padding = 24;
+        const buildPanel = (headerZone, footerZone) => ({
+          x: headerZone.x - padding,
+          y: headerZone.y - padding,
+          w: headerZone.w + padding * 2,
+          h: footerZone.y + footerZone.h - headerZone.y + padding * 2,
+        });
+        return [
+          buildPanel(guide.leftHeaderZone, guide.leftFooterZone),
+          buildPanel(guide.rightHeaderZone, guide.rightFooterZone),
+        ];
+      }
+
+      function drawFeather(ctx, x, y, length, angle, color) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(6, length * 0.06);
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(length * 0.1, length * 0.28, 0, length);
+        ctx.stroke();
+        ctx.lineWidth = Math.max(2, length * 0.022);
+        for (let index = 0; index < 7; index += 1) {
+          const t = index / 6;
+          const stemY = length * t * 0.88;
+          const side = index % 2 === 0 ? -1 : 1;
+          ctx.beginPath();
+          ctx.moveTo(0, stemY);
+          ctx.quadraticCurveTo(
+            side * length * 0.22,
+            stemY + length * 0.06,
+            side * length * 0.12,
+            stemY + length * 0.17
+          );
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function drawBalloonCluster(ctx, x, y, scale, colors) {
+        ctx.save();
+        const balloons = [
+          { dx: 0, dy: 0, rx: 42, ry: 54, color: colors[0] },
+          { dx: 62, dy: 20, rx: 38, ry: 50, color: colors[1] },
+          { dx: 34, dy: 74, rx: 34, ry: 46, color: colors[2] },
+        ];
+        balloons.forEach((balloon) => {
+          ctx.beginPath();
+          ctx.fillStyle = balloon.color;
+          ctx.ellipse(
+            x + balloon.dx * scale,
+            y + balloon.dy * scale,
+            balloon.rx * scale,
+            balloon.ry * scale,
+            0,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+          ctx.beginPath();
+          ctx.strokeStyle = "rgba(126, 93, 112, 0.7)";
+          ctx.lineWidth = 3 * scale;
+          ctx.moveTo(x + balloon.dx * scale, y + (balloon.dy + balloon.ry) * scale);
+          ctx.quadraticCurveTo(
+            x + (balloon.dx - 10) * scale,
+            y + (balloon.dy + balloon.ry + 34) * scale,
+            x + (balloon.dx + 6) * scale,
+            y + (balloon.dy + balloon.ry + 72) * scale
+          );
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      function drawScallopBorder(ctx, x, y, w, h, radius, color) {
+        ctx.save();
+        ctx.fillStyle = color;
+        for (let offset = 0; offset < w; offset += radius * 2) {
+          ctx.beginPath();
+          ctx.arc(x + offset + radius, y, radius, 0, Math.PI, true);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x + offset + radius, y + h, radius, 0, Math.PI);
+          ctx.fill();
+        }
+        for (let offset = 0; offset < h; offset += radius * 2) {
+          ctx.beginPath();
+          ctx.arc(x, y + offset + radius, radius, Math.PI / 2, -Math.PI / 2, true);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x + w, y + offset + radius, radius, Math.PI / 2, -Math.PI / 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function getTextFontFamily(familyKey) {
+        return familyKey === "signature_polaroid"
+          ? '"Great Vibes", cursive'
+          : '"Fraunces", serif';
+      }
+
+      function drawSingleTemplateChrome(ctx, guide, familyKey, variantKey, accent, templateBg) {
+        const photoWindow = getEditableSlots(guide)[0];
+        if (familyKey === "minimal_dark") {
+          ctx.fillStyle = templateBg;
+          ctx.fillRect(0, 0, guide.w, guide.h);
+          strokePhotoWindows(ctx, guide, "rgba(255, 255, 255, 0.9)", 10);
+          return;
+        }
+        if (familyKey === "signature_polaroid") {
+          ctx.fillStyle = templateBg;
+          ctx.fillRect(0, 0, guide.w, guide.h);
+          fillRoundedRect(
+            ctx,
+            guide.borders.left - 18,
+            guide.borders.top - 18,
+            guide.w - guide.borders.left - guide.borders.right + 36,
+            guide.h - guide.borders.top - 18,
+            18,
+            "#fffdf9"
+          );
+          strokePhotoWindows(ctx, guide, "rgba(212, 201, 190, 0.9)", 8);
+          return;
+        }
+        ctx.fillStyle = templateBg;
+        ctx.fillRect(0, 0, guide.w, guide.h);
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = familyKey === "minimal" ? 12 : 8;
+        ctx.strokeRect(
+          photoWindow.x - 8,
+          photoWindow.y - 8,
+          photoWindow.w + 16,
+          photoWindow.h + 16
+        );
+        if (familyKey === "feathers") {
+          drawFeather(ctx, 120, 120, 210, -0.5, "rgba(242, 178, 109, 0.8)");
+          drawFeather(ctx, guide.w - 160, 120, 190, 0.38, "rgba(120, 170, 154, 0.72)");
+          drawFeather(
+            ctx,
+            130,
+            guide.h - 300,
+            170,
+            -0.2,
+            "rgba(242, 178, 109, 0.65)"
+          );
+          drawFeather(
+            ctx,
+            guide.w - 130,
+            guide.h - 290,
+            170,
+            0.18,
+            "rgba(120, 170, 154, 0.65)"
+          );
+        }
+        if (familyKey === "seasonal_event") {
+          if (variantKey === "birthday_balloons") {
+            drawBalloonCluster(ctx, 130, 120, 1, [
+              "rgba(243, 154, 167, 0.92)",
+              "rgba(255, 255, 255, 0.95)",
+              "rgba(244, 187, 112, 0.92)",
+            ]);
+            drawBalloonCluster(ctx, guide.w - 220, 120, 0.9, [
+              "rgba(243, 154, 167, 0.92)",
+              "rgba(255, 255, 255, 0.95)",
+              "rgba(244, 187, 112, 0.92)",
+            ]);
+          } else if (variantKey === "easter") {
+            fillRoundedRect(
+              ctx,
+              35,
+              35,
+              guide.w - 70,
+              guide.h - 70,
+              28,
+              "rgba(79, 154, 67, 0.92)"
+            );
+            fillRoundedRect(
+              ctx,
+              75,
+              75,
+              guide.w - 150,
+              guide.h - 150,
+              22,
+              "rgba(255, 255, 255, 0.18)"
+            );
+          } else if (variantKey === "retro_party") {
+            fillRoundedRect(
+              ctx,
+              30,
+              30,
+              guide.w - 60,
+              guide.h - 60,
+              18,
+              "#f3924b"
+            );
+            drawScallopBorder(ctx, 38, 38, guide.w - 76, guide.h - 76, 22, "#ffd6da");
+          }
+        }
+      }
+
+      function drawSingleTemplateText(ctx, guide, familyKey) {
         const headline = $("headline").value;
         const footer = $("footer").value;
         const autofillText = getAutofillSampleText($("autofillField").value);
@@ -1276,78 +1901,294 @@
         );
         const headlineSize = parseInt($("headlineSize").value, 10);
         const footerSize = parseInt($("footerSize").value, 10);
-        const photoWindow = guide.windows[0];
-
-        ctx.fillStyle = templateBg;
-        ctx.fillRect(0, 0, guide.w, guide.h);
-
-        const border = guide.borders;
-        ctx.fillStyle = accent;
-        ctx.globalAlpha = 0.9;
-        ctx.fillRect(0, 0, guide.w, border.top);
-        ctx.fillRect(0, guide.h - border.bottom, guide.w, border.bottom);
-        ctx.fillRect(0, 0, border.left, guide.h);
-        ctx.fillRect(guide.w - border.right, 0, border.right, guide.h);
-        ctx.globalAlpha = 1;
-
-        ctx.strokeStyle = accent;
-        ctx.globalAlpha = 0.45;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(
-          photoWindow.x - 2,
-          photoWindow.y - 2,
-          photoWindow.w + 4,
-          photoWindow.h + 4
-        );
-        ctx.globalAlpha = 1;
-
-        ctx.save();
-        ctx.globalCompositeOperation = "destination-out";
-        ctx.fillStyle = "#000";
-        ctx.fillRect(
-          photoWindow.x,
-          photoWindow.y,
-          photoWindow.w,
-          photoWindow.h
-        );
-        ctx.restore();
+        const headlineFont = getTextFontFamily(familyKey);
+        const headlineWeight = familyKey === "signature_polaroid" ? "400" : "700";
 
         drawCenteredText(
           ctx,
           headline,
           guide.textZone,
-          '"Fraunces", serif',
-          "700",
-          headlineSize,
+          headlineFont,
+          headlineWeight,
+          familyKey === "signature_polaroid"
+            ? Math.max(headlineSize + 10, 64)
+            : headlineSize,
           10,
           1,
-          0.34
+          familyKey === "signature_polaroid" ? 0.28 : 0.34
         );
         if (autofillText || secondaryAutofillText) {
           drawAutofillLines(
             ctx,
             {
               x: guide.textZone.x,
-              y: guide.textZone.y + guide.textZone.h * 0.46,
+              y: guide.textZone.y + guide.textZone.h * 0.5,
               w: guide.textZone.w,
-              h: guide.textZone.h * 0.38,
+              h: guide.textZone.h * 0.28,
             },
             autofillText,
             secondaryAutofillText,
             footerSize
           );
-        } else {
-          drawCenteredText(
-            ctx,
-            footer,
-            guide.textZone,
-            '"DM Sans", sans-serif',
-            "500",
-            footerSize,
-            8,
-            0.8,
-            0.73
+          return;
+        }
+        drawCenteredText(
+          ctx,
+          footer,
+          guide.textZone,
+          familyKey === "signature_polaroid"
+            ? '"DM Sans", sans-serif'
+            : '"Fraunces", serif',
+          familyKey === "signature_polaroid" ? "500" : "600",
+          familyKey === "signature_polaroid"
+            ? Math.max(18, Math.round(footerSize * 0.8))
+            : footerSize,
+          8,
+          familyKey === "signature_polaroid" ? 0.78 : 0.8,
+          familyKey === "signature_polaroid" ? 0.78 : 0.73
+        );
+      }
+
+      function drawSingleLayout(ctx, guide, familyKey, variantKey, accent, templateBg) {
+        drawSingleTemplateChrome(ctx, guide, familyKey, variantKey, accent, templateBg);
+        cutPhotoWindows(ctx, guide);
+        drawSingleTemplateText(ctx, guide, familyKey);
+      }
+
+      function wrapHeadline(ctx, text, maxWidth, fontSize, fontFamily, fontWeight) {
+        const words = text.split(" ");
+        const lines = [];
+        let currentLine = "";
+        ctx.font = fontWeight + " " + fontSize + "px " + fontFamily;
+        words.forEach((word) => {
+          const next = currentLine ? currentLine + " " + word : word;
+          if (ctx.measureText(next).width > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = next;
+          }
+        });
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+        return lines;
+      }
+
+      function drawStripHeadline(ctx, zone, text, startSize, familyKey) {
+        if (!text) {
+          return;
+        }
+        const fontFamily = getTextFontFamily(familyKey);
+        const fontWeight = familyKey === "signature_polaroid" ? "400" : "700";
+        let size = familyKey === "signature_polaroid"
+          ? Math.max(startSize + 8, 44)
+          : startSize;
+        let lines = wrapHeadline(ctx, text, zone.w - 24, size, fontFamily, fontWeight);
+        while (size > 10) {
+          const lineHeight = size * 1.2;
+          const totalHeight = lines.length * lineHeight;
+          const widest = Math.max(
+            ...lines.map((line) => {
+              ctx.font = fontWeight + " " + size + "px " + fontFamily;
+              return ctx.measureText(line).width;
+            })
           );
+          if (totalHeight <= zone.h - 12 && widest <= zone.w - 24) {
+            break;
+          }
+          size -= 1;
+          lines = wrapHeadline(ctx, text, zone.w - 24, size, fontFamily, fontWeight);
+        }
+
+        ctx.save();
+        ctx.fillStyle = $("templateTextColor").value;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.font = fontWeight + " " + size + "px " + fontFamily;
+        const lineHeight = size * 1.2;
+        const totalHeight = lines.length * lineHeight;
+        const startY = zone.y + (zone.h - totalHeight) / 2;
+        lines.forEach((line, index) => {
+          ctx.fillText(line, zone.x + zone.w / 2, startY + index * lineHeight);
+        });
+        ctx.restore();
+      }
+
+      function drawStripTemplateChrome(ctx, guide, familyKey, variantKey, accent, templateBg) {
+        ctx.fillStyle = templateBg;
+        ctx.fillRect(0, 0, guide.w, guide.h);
+        const panels = getStripPanels(guide);
+        if (familyKey === "minimal_dark") {
+          panels.forEach((panel) => fillRoundedRect(ctx, panel.x, panel.y, panel.w, panel.h, 18, "#2a2429"));
+          strokePhotoWindows(ctx, guide, "rgba(255, 255, 255, 0.92)", 8);
+          return;
+        }
+        if (familyKey === "signature_polaroid") {
+          panels.forEach((panel) => fillRoundedRect(ctx, panel.x, panel.y, panel.w, panel.h, 16, "#fffdf9"));
+          strokePhotoWindows(ctx, guide, "rgba(213, 204, 195, 0.92)", 6);
+          return;
+        }
+        panels.forEach((panel) =>
+          fillRoundedRect(
+            ctx,
+            panel.x,
+            panel.y,
+            panel.w,
+            panel.h,
+            16,
+            familyKey === "feathers" ? "#fff7f1" : templateBg
+          )
+        );
+        strokePhotoWindows(ctx, guide, accent, familyKey === "minimal" ? 8 : 6);
+        if (familyKey === "feathers") {
+          drawFeather(ctx, 90, 90, 150, -0.4, "rgba(242, 178, 109, 0.85)");
+          drawFeather(ctx, guide.w - 120, 100, 145, 0.42, "rgba(113, 168, 154, 0.78)");
+          drawFeather(ctx, 105, guide.h - 260, 135, -0.2, "rgba(242, 178, 109, 0.7)");
+          drawFeather(ctx, guide.w - 115, guide.h - 250, 135, 0.18, "rgba(113, 168, 154, 0.7)");
+        }
+        if (familyKey === "seasonal_event") {
+          if (variantKey === "birthday_balloons") {
+            drawBalloonCluster(ctx, 115, 105, 0.75, [
+              "rgba(243, 154, 167, 0.95)",
+              "rgba(255, 255, 255, 0.95)",
+              "rgba(244, 187, 112, 0.95)",
+            ]);
+            drawBalloonCluster(ctx, guide.w - 180, 105, 0.7, [
+              "rgba(243, 154, 167, 0.95)",
+              "rgba(255, 255, 255, 0.95)",
+              "rgba(244, 187, 112, 0.95)",
+            ]);
+          } else if (variantKey === "easter") {
+            fillRoundedRect(ctx, 24, 24, guide.w - 48, guide.h - 48, 22, "rgba(79, 154, 67, 0.94)");
+            fillRoundedRect(ctx, 58, 58, guide.w - 116, guide.h - 116, 18, "rgba(255, 255, 255, 0.14)");
+          } else if (variantKey === "retro_party") {
+            fillRoundedRect(ctx, 18, 18, guide.w - 36, guide.h - 36, 18, "#f3924b");
+            drawScallopBorder(ctx, 28, 28, guide.w - 56, guide.h - 56, 18, "#ffd6da");
+          }
+        }
+      }
+
+      function drawStripLayout(ctx, guide, familyKey, variantKey, templateBg) {
+        const headline = $("headline").value;
+        const footer = $("footer").value;
+        const autofillText = getAutofillSampleText($("autofillField").value);
+        const secondaryAutofillText = getAutofillSampleText(
+          $("secondaryAutofillField").value
+        );
+        const headlineSize = parseInt($("headlineSize").value, 10);
+        const footerSize = parseInt($("footerSize").value, 10);
+
+        drawStripTemplateChrome(
+          ctx,
+          guide,
+          familyKey,
+          variantKey,
+          $("accentColor").value,
+          templateBg
+        );
+        cutPhotoWindows(ctx, guide);
+
+        if (guide.leftHeaderZone && guide.rightHeaderZone) {
+          drawStripHeadline(ctx, guide.leftHeaderZone, headline, headlineSize, familyKey);
+          drawStripHeadline(ctx, guide.rightHeaderZone, headline, headlineSize, familyKey);
+        }
+
+        if (autofillText || secondaryAutofillText) {
+          drawAutofillLines(
+            ctx,
+            guide.leftFooterZone,
+            autofillText,
+            secondaryAutofillText,
+            footerSize
+          );
+          drawAutofillLines(
+            ctx,
+            guide.rightFooterZone,
+            autofillText,
+            secondaryAutofillText,
+            footerSize
+          );
+          return;
+        }
+
+        drawCenteredText(
+          ctx,
+          footer,
+          guide.leftFooterZone,
+          familyKey === "signature_polaroid"
+            ? '"DM Sans", sans-serif'
+            : '"Fraunces", serif',
+          familyKey === "signature_polaroid" ? "500" : "600",
+          familyKey === "signature_polaroid"
+            ? Math.max(18, Math.round(footerSize * 0.8))
+            : footerSize,
+          8,
+          0.85,
+          0.5
+        );
+        drawCenteredText(
+          ctx,
+          footer,
+          guide.rightFooterZone,
+          familyKey === "signature_polaroid"
+            ? '"DM Sans", sans-serif'
+            : '"Fraunces", serif',
+          familyKey === "signature_polaroid" ? "500" : "600",
+          familyKey === "signature_polaroid"
+            ? Math.max(18, Math.round(footerSize * 0.8))
+            : footerSize,
+          8,
+          0.85,
+          0.5
+        );
+      }
+
+      function getLogoSlotRect(guide, layoutType) {
+        const slot = LOGO_SLOTS[layoutType];
+        return {
+          x: Math.round(guide.w * slot.xPct),
+          y: Math.round(guide.h * slot.yPct),
+          w: Math.round(guide.w * slot.wPct),
+          h: Math.round(guide.h * slot.hPct),
+        };
+      }
+
+      function drawLogoImage(ctx, guide, layoutType, image) {
+        if (!image) {
+          return;
+        }
+        const slot = getLogoSlotRect(guide, layoutType);
+        const naturalWidth = image.naturalWidth || image.width || 1;
+        const naturalHeight = image.naturalHeight || image.height || 1;
+        const scale = Math.min(slot.w / naturalWidth, slot.h / naturalHeight);
+        const drawWidth = Math.round(naturalWidth * scale);
+        const drawHeight = Math.round(naturalHeight * scale);
+        const drawX = slot.x + Math.round((slot.w - drawWidth) / 2);
+        const drawY = slot.y + Math.round((slot.h - drawHeight) / 2);
+        ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+      }
+
+      function drawCanvas(ctx, width, height, drawGuides, logoImage) {
+        const guide = getGuide();
+        const layoutType = getLayoutType();
+        const familyKey = getSelectedFamilyKey();
+        const variantKey = getSelectedVariantKey();
+        const accent = $("accentColor").value;
+        const templateBg = $("templateBgColor").value;
+
+        ctx.clearRect(0, 0, width, height);
+
+        if (guide && guide.type === "strip") {
+          drawStripLayout(ctx, guide, familyKey, variantKey, templateBg);
+        } else {
+          drawSingleLayout(ctx, guide, familyKey, variantKey, accent, templateBg);
+        }
+
+        drawLogoImage(ctx, guide, layoutType, logoImage);
+
+        if (drawGuides) {
+          drawGuideOverlay(ctx, guide);
         }
       }
 
@@ -1407,101 +2248,82 @@
         ctx.restore();
       }
 
-      function drawStripLayout(ctx, guide, templateBg) {
-        const headline = $("headline").value;
-        const footer = $("footer").value;
-        const autofillText = getAutofillSampleText($("autofillField").value);
-        const secondaryAutofillText = getAutofillSampleText(
-          $("secondaryAutofillField").value
-        );
-        const headlineSize = parseInt($("headlineSize").value, 10);
-        const footerSize = parseInt($("footerSize").value, 10);
-
-        ctx.fillStyle = templateBg;
-        ctx.fillRect(0, 0, guide.w, guide.h);
-
-        ctx.save();
-        ctx.globalCompositeOperation = "destination-out";
-        ctx.fillStyle = "#000";
-        guide.windows.forEach((windowBox) => {
-          ctx.fillRect(windowBox.x, windowBox.y, windowBox.w, windowBox.h);
-        });
-        ctx.restore();
-
-        drawStripHeadline(ctx, guide.leftHeaderZone, headline, headlineSize);
-        drawStripHeadline(ctx, guide.rightHeaderZone, headline, headlineSize);
-
-        if (autofillText || secondaryAutofillText) {
-          drawAutofillLines(
-            ctx,
-            guide.leftFooterZone,
-            autofillText,
-            secondaryAutofillText,
-            footerSize
-          );
-          drawAutofillLines(
-            ctx,
-            guide.rightFooterZone,
-            autofillText,
-            secondaryAutofillText,
-            footerSize
-          );
-        } else {
-          drawCenteredText(
-            ctx,
-            footer,
-            guide.leftFooterZone,
-            '"DM Sans", sans-serif',
-            "500",
-            footerSize,
-            8,
-            0.85,
-            0.5
-          );
-          drawCenteredText(
-            ctx,
-            footer,
-            guide.rightFooterZone,
-            '"DM Sans", sans-serif',
-            "500",
-            footerSize,
-            8,
-            0.85,
-            0.5
-          );
+      function getPreviewPoint(event) {
+        const canvas = $("preview");
+        const rect = canvas.getBoundingClientRect();
+        if (!rect.width || !rect.height) {
+          return null;
         }
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+          x: Math.max(0, Math.min(canvas.width, (event.clientX - rect.left) * scaleX)),
+          y: Math.max(0, Math.min(canvas.height, (event.clientY - rect.top) * scaleY)),
+        };
       }
 
-      function drawCanvas(ctx, width, height, drawGuides, graphicImage) {
+      function buildSlotFromPoints(start, end, guide) {
+        return normalizeSlot(
+          {
+            x: Math.min(start.x, end.x),
+            y: Math.min(start.y, end.y),
+            w: Math.abs(end.x - start.x),
+            h: Math.abs(end.y - start.y),
+          },
+          guide
+        );
+      }
+
+      function handlePreviewPointerDown(event) {
+        if (!$("customSlotsEnabled").checked) {
+          return;
+        }
         const guide = getGuide();
-        const accent = $("accentColor").value;
-        const templateBg = $("templateBgColor").value;
-        const graphicPlacement = $("graphicPlacement").value;
-        const graphicOpacity = parseInt($("graphicOpacity").value, 10) / 100;
-
-        ctx.clearRect(0, 0, width, height);
-
-        if (guide === GUIDES.strip_double_column) {
-          drawStripLayout(ctx, guide, templateBg);
-        } else {
-          drawSingleLayout(ctx, guide, accent, templateBg);
+        const point = getPreviewPoint(event);
+        if (!guide || !point) {
+          return;
         }
+        pointerSlotState = { start: point };
+        slotDraft = { x: point.x, y: point.y, w: 1, h: 1 };
+        $("preview").setPointerCapture(event.pointerId);
+        updatePreview();
+      }
 
-        if (graphicImage) {
-          ctx.save();
-          ctx.globalAlpha = graphicOpacity;
-          drawGraphics(ctx, width, height, graphicImage, graphicPlacement);
-          ctx.restore();
+      function handlePreviewPointerMove(event) {
+        if (!pointerSlotState || !$("customSlotsEnabled").checked) {
+          return;
         }
+        const point = getPreviewPoint(event);
+        const guide = getGuide();
+        if (!point || !guide) {
+          return;
+        }
+        slotDraft = buildSlotFromPoints(pointerSlotState.start, point, guide);
+        updatePreview();
+      }
 
-        if (drawGuides) {
-          drawGuideOverlay(ctx, guide);
+      function finishPreviewPointer(event, shouldCommit) {
+        if (!pointerSlotState) {
+          return;
         }
+        const point = getPreviewPoint(event);
+        const guide = getGuide();
+        if (shouldCommit && point && guide) {
+          const nextSlot = buildSlotFromPoints(pointerSlotState.start, point, guide);
+          if (nextSlot) {
+            const slots = getEditableSlots(guide);
+            slots[getSelectedSlotIndex()] = nextSlot;
+          }
+        }
+        pointerSlotState = null;
+        slotDraft = null;
+        updatePreview();
       }
 
       async function updatePreview() {
         updateInfo();
-        updateGraphicControlState();
+        syncSlotEditorOptions();
+        updateLogoControlState();
 
         const guide = getGuide();
         const canvas = $("preview");
@@ -1521,40 +2343,73 @@
 
         const ctx = canvas.getContext("2d");
         const renderId = ++previewRenderId;
-        const graphicImage = await resolveSelectedGraphicImage();
+        const logoImage = await resolveSelectedLogoImage();
         if (renderId !== previewRenderId) {
           return;
         }
-        drawCanvas(ctx, guide.w, guide.h, true, graphicImage);
+        drawCanvas(ctx, guide.w, guide.h, true, logoImage);
       }
 
-      async function exportPNG() {
+      async function renderExportBlob(includeGuide) {
         const guide = getGuide();
         const exportCanvas = $("exportCanvas");
         exportCanvas.width = guide.w;
         exportCanvas.height = guide.h;
         const ctx = exportCanvas.getContext("2d");
-        const graphicImage = await resolveSelectedGraphicImage();
-        drawCanvas(
-          ctx,
-          guide.w,
-          guide.h,
-          $("includeGuide").checked,
-          graphicImage
-        );
+        const logoImage = await resolveSelectedLogoImage();
+        drawCanvas(ctx, guide.w, guide.h, includeGuide, logoImage);
+        return await new Promise((resolve) => {
+          exportCanvas.toBlob((blob) => resolve(blob || null), "image/png");
+        });
+      }
 
-        exportCanvas.toBlob((blob) => {
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.download = getFilename();
-          link.click();
-          URL.revokeObjectURL(link.href);
-          showToast("Exported: " + getFilename());
-        }, "image/png");
+      async function exportPNG() {
+        const blob = await renderExportBlob($("includeGuide").checked);
+        if (!blob) {
+          showToast("Export failed.");
+          return;
+        }
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = getFilename();
+        link.click();
+        URL.revokeObjectURL(link.href);
+        showToast("Exported: " + getFilename());
+      }
+
+      async function uploadBlobToCloudinary(blob, layoutType) {
+        const cfg = getCloudinaryConfig();
+        if (!cfg.cloud || !cfg.preset || !cfg.use) return "";
+        const form = new FormData();
+        const filename = getFilename();
+        form.append("file", new File([blob], filename, { type: "image/png" }));
+        form.append("upload_preset", cfg.preset);
+        form.append("folder", getCloudinaryUploadFolder(layoutType));
+        try {
+          const resp = await fetch(
+            `https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`,
+            {
+              method: "POST",
+              body: form,
+            }
+          );
+          const json = await resp.json();
+          return json && json.secure_url ? json.secure_url : "";
+        } catch (_error) {
+          return "";
+        }
+      }
+
+      async function blobToDataUrl(blob) {
+        return await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.onerror = () => reject(new Error("read-failed"));
+          reader.readAsDataURL(blob);
+        });
       }
 
       async function uploadToCloudinary() {
-        const guide = getGuide();
         const layoutType = getLayoutType();
         const cfg = getCloudinaryConfig();
         if (!cfg.cloud || !cfg.preset || !cfg.use) {
@@ -1564,55 +2419,70 @@
           showToast("Cloudinary is not configured.");
           return;
         }
-        const exportCanvas = $("exportCanvas");
-        exportCanvas.width = guide.w;
-        exportCanvas.height = guide.h;
-        const ctx = exportCanvas.getContext("2d");
-        const graphicImage = await resolveSelectedGraphicImage();
-        drawCanvas(
-          ctx,
-          guide.w,
-          guide.h,
-          $("includeGuide").checked,
-          graphicImage
-        );
-
+        const blob = await renderExportBlob($("includeGuide").checked);
+        if (!blob) {
+          updateCloudinaryUploadStatus("Export failed before upload.");
+          showToast("Export failed.");
+          return;
+        }
         updateCloudinaryUploadStatus("Uploading to Cloudinary...");
-        exportCanvas.toBlob(async (blob) => {
-          if (!blob) {
-            updateCloudinaryUploadStatus("Export failed before upload.");
-            showToast("Export failed.");
-            return;
-          }
-          const form = new FormData();
-          const filename = getFilename();
-          form.append(
-            "file",
-            new File([blob], filename, { type: "image/png" })
-          );
-          form.append("upload_preset", cfg.preset);
-          form.append("folder", getCloudinaryUploadFolder(layoutType));
-          try {
-            const resp = await fetch(
-              `https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`,
-              {
-                method: "POST",
-                body: form,
-              }
+        const uploadedUrl = await uploadBlobToCloudinary(blob, layoutType);
+        if (!uploadedUrl) {
+          updateCloudinaryUploadStatus("Cloudinary upload failed.");
+          showToast("Cloudinary upload failed.");
+          return;
+        }
+        updateCloudinaryUploadStatus(uploadedUrl);
+        showToast("Uploaded to Cloudinary");
+      }
+
+      async function addToBoothAssets() {
+        const themeKey = $("targetThemeKey").value;
+        if (!themeKey) {
+          updateTargetThemeStatus("Choose a target theme first.");
+          showToast("Choose a target theme");
+          return;
+        }
+        const layoutType = getLayoutType();
+        const guide = getGuide();
+        const blob = await renderExportBlob(false);
+        if (!blob) {
+          updateTargetThemeStatus("Export failed before adding the asset.");
+          showToast("Export failed.");
+          return;
+        }
+        updateTargetThemeStatus("Adding asset to the selected theme...");
+        const uploadedUrl = await uploadBlobToCloudinary(blob, layoutType);
+        const assetSrc = uploadedUrl || (await blobToDataUrl(blob));
+        const themes = readStoredThemes();
+        const target = resolveThemeTarget(themes, themeKey);
+        if (!target) {
+          updateTargetThemeStatus("That theme could not be found in local storage.");
+          showToast("Theme not found");
+          return;
+        }
+        const manifestEntry = buildManifestEntry(
+          getFilename(),
+          guide,
+          layoutType,
+          assetSrc
+        );
+        addManifestEntryToTheme(target, layoutType, manifestEntry);
+        saveStoredThemes(themes);
+        try {
+          if (window.opener && window.opener !== window) {
+            window.opener.postMessage(
+              { type: "photobooth-assets-updated", themeKey },
+              window.location.origin
             );
-            const json = await resp.json();
-            if (!json || !json.secure_url) {
-              updateCloudinaryUploadStatus("Cloudinary upload failed.");
-              showToast("Cloudinary upload failed.");
-              return;
-            }
-            updateCloudinaryUploadStatus(json.secure_url);
-            showToast("Uploaded to Cloudinary");
-          } catch (_error) {
-            updateCloudinaryUploadStatus("Cloudinary upload failed.");
-            showToast("Cloudinary upload failed.");
           }
-        }, "image/png");
+        } catch (_error) {}
+        updateTargetThemeStatus(
+          uploadedUrl
+            ? "Added and shared through Cloudinary."
+            : "Added as a local browser asset. Configure Cloudinary to share it across devices."
+        );
+        showToast("Added to booth assets");
       }
 
       function copyManifest() {
@@ -1623,6 +2493,10 @@
       }
 
       function goBackToBoothAdmin() {
+        if (window.opener && window.opener !== window) {
+          window.location.href = "./index.html";
+          return;
+        }
         if (window.history.length > 1 && document.referrer) {
           try {
             const referrerUrl = new URL(
@@ -1642,33 +2516,34 @@
 
       function resetAll() {
         $("assetName").value = "my_overlay";
-        $("layoutType").value = "single_photo";
-        $("templateBgColor").value = "#f5e6d3";
-        $("templateTextColor").value = "#3d3442";
+        $("templateFamily").value = "minimal";
+        populateTemplateVariantSelect();
+        $("templateVariant").value = "classic";
+        $("layoutType").value = "single_vertical";
         $("layoutGuide").value = "single_portrait";
-        $("headline").value = "OUR PHOTO BOOTH";
         $("headlineSize").value = "48";
         $("headlineSizeVal").textContent = "48";
-        $("footer").value = "#celebrate";
         $("footerSize").value = "28";
         $("footerSizeVal").textContent = "28";
         $("autofillField").value = "";
         $("secondaryAutofillField").value = "";
-        $("graphicSource").value = "library";
-        $("graphicSelect").value = "";
-        revokeCustomGraphicUrl();
-        $("graphicUpload").value = "";
-        $("graphicPlacement").value = "corners";
-        $("graphicOpacity").value = "100";
-        $("graphicOpacityVal").textContent = "100";
-        $("accentColor").value = "#a8d5ba";
+        $("customSlotsEnabled").checked = false;
+        revokeCustomLogoUrl();
+        $("logoUpload").value = "";
         $("includeGuide").checked = false;
+        customSlots = null;
+        slotDraft = null;
+        pointerSlotState = null;
+        applyTemplateDefaults();
+        populateTargetThemeSelect();
         updatePreview();
         showToast("Reset to defaults");
       }
 
       [
         "assetName",
+        "templateFamily",
+        "templateVariant",
         "layoutType",
         "templateBgColor",
         "templateTextColor",
@@ -1677,9 +2552,8 @@
         "footer",
         "autofillField",
         "secondaryAutofillField",
-        "graphicSource",
-        "graphicSelect",
-        "graphicPlacement",
+        "customSlotsEnabled",
+        "slotEditorIndex",
         "accentColor",
         "includeGuide",
       ].forEach((id) => {
@@ -1696,42 +2570,84 @@
         $("footerSizeVal").textContent = event.target.value;
         updatePreview();
       });
-
-      $("graphicOpacity").addEventListener("input", (event) => {
-        $("graphicOpacityVal").textContent = event.target.value;
+      $("templateFamily").addEventListener("change", () => {
+        populateTemplateVariantSelect();
+        applyTemplateDefaults();
         updatePreview();
       });
-      $("graphicUpload").addEventListener("change", (event) => {
+      $("templateVariant").addEventListener("change", () => {
+        applyTemplateDefaults();
+        updatePreview();
+      });
+      $("layoutGuide").addEventListener("change", () => {
+        customSlots = null;
+        slotDraft = null;
+        pointerSlotState = null;
+      });
+
+      $("layoutType").addEventListener("change", () => {
+        customSlots = null;
+        slotDraft = null;
+        pointerSlotState = null;
+      });
+
+      $("resetSlotsButton").addEventListener("click", () => {
+        customSlots = getDefaultSlots(getGuide());
+        slotDraft = null;
+        pointerSlotState = null;
+        updatePreview();
+      });
+
+      $("logoUpload").addEventListener("change", (event) => {
         const [file] = Array.from(event.target.files || []);
-        revokeCustomGraphicUrl();
+        revokeCustomLogoUrl();
         if (!file) {
-          updateGraphicUploadStatus("No custom PNG selected.");
-          updateGraphicControlState();
+          updateLogoUploadStatus("No logo selected.");
+          updateLogoControlState();
           updatePreview();
           return;
         }
-        customGraphicObjectUrl = URL.createObjectURL(file);
-        updateGraphicUploadStatus("Custom PNG: " + file.name);
-        updateGraphicControlState();
+        customLogoObjectUrl = URL.createObjectURL(file);
+        updateLogoUploadStatus("Logo: " + file.name);
+        updateLogoControlState();
         updatePreview();
       });
-      $("clearGraphicUpload").addEventListener("click", () => {
-        revokeCustomGraphicUrl();
-        $("graphicUpload").value = "";
-        updateGraphicControlState();
+      $("clearLogoUpload").addEventListener("click", () => {
+        revokeCustomLogoUrl();
+        $("logoUpload").value = "";
+        updateLogoControlState();
         updatePreview();
       });
 
       $("downloadButton").addEventListener("click", exportPNG);
       $("uploadCloudinaryButton").addEventListener("click", uploadToCloudinary);
+      $("addToBoothAssetsButton").addEventListener("click", addToBoothAssets);
       $("copyManifestButton").addEventListener("click", copyManifest);
       $("resetButton").addEventListener("click", resetAll);
       $("backButton").addEventListener("click", goBackToBoothAdmin);
-      window.addEventListener("beforeunload", revokeCustomGraphicUrl);
+      $("targetThemeKey").addEventListener("change", () => {
+        updateTargetThemeStatus(
+          $("targetThemeKey").value
+            ? "Finished assets can be added straight into this theme."
+            : "No saved themes found in this browser yet."
+        );
+      });
+      $("preview").addEventListener("pointerdown", handlePreviewPointerDown);
+      $("preview").addEventListener("pointermove", handlePreviewPointerMove);
+      $("preview").addEventListener("pointerup", (event) =>
+        finishPreviewPointer(event, true)
+      );
+      $("preview").addEventListener("pointercancel", (event) =>
+        finishPreviewPointer(event, false)
+      );
+      window.addEventListener("beforeunload", revokeCustomLogoUrl);
 
       window.addEventListener("resize", updatePreview);
       lucide.createIcons();
-      updateGraphicControlState();
+      populateTargetThemeSelect();
+      populateTemplateVariantSelect();
+      applyTemplateDefaults();
+      updateLogoControlState();
       updatePreview();
     </script>
   </body>

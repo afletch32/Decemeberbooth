@@ -1,4 +1,72 @@
 [
-  "timeless-romance-strip-overlay.svg",
-  "timeless-romance-single-overlay.svg"
+  {
+    "id": "timeless-romance-strip",
+    "name": "Timeless Romance Strip",
+    "type": "photo-strip-layout",
+    "category": "wedding",
+    "aspectRatio": "1:3",
+    "background": {
+      "type": "color",
+      "value": "#fffcf8"
+    },
+    "foreground": {
+      "type": "image",
+      "src": "timeless-romance-strip-overlay.svg"
+    },
+    "photoSlots": [
+      {
+        "x": 0.1083,
+        "y": 0.213,
+        "width": 0.7833,
+        "height": 0.1833,
+        "borderRadius": 0.02,
+        "objectFit": "cover",
+        "objectPosition": "center"
+      },
+      {
+        "x": 0.1083,
+        "y": 0.4185,
+        "width": 0.7833,
+        "height": 0.1833,
+        "borderRadius": 0.02,
+        "objectFit": "cover",
+        "objectPosition": "center"
+      },
+      {
+        "x": 0.1083,
+        "y": 0.6241,
+        "width": 0.7833,
+        "height": 0.1833,
+        "borderRadius": 0.02,
+        "objectFit": "cover",
+        "objectPosition": "center"
+      }
+    ]
+  },
+  {
+    "id": "timeless-romance-single",
+    "name": "Timeless Romance Single",
+    "type": "overlay",
+    "category": "wedding",
+    "aspectRatio": "3:2",
+    "background": {
+      "type": "color",
+      "value": "#fffcf8"
+    },
+    "foreground": {
+      "type": "image",
+      "src": "timeless-romance-single-overlay.svg"
+    },
+    "photoSlots": [
+      {
+        "x": 0.0811,
+        "y": 0.3583,
+        "width": 0.8378,
+        "height": 0.4883,
+        "borderRadius": 0.02,
+        "objectFit": "cover",
+        "objectPosition": "center"
+      }
+    ]
+  }
 ]

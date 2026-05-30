@@ -103,10 +103,7 @@
       overflow: hidden;
       font-family: var(--font-body);
       color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 34%),
-        radial-gradient(circle at 85% 12%, rgba(111, 231, 215, 0.24), rgba(255, 255, 255, 0) 28%),
-        linear-gradient(160deg, #fbfffe 0%, #f1fffb 42%, #e7fff8 100%);
+      background: linear-gradient(160deg, #fcfbf9 0%, #f7f3ee 100%);
     }
 
     .hidden { display: none !important; }
@@ -170,37 +167,13 @@
       display: block;
       padding: 18px;
       -webkit-overflow-scrolling: touch;
-      background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 40%),
-        linear-gradient(180deg, rgba(251, 255, 254, 0.94), rgba(239, 255, 250, 0.92));
+      background: linear-gradient(180deg, #fcfbf9 0%, #f6f1eb 100%);
     }
 
     #adminScreen::before,
     #adminScreen::after {
-      content: "";
-      position: fixed;
-      inset: auto;
-      pointer-events: none;
-      z-index: 0;
-      filter: blur(8px);
-    }
-
-    #adminScreen::before {
-      top: 84px;
-      left: max(-120px, -8vw);
-      width: clamp(240px, 26vw, 380px);
-      height: clamp(240px, 26vw, 380px);
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(111, 231, 215, 0.24) 0%, rgba(111, 231, 215, 0) 72%);
-    }
-
-    #adminScreen::after {
-      top: 18px;
-      right: max(-110px, -7vw);
-      width: clamp(280px, 30vw, 430px);
-      height: clamp(280px, 30vw, 430px);
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(111, 231, 215, 0.2) 0%, rgba(111, 231, 215, 0) 72%);
+      content: none;
+      display: none;
     }
 
     html.admin-open,
@@ -279,6 +252,188 @@
       overflow: hidden;
     }
 
+    .setup-session-card {
+      max-width: 1220px;
+      width: min(1220px, 100%);
+      margin: 0 auto 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .setup-session-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .setup-session-assets {
+      display: grid;
+      gap: 10px;
+    }
+
+    .setup-session-item {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 255, 251, 0.92));
+      box-shadow: 0 14px 28px rgba(17, 17, 17, 0.05);
+    }
+
+    .setup-session-action {
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .setup-session-action:hover,
+    .setup-session-action:focus-visible {
+      border-color: #73e0d1;
+      box-shadow: 0 18px 34px rgba(111, 231, 215, 0.16);
+      transform: translateY(-1px);
+    }
+
+    .setup-session-item span,
+    .setup-session-mode span,
+    .setup-launch-warning {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .setup-session-item strong,
+    .setup-session-mode strong {
+      display: block;
+      margin-top: 4px;
+      color: #111111;
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+
+    .session-asset-panel {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 255, 251, 0.92));
+      box-shadow: 0 14px 28px rgba(17, 17, 17, 0.05);
+      overflow: hidden;
+    }
+
+    .session-asset-panel .asset-collapsible-header {
+      min-height: 74px;
+      padding: 14px 16px;
+    }
+
+    .session-asset-panel .asset-collapsible-title {
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .session-asset-panel .asset-collapsible-selected {
+      margin-top: 4px;
+      font-size: 1rem;
+      line-height: 1.25;
+      color: #111111;
+    }
+
+    .setup-session-mode-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .setup-session-mode {
+      min-width: 0;
+      flex: 1 1 180px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 255, 251, 0.92));
+      box-shadow: 0 14px 28px rgba(17, 17, 17, 0.05);
+      text-align: left;
+    }
+
+    .setup-session-mode.active {
+      border-color: #73e0d1;
+      background: linear-gradient(135deg, rgba(237, 255, 250, 0.98), rgba(201, 247, 239, 0.96));
+    }
+
+    .setup-session-actions {
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .setup-session-actions .session-action-button {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(236, 248, 240, 0.98));
+      border-color: #b6dec7;
+      color: #214036;
+      box-shadow: 0 12px 24px rgba(92, 136, 112, 0.12);
+      font-weight: 700;
+    }
+
+    .setup-session-actions .session-action-button:hover,
+    .setup-session-actions .session-action-button:focus-visible {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(230, 246, 235, 0.99));
+      border-color: #9fd3b6;
+      box-shadow: 0 14px 26px rgba(92, 136, 112, 0.16);
+    }
+
+    .setup-launch-warning {
+      padding: 12px 14px;
+      border: 1px solid #f2c988;
+      border-radius: 16px;
+      background: #fffaf0;
+      color: #8b5a00;
+      text-transform: none;
+    }
+
+    #launchConfirmModal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(34, 48, 81, 0.45);
+      z-index: 10035;
+    }
+
+    #launchConfirmCard {
+      width: min(560px, 94vw);
+      max-height: 90svh;
+      overflow: auto;
+      padding: 18px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px;
+    }
+
+    .launch-confirm-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .launch-confirm-note {
+      margin: 0;
+      color: #5d6c69;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    .launch-confirm-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .status-pill::before {
       content: "";
       position: absolute;
@@ -336,10 +491,10 @@
     }
 
     .setup-tab.active {
-      background: linear-gradient(135deg, var(--action-grad-start), var(--action-grad-mid) 52%, var(--action-grad-end));
-      color: var(--action-text);
-      border-color: #73e0d1;
-      box-shadow: 0 18px 34px rgba(111, 231, 215, 0.18);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(241, 255, 251, 0.98));
+      color: #294640;
+      border-color: #bfeee4;
+      box-shadow: 0 18px 34px rgba(121, 183, 172, 0.14);
     }
 
     .setup-install {
@@ -431,7 +586,7 @@
       letter-spacing: 0.01em;
       color: #111111;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(239, 255, 251, 0.92));
-      border-bottom: 1px solid rgba(215, 226, 247, 0.85);
+      border-bottom: 1px solid rgba(200, 238, 229, 0.85);
     }
 
     details.panel-section > summary::-webkit-details-marker,
@@ -852,12 +1007,12 @@
       place-items: center;
       min-height: 92px;
       padding: 16px 18px;
-      border: 2px dashed #bdd0f0;
+      border: 2px dashed #b9cdbf;
       border-radius: 24px;
       background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0) 45%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(238, 244, 255, 0.92));
-      box-shadow: 0 18px 34px rgba(45, 70, 116, 0.12);
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0) 45%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(239, 248, 241, 0.94));
+      box-shadow: 0 18px 34px rgba(77, 102, 88, 0.12);
       color: #111111;
       text-align: center;
       cursor: pointer;
@@ -870,7 +1025,7 @@
     .airdrop-zone.drag-active {
       transform: translateY(-1px);
       border-color: #73e0d1;
-      box-shadow: 0 22px 40px rgba(45, 70, 116, 0.16);
+      box-shadow: 0 22px 40px rgba(77, 102, 88, 0.16);
       outline: none;
     }
 
@@ -1238,6 +1393,128 @@
       gap: 10px;
     }
 
+    .asset-collapsible {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid rgba(200, 239, 231, 0.92);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 255, 252, 0.92));
+      box-shadow: 0 12px 24px rgba(121, 183, 172, 0.08);
+    }
+
+    .asset-collapsible-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid rgba(200, 239, 231, 0.92);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 255, 251, 0.96));
+      box-shadow: 0 10px 22px rgba(121, 183, 172, 0.08);
+      color: #21403a;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .asset-collapsible-header:hover,
+    .asset-collapsible-header:focus-visible {
+      border-color: #79e1d3;
+      box-shadow: 0 14px 28px rgba(121, 183, 172, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .asset-collapsible-header:focus-visible {
+      outline: 3px solid rgba(121, 183, 172, 0.22);
+      outline-offset: 2px;
+    }
+
+    .asset-collapsible-copy {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .asset-collapsible-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      line-height: 1.15;
+      letter-spacing: 0.02em;
+      color: #111111;
+    }
+
+    .asset-collapsible-selected {
+      color: #5d6c69;
+      font-size: 0.84rem;
+      line-height: 1.2;
+    }
+
+    .asset-collapsible-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      color: #5d6c69;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .asset-collapsible-count {
+      white-space: nowrap;
+    }
+
+    .asset-collapsible-action {
+      color: #47726a;
+    }
+
+    .asset-collapsible-chevron {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(200, 239, 231, 0.95);
+      background: rgba(255, 255, 255, 0.94);
+      transition: transform 180ms ease;
+    }
+
+    .asset-collapsible.open .asset-collapsible-chevron {
+      transform: rotate(180deg);
+    }
+
+    .asset-collapsible-body {
+      display: grid;
+      grid-template-rows: 0fr;
+      opacity: 0;
+      transition: grid-template-rows 220ms ease, opacity 180ms ease;
+    }
+
+    .asset-collapsible.open .asset-collapsible-body {
+      grid-template-rows: 1fr;
+      opacity: 1;
+    }
+
+    .asset-collapsible-body-inner {
+      min-height: 0;
+      overflow: hidden;
+      display: grid;
+      gap: 10px;
+    }
+
+    .asset-panel-state {
+      padding: 10px 12px;
+      border: 1px dashed rgba(200, 239, 231, 0.92);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.8);
+      color: #5d6c69;
+      font-size: 0.92rem;
+    }
+
     .asset-row {
       display: grid;
       gap: 6px;
@@ -1247,6 +1524,11 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
       gap: 8px;
+    }
+
+    .asset-grid.asset-grid-thumbs {
+      grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+      gap: 10px;
     }
 
     .asset-single {
@@ -1284,6 +1566,24 @@
       box-shadow: 0 8px 18px rgba(121, 183, 172, 0.22);
     }
 
+    .asset-item.selected::after {
+      content: "✓";
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(34, 73, 65, 0.92);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      z-index: 2;
+      box-shadow: 0 6px 14px rgba(17, 17, 17, 0.16);
+    }
+
     .asset-remove {
       position: absolute;
       top: 4px;
@@ -1307,6 +1607,40 @@
       font-size: 12px;
       line-height: 1.1;
       z-index: 2;
+    }
+
+    @media (max-width: 1100px) {
+      .asset-grid.asset-grid-thumbs {
+        grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .asset-grid.asset-grid-thumbs {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .asset-collapsible {
+        padding: 10px;
+        border-radius: 18px;
+      }
+
+      .asset-collapsible-header {
+        flex-wrap: wrap;
+        padding: 10px;
+      }
+
+      .asset-collapsible-meta {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .asset-grid.asset-grid-thumbs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
     }
 
     #adminScreen label {
@@ -1429,10 +1763,10 @@
       height: 100svh;
       position: relative;
       background:
-        radial-gradient(circle at 16% 22%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 34%),
-        radial-gradient(circle at 88% 18%, rgba(144, 240, 229, 0.22) 0%, rgba(144, 240, 229, 0) 26%),
-        radial-gradient(circle at 78% 76%, rgba(198, 248, 240, 0.2) 0%, rgba(198, 248, 240, 0) 28%),
-        linear-gradient(180deg, #fbfffe 0%, #f4fffc 44%, #effdf9 100%);
+        radial-gradient(circle at 16% 18%, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0) 34%),
+        radial-gradient(circle at 86% 16%, rgba(240, 213, 174, 0.26) 0%, rgba(240, 213, 174, 0) 26%),
+        radial-gradient(circle at 78% 78%, rgba(238, 229, 216, 0.56) 0%, rgba(238, 229, 216, 0) 30%),
+        linear-gradient(180deg, #fbf8f3 0%, #f5efe6 42%, #f1e8db 100%);
       background-size: cover;
       background-position: center;
     }
@@ -1443,19 +1777,129 @@
       inset: 0;
       pointer-events: none;
       background:
-        linear-gradient(120deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 36%),
-        radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 56%, rgba(135, 236, 225, 0.12) 100%);
+        linear-gradient(120deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0) 36%),
+        radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 54%, rgba(214, 188, 149, 0.14) 100%);
       z-index: 0;
     }
 
-    #mobileSettingsToggle,
-    #mobileSettingsBackdrop,
+    #mobileSettingsToggle {
+      position: fixed;
+      top: 14px;
+      right: 70px;
+      z-index: 36;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid #c8efe7;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 14px 28px rgba(17, 17, 17, 0.08);
+    }
+
+    #mobileSettingsBackdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 29;
+      background: rgba(17, 17, 17, 0.22);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+
     .mobile-settings-sheet-header {
-      display: none;
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
     }
 
     #mobileSettingsSheet {
-      display: contents;
+      position: fixed;
+      top: 58px;
+      right: 12px;
+      z-index: 30;
+      display: grid;
+      gap: 12px;
+      width: min(430px, calc(100vw - 24px));
+      max-height: min(78svh, 760px);
+      padding: 14px;
+      border: 1px solid rgba(200, 238, 229, 0.96);
+      border-radius: 26px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(239, 255, 251, 0.94)),
+        radial-gradient(circle at top right, rgba(111, 231, 215, 0.18), rgba(255, 255, 255, 0) 34%);
+      box-shadow: 0 26px 56px rgba(17, 17, 17, 0.14);
+      backdrop-filter: blur(20px);
+      overflow: auto;
+      transform: translateY(-10px) scale(0.985);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 220ms ease, opacity 180ms ease;
+    }
+
+    #mobileSettingsSheet #controls,
+    #mobileSettingsSheet #options {
+      position: static;
+      z-index: auto;
+      top: auto;
+      right: auto;
+      bottom: auto;
+      left: auto;
+      width: 100%;
+      max-width: 100%;
+      max-height: none;
+      transform: none;
+    }
+
+    #mobileSettingsSheet #controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      overflow: visible;
+    }
+
+    #mobileSettingsSheet #options {
+      padding: 12px;
+      border-radius: 20px;
+      max-height: min(42svh, 360px);
+    }
+
+    #mobileSettingsSheet #options .options-section {
+      display: grid;
+      gap: 10px;
+    }
+
+    #mobileSettingsSheet #options .options-section + .options-section {
+      margin-top: 12px;
+    }
+
+    body:not(.viewport-phone) #mobileSettingsToggle,
+    body:not(.viewport-phone) #mobileSettingsBackdrop,
+    body:not(.viewport-phone) .mobile-settings-sheet-header {
+      display: none !important;
+    }
+
+    body:not(.viewport-phone) #mobileSettingsSheet {
+      position: absolute;
+      top: 96px;
+      left: 12px;
+      right: auto;
+      z-index: 14;
+      width: clamp(208px, 18vw, 248px);
+      max-height: min(68svh, 620px);
+      padding: 12px;
+      transform: none;
+      opacity: 1;
+      pointer-events: auto;
     }
 
     #boothHeader {
@@ -1465,20 +1909,20 @@
       transform: translateX(-50%) translateY(var(--edit-header-y)) scale(var(--edit-header-scale));
       transform-origin: center;
       width: fit-content;
-      max-width: min(88vw, 760px);
+      max-width: min(58vw, 420px);
       z-index: 20;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      padding: 16px 30px;
-      border: 1px solid var(--border);
+      padding: 10px 20px;
+      border: 1px solid rgba(214, 188, 149, 0.48);
       border-radius: var(--radius-lg);
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(242, 255, 251, 0.84)),
-        radial-gradient(circle at top, rgba(135, 236, 225, 0.18), rgba(255, 255, 255, 0) 56%);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(249, 243, 233, 0.9)),
+        radial-gradient(circle at top, rgba(214, 188, 149, 0.16), rgba(255, 255, 255, 0) 56%);
       backdrop-filter: blur(14px);
-      box-shadow: 0 20px 44px rgba(132, 176, 170, 0.14);
+      box-shadow: 0 18px 40px rgba(81, 65, 47, 0.12);
     }
 
     #boothHeader img { max-height: 54px; }
@@ -1489,10 +1933,10 @@
       color: #111111;
       text-align: center;
       flex: 0 1 auto;
-      font-size: clamp(2rem, 3.8vw, 3rem);
+      font-size: clamp(1.28rem, 1.9vw, 1.92rem);
       min-width: 0;
       max-width: 100%;
-      line-height: 0.92;
+      line-height: 0.96;
       overflow-wrap: anywhere;
       text-wrap: balance;
       letter-spacing: -0.03em;
@@ -1516,11 +1960,21 @@
     #boothMain {
       flex: 1;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 18px;
-      padding: clamp(132px, 16vh, 188px) 16px clamp(28px, 6vh, 54px);
+      gap: 10px;
+      padding: clamp(90px, 10vh, 124px) clamp(16px, 2.5vw, 24px) clamp(28px, 4.5vh, 40px);
       position: relative;
+    }
+
+    #boothModeBar {
+      display: flex;
+      justify-content: center;
+      width: min(100%, 1120px);
+      margin: 0 auto 8px;
+      position: relative;
+      z-index: 12;
     }
 
     #options,
@@ -1579,6 +2033,68 @@
       transform: translateY(calc(-50% + var(--edit-mode-buttons-y)));
     }
 
+    #boothModeBar #controls {
+      position: static;
+      top: auto;
+      right: auto;
+      bottom: auto;
+      left: auto;
+      width: 100%;
+      max-height: none;
+      transform: none;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      justify-content: center;
+      align-items: stretch;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid rgba(214, 188, 149, 0.44);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 18px 40px rgba(81, 65, 47, 0.1);
+      scrollbar-width: none;
+    }
+
+    #boothModeBar #controls::-webkit-scrollbar {
+      display: none;
+    }
+
+    #boothModeBar #recordingModeBtn {
+      display: none;
+    }
+
+    #boothModeBar .mode-btn {
+      width: auto;
+      min-width: clamp(112px, 12vw, 154px);
+      min-height: 72px;
+      flex: 0 1 auto;
+      padding: 8px 10px !important;
+      border: 1px solid rgba(214, 188, 149, 0.62);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 243, 233, 0.98));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+
+    #boothModeBar .mode-btn-label {
+      font-size: 0.61rem;
+      letter-spacing: 0.1em;
+      color: #5a4d3f;
+    }
+
+    #boothModeBar .controls-toggle {
+      width: auto;
+      flex: 0 0 auto;
+      margin-top: 0;
+    }
+
+    #boothModeBar .controls-toggle label {
+      width: auto;
+      min-width: 0;
+      padding-inline: 14px;
+    }
+
     #options .thumb {
       width: 100%;
       max-width: 140px;
@@ -1615,15 +2131,15 @@
 
     .mode-btn:hover,
     .mode-btn:focus-visible {
-      border-color: #78e2d4;
-      background: linear-gradient(180deg, #ffffff, #ebfffa);
-      box-shadow: 0 12px 24px rgba(132, 176, 170, 0.14);
+      border-color: #cba76d;
+      background: linear-gradient(180deg, #ffffff, #f5eddf);
+      box-shadow: 0 12px 24px rgba(81, 65, 47, 0.12);
     }
 
     .mode-btn.active {
-      border-color: #68dece;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(230, 252, 247, 0.96) 58%, rgba(202, 247, 239, 0.98));
-      box-shadow: 0 14px 26px rgba(111, 231, 215, 0.16);
+      border-color: #c79f5d;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(247, 238, 221, 0.98) 58%, rgba(241, 226, 197, 0.98));
+      box-shadow: 0 14px 26px rgba(81, 65, 47, 0.15);
     }
 
     #videoWrap {
@@ -1633,24 +2149,90 @@
       justify-content: center;
       position: relative;
       z-index: 1;
-      gap: 16px;
-      padding-bottom: 16px;
+      gap: 12px;
+      padding-bottom: 24px;
     }
 
     #videoContainer {
       position: relative;
       overflow: hidden;
-      border: 10px solid rgba(255, 255, 255, 0.98);
-      border-radius: 30px;
+      border: 12px solid rgba(255, 255, 255, 0.98);
+      border-radius: 34px;
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0)),
-        #f2fffb;
-      box-shadow: 0 24px 54px rgba(132, 176, 170, 0.16);
-      width: min(92vw, var(--capture-landscape-width));
+        linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0)),
+        #f7f1e7;
+      box-shadow:
+        0 34px 76px rgba(81, 65, 47, 0.18),
+        0 0 0 1px rgba(214, 188, 149, 0.2);
+      width: min(94vw, var(--live-camera-width, 920px));
       max-height: min(68svh, calc(100svh - 320px));
-      aspect-ratio: var(--capture-aspect, 4 / 3);
+      aspect-ratio: var(--live-camera-aspect, 4 / 3);
       transform: translateY(var(--edit-camera-y)) scale(var(--edit-camera-scale));
       isolation: isolate;
+    }
+
+    .booth-helper-text {
+      margin: 0;
+      max-width: 28ch;
+      text-align: center;
+      color: #5c6e6b;
+      font-family: var(--font-label);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.35;
+    }
+
+    #overlayBackground,
+    #photoSlotLayer,
+    #liveOverlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 18px;
+      pointer-events: none;
+    }
+
+    #overlayBackground {
+      z-index: 0;
+      overflow: hidden;
+      background: transparent;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+
+    #photoSlotLayer {
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .photo-slot {
+      position: absolute;
+      overflow: hidden;
+      display: block;
+      pointer-events: none;
+      background: rgba(255, 255, 255, 0.08);
+      transform-origin: center center;
+    }
+
+    .photo-slot.is-empty {
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.04)),
+        rgba(255, 255, 255, 0.1);
+    }
+
+    .photo-slot-media {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      border: 0;
+      pointer-events: none;
     }
 
     #videoContainer::before {
@@ -1660,8 +2242,8 @@
       pointer-events: none;
       z-index: 1;
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 22%),
-        radial-gradient(circle at 15% 12%, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0) 24%);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 22%),
+        radial-gradient(circle at 15% 12%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 24%);
     }
 
     #videoContainer.recording {
@@ -1680,13 +2262,13 @@
     }
 
     .view-landscape #videoContainer {
-      width: min(92vw, var(--capture-landscape-width));
-      aspect-ratio: var(--capture-landscape-ratio);
+      width: min(92vw, var(--live-camera-width, 860px));
+      aspect-ratio: var(--live-camera-aspect, 4 / 3);
     }
 
     .view-portrait #videoContainer {
-      width: min(86vw, var(--capture-portrait-width));
-      aspect-ratio: var(--capture-portrait-ratio);
+      width: min(92vw, var(--live-camera-width, 860px));
+      aspect-ratio: var(--live-camera-aspect, 4 / 3);
     }
 
     #video,
@@ -1704,17 +2286,10 @@
       transform-origin: center;
       -webkit-transform: scaleX(-1) scale(var(--camera-zoom));
       transform: scaleX(-1) scale(var(--camera-zoom));
+      z-index: 1;
     }
 
     #video.active { opacity: 1; }
-
-    #liveOverlay {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: contain;
-      border-radius: 18px;
-    }
 
     #lastShot,
     #liveOverlay {
@@ -1731,27 +2306,34 @@
     #liveOverlay {
       -webkit-transform: none;
       transform: none;
+      z-index: 3;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
     }
 
     #captureBtn {
       display: none;
-      position: relative;
-      z-index: 6;
-      transform: translateY(var(--edit-capture-button-y)) scale(var(--edit-capture-button-scale)) !important;
+      position: fixed;
+      left: 50%;
+      bottom: clamp(16px, 3.2vh, 32px);
+      z-index: 20;
+      transform: translateX(-50%) translateY(var(--edit-capture-button-y)) scale(var(--edit-capture-button-scale)) !important;
     }
 
     #captureBtn.primary {
-      width: clamp(96px, 14vw, 138px);
+      width: clamp(112px, 16vw, 154px);
       height: clamp(96px, 14vw, 138px);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       border-radius: 34px;
-      border: 3px solid var(--action-border);
-      outline: 3px solid var(--action-outline);
-      background: linear-gradient(145deg, var(--action-grad-start), var(--action-grad-mid) 45%, var(--action-grad-end));
-      box-shadow: 0 20px 36px rgba(121, 183, 172, 0.22);
-      color: var(--action-text);
+      border: 2px solid rgba(214, 188, 149, 0.88);
+      outline: 4px solid rgba(255, 255, 255, 0.82);
+      background: linear-gradient(180deg, #f9f1e4, #ead8bc);
+      box-shadow: 0 24px 44px rgba(81, 65, 47, 0.18);
+      color: #2f251c;
       font-family: var(--font-label);
       font-size: clamp(1rem, 2vw, 1.25rem);
       line-height: 1;
@@ -1778,8 +2360,8 @@
     }
 
     #captureBtn.recording-stop {
-      background: linear-gradient(145deg, #ffb8cb, #ff95b2);
-      outline-color: #d37b96;
+      background: linear-gradient(180deg, #ffd0dc, #f6a9bc);
+      outline-color: #cf7d96;
     }
 
     #welcomeScreen {
@@ -1815,18 +2397,20 @@
         radial-gradient(circle at top, rgba(135, 236, 225, 0.18), rgba(255, 255, 255, 0) 44%);
       backdrop-filter: blur(14px);
       box-shadow: 0 22px 48px rgba(132, 176, 170, 0.14);
-      cursor: pointer;
+      cursor: default;
       touch-action: manipulation;
       position: relative;
       overflow: hidden;
     }
 
-    #welcomeOverlay::before {
-      content: "Tap to begin";
+    #welcomeOverlay[data-step="idle"] {
+      cursor: pointer;
+    }
+
+    .welcome-eyebrow {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: -4px;
       padding: 6px 12px;
       border-radius: 999px;
       background: rgba(111, 231, 215, 0.14);
@@ -1835,6 +2419,22 @@
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+    }
+
+    .welcome-flow-section {
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+      width: 100%;
+    }
+
+    .welcome-flow-title {
+      margin: 0;
+      color: #111111;
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5.5vw, 4rem);
+      line-height: 1.04;
+      text-wrap: balance;
     }
 
     #welcomeTitle {
@@ -1919,6 +2519,55 @@
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(222, 250, 244, 0.92));
       color: #111111;
       border-color: rgba(255, 255, 255, 0.72);
+    }
+
+    .welcome-mode-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      width: min(100%, 680px);
+    }
+
+    .welcome-mode-btn {
+      min-height: 104px;
+      padding: 14px 16px;
+      border-radius: 24px;
+      border: 1px solid rgba(214, 188, 149, 0.62);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 243, 233, 0.98));
+      color: #2f251c;
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      align-content: center;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+      text-align: center;
+      font-family: var(--font-body);
+      font-weight: 700;
+    }
+
+    .welcome-mode-btn span {
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6a5843;
+    }
+
+    .welcome-back-button {
+      border: 1px solid rgba(214, 188, 149, 0.58);
+      background: rgba(255, 255, 255, 0.84);
+      color: #5a4d3f;
+      box-shadow: 0 10px 20px rgba(81, 65, 47, 0.08);
+    }
+
+    #boothBackBtn {
+      position: fixed;
+      left: clamp(16px, 2vw, 24px);
+      top: clamp(16px, 2vw, 24px);
+      z-index: 35;
+    }
+
+    #boothScreen.welcome-active #boothBackBtn {
+      display: none;
     }
 
     #countdownOverlay {
@@ -2251,7 +2900,7 @@
         max-width: 560px;
         margin-top: 12px;
       }
-      #videoContainer { width: min(92vw, var(--capture-landscape-width)); max-width: none; }
+      #videoContainer { width: min(92vw, var(--live-camera-width, 860px)); max-width: none; }
       .share-mock {
         position: static;
         width: min(520px, 88vw);
@@ -2569,11 +3218,11 @@
     #finalPreviewContent {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) clamp(250px, 18vw, 320px) clamp(150px, 10vw, 190px);
+      grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 420px);
       align-items: center;
       justify-items: center;
-      gap: clamp(14px, 1.4vw, 22px);
-      width: min(100%, 1820px);
+      gap: clamp(18px, 2vw, 30px);
+      width: min(100%, 1720px);
       min-height: calc(100svh - clamp(44px, 6vw, 88px));
       padding: clamp(18px, 1.8vw, 28px);
       box-sizing: border-box;
@@ -2600,6 +3249,8 @@
     }
 
     #finalStrip {
+      grid-column: 1;
+      grid-row: 1 / span 2;
       width: min(100%, 1160px);
       height: auto;
       max-width: 100%;
@@ -2614,6 +3265,8 @@
       object-fit: contain;
     }
     #finalLive {
+      grid-column: 1;
+      grid-row: 1 / span 2;
       width: min(100%, 1160px);
       height: auto;
       max-width: 100%;
@@ -2632,20 +3285,23 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      width: min(100%, 320px);
+      grid-column: 2;
+      grid-row: 1;
+      width: min(100%, 420px);
       min-width: 0;
-      min-height: min(74svh, 980px);
-      max-height: 74svh;
-      order: 0;
-      gap: 12px;
-      align-self: stretch;
+      min-height: 0;
+      max-height: none;
+      gap: 16px;
+      align-self: center;
+      justify-self: stretch;
     }
 
+    /* Guest event flow prioritizes QR scanning. */
     #qrCodeContainer {
       color: #111111;
       font-family: var(--font-body);
-      padding: 18px 18px 16px;
-      border-radius: 30px;
+      padding: clamp(20px, 2vw, 28px);
+      border-radius: 34px;
       border: 1px solid rgba(173, 244, 234, 0.9);
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(242, 255, 252, 0.78)),
@@ -2653,34 +3309,38 @@
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65), 0 14px 30px rgba(110, 132, 150, 0.14);
       box-sizing: border-box;
       width: 100%;
-      height: 100%;
-      overflow-x: hidden;
-      overflow-y: auto;
-      scrollbar-width: thin;
+      height: auto;
+      display: grid;
+      justify-items: center;
+      align-content: start;
+      gap: 16px;
+      overflow: visible;
     }
 
     .share-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 14px;
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 0;
+      text-align: center;
     }
 
     .share-header-copy {
-      min-width: 0;
       display: grid;
-      gap: 10px;
+      gap: 8px;
+      justify-items: center;
     }
 
     #qrCodeContainer h2 {
       margin: 0;
       font-family: "Comic Neue", var(--font-label);
       font-weight: 800;
-      font-size: clamp(1.35rem, 1.7vw, 2.15rem);
-      line-height: 0.92;
+      font-size: clamp(1.7rem, 2.6vw, 2.7rem);
+      line-height: 0.98;
       letter-spacing: 0.02em;
       text-transform: uppercase;
+      text-wrap: balance;
     }
 
     #shareStatus {
@@ -2703,84 +3363,61 @@
 
     #qrCode {
       display: block;
-      width: 100%;
+      width: min(100%, 320px);
       height: auto;
-      max-width: 100%;
+      max-width: 320px;
       margin: 0 auto;
-      padding: 10px;
+      padding: 14px;
       border: 0;
-      border-radius: 18px;
+      border-radius: 24px;
       background: #ffffff;
-      box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.06);
+      box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.06), 0 18px 32px rgba(76, 97, 114, 0.14);
     }
 
     #qrHint {
-      margin-top: 10px;
+      margin-top: 0;
       color: #5c6f6b;
       font-size: 0.92rem;
       line-height: 1.4;
       word-break: break-word;
+      text-align: center;
     }
 
-    #shareLinkRow {
-      margin-top: 10px;
-    }
-
-    #shareLink {
-      display: block;
+    #emailPlaceholderBtn {
       width: 100%;
-      color: rgba(17, 17, 17, 0.18);
-      text-decoration: none;
-      font-size: 0.9rem;
-      line-height: 1.35;
-      word-break: break-all;
-      min-height: 4.05em;
-      padding: 2px 0 0;
-    }
-
-    #emailForm {
-      margin-top: 12px;
-    }
-
-    #emailShortcuts {
-      margin-top: 0;
+      min-height: 52px;
+      padding: 12px 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(197, 226, 220, 0.96);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 248, 246, 0.95));
+      color: #3f5550;
+      font-size: 0.96rem;
+      font-weight: 700;
+      box-shadow: none;
+      opacity: 0.8;
     }
 
     #finalPreviewButtons {
-      position: relative;
-      right: auto;
-      bottom: auto;
       display: flex;
       flex-direction: column;
       gap: 14px;
-      align-self: start;
-      width: min(100%, 190px);
-    }
-
-    @media (max-width: 1180px) {
-      #finalPreviewContent {
-        grid-template-columns: minmax(0, 1fr) clamp(240px, 28vw, 300px);
-      }
-
-      #finalPreviewButtons {
-        grid-column: 1 / -1;
-        flex-direction: row;
-        justify-content: flex-end;
-        width: 100%;
-      }
+      width: 100%;
+      max-width: 100%;
     }
 
     @media (max-width: 900px) {
       #finalPreviewContent {
         grid-template-columns: 1fr;
         justify-items: center;
-        gap: 16px;
+        gap: 18px;
         min-height: auto;
         padding: 16px;
       }
 
       #finalStrip,
       #finalLive {
+        grid-column: auto;
+        grid-row: auto;
         width: min(100%, 92vw);
         height: min(var(--frame-preview-height, 62vh), 62vh);
         max-height: 62vh;
@@ -2788,18 +3425,19 @@
       }
 
       #finalPreviewActions {
-        width: min(360px, 92vw);
+        grid-column: auto;
+        grid-row: auto;
+        width: min(420px, 100%);
         min-width: 0;
         min-height: 0;
         max-height: none;
       }
 
       #finalPreviewButtons {
-        flex-direction: row;
-        flex-wrap: wrap;
+        flex-direction: column;
+        flex-wrap: nowrap;
         justify-content: center;
         width: 100%;
-        max-width: 360px;
       }
     }
 
@@ -3187,14 +3825,40 @@
     }
 
     body.viewport-short #boothMain {
-      padding-top: clamp(72px, 8vh, 96px);
+      justify-content: flex-start;
+      gap: 8px;
+      padding-top: clamp(56px, 5.8vh, 72px);
       padding-left: clamp(136px, 13vw, 176px);
       padding-right: clamp(136px, 13vw, 176px);
-      padding-bottom: clamp(10px, 1.75vh, 20px);
+      padding-bottom: clamp(108px, 13vh, 138px);
+    }
+
+    body.viewport-short #boothModeBar {
+      width: min(100%, calc(100vw - 24px));
+      margin-bottom: 2px;
+    }
+
+    body.viewport-short #boothModeBar #controls {
+      width: 100%;
+      max-height: none;
+      padding: 8px 10px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    body.viewport-short #boothModeBar .mode-btn {
+      min-width: clamp(96px, 11vw, 138px);
+      min-height: 64px;
+    }
+
+    body.viewport-short #boothModeBar .mode-btn-label {
+      font-size: 0.56rem;
     }
 
     body.viewport-short #videoWrap {
-      gap: 8px;
+      gap: 6px;
       position: relative;
       max-width: min(100%, calc(var(--capture-landscape-width) + 160px));
       margin-inline: auto;
@@ -3203,14 +3867,14 @@
     }
 
     body.viewport-short #videoContainer {
-      max-height: min(62svh, calc(100svh - 182px));
+      max-height: min(54svh, calc(100svh - 278px));
     }
 
     body.viewport-short #captureBtn {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      z-index: 8;
+      left: 50%;
+      right: auto;
+      bottom: clamp(12px, 2.6vh, 26px);
+      transform: translateX(-50%) translateY(var(--edit-capture-button-y)) scale(var(--edit-capture-button-scale)) !important;
     }
 
     body.viewport-short #captureBtn.primary {
@@ -3290,8 +3954,10 @@
     }
 
     body.viewport-short #captureBtn {
-      right: 0;
-      bottom: 0;
+      left: 50%;
+      right: auto;
+      bottom: clamp(12px, 2.6vh, 26px);
+      transform: translateX(-50%) translateY(var(--edit-capture-button-y)) scale(var(--edit-capture-button-scale)) !important;
     }
 
     :root {
@@ -3411,7 +4077,6 @@
     }
 
     #eventGalleryActions,
-    #shareLinkRow,
     #emailShortcuts {
       display: flex;
       flex-wrap: wrap;
@@ -3492,10 +4157,10 @@
     }
 
     #adminScreen .setup-tab.active {
-      background: var(--button-primary-bg);
-      border-color: var(--button-primary-border);
-      color: var(--button-primary-text);
-      box-shadow: 0 14px 28px rgba(121, 183, 172, 0.2);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(241, 255, 251, 0.98));
+      border-color: #bfeee4;
+      color: #294640;
+      box-shadow: 0 14px 28px rgba(121, 183, 172, 0.16);
     }
 
     .booth-360-action.primary,
@@ -3627,22 +4292,22 @@
 
     #videoWrap {
       width: 100%;
-      max-width: min(100%, calc(var(--capture-landscape-width) + 40px));
+      max-width: min(100%, calc(var(--live-camera-width, 860px) + 40px));
       min-width: 0;
     }
 
     #videoContainer {
-      width: min(100%, var(--frame-preview-width, var(--capture-landscape-width)));
-      aspect-ratio: var(--frame-preview-aspect, var(--capture-aspect, 4 / 3));
+      width: min(100%, var(--live-camera-width, 920px));
+      aspect-ratio: var(--live-camera-aspect, 4 / 3);
     }
 
     .view-portrait #videoContainer {
-      width: min(100%, var(--frame-preview-width, var(--capture-portrait-width)));
-      aspect-ratio: var(--frame-preview-aspect, var(--capture-portrait-ratio));
+      width: min(100%, var(--live-camera-width, 920px));
+      aspect-ratio: var(--live-camera-aspect, 4 / 3);
     }
 
     .view-landscape #videoContainer {
-      aspect-ratio: var(--frame-preview-aspect, var(--capture-landscape-ratio));
+      aspect-ratio: var(--live-camera-aspect, 4 / 3);
     }
 
     #welcomeOverlay {
@@ -3677,8 +4342,7 @@
     }
 
     #finalPreviewActions.share-panel-empty #qrCodeContainer {
-      visibility: hidden;
-      pointer-events: none;
+      opacity: 1;
     }
 
     #finalPreviewButtons button {
@@ -3765,6 +4429,10 @@
         padding: 24px 22px;
       }
 
+      .welcome-mode-grid {
+        grid-template-columns: 1fr;
+      }
+
       #welcomeTitle {
         font-size: clamp(2rem, 6.2vw, 4rem);
         max-width: min(88vw, 15ch);
@@ -3834,33 +4502,6 @@
         height: 42px;
       }
 
-      #mobileSettingsToggle {
-        position: fixed;
-        top: max(62px, env(safe-area-inset-top, 0px) + 62px);
-        left: 10px;
-        z-index: 36;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 42px;
-        padding: 10px 14px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(14px);
-        box-shadow: 0 14px 28px rgba(17, 17, 17, 0.08);
-      }
-
-      #mobileSettingsBackdrop {
-        display: block;
-        position: fixed;
-        inset: 0;
-        z-index: 29;
-        background: rgba(17, 17, 17, 0.22);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 180ms ease;
-      }
-
       #mobileSettingsSheet {
         position: fixed;
         top: 0;
@@ -3882,16 +4523,50 @@
         overflow: auto;
         transform: translateY(calc(-100% - 18px));
         opacity: 0;
-        pointer-events: none;
-        transition: transform 220ms ease, opacity 180ms ease;
-      }
+      pointer-events: none;
+      transition: transform 220ms ease, opacity 180ms ease;
+    }
 
-      .mobile-settings-sheet-header {
-        display: flex;
-        align-items: start;
-        justify-content: space-between;
-        gap: 12px;
-      }
+    #mobileSettingsSheet #controls,
+    #mobileSettingsSheet #options {
+      position: static;
+      z-index: auto;
+      top: auto;
+      right: auto;
+      bottom: auto;
+      left: auto;
+      width: 100%;
+      max-width: 100%;
+      max-height: none;
+      transform: none;
+    }
+
+    #mobileSettingsSheet #controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      overflow: visible;
+    }
+
+    #mobileSettingsSheet #options {
+      padding: 12px;
+      border-radius: 20px;
+      max-height: min(48svh, 420px);
+    }
+
+    #mobileSettingsSheet #options .options-section {
+      display: grid;
+      gap: 10px;
+    }
+
+    #mobileSettingsSheet #options .options-section + .options-section {
+      margin-top: 12px;
+    }
 
       .mobile-settings-sheet-copy {
         display: grid;
@@ -3917,45 +4592,8 @@
         color: #111111;
       }
 
-      #mobileSettingsSheet #controls,
-      #mobileSettingsSheet #options {
-        position: static;
-        z-index: auto;
-        top: auto;
-        right: auto;
-        bottom: auto;
-        left: auto;
-        width: 100%;
-        max-width: 100%;
-        max-height: none;
-        transform: none;
-      }
-
       #mobileSettingsSheet #controls {
-        display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
-        padding: 0;
-        border: none;
-        background: transparent;
-        box-shadow: none;
-        backdrop-filter: none;
-        overflow: visible;
-      }
-
-      #mobileSettingsSheet #options {
-        padding: 12px;
-        border-radius: 20px;
-        max-height: min(48svh, 420px);
-      }
-
-      #mobileSettingsSheet #options .options-section {
-        display: grid;
-        gap: 10px;
-      }
-
-      #mobileSettingsSheet #options .options-section + .options-section {
-        margin-top: 12px;
       }
 
       #boothScreen.mobile-settings-open #mobileSettingsBackdrop {
@@ -4005,22 +4643,21 @@
         padding: 14px 16px;
       }
 
-      #options,
-      #controls {
+      #mobileSettingsSheet #options,
+      #mobileSettingsSheet #controls {
         display: none;
       }
 
-      #options.hidden,
-      #controls.hidden {
+      #mobileSettingsSheet #options.hidden,
+      #mobileSettingsSheet #controls.hidden {
         display: none !important;
       }
 
-      #boothScreen.mobile-settings-open #options:not(.hidden),
-      #boothScreen.mobile-settings-open #controls:not(.hidden) {
+      #boothScreen.mobile-settings-open #mobileSettingsSheet #options:not(.hidden) {
         display: grid;
       }
 
-      #boothScreen.mobile-settings-open #options:not(.hidden) {
+      #boothScreen.mobile-settings-open #mobileSettingsSheet #options:not(.hidden) {
         display: block;
       }
 
@@ -4042,14 +4679,12 @@
       }
 
       #eventGalleryActions,
-      #shareLinkRow,
       #emailShortcuts {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       #eventGalleryActions > *,
-      #shareLinkRow > *,
       #emailShortcuts > * {
         width: 100%;
       }
@@ -4142,7 +4777,6 @@
       }
 
       #eventGalleryActions,
-      #shareLinkRow,
       #emailShortcuts {
         grid-template-columns: 1fr;
       }
@@ -4156,13 +4790,50 @@
     #boothScreen.share-mode #mobileSettingsSheet {
       display: none;
     }
+
+    #boothScreen.booth-ready:not(.mode-360) #captureBtn {
+      display: inline-flex;
+    }
+
+    #boothScreen.mode-live-photo #videoWrap.view-landscape #videoContainer,
+    #boothScreen.mode-still-photo #videoWrap.view-landscape #videoContainer,
+    #boothScreen.mode-message #videoWrap.view-landscape #videoContainer,
+    #boothScreen.mode-layout #videoWrap.view-landscape #videoContainer {
+      max-height: none;
+    }
+
+    #boothScreen.mode-live-photo #videoWrap.view-portrait #videoContainer,
+    #boothScreen.mode-still-photo #videoWrap.view-portrait #videoContainer,
+    #boothScreen.mode-message #videoWrap.view-portrait #videoContainer,
+    #boothScreen.mode-layout #videoWrap.view-portrait #videoContainer {
+      max-height: none;
+    }
+
+    #boothScreen.mode-live-photo,
+    #boothScreen.mode-still-photo,
+    #boothScreen.mode-strip,
+    #boothScreen.mode-message,
+    #boothScreen.mode-layout {
+      --live-camera-width: 920px;
+      --live-camera-aspect: 4 / 3;
+    }
+
+    #boothScreen.mode-live-photo #videoContainer,
+    #boothScreen.mode-still-photo #videoContainer,
+    #boothScreen.mode-strip #videoContainer,
+    #boothScreen.mode-message #videoContainer,
+    #boothScreen.mode-layout #videoContainer {
+      width: min(100%, var(--live-camera-width, 860px));
+      aspect-ratio: var(--live-camera-aspect, 4 / 3);
+      max-height: none;
+    }
   </style>
 </head>
 
 <body>
   <div id="adminScreen">
     <h1 class="admin-title">Photobooth Setup</h1>
-    <p class="admin-subtitle">Choose a theme, confirm capture settings, and launch a booth that looks camera-ready from the first screen.</p>
+    <p class="admin-subtitle">Choose a theme, confirm capture settings, and launch a booth that looks camera-ready from the first screen. Guests can pick an overlay from the booth screen after launch.</p>
     <div class="setup-status" id="setupStatus">
       <div class="status-pill">Camera: <strong id="statusCamera">Not Started</strong></div>
       <div class="status-pill">Uploads: <strong id="statusUpload">Checking</strong></div>
@@ -4173,10 +4844,112 @@
       <button type="button" id="quickStartBtn">Demo Booth Now</button>
       <button type="button" id="startBoothButton" class="start-booth-hero">Start Booth</button>
     </div>
+    <div class="setup-session-card glass-panel rounded-2xl p-4">
+      <div class="flex items-center gap-2 mb-1">
+        <i
+          data-lucide="clipboard-check"
+          style="width: 14px; height: 14px; color: #74bf9d"
+        ></i>
+        <span
+          style="
+            font-family: 'Fraunces', serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: #3d3442;
+          "
+          >Session Setup</span
+        >
+      </div>
+      <div class="setup-session-grid">
+        <div class="setup-session-item setup-session-action" role="button" tabindex="0" data-session-action="capture" aria-label="Go to capture settings">
+          <span>Booth Type</span>
+          <strong id="launchLayoutMode">Normal</strong>
+        </div>
+        <div class="setup-session-item setup-session-action" role="button" tabindex="0" data-session-action="theme" aria-label="Go to theme settings">
+          <span>Theme</span>
+          <strong id="launchOverlayName">No theme selected</strong>
+        </div>
+        <div class="setup-session-item setup-session-action" role="button" tabindex="0" data-session-action="font" aria-label="Go to font settings">
+          <span>Font</span>
+          <strong id="launchFontStatus">Use theme fonts</strong>
+        </div>
+        <div class="setup-session-item setup-session-action" role="button" tabindex="0" data-session-action="camera" aria-label="Go to camera settings">
+          <span>Camera</span>
+          <strong id="launchCameraStatus">Not checked yet</strong>
+        </div>
+        <div class="setup-session-item setup-session-action" role="button" tabindex="0" data-session-action="save" aria-label="Go to sharing settings">
+          <span>Save</span>
+          <strong id="launchOutputStatus">Local uploads</strong>
+        </div>
+      </div>
+      <div class="setup-session-assets" aria-label="Assigned overlays and templates">
+        <div class="asset-collapsible session-asset-panel" data-asset-panel="overlay" id="overlayThumbnailsPanel">
+          <button
+            type="button"
+            class="asset-collapsible-header"
+            id="overlayThumbnailsHeader"
+            aria-controls="overlayThumbnailsBody"
+            aria-expanded="false"
+          >
+            <span class="asset-collapsible-copy">
+              <span class="asset-collapsible-title">Overlays</span>
+              <span class="asset-collapsible-selected" id="launchOverlayCount">0 assigned</span>
+            </span>
+            <span class="asset-collapsible-meta">
+              <span class="asset-collapsible-chevron" aria-hidden="true">⌄</span>
+            </span>
+          </button>
+          <div class="asset-collapsible-body" id="overlayThumbnailsBody">
+            <div class="asset-collapsible-body-inner">
+              <div class="asset-row">
+                <div
+                  id="currentOverlays"
+                  class="asset-grid asset-grid-thumbs"
+                  data-empty-text="No overlays uploaded yet."
+                ></div>
+              </div>
+              <div class="asset-panel-state hidden" id="overlayThumbnailsLoading" aria-live="polite">Loading overlays...</div>
+              <div class="asset-panel-state hidden" id="overlayThumbnailsError" aria-live="polite">Couldn't load overlay thumbnails.</div>
+            </div>
+          </div>
+        </div>
+        <div class="asset-collapsible session-asset-panel" data-asset-panel="template" id="templateThumbnailsPanel">
+          <button
+            type="button"
+            class="asset-collapsible-header"
+            id="templateThumbnailsHeader"
+            aria-controls="templateThumbnailsBody"
+            aria-expanded="false"
+          >
+            <span class="asset-collapsible-copy">
+              <span class="asset-collapsible-title">Templates</span>
+              <span class="asset-collapsible-selected" id="launchStripStatus">0 assigned</span>
+            </span>
+            <span class="asset-collapsible-meta">
+              <span class="asset-collapsible-chevron" aria-hidden="true">⌄</span>
+            </span>
+          </button>
+          <div class="asset-collapsible-body" id="templateThumbnailsBody">
+            <div class="asset-collapsible-body-inner">
+              <div class="asset-row">
+                <div
+                  id="currentTemplates"
+                  class="asset-grid asset-grid-thumbs"
+                  data-empty-text="No templates uploaded yet."
+                ></div>
+              </div>
+              <div class="asset-panel-state hidden" id="templateThumbnailsLoading" aria-live="polite">Loading templates...</div>
+              <div class="asset-panel-state hidden" id="templateThumbnailsError" aria-live="polite">Couldn't load template thumbnails.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="launchWarning" class="setup-launch-warning hidden"></div>
+    </div>
     <div class="capture-mode-bar">
       <div class="capture-mode-copy">
-        <p class="capture-mode-title">Capture Mode</p>
-        <p class="capture-mode-note">Use photo mode for the built-in camera, or switch to 360 mode for the remote arm workflow and AirDrop upload.</p>
+        <p class="capture-mode-title">Booth Type</p>
+        <p class="capture-mode-note">Choose Normal for the built-in camera booth, or switch to 360 for the remote arm workflow and AirDrop upload.</p>
       </div>
       <button type="button" id="modeToggle">Switch to 360 Mode</button>
     </div>
@@ -4186,14 +4959,11 @@
         <button type="button" id="setupTabCapture" class="setup-tab" data-setup-tab="capture" aria-pressed="false">Capture</button>
         <button type="button" id="setupTabShare" class="setup-tab" data-setup-tab="share" aria-pressed="false">Share</button>
       </div>
-      <div class="setup-install">
-        <button id="installBtn" class="primary hidden" type="button">Install App</button>
-      </div>
     </div>
     <div class="admin-container">
       <div class="admin-left panel">
         <details class="panel-section" id="eventBasicsSection" data-setup-section="event" open>
-          <summary>Event Setup</summary>
+          <summary>Event Basics</summary>
           <div class="section-content">
             <div class="btn-row event-path-switcher">
               <button type="button" id="eventPathCreateBtn">Path 1: Create Event</button>
@@ -4227,11 +4997,11 @@
                   <input type="text" id="createPathPartner2" placeholder="Partner 2" style="font-size: 13px;">
                 </div>
               </div>
-              <div id="createPathBirthdayFields" class="hidden p-3 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-2 mt-2">
-                <span class="control-label block" style="font-size: 10px; color: #90a0b0;">Birthday Details</span>
+              <div id="createPathBirthdayFields" class="hidden p-3 bg-green-50/50 rounded-2xl border border-green-100 space-y-2 mt-2">
+                <span class="control-label block" style="font-size: 10px; color: #5c8a67;">Birthday Details</span>
                 <input type="text" id="createPathBirthdayName" placeholder="Birthday Person's Name" style="font-size: 13px;">
               </div>
-              <div id="createPathDateFields" class="hidden p-3 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-2 mt-2">
+              <div id="createPathDateFields" class="p-3 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-2 mt-2">
                 <span class="control-label block" style="font-size: 10px; color: #9b7a3c;">Event Date</span>
                 <input type="text" id="createPathEventDate" placeholder="e.g., April 27, 2026" style="font-size: 13px;">
               </div>
@@ -4282,7 +5052,7 @@
           </div>
         </details>
         <details class="panel-section" id="captureSection" data-setup-section="capture">
-          <summary>Capture Controls</summary>
+          <summary>Capture Modes</summary>
           <div class="section-content">
             <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
               <input type="checkbox" id="allowRetakes" checked>
@@ -4337,7 +5107,7 @@
           </div>
         </details>
         <details class="panel-section" id="sharingSection" data-setup-section="share">
-          <summary>Sharing & Email</summary>
+          <summary>Sharing / Email</summary>
           <div class="section-content">
             <h3 style="margin:0;">Cloudinary (QR Links)</h3>
             <label for="cloudNameInput">Cloud Name</label>
@@ -4369,7 +5139,7 @@
           </div>
         </details>
         <details class="panel-section" id="offlineSection" data-setup-section="share">
-          <summary>Offline & Device Tools</summary>
+          <summary>Offline / Device Tools</summary>
           <div class="section-content">
             <div class="admin-field" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0;">
               <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
@@ -4384,7 +5154,7 @@
           </div>
         </details>
         <details class="panel-section" id="currentAssetsSection" data-setup-section="event">
-          <summary>Current Event Assets</summary>
+          <summary>Visual Assets</summary>
           <div id="currentAssetsContent" class="section-content hidden">
             <div class="panel" style="margin-bottom:12px;">
               <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
@@ -4414,7 +5184,7 @@
             <div class="panel" style="margin-bottom:12px;">
               <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
                 <div>
-                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Event Setup</div>
+                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Advanced Theme Controls</div>
                   <div style="font-weight:700; font-size:1.02em;">Edit this event without changing the base theme</div>
                 </div>
                 <div style="max-width:280px; color:#9aa; font-size:0.9em;">
@@ -4503,7 +5273,7 @@
               <button type="button" id="addLogoBtn">Add Logo</button>
               <button type="button" id="addAssetsBtn">Add Assets</button>
               <button type="button" id="addCharacterBtn">Add Character</button>
-              <button type="button" onclick="window.open('./overlay-maker.html', '_blank', 'noopener')">Layout Builder</button>
+              <button type="button" onclick="openLayoutBuilder()">Open Layout Builder</button>
               <button type="button" id="eventToSubThemeBtn" class="hidden">Save Theme Preset</button>
             </div>
             <div id="assetUploadInputs" class="hidden">
@@ -4549,14 +5319,6 @@
               <div class="asset-row">
                 <label>Logo:</label>
                 <div id="currentLogo" class="asset-single"></div>
-              </div>
-              <div class="asset-row">
-                <label>Overlays:</label>
-                <div id="currentOverlays" class="asset-grid"></div>
-              </div>
-              <div class="asset-row">
-                <label>Templates:</label>
-                <div id="currentTemplates" class="asset-grid"></div>
               </div>
               <div class="asset-row">
                 <label>Character:</label>
@@ -4784,6 +5546,7 @@
       <img id="logo" />
       <h1 id="eventTitle">🎃 Happy Halloween!</h1>
     </div>
+    <button id="boothBackBtn" type="button" class="button-ghost welcome-back-button" onclick="goBackFromBooth(event)">Go Back</button>
     <button id="adminBtn" onclick="goAdmin()">⚙️</button>
     <button id="mobileSettingsToggle" type="button" aria-expanded="false" aria-controls="mobileSettingsSheet">Change Settings</button>
     <div id="mobileSettingsBackdrop" aria-hidden="true"></div>
@@ -4792,10 +5555,13 @@
         <div class="mobile-settings-sheet-header">
           <div class="mobile-settings-sheet-copy">
             <p class="mobile-settings-sheet-eyebrow">Booth Settings</p>
-            <p class="mobile-settings-sheet-title">Change capture mode and overlays</p>
+            <p class="mobile-settings-sheet-title">Choose overlays and settings</p>
           </div>
           <button id="mobileSettingsClose" type="button" class="button-ghost">Done</button>
         </div>
+        <div id="options"></div>
+      </div>
+      <div id="boothModeBar">
         <div id="controls">
           <button class="mode-btn" type="button" data-mode="live-photo" onclick="setMode('live-photo')" aria-label="Live Photo">
             <div class="mode-btn-icon video">
@@ -4830,10 +5596,11 @@
             </label>
           </div>
         </div>
-        <div id="options"></div>
       </div>
       <div id="videoWrap" class="view-landscape">
         <div id="videoContainer">
+          <div id="overlayBackground" aria-hidden="true"></div>
+          <div id="photoSlotLayer" aria-hidden="true"></div>
           <video id="video" class="hidden" autoplay playsinline muted></video>
           <img id="lastShot" />
           <img id="liveOverlay" />
@@ -4884,37 +5651,20 @@
           <div id="qrCodeContainer" class="hidden">
             <div class="share-header">
               <div class="share-header-copy">
-                <h2>Scan to Download</h2>
+                <h2>Scan to Get Your Photo</h2>
               </div>
               <span id="shareStatus" style="display:none;">Preparing link…</span>
             </div>
             <canvas id="qrCode"></canvas>
             <div id="qrHint" style="display:none; font-size:0.9em; color:#ccc; margin-top:6px;"></div>
-            <div id="shareLinkRow" style="margin-top:8px; display:none; align-items:center; gap:8px; flex-wrap:wrap;">
-              <a id="shareLink" href="#" target="_blank" rel="noopener"
-                style="color: var(--accent2); word-break: break-all;"></a>
-              <button type="button" onclick="openShareLink()">Open</button>
-              <button type="button" onclick="copyShareLink()">Copy</button>
-              <button type="button" onclick="downloadShareImage()">Download</button>
-            </div>
-            <form id="emailForm" onsubmit="sendEmail(event)">
-              <input type="email" id="emailInput" placeholder="your@email.com" required onfocus="cancelHideTimer()"
-                onblur="startHideTimerIfIdle()" />
-              <button type="submit" id="sendBtn" onclick="cancelHideTimer()">Send</button>
-              <div id="emailShortcuts">
-                <button type="button" class="shortcut-btn" onclick="appendEmailText('@gmail.com')">@gmail.com</button>
-                <button type="button" class="shortcut-btn"
-                  onclick="appendEmailText('@outlook.com')">@outlook.com</button>
-                <button type="button" class="shortcut-btn"
-                  onclick="appendEmailText('@hotmail.com')">@hotmail.com</button>
-                <button type="button" class="shortcut-btn" onclick="appendEmailText('.com')">.com</button>
-              </div>
-            </form>
+            <!-- Guest mode must not expose local device download actions. -->
+            <!-- TODO: Email functionality will be connected separately. -->
+            <button type="button" id="emailPlaceholderBtn" disabled aria-disabled="true">Email My Photo</button>
           </div>
-        </div>
-        <div id="finalPreviewButtons">
-          <button id="closePreviewBtn" onclick="exitFinalPreview()">✅ Done</button>
-          <button id="retakeBtn" onclick="retakePhoto()">🔄 Retake</button>
+          <div id="finalPreviewButtons">
+            <button id="closePreviewBtn" onclick="exitFinalPreview()">✅ Done</button>
+            <button id="retakeBtn" onclick="retakePhoto()">🔄 Retake</button>
+          </div>
         </div>
       </div>
     </div>
@@ -4924,6 +5674,56 @@
         <div id="confirmActions">
           <button onclick="closeConfirm()">Back</button>
           <button class="primary" onclick="confirmTemplate()">Yes, Use This</button>
+        </div>
+      </div>
+    </div>
+    <div id="launchConfirmModal">
+      <div id="launchConfirmCard">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+          <div>
+            <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Confirm Launch</div>
+            <div style="font-weight:700; font-size:1.05em;">Review the session summary before the booth opens</div>
+          </div>
+        </div>
+        <p class="launch-confirm-note">This confirmation does not change any overlay export data. It only reviews the setup that will be used when the booth starts.</p>
+        <div class="launch-confirm-grid">
+          <div class="setup-session-item">
+            <span>Event</span>
+            <strong id="launchConfirmEventName">No event selected</strong>
+          </div>
+          <div class="setup-session-item">
+            <span>Capture Mode</span>
+            <strong id="launchConfirmLayoutMode">Normal</strong>
+          </div>
+          <div class="setup-session-item">
+            <span>Theme</span>
+            <strong id="launchConfirmOverlayName">No theme selected</strong>
+          </div>
+          <div class="setup-session-item">
+            <span>Font</span>
+            <strong id="launchConfirmFontStatus">Use theme fonts</strong>
+          </div>
+          <div class="setup-session-item">
+            <span>Camera</span>
+            <strong id="launchConfirmCameraStatus">Not checked yet</strong>
+          </div>
+          <div class="setup-session-item">
+            <span>Save</span>
+            <strong id="launchConfirmOutputStatus">Local uploads</strong>
+          </div>
+          <div class="setup-session-item">
+            <span>Overlays</span>
+            <strong id="launchConfirmOverlayCount">0 assigned</strong>
+          </div>
+          <div class="setup-session-item">
+            <span>Templates</span>
+            <strong id="launchConfirmStripStatus">0 assigned</strong>
+          </div>
+        </div>
+        <div id="launchConfirmWarning" class="setup-launch-warning hidden"></div>
+        <div class="launch-confirm-actions">
+          <button type="button" id="launchConfirmCancel" onclick="closeBoothLaunchConfirm()">Back</button>
+          <button type="button" id="launchConfirmStart" class="primary" onclick="confirmBoothLaunch()">Start Booth</button>
         </div>
       </div>
     </div>
@@ -4957,13 +5757,39 @@
     </div>
     <div id="welcomeScreen">
       <img id="welcomeImg" />
-      <div id="welcomeOverlay" onclick="beginWelcome(event)">
-        <h1 id="welcomeTitle">🎃 Happy Halloween!</h1>
-        <button id="startButton" type="button" class="start-button" onclick="beginWelcome(event)">Touch to start</button>
-        <div id="demoThemeBar" class="demo-theme-bar">
-          <button type="button" class="demo-theme-chip" data-demo-theme="wedding">Wedding Demo</button>
-          <button type="button" class="demo-theme-chip" data-demo-theme="birthday">Birthday Demo</button>
-          <button type="button" class="demo-theme-chip" data-demo-theme="general">General Demo</button>
+      <div id="welcomeOverlay">
+        <div id="welcomeEyebrow" class="welcome-eyebrow">Choose your demo</div>
+        <div id="welcomeDemoStep" class="welcome-flow-section">
+          <h1 class="welcome-flow-title">Choose a Demo</h1>
+          <div id="demoThemeBar" class="demo-theme-bar">
+            <button type="button" class="demo-theme-chip" data-demo-theme="wedding">Wedding Demo</button>
+            <button type="button" class="demo-theme-chip" data-demo-theme="birthday">Birthday Demo</button>
+            <button type="button" class="demo-theme-chip" data-demo-theme="general">General Demo</button>
+          </div>
+          <button id="welcomeDemoBackBtn" type="button" class="button-ghost welcome-back-button" onclick="goBackFromWelcome(event)">Go Back</button>
+        </div>
+        <div id="welcomeIdleStep" class="welcome-flow-section hidden">
+          <h1 id="welcomeTitle">🎃 Happy Halloween!</h1>
+          <button id="startButton" type="button" class="start-button" onclick="beginWelcome(event)">Touch to start</button>
+          <button id="welcomeIdleBackBtn" type="button" class="button-ghost welcome-back-button" onclick="goBackFromWelcome(event)">Go Back</button>
+        </div>
+        <div id="welcomeModeStep" class="welcome-flow-section hidden">
+          <h1 class="welcome-flow-title">Choose Your Photo Style</h1>
+          <div class="welcome-mode-grid">
+            <button type="button" class="welcome-mode-btn" data-welcome-mode="live-photo" onclick="beginModeSelection('live-photo', event)">
+              <strong>Single Live Photo</strong>
+              <span>Live motion capture</span>
+            </button>
+            <button type="button" class="welcome-mode-btn" data-welcome-mode="still-photo" onclick="beginModeSelection('still-photo', event)">
+              <strong>Single Still Photo</strong>
+              <span>One classic shot</span>
+            </button>
+            <button type="button" class="welcome-mode-btn" data-welcome-mode="strip" onclick="beginModeSelection('strip', event)">
+              <strong>Photostrip</strong>
+              <span>Multi-photo strip</span>
+            </button>
+          </div>
+          <button id="welcomeModeBackBtn" type="button" class="button-ghost welcome-back-button" onclick="goBackFromWelcome(event)">Go Back</button>
         </div>
       </div>
     </div>

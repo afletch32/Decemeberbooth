@@ -9,15 +9,49 @@ function readProjectFile(...parts) {
 
 test("setup screen uses a compact toolbar for section controls", () => {
   const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts/app.js");
   const commandBarIndex = html.indexOf('<div class="setup-command-bar">');
-  const installButtonIndex = html.indexOf('<button id="installBtn" class="primary hidden" type="button">Install App</button>');
   const adminContainerIndex = html.indexOf('<div class="admin-container">');
 
   assert.notEqual(commandBarIndex, -1, "setup command bar should exist");
-  assert.notEqual(installButtonIndex, -1, "install button should exist");
   assert.notEqual(adminContainerIndex, -1, "admin container should exist");
   assert.ok(commandBarIndex < adminContainerIndex, "toolbar should appear before the admin panels");
-  assert.ok(installButtonIndex < adminContainerIndex, "install button should sit in the toolbar, not inside the admin panel");
+  assert.ok(
+    !html.includes('id="installBtn" class="primary hidden" type="button">Install App</button>'),
+    "install button should not be part of the setup toolbar anymore"
+  );
+  assert.ok(
+    html.includes('id="overlayThumbnailsPanel"'),
+    "overlay thumbnails panel should exist"
+  );
+  assert.ok(
+    html.includes('id="templateThumbnailsPanel"'),
+    "template thumbnails panel should exist"
+  );
+  assert.ok(
+    html.includes('data-empty-text="No overlays uploaded yet."'),
+    "overlay panel should expose an empty state"
+  );
+  assert.ok(
+    html.includes('data-empty-text="No templates uploaded yet."'),
+    "template panel should expose an empty state"
+  );
+  assert.ok(
+    appScript.includes('const ASSET_PANEL_STATE_KEY = "photoboothAssetPanels";'),
+    "asset panel state should persist locally per device"
+  );
+  assert.ok(
+    appScript.includes("function setupAssetPanelControls()"),
+    "asset panels should be wired through a reusable collapsible helper"
+  );
+  assert.ok(
+    appScript.includes("scheduleThemesRemoteSync();"),
+    "theme saves should continue syncing overlay and layout data across devices"
+  );
+  assert.ok(
+    !html.includes('data-session-action="event"'),
+    "session setup summary should not include a duplicate event card"
+  );
   assert.ok(html.includes('id="setupTabEvent" class="setup-tab active" data-setup-tab="event" aria-pressed="true"'));
   assert.ok(html.includes('id="setupTabCapture" class="setup-tab" data-setup-tab="capture" aria-pressed="false"'));
   assert.ok(html.includes('id="setupTabShare" class="setup-tab" data-setup-tab="share" aria-pressed="false"'));

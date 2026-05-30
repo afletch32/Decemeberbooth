@@ -1,4 +1,72 @@
 [
-  "garden-vows-strip-overlay.svg",
-  "garden-vows-single-overlay.svg"
+  {
+    "id": "garden-vows-strip",
+    "name": "Garden Vows Strip",
+    "type": "photo-strip-layout",
+    "category": "wedding",
+    "aspectRatio": "1:3",
+    "background": {
+      "type": "color",
+      "value": "#fffdf9"
+    },
+    "foreground": {
+      "type": "image",
+      "src": "garden-vows-strip-overlay.svg"
+    },
+    "photoSlots": [
+      {
+        "x": 0.1139,
+        "y": 0.2,
+        "width": 0.7722,
+        "height": 0.1843,
+        "borderRadius": 0.02,
+        "objectFit": "cover",
+        "objectPosition": "center"
+      },
+      {
+        "x": 0.1139,
+        "y": 0.4083,
+        "width": 0.7722,
+        "height": 0.1843,
+        "borderRadius": 0.02,
+        "objectFit": "cover",
+        "objectPosition": "center"
+      },
+      {
+        "x": 0.1139,
+        "y": 0.6167,
+        "width": 0.7722,
+        "height": 0.1843,
+        "borderRadius": 0.02,
+        "objectFit": "cover",
+        "objectPosition": "center"
+      }
+    ]
+  },
+  {
+    "id": "garden-vows-single",
+    "name": "Garden Vows Single",
+    "type": "overlay",
+    "category": "wedding",
+    "aspectRatio": "3:2",
+    "background": {
+      "type": "color",
+      "value": "#fffdf9"
+    },
+    "foreground": {
+      "type": "image",
+      "src": "garden-vows-single-overlay.svg"
+    },
+    "photoSlots": [
+      {
+        "x": 0.0811,
+        "y": 0.3583,
+        "width": 0.8378,
+        "height": 0.4883,
+        "borderRadius": 0.02,
+        "objectFit": "cover",
+        "objectPosition": "center"
+      }
+    ]
+  }
 ]

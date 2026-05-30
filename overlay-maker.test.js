@@ -16,8 +16,12 @@ test("overlay builder is exposed from admin and uses a full HTML document", () =
   const overlayMaker = readProjectFile("overlay-maker.html");
 
   assert.ok(
-    indexHtml.includes("Layout Builder"),
-    "admin setup should link to the expanded builder"
+    indexHtml.includes("Open Layout Builder"),
+    "admin visual assets section should link to the overlay maker"
+  );
+  assert.ok(
+    indexHtml.includes("openLayoutBuilder()"),
+    "admin should open the builder with app context instead of a hardcoded bare URL"
   );
   assert.ok(
     overlayMaker.startsWith("<!DOCTYPE html>"),
@@ -45,12 +49,14 @@ test("overlay builder uses clear layout-first terminology for exports", () => {
     "builder should label the main workflow around layout type"
   );
   assert.ok(
-    overlayMaker.includes('Single Photo') && overlayMaker.includes('Photo Strip'),
-    "builder should use single photo and photo strip as the primary choices"
+    overlayMaker.includes('Single Vertical') &&
+      overlayMaker.includes('Single Horizontal') &&
+      overlayMaker.includes('Photo Strip'),
+    "builder should expose the three canonical layout classes"
   );
   assert.ok(
-    overlayMaker.includes(`return '"' + filename + '",';`),
-    "single photo exports should copy a filename-only manifest line"
+    overlayMaker.includes("return assetSrc || filename;"),
+    "single-layout exports should keep the filename-only manifest fallback"
   );
   assert.ok(
     overlayMaker.includes("manifest.layout = guide.layout;"),
@@ -61,37 +67,63 @@ test("overlay builder uses clear layout-first terminology for exports", () => {
     "builder should emit autofill metadata for reusable text zones"
   );
   assert.ok(
+    overlayMaker.includes("manifest.layoutClass = layoutType;"),
+    "manifest metadata should record the canonical layout class"
+  );
+  assert.ok(
+    overlayMaker.includes("manifest.templateFamily = getSelectedFamilyKey();"),
+    "manifest metadata should record the chosen template family"
+  );
+  assert.ok(
+    overlayMaker.includes("manifest.templateVariant = getSelectedVariantKey();"),
+    "manifest metadata should record the chosen template variant"
+  );
+  assert.ok(
+    overlayMaker.includes("manifest.photoSlots = slots.map((slot) => ({"),
+    "builder should emit normalized photo slot metadata for the new overlay schema"
+  );
+  assert.ok(
     overlayMaker.includes('assets/<theme>/'),
     "destination hint should point to a theme-scoped asset folder"
   );
 });
 
-test("overlay builder supports a built-in graphic library and custom PNG uploads", () => {
+test("overlay builder uses a template catalog with a single uploaded logo slot", () => {
   const overlayMaker = readProjectFile("overlay-maker.html");
 
   assert.ok(
-    overlayMaker.includes('id="graphicSource"'),
-    "builder should let the user switch between library graphics and uploads"
+    overlayMaker.includes('id="templateFamily"'),
+    "builder should let the user choose a template family"
   );
   assert.ok(
-    overlayMaker.includes('id="graphicUpload" accept="image/png"'),
-    "builder should allow uploading a custom PNG graphic"
+    overlayMaker.includes('id="templateVariant"'),
+    "builder should let the user choose a family variant"
   );
   assert.ok(
-    overlayMaker.includes("const GRAPHIC_LIBRARY_BUILDERS = {"),
-    "builder should ship with a built-in library of graphic assets"
+    overlayMaker.includes("const TEMPLATE_FAMILIES = {"),
+    "builder should define a built-in template catalog"
   );
   assert.ok(
-    overlayMaker.includes('return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);'),
-    "built-in graphics should be image-backed assets rather than canvas primitives"
+    overlayMaker.includes("birthday_balloons") &&
+      overlayMaker.includes("easter") &&
+      overlayMaker.includes("retro_party"),
+    "seasonal event variants should be built into the catalog"
   );
   assert.ok(
-    overlayMaker.includes("customGraphicObjectUrl = URL.createObjectURL(file);"),
-    "uploaded PNGs should be previewed via an object URL"
+    overlayMaker.includes('id="logoUpload"'),
+    "builder should allow a single uploaded logo"
   );
   assert.ok(
-    overlayMaker.includes("function drawGraphicImage(ctx, image, x, y, size) {"),
-    "graphics should render as images on the canvas"
+    overlayMaker.includes("const LOGO_SLOTS = {"),
+    "logo placement should be standardized by layout class"
+  );
+  assert.ok(
+    overlayMaker.includes("customLogoObjectUrl = URL.createObjectURL(file);"),
+    "uploaded logos should be previewed via an object URL"
+  );
+  assert.ok(
+    overlayMaker.includes("function drawLogoImage(ctx, guide, layoutType, image) {"),
+    "logos should render once through a dedicated logo renderer"
   );
   assert.ok(
     overlayMaker.includes('id="uploadCloudinaryButton"'),
@@ -122,6 +154,18 @@ test("overlay builder supports a built-in graphic library and custom PNG uploads
     "builder should split footer space when multiple autofill fields are configured"
   );
   assert.ok(
+    overlayMaker.includes('id="targetThemeKey"'),
+    "builder should let the user choose which theme receives the finished asset"
+  );
+  assert.ok(
+    overlayMaker.includes('id="addToBoothAssetsButton"'),
+    "builder should offer a direct add-to-assets action"
+  );
+  assert.ok(
+    overlayMaker.includes("function addManifestEntryToTheme("),
+    "builder should be able to register a finished asset into stored themes"
+  );
+  assert.ok(
     overlayMaker.includes('https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload'),
     "builder should upload PNG exports directly to Cloudinary"
   );
@@ -144,11 +188,15 @@ test("overlay builder navigation and markup avoid known broken states", () => {
     "back button should fall back to the booth admin page"
   );
   assert.ok(
-    overlayMaker.includes("window.addEventListener(\"beforeunload\", revokeCustomGraphicUrl);"),
-    "uploaded graphics should be cleaned up when the page unloads"
+    overlayMaker.includes("window.addEventListener(\"beforeunload\", revokeCustomLogoUrl);"),
+    "uploaded logos should be cleaned up when the page unloads"
   );
   assert.ok(
-    overlayMaker.includes('layoutType === "photo_strip" ? !isPhotoStrip : isPhotoStrip'),
-    "layout style options should stay in sync with the selected layout type"
+    overlayMaker.includes('const LAYOUT_GUIDE_BY_TYPE = {'),
+    "layout geometry should be locked to canonical guide mappings"
+  );
+  assert.ok(
+    overlayMaker.includes('$("layoutGuide").value = nextGuideKey;'),
+    "the hidden guide selection should stay in sync with the chosen layout class"
   );
 });
