@@ -13,6 +13,7 @@ What is done
 - Tightened the final review/share layout so the QR panel has less fixed height and smaller QR/button sizing on narrow screens.
 - Remote README/local network notes and local-data health check updates from `origin/main` are included.
 - Live deploy verification is complete for the current template-catalog build, including the QR share screen sizing fix.
+- Locked admin scrolling to the admin viewport so page-level scrolling stays contained.
 - `npm test` passes.
 - `npx playwright test browser/smoke.spec.js` passes.
 
@@ -28,6 +29,7 @@ Known bugs/blockers
 - `npm run deploy` can fail when `CLOUDFLARE_API_TOKEN` is invalid in the shell environment.
 - The live deployment is on a preview Pages URL and should be promoted only after final checks if needed.
 - The current QR sizing fix has been deployed to preview Pages and still needs a visual sanity check on the actual review/share flow if desired.
+- Admin scrolling is now contained inside `#adminScreen`; page/body scrolling stays locked while admin is open.
 
 Important decisions
 - Keep the app in vanilla HTML/CSS/JS.
@@ -35,4 +37,4 @@ Important decisions
 - Keep decorative template art built-in and fixed by family/variant instead of allowing freeform decorative PNG placement.
 - Keep layout geometry canonical by layout class so all strip templates share one photo area system, and the same rule applies to single vertical and single horizontal templates.
 - Cloudflare Pages deploy path is `npm run deploy` / `node tools/deploy.js`, which calls `wrangler pages deploy . --project-name decemeberbooth`.
-- The current verified Pages URL is `https://d8010db3.decemeberbooth.pages.dev`.
+- The current verified Pages URL is `https://139f6fbe.decemeberbooth.pages.dev`.

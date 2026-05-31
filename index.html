@@ -164,6 +164,7 @@
       height: 100svh;
       overflow-x: hidden;
       overflow-y: auto;
+      overscroll-behavior: contain;
       display: block;
       padding: 18px;
       -webkit-overflow-scrolling: touch;
@@ -178,8 +179,8 @@
 
     html.admin-open,
     body.admin-open {
-      height: auto;
-      overflow: auto;
+      height: 100%;
+      overflow: hidden;
     }
 
     .admin-title {
