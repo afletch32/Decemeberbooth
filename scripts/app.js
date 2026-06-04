@@ -1118,10 +1118,11 @@ function syncBoothModeButtons() {
 
 function syncCaptureStatusIndicators() {
   const showPhotoIndicators = getSelectedCaptureMode() === "photo";
+  const showLivePhotoIndicator = showPhotoIndicators && mode === "live-photo";
   if (DOM.livePhotoStatus) {
     DOM.livePhotoStatus.classList.toggle(
       "hidden",
-      !showPhotoIndicators || !getLivePhotoEnabled()
+      !showLivePhotoIndicator || !getLivePhotoEnabled()
     );
   }
   if (DOM.instantCaptureStatus) {
@@ -2556,12 +2557,7 @@ function setupVideoListeners() {
 
 function setupFinalPreviewListeners() {
   if (!DOM.finalPreview || !DOM.finalPreviewContent) return;
-  DOM.finalPreview.addEventListener("click", (e) => {
-    if (!DOM.finalPreviewContent.contains(e.target)) {
-      exitFinalPreview();
-    }
-  });
-  DOM.finalPreviewContent.addEventListener("click", (e) => e.stopPropagation());
+  DOM.finalPreview.addEventListener("click", () => exitFinalPreview());
 }
 
 function setupThemeEditorControls() {
@@ -7831,7 +7827,7 @@ function showPreviewFreezeFrame(canvasOrUrl) {
 async function capturePhotoFlow() {
   lastCaptureFlow = capturePhotoFlow; // Store this function for retake
   setBoothControlsVisible(false);
-  const livePhotoEnabled = getLivePhotoEnabled();
+  const livePhotoEnabled = mode === "live-photo";
   const photo = await countdownAndSnap({
     live: livePhotoEnabled,
     instant: getInstantCaptureEnabled(),
@@ -7839,9 +7835,14 @@ async function capturePhotoFlow() {
   if (!livePhotoEnabled) showPreviewFreezeFrame(photo);
   try {
     const finalUrl = await finalizeToPrint(photo, selectedOverlay);
-    showFinal(finalUrl);
+    showFinal(
+      finalUrl,
+      livePhotoEnabled && lastLiveClipBlob
+        ? { shareType: "video", shareBlob: lastLiveClipBlob }
+        : {}
+    );
     handleCaptureUpload(finalUrl);
-    recordAnalytics("photo", selectedOverlay);
+    recordAnalytics(livePhotoEnabled ? "live-photo" : "photo", selectedOverlay);
     addToGallery(finalUrl);
   } finally {
     if (livePhotoEnabled) clearPreviewFreezeFrame();
@@ -7893,6 +7894,25 @@ function handlePrimaryAction() {
       return;
     }
     captureMessageFlow();
+    return;
+  }
+  const captureMode = getSelectedCaptureMode(mode);
+  if (captureMode === "strip" || captureMode === "layout") {
+    const templateKind = captureMode === "layout" ? "layout" : "strip";
+    const template =
+      pendingTemplate ||
+      filterAssetsForMode(getTemplateList(activeTheme), templateKind)[0];
+    if (!template || !template.src) {
+      showToast(
+        captureMode === "layout"
+          ? "Choose a layout first."
+          : "Choose a strip first."
+      );
+      setMobileSettingsOpen(true);
+      return;
+    }
+    pendingTemplate = null;
+    runStripSequence(template);
     return;
   }
   capturePhotoFlow();
@@ -8011,6 +8031,20 @@ function applyAutoEnhanceCanvas(canvas) {
 function ensureEnhancedCanvas(canvas) {
   if (!canvas) return canvas;
   return applyAutoEnhanceCanvas(canvas);
+}
+
+function cloneCanvasForStrip(source) {
+  if (!source) return source;
+  const width = source.width || source.naturalWidth || 0;
+  const height = source.height || source.naturalHeight || 0;
+  if (!width || !height) return source;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (ctx) ctx.drawImage(source, 0, 0, width, height);
+  if (source.__aiMask) canvas.__aiMask = source.__aiMask;
+  return canvas;
 }
 
 function applyBeautyLightingPass(ctx, width, height, enhancement) {
@@ -8232,7 +8266,6 @@ async function captureLiveClip(durationMs) {
   try {
     const stream = DOM.video && DOM.video.srcObject;
     if (
-      !getLivePhotoEnabled() ||
       !stream ||
       typeof MediaRecorder === "undefined"
     )
@@ -8779,7 +8812,7 @@ async function countdownAndSnap(options = {}) {
     DOM.countdownOverlay.classList.remove("show");
     if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
   }
-  if (lowLightEnabled && !torchUsed) triggerFlash();
+  if (!live || (lowLightEnabled && !torchUsed)) triggerFlash();
   if (!live) setRecordingHighlight(false);
   const livePromise = live ? captureLiveClip(LIVE_PHOTO_DURATION_MS) : null;
   const shot = applyAutoEnhanceCanvas(drawToCanvasFromVideo());
@@ -8967,7 +9000,7 @@ function drawDynamicEventText(
 async function composeStrip(template, photos) {
   const bg = await loadImage(template.src);
   const enhancedPhotos = Array.isArray(photos)
-    ? photos.map((photo) => ensureEnhancedCanvas(photo))
+    ? photos.map((photo) => cloneCanvasForStrip(ensureEnhancedCanvas(photo)))
     : [];
   const layout = normalizeTemplateLayout(template && template.layout);
   const rows =
@@ -9222,7 +9255,8 @@ function renderDoubleColumn(canvas, photos, overlayImage, template, rows = 3) {
   const startY = headerH + slotSpacing;
 
   const cachedSlots =
-    template && template.__slotMetrics && template.__slotMetrics.slots;
+    (template && template.__slotMetrics && template.__slotMetrics.slots) ||
+    normalizeTemplateSlots(template && template.slots, cols);
   const detectedSlots =
     cachedSlots || detectTransparentColumnSlots(overlayImage, rows, cols);
   if (detectedSlots) {
@@ -9281,9 +9315,32 @@ function renderSingleColumnStrip(canvas, photos, overlayImage, template, rows = 
     Math.min(0.3, toNumber(template && template.footerPct, 0.05))
   );
   const cachedSlots =
-    template && template.__slotMetrics && template.__slotMetrics.slots;
+    (template && template.__slotMetrics && template.__slotMetrics.slots) ||
+    normalizeTemplateSlots(template && template.slots, 1);
   const detectedSlots =
     cachedSlots || detectTransparentColumnSlots(overlayImage, rows, 1);
+
+  if (cachedSlots && cachedSlots[0] && cachedSlots[0].length === rows) {
+    drawImageContain(ctx, overlayImage, 0, 0, canvas.width, canvas.height);
+    const scaleX =
+      canvas.width / (overlayImage.naturalWidth || overlayImage.width || 1);
+    const scaleY =
+      canvas.height / (overlayImage.naturalHeight || overlayImage.height || 1);
+    for (let row = 0; row < rows; row++) {
+      const photo = photos[row];
+      const slot = cachedSlots[0][row];
+      if (!photo || !slot) continue;
+      drawImageCover(
+        ctx,
+        photo,
+        slot.x * scaleX,
+        slot.y * scaleY,
+        slot.w * scaleX,
+        slot.h * scaleY
+      );
+    }
+    return;
+  }
 
   if (detectedSlots && detectedSlots[0] && detectedSlots[0].length === rows) {
     const scaleX =
@@ -9426,19 +9483,20 @@ function showFinal(url, options = {}) {
     DOM.sendBtn.disabled = false;
   }
 
-  DOM.retakeBtn.style.display = allowRetake ? "block" : "none";
-  DOM.retakeBtn.disabled = !lastCaptureFlow;
+  if (DOM.retakeBtn) {
+    DOM.retakeBtn.style.display = "none";
+    DOM.retakeBtn.disabled = true;
+  }
   if (DOM.closePreviewBtn) DOM.closePreviewBtn.style.display = "block";
 
   img.src = url;
   const useLiveClip = !!(
     DOM.finalLive &&
-    lastLiveClipUrl &&
-    !options.forceImage &&
-    !getGreenScreenEnabled() &&
-    !getAiBackgroundEnabled()
+    (lastLiveClipUrl || shareBlob) &&
+    !options.forceImage
   );
   if (useLiveClip) {
+    if (!lastLiveClipUrl && shareBlob) setLiveClip(shareBlob);
     clearPreviewFreezeFrame();
     DOM.finalLive.src = lastLiveClipUrl;
     DOM.finalLive.poster = url;
@@ -9471,10 +9529,7 @@ function showFinal(url, options = {}) {
       DOM.shareStatus.textContent = "Preparing link…";
       DOM.shareStatus.style.display = "inline-flex";
     }
-    const sharePromise =
-      shareType === "video"
-        ? publishShareVideo(shareBlob)
-        : publishShareImage(url);
+    const sharePromise = publishFinalShareUrl(shareType, shareBlob, url);
     if (!sharePromise) {
       if (DOM.shareStatus) {
         DOM.shareStatus.textContent = "Upload failed";
@@ -10512,6 +10567,17 @@ async function publishShareVideo(blob) {
   return null;
 }
 
+async function publishFinalShareUrl(shareType, shareBlob, posterUrl) {
+  if (shareType === "video") {
+    const videoUrl = await Promise.race([
+      publishShareVideo(shareBlob),
+      delay(8000).then(() => null),
+    ]);
+    if (videoUrl) return videoUrl;
+  }
+  return publishShareImage(posterUrl);
+}
+
 async function openShareLink() {
   const url = lastShareUrl || (DOM.finalStrip && DOM.finalStrip.src);
   if (!url) return;
@@ -10574,7 +10640,7 @@ function hideFinal() {
   setFinalPreviewSharePanelVisible(false);
   if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "none";
   if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
-  DOM.retakeBtn.style.display = "none";
+  if (DOM.retakeBtn) DOM.retakeBtn.style.display = "none";
   if (DOM.closePreviewBtn) DOM.closePreviewBtn.style.display = "none";
   clearLiveClip();
   lastCaptureFlow = null; // Clear the stored flow
@@ -16154,11 +16220,17 @@ function getBaseOverlayList(theme) {
   const removed = new Set(
     Array.isArray(theme.overlaysRemoved) ? theme.overlaysRemoved : []
   );
+  const builtinFolderArr =
+    typeof theme.overlaysFolder === "string"
+      ? getBuiltinFolderStrings(theme.overlaysFolder)
+          .map((item) => normalizeOverlayDefinition(item))
+          .filter((item) => item && !removed.has(item.src))
+      : [];
   const folderArr = Array.isArray(theme.overlaysTmp)
     ? theme.overlaysTmp
         .map((item) => normalizeOverlayDefinition(item))
         .filter((item) => item && !removed.has(item.src))
-    : [];
+    : builtinFolderArr;
   const localArr = Array.isArray(theme.overlays)
     ? theme.overlays.map((item) => normalizeOverlayDefinition(item))
     : [];
@@ -16217,11 +16289,17 @@ function getOverlayList(theme) {
   const removed = new Set(
     Array.isArray(theme.overlaysRemoved) ? theme.overlaysRemoved : []
   );
+  const builtinFolderArr =
+    typeof theme.overlaysFolder === "string"
+      ? getBuiltinFolderStrings(theme.overlaysFolder)
+          .map((item) => normalizeOverlayDefinition(item))
+          .filter((item) => item && !removed.has(item.src))
+      : [];
   const folderArr = Array.isArray(theme.overlaysTmp)
     ? theme.overlaysTmp
         .map((item) => normalizeOverlayDefinition(item))
         .filter((item) => item && !removed.has(item.src))
-    : [];
+    : builtinFolderArr;
   const localArr = Array.isArray(theme.overlays)
     ? theme.overlays.map((item) => normalizeOverlayDefinition(item))
     : [];
@@ -16260,6 +16338,18 @@ function getTemplateList(theme) {
   const removed = new Set(
     Array.isArray(theme.templatesRemoved) ? theme.templatesRemoved : []
   );
+  const builtinFolderArr =
+    typeof theme.templatesFolder === "string"
+      ? getBuiltinTemplateEntries(theme.templatesFolder)
+          .filter((t) => t && t.src && !removed.has(t.src))
+          .map((t) => ({
+            src: t.src,
+            layout: normalizeTemplateLayout(t.layout),
+            slots: t.slots,
+            textFields: normalizeTemplateTextFields(t.textFields),
+            __folder: true,
+          }))
+      : [];
   const folderArr = Array.isArray(theme.templatesTmp)
     ? theme.templatesTmp
         .filter((t) => t && t.src && !removed.has(t.src))
@@ -16270,7 +16360,7 @@ function getTemplateList(theme) {
           textFields: normalizeTemplateTextFields(t.textFields),
           __folder: true,
         }))
-    : [];
+    : builtinFolderArr;
   const localArr = Array.isArray(theme.templates)
     ? theme.templates.map((t) => ({
         src: t.src,
@@ -16440,6 +16530,8 @@ Object.assign(window, {
   exitFinalPreview,
   exportCurrentEvent,
   goAdmin,
+  goBackFromBooth,
+  goBackFromWelcome,
   beginWelcome,
   hideWelcome,
   startBooth: startBoothFromAdmin,

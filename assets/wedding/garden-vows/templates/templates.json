@@ -1,7 +1,12 @@
 [
   {
     "src": "garden-vows-strip-template.svg",
-    "layout": "photo_strip_3"
+    "layout": "photo_strip_3",
+    "slots": [
+      { "x": 90, "y": 440, "w": 540, "h": 382 },
+      { "x": 90, "y": 890, "w": 540, "h": 382 },
+      { "x": 90, "y": 1340, "w": 540, "h": 382 }
+    ]
   },
   {
     "src": "garden-vows-single-template.svg",

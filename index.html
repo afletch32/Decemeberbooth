@@ -2992,6 +2992,21 @@
         padding: 6px 8px;
         font-size: 0.85em;
       }
+
+      #finalPreviewActions {
+        width: min(100%, 392px);
+        max-height: min(82svh, 700px);
+      }
+
+      #qrCodeContainer {
+        padding: 18px;
+        gap: 10px;
+      }
+
+      #qrCode {
+        width: min(100%, 240px);
+        max-width: 240px;
+      }
     }
 
     /* shown in photo mode only */
@@ -3288,18 +3303,18 @@
 
     #finalPreviewActions {
       position: relative;
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
       grid-column: 2;
       grid-row: 1;
       width: min(100%, 420px);
       min-width: 0;
       min-height: 0;
       max-height: min(86svh, 760px);
-      gap: 16px;
+      gap: 12px;
       align-self: center;
       justify-self: stretch;
-      overflow: auto;
+      overflow: visible;
     }
 
     /* Guest event flow prioritizes QR scanning. */
@@ -3319,7 +3334,8 @@
       display: grid;
       justify-items: center;
       align-content: start;
-      gap: 16px;
+      gap: 12px;
+      min-height: 0;
       overflow: visible;
     }
 
@@ -3369,11 +3385,11 @@
 
     #qrCode {
       display: block;
-      width: min(100%, 320px);
+      width: min(100%, 280px);
       height: auto;
-      max-width: 320px;
+      max-width: 280px;
       margin: 0 auto;
-      padding: 14px;
+      padding: 12px;
       border: 0;
       border-radius: 24px;
       background: #ffffff;
@@ -3387,28 +3403,6 @@
       line-height: 1.4;
       word-break: break-word;
       text-align: center;
-    }
-
-    #emailPlaceholderBtn {
-      width: 100%;
-      min-height: 46px;
-      padding: 10px 16px;
-      border-radius: 18px;
-      border: 1px solid rgba(197, 226, 220, 0.96);
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 248, 246, 0.95));
-      color: #3f5550;
-      font-size: 0.96rem;
-      font-weight: 700;
-      box-shadow: none;
-      opacity: 0.8;
-    }
-
-    #finalPreviewButtons {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      width: 100%;
-      max-width: 100%;
     }
 
     @media (max-width: 900px) {
@@ -3433,19 +3427,14 @@
       #finalPreviewActions {
         grid-column: auto;
         grid-row: auto;
+        grid-template-rows: auto auto;
         width: min(420px, 100%);
         min-width: 0;
         min-height: 0;
         max-height: min(70svh, 640px);
-        overflow: auto;
+        overflow: visible;
       }
 
-      #finalPreviewButtons {
-        flex-direction: column;
-        flex-wrap: nowrap;
-        justify-content: center;
-        width: 100%;
-      }
     }
 
     .shortcut-btn {
@@ -3829,6 +3818,161 @@
     /* Final UI polish overrides */
     body {
       overflow: hidden;
+    }
+
+    /* Guest booth UX polish: keep the live screen focused on one decision. */
+    #boothScreen.booth-ready #boothModeBar {
+      display: none;
+    }
+
+    #boothScreen.booth-ready #boothMain {
+      display: grid;
+      grid-template-columns: minmax(190px, 240px) minmax(0, 1fr) minmax(132px, 190px);
+      align-items: center;
+      justify-items: center;
+      gap: clamp(14px, 2vw, 28px);
+      padding: clamp(74px, 8vh, 104px) clamp(16px, 2.5vw, 28px) clamp(104px, 13vh, 144px);
+    }
+
+    #boothScreen.booth-ready #boothHeader {
+      top: 10px;
+      max-width: min(62vw, 720px);
+      padding: 8px 18px;
+      border-radius: 22px;
+    }
+
+    #boothScreen.booth-ready #eventTitle {
+      max-width: min(58vw, 680px);
+      font-size: clamp(1.05rem, 1.7vw, 1.55rem);
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #boothScreen.booth-ready #mobileSettingsSheet {
+      position: relative;
+      top: auto;
+      left: auto;
+      right: auto;
+      z-index: 14;
+      grid-column: 1;
+      align-self: center;
+      width: 100%;
+      max-height: min(64svh, 610px);
+      padding: 12px;
+      border-radius: 24px;
+      transform: none;
+      opacity: 1;
+      pointer-events: auto;
+      box-shadow: 0 20px 48px rgba(81, 65, 47, 0.12);
+    }
+
+    #boothScreen.booth-ready .mobile-settings-sheet-header {
+      display: flex !important;
+      margin-bottom: 10px;
+    }
+
+    #boothScreen.booth-ready #mobileSettingsClose {
+      display: none;
+    }
+
+    #boothScreen.booth-ready #options {
+      padding: 0;
+      max-height: min(50svh, 470px);
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow: auto;
+    }
+
+    #boothScreen.booth-ready #options .options-section:first-child {
+      display: none;
+    }
+
+    #boothScreen.booth-ready #options .options-section-title {
+      font-size: 0.66rem;
+      color: #7a6a58;
+      white-space: normal;
+    }
+
+    #boothScreen.booth-ready #options .thumb {
+      max-width: 112px;
+      border-radius: 14px;
+      margin: 2px auto;
+    }
+
+    #boothScreen.booth-ready #videoWrap {
+      grid-column: 2;
+      width: 100%;
+      max-width: min(100%, 980px);
+      gap: 10px;
+      padding: 0;
+    }
+
+    #boothScreen.booth-ready #videoContainer {
+      width: min(100%, var(--live-camera-width, 920px));
+      max-height: min(66svh, calc(100svh - 226px));
+      border-width: 10px;
+      border-radius: 30px;
+    }
+
+    #boothScreen.booth-ready #captureStatusBar {
+      display: none;
+    }
+
+    #boothScreen.booth-ready #captureBtn.primary {
+      width: clamp(128px, 13vw, 166px);
+      height: clamp(86px, 9vw, 112px);
+      border-radius: 999px;
+      font-size: clamp(0.92rem, 1.3vw, 1.06rem);
+      box-shadow:
+        0 22px 44px rgba(81, 65, 47, 0.2),
+        0 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+
+    #boothScreen.booth-ready #boothBackBtn {
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 999px;
+    }
+
+    #boothScreen.booth-ready #adminBtn {
+      opacity: 0.42;
+      transform: scale(0.86);
+    }
+
+    @media (max-width: 860px) {
+      #boothScreen.booth-ready #boothMain {
+        display: flex;
+        padding: clamp(70px, 9vh, 96px) 12px clamp(104px, 13vh, 132px);
+      }
+
+      #boothScreen.booth-ready #mobileSettingsSheet {
+        position: fixed;
+        top: 58px;
+        right: 12px;
+        left: auto;
+        width: min(430px, calc(100vw - 24px));
+        max-height: min(78svh, 760px);
+        transform: translateY(-10px) scale(0.985);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #boothScreen.booth-ready.mobile-settings-open #mobileSettingsSheet {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      #boothScreen.booth-ready #mobileSettingsToggle {
+        display: inline-flex !important;
+      }
+
+      #boothScreen.booth-ready #videoWrap {
+        max-width: 100%;
+      }
     }
 
     body.viewport-short #boothMain {
@@ -5573,14 +5717,14 @@
     </div>
     <button id="boothBackBtn" type="button" class="button-ghost welcome-back-button" onclick="goBackFromBooth(event)">Go Back</button>
     <button id="adminBtn" onclick="goAdmin()">⚙️</button>
-    <button id="mobileSettingsToggle" type="button" aria-expanded="false" aria-controls="mobileSettingsSheet">Change Settings</button>
+    <button id="mobileSettingsToggle" type="button" aria-expanded="false" aria-controls="mobileSettingsSheet">Choose Frame</button>
     <div id="mobileSettingsBackdrop" aria-hidden="true"></div>
     <div id="boothMain">
       <div id="mobileSettingsSheet" aria-hidden="true">
         <div class="mobile-settings-sheet-header">
           <div class="mobile-settings-sheet-copy">
-            <p class="mobile-settings-sheet-eyebrow">Booth Settings</p>
-            <p class="mobile-settings-sheet-title">Choose overlays and settings</p>
+            <p class="mobile-settings-sheet-eyebrow">Step 3</p>
+            <p class="mobile-settings-sheet-title">Choose your frame</p>
           </div>
           <button id="mobileSettingsClose" type="button" class="button-ghost">Done</button>
         </div>
@@ -5683,12 +5827,6 @@
             <canvas id="qrCode"></canvas>
             <div id="qrHint" style="display:none; font-size:0.9em; color:#ccc; margin-top:6px;"></div>
             <!-- Guest mode must not expose local device download actions. -->
-            <!-- TODO: Email functionality will be connected separately. -->
-            <button type="button" id="emailPlaceholderBtn" disabled aria-disabled="true">Email My Photo</button>
-          </div>
-          <div id="finalPreviewButtons">
-            <button id="closePreviewBtn" onclick="exitFinalPreview()">✅ Done</button>
-            <button id="retakeBtn" onclick="retakePhoto()">🔄 Retake</button>
           </div>
         </div>
       </div>

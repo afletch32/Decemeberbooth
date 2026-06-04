@@ -1,7 +1,12 @@
 [
   {
     "src": "timeless-romance-strip-template.svg",
-    "layout": "photo_strip_3"
+    "layout": "photo_strip_3",
+    "slots": [
+      { "x": 86, "y": 468, "w": 548, "h": 380 },
+      { "x": 86, "y": 912, "w": 548, "h": 380 },
+      { "x": 86, "y": 1356, "w": 548, "h": 380 }
+    ]
   },
   {
     "src": "timeless-romance-single-template.svg",
