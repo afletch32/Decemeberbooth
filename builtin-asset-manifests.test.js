@@ -13,10 +13,13 @@ test("getBuiltinAssetManifest returns built-in entries for known folders", async
   const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
   const entries = getBuiltinAssetManifest("assets/wedding/timeless-romance/templates");
 
-  assert.deepEqual(entries, [
-    { src: "timeless-romance-strip-template.svg", layout: "photo_strip_3" },
-    { src: "timeless-romance-single-template.svg", layout: "single_photo" }
-  ]);
+  assert.equal(entries[0].src, "timeless-romance-strip-template.svg");
+  assert.equal(entries[0].layout, "photo_strip_3");
+  assert.equal(entries[0].slots.length, 3);
+  assert.deepEqual(entries[1], {
+    src: "timeless-romance-single-template.svg",
+    layout: "single_photo",
+  });
 });
 
 test("getBuiltinAssetManifest returns cloned objects", async () => {
@@ -38,12 +41,12 @@ test("wedding overlays remain available in built-in asset manifests", async () =
     "assets/wedding/garden-vows/overlays/"
   );
 
-  assert.deepEqual(timelessEntries, [
-    "timeless-romance-strip-overlay.svg",
-    "timeless-romance-single-overlay.svg"
-  ]);
-  assert.deepEqual(gardenEntries, [
-    "garden-vows-strip-overlay.svg",
-    "garden-vows-single-overlay.svg"
-  ]);
+  assert.equal(timelessEntries[0].src, "timeless-romance-strip-overlay.svg");
+  assert.equal(timelessEntries[0].photoSlots.length, 3);
+  assert.equal(timelessEntries[1].src, "timeless-romance-single-overlay.svg");
+  assert.equal(timelessEntries[1].photoSlots.length, 1);
+  assert.equal(gardenEntries[0].src, "garden-vows-strip-overlay.svg");
+  assert.equal(gardenEntries[0].photoSlots.length, 3);
+  assert.equal(gardenEntries[1].src, "garden-vows-single-overlay.svg");
+  assert.equal(gardenEntries[1].photoSlots.length, 1);
 });

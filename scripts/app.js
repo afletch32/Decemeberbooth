@@ -1,6 +1,7 @@
 import { CanvasBuffer, offscreenToDataURL } from "./canvas-utils.mjs";
 import {
   buildAssetIndexKey,
+  buildDateSessionFolderPath,
   buildEventAssetFolderPath,
   buildEventFolderPath,
 } from "./cloudinary-utils.mjs";
@@ -488,6 +489,9 @@ const DOM = {
   eventProfileSelect: document.getElementById("eventProfileSelect"),
   createPathEventName: document.getElementById("createPathEventName"),
   createPathEventType: document.getElementById("createPathEventType"),
+  createPathEventTypeCards: document.getElementById(
+    "createPathEventTypeCards"
+  ),
   createPathThemeType: document.getElementById("createPathThemeType"),
   createPathThemeSelect: document.getElementById("createPathThemeSelect"),
   createPathFontPairingSelect: document.getElementById(
@@ -511,6 +515,8 @@ const DOM = {
   createPathWeddingFields: document.getElementById("createPathWeddingFields"),
   createPathPartner1: document.getElementById("createPathPartner1"),
   createPathPartner2: document.getElementById("createPathPartner2"),
+  createPathDateFields: document.getElementById("createPathDateFields"),
+  createPathEventDate: document.getElementById("createPathEventDate"),
   createPathBirthdayFields: document.getElementById("createPathBirthdayFields"),
   createPathBirthdayName: document.getElementById("createPathBirthdayName"),
   createPathExpoFields: document.getElementById("createPathExpoFields"),
@@ -1017,9 +1023,8 @@ function getAssetCaptureType(asset) {
   )
     .trim()
     .toLowerCase();
-  const rawLayout = normalizeTemplateLayout(
-    asset && (asset.layout || asset.layoutType)
-  );
+  const explicitLayout = asset && (asset.layout || asset.layoutType);
+  const rawLayout = explicitLayout ? normalizeTemplateLayout(explicitLayout) : "";
   const rawName = [
     asset.id,
     asset.name,
@@ -1242,6 +1247,19 @@ let aiSegmentation = null;
 let aiSegmentationResolver = null;
 let aiSegmentationPromise = null;
 let pendingBulkAssetFiles = [];
+function createEmptySessionAssets() {
+  return {
+    backgrounds: [],
+    greenBackgrounds: [],
+    overlays: [],
+    templates: [],
+    backgroundIndex: 0,
+    greenBackgroundIndex: 0,
+    logo: "",
+    character: "",
+  };
+}
+let activeSessionAssets = createEmptySessionAssets();
 const ACCENT_PRESET_COLORS = [
   "#ffffff",
   "#0f1222",
@@ -1328,6 +1346,12 @@ function clearQuickStartSessionDate() {
   try {
     localStorage.removeItem(QUICK_START_SESSION_DATE_KEY);
   } catch (_) {}
+}
+
+function getDateSessionSlug() {
+  const raw = getQuickStartSessionDate() || getLocalIsoDate();
+  const safe = (raw || "").toString().trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(safe) ? safe : getLocalIsoDate();
 }
 
 function getShowcaseDemoThemeKey(kind) {
@@ -1426,7 +1450,7 @@ function startShowcaseDemo() {
   if (!kind) return;
   if (!applyShowcaseDemoTheme(kind)) return;
   showToast("Demo showcase ready.");
-  startBooth();
+  startBooth({ preserveSession: true });
 }
 
 function cycleShowcaseDemoTheme() {
@@ -1825,26 +1849,7 @@ function populateCreatePathFontPairingSelect(preferredValue = "") {
 
 function updateCreatePathAssetSummary() {
   if (!DOM.createPathAssetSummary) return;
-  const parts = [];
-  const countFiles = (input) => (input && input.files ? input.files.length : 0);
-  const backgrounds = countFiles(DOM.createPathBackgrounds);
-  const greenBackgrounds = countFiles(DOM.createPathGreenBackgrounds);
-  const overlays = countFiles(DOM.createPathOverlays);
-  const templates = countFiles(DOM.createPathTemplates);
-  const logo = countFiles(DOM.createPathLogo);
-  if (backgrounds)
-    parts.push(`${backgrounds} background${backgrounds === 1 ? "" : "s"}`);
-  if (greenBackgrounds)
-    parts.push(
-      `${greenBackgrounds} green background${greenBackgrounds === 1 ? "" : "s"}`
-    );
-  if (overlays) parts.push(`${overlays} overlay${overlays === 1 ? "" : "s"}`);
-  if (templates)
-    parts.push(`${templates} template${templates === 1 ? "" : "s"}`);
-  if (logo) parts.push("logo");
-  DOM.createPathAssetSummary.textContent = parts.length
-    ? `Selected: ${parts.join(", ")}`
-    : "No event assets selected yet.";
+  DOM.createPathAssetSummary.textContent = getSessionAssetSummaryText();
 }
 
 function populateCreatePathThemeSelect(preferredThemeKey) {
@@ -1904,6 +1909,35 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
   updateCreatePathDetailFields(
     inferThemeEventStyle(DOM.createPathThemeSelect.value || "", selectedTheme)
   );
+  const selectedKey = DOM.createPathThemeSelect.value || "";
+  if (selectedKey && DOM.eventSelect && DOM.eventSelect.value !== selectedKey) {
+    setActiveEventId("");
+    setQuickStartSessionDate(getLocalIsoDate());
+    setEventSelection(selectedKey);
+    loadTheme(selectedKey);
+    highlightThemeQuickSelect(selectedKey);
+  }
+}
+
+function syncCreatePathFilterCards() {
+  const selected =
+    (DOM.createPathEventType && DOM.createPathEventType.value) ||
+    createPathEventTypeFilter ||
+    "all";
+  document.querySelectorAll("[data-theme-filter-card]").forEach((button) => {
+    const active = button.dataset.themeFilterCard === selected;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function setCreatePathThemeFilter(value = "all") {
+  const next = value || "all";
+  createPathEventTypeFilter = next;
+  if (DOM.createPathEventType) DOM.createPathEventType.value = next;
+  syncCreatePathFilterCards();
+  populateCreatePathThemeSelect();
+  populateCreatePathFontPairingSelect();
 }
 
 function getCreatePathAssetInputs() {
@@ -1921,6 +1955,100 @@ function resetCreatePathAssetInputs() {
     input.value = "";
   });
   updateCreatePathAssetSummary();
+}
+
+function resetActiveSessionAssets() {
+  activeSessionAssets = createEmptySessionAssets();
+}
+
+function getSessionAssetUploadOptions(kind = "") {
+  const base = getEventFolderBase();
+  const date = getDateSessionSlug();
+  const cleanKind = (kind || "misc").toString().replace(/^\/+|\/+$/g, "");
+  return { folder: `${buildDateSessionFolderPath({ base, date })}/${cleanKind}` };
+}
+
+function addSessionAssetUrl(kind, url) {
+  if (!url) return false;
+  if (kind === "templates") {
+    activeSessionAssets.templates.push({ src: url, layout: "double_column" });
+    return true;
+  }
+  if (kind === "overlays") {
+    activeSessionAssets.overlays.push(url);
+    return true;
+  }
+  if (kind === "backgrounds") {
+    activeSessionAssets.backgrounds.push(url);
+    return true;
+  }
+  if (kind === "greenBackgrounds") {
+    activeSessionAssets.greenBackgrounds.push(url);
+    return true;
+  }
+  if (kind === "logo") {
+    activeSessionAssets.logo = url;
+    return true;
+  }
+  if (kind === "character") {
+    activeSessionAssets.character = url;
+    return true;
+  }
+  return false;
+}
+
+function getSessionAssetSummaryText() {
+  const summary = describeAssetSummaryCounts({
+    backgrounds: activeSessionAssets.backgrounds.length,
+    greenBackgrounds: activeSessionAssets.greenBackgrounds.length,
+    overlays: activeSessionAssets.overlays.length,
+    templates: activeSessionAssets.templates.length,
+    hasLogo: !!activeSessionAssets.logo,
+    hasCharacter: !!activeSessionAssets.character,
+  });
+  return summary === "none" ? "No session assets selected yet." : `Session assets: ${summary}`;
+}
+
+async function uploadCreatePathSessionAssets(kind, fileList) {
+  const files = Array.from(fileList || []).filter(Boolean);
+  if (!files.length) {
+    updateCreatePathAssetSummary();
+    return;
+  }
+  const tasks = files.map(async (file) => {
+    const url = await uploadAsset(file, kind, getSessionAssetUploadOptions(kind));
+    return addSessionAssetUrl(kind, url);
+  });
+  const results = await Promise.all(tasks);
+  const uploaded = results.filter(Boolean).length;
+  if (uploaded) {
+    renderCurrentAssets(activeTheme || getSelectedThemeTarget());
+    renderOptions();
+    updateCurrentEventAssetsPanel(activeTheme || getSelectedThemeTarget());
+    updateLaunchSummary();
+    showToast(`Added ${uploaded} session asset${uploaded === 1 ? "" : "s"}.`);
+  }
+  updateCreatePathAssetSummary();
+}
+
+function prepareThemeSessionFromSetup() {
+  disableShowcaseDemo();
+  setActiveEventId("");
+  setQuickStartSessionDate(getLocalIsoDate());
+  const key =
+    (DOM.createPathThemeSelect && DOM.createPathThemeSelect.value) ||
+    (DOM.eventSelect && DOM.eventSelect.value) ||
+    DEFAULT_THEME_KEY;
+  const resolved = resolvePreferredThemeKey(key);
+  if (!resolved) return false;
+  if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = "";
+  setEventSelection(resolved);
+  loadTheme(resolved);
+  syncEventInputsFromActive();
+  updateEventOverridesSummary();
+  updateStylePreview();
+  updateLaunchSummary();
+  return true;
 }
 
 const CREATE_PATH_VALIDATION_FIELDS = {
@@ -2020,41 +2148,20 @@ function updateCreatePathDetailFields(style = "") {
       (value) => value && value !== "general"
     ) || inferredStyle || selectedFilter || "general";
   if (DOM.createPathWeddingFields) {
-    DOM.createPathWeddingFields.classList.toggle(
-      "hidden",
-      normalized !== "wedding"
-    );
+    DOM.createPathWeddingFields.classList.add("hidden");
+    DOM.createPathWeddingFields.setAttribute("aria-hidden", "true");
   }
   if (DOM.createPathBirthdayFields) {
-    DOM.createPathBirthdayFields.classList.toggle(
-      "hidden",
-      normalized !== "birthday"
-    );
+    DOM.createPathBirthdayFields.classList.add("hidden");
+    DOM.createPathBirthdayFields.setAttribute("aria-hidden", "true");
   }
   if (DOM.createPathExpoFields) {
-    DOM.createPathExpoFields.classList.toggle("hidden", normalized !== "expo");
+    DOM.createPathExpoFields.classList.add("hidden");
+    DOM.createPathExpoFields.setAttribute("aria-hidden", "true");
   }
   if (DOM.createPathDateFields) {
-    DOM.createPathDateFields.classList.remove("hidden");
-  }
-  if (DOM.createPathDateFields) {
-    const label = DOM.createPathDateFields.querySelector("span");
-    if (label) {
-      label.textContent =
-        normalized === "wedding"
-          ? "Wedding Date"
-          : normalized === "birthday"
-          ? "Birthday Date"
-          : "Event Date";
-    }
-  }
-  if (DOM.createPathEventDate) {
-    DOM.createPathEventDate.placeholder =
-      normalized === "wedding"
-        ? "e.g., June 14, 2026"
-        : normalized === "birthday"
-        ? "e.g., April 27, 2026"
-        : "e.g., April 27, 2026";
+    DOM.createPathDateFields.classList.add("hidden");
+    DOM.createPathDateFields.setAttribute("aria-hidden", "true");
   }
 }
 
@@ -2196,7 +2303,7 @@ function quickStartThemeOnly(preferredThemeKey = "") {
   updateEventOverridesSummary();
   updateStylePreview();
   showToast("Quick start ready.");
-  startBooth();
+  startBooth({ preserveSession: true });
 }
 
 function populateQuickStartThemeSelect() {
@@ -2301,14 +2408,9 @@ function setupEventProfileControls() {
   if (DOM.createEventBtn) {
     DOM.createEventBtn.addEventListener("click", () => {
       setEventSetupPath("create");
-      createEventFromPathInputs()
-        .then((created) => {
-          if (created) focusCurrentEventSetup();
-        })
-        .catch((err) => {
-          console.error("Failed to create event from theme", err);
-          alert("Failed to create the event. See console for details.");
-        });
+      if (prepareThemeSessionFromSetup()) {
+        showToast("Theme session ready.");
+      }
     });
   }
   [
@@ -2355,12 +2457,17 @@ function setupEventProfileControls() {
   if (DOM.createPathEventType) {
     DOM.createPathEventType.value = "all";
     DOM.createPathEventType.addEventListener("change", () => {
-      createPathEventTypeFilter =
-        DOM.createPathEventType.value || createPathEventTypeFilter || "all";
-      populateCreatePathThemeSelect();
-      populateCreatePathFontPairingSelect();
+      setCreatePathThemeFilter(
+        DOM.createPathEventType.value || createPathEventTypeFilter || "all"
+      );
     });
   }
+  document.querySelectorAll("[data-theme-filter-card]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setCreatePathThemeFilter(button.dataset.themeFilterCard || "all");
+    });
+  });
+  syncCreatePathFilterCards();
   if (DOM.createPathThemeSelect) {
     DOM.createPathThemeSelect.addEventListener("change", () => {
       disableShowcaseDemo();
@@ -2371,13 +2478,28 @@ function setupEventProfileControls() {
       updateCreatePathDetailFields(style);
       populateCreatePathFontPairingSelect();
       if (!key) return;
+      setActiveEventId("");
+      setQuickStartSessionDate(getLocalIsoDate());
       if (DOM.eventSelect) DOM.eventSelect.value = key;
       loadTheme(key);
       highlightThemeQuickSelect(key);
     });
   }
-  getCreatePathAssetInputs().forEach((input) => {
-    input.addEventListener("change", updateCreatePathAssetSummary);
+  const sessionAssetInputs = [
+    [DOM.createPathBackgrounds, "backgrounds"],
+    [DOM.createPathGreenBackgrounds, "greenBackgrounds"],
+    [DOM.createPathOverlays, "overlays"],
+    [DOM.createPathTemplates, "templates"],
+    [DOM.createPathLogo, "logo"],
+  ];
+  sessionAssetInputs.forEach(([input, kind]) => {
+    if (!input) return;
+    input.addEventListener("change", () => {
+      uploadCreatePathSessionAssets(kind, input.files).catch((err) => {
+        console.error("Session asset upload failed", err);
+        updateCreatePathAssetSummary();
+      });
+    });
   });
   document.querySelectorAll("[data-demo-theme]").forEach((button) => {
     button.addEventListener("click", (event) => {
@@ -2794,6 +2916,27 @@ function handleThemeAssetInputChange(kind) {
       return;
     }
   }
+  if (!getActiveEvent()) {
+    const kindMap = {
+      background: "backgrounds",
+      overlay: "overlays",
+      template: "templates",
+      greenBackgrounds: "greenBackgrounds",
+      logo: "logo",
+      character: "character",
+    };
+    const sessionKind = kindMap[kind];
+    if (sessionKind) {
+      uploadCreatePathSessionAssets(sessionKind, input.files)
+        .catch((err) => {
+          console.error("Failed to update session assets:", err);
+        })
+        .finally(() => {
+          input.value = "";
+        });
+      return;
+    }
+  }
   updateCurrentThemeAssets(kind).catch((err) =>
     console.error("Failed to update theme assets:", err)
   );
@@ -2910,8 +3053,7 @@ async function applyBulkAssetUpload() {
     return;
   }
 
-  const target = getSelectedThemeTarget();
-  if (!target) {
+  if (!getSelectedThemeTarget()) {
     alert("Select a theme first.");
     closeBulkAssetModal();
     return;
@@ -2921,9 +3063,9 @@ async function applyBulkAssetUpload() {
   files.forEach((file) => {
     kinds.forEach((kind) => {
       tasks.push(
-        uploadAsset(file, kind).then((url) => {
+        uploadAsset(file, kind, getSessionAssetUploadOptions(kind)).then((url) => {
           if (!url) return;
-          addAssetUrlToTheme(target, kind, url);
+          addSessionAssetUrl(kind, url);
           uploaded += 1;
         })
       );
@@ -2934,11 +3076,11 @@ async function applyBulkAssetUpload() {
     showToast("No assets were uploaded.");
     return;
   }
-  saveThemesToStorage();
   const key = DOM.eventSelect && DOM.eventSelect.value;
   if (key) loadTheme(key);
+  updateCreatePathAssetSummary();
   closeBulkAssetModal();
-  showToast(`Added ${uploaded} asset item${uploaded === 1 ? "" : "s"}.`);
+  showToast(`Added ${uploaded} session asset item${uploaded === 1 ? "" : "s"}.`);
 }
 
 function setupCreateThemeModalControls() {
@@ -3900,9 +4042,9 @@ function getLaunchThemeName() {
   const active = getActiveEvent();
   if (active && active.name) return active.name;
   if (DOM.eventSelect && DOM.eventSelect.selectedOptions.length) {
-    return DOM.eventSelect.selectedOptions[0].textContent || "No event selected";
+    return DOM.eventSelect.selectedOptions[0].textContent || "No theme selected";
   }
-  return "No event selected";
+  return "No theme selected";
 }
 
 function getLaunchThemeLabel() {
@@ -5310,10 +5452,7 @@ function shouldIncludeThemeForSelectedType(themeKey, theme, selectedType) {
 function shouldIncludeCreatePathTheme(themeKey, theme, selectedType) {
   const normalizedSelected = normalizeEventStyle(selectedType);
   if (!theme) return false;
-  if (normalizedSelected !== "wedding") {
-    return shouldIncludeThemeForSelectedType(themeKey, theme, normalizedSelected);
-  }
-  if (isHolidayThemeKey(themeKey)) return false;
+  if (normalizedSelected === "general") return true;
   const themeText = [
     themeKey,
     theme.name,
@@ -5323,7 +5462,13 @@ function shouldIncludeCreatePathTheme(themeKey, theme, selectedType) {
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
-  if (/(halloween|christmas|valentine|santa|new year|spooky|boo|winter wonderland)/.test(themeText)) {
+  if (
+    normalizedSelected === "wedding" &&
+    (isHolidayThemeKey(themeKey) ||
+      /(halloween|christmas|valentine|santa|new year|spooky|boo|winter wonderland)/.test(
+        themeText
+      ))
+  ) {
     return false;
   }
   const explicitTypes = Array.isArray(theme.eventTypes)
@@ -5331,8 +5476,9 @@ function shouldIncludeCreatePathTheme(themeKey, theme, selectedType) {
         .map((entry) => normalizeEventStyle(entry))
         .filter(Boolean)
     : [];
-  if (explicitTypes.includes("wedding")) return true;
-  return inferThemeEventStyle(themeKey, theme) === "wedding";
+  const inferred = inferThemeEventStyle(themeKey, theme);
+  if (inferred !== "general") return inferred === normalizedSelected;
+  return explicitTypes.includes(normalizedSelected) && themeText.includes(normalizedSelected);
 }
 
 function getEventTypeCopy(selectedType) {
@@ -6586,12 +6732,18 @@ function renderCurrentAssets(theme) {
     ? theme.backgroundsTmp.filter((src) => src && !removedBackgrounds.has(src))
     : [];
   const baseBgList = getBaseBackgroundList(theme);
-  const bgList = baseBgList;
+  const bgList = getBackgroundList(theme);
   const baseGreenList = Array.isArray(theme && theme.greenBackgrounds)
     ? theme.greenBackgrounds.filter(Boolean)
     : [];
-  const greenBgList = baseGreenList;
+  const greenBgList = getGreenBackgroundList(theme);
   const eventOverrides = getActiveEventOverrides();
+  const hasSessionBackgrounds =
+    Array.isArray(activeSessionAssets.backgrounds) &&
+    activeSessionAssets.backgrounds.length > 0;
+  const hasSessionGreenBackgrounds =
+    Array.isArray(activeSessionAssets.greenBackgrounds) &&
+    activeSessionAssets.greenBackgrounds.length > 0;
   const baseFolderSet = new Set(baseFolderList);
   const hasEventBackgrounds =
     Array.isArray(eventOverrides.backgrounds) &&
@@ -6600,7 +6752,12 @@ function renderCurrentAssets(theme) {
     Array.isArray(eventOverrides.greenBackgrounds) &&
     eventOverrides.greenBackgrounds.length > 0;
   const selectedBg = bgList.length
-    ? Number.isFinite(eventOverrides.useBaseBackgroundIndex)
+    ? hasSessionBackgrounds
+      ? Math.min(
+          Math.max(activeSessionAssets.backgroundIndex || 0, 0),
+          activeSessionAssets.backgrounds.length - 1
+        )
+      : Number.isFinite(eventOverrides.useBaseBackgroundIndex)
       ? Math.min(
           Math.max(eventOverrides.useBaseBackgroundIndex, 0),
           baseBgList.length - 1
@@ -6612,7 +6769,12 @@ function renderCurrentAssets(theme) {
       : 0
     : -1;
   const selectedGreenBg = greenBgList.length
-    ? Number.isFinite(eventOverrides.useBaseGreenBackgroundIndex)
+    ? hasSessionGreenBackgrounds
+      ? Math.min(
+          Math.max(activeSessionAssets.greenBackgroundIndex || 0, 0),
+          activeSessionAssets.greenBackgrounds.length - 1
+        )
+      : Number.isFinite(eventOverrides.useBaseGreenBackgroundIndex)
       ? Math.min(
           Math.max(eventOverrides.useBaseGreenBackgroundIndex, 0),
           baseGreenList.length - 1
@@ -6640,11 +6802,21 @@ function renderCurrentAssets(theme) {
           if (!confirm("Remove this " + type + "?")) return;
           if (type === "background") removeBackground();
           if (type === "logo") {
-            if (isEventOwned) updateActiveEventDetails({ logo: "" });
+            if (activeSessionAssets.logo === src) {
+              activeSessionAssets.logo = "";
+              renderCurrentAssets(activeTheme);
+              updateCreatePathAssetSummary();
+              updateLaunchSummary();
+            } else if (isEventOwned) updateActiveEventDetails({ logo: "" });
             else removeLogo();
           }
           if (type === "character") {
-            if (isEventOwned) updateActiveEventDetails({ character: "" });
+            if (activeSessionAssets.character === src) {
+              activeSessionAssets.character = "";
+              renderCurrentAssets(activeTheme);
+              updateCreatePathAssetSummary();
+              updateLaunchSummary();
+            } else if (isEventOwned) updateActiveEventDetails({ character: "" });
             else removeCharacter();
           }
         };
@@ -6690,6 +6862,7 @@ function renderCurrentAssets(theme) {
       const src = typeof entry === "string" ? entry : entry.src;
       const fromFolder = typeof entry === "object" && !!entry.__folder;
       const isEvent = typeof entry === "object" && !!entry.__event;
+      const isSession = typeof entry === "object" && !!entry.__session;
       const localIndex = getLocalIndex(kind, src);
       const badge =
         withBadge && typeof entry === "object" && entry.layout
@@ -6704,30 +6877,37 @@ function renderCurrentAssets(theme) {
         !lockBaseThemeAssets &&
         !fromFolder &&
         !isEvent &&
+        !isSession &&
         localIndex >= 0;
       item.dataset.index = localIndex;
-      if (!lockBaseThemeAssets || isEvent) {
+      if (!lockBaseThemeAssets || isEvent || isSession) {
         const btn = document.createElement("button");
         btn.className = "asset-remove";
         btn.textContent = "×";
         btn.title = isEvent
           ? "Remove from this event"
+          : isSession
+          ? "Remove from this session"
           : fromFolder
           ? "Hide from this theme"
           : "Remove";
         btn.onclick = () => {
           const promptText = isEvent
             ? "Remove this item from this event?"
+            : isSession
+            ? "Remove this item from this session?"
             : fromFolder
             ? "Hide this item for this theme?"
             : "Remove this item?";
           if (!confirm(promptText)) return;
           if (kind === "overlay") {
-            if (isEvent) removeEventOverlay(src);
+            if (isSession) removeSessionOverlay(src);
+            else if (isEvent) removeEventOverlay(src);
             else if (fromFolder) removeFolderOverlay(src);
             else if (localIndex >= 0) removeOverlay(localIndex);
           } else if (kind === "template") {
-            if (isEvent) removeEventTemplate(src);
+            if (isSession) removeSessionTemplate(src);
+            else if (isEvent) removeEventTemplate(src);
             else if (fromFolder) removeFolderTemplate(src);
             else if (localIndex >= 0) removeTemplate(localIndex);
           }
@@ -6740,6 +6920,7 @@ function renderCurrentAssets(theme) {
         !lockBaseThemeAssets &&
         !fromFolder &&
         !isEvent &&
+        !isSession &&
         localIndex >= 0
       ) {
         item.addEventListener("dragstart", (ev) => {
@@ -6863,10 +7044,10 @@ function renderCurrentAssets(theme) {
       });
     }
   }
-  setSingle(DOM.currentLogo, theme && theme.logo ? theme.logo : "", "logo");
+  setSingle(DOM.currentLogo, resolveEventLogo(theme), "logo");
   setSingle(
     DOM.currentCharacter,
-    theme && theme.character ? theme.character : "",
+    resolveEventCharacter(theme),
     "character"
   );
   // Font preview
@@ -6960,7 +7141,7 @@ function renderCurrentAssets(theme) {
   }
   setGrid(
     DOM.currentOverlays,
-    getBaseOverlayList(theme),
+    getOverlayList(theme),
     false,
     "overlay",
     false,
@@ -6968,7 +7149,7 @@ function renderCurrentAssets(theme) {
   );
   setGrid(
     DOM.currentTemplates,
-    getBaseTemplateList(theme),
+    getTemplateList(theme),
     true,
     "template",
     false,
@@ -6976,12 +7157,12 @@ function renderCurrentAssets(theme) {
   );
   syncAssetPanelHeader(
     "overlay",
-    getBaseOverlayList(theme),
+    getOverlayList(theme),
     selectedOverlay || lastPhotoOverlay || ""
   );
   syncAssetPanelHeader(
     "template",
-    getBaseTemplateList(theme),
+    getTemplateList(theme),
     pendingTemplate && pendingTemplate.src ? pendingTemplate.src : ""
   );
   setAssetPanelMessage("overlay", null);
@@ -7762,7 +7943,10 @@ async function startCamera(autoStartBooth = false) {
   }
 }
 
-function startBooth() {
+async function startBooth(options = {}) {
+  if (!options.preserveSession) {
+    prepareThemeSessionFromSetup();
+  }
   if (DOM.eventSelect && DOM.eventSelect.value) {
     loadTheme(DOM.eventSelect.value);
   }
@@ -9462,7 +9646,10 @@ async function detectMaskRegions(img, hexColor, tolerance) {
 // Final preview
 function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
-  if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
+  if (DOM.boothScreen) {
+    DOM.boothScreen.classList.remove("countdown-mode");
+    DOM.boothScreen.classList.add("share-mode");
+  }
   const img = DOM.finalStrip;
   const previewFit = getSelectedCaptureMode() === "strip" ? "contain" : "cover";
   if (img) img.style.objectFit = previewFit;
@@ -9890,7 +10077,7 @@ function syncEventSetupEditor(theme = null) {
   if (DOM.eventThemeReferenceText) {
     if (!hasActiveEvent) {
       DOM.eventThemeReferenceText.textContent =
-        "Select or create an event first. Theme blueprints stay read-only in this setup flow.";
+        "Theme sessions use the selected theme plus one-off session assets. Saved event edits are optional.";
     } else {
       const overrides = ensureEventOverrides(active);
       const eventSpecific = describeAssetSummaryCounts({
@@ -10068,7 +10255,7 @@ function getQuickStartFolderLabel() {
 
 function getEventUploadSlug() {
   const quickStartDate = getQuickStartFolderDate();
-  if (quickStartDate) return `qs-${quickStartDate}`;
+  if (quickStartDate) return quickStartDate;
   const name = slugifyEventText(getEventNameForUploads());
   const date = slugifyEventText(getEventDateForUploads());
   if (name && date) return `${name}-${date}`;
@@ -10120,7 +10307,7 @@ function updateEventOverridesSummary() {
   const active = getActiveEvent();
   if (!active) {
     DOM.eventOverridesSummary.textContent =
-      "Select an event to add event-only assets.";
+      "No saved event selected. Theme session assets stay one-off for this run.";
     updateEventDependentControls(false);
     updateCurrentEventAssetsPanel();
     return;
@@ -10143,12 +10330,13 @@ function updateEventOverridesSummary() {
 }
 
 function updateEventDependentControls(hasActiveEvent = !!getActiveEvent()) {
+  const hasTheme = hasActiveEvent || !!(activeTheme || getSelectedThemeTarget());
   if (DOM.currentAssetsContent)
-    DOM.currentAssetsContent.classList.toggle("hidden", !hasActiveEvent);
+    DOM.currentAssetsContent.classList.toggle("hidden", !hasTheme);
   if (DOM.eventGalleryActions)
-    DOM.eventGalleryActions.classList.toggle("hidden", !hasActiveEvent);
+    DOM.eventGalleryActions.classList.toggle("hidden", !hasTheme);
   if (DOM.currentEventAssetsSummary)
-    DOM.currentEventAssetsSummary.classList.toggle("hidden", !hasActiveEvent);
+    DOM.currentEventAssetsSummary.classList.toggle("hidden", !hasTheme);
   if (DOM.clearEventOverridesBtn)
     DOM.clearEventOverridesBtn.classList.toggle("hidden", !hasActiveEvent);
   if (DOM.eventToSubThemeBtn)
@@ -10166,14 +10354,30 @@ function updateCurrentEventAssetsPanel(theme = null) {
   const active = getActiveEvent();
   if (!active) {
     updateEventDependentControls(false);
-    DOM.currentEventName.textContent = "No event selected";
+    const themeObj = theme || activeTheme || getSelectedThemeTarget();
+    DOM.currentEventName.textContent = `Session ${getDateSessionSlug()}`;
     if (DOM.currentEventDate) DOM.currentEventDate.textContent = "";
-    DOM.currentEventTheme.textContent = "";
-    DOM.currentEventAssetsSummary.textContent = "Event-only assets: none";
-    DOM.currentThemeAssetsSummary.textContent = "Theme assets: none";
+    DOM.currentEventTheme.textContent =
+      themeObj && themeObj.name ? themeObj.name : "No theme selected";
+    DOM.currentEventAssetsSummary.textContent = getSessionAssetSummaryText();
+    const baseBackgrounds = themeObj ? getBaseBackgroundList(themeObj) : [];
+    const baseGreen = Array.isArray(themeObj && themeObj.greenBackgrounds)
+      ? themeObj.greenBackgrounds.filter(Boolean)
+      : [];
+    const baseOverlays = themeObj ? getBaseOverlayList(themeObj).length : 0;
+    const baseTemplates = themeObj ? getBaseTemplateList(themeObj).length : 0;
+    DOM.currentThemeAssetsSummary.textContent = `Theme assets: ${describeAssetSummaryCounts(
+      {
+        backgrounds: baseBackgrounds.length,
+        greenBackgrounds: baseGreen.length,
+        overlays: baseOverlays,
+        templates: baseTemplates,
+        hasLogo: !!(themeObj && themeObj.logo),
+        hasCharacter: !!(themeObj && themeObj.character),
+      }
+    )}`;
     if (DOM.eventGalleryLink)
-      DOM.eventGalleryLink.textContent =
-        "Select an event to enable gallery link.";
+      DOM.eventGalleryLink.textContent = getEventGalleryUrl() || "Set Cloudinary to enable gallery link.";
     syncEventSetupEditor();
     return;
   }
@@ -10304,8 +10508,9 @@ function getEventFolderBase() {
 
 function getEventUploadFolderPath() {
   const base = getEventFolderBase();
-  const quickStartFolder = getQuickStartFolderLabel();
-  if (quickStartFolder) return `${base}/${quickStartFolder}`;
+  const quickStartDate = getQuickStartFolderDate();
+  if (quickStartDate)
+    return buildDateSessionFolderPath({ base, date: quickStartDate });
   const name = slugifyEventText(getEventNameForUploads());
   const date = slugifyEventText(getEventDateForUploads());
   const fallback = getCurrentEventSlug() || "event";
@@ -10334,10 +10539,13 @@ function getEventGalleryUrl() {
   const cfg = getCloudinaryConfig();
   if (!cfg || !cfg.cloud) return "";
   const tag = getEventUploadSlug();
+  const quickStartDate = getQuickStartFolderDate();
   const title = encodeURIComponent(
-    `${getEventNameForUploads()}${
-      getEventDateForUploads() ? " (" + getEventDateForUploads() + ")" : ""
-    }`
+    quickStartDate
+      ? `Photos - ${quickStartDate}`
+      : `${getEventNameForUploads()}${
+          getEventDateForUploads() ? " (" + getEventDateForUploads() + ")" : ""
+        }`
   );
   const cloud = encodeURIComponent(cfg.cloud);
   return `${
@@ -10481,7 +10689,7 @@ async function uploadEventPhoto(dataUrl, options = {}) {
   const res = await fetch(dataUrl);
   const blob = await res.blob();
   const slug = options.slug || getEventUploadSlug();
-  const folder = getEventUploadFolderPath();
+  const folder = options.folder || getEventUploadFolderPath();
   const url = await uploadImageToCloudinary(blob, {
     baseName: slug || "photo",
     folder,
@@ -10497,14 +10705,15 @@ function handleCaptureUpload(dataUrl) {
     return;
   }
   const slug = getEventUploadSlug();
+  const folder = getEventUploadFolderPath();
   if (offlineModeActive() || !navigator.onLine) {
-    const ok = queuePendingUpload(dataUrl, { slug });
+    const ok = queuePendingUpload(dataUrl, { slug, folder });
     if (ok) showToast("Offline: photo queued for upload");
     else alert("Offline upload queue is full or unavailable.");
     return;
   }
-  uploadEventPhoto(dataUrl, { slug }).catch(() => {
-    const ok = queuePendingUpload(dataUrl, { slug });
+  uploadEventPhoto(dataUrl, { slug, folder }).catch(() => {
+    const ok = queuePendingUpload(dataUrl, { slug, folder });
     if (ok) showToast("Upload failed, queued for retry");
   });
 }
@@ -10569,11 +10778,8 @@ async function publishShareVideo(blob) {
 
 async function publishFinalShareUrl(shareType, shareBlob, posterUrl) {
   if (shareType === "video") {
-    const videoUrl = await Promise.race([
-      publishShareVideo(shareBlob),
-      delay(8000).then(() => null),
-    ]);
-    if (videoUrl) return videoUrl;
+    publishShareVideo(shareBlob).catch(() => null);
+    return publishShareImage(posterUrl);
   }
   return publishShareImage(posterUrl);
 }
@@ -10636,6 +10842,7 @@ async function downloadShareImage() {
 function hideFinal() {
   clearPreviewFreezeFrame();
   DOM.finalPreview.classList.remove("show");
+  if (DOM.boothScreen) DOM.boothScreen.classList.remove("share-mode");
   DOM.qrCodeContainer.classList.add("hidden");
   setFinalPreviewSharePanelVisible(false);
   if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "none";
@@ -10845,6 +11052,7 @@ function queuePendingUpload(dataUrl, meta = {}) {
       image: dataUrl,
       createdAt: new Date().toISOString(),
       slug: meta.slug || getEventUploadSlug(),
+      folder: meta.folder || getEventUploadFolderPath(),
     });
     setPendingUploads(q);
     return true;
@@ -10860,7 +11068,10 @@ async function flushPendingUploads() {
   let sent = 0;
   for (const item of q.slice()) {
     try {
-      await uploadEventPhoto(item.image, { slug: item.slug });
+      await uploadEventPhoto(item.image, {
+        slug: item.slug,
+        folder: item.folder,
+      });
       sent++;
       const cur = getPendingUploads();
       const idx = cur.findIndex((x) => x.id === item.id);
@@ -14674,6 +14885,7 @@ function applyThemeCharacter(theme) {
 
 function resolveEventLogo(theme) {
   const active = getActiveEvent();
+  if (activeSessionAssets.logo) return activeSessionAssets.logo;
   if (active && typeof active.logo === "string" && active.logo)
     return active.logo;
   return theme && theme.logo ? theme.logo : "";
@@ -14681,6 +14893,7 @@ function resolveEventLogo(theme) {
 
 function resolveEventCharacter(theme) {
   const active = getActiveEvent();
+  if (activeSessionAssets.character) return activeSessionAssets.character;
   if (active && typeof active.character === "string" && active.character)
     return active.character;
   return theme && theme.character ? theme.character : "";
@@ -15140,12 +15353,32 @@ function removeBackgroundAt(index) {
   const t = getSelectedThemeTarget();
   if (!t) return;
   const overrides = getActiveEventOverrides();
+  const sessionList = Array.isArray(activeSessionAssets.backgrounds)
+    ? activeSessionAssets.backgrounds.filter(Boolean)
+    : [];
   const eventList = Array.isArray(overrides.backgrounds)
     ? overrides.backgrounds.filter(Boolean)
     : [];
-  const combined = mergeUniqueUrls(eventList, getBaseBackgroundList(t));
+  const combined = mergeUniqueUrls(
+    sessionList,
+    mergeUniqueUrls(eventList, getBaseBackgroundList(t))
+  );
   if (index < 0 || index >= combined.length) return;
   const selected = combined[index];
+  if (sessionList.includes(selected)) {
+    activeSessionAssets.backgrounds = activeSessionAssets.backgrounds.filter(
+      (item) => item !== selected
+    );
+    if (activeSessionAssets.backgroundIndex >= activeSessionAssets.backgrounds.length)
+      activeSessionAssets.backgroundIndex = 0;
+    applyThemeBackground(t);
+    renderCurrentAssets(t);
+    updateCreatePathAssetSummary();
+    updateLaunchSummary();
+    scheduleLocalAssetCleanup(selected);
+    showToast("Session background removed");
+    return;
+  }
   if (eventList.includes(selected)) {
     const removeIdx = eventList.indexOf(selected);
     overrides.backgrounds.splice(removeIdx, 1);
@@ -15184,13 +15417,24 @@ function setBackgroundIndex(index) {
   const t = getSelectedThemeTarget();
   if (!t) return;
   const overrides = getActiveEventOverrides();
+  const sessionList = Array.isArray(activeSessionAssets.backgrounds)
+    ? activeSessionAssets.backgrounds.filter(Boolean)
+    : [];
   const eventList = Array.isArray(overrides.backgrounds)
     ? overrides.backgrounds.filter(Boolean)
     : [];
   const baseList = getBaseBackgroundList(t);
-  const combined = mergeUniqueUrls(eventList, baseList);
+  const combined = mergeUniqueUrls(sessionList, mergeUniqueUrls(eventList, baseList));
   if (index < 0 || index >= combined.length) return;
   const selected = combined[index];
+  const sessionIndex = sessionList.indexOf(selected);
+  if (sessionIndex >= 0) {
+    activeSessionAssets.backgroundIndex = sessionIndex;
+    applyThemeBackground(t);
+    renderCurrentAssets(t);
+    showToast("Session background selected");
+    return;
+  }
   const eventIndex = eventList.indexOf(selected);
   if (eventIndex >= 0) {
     overrides.backgroundIndex = eventIndex;
@@ -15289,6 +15533,30 @@ function removeEventTemplate(src) {
   renderCurrentAssets(activeTheme);
   scheduleLocalAssetCleanup(src);
   showToast("Event template removed");
+}
+
+function removeSessionOverlay(src) {
+  activeSessionAssets.overlays = activeSessionAssets.overlays.filter(
+    (item) => (typeof item === "string" ? item : item && item.src) !== src
+  );
+  renderOptions();
+  renderCurrentAssets(activeTheme);
+  updateCreatePathAssetSummary();
+  updateLaunchSummary();
+  scheduleLocalAssetCleanup(src);
+  showToast("Session overlay removed");
+}
+
+function removeSessionTemplate(src) {
+  activeSessionAssets.templates = activeSessionAssets.templates.filter(
+    (item) => (typeof item === "string" ? item : item && item.src) !== src
+  );
+  renderOptions();
+  renderCurrentAssets(activeTheme);
+  updateCreatePathAssetSummary();
+  updateLaunchSummary();
+  scheduleLocalAssetCleanup(src);
+  showToast("Session template removed");
 }
 
 // Hide a folder-based overlay/template by adding it to a per-theme blocklist
@@ -15424,10 +15692,13 @@ function getBaseBackgroundList(theme) {
 function getBackgroundList(theme) {
   const baseList = getBaseBackgroundList(theme);
   const overrides = getActiveEventOverrides();
+  const sessionList = Array.isArray(activeSessionAssets.backgrounds)
+    ? activeSessionAssets.backgrounds.filter(Boolean)
+    : [];
   const eventList = Array.isArray(overrides.backgrounds)
     ? overrides.backgrounds.filter(Boolean)
     : [];
-  return mergeUniqueUrls(eventList, baseList);
+  return mergeUniqueUrls(sessionList, mergeUniqueUrls(eventList, baseList));
 }
 
 function getGreenBackgroundList(theme) {
@@ -15435,15 +15706,31 @@ function getGreenBackgroundList(theme) {
     ? theme.greenBackgrounds.filter(Boolean)
     : [];
   const overrides = getActiveEventOverrides();
+  const sessionList = Array.isArray(activeSessionAssets.greenBackgrounds)
+    ? activeSessionAssets.greenBackgrounds.filter(Boolean)
+    : [];
   const eventList = Array.isArray(overrides.greenBackgrounds)
     ? overrides.greenBackgrounds.filter(Boolean)
     : [];
-  return mergeUniqueUrls(eventList, baseList);
+  return mergeUniqueUrls(sessionList, mergeUniqueUrls(eventList, baseList));
 }
 
 function getActiveBackground(theme) {
   const overrides = getActiveEventOverrides();
   const baseList = getBaseBackgroundList(theme);
+  if (
+    Array.isArray(activeSessionAssets.backgrounds) &&
+    activeSessionAssets.backgrounds.length
+  ) {
+    const idx =
+      typeof activeSessionAssets.backgroundIndex === "number"
+        ? Math.min(
+            Math.max(activeSessionAssets.backgroundIndex, 0),
+            activeSessionAssets.backgrounds.length - 1
+          )
+        : 0;
+    return activeSessionAssets.backgrounds[idx];
+  }
   if (Number.isFinite(overrides.useBaseBackgroundIndex)) {
     const idx = Math.min(
       Math.max(overrides.useBaseBackgroundIndex, 0),
@@ -15474,15 +15761,25 @@ function setGreenBackgroundIndex(idx) {
   const target = activeTheme || getSelectedThemeTarget();
   if (!target) return;
   const overrides = getActiveEventOverrides();
+  const sessionList = Array.isArray(activeSessionAssets.greenBackgrounds)
+    ? activeSessionAssets.greenBackgrounds.filter(Boolean)
+    : [];
   const eventList = Array.isArray(overrides.greenBackgrounds)
     ? overrides.greenBackgrounds.filter(Boolean)
     : [];
   const baseList = Array.isArray(target.greenBackgrounds)
     ? target.greenBackgrounds.filter(Boolean)
     : [];
-  const combined = mergeUniqueUrls(eventList, baseList);
+  const combined = mergeUniqueUrls(sessionList, mergeUniqueUrls(eventList, baseList));
   if (idx < 0 || idx >= combined.length) return;
   const selected = combined[idx];
+  const sessionIndex = sessionList.indexOf(selected);
+  if (sessionIndex >= 0) {
+    activeSessionAssets.greenBackgroundIndex = sessionIndex;
+    renderCurrentAssets(target);
+    renderOptions();
+    return;
+  }
   const eventIndex = eventList.indexOf(selected);
   if (active) {
     const activeOverrides = ensureEventOverrides(active);
@@ -15514,15 +15811,36 @@ function removeGreenBackgroundAt(idx) {
   const target = activeTheme || getSelectedThemeTarget();
   if (!target) return;
   const overrides = getActiveEventOverrides();
+  const sessionList = Array.isArray(activeSessionAssets.greenBackgrounds)
+    ? activeSessionAssets.greenBackgrounds.filter(Boolean)
+    : [];
   const eventList = Array.isArray(overrides.greenBackgrounds)
     ? overrides.greenBackgrounds.filter(Boolean)
     : [];
   const baseList = Array.isArray(target.greenBackgrounds)
     ? target.greenBackgrounds.filter(Boolean)
     : [];
-  const combined = mergeUniqueUrls(eventList, baseList);
+  const combined = mergeUniqueUrls(sessionList, mergeUniqueUrls(eventList, baseList));
   if (idx < 0 || idx >= combined.length) return;
   const selected = combined[idx];
+  const sessionIndex = sessionList.indexOf(selected);
+  if (sessionIndex >= 0) {
+    activeSessionAssets.greenBackgrounds.splice(sessionIndex, 1);
+    if (
+      activeSessionAssets.greenBackgroundIndex >=
+      activeSessionAssets.greenBackgrounds.length
+    ) {
+      activeSessionAssets.greenBackgroundIndex = Math.max(
+        0,
+        activeSessionAssets.greenBackgrounds.length - 1
+      );
+    }
+    renderCurrentAssets(target);
+    updateCreatePathAssetSummary();
+    updateLaunchSummary();
+    scheduleLocalAssetCleanup(selected);
+    return;
+  }
   const eventIndex = eventList.indexOf(selected);
   if (active && eventIndex >= 0) {
     const activeOverrides = ensureEventOverrides(active);
@@ -15562,6 +15880,19 @@ function getActiveGreenBackground(theme) {
   const baseList = Array.isArray(theme && theme.greenBackgrounds)
     ? theme.greenBackgrounds.filter(Boolean)
     : [];
+  if (
+    Array.isArray(activeSessionAssets.greenBackgrounds) &&
+    activeSessionAssets.greenBackgrounds.length
+  ) {
+    const idx =
+      typeof activeSessionAssets.greenBackgroundIndex === "number"
+        ? Math.min(
+            Math.max(activeSessionAssets.greenBackgroundIndex, 0),
+            activeSessionAssets.greenBackgrounds.length - 1
+          )
+        : 0;
+    return activeSessionAssets.greenBackgrounds[idx];
+  }
   if (Number.isFinite(overrides.useBaseGreenBackgroundIndex)) {
     const idx = Math.min(
       Math.max(overrides.useBaseGreenBackgroundIndex, 0),
@@ -15669,6 +16000,37 @@ function getBuiltinFolderStrings(folder) {
   return getBuiltinAssetManifest(folder)
     .filter((it) => typeof it === "string")
     .map((it) => folder + it);
+}
+
+function qualifyAssetPath(path, folder) {
+  const value = String(path || "").trim();
+  if (!value) return value;
+  if (/^(https?:|data:|\/)/i.test(value)) return value;
+  return folder + value;
+}
+
+function qualifyOverlayEntry(entry, folder) {
+  if (typeof entry === "string") return folder + entry;
+  if (!entry || typeof entry !== "object" || typeof entry.src !== "string") {
+    return null;
+  }
+  const next = {
+    ...entry,
+    src: qualifyAssetPath(entry.src, folder),
+  };
+  if (entry.foreground && typeof entry.foreground === "object") {
+    next.foreground = {
+      ...entry.foreground,
+      src: qualifyAssetPath(entry.foreground.src, folder),
+    };
+  }
+  return next;
+}
+
+function getBuiltinOverlayEntries(folder) {
+  return getBuiltinAssetManifest(folder)
+    .map((it) => qualifyOverlayEntry(it, folder))
+    .filter(Boolean);
 }
 
 function getBuiltinTemplateEntries(folder) {
@@ -16130,7 +16492,7 @@ async function resolveOverlaysFromFolder(theme) {
         ? theme.overlaysFolder
         : "";
     if (!folder || !folder.endsWith("/")) return [];
-    const builtin = getBuiltinFolderStrings(folder);
+    const builtin = getBuiltinOverlayEntries(folder);
     if (!String(location.protocol).startsWith("http")) {
       return fixOverlayEntries(builtin);
     }
@@ -16141,20 +16503,8 @@ async function resolveOverlaysFromFolder(theme) {
     const out = [];
     if (Array.isArray(json)) {
       for (const it of json) {
-        if (typeof it === "string") out.push(folder + it);
-        else if (it && typeof it === "object" && typeof it.src === "string")
-          out.push({
-            src: folder + it.src,
-            id: it.id,
-            name: it.name,
-            type: it.type,
-            category: it.category,
-            aspectRatio: it.aspectRatio,
-            background: it.background,
-            foreground: it.foreground,
-            photoSlots: it.photoSlots || it.slots,
-            textFields: normalizeTemplateTextFields(it.textFields),
-          });
+        const entry = qualifyOverlayEntry(it, folder);
+        if (entry) out.push(entry);
       }
     }
     return fixOverlayEntries(out.length ? out : builtin);
@@ -16163,7 +16513,7 @@ async function resolveOverlaysFromFolder(theme) {
       theme && typeof theme.overlaysFolder === "string"
         ? theme.overlaysFolder
         : "";
-    return fixOverlayEntries(getBuiltinFolderStrings(folder));
+    return fixOverlayEntries(getBuiltinOverlayEntries(folder));
   }
 }
 
@@ -16222,14 +16572,31 @@ function getBaseOverlayList(theme) {
   );
   const builtinFolderArr =
     typeof theme.overlaysFolder === "string"
-      ? getBuiltinFolderStrings(theme.overlaysFolder)
+      ? getBuiltinOverlayEntries(theme.overlaysFolder)
           .map((item) => normalizeOverlayDefinition(item))
           .filter((item) => item && !removed.has(item.src))
       : [];
+  const builtinFolderSrcs = new Set(
+    builtinFolderArr.map((item) => item && item.src).filter(Boolean)
+  );
   const folderArr = Array.isArray(theme.overlaysTmp)
-    ? theme.overlaysTmp
-        .map((item) => normalizeOverlayDefinition(item))
-        .filter((item) => item && !removed.has(item.src))
+    ? [
+        ...builtinFolderArr,
+        ...theme.overlaysTmp
+          .map((item) => normalizeOverlayDefinition(item))
+          .filter((item) => {
+            if (!item || removed.has(item.src)) return false;
+            if (
+              theme.overlaysFolder &&
+              item.src &&
+              item.src.startsWith(theme.overlaysFolder) &&
+              builtinFolderSrcs.size
+            ) {
+              return builtinFolderSrcs.has(item.src);
+            }
+            return true;
+          }),
+      ]
     : builtinFolderArr;
   const localArr = Array.isArray(theme.overlays)
     ? theme.overlays.map((item) => normalizeOverlayDefinition(item))
@@ -16283,6 +16650,11 @@ function getBaseTemplateList(theme) {
 function getOverlayList(theme) {
   if (!theme || typeof theme !== "object") return [];
   const overrides = getActiveEventOverrides();
+  const sessionArr = Array.isArray(activeSessionAssets.overlays)
+    ? activeSessionAssets.overlays
+        .map((item) => normalizeOverlayDefinition(item))
+        .filter(Boolean)
+    : [];
   const eventArr = Array.isArray(overrides.overlays)
     ? overrides.overlays.map((item) => normalizeOverlayDefinition(item)).filter(Boolean)
     : [];
@@ -16291,21 +16663,38 @@ function getOverlayList(theme) {
   );
   const builtinFolderArr =
     typeof theme.overlaysFolder === "string"
-      ? getBuiltinFolderStrings(theme.overlaysFolder)
+      ? getBuiltinOverlayEntries(theme.overlaysFolder)
           .map((item) => normalizeOverlayDefinition(item))
           .filter((item) => item && !removed.has(item.src))
       : [];
+  const builtinFolderSrcs = new Set(
+    builtinFolderArr.map((item) => item && item.src).filter(Boolean)
+  );
   const folderArr = Array.isArray(theme.overlaysTmp)
-    ? theme.overlaysTmp
-        .map((item) => normalizeOverlayDefinition(item))
-        .filter((item) => item && !removed.has(item.src))
+    ? [
+        ...builtinFolderArr,
+        ...theme.overlaysTmp
+          .map((item) => normalizeOverlayDefinition(item))
+          .filter((item) => {
+            if (!item || removed.has(item.src)) return false;
+            if (
+              theme.overlaysFolder &&
+              item.src &&
+              item.src.startsWith(theme.overlaysFolder) &&
+              builtinFolderSrcs.size
+            ) {
+              return builtinFolderSrcs.has(item.src);
+            }
+            return true;
+          }),
+      ]
     : builtinFolderArr;
   const localArr = Array.isArray(theme.overlays)
     ? theme.overlays.map((item) => normalizeOverlayDefinition(item))
     : [];
   const seen = new Set();
   const out = [];
-  for (const o of [...eventArr, ...folderArr, ...localArr]) {
+  for (const o of [...sessionArr, ...eventArr, ...folderArr, ...localArr]) {
     const k = (o && o.src ? o.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
@@ -16317,6 +16706,24 @@ function getOverlayList(theme) {
 function getTemplateList(theme) {
   if (!theme || typeof theme !== "object") return [];
   const overrides = getActiveEventOverrides();
+  const sessionArr = Array.isArray(activeSessionAssets.templates)
+    ? activeSessionAssets.templates
+        .map((t) => {
+          if (typeof t === "string")
+            return { src: t, layout: "double_column", __session: true };
+          if (t && typeof t === "object" && t.src) {
+            return {
+              src: t.src,
+              layout: normalizeTemplateLayout(t.layout),
+              slots: t.slots,
+              textFields: normalizeTemplateTextFields(t.textFields),
+              __session: true,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean)
+    : [];
   const eventArr = Array.isArray(overrides.templates)
     ? overrides.templates
         .map((t) => {
@@ -16351,7 +16758,9 @@ function getTemplateList(theme) {
           }))
       : [];
   const folderArr = Array.isArray(theme.templatesTmp)
-    ? theme.templatesTmp
+    ? [
+        ...builtinFolderArr,
+        ...theme.templatesTmp
         .filter((t) => t && t.src && !removed.has(t.src))
         .map((t) => ({
           src: t.src,
@@ -16359,7 +16768,8 @@ function getTemplateList(theme) {
           slots: t.slots,
           textFields: normalizeTemplateTextFields(t.textFields),
           __folder: true,
-        }))
+        })),
+      ]
     : builtinFolderArr;
   const localArr = Array.isArray(theme.templates)
     ? theme.templates.map((t) => ({
@@ -16371,7 +16781,7 @@ function getTemplateList(theme) {
     : [];
   const seen = new Set();
   const out = [];
-  for (const t of [...eventArr, ...folderArr, ...localArr]) {
+  for (const t of [...sessionArr, ...eventArr, ...folderArr, ...localArr]) {
     const k = (t && t.src ? t.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);

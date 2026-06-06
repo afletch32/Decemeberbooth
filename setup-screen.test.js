@@ -89,40 +89,48 @@ test("setup flow is theme-first and quick start is a demo action", () => {
     "quick start should read as a one-tap booth demo action"
   );
   assert.ok(
-    html.includes('<label for="createPathEventType">Theme Filter (optional)</label>'),
-    "create flow should present event type as an optional theme filter"
+    html.includes('id="createPathEventTypeCards"'),
+    "setup flow should present theme filters as cards"
   );
   assert.ok(
-    html.includes('<option value="all">All Themes</option>'),
-    "create flow should allow browsing all themes without picking a type first"
+    html.includes('data-theme-filter-card="all"') &&
+      html.includes('data-theme-filter-card="wedding"') &&
+      html.includes('data-theme-filter-card="expo"') &&
+      html.includes('data-theme-filter-card="party"') &&
+      html.includes('data-theme-filter-card="community"'),
+    "theme filter cards should expose all supported filter values"
   );
   assert.ok(
-    html.includes('id="createPathEventDate"'),
-    "fast event creation should collect a reusable event date when needed"
+    html.includes('id="createPathEventType" class="hidden"'),
+    "filter cards should keep the existing filter value as hidden state"
   );
   assert.ok(
-    html.includes('id="createPathBirthdayName"'),
-    "birthday creation should collect the birthday name up front"
+    html.includes('id="createPathDateFields" class="hidden'),
+    "theme sessions should not ask for an event date by default"
   );
   assert.ok(
-    html.includes('id="createPathPartner1"') && html.includes('id="createPathPartner2"'),
-    "wedding creation should collect couple names up front"
+    html.includes('id="createEventBtn" class="primary">Use This Theme</button>'),
+    "default setup action should prepare a theme session instead of creating an event"
   );
   assert.ok(
     appScript.includes('DOM.createPathEventType.value = "all";'),
-    "create flow should default to showing all themes"
+    "theme session flow should default to showing all themes"
+  );
+  assert.ok(
+    appScript.includes('function setCreatePathThemeFilter(value = "all")'),
+    "theme filter cards should update through a dedicated helper"
+  );
+  assert.ok(
+    appScript.includes('button.dataset.themeFilterCard || "all"'),
+    "filter card clicks should drive theme filtering"
   );
   assert.ok(
     appScript.includes('const selectedType = inferThemeEventStyle(themeKey, theme);'),
     "font suggestions should follow the selected theme"
   );
   assert.ok(
-    appScript.includes("const eventType = inferThemeEventStyle(details.themeKey, theme);"),
-    "new events should infer their type from the chosen theme"
-  );
-  assert.ok(
     appScript.includes("updateCreatePathDetailFields("),
-    "create flow should toggle style-specific detail prompts from the chosen theme"
+    "setup flow should still refresh style-aware font suggestions from the chosen theme"
   );
   assert.ok(
     appScript.includes("function shouldIncludeThemeForSelectedType(themeKey, theme, selectedType)"),
@@ -134,31 +142,19 @@ test("setup flow is theme-first and quick start is a demo action", () => {
   );
   assert.ok(
     html.includes('id="createPathValidationMessage"'),
-    "create flow should expose an inline validation message area"
+    "setup flow should retain the inline validation/status area"
   );
   assert.ok(
-    appScript.includes("function readCreatePathEventDetails()"),
-    "create flow should read fast-create inputs through a dedicated helper"
+    appScript.includes("function prepareThemeSessionFromSetup()"),
+    "start flow should prepare a no-event theme session"
   );
   assert.ok(
-    appScript.includes("function buildCreatePathEvent(theme, details, eventType)"),
-    "new events should be assembled through a focused create-path event helper"
+    appScript.includes('setActiveEventId("");'),
+    "theme session start should clear saved event selection"
   );
   assert.ok(
-    appScript.includes("function resetCreatePathForm()"),
-    "create flow should reset the form through a dedicated helper"
-  );
-  assert.ok(
-    appScript.includes("validateCreatePathEventDetails(eventType, details)"),
-    "create flow should validate required reusable event details before saving"
-  );
-  assert.ok(
-    appScript.includes("showCreatePathValidation(detailValidation.message, detailValidation.fields);"),
-    "validation failures should be shown inline in the fast create flow"
-  );
-  assert.ok(
-    appScript.includes("if (created) focusCurrentEventSetup();"),
-    "create flow should only advance into event setup after a successful create"
+    appScript.includes("getDateSessionSlug()"),
+    "theme sessions should save photos under a date slug"
   );
 });
 
@@ -193,6 +189,28 @@ test("demo booth mode showcases wedding, birthday, and general looks", () => {
   assert.ok(
     appScript.includes('cycleShowcaseDemoTheme();'),
     "showcase demo should rotate to the next look on idle return"
+  );
+});
+
+test("theme filter cards keep accessible selected state", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes('class="theme-filter-card active" data-theme-filter-card="all" aria-pressed="true"'),
+    "all themes card should start selected"
+  );
+  assert.ok(
+    html.includes('data-theme-filter-card="wedding" aria-pressed="false"'),
+    "inactive filter cards should expose unpressed state"
+  );
+  assert.ok(
+    appScript.includes('button.classList.toggle("active", active);'),
+    "filter card sync should update visual selected state"
+  );
+  assert.ok(
+    appScript.includes('button.setAttribute("aria-pressed", active ? "true" : "false");'),
+    "filter card sync should update aria-pressed state"
   );
 });
 
@@ -233,12 +251,12 @@ test("event setup owns the day-to-day event editing controls", () => {
     "event-only asset uploads should require an active event"
   );
   assert.ok(
-    appScript.includes("setGrid(\n    DOM.currentOverlays,\n    getBaseOverlayList(theme),"),
-    "current asset panel should render base theme overlays instead of event overlays"
+    appScript.includes("setGrid(\n    DOM.currentOverlays,\n    getOverlayList(theme),"),
+    "current asset panel should render merged session/theme overlays"
   );
   assert.ok(
-    appScript.includes("setGrid(\n    DOM.currentTemplates,\n    getBaseTemplateList(theme),"),
-    "current asset panel should render base theme templates instead of event templates"
+    appScript.includes("setGrid(\n    DOM.currentTemplates,\n    getTemplateList(theme),"),
+    "current asset panel should render merged session/theme templates"
   );
   assert.ok(
     appScript.includes('if (hasOwnEventTextValue(active, key)) return active[key];'),

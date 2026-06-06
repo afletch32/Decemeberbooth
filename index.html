@@ -1147,6 +1147,130 @@
       font-size: 0.9rem;
     }
 
+    .create-path-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    .create-path-header {
+      display: grid;
+      gap: 4px;
+    }
+
+    .create-path-header h3,
+    .create-path-header p {
+      margin: 0;
+    }
+
+    .create-path-header p {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .create-path-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .create-path-field {
+      display: grid;
+      gap: 6px;
+      align-content: start;
+    }
+
+    .create-path-field-full {
+      grid-column: 1 / -1;
+    }
+
+    .theme-filter-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+      gap: 8px;
+    }
+
+    .theme-filter-card {
+      min-height: 70px;
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(200, 239, 231, 0.95);
+      background: rgba(255, 255, 255, 0.94);
+      color: #294640;
+      box-shadow: 0 10px 20px rgba(17, 17, 17, 0.06);
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      text-align: left;
+    }
+
+    .theme-filter-card strong {
+      font-size: 0.92rem;
+      line-height: 1.1;
+    }
+
+    .theme-filter-card span {
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      line-height: 1.2;
+    }
+
+    .theme-filter-card.active,
+    .theme-filter-card[aria-pressed="true"] {
+      border-color: #73e0d1;
+      background: linear-gradient(180deg, #ffffff, #eafffb);
+      box-shadow: 0 0 0 2px rgba(113, 225, 210, 0.2), 0 12px 24px rgba(121, 183, 172, 0.14);
+    }
+
+    .create-optional-panel {
+      border: 1px solid rgba(200, 239, 231, 0.92);
+      border-radius: 16px;
+      background: rgba(248, 255, 253, 0.82);
+      overflow: clip;
+    }
+
+    .create-optional-panel > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .create-optional-panel > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .create-optional-title {
+      color: #294640;
+      font-family: var(--font-label);
+      font-size: 0.86rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .create-optional-note {
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      line-height: 1.35;
+      text-align: right;
+    }
+
+    .create-optional-body {
+      display: grid;
+      gap: 12px;
+      padding: 0 14px 14px;
+    }
+
+    .create-asset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
     .theme-picker-shell {
       display: grid;
       gap: 12px;
@@ -1238,8 +1362,8 @@
 
     .event-style-cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
     }
 
     .event-style-card {
@@ -1251,12 +1375,28 @@
       box-shadow: 0 0 0 2px rgba(113, 225, 210, 0.18), 0 12px 24px rgba(121, 183, 172, 0.14);
     }
 
+    #createPathFontPreviewCards .quick-pick-card {
+      min-height: 132px;
+    }
+
+    #createPathFontPreviewCards .quick-pick-preview {
+      max-height: 2.4em;
+      overflow: hidden;
+      font-size: 0.82rem;
+    }
+
+    #createPathFontPreviewCards .quick-pick-notes {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .quick-pick-card {
       text-align: left;
-      padding: 12px 14px;
-      border-radius: 16px;
+      padding: 10px 12px;
+      border-radius: 14px;
       display: grid;
-      gap: 6px;
+      gap: 5px;
       align-content: start;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 255, 251, 0.94));
       border: 1px solid rgba(200, 239, 231, 0.95);
@@ -1280,11 +1420,11 @@
       align-items: center;
       width: fit-content;
       margin-bottom: 2px;
-      padding: 4px 8px;
+      padding: 3px 7px;
       border-radius: 999px;
       background: rgba(113, 225, 210, 0.12);
       color: #4f7d76;
-      font-size: 0.7rem;
+      font-size: 0.66rem;
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -1300,7 +1440,7 @@
       color: #111111;
       font-weight: 700;
       line-height: 1.15;
-      font-size: 0.98rem;
+      font-size: 0.9rem;
     }
 
     .quick-pick-context {
@@ -1314,14 +1454,14 @@
     .quick-pick-preview {
       margin-top: 2px;
       color: #36534e;
-      font-size: 0.98rem;
+      font-size: 0.9rem;
       line-height: 1.18;
     }
 
     .quick-pick-notes {
       margin-top: 2px;
       color: var(--text-muted);
-      font-size: 0.83rem;
+      font-size: 0.78rem;
       line-height: 1.35;
     }
 
@@ -4606,6 +4746,21 @@
     }
 
     @media (max-width: 760px) {
+      .create-path-grid,
+      .create-asset-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .create-optional-panel > summary {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .create-optional-note {
+        text-align: left;
+      }
+
       .setup-status,
       .setup-command-bar,
       .setup-tabs,
@@ -5132,67 +5287,121 @@
     <div class="admin-container">
       <div class="admin-left panel">
         <details class="panel-section" id="eventBasicsSection" data-setup-section="event" open>
-          <summary>Event Basics</summary>
+          <summary>Theme Session</summary>
           <div class="section-content">
             <div class="btn-row event-path-switcher">
-              <button type="button" id="eventPathCreateBtn">Path 1: Create Event</button>
-              <button type="button" id="eventPathSelectBtn">Path 2: Existing Event</button>
+              <button type="button" id="eventPathCreateBtn">Theme Session</button>
+              <button type="button" id="eventPathSelectBtn">Saved Events</button>
             </div>
-            <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Path 1 is for fast setup from a theme. Path 2 is only for loading something you already made.</p>
-            <div class="panel hidden" id="eventPathCreatePanel" style="margin-bottom:10px;">
-              <h3 style="margin:0 0 6px;">Path 1: Create New Event</h3>
-              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Create a new event from a theme. Pick the look first, then fine-tune the event after creation.</p>
-              <label for="createPathEventName">Event Name</label>
-              <input type="text" id="createPathEventName" placeholder="e.g., Winter Gala 2026">
-              <label for="createPathEventType">Theme Filter (optional)</label>
-              <select id="createPathEventType">
-                <option value="all">All Themes</option>
-                <option value="wedding">Wedding</option>
-                <option value="expo">Expo</option>
-                <option value="party">Party</option>
-                <option value="community">Community</option>
-              </select>
-              <select id="createPathThemeType" class="hidden" aria-hidden="true">
-                <option value="favorite">Favorite</option>
-                <option value="standard" selected>Standard</option>
-                <option value="custom">Custom</option>
-              </select>
-              <label for="createPathThemeSelect">Theme</label>
-              <select id="createPathThemeSelect"></select>
-              <div id="createPathWeddingFields" class="hidden p-3 bg-purple-50/50 rounded-2xl border border-purple-100 space-y-2 mt-2">
+            <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Pick a theme, add any one-off assets you want, then start the booth. No event setup is required.</p>
+            <div class="panel hidden create-path-panel" id="eventPathCreatePanel" style="margin-bottom:10px;">
+              <div class="create-path-header">
+                <h3>Start From A Theme</h3>
+                <p>Choose the look for this booth session. Optional uploads only apply to this run.</p>
+              </div>
+              <div class="create-path-grid">
+                <div class="create-path-field create-path-field-full">
+                  <span class="control-label">Theme Filter</span>
+                  <div class="theme-filter-cards" id="createPathEventTypeCards" role="group" aria-label="Theme Filter">
+                    <button type="button" class="theme-filter-card active" data-theme-filter-card="all" aria-pressed="true">
+                      <strong>All Themes</strong>
+                      <span>Browse every look</span>
+                    </button>
+                    <button type="button" class="theme-filter-card" data-theme-filter-card="wedding" aria-pressed="false">
+                      <strong>Wedding</strong>
+                      <span>Couples and formal</span>
+                    </button>
+                    <button type="button" class="theme-filter-card" data-theme-filter-card="expo" aria-pressed="false">
+                      <strong>Expo</strong>
+                      <span>Vendor booths</span>
+                    </button>
+                    <button type="button" class="theme-filter-card" data-theme-filter-card="party" aria-pressed="false">
+                      <strong>Party</strong>
+                      <span>Birthday and fun</span>
+                    </button>
+                    <button type="button" class="theme-filter-card" data-theme-filter-card="community" aria-pressed="false">
+                      <strong>Community</strong>
+                      <span>School and events</span>
+                    </button>
+                  </div>
+                  <select id="createPathEventType" class="hidden" aria-hidden="true" tabindex="-1">
+                    <option value="all">All Themes</option>
+                    <option value="wedding">Wedding</option>
+                    <option value="expo">Expo</option>
+                    <option value="party">Party</option>
+                    <option value="community">Community</option>
+                  </select>
+                </div>
+                <select id="createPathThemeType" class="hidden" aria-hidden="true">
+                  <option value="favorite">Favorite</option>
+                  <option value="standard" selected>Standard</option>
+                  <option value="custom">Custom</option>
+                </select>
+                <div class="create-path-field">
+                  <label for="createPathThemeSelect">Theme</label>
+                  <select id="createPathThemeSelect"></select>
+                </div>
+              </div>
+              <div id="createPathWeddingFields" class="hidden p-3 bg-purple-50/50 rounded-2xl border border-purple-100 space-y-2 mt-2" aria-hidden="true">
                 <span class="control-label block" style="font-size: 10px; color: #a090b0;">Wedding Details</span>
                 <div class="grid grid-cols-2 gap-2">
                   <input type="text" id="createPathPartner1" placeholder="Partner 1" style="font-size: 13px;">
                   <input type="text" id="createPathPartner2" placeholder="Partner 2" style="font-size: 13px;">
                 </div>
               </div>
-              <div id="createPathBirthdayFields" class="hidden p-3 bg-green-50/50 rounded-2xl border border-green-100 space-y-2 mt-2">
+              <div id="createPathBirthdayFields" class="hidden p-3 bg-green-50/50 rounded-2xl border border-green-100 space-y-2 mt-2" aria-hidden="true">
                 <span class="control-label block" style="font-size: 10px; color: #5c8a67;">Birthday Details</span>
                 <input type="text" id="createPathBirthdayName" placeholder="Birthday Person's Name" style="font-size: 13px;">
               </div>
-              <div id="createPathDateFields" class="p-3 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-2 mt-2">
+              <div id="createPathDateFields" class="hidden p-3 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-2 mt-2" aria-hidden="true">
                 <span class="control-label block" style="font-size: 10px; color: #9b7a3c;">Event Date</span>
                 <input type="text" id="createPathEventDate" placeholder="e.g., April 27, 2026" style="font-size: 13px;">
               </div>
-              <div id="createPathExpoFields" class="hidden p-3 bg-green-50/50 rounded-2xl border border-green-100 space-y-2 mt-2">
+              <div id="createPathExpoFields" class="hidden p-3 bg-green-50/50 rounded-2xl border border-green-100 space-y-2 mt-2" aria-hidden="true">
                 <span class="control-label block" style="font-size: 10px; color: #5c8a67;">Expo Details</span>
                 <input type="text" id="createPathExpoCompany" placeholder="Company Name" style="font-size: 13px;">
               </div>
-              <label for="createPathFontPairingSelect" class="hidden" aria-hidden="true">Choose Font Pairing</label>
-              <select id="createPathFontPairingSelect" class="hidden" aria-hidden="true"></select>
-              <p id="createPathFontNote" style="margin:0; color:#9aa; font-size:0.9em;">Theme-based font suggestions will update when you choose a theme.</p>
-              <div id="createPathFontPreviewCards" class="event-style-cards"></div>
-              <label for="createPathBackgrounds">Backgrounds</label>
-              <input type="file" id="createPathBackgrounds" accept="image/*" multiple>
-              <label for="createPathGreenBackgrounds">Green Screen Backgrounds</label>
-              <input type="file" id="createPathGreenBackgrounds" accept="image/*" multiple>
-              <label for="createPathOverlays">Overlays</label>
-              <input type="file" id="createPathOverlays" accept="image/*" multiple>
-              <label for="createPathTemplates">Templates</label>
-              <input type="file" id="createPathTemplates" accept="image/*" multiple>
-              <label for="createPathLogo">Logo</label>
-              <input type="file" id="createPathLogo" accept="image/*">
-              <div id="createPathAssetSummary" style="margin:0 0 6px; color:#9aa; font-size:0.9em;">No event assets selected yet.</div>
+              <details class="create-optional-panel">
+                <summary>
+                  <span class="create-optional-title">Optional fonts</span>
+                  <span id="createPathFontNote" class="create-optional-note">Theme-based font suggestions update with the selected theme.</span>
+                </summary>
+                <div class="create-optional-body">
+                  <label for="createPathFontPairingSelect" class="hidden" aria-hidden="true">Choose Font Pairing</label>
+                  <select id="createPathFontPairingSelect" class="hidden" aria-hidden="true"></select>
+                  <div id="createPathFontPreviewCards" class="event-style-cards"></div>
+                </div>
+              </details>
+              <details class="create-optional-panel">
+                <summary>
+                  <span class="create-optional-title">Optional uploads</span>
+                  <span id="createPathAssetSummary" class="create-optional-note">No session assets selected yet.</span>
+                </summary>
+                <div class="create-optional-body">
+                  <div class="create-asset-grid">
+                    <div class="create-path-field">
+                      <label for="createPathBackgrounds">Backgrounds</label>
+                      <input type="file" id="createPathBackgrounds" accept="image/*" multiple>
+                    </div>
+                    <div class="create-path-field">
+                      <label for="createPathGreenBackgrounds">Green Screen Backgrounds</label>
+                      <input type="file" id="createPathGreenBackgrounds" accept="image/*" multiple>
+                    </div>
+                    <div class="create-path-field">
+                      <label for="createPathOverlays">Overlays</label>
+                      <input type="file" id="createPathOverlays" accept="image/*" multiple>
+                    </div>
+                    <div class="create-path-field">
+                      <label for="createPathTemplates">Templates</label>
+                      <input type="file" id="createPathTemplates" accept="image/*" multiple>
+                    </div>
+                    <div class="create-path-field create-path-field-full">
+                      <label for="createPathLogo">Logo</label>
+                      <input type="file" id="createPathLogo" accept="image/*">
+                    </div>
+                  </div>
+                </div>
+              </details>
               <div class="btn-row hidden" style="justify-content:flex-start; margin-bottom:10px;" aria-hidden="true">
                 <button type="button" id="toggleThemeFavoriteBtn">Add to Favorites</button>
               </div>
@@ -5204,12 +5413,12 @@
                 style="margin:0 0 10px; padding:10px 12px; border-radius:12px; border:1px solid #f1b7c3; background:#fff3f6; color:#9f2442; font-size:0.92em;"
               ></div>
               <div class="btn-row">
-                <button type="button" id="createEventBtn" class="primary">Create New Event</button>
+                <button type="button" id="createEventBtn" class="primary">Use This Theme</button>
               </div>
             </div>
             <div class="panel hidden" id="eventPathSelectPanel">
-              <h3 style="margin:0 0 6px;">Path 2: Select Existing Event</h3>
-              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Load an existing event, then keep all event-specific edits in the setup panel below.</p>
+              <h3 style="margin:0 0 6px;">Saved Events</h3>
+              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Optional saved profiles. The normal booth setup does not need one.</p>
               <label for="eventProfileSelect">Existing Event</label>
               <select id="eventProfileSelect"></select>
               <div id="eventOverridesSummary" style="color:#9aa; font-size:0.9em;"></div>
@@ -5851,7 +6060,7 @@
         <p class="launch-confirm-note">This confirmation does not change any overlay export data. It only reviews the setup that will be used when the booth starts.</p>
         <div class="launch-confirm-grid">
           <div class="setup-session-item">
-            <span>Event</span>
+            <span>Session</span>
             <strong id="launchConfirmEventName">No event selected</strong>
           </div>
           <div class="setup-session-item">

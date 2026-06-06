@@ -10,6 +10,7 @@ async function loadBuildEventFolderPath() {
   const mod = await import(moduleUrl.href);
   return {
     buildAssetIndexKey: mod.buildAssetIndexKey,
+    buildDateSessionFolderPath: mod.buildDateSessionFolderPath,
     buildEventAssetFolderPath: mod.buildEventAssetFolderPath,
     buildEventFolderPath: mod.buildEventFolderPath
   };
@@ -62,6 +63,16 @@ test("buildEventAssetFolderPath appends the asset kind below the event folder", 
   });
 
   assert.equal(result, "photobooth/events/holiday-party/2024-12-14/overlays");
+});
+
+test("buildDateSessionFolderPath groups no-event booth photos by date", async () => {
+  const { buildDateSessionFolderPath } = await loadBuildEventFolderPath();
+  const result = buildDateSessionFolderPath({
+    base: BASE,
+    date: "2026-06-06"
+  });
+
+  assert.equal(result, "photobooth/events/2026-06-06");
 });
 
 test("buildAssetIndexKey scopes duplicate detection by destination folder", async () => {

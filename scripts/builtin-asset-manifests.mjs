@@ -7,8 +7,7 @@ const BUILTIN_ASSET_MANIFESTS = {
     "blue smoke frame.png",
     "flowers frame.png",
     "general-frame-black.png",
-    "general-frame-blue-flowers.png",
-    "sparkles.png"
+    "general-frame-blue-flowers.png"
   ],
   "assets/general/basic/templates/": [],
   "assets/general/birthday/backgrounds/": [
@@ -35,11 +34,45 @@ const BUILTIN_ASSET_MANIFESTS = {
     "timeless-romance-bg-8.png"
   ],
   "assets/wedding/timeless-romance/overlays/": [
-    "timeless-romance-strip-overlay.svg",
-    "timeless-romance-single-overlay.svg"
+    {
+      src: "timeless-romance-strip-overlay.svg",
+      id: "timeless-romance-strip",
+      name: "Timeless Romance Strip",
+      type: "photo-strip-layout",
+      category: "wedding",
+      aspectRatio: "1:3",
+      background: { type: "color", value: "#fffcf8" },
+      foreground: { type: "image", src: "timeless-romance-strip-overlay.svg" },
+      photoSlots: [
+        { x: 0.1083, y: 0.213, width: 0.7833, height: 0.1833, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" },
+        { x: 0.1083, y: 0.4185, width: 0.7833, height: 0.1833, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" },
+        { x: 0.1083, y: 0.6241, width: 0.7833, height: 0.1833, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" }
+      ]
+    },
+    {
+      src: "timeless-romance-single-overlay.svg",
+      id: "timeless-romance-single",
+      name: "Timeless Romance Single",
+      type: "overlay",
+      category: "wedding",
+      aspectRatio: "3:2",
+      background: { type: "color", value: "#fffcf8" },
+      foreground: { type: "image", src: "timeless-romance-single-overlay.svg" },
+      photoSlots: [
+        { x: 0.0811, y: 0.3583, width: 0.8378, height: 0.4883, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" }
+      ]
+    }
   ],
   "assets/wedding/timeless-romance/templates/": [
-    { src: "timeless-romance-strip-template.svg", layout: "photo_strip_3" },
+    {
+      src: "timeless-romance-strip-template.svg",
+      layout: "photo_strip_3",
+      slots: [
+        { x: 86, y: 468, w: 548, h: 380 },
+        { x: 86, y: 912, w: 548, h: 380 },
+        { x: 86, y: 1356, w: 548, h: 380 }
+      ]
+    },
     { src: "timeless-romance-single-template.svg", layout: "single_photo" }
   ],
   "assets/wedding/garden-vows/backgrounds/": [
@@ -50,11 +83,45 @@ const BUILTIN_ASSET_MANIFESTS = {
     "garden-vows-bg-7.png"
   ],
   "assets/wedding/garden-vows/overlays/": [
-    "garden-vows-strip-overlay.svg",
-    "garden-vows-single-overlay.svg"
+    {
+      src: "garden-vows-strip-overlay.svg",
+      id: "garden-vows-strip",
+      name: "Garden Vows Strip",
+      type: "photo-strip-layout",
+      category: "wedding",
+      aspectRatio: "1:3",
+      background: { type: "color", value: "#fffdf9" },
+      foreground: { type: "image", src: "garden-vows-strip-overlay.svg" },
+      photoSlots: [
+        { x: 0.1139, y: 0.2, width: 0.7722, height: 0.1843, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" },
+        { x: 0.1139, y: 0.4083, width: 0.7722, height: 0.1843, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" },
+        { x: 0.1139, y: 0.6167, width: 0.7722, height: 0.1843, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" }
+      ]
+    },
+    {
+      src: "garden-vows-single-overlay.svg",
+      id: "garden-vows-single",
+      name: "Garden Vows Single",
+      type: "overlay",
+      category: "wedding",
+      aspectRatio: "3:2",
+      background: { type: "color", value: "#fffdf9" },
+      foreground: { type: "image", src: "garden-vows-single-overlay.svg" },
+      photoSlots: [
+        { x: 0.0811, y: 0.3583, width: 0.8378, height: 0.4883, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" }
+      ]
+    }
   ],
   "assets/wedding/garden-vows/templates/": [
-    { src: "garden-vows-strip-template.svg", layout: "photo_strip_3" },
+    {
+      src: "garden-vows-strip-template.svg",
+      layout: "photo_strip_3",
+      slots: [
+        { x: 90, y: 440, w: 540, h: 382 },
+        { x: 90, y: 890, w: 540, h: 382 },
+        { x: 90, y: 1340, w: 540, h: 382 }
+      ]
+    },
     { src: "garden-vows-single-template.svg", layout: "single_photo" }
   ],
   "assets/Hawks/overlays/": [

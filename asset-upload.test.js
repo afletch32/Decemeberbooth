@@ -38,15 +38,19 @@ test("asset migration UI is exposed from the Cloudinary settings section", () =>
   );
 });
 
-test("quick start uploads use a QS(date) Cloudinary folder", () => {
+test("no-event booth uploads use a date Cloudinary folder", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    appScript.includes('return date ? `QS(${date})` : "";'),
-    "quick start sessions should format their folder label as QS(date)"
+    appScript.includes("function getDateSessionSlug()"),
+    "theme sessions should normalize a local date slug"
   );
   assert.ok(
-    appScript.includes('if (quickStartFolder) return `${base}/${quickStartFolder}`;'),
-    "quick start capture uploads should write into their dedicated QS(date) folder"
+    appScript.includes("return buildDateSessionFolderPath({ base, date: quickStartDate });"),
+    "no-event capture uploads should write into their date folder"
+  );
+  assert.ok(
+    appScript.includes("quickStartDate\n      ? `Photos - ${quickStartDate}`"),
+    "no-event gallery titles should use the date"
   );
 });
