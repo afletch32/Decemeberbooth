@@ -45,9 +45,14 @@ async function startTempServer(t) {
   }
 }
 
-async function uploadFixture(port, contents = "hello", name = "greeting.txt") {
+const PNG_FIXTURE = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "base64"
+);
+
+async function uploadFixture(port, contents = PNG_FIXTURE, name = "fixture.png") {
   const body = new FormData();
-  body.append("file", new Blob([contents], { type: "text/plain" }), name);
+  body.append("file", new Blob([contents], { type: "image/png" }), name);
   const resp = await fetch(`http://127.0.0.1:${port}/api/upload`, {
     method: "POST",
     body,
@@ -66,8 +71,8 @@ test("uploads are stored and served via /api/upload", withTempEnv(async (_tmp, t
   try {
     const { port } = server.address();
     const json = await uploadFixture(port);
-    const saved = await fs.readFile(path.join(UPLOADS_DIR, json.filename), "utf8");
-    assert.equal(saved, "hello");
+    const saved = await fs.readFile(path.join(UPLOADS_DIR, json.filename));
+    assert.deepEqual(saved, PNG_FIXTURE);
   } finally {
     await new Promise((resolve) => server.close(() => resolve()));
   }
@@ -94,7 +99,7 @@ test("local uploads can be deleted through /api/upload", withTempEnv(async (_tmp
   if (!server) return;
   try {
     const { port } = server.address();
-    const upload = await uploadFixture(port, "bye", "delete-me.txt");
+    const upload = await uploadFixture(port, PNG_FIXTURE, "delete-me.png");
 
     const delResp = await fetch(`http://127.0.0.1:${port}/api/upload`, {
       method: "DELETE",
