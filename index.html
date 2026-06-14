@@ -1759,7 +1759,7 @@
 
     .asset-library-toolbar {
       display: grid;
-      grid-template-columns: minmax(140px, 1fr) minmax(140px, 1fr) minmax(140px, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 8px;
       align-items: end;
       margin-bottom: 10px;
@@ -1783,7 +1783,7 @@
 
     .asset-library-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
       gap: 10px;
     }
 
@@ -1795,6 +1795,10 @@
       display: grid;
       gap: 6px;
       min-width: 0;
+    }
+
+    .asset-library-card.builtin {
+      background: #fbfdff;
     }
 
     .asset-library-card img {
@@ -1811,6 +1815,28 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .asset-library-meta {
+      color: #5c6b93;
+      font-size: 0.72em;
+      line-height: 1.25;
+    }
+
+    .asset-library-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .asset-library-badge {
+      border: 1px solid #dbe6f6;
+      border-radius: 999px;
+      background: #eef5ff;
+      color: #355071;
+      font-size: 0.66em;
+      line-height: 1;
+      padding: 4px 6px;
     }
 
     .asset-library-actions {
@@ -5784,7 +5810,7 @@
             </div>
             <div class="asset-library-panel" id="uploadedAssetLibraryPanel">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">
-                <span style="font-weight:600; color:var(--accent2);">Uploaded Asset Library</span>
+                <span style="font-weight:600; color:#334155;">Asset Library</span>
                 <button type="button" id="refreshAssetLibraryBtn">Refresh</button>
               </div>
               <div class="asset-library-toolbar">
@@ -5799,6 +5825,35 @@
                     <option value="background">Background</option>
                     <option value="overlay">Overlay</option>
                     <option value="template">Template</option>
+                  </select>
+                </label>
+                <label>
+                  Asset type
+                  <select id="assetLibraryReadiness">
+                    <option value="">All Assets</option>
+                    <option value="customizable">Customizable Assets</option>
+                    <option value="ready">Ready-To-Use Assets</option>
+                  </select>
+                </label>
+                <label>
+                  Editable field
+                  <select id="assetLibraryEditableField">
+                    <option value="">Any field</option>
+                    <option value="eventName">Event Name</option>
+                    <option value="date">Date</option>
+                    <option value="schoolName">School Name</option>
+                    <option value="title">Title</option>
+                    <option value="subtitle">Subtitle</option>
+                    <option value="buttonText">Button Text</option>
+                    <option value="bannerText">Banner Text</option>
+                  </select>
+                </label>
+                <label>
+                  Sort
+                  <select id="assetLibrarySort">
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
+                    <option value="name">Name</option>
                   </select>
                 </label>
                 <label>

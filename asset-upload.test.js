@@ -133,8 +133,11 @@ test("uploaded assets register in a persistent shared library", () => {
   assert.ok(
     html.includes('id="assetLibrarySearch"') &&
       html.includes('id="assetLibraryCategory"') &&
+      html.includes('id="assetLibraryReadiness"') &&
+      html.includes('id="assetLibraryEditableField"') &&
+      html.includes('id="assetLibrarySort"') &&
       html.includes('id="assetUploadTags"'),
-    "asset library should support search, category filters, and upload tags"
+    "asset library should support search, category filters, customizable filters, sorting, and upload tags"
   );
   assert.ok(
     appScript.includes('fetch("/api/assets"') &&
@@ -151,5 +154,40 @@ test("uploaded assets register in a persistent shared library", () => {
     appScript.includes("archiveLibraryAssetByUrl(src)") &&
       appScript.includes('method: "DELETE"'),
     "library assets should support hiding/archiving and deletion"
+  );
+});
+
+test("asset library management supports sorting and editable metadata", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const html = readProjectFile("index.html");
+
+  assert.ok(
+    html.includes('<option value="customizable">Customizable Assets</option>') &&
+      html.includes('<option value="ready">Ready-To-Use Assets</option>') &&
+      html.includes('<option value="eventName">Event Name</option>'),
+    "asset library should expose customizable and editable-field filters"
+  );
+  assert.ok(
+    appScript.includes("function getFilteredAssetLibraryRows()") &&
+      appScript.includes('sortMode === "name"') &&
+      appScript.includes('sortMode === "oldest"'),
+    "asset library rows should support newest, oldest, and name sorting"
+  );
+  assert.ok(
+    appScript.includes("function promptForAssetName(asset)") &&
+      appScript.includes("function promptForAssetTags(asset)") &&
+      appScript.includes("function promptForAssetEditableFields(asset)"),
+    "uploaded asset cards should support rename, tag editing, and editable-field metadata"
+  );
+  assert.ok(
+    appScript.includes("function collectBuiltinAssetLibraryRows()") &&
+      appScript.includes('source: "builtin"'),
+    "built-in assets should display in the same asset library screen"
+  );
+  assert.ok(
+    appScript.includes("customizable:") &&
+      appScript.includes("editableFields:") &&
+      appScript.includes("detectEditableFieldsFromText"),
+    "customizable detection metadata should be normalized and detected"
   );
 });

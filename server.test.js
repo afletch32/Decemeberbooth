@@ -239,6 +239,8 @@ test("asset library stores uploaded Cloudinary asset metadata", withTempEnv(asyn
         name: "Summer Overlay",
         tags: ["Summer", "party", "summer"],
         folder: "photobooth/assets/overlays",
+        customizable: true,
+        editableFields: ["Event Name", "date", "school name"],
       }),
     });
     assert.equal(postResp.status, 200);
@@ -250,17 +252,36 @@ test("asset library stores uploaded Cloudinary asset metadata", withTempEnv(asyn
     assert.equal(getJson.assets.length, 1);
     assert.equal(getJson.assets[0].category, "overlay");
     assert.deepEqual(getJson.assets[0].tags, ["summer", "party"]);
+    assert.equal(getJson.assets[0].customizable, true);
+    assert.deepEqual(getJson.assets[0].editableFields, [
+      "eventName",
+      "date",
+      "schoolName",
+    ]);
 
     const patchResp = await fetch(`http://127.0.0.1:${port}/api/assets`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: "overlay:summer", archived: true, hidden: true }),
+      body: JSON.stringify({
+        id: "overlay:summer",
+        archived: true,
+        hidden: true,
+        name: "Renamed Summer Overlay",
+        tags: "school, reusable",
+        editableFields: "title, button text",
+      }),
     });
     assert.equal(patchResp.status, 200);
     const archivedResp = await fetch(`http://127.0.0.1:${port}/api/assets`);
     const archivedJson = await archivedResp.json();
     assert.equal(archivedJson.assets[0].archived, true);
     assert.equal(archivedJson.assets[0].hidden, true);
+    assert.equal(archivedJson.assets[0].name, "Renamed Summer Overlay");
+    assert.deepEqual(archivedJson.assets[0].tags, ["school", "reusable"]);
+    assert.deepEqual(archivedJson.assets[0].editableFields, [
+      "title",
+      "buttonText",
+    ]);
 
     const deleteResp = await fetch(`http://127.0.0.1:${port}/api/assets`, {
       method: "DELETE",

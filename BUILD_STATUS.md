@@ -1,5 +1,5 @@
 Current goal
-- Create a persistent uploaded asset library for Cloudinary-hosted overlays, templates, and backgrounds.
+- Build Asset Library Management for uploaded and built-in overlays, templates, and backgrounds.
 
 What is done
 - Disabled browser autofill on Advanced Theme Controls text inputs so manual edits are not overridden.
@@ -138,9 +138,16 @@ What is done
 - Changed session Backgrounds and Overlays pickers to list assets across all themes, while storing selections as session-only assets for the current booth run.
 - Added a Summer built-in theme entry and generated `assets/general/Summer/overlays/overlays.json`.
 - Added Summer overlay fallback entries to `builtin-asset-manifests.mjs`.
+- Changed the Advanced Theme Controls asset library panel into an Asset Library screen for uploaded and built-in assets.
+- Added asset search, category filters, customizable/ready-to-use filters, editable-field filtering, and newest/oldest/name sorting.
+- Added uploaded asset actions for rename, delete, tag editing, hide/archive, and editable-field metadata.
+- Displayed thumbnail, name, category/source, upload date, and customizable/editable-field badges on asset cards.
+- Extended uploaded asset metadata with `customizable` and `editableFields` while preserving the existing `/api/assets` storage path.
+- Added conservative customizable detection for older uploads and built-in assets based on names, tags, URLs, and template text fields.
+- Added tests for asset-library management controls, sorting hooks, customizable detection, and metadata persistence.
 
 What is in progress
-- Persistent asset library verification.
+- Asset Library Management verification.
 
 Next steps
 - Test one real device capture with Cloudinary configured to confirm the photo is recorded into the app gallery index.
@@ -154,6 +161,7 @@ Next steps
 - Test a real Cloudinary asset upload on the deployed Pages app and confirm it appears on a second device after refresh.
 - Confirm archive/delete library metadata updates on the deployed Pages app.
 - Smoke test selecting a background from one theme and an overlay from another theme before launching a no-event session.
+- Browser smoke test the Asset Library screen with search, sort, category/customizable filters, rename, tags, fields, and delete.
 
 Known bugs/blockers
 - Cross-device sync still depends on using the live HTTP/HTTPS deployment rather than `file://`.
@@ -194,4 +202,6 @@ Important decisions
 - Uploaded asset library metadata lives in `THEMES_KV` under `assetLibrary`; Cloudinary remains the file store.
 - Uploaded library assets are shared across devices/future sessions and are separate from built-in manifests and saved theme records.
 - Individual sessions may mix backgrounds and overlays from different themes without creating or saving a new theme/event.
+- Built-in assets appear in the Asset Library as read-only/use-only items; uploaded assets remain the only records that can be renamed, tagged, hidden, or deleted.
+- Customizable assets use the existing asset metadata model with `customizable` and `editableFields`; no separate asset-management store is being added.
 - The current verified Pages URL is `https://e432f899.decemeberbooth.pages.dev`.

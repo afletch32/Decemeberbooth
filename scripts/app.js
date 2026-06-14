@@ -804,6 +804,11 @@ const DOM = {
   ),
   assetLibrarySearch: document.getElementById("assetLibrarySearch"),
   assetLibraryCategory: document.getElementById("assetLibraryCategory"),
+  assetLibraryReadiness: document.getElementById("assetLibraryReadiness"),
+  assetLibraryEditableField: document.getElementById(
+    "assetLibraryEditableField"
+  ),
+  assetLibrarySort: document.getElementById("assetLibrarySort"),
   assetUploadTags: document.getElementById("assetUploadTags"),
   refreshAssetLibraryBtn: document.getElementById("refreshAssetLibraryBtn"),
   assetLibraryGrid: document.getElementById("assetLibraryGrid"),
@@ -3067,6 +3072,12 @@ function setupThemeEditorControls() {
     DOM.assetLibrarySearch.addEventListener("input", renderAssetLibrary);
   if (DOM.assetLibraryCategory)
     DOM.assetLibraryCategory.addEventListener("change", renderAssetLibrary);
+  if (DOM.assetLibraryReadiness)
+    DOM.assetLibraryReadiness.addEventListener("change", renderAssetLibrary);
+  if (DOM.assetLibraryEditableField)
+    DOM.assetLibraryEditableField.addEventListener("change", renderAssetLibrary);
+  if (DOM.assetLibrarySort)
+    DOM.assetLibrarySort.addEventListener("change", renderAssetLibrary);
   if (DOM.refreshAssetLibraryBtn)
     DOM.refreshAssetLibraryBtn.addEventListener("click", () => {
       loadAssetLibraryRemote().catch((err) => {
@@ -12717,15 +12728,94 @@ function normalizeUploadedAssetCategory(value) {
 
 function getUploadTagList() {
   const raw = DOM.assetUploadTags ? DOM.assetUploadTags.value : "";
+  return normalizeAssetTags(raw);
+}
+
+const ASSET_EDITABLE_FIELD_LABELS = {
+  eventName: "Event Name",
+  date: "Date",
+  schoolName: "School Name",
+  title: "Title",
+  subtitle: "Subtitle",
+  buttonText: "Button Text",
+  bannerText: "Banner Text",
+};
+
+const ASSET_EDITABLE_FIELD_ALIASES = {
+  event: "eventName",
+  eventname: "eventName",
+  name: "eventName",
+  date: "date",
+  school: "schoolName",
+  schoolname: "schoolName",
+  title: "title",
+  subtitle: "subtitle",
+  button: "buttonText",
+  buttonlabel: "buttonText",
+  buttontext: "buttonText",
+  banner: "bannerText",
+  bannertext: "bannerText",
+};
+
+function normalizeAssetTags(value) {
   const seen = new Set();
-  return String(raw || "")
-    .split(",")
-    .map((tag) => tag.trim().toLowerCase())
+  const source = Array.isArray(value)
+    ? value
+    : String(value || "")
+        .split(",");
+  return source
+    .map((tag) => String(tag || "").trim().toLowerCase())
     .filter((tag) => {
       if (!tag || seen.has(tag)) return false;
       seen.add(tag);
       return true;
     });
+}
+
+function normalizeEditableFields(value) {
+  const source = Array.isArray(value)
+    ? value
+    : String(value || "")
+        .split(",");
+  const seen = new Set();
+  return source
+    .map((field) => {
+      const raw = String(field || "").trim();
+      const compact = raw.replace(/[\s_-]+/g, "").toLowerCase();
+      return ASSET_EDITABLE_FIELD_LABELS[raw]
+        ? raw
+        : ASSET_EDITABLE_FIELD_ALIASES[compact] || "";
+    })
+    .filter((field) => {
+      if (!field || seen.has(field)) return false;
+      seen.add(field);
+      return true;
+    });
+}
+
+function getAssetEditableFieldLabel(field) {
+  return ASSET_EDITABLE_FIELD_LABELS[field] || field;
+}
+
+function detectEditableFieldsFromText(...values) {
+  const text = values
+    .flat()
+    .filter(Boolean)
+    .join(" ")
+    .replace(/[-_]+/g, " ")
+    .toLowerCase();
+  const fields = [];
+  const add = (field, patterns) => {
+    if (patterns.some((pattern) => pattern.test(text))) fields.push(field);
+  };
+  add("eventName", [/\bevent\s*name\b/, /\bevent\b/]);
+  add("date", [/\bdate\b/, /\byyyy\b/, /\bmm[/-]dd\b/]);
+  add("schoolName", [/\bschool\s*name\b/, /\bschool\b/]);
+  add("title", [/\btitle\b/, /\bheadline\b/]);
+  add("subtitle", [/\bsubtitle\b/, /\bsub\s*title\b/]);
+  add("buttonText", [/\bbutton\s*text\b/, /\bbutton\b/, /\bcta\b/]);
+  add("bannerText", [/\bbanner\s*text\b/, /\bbanner\b/]);
+  return normalizeEditableFields(fields);
 }
 
 function normalizeAssetLibraryPayload(payload) {
@@ -12742,25 +12832,34 @@ function normalizeAssetLibraryPayload(payload) {
     const category = normalizeUploadedAssetCategory(item.category || item.kind);
     if (!category) return;
     const id = String(item.id || `${category}:${url}`).trim();
-    const tags = Array.isArray(item.tags)
-      ? item.tags
-      : String(item.tags || "")
-          .split(",")
-          .map((tag) => tag.trim());
+    const tags = normalizeAssetTags(item.tags);
+    const editableFields = normalizeEditableFields(item.editableFields);
+    const detectedFields = detectEditableFieldsFromText(
+      item.name,
+      item.originalName,
+      item.url,
+      tags
+    );
+    const mergedFields = normalizeEditableFields([
+      ...editableFields,
+      ...detectedFields,
+    ]);
     byId.set(id, {
       id,
       category,
       url,
       secure_url: url,
       name: String(item.name || item.originalName || url.split("/").pop() || category).trim(),
-      tags: tags
-        .map((tag) => String(tag || "").trim().toLowerCase())
-        .filter(Boolean),
+      tags,
       folder: String(item.folder || "").trim(),
       hash: String(item.hash || "").trim(),
       contentType: String(item.contentType || item.type || "").trim(),
       createdAt: String(item.createdAt || item.created_at || new Date().toISOString()),
       updatedAt: String(item.updatedAt || item.updated_at || new Date().toISOString()),
+      customizable:
+        item.customizable === true ||
+        (item.customizable !== false && mergedFields.length > 0),
+      editableFields: mergedFields,
       archived: item.archived === true,
       hidden: item.hidden === true || item.archived === true,
     });
@@ -12963,6 +13062,180 @@ function archiveLibraryAssetByUrl(url) {
   updateAssetLibraryItem(asset.id, { hidden: true, archived: true });
 }
 
+function getAssetDisplayName(asset) {
+  if (asset && asset.name) return String(asset.name);
+  const url = String((asset && asset.url) || "");
+  const filename = decodeURIComponent(url.split("/").pop() || "");
+  return filename.replace(/\.[a-z0-9]+$/i, "") || "Untitled asset";
+}
+
+function getAssetCreatedAtLabel(asset) {
+  if (!asset || asset.source === "builtin") return "Built-in";
+  const value = asset.createdAt || asset.created_at || "";
+  if (!value) return "Unknown";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
+}
+
+function getAssetBadgeLabels(asset) {
+  const labels = [];
+  if (asset && asset.customizable) labels.push("Customizable");
+  normalizeEditableFields(asset && asset.editableFields).forEach((field) => {
+    labels.push(getAssetEditableFieldLabel(field));
+  });
+  return labels;
+}
+
+function createBuiltinAssetRow(entry, category, themeName, themeKey) {
+  const src = typeof entry === "string" ? entry : entry && entry.src;
+  if (!src) return null;
+  const name = getAssetDisplayName({
+    name: entry && typeof entry === "object" ? entry.name : "",
+    url: src,
+  });
+  const textFields =
+    entry && typeof entry === "object" && entry.textFields
+      ? Object.keys(entry.textFields)
+      : [];
+  const editableFields = normalizeEditableFields([
+    ...textFields,
+    ...detectEditableFieldsFromText(name, src),
+  ]);
+  return {
+    id: `builtin:${category}:${src}`,
+    category,
+    url: src,
+    secure_url: src,
+    name,
+    tags: normalizeAssetTags([themeName, themeKey, "built-in"]),
+    source: "builtin",
+    createdAt: "",
+    updatedAt: "",
+    customizable: editableFields.length > 0,
+    editableFields,
+  };
+}
+
+function collectBuiltinAssetLibraryRows() {
+  const byKey = new Map();
+  const add = (entry, category, themeName, themeKey) => {
+    const row = createBuiltinAssetRow(entry, category, themeName, themeKey);
+    if (!row) return;
+    const key = `${row.category}:${row.url}`;
+    if (!byKey.has(key)) byKey.set(key, row);
+  };
+  forEachThemeEntry((theme, themeKey) => {
+    const themeName = theme && theme.name ? theme.name : themeKey;
+    if (theme && theme.background) add(theme.background, "background", themeName, themeKey);
+    if (Array.isArray(theme && theme.backgrounds)) {
+      theme.backgrounds.forEach((src) => add(src, "background", themeName, themeKey));
+    }
+    if (Array.isArray(theme && theme.backgroundsTmp)) {
+      theme.backgroundsTmp.forEach((src) => add(src, "background", themeName, themeKey));
+    }
+    if (Array.isArray(theme && theme.overlays)) {
+      theme.overlays.forEach((entry) => add(entry, "overlay", themeName, themeKey));
+    }
+    if (Array.isArray(theme && theme.overlaysTmp)) {
+      theme.overlaysTmp.forEach((entry) => add(entry, "overlay", themeName, themeKey));
+    }
+    if (Array.isArray(theme && theme.templates)) {
+      theme.templates.forEach((entry) => add(entry, "template", themeName, themeKey));
+    }
+    if (Array.isArray(theme && theme.templatesTmp)) {
+      theme.templatesTmp.forEach((entry) => add(entry, "template", themeName, themeKey));
+    }
+  });
+  return Array.from(byKey.values());
+}
+
+function getAllAssetLibraryRows() {
+  const uploadedRows = (uploadedAssetLibrary.assets || [])
+    .filter((asset) => asset && !asset.hidden && !asset.archived)
+    .map((asset) => ({ ...asset, source: "uploaded" }));
+  return [...uploadedRows, ...collectBuiltinAssetLibraryRows()];
+}
+
+function getFilteredAssetLibraryRows() {
+  const query = DOM.assetLibrarySearch
+    ? DOM.assetLibrarySearch.value.trim().toLowerCase()
+    : "";
+  const category = DOM.assetLibraryCategory
+    ? normalizeUploadedAssetCategory(DOM.assetLibraryCategory.value)
+    : "";
+  const readiness = DOM.assetLibraryReadiness
+    ? DOM.assetLibraryReadiness.value
+    : "";
+  const editableField = DOM.assetLibraryEditableField
+    ? DOM.assetLibraryEditableField.value
+    : "";
+  const sortMode = DOM.assetLibrarySort ? DOM.assetLibrarySort.value : "newest";
+  const rows = getAllAssetLibraryRows().filter((asset) => {
+    if (!asset) return false;
+    if (category && asset.category !== category) return false;
+    if (readiness === "customizable" && !asset.customizable) return false;
+    if (readiness === "ready" && asset.customizable) return false;
+    if (
+      editableField &&
+      !normalizeEditableFields(asset.editableFields).includes(editableField)
+    )
+      return false;
+    if (!query) return true;
+    const haystack = [
+      asset.name,
+      asset.category,
+      asset.source,
+      asset.url,
+      ...(Array.isArray(asset.tags) ? asset.tags : []),
+      ...normalizeEditableFields(asset.editableFields).map(getAssetEditableFieldLabel),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(query);
+  });
+  rows.sort((a, b) => {
+    if (sortMode === "name") {
+      return getAssetDisplayName(a).localeCompare(getAssetDisplayName(b));
+    }
+    const aTime = a.source === "builtin" ? 0 : Date.parse(a.createdAt || "") || 0;
+    const bTime = b.source === "builtin" ? 0 : Date.parse(b.createdAt || "") || 0;
+    return sortMode === "oldest" ? aTime - bTime : bTime - aTime;
+  });
+  return rows;
+}
+
+function promptForAssetEditableFields(asset) {
+  if (!asset || asset.source === "builtin") return;
+  const current = normalizeEditableFields(asset.editableFields);
+  const value = prompt(
+    "Editable fields, comma-separated. Examples: eventName, date, schoolName, title, subtitle, buttonText, bannerText",
+    current.join(", ")
+  );
+  if (value === null) return;
+  const editableFields = normalizeEditableFields(value);
+  updateAssetLibraryItem(asset.id, {
+    editableFields,
+    customizable: editableFields.length > 0,
+  });
+}
+
+function promptForAssetTags(asset) {
+  if (!asset || asset.source === "builtin") return;
+  const value = prompt("Tags, comma-separated", (asset.tags || []).join(", "));
+  if (value === null) return;
+  updateAssetLibraryItem(asset.id, { tags: normalizeAssetTags(value) });
+}
+
+function promptForAssetName(asset) {
+  if (!asset || asset.source === "builtin") return;
+  const value = prompt("Asset name", getAssetDisplayName(asset));
+  if (value === null) return;
+  const name = value.trim();
+  if (!name) return;
+  updateAssetLibraryItem(asset.id, { name });
+}
+
 function registerUploadedAsset(url, kind, details = {}) {
   const category = normalizeUploadedAssetCategory(kind);
   if (!url || !category) return;
@@ -12978,6 +13251,8 @@ function registerUploadedAsset(url, kind, details = {}) {
     contentType: details.contentType || "",
     createdAt: details.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    customizable: details.customizable === true,
+    editableFields: normalizeEditableFields(details.editableFields),
     hidden: false,
     archived: false,
   };
@@ -12990,31 +13265,13 @@ function renderAssetLibrary() {
   const grid = DOM.assetLibraryGrid;
   const status = DOM.assetLibraryStatus;
   if (!grid && !status) return;
-  const query = DOM.assetLibrarySearch
-    ? DOM.assetLibrarySearch.value.trim().toLowerCase()
-    : "";
-  const category = DOM.assetLibraryCategory
-    ? normalizeUploadedAssetCategory(DOM.assetLibraryCategory.value)
-    : "";
-  const assets = (uploadedAssetLibrary.assets || []).filter((asset) => {
-    if (!asset || asset.hidden || asset.archived) return false;
-    if (category && asset.category !== category) return false;
-    if (!query) return true;
-    const haystack = [
-      asset.name,
-      asset.category,
-      asset.url,
-      ...(Array.isArray(asset.tags) ? asset.tags : []),
-    ]
-      .join(" ")
-      .toLowerCase();
-    return haystack.includes(query);
-  });
+  const assets = getFilteredAssetLibraryRows();
   if (grid) {
     grid.innerHTML = "";
     assets.forEach((asset) => {
       const card = document.createElement("div");
       card.className = "asset-library-card";
+      if (asset.source === "builtin") card.classList.add("builtin");
       const img = document.createElement("img");
       img.src = withBust(asset.url);
       img.alt = asset.name || asset.category;
@@ -13022,45 +13279,77 @@ function renderAssetLibrary() {
       const name = document.createElement("div");
       name.className = "asset-library-name";
       name.title = `${asset.name}${asset.tags && asset.tags.length ? ` (${asset.tags.join(", ")})` : ""}`;
-      name.textContent = asset.name || asset.category;
+      name.textContent = getAssetDisplayName(asset);
+      const meta = document.createElement("div");
+      meta.className = "asset-library-meta";
+      meta.textContent = `${asset.category} • ${
+        asset.source === "builtin" ? "Built-in" : "Uploaded"
+      } • ${getAssetCreatedAtLabel(asset)}`;
+      const badges = document.createElement("div");
+      badges.className = "asset-library-badges";
+      getAssetBadgeLabels(asset).forEach((label) => {
+        const badge = document.createElement("span");
+        badge.className = "asset-library-badge";
+        badge.textContent = label;
+        badges.appendChild(badge);
+      });
       const actions = document.createElement("div");
       actions.className = "asset-library-actions";
       const useBtn = document.createElement("button");
       useBtn.type = "button";
       useBtn.textContent = "Use";
       useBtn.addEventListener("click", () => useLibraryAsset(asset));
-      const archiveBtn = document.createElement("button");
-      archiveBtn.type = "button";
-      archiveBtn.textContent = "Hide";
-      archiveBtn.addEventListener("click", () =>
-        updateAssetLibraryItem(asset.id, { hidden: true, archived: true })
-      );
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.textContent = "Delete";
-      deleteBtn.addEventListener("click", () => {
-        if (confirm("Delete this uploaded asset from the shared library?")) {
-          deleteAssetLibraryItem(asset.id);
-        }
-      });
       actions.appendChild(useBtn);
-      actions.appendChild(archiveBtn);
-      actions.appendChild(deleteBtn);
+      if (asset.source !== "builtin") {
+        const renameBtn = document.createElement("button");
+        renameBtn.type = "button";
+        renameBtn.textContent = "Rename";
+        renameBtn.addEventListener("click", () => promptForAssetName(asset));
+        const tagsBtn = document.createElement("button");
+        tagsBtn.type = "button";
+        tagsBtn.textContent = "Tags";
+        tagsBtn.addEventListener("click", () => promptForAssetTags(asset));
+        const fieldsBtn = document.createElement("button");
+        fieldsBtn.type = "button";
+        fieldsBtn.textContent = "Fields";
+        fieldsBtn.addEventListener("click", () =>
+          promptForAssetEditableFields(asset)
+        );
+        const archiveBtn = document.createElement("button");
+        archiveBtn.type = "button";
+        archiveBtn.textContent = "Hide";
+        archiveBtn.addEventListener("click", () =>
+          updateAssetLibraryItem(asset.id, { hidden: true, archived: true })
+        );
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.textContent = "Delete";
+        deleteBtn.addEventListener("click", () => {
+          if (confirm("Delete this uploaded asset from the shared library?")) {
+            deleteAssetLibraryItem(asset.id);
+          }
+        });
+        actions.appendChild(renameBtn);
+        actions.appendChild(tagsBtn);
+        actions.appendChild(fieldsBtn);
+        actions.appendChild(archiveBtn);
+        actions.appendChild(deleteBtn);
+      }
       card.appendChild(img);
       card.appendChild(name);
+      card.appendChild(meta);
+      if (badges.childNodes.length) card.appendChild(badges);
       card.appendChild(actions);
       grid.appendChild(card);
     });
   }
   if (status) {
-    const total = (uploadedAssetLibrary.assets || []).filter(
-      (asset) => asset && !asset.hidden && !asset.archived
-    ).length;
+    const total = getAllAssetLibraryRows().length;
     status.textContent = assets.length
-      ? `${assets.length} of ${total} uploaded asset${total === 1 ? "" : "s"} shown`
+      ? `${assets.length} of ${total} asset${total === 1 ? "" : "s"} shown`
       : total
-      ? "No uploaded assets match this search."
-      : "No uploaded assets yet.";
+      ? "No assets match these filters."
+      : "No assets available yet.";
   }
 }
 

@@ -38,6 +38,53 @@ function normalizeTags(value) {
   return out;
 }
 
+const VALID_EDITABLE_FIELDS = new Set([
+  "eventName",
+  "date",
+  "schoolName",
+  "title",
+  "subtitle",
+  "buttonText",
+  "bannerText",
+]);
+
+const EDITABLE_FIELD_ALIASES = {
+  event: "eventName",
+  eventname: "eventName",
+  name: "eventName",
+  date: "date",
+  school: "schoolName",
+  schoolname: "schoolName",
+  title: "title",
+  subtitle: "subtitle",
+  button: "buttonText",
+  buttonlabel: "buttonText",
+  buttontext: "buttonText",
+  banner: "bannerText",
+  bannertext: "bannerText",
+};
+
+function normalizeEditableFields(value) {
+  const source = Array.isArray(value)
+    ? value
+    : String(value || "")
+        .split(",")
+        .map((field) => field.trim());
+  const seen = new Set();
+  const out = [];
+  source.forEach((field) => {
+    const raw = String(field || "").trim();
+    const compact = raw.replace(/[\s_-]+/g, "").toLowerCase();
+    const clean = VALID_EDITABLE_FIELDS.has(raw)
+      ? raw
+      : EDITABLE_FIELD_ALIASES[compact] || "";
+    if (!clean || seen.has(clean)) return;
+    seen.add(clean);
+    out.push(clean);
+  });
+  return out;
+}
+
 function normalizeAsset(item) {
   if (!item || typeof item !== "object") return null;
   const url = String(item.url || item.secure_url || item.src || "").trim();
@@ -45,6 +92,7 @@ function normalizeAsset(item) {
   const category = normalizeCategory(item.category || item.kind);
   if (!category) return null;
   const id = String(item.id || `${category}:${url}`).trim();
+  const editableFields = normalizeEditableFields(item.editableFields);
   return {
     id,
     category,
@@ -57,6 +105,10 @@ function normalizeAsset(item) {
     contentType: String(item.contentType || item.type || "").trim(),
     createdAt: String(item.createdAt || item.created_at || new Date().toISOString()),
     updatedAt: String(item.updatedAt || item.updated_at || new Date().toISOString()),
+    customizable:
+      item.customizable === true ||
+      (item.customizable !== false && editableFields.length > 0),
+    editableFields,
     archived: item.archived === true,
     hidden: item.hidden === true || item.archived === true,
   };
