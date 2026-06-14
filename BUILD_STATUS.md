@@ -152,6 +152,7 @@ What is done
 - Kept full-screen booth background rendering on the existing background URL path; only picker/library discovery now uses the unified provider.
 - Hid booth operator mode controls on the guest idle/start screen while keeping capture mode selection active after Touch to Start.
 - Verified setup to idle to capture to Go Back on desktop and tablet viewports.
+- Split setup assets into clean assigned trays while Asset Library remains the full searchable catalog with selected styling for already-assigned assets.
 
 What is in progress
 - Ready for the next booth UI fix or deploy.
@@ -216,4 +217,5 @@ Important decisions
 - Asset source labels are intentionally hidden from operator-facing cards; source is only an internal implementation detail.
 - Repo-backed default assets are hidden through stored metadata tombstones instead of physical file deletion.
 - Guest idle/start mode hides operator controls; the booth mode bar remains an operator/setup control, not a guest-facing control.
+- Setup assigned trays render only current-session assets without selected styling; Asset Library cards show selected styling when already assigned.
 - The current verified Pages URL is `https://e432f899.decemeberbooth.pages.dev`.

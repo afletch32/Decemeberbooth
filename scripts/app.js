@@ -1798,6 +1798,59 @@ function normalizeAssetDisplayName(value, fallback = "None") {
   return fileName.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim() || fallback;
 }
 
+function getAssetEntrySrc(entry) {
+  const value = String(
+    typeof entry === "string"
+      ? entry
+      : entry && (entry.src || entry.url || entry.secure_url || "")
+  ).trim();
+  return value === "[object Object]" ? "" : value;
+}
+
+function createAssetSelectionSet(value) {
+  if (value instanceof Set) return value;
+  const source = Array.isArray(value) ? value : value ? [value] : [];
+  return new Set(source.map(getAssetEntrySrc).filter(Boolean));
+}
+
+function getSessionAssignedAssetEntries(category = "") {
+  const normalized = normalizeUploadedAssetCategory(category);
+  if (normalized === "background") {
+    return Array.isArray(activeSessionAssets.backgrounds)
+      ? activeSessionAssets.backgrounds.map(getAssetEntrySrc).filter(Boolean)
+      : [];
+  }
+  if (normalized === "overlay") {
+    return Array.isArray(activeSessionAssets.overlays)
+      ? activeSessionAssets.overlays
+          .map((entry) => {
+            const src = getAssetEntrySrc(entry);
+            if (!src) return null;
+            return typeof entry === "object" ? entry : { src, __session: true };
+          })
+          .filter(Boolean)
+      : [];
+  }
+  if (normalized === "template") {
+    return Array.isArray(activeSessionAssets.templates)
+      ? activeSessionAssets.templates
+          .map((entry) => {
+            const src = getAssetEntrySrc(entry);
+            if (!src) return null;
+            return typeof entry === "object"
+              ? entry
+              : { src, layout: "double_column", __session: true };
+          })
+          .filter(Boolean)
+      : [];
+  }
+  return [];
+}
+
+function getSessionAssignedAssetSourceSet(category = "") {
+  return createAssetSelectionSet(getSessionAssignedAssetEntries(category));
+}
+
 function syncAssetPanelHeader(kind, list = [], selectedValue = "") {
   const controls = getAssetPanelControls(kind);
   const resolved = getAssetPanelKind(kind);
@@ -1809,8 +1862,8 @@ function syncAssetPanelHeader(kind, list = [], selectedValue = "") {
       ? "background"
       : "overlay";
   const selectedText = !count
-    ? `No ${noun}s available yet`
-    : `${count} ${noun}${count === 1 ? "" : "s"} available`;
+    ? `No ${noun}s assigned yet`
+    : `${count} ${noun}${count === 1 ? "" : "s"} assigned`;
   if (controls.selected) {
     controls.selected.textContent = selectedText;
   }
@@ -2173,15 +2226,24 @@ function getSessionAssetUploadOptions(kind = "") {
 function addSessionAssetUrl(kind, url) {
   if (!url) return false;
   if (kind === "templates") {
-    activeSessionAssets.templates.push({ src: url, layout: "double_column" });
+    const exists = activeSessionAssets.templates.some(
+      (item) => getAssetEntrySrc(item) === url
+    );
+    if (!exists) activeSessionAssets.templates.push({ src: url, layout: "double_column" });
     return true;
   }
   if (kind === "overlays") {
-    activeSessionAssets.overlays.push(url);
+    const exists = activeSessionAssets.overlays.some(
+      (item) => getAssetEntrySrc(item) === url
+    );
+    if (!exists) activeSessionAssets.overlays.push(url);
     return true;
   }
   if (kind === "backgrounds") {
-    activeSessionAssets.backgrounds.push(url);
+    const exists = activeSessionAssets.backgrounds.some(
+      (item) => getAssetEntrySrc(item) === url
+    );
+    if (!exists) activeSessionAssets.backgrounds.push(url);
     return true;
   }
   if (kind === "greenBackgrounds") {
@@ -4331,13 +4393,13 @@ function getLaunchFontLabel() {
 }
 
 function getLaunchOverlayCountLabel() {
-  const overlayCount = getOverlayList(activeTheme).length;
+  const overlayCount = getSessionAssignedAssetEntries("overlay").length;
   if (!overlayCount) return "No overlays assigned";
   return `${overlayCount} overlay${overlayCount === 1 ? "" : "s"} assigned`;
 }
 
 function getLaunchTemplateCountLabel() {
-  const templateCount = getTemplateList(activeTheme).length;
+  const templateCount = getSessionAssignedAssetEntries("template").length;
   if (!templateCount) return "No templates assigned";
   return `${templateCount} template${templateCount === 1 ? "" : "s"} assigned`;
 }
@@ -7145,20 +7207,27 @@ function renderCurrentAssets(theme) {
     withBadge = false,
     kind = "",
     allowReorder = true,
-    selectedValue = ""
+    selectedValue = "",
+    options = {}
   ) => {
     if (!wrap) return;
     if (kind === "background" || kind === "overlay" || kind === "template") {
       setAssetPanelMessage(kind, null);
     }
+    const selectedSources = options.showSelected
+      ? createAssetSelectionSet(selectedValue)
+      : new Set();
+    const assignedTray = options.assignedTray === true;
     wrap.innerHTML = "";
     let shown = 0;
     let hasSelected = false;
     (list || []).forEach((entry, idx) => {
-      const src = typeof entry === "string" ? entry : entry.src;
+      const src = getAssetEntrySrc(entry);
+      if (!src) return;
       const fromFolder = typeof entry === "object" && !!entry.__folder;
       const isEvent = typeof entry === "object" && !!entry.__event;
       const isSession =
+        assignedTray ||
         (typeof entry === "object" && !!entry.__session) ||
         (kind === "background" &&
           Array.isArray(activeSessionAssets.backgrounds) &&
@@ -7170,14 +7239,14 @@ function renderCurrentAssets(theme) {
           ? entry.layout
           : null;
       const item = createAssetTile(src, { badge });
-      if (selectedValue && src === selectedValue) {
+      if (selectedSources.has(src)) {
         item.classList.add("selected");
         item.setAttribute("aria-selected", "true");
         hasSelected = true;
       } else {
         item.setAttribute("aria-selected", "false");
       }
-      if (kind === "background" || kind === "overlay") {
+      if (!assignedTray && (kind === "background" || kind === "overlay")) {
         item.addEventListener("click", () => {
           if (kind === "background") {
             selectSessionBackground(src);
@@ -7187,6 +7256,7 @@ function renderCurrentAssets(theme) {
         });
       }
       item.draggable =
+        !assignedTray &&
         allowReorder &&
         !lockBaseThemeAssets &&
         !fromFolder &&
@@ -7195,15 +7265,15 @@ function renderCurrentAssets(theme) {
         !isLibrary &&
         localIndex >= 0;
       item.dataset.index = localIndex;
-      if (
-        kind === "background"
-          ? isSession
-          : !lockBaseThemeAssets || isEvent || isSession
-      ) {
+      if (assignedTray || (kind === "background"
+        ? isSession
+        : !lockBaseThemeAssets || isEvent || isSession)) {
         const btn = document.createElement("button");
         btn.className = "asset-remove";
         btn.textContent = "×";
-        btn.title = isEvent
+        btn.title = assignedTray
+          ? "Remove from this session"
+          : isEvent
           ? "Remove from this event"
           : isSession
           ? "Remove from this session"
@@ -7215,7 +7285,9 @@ function renderCurrentAssets(theme) {
         btn.onclick = (event) => {
           event.preventDefault();
           event.stopPropagation();
-          const promptText = isEvent
+          const promptText = assignedTray
+            ? "Remove this item from this session?"
+            : isEvent
             ? "Remove this item from this event?"
             : isSession
             ? "Remove this item from this session?"
@@ -7225,6 +7297,12 @@ function renderCurrentAssets(theme) {
             ? "Hide this item for this theme?"
             : "Remove this item?";
           if (!confirm(promptText)) return;
+          if (assignedTray) {
+            if (kind === "overlay") removeSessionOverlay(src);
+            else if (kind === "background") removeSessionBackground(src);
+            else if (kind === "template") removeSessionTemplate(src);
+            return;
+          }
           if (kind === "overlay") {
             if (isSession) removeSessionOverlay(src);
             else if (isEvent) removeEventOverlay(src);
@@ -7282,18 +7360,19 @@ function renderCurrentAssets(theme) {
       wrap.appendChild(span);
     }
   };
-  const selectedBackgroundSrc = getActiveBackground(theme);
   setGrid(
     DOM.sessionBackgrounds,
-    getSessionBackgroundPickerList(theme),
+    getSessionAssignedAssetEntries("background"),
     false,
     "background",
     false,
-    selectedBackgroundSrc || ""
+    "",
+    { assignedTray: true }
   );
   // Backgrounds grid with selection
   if (DOM.currentBackgrounds) {
     const wrap = DOM.currentBackgrounds;
+    const assignedBackgrounds = createAssetSelectionSet(bgList);
     wrap.innerHTML = "";
     const markSelected = (idxToMark) => {
       const items = wrap.querySelectorAll(".asset-item");
@@ -7321,7 +7400,7 @@ function renderCurrentAssets(theme) {
         const isFolder = baseFolderSet.has(src);
         const item = document.createElement("div");
         item.className = "asset-item";
-        if (idx === selectedBg) {
+        if (assignedBackgrounds.has(src)) {
           item.classList.add("selected");
           item.setAttribute("aria-selected", "true");
         } else {
@@ -7362,7 +7441,7 @@ function renderCurrentAssets(theme) {
         }
         wrap.appendChild(item);
       });
-      wrap.classList.toggle("has-selection", selectedBg >= 0);
+      wrap.classList.toggle("has-selection", assignedBackgrounds.size > 0);
     }
   }
   // Green screen backgrounds grid
@@ -7494,34 +7573,33 @@ function renderCurrentAssets(theme) {
   }
   setGrid(
     DOM.currentOverlays,
-    getAllThemeOverlayCatalogList(theme),
+    getSessionAssignedAssetEntries("overlay"),
     false,
     "overlay",
     false,
-    selectedOverlay || lastPhotoOverlay || ""
+    "",
+    { assignedTray: true }
   );
   setGrid(
     DOM.currentTemplates,
-    getTemplateList(theme),
+    getSessionAssignedAssetEntries("template"),
     true,
     "template",
     false,
-    pendingTemplate && pendingTemplate.src ? pendingTemplate.src : ""
+    "",
+    { assignedTray: true }
   );
   syncAssetPanelHeader(
     "background",
-    getSessionBackgroundPickerList(theme),
-    getActiveBackground(theme) || ""
+    getSessionAssignedAssetEntries("background")
   );
   syncAssetPanelHeader(
     "overlay",
-    getAllThemeOverlayCatalogList(theme),
-    selectedOverlay || lastPhotoOverlay || ""
+    getSessionAssignedAssetEntries("overlay")
   );
   syncAssetPanelHeader(
     "template",
-    getTemplateList(theme),
-    pendingTemplate && pendingTemplate.src ? pendingTemplate.src : ""
+    getSessionAssignedAssetEntries("template")
   );
   setAssetPanelMessage("background", null);
   setAssetPanelMessage("overlay", null);
@@ -13141,7 +13219,7 @@ function getAssetBadgeLabels(asset) {
 }
 
 function createCanonicalAssetRow(entry, category, themeName, themeKey) {
-  const src = typeof entry === "string" ? entry : entry && entry.src;
+  const src = getAssetEntrySrc(entry);
   if (!src) return null;
   const name = getAssetDisplayName({
     name: entry && typeof entry === "object" ? entry.name : "",
@@ -13377,9 +13455,15 @@ function renderAssetLibrary() {
   const assets = getFilteredAssetLibraryRows();
   if (grid) {
     grid.innerHTML = "";
+    let hasAssigned = false;
     assets.forEach((asset) => {
+      const assignedSources = getSessionAssignedAssetSourceSet(asset.category);
+      const isAssigned = assignedSources.has(asset.url);
+      hasAssigned = hasAssigned || isAssigned;
       const card = document.createElement("div");
       card.className = "asset-library-card";
+      card.classList.toggle("selected", isAssigned);
+      card.setAttribute("aria-selected", isAssigned ? "true" : "false");
       const img = document.createElement("img");
       img.src = withBust(asset.url);
       img.alt = asset.name || asset.category;
@@ -13405,7 +13489,7 @@ function renderAssetLibrary() {
       actions.className = "asset-library-actions";
       const useBtn = document.createElement("button");
       useBtn.type = "button";
-      useBtn.textContent = "Use";
+      useBtn.textContent = isAssigned ? "Using" : "Use";
       useBtn.addEventListener("click", () => useLibraryAsset(asset));
       actions.appendChild(useBtn);
       const renameBtn = document.createElement("button");
@@ -13441,6 +13525,7 @@ function renderAssetLibrary() {
       card.appendChild(actions);
       grid.appendChild(card);
     });
+    grid.classList.toggle("has-selection", hasAssigned);
   }
   if (status) {
     const total = getAllAssetLibraryRows().length;
@@ -13463,6 +13548,8 @@ function useLibraryAsset(asset) {
   }
   const key = DOM.eventSelect && DOM.eventSelect.value;
   if (key) loadTheme(key);
+  renderCurrentAssets(activeTheme || getSelectedThemeTarget());
+  renderAssetLibrary();
   updateCreatePathAssetSummary();
   updateLaunchSummary();
   showToast("Asset added to this session");
@@ -17245,10 +17332,11 @@ function removeEventTemplate(src) {
 
 function removeSessionOverlay(src) {
   activeSessionAssets.overlays = activeSessionAssets.overlays.filter(
-    (item) => (typeof item === "string" ? item : item && item.src) !== src
+    (item) => getAssetEntrySrc(item) !== src
   );
   renderOptions();
   renderCurrentAssets(activeTheme);
+  renderAssetLibrary();
   updateCreatePathAssetSummary();
   updateLaunchSummary();
   scheduleLocalAssetCleanup(src);
@@ -17257,7 +17345,7 @@ function removeSessionOverlay(src) {
 
 function removeSessionBackground(src) {
   activeSessionAssets.backgrounds = activeSessionAssets.backgrounds.filter(
-    (item) => item !== src
+    (item) => getAssetEntrySrc(item) !== src
   );
   if (
     activeSessionAssets.backgroundIndex >= activeSessionAssets.backgrounds.length
@@ -17270,6 +17358,7 @@ function removeSessionBackground(src) {
   applyThemeBackground(activeTheme);
   renderOptions();
   renderCurrentAssets(activeTheme);
+  renderAssetLibrary();
   updateCreatePathAssetSummary();
   updateLaunchSummary();
   scheduleLocalAssetCleanup(src);
@@ -17278,10 +17367,11 @@ function removeSessionBackground(src) {
 
 function removeSessionTemplate(src) {
   activeSessionAssets.templates = activeSessionAssets.templates.filter(
-    (item) => (typeof item === "string" ? item : item && item.src) !== src
+    (item) => getAssetEntrySrc(item) !== src
   );
   renderOptions();
   renderCurrentAssets(activeTheme);
+  renderAssetLibrary();
   updateCreatePathAssetSummary();
   updateLaunchSummary();
   scheduleLocalAssetCleanup(src);
@@ -17461,7 +17551,10 @@ function getAllThemeBackgroundCatalogList() {
 }
 
 function getSessionBackgroundPickerList(theme) {
-  return getCanonicalAssetCollection("background").map((asset) => asset.url);
+  return mergeUniqueUrls(
+    getBackgroundList(theme),
+    getCanonicalAssetCollection("background").map((asset) => asset.url)
+  );
 }
 
 function getGreenBackgroundList(theme) {
@@ -17946,7 +18039,7 @@ function normalizeOverlayPhotoSlots(entry) {
 function normalizeOverlayDefinition(entry) {
   if (!entry) return null;
   if (typeof entry === "string") {
-    const src = entry.trim();
+    const src = getAssetEntrySrc(entry);
     if (!src) return null;
     return {
       id: buildOverlayIdFromSrc(src),
@@ -17962,9 +18055,9 @@ function normalizeOverlayDefinition(entry) {
     };
   }
   if (typeof entry !== "object") return null;
-  const src = String(entry.src || entry.renderSrc || "").trim();
+  const src = getAssetEntrySrc(entry.src) || getAssetEntrySrc(entry.renderSrc);
   if (!src) return null;
-  const renderSrc = String(entry.renderSrc || src).trim();
+  const renderSrc = getAssetEntrySrc(entry.renderSrc) || src;
   const photoSlots = normalizeOverlayPhotoSlots(entry);
   const aspectRatio =
     parseAspectRatioValue(entry.aspectRatio) ||
@@ -18482,7 +18575,15 @@ function getOverlayList(theme) {
 }
 
 function getAllThemeOverlayCatalogList(theme) {
-  return getCanonicalAssetCollection("overlay")
+  const bySrc = new Map();
+  const add = (entry) => {
+    const normalized = normalizeOverlayDefinition(entry);
+    if (normalized && normalized.src && !bySrc.has(normalized.src)) {
+      bySrc.set(normalized.src, normalized);
+    }
+  };
+  getOverlayList(theme).forEach(add);
+  getCanonicalAssetCollection("overlay")
     .map((asset) =>
       normalizeOverlayDefinition({
         ...(asset.raw && typeof asset.raw === "object" ? asset.raw : {}),
@@ -18493,7 +18594,8 @@ function getAllThemeOverlayCatalogList(theme) {
         __library: true,
       })
     )
-    .filter(Boolean);
+    .forEach(add);
+  return Array.from(bySrc.values());
 }
 
 function getTemplateList(theme) {

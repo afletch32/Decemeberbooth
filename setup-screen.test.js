@@ -259,16 +259,16 @@ test("event setup owns the day-to-day event editing controls", () => {
     "event-only asset uploads should require an active event"
   );
   assert.ok(
-    appScript.includes("setGrid(\n    DOM.sessionBackgrounds,\n    getSessionBackgroundPickerList(theme),"),
-    "session setup should render backgrounds from the cross-theme picker"
+    appScript.includes("setGrid(\n    DOM.sessionBackgrounds,\n    getSessionAssignedAssetEntries(\"background\"),"),
+    "session setup should render assigned backgrounds only"
   );
   assert.ok(
-    appScript.includes("setGrid(\n    DOM.currentOverlays,\n    getAllThemeOverlayCatalogList(theme),"),
-    "session setup should render overlays from the cross-theme picker"
+    appScript.includes("setGrid(\n    DOM.currentOverlays,\n    getSessionAssignedAssetEntries(\"overlay\"),"),
+    "session setup should render assigned overlays only"
   );
   assert.ok(
-    appScript.includes("setGrid(\n    DOM.currentTemplates,\n    getTemplateList(theme),"),
-    "current asset panel should render merged session/theme templates"
+    appScript.includes("setGrid(\n    DOM.currentTemplates,\n    getSessionAssignedAssetEntries(\"template\"),"),
+    "session setup should render assigned templates only"
   );
   assert.ok(
     appScript.includes('if (hasOwnEventTextValue(active, key)) return active[key];'),
@@ -284,21 +284,21 @@ test("event setup owns the day-to-day event editing controls", () => {
   );
 });
 
-test("asset picker selections have a strong visible and accessible state", () => {
+test("asset library selections have a strong visible and accessible state", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
     html.includes('content: "✓ Selected";') &&
       html.includes("box-shadow:\n        0 0 0 4px #facc15") &&
-      html.includes(".asset-grid.has-selection .asset-item:not(.selected)"),
-    "selected asset tiles should have a prominent badge, border/glow, and optional unselected dimming"
+      html.includes(".asset-library-grid.has-selection .asset-library-card:not(.selected)"),
+    "selected asset library cards should have a prominent badge, border/glow, and optional unselected dimming"
   );
   assert.ok(
-    appScript.includes('item.setAttribute("aria-selected", "true");') &&
-      appScript.includes('wrap.classList.toggle("has-selection", hasSelected);') &&
-      appScript.includes('node.setAttribute("aria-selected", "true");'),
-    "asset grids should expose selected state to assistive tech and dim only when a selection exists"
+    appScript.includes('card.classList.toggle("selected", isAssigned);') &&
+      appScript.includes('card.setAttribute("aria-selected", isAssigned ? "true" : "false");') &&
+      appScript.includes('grid.classList.toggle("has-selection", hasAssigned);'),
+    "asset library cards should expose assigned selected state to assistive tech"
   );
 });
 
@@ -317,6 +317,29 @@ test("guest idle screen hides operator booth mode controls", () => {
       appScript.includes("function hideWelcome()") &&
       appScript.includes("setMode(resolveBoothLaunchMode());"),
     "welcome flow should hide controls while preserving the selected booth mode before capture"
+  );
+});
+
+test("setup trays are assigned-only and asset library owns selected state", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("function getSessionAssignedAssetEntries(category = \"\")") &&
+      appScript.includes("const assignedTray = options.assignedTray === true;") &&
+      appScript.includes("{ assignedTray: true }"),
+    "setup trays should render session-assigned assets only"
+  );
+  assert.ok(
+    appScript.includes("getSessionAssignedAssetEntries(\"background\")") &&
+      appScript.includes("getSessionAssignedAssetEntries(\"overlay\")") &&
+      appScript.includes("getSessionAssignedAssetEntries(\"template\")"),
+    "background, overlay, and template tray counts should share assigned sources"
+  );
+  assert.ok(
+    appScript.includes("getSessionAssignedAssetSourceSet(asset.category)") &&
+      appScript.includes('useBtn.textContent = isAssigned ? "Using" : "Use";') &&
+      appScript.includes("renderAssetLibrary();"),
+    "asset library should show assigned state and refresh when Use/remove changes the tray"
   );
 });
 

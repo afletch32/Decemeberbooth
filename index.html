@@ -1814,6 +1814,49 @@
       display: grid;
       gap: 6px;
       min-width: 0;
+      position: relative;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease,
+        opacity 0.16s ease, transform 0.16s ease;
+    }
+
+    .asset-library-card.selected {
+      border-color: #0f766e;
+      box-shadow:
+        0 0 0 4px #facc15,
+        0 0 0 7px rgba(15, 118, 110, 0.34),
+        0 14px 28px rgba(15, 118, 110, 0.28);
+      opacity: 1;
+      transform: translateY(-1px);
+      z-index: 5;
+    }
+
+    .asset-library-card.selected::after {
+      content: "✓ Selected";
+      position: absolute;
+      top: 7px;
+      left: 7px;
+      min-width: 88px;
+      height: 28px;
+      padding: 0 9px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: #0f3d37;
+      color: #fff;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0;
+      z-index: 8;
+      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.24);
+    }
+
+    .asset-library-grid.has-selection .asset-library-card:not(.selected) {
+      opacity: 0.62;
+    }
+
+    .asset-library-grid.has-selection .asset-library-card:not(.selected):hover,
+    .asset-library-grid.has-selection .asset-library-card:not(.selected):focus-within {
+      opacity: 1;
     }
 
     .asset-library-card img {
@@ -1858,6 +1901,8 @@
       display: flex;
       flex-wrap: wrap;
       gap: 4px;
+      position: relative;
+      z-index: 9;
     }
 
     .asset-library-actions button {
