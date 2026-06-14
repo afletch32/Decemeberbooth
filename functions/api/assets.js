@@ -21,6 +21,13 @@ function normalizeCategory(value) {
   return VALID_CATEGORIES.has(raw) ? raw : "";
 }
 
+function isManageableAssetUrl(value) {
+  const url = String(value || "").trim();
+  if (!url) return false;
+  if (/^(javascript|vbscript):/i.test(url)) return false;
+  return true;
+}
+
 function normalizeTags(value) {
   const source = Array.isArray(value)
     ? value
@@ -88,7 +95,7 @@ function normalizeEditableFields(value) {
 function normalizeAsset(item) {
   if (!item || typeof item !== "object") return null;
   const url = String(item.url || item.secure_url || item.src || "").trim();
-  if (!/^https?:\/\//i.test(url)) return null;
+  if (!isManageableAssetUrl(url)) return null;
   const category = normalizeCategory(item.category || item.kind);
   if (!category) return null;
   const id = String(item.id || `${category}:${url}`).trim();

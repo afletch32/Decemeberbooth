@@ -1687,6 +1687,8 @@
       border-radius: 12px;
       overflow: hidden;
       background: #f5fffc;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease,
+        opacity 0.16s ease, transform 0.16s ease;
     }
 
     .asset-single .asset-item {
@@ -1702,26 +1704,43 @@
     }
 
     .asset-item.selected {
-      border-color: #8de7da;
-      box-shadow: 0 8px 18px rgba(121, 183, 172, 0.22);
+      border-color: #0f766e;
+      box-shadow:
+        0 0 0 4px #facc15,
+        0 0 0 7px rgba(15, 118, 110, 0.34),
+        0 14px 28px rgba(15, 118, 110, 0.28);
+      opacity: 1;
+      transform: translateY(-1px);
+      z-index: 5;
     }
 
     .asset-item.selected::after {
-      content: "✓";
+      content: "✓ Selected";
       position: absolute;
-      top: 6px;
-      left: 6px;
-      width: 22px;
-      height: 22px;
+      top: 7px;
+      left: 7px;
+      min-width: 88px;
+      height: 28px;
+      padding: 0 9px;
       border-radius: 999px;
       display: grid;
       place-items: center;
-      background: rgba(34, 73, 65, 0.92);
+      background: #0f3d37;
       color: #fff;
-      font-size: 0.72rem;
+      font-size: 0.74rem;
       font-weight: 800;
-      z-index: 2;
-      box-shadow: 0 6px 14px rgba(17, 17, 17, 0.16);
+      letter-spacing: 0;
+      z-index: 8;
+      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.24);
+    }
+
+    .asset-grid.has-selection .asset-item:not(.selected) {
+      opacity: 0.62;
+    }
+
+    .asset-grid.has-selection .asset-item:not(.selected):hover,
+    .asset-grid.has-selection .asset-item:not(.selected):focus-within {
+      opacity: 1;
     }
 
     .asset-remove {
@@ -1735,7 +1754,7 @@
       line-height: 1;
       display: grid;
       place-items: center;
-      z-index: 2;
+      z-index: 6;
     }
 
     .asset-use {
@@ -1746,7 +1765,7 @@
       border-radius: 999px;
       font-size: 12px;
       line-height: 1.1;
-      z-index: 2;
+      z-index: 6;
     }
 
     .asset-library-panel {
@@ -1795,10 +1814,6 @@
       display: grid;
       gap: 6px;
       min-width: 0;
-    }
-
-    .asset-library-card.builtin {
-      background: #fbfdff;
     }
 
     .asset-library-card img {

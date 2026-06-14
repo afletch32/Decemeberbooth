@@ -145,10 +145,11 @@ test("uploaded assets register in a persistent shared library", () => {
     "Cloudinary asset uploads should persist metadata to the shared asset API"
   );
   assert.ok(
-    appScript.includes("function getLibraryOverlayEntries()") &&
-      appScript.includes("function getLibraryTemplateEntries()") &&
-      appScript.includes("function getLibraryBackgroundUrls()"),
-    "uploaded library assets should merge with built-in overlay/template/background lists"
+    appScript.includes("function getCanonicalAssetCollection(category = \"\")") &&
+      appScript.includes('getCanonicalAssetCollection("background")') &&
+      appScript.includes('getCanonicalAssetCollection("overlay")') &&
+      appScript.includes('getCanonicalAssetCollection("template")'),
+    "setup pickers and Asset Library should share one canonical asset collection"
   );
   assert.ok(
     appScript.includes("archiveLibraryAssetByUrl(src)") &&
@@ -180,14 +181,35 @@ test("asset library management supports sorting and editable metadata", () => {
     "uploaded asset cards should support rename, tag editing, and editable-field metadata"
   );
   assert.ok(
-    appScript.includes("function collectBuiltinAssetLibraryRows()") &&
-      appScript.includes('source: "builtin"'),
-    "built-in assets should display in the same asset library screen"
+    appScript.includes("function collectThemeAssetRows(category = \"\")") &&
+      appScript.includes("mergeCanonicalAssetWithStoredRecord"),
+    "theme-file assets and stored metadata should merge into the same asset provider"
   );
   assert.ok(
     appScript.includes("customizable:") &&
       appScript.includes("editableFields:") &&
       appScript.includes("detectEditableFieldsFromText"),
     "customizable detection metadata should be normalized and detected"
+  );
+});
+
+test("asset library cards hide source labels and manage every asset through metadata", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    !appScript.includes('asset.source === "builtin" ? "Built-in" : "Uploaded"') &&
+      !appScript.includes("Uploaded •") &&
+      !appScript.includes("Built-in •"),
+    "asset cards should not render source labels"
+  );
+  assert.ok(
+    appScript.includes('meta.textContent = [asset.category, getAssetCreatedAtLabel(asset)]') &&
+      appScript.includes('confirm("Remove this asset from the library?")'),
+    "asset cards should show simple category/date metadata and delete through a generic library action"
+  );
+  assert.ok(
+    appScript.includes("method: index >= 0 ? \"PATCH\" : \"POST\"") &&
+      appScript.includes("{ hidden: true, archived: true }"),
+    "renaming/tagging/deleting repo-backed assets should create stored metadata overrides or tombstones"
   );
 });

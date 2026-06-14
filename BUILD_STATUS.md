@@ -145,9 +145,14 @@ What is done
 - Extended uploaded asset metadata with `customizable` and `editableFields` while preserving the existing `/api/assets` storage path.
 - Added conservative customizable detection for older uploads and built-in assets based on names, tags, URLs, and template text fields.
 - Added tests for asset-library management controls, sorting hooks, customizable detection, and metadata persistence.
+- Strengthened selected asset visibility for backgrounds, overlays, and templates with a prominent border/glow, `Selected` badge, accessible `aria-selected` state, and optional dimming for unselected tiles.
+- Unified setup picker and Asset Library asset discovery through one normalized canonical provider for backgrounds, overlays, and templates.
+- Removed visible source labels from Asset Library cards and kept simple category/date metadata only.
+- Changed rename, tag editing, field editing, and delete/hide actions to work through shared metadata for uploaded and repo-backed assets.
+- Kept full-screen booth background rendering on the existing background URL path; only picker/library discovery now uses the unified provider.
 
 What is in progress
-- Asset Library Management verification.
+- Unified Asset Library verification.
 
 Next steps
 - Test one real device capture with Cloudinary configured to confirm the photo is recorded into the app gallery index.
@@ -162,6 +167,8 @@ Next steps
 - Confirm archive/delete library metadata updates on the deployed Pages app.
 - Smoke test selecting a background from one theme and an overlay from another theme before launching a no-event session.
 - Browser smoke test the Asset Library screen with search, sort, category/customizable filters, rename, tags, fields, and delete.
+- Smoke test selected asset visibility on the deployed Pages app after the next deploy.
+- Smoke test setup picker/library count parity and repo-backed delete/hide behavior on the deployed Pages app after the next deploy.
 
 Known bugs/blockers
 - Cross-device sync still depends on using the live HTTP/HTTPS deployment rather than `file://`.
@@ -202,6 +209,8 @@ Important decisions
 - Uploaded asset library metadata lives in `THEMES_KV` under `assetLibrary`; Cloudinary remains the file store.
 - Uploaded library assets are shared across devices/future sessions and are separate from built-in manifests and saved theme records.
 - Individual sessions may mix backgrounds and overlays from different themes without creating or saving a new theme/event.
-- Built-in assets appear in the Asset Library as read-only/use-only items; uploaded assets remain the only records that can be renamed, tagged, hidden, or deleted.
+- All Asset Library cards expose the same management actions; repo-backed assets use metadata overrides/tombstones when files cannot be physically changed.
 - Customizable assets use the existing asset metadata model with `customizable` and `editableFields`; no separate asset-management store is being added.
+- Asset source labels are intentionally hidden from operator-facing cards; source is only an internal implementation detail.
+- Repo-backed default assets are hidden through stored metadata tombstones instead of physical file deletion.
 - The current verified Pages URL is `https://e432f899.decemeberbooth.pages.dev`.

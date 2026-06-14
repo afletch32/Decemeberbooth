@@ -291,6 +291,24 @@ test("asset library stores uploaded Cloudinary asset metadata", withTempEnv(asyn
     assert.equal(deleteResp.status, 200);
     const emptyResp = await fetch(`http://127.0.0.1:${port}/api/assets`);
     assert.deepEqual(await emptyResp.json(), { assets: [] });
+
+    const relativeResp = await fetch(`http://127.0.0.1:${port}/api/assets`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: "background:assets/general/basic/backgrounds/background.png",
+        category: "background",
+        url: "assets/general/basic/backgrounds/background.png",
+        name: "Renamed Default Background",
+        hidden: true,
+        archived: true,
+      }),
+    });
+    assert.equal(relativeResp.status, 200);
+    const relativeJson = await (await fetch(`http://127.0.0.1:${port}/api/assets`)).json();
+    assert.equal(relativeJson.assets[0].url, "assets/general/basic/backgrounds/background.png");
+    assert.equal(relativeJson.assets[0].hidden, true);
+    assert.equal(relativeJson.assets[0].name, "Renamed Default Background");
   } finally {
     await new Promise((resolve) => server.close(() => resolve()));
   }

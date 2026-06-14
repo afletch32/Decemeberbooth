@@ -7153,6 +7153,7 @@ function renderCurrentAssets(theme) {
     }
     wrap.innerHTML = "";
     let shown = 0;
+    let hasSelected = false;
     (list || []).forEach((entry, idx) => {
       const src = typeof entry === "string" ? entry : entry.src;
       const fromFolder = typeof entry === "object" && !!entry.__folder;
@@ -7171,6 +7172,10 @@ function renderCurrentAssets(theme) {
       const item = createAssetTile(src, { badge });
       if (selectedValue && src === selectedValue) {
         item.classList.add("selected");
+        item.setAttribute("aria-selected", "true");
+        hasSelected = true;
+      } else {
+        item.setAttribute("aria-selected", "false");
       }
       if (kind === "background" || kind === "overlay") {
         item.addEventListener("click", () => {
@@ -7268,6 +7273,7 @@ function renderCurrentAssets(theme) {
       wrap.appendChild(item);
       shown++;
     });
+    wrap.classList.toggle("has-selection", hasSelected);
     if ((list || []).length === 0 || shown === 0) {
       const span = document.createElement("span");
       span.className = "asset-panel-state";
@@ -7292,13 +7298,20 @@ function renderCurrentAssets(theme) {
     const markSelected = (idxToMark) => {
       const items = wrap.querySelectorAll(".asset-item");
       items.forEach((node, i) => {
-        if (i === idxToMark) node.classList.add("selected");
-        else node.classList.remove("selected");
+        if (i === idxToMark) {
+          node.classList.add("selected");
+          node.setAttribute("aria-selected", "true");
+        } else {
+          node.classList.remove("selected");
+          node.setAttribute("aria-selected", "false");
+        }
         const btn = node.querySelector(".asset-use");
         if (btn) btn.textContent = i === idxToMark ? "Using" : "Use";
       });
+      wrap.classList.toggle("has-selection", idxToMark >= 0);
     };
     if (bgList.length === 0) {
+      wrap.classList.remove("has-selection");
       const span = document.createElement("span");
       span.style.color = "#888";
       span.textContent = "None";
@@ -7308,7 +7321,12 @@ function renderCurrentAssets(theme) {
         const isFolder = baseFolderSet.has(src);
         const item = document.createElement("div");
         item.className = "asset-item";
-        if (idx === selectedBg) item.classList.add("selected");
+        if (idx === selectedBg) {
+          item.classList.add("selected");
+          item.setAttribute("aria-selected", "true");
+        } else {
+          item.setAttribute("aria-selected", "false");
+        }
         const img = document.createElement("img");
         img.src = withBust(src);
         img.onerror = () => renderMissingThumbnail(item, src);
@@ -7344,6 +7362,7 @@ function renderCurrentAssets(theme) {
         }
         wrap.appendChild(item);
       });
+      wrap.classList.toggle("has-selection", selectedBg >= 0);
     }
   }
   // Green screen backgrounds grid
@@ -12726,6 +12745,25 @@ function normalizeUploadedAssetCategory(value) {
   return "";
 }
 
+function getAssetLibraryId(category, url) {
+  const normalizedCategory = normalizeUploadedAssetCategory(category);
+  const value = String(url || "").trim();
+  return normalizedCategory && value ? `${normalizedCategory}:${value}` : "";
+}
+
+function getAssetUrlValue(item) {
+  return String(
+    (item && (item.url || item.secure_url || item.src || item.renderSrc)) || ""
+  ).trim();
+}
+
+function isManageableAssetUrl(url) {
+  const value = String(url || "").trim();
+  if (!value) return false;
+  if (/^(javascript|vbscript):/i.test(value)) return false;
+  return true;
+}
+
 function getUploadTagList() {
   const raw = DOM.assetUploadTags ? DOM.assetUploadTags.value : "";
   return normalizeAssetTags(raw);
@@ -12827,11 +12865,11 @@ function normalizeAssetLibraryPayload(payload) {
   const byId = new Map();
   assets.forEach((item) => {
     if (!item || typeof item !== "object") return;
-    const url = String(item.url || item.secure_url || item.src || "").trim();
-    if (!/^https?:\/\//i.test(url)) return;
+    const url = getAssetUrlValue(item);
+    if (!isManageableAssetUrl(url)) return;
     const category = normalizeUploadedAssetCategory(item.category || item.kind);
     if (!category) return;
-    const id = String(item.id || `${category}:${url}`).trim();
+    const id = String(item.id || getAssetLibraryId(category, url)).trim();
     const tags = normalizeAssetTags(item.tags);
     const editableFields = normalizeEditableFields(item.editableFields);
     const detectedFields = detectEditableFieldsFromText(
@@ -12909,8 +12947,9 @@ function getLibraryOverlayEntries() {
   return getVisibleLibraryAssets("overlay").map((asset) => ({
     src: asset.url,
     name: asset.name,
-    category: "uploaded",
+    category: asset.category,
     tags: asset.tags,
+    textFields: asset.textFields,
     __library: true,
   }));
 }
@@ -12920,6 +12959,7 @@ function getLibraryTemplateEntries() {
     src: asset.url,
     name: asset.name,
     tags: asset.tags,
+    textFields: asset.textFields,
     layout: "double_column",
     __library: true,
   }));
@@ -13007,25 +13047,43 @@ function scheduleAssetLibraryRender() {
   }
 }
 
-async function updateAssetLibraryItem(id, patch = {}) {
+async function updateAssetLibraryItem(id, patch = {}, fallbackAsset = null) {
   if (!id) return;
   const library = normalizeAssetLibraryPayload(uploadedAssetLibrary);
   const index = library.assets.findIndex((asset) => asset.id === id);
-  if (index < 0) return;
-  library.assets[index] = {
-    ...library.assets[index],
+  const baseRecord =
+    index >= 0
+      ? library.assets[index]
+      : fallbackAsset
+      ? {
+          id,
+          category: fallbackAsset.category,
+          url: fallbackAsset.url,
+          secure_url: fallbackAsset.url,
+          name: getAssetDisplayName(fallbackAsset),
+          tags: fallbackAsset.tags || [],
+          editableFields: fallbackAsset.editableFields || [],
+          customizable: fallbackAsset.customizable === true,
+          createdAt: fallbackAsset.createdAt || "",
+        }
+      : null;
+  if (!baseRecord) return;
+  const nextRecord = {
+    ...baseRecord,
     ...patch,
     updatedAt: new Date().toISOString(),
   };
+  if (index >= 0) library.assets[index] = nextRecord;
+  else library.assets.unshift(nextRecord);
   uploadedAssetLibrary = normalizeAssetLibraryPayload(library);
   saveAssetLibraryLocal();
   scheduleAssetLibraryRender();
   if (canSyncRemote()) {
     try {
       await fetch("/api/assets", {
-        method: "PATCH",
+        method: index >= 0 ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, ...patch }),
+        body: JSON.stringify({ ...nextRecord, id }),
       });
     } catch (err) {
       console.warn("Asset library update failed", err);
@@ -13033,33 +13091,28 @@ async function updateAssetLibraryItem(id, patch = {}) {
   }
 }
 
-async function deleteAssetLibraryItem(id) {
+async function deleteAssetLibraryItem(id, fallbackAsset = null) {
   if (!id) return;
-  const library = normalizeAssetLibraryPayload(uploadedAssetLibrary);
-  const next = library.assets.filter((asset) => asset.id !== id);
-  if (next.length === library.assets.length) return;
-  uploadedAssetLibrary = { assets: next };
-  saveAssetLibraryLocal();
-  scheduleAssetLibraryRender();
-  if (canSyncRemote()) {
-    try {
-      await fetch("/api/assets", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-    } catch (err) {
-      console.warn("Asset library delete failed", err);
-    }
-  }
+  await updateAssetLibraryItem(
+    id,
+    { hidden: true, archived: true },
+    fallbackAsset
+  );
 }
 
 function archiveLibraryAssetByUrl(url) {
   const asset = (uploadedAssetLibrary.assets || []).find(
     (item) => item && item.url === url
   );
-  if (!asset) return;
-  updateAssetLibraryItem(asset.id, { hidden: true, archived: true });
+  const fallback = getCanonicalAssetCollection().find(
+    (item) => item && item.url === url
+  );
+  if (!asset && !fallback) return;
+  updateAssetLibraryItem(
+    (asset && asset.id) || (fallback && fallback.id),
+    { hidden: true, archived: true },
+    fallback
+  );
 }
 
 function getAssetDisplayName(asset) {
@@ -13070,9 +13123,9 @@ function getAssetDisplayName(asset) {
 }
 
 function getAssetCreatedAtLabel(asset) {
-  if (!asset || asset.source === "builtin") return "Built-in";
+  if (!asset) return "";
   const value = asset.createdAt || asset.created_at || "";
-  if (!value) return "Unknown";
+  if (!value || asset.source === "theme") return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString();
@@ -13087,7 +13140,7 @@ function getAssetBadgeLabels(asset) {
   return labels;
 }
 
-function createBuiltinAssetRow(entry, category, themeName, themeKey) {
+function createCanonicalAssetRow(entry, category, themeName, themeKey) {
   const src = typeof entry === "string" ? entry : entry && entry.src;
   if (!src) return null;
   const name = getAssetDisplayName({
@@ -13102,27 +13155,31 @@ function createBuiltinAssetRow(entry, category, themeName, themeKey) {
     ...textFields,
     ...detectEditableFieldsFromText(name, src),
   ]);
+  const normalizedCategory = normalizeUploadedAssetCategory(category);
   return {
-    id: `builtin:${category}:${src}`,
-    category,
+    id: getAssetLibraryId(normalizedCategory, src),
+    category: normalizedCategory,
     url: src,
     secure_url: src,
     name,
-    tags: normalizeAssetTags([themeName, themeKey, "built-in"]),
-    source: "builtin",
+    tags: normalizeAssetTags([themeName, themeKey]),
+    source: "theme",
     createdAt: "",
     updatedAt: "",
     customizable: editableFields.length > 0,
     editableFields,
+    raw: entry,
   };
 }
 
-function collectBuiltinAssetLibraryRows() {
+function collectThemeAssetRows(category = "") {
+  const filterCategory = normalizeUploadedAssetCategory(category);
   const byKey = new Map();
-  const add = (entry, category, themeName, themeKey) => {
-    const row = createBuiltinAssetRow(entry, category, themeName, themeKey);
+  const add = (entry, rowCategory, themeName, themeKey) => {
+    const row = createCanonicalAssetRow(entry, rowCategory, themeName, themeKey);
     if (!row) return;
-    const key = `${row.category}:${row.url}`;
+    if (filterCategory && row.category !== filterCategory) return;
+    const key = row.id;
     if (!byKey.has(key)) byKey.set(key, row);
   };
   forEachThemeEntry((theme, themeKey) => {
@@ -13150,11 +13207,56 @@ function collectBuiltinAssetLibraryRows() {
   return Array.from(byKey.values());
 }
 
+function mergeCanonicalAssetWithStoredRecord(base, stored) {
+  if (!stored) return base;
+  return {
+    ...base,
+    ...stored,
+    source: base.source || stored.source || "library",
+    url: base.url || stored.url,
+    secure_url: base.secure_url || stored.secure_url || base.url || stored.url,
+    category: base.category || stored.category,
+    id: base.id || stored.id,
+    tags: normalizeAssetTags(stored.tags && stored.tags.length ? stored.tags : base.tags),
+    editableFields: normalizeEditableFields(
+      stored.editableFields && stored.editableFields.length
+        ? stored.editableFields
+        : base.editableFields
+    ),
+    customizable:
+      stored.customizable === true ||
+      (stored.customizable !== false && base.customizable === true),
+    hidden: stored.hidden === true || stored.archived === true,
+    archived: stored.archived === true,
+  };
+}
+
+function getCanonicalAssetCollection(category = "") {
+  const filterCategory = normalizeUploadedAssetCategory(category);
+  const themeRows = collectThemeAssetRows(filterCategory);
+  const storedRows = (uploadedAssetLibrary.assets || []).filter((asset) => {
+    if (!asset) return false;
+    if (filterCategory && asset.category !== filterCategory) return false;
+    return true;
+  });
+  const storedById = new Map(storedRows.map((asset) => [asset.id, asset]));
+  const byId = new Map();
+  themeRows.forEach((row) => {
+    const merged = mergeCanonicalAssetWithStoredRecord(row, storedById.get(row.id));
+    if (!merged.hidden && !merged.archived) byId.set(merged.id, merged);
+  });
+  storedRows.forEach((asset) => {
+    if (byId.has(asset.id)) return;
+    if (asset.hidden || asset.archived) return;
+    byId.set(asset.id, { ...asset, source: "library" });
+  });
+  return Array.from(byId.values()).sort((a, b) =>
+    getAssetDisplayName(a).localeCompare(getAssetDisplayName(b))
+  );
+}
+
 function getAllAssetLibraryRows() {
-  const uploadedRows = (uploadedAssetLibrary.assets || [])
-    .filter((asset) => asset && !asset.hidden && !asset.archived)
-    .map((asset) => ({ ...asset, source: "uploaded" }));
-  return [...uploadedRows, ...collectBuiltinAssetLibraryRows()];
+  return getCanonicalAssetCollection();
 }
 
 function getFilteredAssetLibraryRows() {
@@ -13185,7 +13287,6 @@ function getFilteredAssetLibraryRows() {
     const haystack = [
       asset.name,
       asset.category,
-      asset.source,
       asset.url,
       ...(Array.isArray(asset.tags) ? asset.tags : []),
       ...normalizeEditableFields(asset.editableFields).map(getAssetEditableFieldLabel),
@@ -13198,15 +13299,15 @@ function getFilteredAssetLibraryRows() {
     if (sortMode === "name") {
       return getAssetDisplayName(a).localeCompare(getAssetDisplayName(b));
     }
-    const aTime = a.source === "builtin" ? 0 : Date.parse(a.createdAt || "") || 0;
-    const bTime = b.source === "builtin" ? 0 : Date.parse(b.createdAt || "") || 0;
+    const aTime = Date.parse(a.createdAt || "") || 0;
+    const bTime = Date.parse(b.createdAt || "") || 0;
     return sortMode === "oldest" ? aTime - bTime : bTime - aTime;
   });
   return rows;
 }
 
 function promptForAssetEditableFields(asset) {
-  if (!asset || asset.source === "builtin") return;
+  if (!asset) return;
   const current = normalizeEditableFields(asset.editableFields);
   const value = prompt(
     "Editable fields, comma-separated. Examples: eventName, date, schoolName, title, subtitle, buttonText, bannerText",
@@ -13215,25 +13316,33 @@ function promptForAssetEditableFields(asset) {
   if (value === null) return;
   const editableFields = normalizeEditableFields(value);
   updateAssetLibraryItem(asset.id, {
+    category: asset.category,
+    url: asset.url,
+    secure_url: asset.url,
+    name: getAssetDisplayName(asset),
     editableFields,
     customizable: editableFields.length > 0,
-  });
+  }, asset);
 }
 
 function promptForAssetTags(asset) {
-  if (!asset || asset.source === "builtin") return;
+  if (!asset) return;
   const value = prompt("Tags, comma-separated", (asset.tags || []).join(", "));
   if (value === null) return;
-  updateAssetLibraryItem(asset.id, { tags: normalizeAssetTags(value) });
+  updateAssetLibraryItem(
+    asset.id,
+    { tags: normalizeAssetTags(value) },
+    asset
+  );
 }
 
 function promptForAssetName(asset) {
-  if (!asset || asset.source === "builtin") return;
+  if (!asset) return;
   const value = prompt("Asset name", getAssetDisplayName(asset));
   if (value === null) return;
   const name = value.trim();
   if (!name) return;
-  updateAssetLibraryItem(asset.id, { name });
+  updateAssetLibraryItem(asset.id, { name }, asset);
 }
 
 function registerUploadedAsset(url, kind, details = {}) {
@@ -13271,7 +13380,6 @@ function renderAssetLibrary() {
     assets.forEach((asset) => {
       const card = document.createElement("div");
       card.className = "asset-library-card";
-      if (asset.source === "builtin") card.classList.add("builtin");
       const img = document.createElement("img");
       img.src = withBust(asset.url);
       img.alt = asset.name || asset.category;
@@ -13282,9 +13390,9 @@ function renderAssetLibrary() {
       name.textContent = getAssetDisplayName(asset);
       const meta = document.createElement("div");
       meta.className = "asset-library-meta";
-      meta.textContent = `${asset.category} • ${
-        asset.source === "builtin" ? "Built-in" : "Uploaded"
-      } • ${getAssetCreatedAtLabel(asset)}`;
+      meta.textContent = [asset.category, getAssetCreatedAtLabel(asset)]
+        .filter(Boolean)
+        .join(" • ");
       const badges = document.createElement("div");
       badges.className = "asset-library-badges";
       getAssetBadgeLabels(asset).forEach((label) => {
@@ -13300,41 +13408,32 @@ function renderAssetLibrary() {
       useBtn.textContent = "Use";
       useBtn.addEventListener("click", () => useLibraryAsset(asset));
       actions.appendChild(useBtn);
-      if (asset.source !== "builtin") {
-        const renameBtn = document.createElement("button");
-        renameBtn.type = "button";
-        renameBtn.textContent = "Rename";
-        renameBtn.addEventListener("click", () => promptForAssetName(asset));
-        const tagsBtn = document.createElement("button");
-        tagsBtn.type = "button";
-        tagsBtn.textContent = "Tags";
-        tagsBtn.addEventListener("click", () => promptForAssetTags(asset));
-        const fieldsBtn = document.createElement("button");
-        fieldsBtn.type = "button";
-        fieldsBtn.textContent = "Fields";
-        fieldsBtn.addEventListener("click", () =>
-          promptForAssetEditableFields(asset)
-        );
-        const archiveBtn = document.createElement("button");
-        archiveBtn.type = "button";
-        archiveBtn.textContent = "Hide";
-        archiveBtn.addEventListener("click", () =>
-          updateAssetLibraryItem(asset.id, { hidden: true, archived: true })
-        );
-        const deleteBtn = document.createElement("button");
-        deleteBtn.type = "button";
-        deleteBtn.textContent = "Delete";
-        deleteBtn.addEventListener("click", () => {
-          if (confirm("Delete this uploaded asset from the shared library?")) {
-            deleteAssetLibraryItem(asset.id);
-          }
-        });
-        actions.appendChild(renameBtn);
-        actions.appendChild(tagsBtn);
-        actions.appendChild(fieldsBtn);
-        actions.appendChild(archiveBtn);
-        actions.appendChild(deleteBtn);
-      }
+      const renameBtn = document.createElement("button");
+      renameBtn.type = "button";
+      renameBtn.textContent = "Rename";
+      renameBtn.addEventListener("click", () => promptForAssetName(asset));
+      const tagsBtn = document.createElement("button");
+      tagsBtn.type = "button";
+      tagsBtn.textContent = "Tags";
+      tagsBtn.addEventListener("click", () => promptForAssetTags(asset));
+      const fieldsBtn = document.createElement("button");
+      fieldsBtn.type = "button";
+      fieldsBtn.textContent = "Fields";
+      fieldsBtn.addEventListener("click", () =>
+        promptForAssetEditableFields(asset)
+      );
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", () => {
+        if (confirm("Remove this asset from the library?")) {
+          deleteAssetLibraryItem(asset.id, asset);
+        }
+      });
+      actions.appendChild(renameBtn);
+      actions.appendChild(tagsBtn);
+      actions.appendChild(fieldsBtn);
+      actions.appendChild(deleteBtn);
       card.appendChild(img);
       card.appendChild(name);
       card.appendChild(meta);
@@ -17358,22 +17457,11 @@ function getThemeBackgroundCatalogList(theme) {
 }
 
 function getAllThemeBackgroundCatalogList() {
-  const out = [];
-  forEachThemeEntry((theme) => {
-    out.push(...getThemeBackgroundCatalogList(theme));
-  });
-  return mergeUniqueUrls(out, getLibraryBackgroundUrls());
+  return getCanonicalAssetCollection("background").map((asset) => asset.url);
 }
 
 function getSessionBackgroundPickerList(theme) {
-  const sessionList = Array.isArray(activeSessionAssets.backgrounds)
-    ? activeSessionAssets.backgrounds.filter(Boolean)
-    : [];
-  const activeThemeList = getThemeBackgroundCatalogList(theme);
-  return mergeUniqueUrls(
-    sessionList,
-    mergeUniqueUrls(activeThemeList, getAllThemeBackgroundCatalogList())
-  );
+  return getCanonicalAssetCollection("background").map((asset) => asset.url);
 }
 
 function getGreenBackgroundList(theme) {
@@ -18394,127 +18482,34 @@ function getOverlayList(theme) {
 }
 
 function getAllThemeOverlayCatalogList(theme) {
-  const activeThemeList = getBaseOverlayList(theme);
-  const sessionList = Array.isArray(activeSessionAssets.overlays)
-    ? activeSessionAssets.overlays
-    : [];
-  const out = [];
-  forEachThemeEntry((entryTheme) => {
-    out.push(...getBaseOverlayList(entryTheme));
-  });
-  const seen = new Set();
-  const merged = [];
-  [
-    ...sessionList.map((item) =>
-      typeof item === "string" ? { src: item, __session: true } : { ...item, __session: true }
-    ),
-    ...activeThemeList,
-    ...out,
-    ...getLibraryOverlayEntries(),
-  ].forEach((item) => {
-    const normalized = normalizeOverlayDefinition(item);
-    const src = normalized && normalized.src ? normalized.src : "";
-    if (!src || seen.has(src)) return;
-    seen.add(src);
-    merged.push(normalized);
-  });
-  return merged;
+  return getCanonicalAssetCollection("overlay")
+    .map((asset) =>
+      normalizeOverlayDefinition({
+        ...(asset.raw && typeof asset.raw === "object" ? asset.raw : {}),
+        src: asset.url,
+        name: asset.name,
+        tags: asset.tags,
+        textFields: asset.editableFields,
+        __library: true,
+      })
+    )
+    .filter(Boolean);
 }
 
 function getTemplateList(theme) {
-  if (!theme || typeof theme !== "object") return [];
-  const overrides = getActiveEventOverrides();
-  const sessionArr = Array.isArray(activeSessionAssets.templates)
-    ? activeSessionAssets.templates
-        .map((t) => {
-          if (typeof t === "string")
-            return { src: t, layout: "double_column", __session: true };
-          if (t && typeof t === "object" && t.src) {
-            return {
-              src: t.src,
-              layout: normalizeTemplateLayout(t.layout),
-              slots: t.slots,
-              textFields: normalizeTemplateTextFields(t.textFields),
-              __session: true,
-            };
-          }
-          return null;
-        })
-        .filter(Boolean)
-    : [];
-  const eventArr = Array.isArray(overrides.templates)
-    ? overrides.templates
-        .map((t) => {
-          if (typeof t === "string")
-            return { src: t, layout: "double_column", __event: true };
-          if (t && typeof t === "object" && t.src) {
-            return {
-              src: t.src,
-              layout: normalizeTemplateLayout(t.layout),
-              slots: t.slots,
-              textFields: normalizeTemplateTextFields(t.textFields),
-              __event: true,
-            };
-          }
-          return null;
-        })
-        .filter(Boolean)
-    : [];
-  const removed = new Set(
-    Array.isArray(theme.templatesRemoved) ? theme.templatesRemoved : []
-  );
-  const builtinFolderArr =
-    typeof theme.templatesFolder === "string"
-      ? getBuiltinTemplateEntries(theme.templatesFolder)
-          .filter((t) => t && t.src && !removed.has(t.src))
-          .map((t) => ({
-            src: t.src,
-            layout: normalizeTemplateLayout(t.layout),
-            slots: t.slots,
-            textFields: normalizeTemplateTextFields(t.textFields),
-            __folder: true,
-          }))
-      : [];
-  const folderArr = Array.isArray(theme.templatesTmp)
-    ? [
-        ...builtinFolderArr,
-        ...theme.templatesTmp
-        .filter((t) => t && t.src && !removed.has(t.src))
-        .map((t) => ({
-          src: t.src,
-          layout: normalizeTemplateLayout(t.layout),
-          slots: t.slots,
-          textFields: normalizeTemplateTextFields(t.textFields),
-          __folder: true,
-        })),
-      ]
-    : builtinFolderArr;
-  const libraryArr = getLibraryTemplateEntries()
-    .filter((t) => t && t.src && !removed.has(t.src))
-    .map((t) => ({
-      src: t.src,
-      layout: normalizeTemplateLayout(t.layout),
-      slots: t.slots,
-      textFields: normalizeTemplateTextFields(t.textFields),
+  return getCanonicalAssetCollection("template").map((asset) => {
+    const raw = asset.raw && typeof asset.raw === "object" ? asset.raw : {};
+    return {
+      ...raw,
+      src: asset.url,
+      name: asset.name,
+      tags: asset.tags,
+      layout: normalizeTemplateLayout(raw.layout),
+      slots: raw.slots,
+      textFields: normalizeTemplateTextFields(raw.textFields),
       __library: true,
-    }));
-  const localArr = Array.isArray(theme.templates)
-    ? theme.templates.map((t) => ({
-        src: t.src,
-        layout: normalizeTemplateLayout(t.layout),
-        slots: t.slots,
-        textFields: normalizeTemplateTextFields(t.textFields),
-      }))
-    : [];
-  const seen = new Set();
-  const out = [];
-  for (const t of [...sessionArr, ...eventArr, ...folderArr, ...libraryArr, ...localArr]) {
-    const k = (t && t.src ? t.src : "").toString().trim();
-    if (!k || seen.has(k)) continue;
-    seen.add(k);
-    out.push(t);
-  }
-  return out;
+    };
+  });
 }
 
 // --- PWA Install Button ---

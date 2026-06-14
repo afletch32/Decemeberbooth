@@ -284,6 +284,24 @@ test("event setup owns the day-to-day event editing controls", () => {
   );
 });
 
+test("asset picker selections have a strong visible and accessible state", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes('content: "✓ Selected";') &&
+      html.includes("box-shadow:\n        0 0 0 4px #facc15") &&
+      html.includes(".asset-grid.has-selection .asset-item:not(.selected)"),
+    "selected asset tiles should have a prominent badge, border/glow, and optional unselected dimming"
+  );
+  assert.ok(
+    appScript.includes('item.setAttribute("aria-selected", "true");') &&
+      appScript.includes('wrap.classList.toggle("has-selection", hasSelected);') &&
+      appScript.includes('node.setAttribute("aria-selected", "true");'),
+    "asset grids should expose selected state to assistive tech and dim only when a selection exists"
+  );
+});
+
 test("advanced theme controls keep defaults as editable placeholders", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts/app.js");
