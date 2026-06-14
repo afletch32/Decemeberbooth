@@ -13,7 +13,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0f1222">
   <link rel="stylesheet" href="fonts.css">
-  <link rel="stylesheet" href="final-preview-sizing-fix.css">
 	<style>
     :root {
       --accent: #6fe7d7;
@@ -58,8 +57,8 @@
       --edit-options-scale: 1;
       --capture-landscape-width: 980px;
       --capture-portrait-width: 560px;
-      --capture-landscape-ratio: 4 / 3;
-      --capture-portrait-ratio: 3 / 4;
+      --capture-landscape-ratio: 3 / 2;
+      --capture-portrait-ratio: 2 / 3;
       --font-heading: "Montserrat", sans-serif;
       --font-body: "Inter", sans-serif;
       --font: var(--font-body);
@@ -1750,6 +1749,88 @@
       z-index: 2;
     }
 
+    .asset-library-panel {
+      border: 1px solid #d7e1f2;
+      background: #f8fbff;
+      border-radius: 10px;
+      padding: 12px;
+      margin: 12px 0;
+    }
+
+    .asset-library-toolbar {
+      display: grid;
+      grid-template-columns: minmax(140px, 1fr) minmax(140px, 1fr) minmax(140px, 1fr);
+      gap: 8px;
+      align-items: end;
+      margin-bottom: 10px;
+    }
+
+    .asset-library-toolbar label {
+      display: grid;
+      gap: 4px;
+      color: #5c6b93;
+      font-size: 0.88em;
+    }
+
+    .asset-library-toolbar input,
+    .asset-library-toolbar select {
+      min-height: 40px;
+      border: 1px solid #d2ddf0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+
+    .asset-library-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+      gap: 10px;
+    }
+
+    .asset-library-card {
+      border: 1px solid #d7e1f2;
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .asset-library-card img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+      background: #f3f6fb;
+      border-radius: 6px;
+    }
+
+    .asset-library-name {
+      font-size: 0.78em;
+      color: #334155;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .asset-library-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .asset-library-actions button {
+      min-height: 30px;
+      padding: 4px 7px;
+      font-size: 0.76em;
+    }
+
+    .asset-library-empty {
+      color: #718096;
+      font-size: 0.92em;
+      padding: 8px 0;
+    }
+
     @media (max-width: 1100px) {
       .asset-grid.asset-grid-thumbs {
         grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
@@ -1763,6 +1844,10 @@
     }
 
     @media (max-width: 640px) {
+      .asset-library-toolbar {
+        grid-template-columns: 1fr;
+      }
+
       .asset-collapsible {
         padding: 10px;
         border-radius: 18px;
@@ -2166,6 +2251,40 @@
       justify-items: center;
     }
 
+    .photo-orientation-section {
+      gap: 8px;
+    }
+
+    .photo-orientation-toggle {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 4px;
+      border: 1px solid rgba(202, 186, 160, 0.72);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .photo-orientation-btn {
+      min-height: 42px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: #6d5f4f;
+      font-family: var(--font-label);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .photo-orientation-btn.active {
+      background: #111111;
+      color: #fffaf0;
+      box-shadow: 0 10px 20px rgba(81, 65, 47, 0.16);
+    }
+
     #controls {
       right: 10px;
       display: flex;
@@ -2307,7 +2426,7 @@
         0 0 0 1px rgba(214, 188, 149, 0.2);
       width: min(94vw, var(--live-camera-width, 920px));
       max-height: min(68svh, calc(100svh - 320px));
-      aspect-ratio: var(--live-camera-aspect, 4 / 3);
+      aspect-ratio: var(--live-camera-aspect, 3 / 2);
       transform: translateY(var(--edit-camera-y)) scale(var(--edit-camera-scale));
       isolation: isolate;
     }
@@ -2376,6 +2495,11 @@
       pointer-events: none;
     }
 
+    .photo-slot-media.is-live {
+      -webkit-transform: scaleX(-1);
+      transform: scaleX(-1);
+    }
+
     #videoContainer::before {
       content: "";
       position: absolute;
@@ -2404,12 +2528,12 @@
 
     .view-landscape #videoContainer {
       width: min(92vw, var(--live-camera-width, 860px));
-      aspect-ratio: var(--live-camera-aspect, 4 / 3);
+      aspect-ratio: var(--live-camera-aspect, 3 / 2);
     }
 
     .view-portrait #videoContainer {
       width: min(92vw, var(--live-camera-width, 860px));
-      aspect-ratio: var(--live-camera-aspect, 4 / 3);
+      aspect-ratio: var(--live-camera-aspect, 2 / 3);
     }
 
     #video,
@@ -2810,9 +2934,6 @@
 
     #finalStrip,
     #finalLive {
-      width: min(var(--review-width, 640px), 92vw);
-      height: min(var(--review-height, 860px), 86svh);
-      object-fit: contain;
       background: #f7fffd;
       border: 10px solid #fff;
       border-radius: 24px;
@@ -3411,34 +3532,22 @@
     #finalStrip {
       grid-column: 1;
       grid-row: 1 / span 2;
-      width: min(100%, 1160px);
-      height: auto;
-      max-width: 100%;
-      max-height: min(var(--frame-preview-height, 68svh), 68svh);
-      aspect-ratio: var(--frame-preview-aspect, var(--review-aspect, 4 / 3));
       justify-self: center;
       align-self: center;
       border: 10px solid rgba(255, 255, 255, 0.96);
       border-radius: 28px;
       box-shadow: 0 22px 50px rgba(110, 132, 150, 0.2);
       background: #fff;
-      object-fit: contain;
     }
     #finalLive {
       grid-column: 1;
       grid-row: 1 / span 2;
-      width: min(100%, 1160px);
-      height: auto;
-      max-width: 100%;
-      max-height: min(var(--frame-preview-height, 68svh), 68svh);
-      aspect-ratio: var(--frame-preview-aspect, var(--review-aspect, 4 / 3));
       justify-self: center;
       align-self: center;
       border: 10px solid rgba(255, 255, 255, 0.96);
       border-radius: 28px;
       box-shadow: 0 22px 50px rgba(110, 132, 150, 0.2);
       background: #000;
-      object-fit: cover;
     }
 
     #finalPreviewActions {
@@ -3558,9 +3667,6 @@
       #finalLive {
         grid-column: auto;
         grid-row: auto;
-        width: min(100%, 92vw);
-        height: min(var(--frame-preview-height, 62vh), 62vh);
-        max-height: 62vh;
         justify-self: center;
       }
 
@@ -4589,16 +4695,16 @@
 
     #videoContainer {
       width: min(100%, var(--live-camera-width, 920px));
-      aspect-ratio: var(--live-camera-aspect, 4 / 3);
+      aspect-ratio: var(--live-camera-aspect, 3 / 2);
     }
 
     .view-portrait #videoContainer {
       width: min(100%, var(--live-camera-width, 920px));
-      aspect-ratio: var(--live-camera-aspect, 4 / 3);
+      aspect-ratio: var(--live-camera-aspect, 2 / 3);
     }
 
     .view-landscape #videoContainer {
-      aspect-ratio: var(--live-camera-aspect, 4 / 3);
+      aspect-ratio: var(--live-camera-aspect, 3 / 2);
     }
 
     #welcomeOverlay {
@@ -4613,19 +4719,6 @@
     #welcomeOverlay h1 {
       color: #111111;
       text-wrap: balance;
-    }
-
-    #finalPreviewContent {
-      align-items: center;
-    }
-
-    #finalStrip,
-    #finalLive {
-      width: min(100%, 1160px);
-      max-width: 100%;
-      height: auto;
-      aspect-ratio: var(--frame-preview-aspect, var(--review-aspect, 4 / 3));
-      max-height: min(var(--frame-preview-height, 68svh), 68svh);
     }
 
     #finalPreviewActions {
@@ -5109,6 +5202,9 @@
     #boothScreen.countdown-mode #mobileSettingsToggle,
     #boothScreen.countdown-mode #mobileSettingsBackdrop,
     #boothScreen.countdown-mode #mobileSettingsSheet,
+    #boothScreen.welcome-active #mobileSettingsToggle,
+    #boothScreen.welcome-active #mobileSettingsBackdrop,
+    #boothScreen.welcome-active #mobileSettingsSheet,
     #boothScreen.share-mode #mobileSettingsToggle,
     #boothScreen.share-mode #mobileSettingsBackdrop,
     #boothScreen.share-mode #mobileSettingsSheet {
@@ -5139,7 +5235,7 @@
     #boothScreen.mode-message,
     #boothScreen.mode-layout {
       --live-camera-width: 920px;
-      --live-camera-aspect: 4 / 3;
+      --live-camera-aspect: 3 / 2;
     }
 
     #boothScreen.mode-live-photo #videoContainer,
@@ -5148,10 +5244,11 @@
     #boothScreen.mode-message #videoContainer,
     #boothScreen.mode-layout #videoContainer {
       width: min(100%, var(--live-camera-width, 860px));
-      aspect-ratio: var(--live-camera-aspect, 4 / 3);
+      aspect-ratio: var(--live-camera-aspect, 3 / 2);
       max-height: none;
     }
   </style>
+  <link rel="stylesheet" href="final-preview-sizing-fix.css">
 </head>
 
 <body>
@@ -5166,6 +5263,7 @@
     </div>
     <div class="btn-row admin-actions">
       <button type="button" id="quickStartBtn">Demo Booth Now</button>
+      <button type="button" id="openLayoutBuilderBtn" onclick="openLayoutBuilder()">Overlay Builder</button>
       <button type="button" id="startBoothButton" class="start-booth-hero">Start Booth</button>
     </div>
     <div class="setup-session-card glass-panel rounded-2xl p-4">
@@ -5206,7 +5304,37 @@
           <strong id="launchOutputStatus">Local uploads</strong>
         </div>
       </div>
-      <div class="setup-session-assets" aria-label="Assigned overlays and templates">
+      <div class="setup-session-assets" aria-label="Assigned backgrounds, overlays, and templates">
+        <div class="asset-collapsible session-asset-panel" data-asset-panel="background" id="backgroundThumbnailsPanel">
+          <button
+            type="button"
+            class="asset-collapsible-header"
+            id="backgroundThumbnailsHeader"
+            aria-controls="backgroundThumbnailsBody"
+            aria-expanded="false"
+          >
+            <span class="asset-collapsible-copy">
+              <span class="asset-collapsible-title">Backgrounds</span>
+              <span class="asset-collapsible-selected" id="launchBackgroundCount">0 available</span>
+            </span>
+            <span class="asset-collapsible-meta">
+              <span class="asset-collapsible-chevron" aria-hidden="true">⌄</span>
+            </span>
+          </button>
+          <div class="asset-collapsible-body" id="backgroundThumbnailsBody">
+            <div class="asset-collapsible-body-inner">
+              <div class="asset-row">
+                <div
+                  id="sessionBackgrounds"
+                  class="asset-grid asset-grid-thumbs"
+                  data-empty-text="No backgrounds available yet."
+                ></div>
+              </div>
+              <div class="asset-panel-state hidden" id="backgroundThumbnailsLoading" aria-live="polite">Loading backgrounds...</div>
+              <div class="asset-panel-state hidden" id="backgroundThumbnailsError" aria-live="polite">Couldn't load background thumbnails.</div>
+            </div>
+          </div>
+        </div>
         <div class="asset-collapsible session-asset-panel" data-asset-panel="overlay" id="overlayThumbnailsPanel">
           <button
             type="button"
@@ -5572,45 +5700,45 @@
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
                 <div class="theme-field">
                   <label for="eventNameInput">Event Name</label>
-                  <input type="text" id="eventNameInput" placeholder="Event name">
+                  <input type="text" id="eventNameInput" placeholder="Event name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
                 <div class="theme-field">
                   <label for="eventDateInput">Event Date</label>
-                  <input type="text" id="eventDateInput" placeholder="e.g., April 2026">
+                  <input type="text" id="eventDateInput" placeholder="e.g., April 2026" autocomplete="off" spellcheck="false">
                 </div>
                 <div class="theme-field">
                   <label for="eventPartner1Input">Partner 1</label>
-                  <input type="text" id="eventPartner1Input" placeholder="Name">
+                  <input type="text" id="eventPartner1Input" placeholder="Name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
                 <div class="theme-field">
                   <label for="eventPartner2Input">Partner 2</label>
-                  <input type="text" id="eventPartner2Input" placeholder="Name">
+                  <input type="text" id="eventPartner2Input" placeholder="Name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
                 <div class="theme-field">
                   <label for="eventBirthdayNameInput">Birthday Name</label>
-                  <input type="text" id="eventBirthdayNameInput" placeholder="Name">
+                  <input type="text" id="eventBirthdayNameInput" placeholder="Name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
                 <div class="theme-field">
                   <label for="eventExpoCompanyInput">Company Name</label>
-                  <input type="text" id="eventExpoCompanyInput" placeholder="Name">
+                  <input type="text" id="eventExpoCompanyInput" placeholder="Name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
               </div>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
                 <div class="theme-field">
                   <label for="eventBannerTextInput">Banner Text</label>
-                  <input type="text" id="eventBannerTextInput" placeholder="Top booth banner">
+                  <input type="text" id="eventBannerTextInput" placeholder="Top booth banner" autocomplete="off" spellcheck="false">
                 </div>
                 <div class="theme-field">
                   <label for="eventWelcomeTitleInput">Welcome Title</label>
-                  <input type="text" id="eventWelcomeTitleInput" placeholder="Welcome screen title">
+                  <input type="text" id="eventWelcomeTitleInput" placeholder="Welcome screen title" autocomplete="off" spellcheck="false">
                 </div>
                 <div class="theme-field">
                   <label for="eventStartButtonTextInput">Start Button Text</label>
-                  <input type="text" id="eventStartButtonTextInput" placeholder="Touch to start">
+                  <input type="text" id="eventStartButtonTextInput" placeholder="Touch to start" autocomplete="off" spellcheck="false">
                 </div>
                 <div class="theme-field">
                   <label for="eventCaptureLabelInput">Capture Button Text</label>
-                  <input type="text" id="eventCaptureLabelInput" placeholder="Take Photo">
+                  <input type="text" id="eventCaptureLabelInput" placeholder="Take Photo" autocomplete="off" spellcheck="false">
                 </div>
               </div>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
@@ -5653,6 +5781,33 @@
               <button type="button" id="addCharacterBtn">Add Character</button>
               <button type="button" onclick="openLayoutBuilder()">Open Layout Builder</button>
               <button type="button" id="eventToSubThemeBtn" class="hidden">Save Theme Preset</button>
+            </div>
+            <div class="asset-library-panel" id="uploadedAssetLibraryPanel">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">
+                <span style="font-weight:600; color:var(--accent2);">Uploaded Asset Library</span>
+                <button type="button" id="refreshAssetLibraryBtn">Refresh</button>
+              </div>
+              <div class="asset-library-toolbar">
+                <label>
+                  Search
+                  <input type="search" id="assetLibrarySearch" placeholder="Search names or tags">
+                </label>
+                <label>
+                  Category
+                  <select id="assetLibraryCategory">
+                    <option value="">All assets</option>
+                    <option value="background">Background</option>
+                    <option value="overlay">Overlay</option>
+                    <option value="template">Template</option>
+                  </select>
+                </label>
+                <label>
+                  Tags for new uploads
+                  <input type="text" id="assetUploadTags" placeholder="summer, school, client">
+                </label>
+              </div>
+              <div id="assetLibraryGrid" class="asset-library-grid"></div>
+              <div id="assetLibraryStatus" class="asset-library-empty" aria-live="polite"></div>
             </div>
             <div id="assetUploadInputs" class="hidden">
               <input type="file" id="themeBackground" accept="image/*">

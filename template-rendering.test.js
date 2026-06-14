@@ -10,6 +10,7 @@ function readProjectFile(...parts) {
 test("template rendering logic preserves photo overlays across strip mode and supports strip aliases", () => {
   const appScript = readProjectFile("scripts", "app.js");
   const html = readProjectFile("index.html");
+  const finalPreviewCss = readProjectFile("final-preview-sizing-fix.css");
 
   assert.ok(
     appScript.includes('let lastPhotoOverlay = null;'),
@@ -40,12 +41,22 @@ test("template rendering logic preserves photo overlays across strip mode and su
     "single photo rendering should resolve overlay autofill metadata"
   );
   assert.ok(
-    appScript.includes('drawImageContain(ctx, overlayToDraw, 0, 0, canvas.width, canvas.height);'),
-    "single-photo overlays should be composited without cropping their edges"
+    appScript.includes('ctx.drawImage(overlayToDraw, 0, 0, canvas.width, canvas.height);'),
+    "single-photo overlays should fill the print canvas exactly"
   );
   assert.ok(
-    html.includes("object-fit: contain;"),
-    "live overlay preview should fit fully inside the frame"
+    appScript.includes("const PRINT_SIZES = {") &&
+      appScript.includes("landscape: { width: 1800, height: 1200, aspect: 3 / 2") &&
+      appScript.includes("portrait: { width: 1200, height: 1800, aspect: 2 / 3"),
+    "single-photo exports should use true 4x6 300 DPI print sizes"
+  );
+  assert.ok(
+    appScript.includes("const { canvas: c, ctx, size } = createPrintCanvas(orientation);"),
+    "single-photo finalization should use the shared print canvas helper"
+  );
+  assert.ok(
+    finalPreviewCss.includes("object-fit: fill;"),
+    "live overlay preview should fill the frame"
   );
   assert.ok(
     html.includes("#liveOverlay {\n      -webkit-transform: none;\n      transform: none;"),

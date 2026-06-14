@@ -21,12 +21,20 @@ test("setup screen uses a compact toolbar for section controls", () => {
     "install button should not be part of the setup toolbar anymore"
   );
   assert.ok(
+    html.includes('id="backgroundThumbnailsPanel"'),
+    "background thumbnails panel should exist"
+  );
+  assert.ok(
     html.includes('id="overlayThumbnailsPanel"'),
     "overlay thumbnails panel should exist"
   );
   assert.ok(
     html.includes('id="templateThumbnailsPanel"'),
     "template thumbnails panel should exist"
+  );
+  assert.ok(
+    html.includes('data-empty-text="No backgrounds available yet."'),
+    "background panel should expose an empty state"
   );
   assert.ok(
     html.includes('data-empty-text="No overlays uploaded yet."'),
@@ -251,8 +259,12 @@ test("event setup owns the day-to-day event editing controls", () => {
     "event-only asset uploads should require an active event"
   );
   assert.ok(
-    appScript.includes("setGrid(\n    DOM.currentOverlays,\n    getOverlayList(theme),"),
-    "current asset panel should render merged session/theme overlays"
+    appScript.includes("setGrid(\n    DOM.sessionBackgrounds,\n    getSessionBackgroundPickerList(theme),"),
+    "session setup should render backgrounds from the cross-theme picker"
+  );
+  assert.ok(
+    appScript.includes("setGrid(\n    DOM.currentOverlays,\n    getAllThemeOverlayCatalogList(theme),"),
+    "session setup should render overlays from the cross-theme picker"
   );
   assert.ok(
     appScript.includes("setGrid(\n    DOM.currentTemplates,\n    getTemplateList(theme),"),
@@ -269,6 +281,67 @@ test("event setup owns the day-to-day event editing controls", () => {
   assert.ok(
     appScript.includes('if (DOM.themeWelcomeTitle) target.welcome.title = DOM.themeWelcomeTitle.value;'),
     "theme updates should preserve intentionally blank welcome titles"
+  );
+});
+
+test("advanced theme controls keep defaults as editable placeholders", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts/app.js");
+  const advancedTextInputs = [
+    "eventNameInput",
+    "eventDateInput",
+    "eventPartner1Input",
+    "eventPartner2Input",
+    "eventBirthdayNameInput",
+    "eventExpoCompanyInput",
+    "eventBannerTextInput",
+    "eventWelcomeTitleInput",
+    "eventStartButtonTextInput",
+    "eventCaptureLabelInput",
+  ];
+
+  advancedTextInputs.forEach((id) => {
+    assert.match(
+      html,
+      new RegExp(`<input type="text" id="${id}"[^>]*autocomplete="off"`),
+      `${id} should disable browser autofill so manual typing wins`
+    );
+  });
+  assert.ok(
+    appScript.includes("function setTextFieldValueAndPlaceholder("),
+    "advanced text controls should sync values and placeholders through one helper"
+  );
+  assert.ok(
+    appScript.includes("node.placeholder = safePlaceholder;"),
+    "theme defaults should be shown as placeholders"
+  );
+  assert.ok(
+    appScript.includes("document.activeElement !== node"),
+    "sync should not rewrite the field currently being typed into"
+  );
+  assert.ok(
+    appScript.includes('getSavedEventTextValue(textSource, "bannerText")'),
+    "saved custom banner text should load as the editable value"
+  );
+  assert.ok(
+    appScript.includes('hasEditableTarget ? resolveThemeStartButtonText() : "Touch to start"'),
+    "default start button text should load as a placeholder"
+  );
+  assert.ok(
+    appScript.includes("if (eventLabel) return eventLabel;"),
+    "empty custom button text should fall back to the default label"
+  );
+  assert.ok(
+    appScript.includes("let activeSessionTextDetails = {};"),
+    "theme-session text edits should be kept in runtime session state"
+  );
+  assert.ok(
+    appScript.includes("updateActiveSessionTextDetails({ [key]: nextValue });"),
+    "no-event advanced text edits should not mutate saved theme defaults while typing"
+  );
+  assert.ok(
+    appScript.includes('getSavedEventTextValue(textSource, "partner1")'),
+    "all advanced text fields should load from the active event or session text source"
   );
 });
 

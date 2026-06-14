@@ -54,3 +54,102 @@ test("no-event booth uploads use a date Cloudinary folder", () => {
     "no-event gallery titles should use the date"
   );
 });
+
+test("capture modes share one canonical upload pipeline", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("async function uploadCaptureOnce(options = {})"),
+    "captures should upload through one high-level pipeline"
+  );
+  assert.ok(
+    appScript.includes("await recordGalleryPhoto(meta.slug, publicUrl"),
+    "the canonical pipeline should save the same uploaded URL to the gallery"
+  );
+  assert.ok(
+    appScript.includes("shareUrl: uploadResult.publicUrl"),
+    "final screens should receive the uploaded URL instead of uploading again"
+  );
+  assert.ok(
+    !appScript.includes("handleCaptureUpload("),
+    "capture flows should not use the old gallery-only upload path"
+  );
+  assert.ok(
+    !appScript.includes("publishFinalShareUrl("),
+    "final preview should not start a second share upload"
+  );
+  assert.ok(
+    !appScript.includes("publishShareImage(") &&
+      !appScript.includes("publishShareVideo("),
+    "legacy image/video share upload helpers should be removed"
+  );
+});
+
+test("upload failures are queued with retry and gallery metadata", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("function createCaptureUploadId("),
+    "capture retries should use a stable capture id"
+  );
+  assert.ok(
+    appScript.includes("async function queueCaptureForRetry(options = {})"),
+    "failed captures should be queued through a shared retry helper"
+  );
+  assert.ok(
+    appScript.includes("function queuePendingGalleryRecord(record = {})"),
+    "successful uploads with gallery failures should queue gallery retries"
+  );
+  assert.ok(
+    appScript.includes("async function flushPendingGalleryRecords()"),
+    "queued gallery writes should be retried later"
+  );
+  assert.ok(
+    appScript.includes("capture_id: options.captureId"),
+    "gallery records should include capture ids for dedupe"
+  );
+  assert.ok(
+    appScript.includes("isFlushingPendingUploads"),
+    "pending upload flushing should guard against duplicate concurrent retries"
+  );
+  assert.ok(
+    appScript.includes("Capture retry backup could not be saved before upload."),
+    "online uploads should warn if the pre-upload safety queue cannot be saved"
+  );
+  assert.ok(
+    appScript.includes("removePendingUpload(meta.captureId)"),
+    "successful uploads should clear their pre-upload safety queue item"
+  );
+});
+
+test("uploaded assets register in a persistent shared library", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const html = readProjectFile("index.html");
+
+  assert.ok(
+    html.includes('id="uploadedAssetLibraryPanel"'),
+    "advanced controls should expose the uploaded asset library"
+  );
+  assert.ok(
+    html.includes('id="assetLibrarySearch"') &&
+      html.includes('id="assetLibraryCategory"') &&
+      html.includes('id="assetUploadTags"'),
+    "asset library should support search, category filters, and upload tags"
+  );
+  assert.ok(
+    appScript.includes('fetch("/api/assets"') &&
+      appScript.includes("registerUploadedAsset(json.secure_url, kind"),
+    "Cloudinary asset uploads should persist metadata to the shared asset API"
+  );
+  assert.ok(
+    appScript.includes("function getLibraryOverlayEntries()") &&
+      appScript.includes("function getLibraryTemplateEntries()") &&
+      appScript.includes("function getLibraryBackgroundUrls()"),
+    "uploaded library assets should merge with built-in overlay/template/background lists"
+  );
+  assert.ok(
+    appScript.includes("archiveLibraryAssetByUrl(src)") &&
+      appScript.includes('method: "DELETE"'),
+    "library assets should support hiding/archiving and deletion"
+  );
+});

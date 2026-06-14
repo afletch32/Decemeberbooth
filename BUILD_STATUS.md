@@ -1,7 +1,15 @@
 Current goal
-- Simplify booth setup into a theme session flow that does not require creating an event.
+- Create a persistent uploaded asset library for Cloudinary-hosted overlays, templates, and backgrounds.
 
 What is done
+- Disabled browser autofill on Advanced Theme Controls text inputs so manual edits are not overridden.
+- Changed Advanced Theme Controls text defaults to display as placeholders instead of pre-filled field values.
+- Added session-only text override state so no-event theme sessions can edit labels without mutating saved theme defaults.
+- Preserved saved-event text load/save behavior while keeping theme-default text out of editable values.
+- Changed empty custom start button text to fall back to the default start button label.
+- Added setup coverage for placeholder behavior, autofill blocking, session text overrides, and button-label fallback.
+- Browser smoke verified all Advanced Theme Controls text inputs accept typing.
+- `npm test` passes with 65/65 tests after the Advanced Theme Controls fix.
 - Replaced the default create-event setup with `Theme Session` copy and a theme-first start path.
 - Replaced the theme type dropdown with touch-friendly filter cards for All Themes, Wedding, Expo, Party, and Community.
 - Kept the hidden backing filter/select behavior so existing theme filtering logic remains stable.
@@ -38,39 +46,152 @@ What is done
 - Fixed overlay classification so missing layout metadata no longer turns normal photo overlays into strip assets.
 - Added slot-aware built-in metadata for wedding overlays and strip templates so the first guest render has usable photo windows before async manifests finish loading.
 - Qualified overlay foreground paths from manifests so SVG overlay art loads from the correct folder.
+- Added exact six-slot metadata for `assets/Hawks/templates/go hawks.png` in both the folder manifest and built-in manifest.
+- Made the Hawks six-frame grid the canonical renderer placement for every double-column photostrip.
+- Kept built-in wedding strip metadata on its native single-column strip geometry so it matches the SVG art.
+- Changed double-column fallback rendering to respect explicit template slots before using the Hawks six-slot default.
+- Added a guest-facing Portrait/Landscape overlay format selector in photo modes.
+- Filtered photo overlay thumbnails by explicit orientation/aspect metadata, filename hints, or cached natural image dimensions.
+- Changed photo-mode preview/export aspect to follow the selected overlay format.
+- Fixed live photo-slot overlay previews so choosing an overlay keeps the camera mirrored until final output.
+- Fixed absolute six-slot double-column metadata grouping so both strip columns fill.
+- Added browser smoke coverage for switching portrait and landscape overlay formats.
 - Locked admin scrolling to the admin viewport so page-level scrolling stays contained.
 - `npm test` passes.
+- Targeted Playwright overlay format selector smoke test passes.
+- Targeted Playwright coverage passes for mirrored live overlay slots and double-column strip column fill.
+- Preview deploy completed at `https://6b69285d.decemeberbooth.pages.dev`.
+- Preview URL returns HTTP 200 and includes the deployed Hawks standard strip placement code.
+- Live manifest verification confirms Hawks uses the six-slot grid while wedding strip templates remain native `photo_strip_3`.
+- Live app script verification confirms explicit template slots are respected before the Hawks fallback grid.
+- Live app script verification confirms photo-slot live videos receive the mirror transform before final output.
+- Added a Cloudflare Pages `/api/gallery` function that stores an app-owned gallery index in `THEMES_KV`.
+- Added local dev `GET/POST /api/gallery` endpoints backed by `local-data/gallery-index.json`.
+- Changed Cloudinary photo uploads to record uploaded photo URLs into the app gallery index.
+- Changed `gallery.html` to read the app gallery index first, then fall back to Cloudinary tag-based lists when available.
+- Added Node coverage for the Pages gallery function and local gallery index round trip.
+- Syntax checks pass for touched browser/API/server/test files.
+- Preview deploy completed at `https://623a8706.decemeberbooth.pages.dev`.
+- Live `/api/gallery` verification passes for empty reads and posted gallery records.
+- Live browser verification confirms the gallery page renders an app-indexed photo without Cloudinary tag-list mode.
+- Fixed the frame/overlay picker so it stays hidden on welcome and photo-style selection screens.
+- Added frame-picker regression coverage for welcome, style selection, and capture readiness.
+- Preview deploy completed at `https://07ecafa6.decemeberbooth.pages.dev`.
+- Live verification confirms the frame/overlay picker is hidden on the welcome overlay.
+- Added a top-level `Overlay Builder` button to booth setup so the builder is accessible without opening Visual Assets first.
+- Changed photostrip slot rendering to crop-to-fill captured photos instead of containing them.
+- Strengthened double-column strip coverage with portrait-shaped source photos in landscape slots.
+- Cloned each strip countdown capture immediately so the final strip cannot reuse the last mutable snapshot canvas for every row.
+- Changed double-column strip rendering to use the same six 1200x1800 photo slots for every double-column template.
+- Changed double-column strip rendering to draw template art first, then photos, so black placeholder windows do not cover the captured photos.
+- Fixed crop-to-fill drawing so photos are clipped to their assigned slot and cannot spill into neighboring rows.
+- Updated Hawks, birthday, and Christmas template metadata to the same canonical double-column slot grid.
+- Targeted Playwright double-column coverage passes for canonical placement, distinct row photos, and both duplicated columns.
+- `npm test` passes with 64/64 tests.
+- Preview deploy completed at `https://600fdb00.decemeberbooth.pages.dev`.
+- Live verification confirms the preview returns HTTP 200 and includes the strip snapshot clone, canonical six-slot grid, template-first double-column draw, and clipped crop-to-fill helper.
+- Enabled the existing event visual text controls for no-event theme sessions when a theme is selected.
+- Added a theme-session text update path so Banner Text, Welcome Title, Start Button Text, and Capture Button Text update the active theme/session immediately.
+- Changed the capture button resolver to honor custom event/theme capture labels before mode defaults.
+- Added browser regression coverage for editing all four labels without a saved event and launching the booth.
+- Targeted Playwright theme-session text control coverage passes.
+- `npm test` passes with 64/64 tests after the text edit fix.
+- Preview deploy completed at `https://dee4a666.decemeberbooth.pages.dev`.
+- Live verification confirms the preview returns HTTP 200 and includes the no-event theme text edit path and custom capture-label resolver.
+- Preview deploy completed at `https://0f9e6946.decemeberbooth.pages.dev`.
+- Live script verification confirms double-column strip slots use crop-to-fill rendering.
+- Live verification confirms the setup page exposes the `Overlay Builder` button.
+- Added shared `PRINT_SIZES` and `createPrintCanvas()` helpers for fixed 4x6 exports.
+- Changed normal photo portrait/landscape ratios from 3:4/4:3 to 2:3/3:2.
+- Changed single-photo finalization to export exactly 1200x1800 portrait or 1800x1200 landscape.
+- Moved final preview sizing authority into `final-preview-sizing-fix.css` and removed old review aspect sizing from the export path.
+- Targeted tests confirm decoded single-photo PNG exports are exactly 1200x1800 and 1800x1200.
+- Preview deploy completed at `https://e432f899.decemeberbooth.pages.dev`.
+- Live verification confirms the preview returns HTTP 200 and includes the 4x6 print sizing constants plus final preview ratio CSS.
 - Local Playwright live-photo flow check passes with fake camera.
 - Local Playwright visual check passes at a 1512x790 viewport with fake camera input.
 - Live Pages verification confirms the removed controls are gone, the QR remains fully visible, and tapping the result overlay exits the share view.
+- Added `uploadCaptureOnce()` as the single high-level capture upload path.
+- Routed photo, live-photo, strip, message, and imported 360/video captures through the canonical upload path.
+- Changed final preview sharing so it consumes the already-uploaded Cloudinary URL instead of uploading again.
+- Changed gallery indexing to store the same Cloudinary URL used by QR/share links.
+- Preserved gallery media metadata so video/message captures render as videos in `gallery.html`.
+- Removed legacy duplicate capture upload helpers from the active app script.
+- `npm test` passes with 66/66 tests after the upload-pipeline refactor.
+- `npm run test:browser` passes with 25/25 Playwright smoke tests after aligning event-profile smokes with theme sessions.
+- Added retry attempts around Cloudinary image/video uploads.
+- Added stable capture IDs for upload retries and gallery indexing.
+- Added a pre-upload safety queue so browser refreshes during an in-flight upload leave a retryable capture record.
+- Added a pending gallery-write queue so Cloudinary upload success is not lost when `/api/gallery` fails.
+- Added pending upload and pending gallery flush guards to prevent duplicate concurrent retries.
+- Added best-effort video retry storage, with poster fallback when browser storage cannot hold the clip.
+- Updated local and Cloudflare gallery APIs to dedupe retried records by `capture_id` as well as URL.
+- Added logging and user-facing retry/queue messages for Cloudinary, gallery, offline, and storage fallback failures.
+- `npm test` passes with 67/67 tests after the upload reliability audit.
+- `npm run test:browser` passes with 25/25 Playwright smoke tests after the upload reliability audit.
+- Added `/api/assets` for a shared uploaded asset library backed by `THEMES_KV` on Cloudflare Pages and `local-data/asset-library.json` in local dev.
+- Registered Cloudinary theme/session asset uploads into the shared asset library with category, name, tags, folder, hash, and archive/delete metadata.
+- Added an Advanced Theme Controls asset library panel with search, category filter, upload tags, refresh, use, hide/archive, and delete actions.
+- Merged visible uploaded backgrounds, overlays, and templates alongside built-in/theme assets without requiring repository commits or manifest edits.
+- Preserved built-in manifest and folder-manifest asset behavior.
+- Added a session Backgrounds picker beside Overlays and Templates.
+- Changed session Backgrounds and Overlays pickers to list assets across all themes, while storing selections as session-only assets for the current booth run.
+- Added a Summer built-in theme entry and generated `assets/general/Summer/overlays/overlays.json`.
+- Added Summer overlay fallback entries to `builtin-asset-manifests.mjs`.
 
 What is in progress
-- No active theme-session implementation work.
+- Persistent asset library verification.
 
 Next steps
-- Test one real device capture with Cloudinary configured to confirm the date-based folder is created remotely.
+- Test one real device capture with Cloudinary configured to confirm the photo is recorded into the app gallery index.
 - Test Live Photo frame selection plus Photostrip template selection on the preview URL.
+- Test a Hawks photostrip and one non-Hawks photostrip on the preview URL.
+- Test portrait and landscape photo overlay selection on the preview URL.
+- Open the new setup `Overlay Builder` button and confirm it launches `overlay-maker.html`.
+- Verify one live portrait and one live landscape capture on the 4x6 preview deployment.
+- Run a real Cloudinary capture pass for photo, strip, live/video, and message modes to confirm each produces one URL shared by QR and gallery.
+- Test a forced gallery API failure on the deployed Pages app to confirm the queued gallery retry clears after connectivity/API recovery.
+- Test a real Cloudinary asset upload on the deployed Pages app and confirm it appears on a second device after refresh.
+- Confirm archive/delete library metadata updates on the deployed Pages app.
+- Smoke test selecting a background from one theme and an overlay from another theme before launching a no-event session.
 
 Known bugs/blockers
 - Cross-device sync still depends on using the live HTTP/HTTPS deployment rather than `file://`.
 - Asset file persistence still depends on shared Cloudinary storage being configured for uploads.
+- Hard deletion removes app library metadata; unsigned browser uploads do not provide Cloudinary destroy permissions, so Cloudinary media cleanup must be done from Cloudinary unless a signed backend delete flow is added.
 - Full photo upload verification requires Cloudinary credentials and a real capture/upload run.
+- Very large offline video captures may exceed browser storage; the app queues the poster image as a visible fallback in that case.
 - The live deployment is on a preview Pages URL and should be promoted only after final checks if needed.
+- Existing photos captured before the app gallery index fix may not appear unless Cloudinary tag-based image lists are enabled or those URLs are posted into `/api/gallery`.
 - Admin scrolling is now contained inside `#adminScreen`; page/body scrolling stays locked while admin is open.
 - Latest preview includes explicit wedding strip slots and distinct-photo strip composition.
 - Live-photo video preview now prioritizes the recorded clip; the poster image is still used as the fallback/thumbnail.
-- Live-photo QR now prioritizes reliability: guests get a poster-image QR immediately instead of waiting on video upload.
+- Live-photo and message QR links now use the canonical uploaded video URL when a video blob is available.
 - Wedding demo currently ships one single-photo overlay and one photostrip template per wedding theme.
+- All double-column photostrips duplicate the three captured photos into both columns using the canonical six-slot grid.
+- Wedding strip templates remain single-column because their SVG art is 720x2160 and has three native photo windows.
+- Photo overlay format selection affects photo modes only; strip and layout modes keep their existing template selection flow.
+- Live overlay slot video is mirrored only in the booth preview; still/final output stays unmirrored.
+- Strip photos now fill their assigned slots by cropping as needed; the full uncropped camera frame is not preserved inside each strip window.
+- In no-event theme sessions, the text controls edit the active theme/session rather than requiring a saved event record.
+- Normal single-photo exports now crop/fill to true 4x6 output; they no longer preserve the old 4:3 camera frame.
 
 Important decisions
 - Keep the app in vanilla HTML/CSS/JS.
 - Keep booth overlay rendering slot-based: background, photo slots, foreground, optional logo.
 - Keep decorative template art built-in and fixed by family/variant instead of allowing freeform decorative PNG placement.
 - Keep layout geometry canonical by layout class so all strip templates share one photo area system, and the same rule applies to single vertical and single horizontal templates.
+- Keep portrait/landscape overlay choice guest-facing in the booth and scoped to photo overlays.
+- Keep preview sizing visual and responsive; only the exported canvas is fixed to 300 DPI print dimensions.
 - Cloudflare Pages deploy path is `npm run deploy` / `node tools/deploy.js`, which calls `wrangler pages deploy . --project-name decemeberbooth`.
 - Keep the QR/share fix inside the existing result screen; no new route or redirect is needed.
 - Normal booth launch no longer requires an event record; saved events are reusable profiles only.
 - No legacy event-first behavior needs to be preserved because this booth has only been used for tests.
 - No-event sessions save photos under the booth browser's local date using `YYYY-MM-DD`.
 - Session-only uploads affect the current booth run only and are not persisted to saved themes or event records.
-- The current verified Pages URL is `https://a1a18a6a.decemeberbooth.pages.dev`.
+- Capture QR/share links and gallery entries must use the same Cloudinary URL from `uploadCaptureOnce()`.
+- Retried gallery writes are idempotent by `capture_id`, so duplicate submissions update one gallery entry instead of creating multiples.
+- Uploaded asset library metadata lives in `THEMES_KV` under `assetLibrary`; Cloudinary remains the file store.
+- Uploaded library assets are shared across devices/future sessions and are separate from built-in manifests and saved theme records.
+- Individual sessions may mix backgrounds and overlays from different themes without creating or saving a new theme/event.
+- The current verified Pages URL is `https://e432f899.decemeberbooth.pages.dev`.

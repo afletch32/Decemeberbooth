@@ -20,6 +20,11 @@ test("overlay builder is exposed from admin and uses a full HTML document", () =
     "admin visual assets section should link to the overlay maker"
   );
   assert.ok(
+    indexHtml.includes('id="openLayoutBuilderBtn"') &&
+      indexHtml.includes("Overlay Builder"),
+    "admin setup actions should expose the overlay builder without opening Visual Assets first"
+  );
+  assert.ok(
     indexHtml.includes("openLayoutBuilder()"),
     "admin should open the builder with app context instead of a hardcoded bare URL"
   );

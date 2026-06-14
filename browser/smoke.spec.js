@@ -85,7 +85,6 @@ async function expectCreatePathValidation(page, options) {
   const {
     themePattern,
     eventType,
-    eventName,
     visibleFieldSelectors,
     firstMessage,
     fillBetweenAlerts,
@@ -97,7 +96,10 @@ async function expectCreatePathValidation(page, options) {
   await gotoApp(page, "/index.html");
 
   if (eventType) {
-    await page.selectOption("#createPathEventType", eventType);
+    await page.locator("#createPathEventType").evaluate((select, value) => {
+      select.value = value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    }, eventType);
   }
 
   const themeValue = await getOptionValue(
@@ -107,7 +109,6 @@ async function expectCreatePathValidation(page, options) {
   );
   await expect(themeValue).not.toBe("");
 
-  await page.fill("#createPathEventName", eventName);
   await page.selectOption("#createPathThemeSelect", themeValue);
 
   for (const selector of visibleFieldSelectors || []) {
@@ -144,7 +145,9 @@ async function createWeddingEvent(page, options = {}) {
     /wedding/
   );
   await expect(themeValue).not.toBe("");
-  await page.fill("#createPathEventName", eventName);
+  if (await page.locator("#createPathEventName").count()) {
+    await page.fill("#createPathEventName", eventName);
+  }
   await page.selectOption("#createPathThemeSelect", themeValue);
   await page.fill("#createPathPartner1", partner1);
   await page.fill("#createPathPartner2", partner2);
@@ -416,7 +419,7 @@ test("legacy string overlays normalize to a full-frame photo slot", async ({
   });
 });
 
-test("photo-strip overlays render one DOM slot per manifest slot", async ({
+test("photo overlays render mirrored live DOM slots", async ({
   page,
 }) => {
   await gotoApp(page, "/index.html");
@@ -429,43 +432,25 @@ test("photo-strip overlays render one DOM slot per manifest slot", async ({
         window.__photoboothTest.getActiveTheme()
       )
   );
-  const stripOverlay = await page.evaluate(() => {
+  const slotOverlay = await page.evaluate(() => {
     const [overlay] = window.__photoboothTest.setTestOverlays([
       {
-        id: "smoke-strip-overlay",
-        name: "Smoke Strip Overlay",
-        type: "photo-strip-layout",
+        id: "smoke-photo-slot-overlay",
+        name: "Smoke Photo Slot Overlay",
+        type: "overlay",
         category: "wedding",
-        src: "data:test/smoke-strip-overlay",
+        src: "data:test/smoke-photo-slot-overlay",
         background: { type: "color", value: "#fffaf4" },
         foreground: {
           type: "image",
-          src: "assets/wedding/timeless-romance/overlays/timeless-romance-strip-overlay.svg",
+          src: "assets/wedding/timeless-romance/overlays/timeless-romance-single-overlay.svg",
         },
         photoSlots: [
           {
-            x: 0.12,
-            y: 0.18,
-            width: 0.76,
-            height: 0.18,
-            borderRadius: 0.02,
-            objectFit: "cover",
-            objectPosition: "center",
-          },
-          {
-            x: 0.12,
-            y: 0.4,
-            width: 0.76,
-            height: 0.18,
-            borderRadius: 0.02,
-            objectFit: "cover",
-            objectPosition: "center",
-          },
-          {
-            x: 0.12,
-            y: 0.62,
-            width: 0.76,
-            height: 0.18,
+            x: 0,
+            y: 0,
+            width: 1,
+            height: 1,
             borderRadius: 0.02,
             objectFit: "cover",
             objectPosition: "center",
@@ -479,8 +464,118 @@ test("photo-strip overlays render one DOM slot per manifest slot", async ({
     };
   });
 
-  await expect(page.locator(".photo-slot")).toHaveCount(stripOverlay.photoSlots);
+  await expect(page.locator(".photo-slot")).toHaveCount(slotOverlay.photoSlots);
   await expect(page.locator("#video")).toHaveClass(/hidden/);
+  await expect(page.locator(".photo-slot video.photo-slot-media").first()).toHaveClass(/is-live/);
+  await expect(page.locator(".photo-slot video.photo-slot-media").first()).toHaveAttribute(
+    "style",
+    /transform: scaleX\(-1\)/
+  );
+});
+
+test("double-column strips use canonical slots with distinct photos", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+  const samples = await page.evaluate(async () => {
+    const makePhoto = (pattern, width = 80, height = 160) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = pattern === "third" ? "#000000" : "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (pattern === "second") {
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(30, 0, 20, canvas.height);
+      }
+      if (pattern === "third") {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(30, 0, 20, canvas.height);
+      }
+      return canvas;
+    };
+    const templateSvg = [
+      '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1800" viewBox="0 0 1200 1800">',
+      '<rect width="1200" height="1800" fill="#ffeecc"/>',
+      '<rect x="50" y="357" width="500" height="414" fill="#000"/>',
+      '<rect x="50" y="823" width="500" height="414" fill="#000"/>',
+      '<rect x="50" y="1288" width="500" height="413" fill="#000"/>',
+      '<rect x="650" y="357" width="500" height="414" fill="#000"/>',
+      '<rect x="650" y="823" width="500" height="414" fill="#000"/>',
+      '<rect x="650" y="1288" width="500" height="413" fill="#000"/>',
+      "</svg>",
+    ].join("");
+    const url = await window.__photoboothTest.composeStrip(
+      {
+        src: `data:image/svg+xml,${encodeURIComponent(templateSvg)}`,
+        layout: "double_column",
+        slots: [
+          { x: 1, y: 1, w: 20, h: 20 },
+          { x: 1, y: 30, w: 20, h: 20 },
+          { x: 1, y: 60, w: 20, h: 20 },
+          { x: 30, y: 1, w: 20, h: 20 },
+          { x: 30, y: 30, w: 20, h: 20 },
+          { x: 30, y: 60, w: 20, h: 20 },
+        ],
+      },
+      [
+        makePhoto("first"),
+        makePhoto("second"),
+        makePhoto("third"),
+      ]
+    );
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const pixelAt = (x, y) => Array.from(ctx.getImageData(x, y, 1, 1).data);
+    return {
+      leftTopSide: pixelAt(150, 564),
+      leftTopCenter: pixelAt(300, 564),
+      rightTopSide: pixelAt(750, 564),
+      rightTopCenter: pixelAt(900, 564),
+      leftMiddleSide: pixelAt(150, 1030),
+      leftMiddleCenter: pixelAt(300, 1030),
+      rightMiddleSide: pixelAt(750, 1030),
+      rightMiddleCenter: pixelAt(900, 1030),
+      leftBottomSide: pixelAt(150, 1494),
+      leftBottomCenter: pixelAt(300, 1494),
+      rightBottomSide: pixelAt(750, 1494),
+      rightBottomCenter: pixelAt(900, 1494),
+      ignoredMetadata: pixelAt(10, 10),
+    };
+  });
+
+  const brightness = (pixel) => {
+    const [r, g, b] = pixel;
+    return (r + g + b) / 3;
+  };
+  const expectOpaque = (pixel) => {
+    const [, , , a] = pixel;
+    expect(a).toBe(255);
+  };
+
+  Object.values(samples).forEach(expectOpaque);
+  expect(brightness(samples.leftTopSide)).toBeGreaterThan(120);
+  expect(brightness(samples.leftTopCenter)).toBeGreaterThan(120);
+  expect(brightness(samples.rightTopSide)).toBeGreaterThan(120);
+  expect(brightness(samples.rightTopCenter)).toBeGreaterThan(120);
+  expect(brightness(samples.leftMiddleSide)).toBeGreaterThan(120);
+  expect(brightness(samples.leftMiddleCenter)).toBeLessThan(80);
+  expect(brightness(samples.rightMiddleSide)).toBeGreaterThan(120);
+  expect(brightness(samples.rightMiddleCenter)).toBeLessThan(80);
+  expect(brightness(samples.leftBottomSide)).toBeLessThan(80);
+  expect(brightness(samples.leftBottomCenter)).toBeGreaterThan(120);
+  expect(brightness(samples.rightBottomSide)).toBeLessThan(80);
+  expect(brightness(samples.rightBottomCenter)).toBeGreaterThan(120);
+  expect(samples.ignoredMetadata[1]).toBeGreaterThan(150);
+  expect(samples.ignoredMetadata[2]).toBeGreaterThan(150);
 });
 
 test("single-photo overlays fall back to one full-frame photo slot", async ({
@@ -504,6 +599,14 @@ test("single-photo overlays fall back to one full-frame photo slot", async ({
     width: 1,
     height: 1,
   });
+
+  await page.evaluate(() => {
+    window.__photoboothTest.setTestOverlays([
+      { src: "data:test/simple-overlay" },
+    ]);
+  });
+  await expect(page.locator(".photo-slot")).toHaveCount(1);
+  await expect(page.locator("#video")).toHaveClass(/hidden/);
 });
 
 test("setup screen keeps overlay choice in the booth and can start a plain layout", async ({
@@ -628,12 +731,18 @@ test("setup screen shows assigned asset counts and font summary", async ({
   expect(templateCount).toBeGreaterThanOrEqual(2);
   await page.locator("#startBoothButton").click({ force: true });
   await expect(page.locator("#boothScreen")).not.toHaveClass(/hidden/);
+  await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
+  await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
+  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
   await page.locator("#startButton").click({ force: true });
+  await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
+  await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
+  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
   await page
     .locator(".welcome-mode-btn")
     .filter({ hasText: "Photostrip" })
     .click({ force: true });
-  await expect(page.locator("#controls .mode-btn[data-mode=\"strip\"]")).toBeVisible();
+  await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
   await page.evaluate(() => setMode("strip"));
   await expect(page.locator("#controls .mode-btn[data-mode=\"strip\"]")).toHaveClass(/active/);
 });
@@ -655,6 +764,7 @@ test("booth mode buttons switch frame sizing and option sets", async ({
           src: "data:test/smoke-photo-overlay",
         }),
       ],
+      captureLabel: "",
       templates: [
         {
           id: "smoke-strip-template",
@@ -669,6 +779,11 @@ test("booth mode buttons switch frame sizing and option sets", async ({
         },
       ],
     });
+    const captureInput = document.querySelector("#eventCaptureLabelInput");
+    if (captureInput) {
+      captureInput.value = "";
+      captureInput.dispatchEvent(new Event("input", { bubbles: true }));
+    }
   });
 
   await page.locator("#startBoothButton").click({ force: true });
@@ -679,7 +794,7 @@ test("booth mode buttons switch frame sizing and option sets", async ({
     .click({ force: true });
   await expect(page.locator("#captureBtn")).toBeVisible();
   await expect(page.locator("#boothScreen")).toHaveClass(/booth-ready/);
-  await expect(page.locator("#boothModeBar")).toBeVisible();
+  await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#boothHelperText")).toHaveCount(0);
 
   await page.evaluate(() => setMode("live-photo"));
@@ -723,39 +838,210 @@ test("booth mode buttons switch frame sizing and option sets", async ({
   expect(stripBox.width / stripBox.height).toBeLessThan(1.8);
 });
 
-test("fast wedding event creation requires couple names and date", async ({
+test("theme session text controls update booth labels without a saved event", async ({
   page,
 }) => {
-  await expectCreatePathValidation(page, {
-    themePattern: /wedding/,
-    eventType: "wedding",
-    eventName: "Jordan and Alex",
-    visibleFieldSelectors: ["#createPathWeddingFields", "#createPathDateFields"],
-    firstMessage: "Enter both partner names for a wedding event.",
-    firstInvalidSelectors: ["#createPathPartner1", "#createPathPartner2"],
-    fillBetweenAlerts: async (nextPage) => {
-      await nextPage.fill("#createPathPartner1", "Jordan");
-      await nextPage.fill("#createPathPartner2", "Alex");
-    },
-    secondMessage: "Enter the wedding date.",
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  await page.evaluate(() => {
+    localStorage.removeItem("photoboothActiveEventId");
+    window.__photoboothTest.patchActiveTheme({
+      bannerText: "Original Banner",
+      welcome: {
+        title: "Original Welcome",
+        prompt: "Original Start",
+      },
+      captureLabel: "Original Capture",
+    });
   });
+
+  await expect(page.locator("#eventBannerTextInput")).toBeEnabled();
+  await expect(page.locator("#eventWelcomeTitleInput")).toBeEnabled();
+  await expect(page.locator("#eventStartButtonTextInput")).toBeEnabled();
+  await expect(page.locator("#eventCaptureLabelInput")).toBeEnabled();
+
+  await page.fill("#eventBannerTextInput", "Custom Banner");
+  await page.fill("#eventWelcomeTitleInput", "Custom Welcome");
+  await page.fill("#eventStartButtonTextInput", "Begin Booth");
+  await page.fill("#eventCaptureLabelInput", "Snap Now");
+
+  await expect(page.locator("#stylePreviewHeading")).toHaveText("Custom Banner");
+  await expect(page.locator("#stylePreviewSubheading")).toHaveText("Custom Welcome");
+  await expect(page.locator("#stylePreviewButton")).toHaveText("Begin Booth");
+  await expect(page.locator("#stylePreviewBody")).toHaveText("Snap Now");
+
+  await page.locator("#startBoothButton").click({ force: true });
+  await expect(page.locator("#eventTitle")).toHaveText("Custom Banner");
+  await expect(page.locator("#welcomeTitle")).toHaveText("Custom Welcome");
+  await expect(page.locator("#startButton")).toHaveText("Begin Booth");
+
+  await page.locator("#startButton").click({ force: true });
+  await page
+    .locator(".welcome-mode-btn")
+    .filter({ hasText: "Single Still Photo" })
+    .click({ force: true });
+  await expect(page.locator("#captureBtn")).toHaveText("Snap Now");
 });
 
-test("fast birthday event creation requires birthday name and date", async ({
+test("photo overlay format selector filters portrait and landscape overlays", async ({
   page,
 }) => {
-  await expectCreatePathValidation(page, {
-    themePattern: /birthday/,
-    eventType: "party",
-    eventName: "Maddie Birthday Bash",
-    visibleFieldSelectors: ["#createPathBirthdayFields"],
-    firstMessage: "Enter the birthday name.",
-    firstInvalidSelectors: ["#createPathBirthdayName"],
-    fillBetweenAlerts: async (nextPage) => {
-      await nextPage.fill("#createPathBirthdayName", "Maddie");
-    },
-    secondMessage: "Enter the birthday date.",
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+  await page.evaluate(() => {
+    const normalize = window.__photoboothTest.normalizeOverlayDefinition;
+    window.__photoboothTest.patchActiveTheme({
+      overlaysTmp: [],
+      overlaysRemoved: [],
+      overlays: [
+        normalize({
+          id: "portrait-overlay",
+          name: "Portrait Overlay",
+          src: "data:test/portrait-overlay",
+          aspectRatio: "3:4",
+        }),
+        normalize({
+          id: "landscape-overlay",
+          name: "Landscape Overlay",
+          src: "data:test/landscape-overlay",
+          aspectRatio: "4:3",
+        }),
+      ],
+    });
   });
+
+  await page.locator("#startBoothButton").click({ force: true });
+  await page.locator("#startButton").click({ force: true });
+  await page
+    .locator(".welcome-mode-btn")
+    .filter({ hasText: "Single Live Photo" })
+    .click({ force: true });
+  await page.evaluate(() => setMode("live-photo"));
+  await page.evaluate(() => window.__photoboothTest.setPhotoOverlayFormat("portrait"));
+
+  await expect(page.locator(".photo-orientation-toggle")).toBeVisible();
+  await expect(
+    page.locator(".photo-orientation-btn.active")
+  ).toHaveText("Portrait");
+  await expect(page.locator('#options .thumb[data-overlay-src="data:test/portrait-overlay"]')).toHaveCount(1);
+  await expect(page.locator('#options .thumb[data-overlay-src="data:test/landscape-overlay"]')).toHaveCount(0);
+  await expect(page.locator("#videoWrap")).toHaveClass(/view-portrait/);
+  expect(await page.evaluate(() => window.__photoboothTest.getResolvedCaptureAspectRatio())).toBeCloseTo(2 / 3, 2);
+
+  await page.locator('.photo-orientation-btn[data-orientation="landscape"]').click();
+  await expect(
+    page.locator(".photo-orientation-btn.active")
+  ).toHaveText("Landscape");
+  await expect(page.locator('#options .thumb[data-overlay-src="data:test/portrait-overlay"]')).toHaveCount(0);
+  await expect(page.locator('#options .thumb[data-overlay-src="data:test/landscape-overlay"]')).toHaveCount(1);
+  await expect(page.locator("#videoWrap")).toHaveClass(/view-landscape/);
+  expect(await page.evaluate(() => window.__photoboothTest.getResolvedCaptureAspectRatio())).toBeCloseTo(1.5, 2);
+});
+
+test("single photo exports use true 4x6 print dimensions", async ({ page }) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  const sizes = await page.evaluate(async () => {
+    const source = document.createElement("canvas");
+    source.width = 640;
+    source.height = 480;
+    const ctx = source.getContext("2d");
+    ctx.fillStyle = "#bfdfff";
+    ctx.fillRect(0, 0, source.width, source.height);
+
+    const readImageSize = (url) =>
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () =>
+          resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        img.onerror = reject;
+        img.src = url;
+      });
+
+    window.__photoboothTest.setPhotoOverlayFormat("landscape");
+    const landscapeUrl = await window.__photoboothTest.finalizeToPrint(source, null);
+    window.__photoboothTest.setPhotoOverlayFormat("portrait");
+    const portraitUrl = await window.__photoboothTest.finalizeToPrint(source, null);
+
+    return {
+      landscape: await readImageSize(landscapeUrl),
+      portrait: await readImageSize(portraitUrl),
+    };
+  });
+
+  expect(sizes.landscape).toEqual({ width: 1800, height: 1200 });
+  expect(sizes.portrait).toEqual({ width: 1200, height: 1800 });
+});
+
+test("frame picker stays hidden until the welcome flow reaches capture", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  await page.locator("#startBoothButton").click({ force: true });
+  await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
+  await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
+  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
+
+  await page.locator("#startButton").click({ force: true });
+  await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
+  await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
+  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
+
+  await page
+    .locator(".welcome-mode-btn")
+    .filter({ hasText: "Single Still Photo" })
+    .click({ force: true });
+  await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
+  await expect(page.locator("#captureBtn")).toBeVisible();
+  await expect(page.locator("#mobileSettingsSheet")).toBeVisible();
+});
+
+test("theme session wedding start does not require names or date", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.locator("[data-theme-filter-card=\"wedding\"]").click();
+  const themeValue = await getOptionValue(
+    page,
+    "#createPathThemeSelect",
+    /wedding/
+  );
+  await expect(themeValue).not.toBe("");
+  await page.selectOption("#createPathThemeSelect", themeValue);
+  await expect(page.locator("#createPathWeddingFields")).toHaveClass(/hidden/);
+  await expect(page.locator("#createPathDateFields")).toHaveClass(/hidden/);
+  await page.locator("#createEventBtn").click();
+  await expect(page.locator("#createPathValidationMessage")).toHaveClass(
+    /hidden/
+  );
+  await page.locator("#startBoothButton").click({ force: true });
+  await expect(page.locator("#boothScreen")).not.toHaveClass(/hidden/);
+});
+
+test("theme session birthday start does not require birthday name or date", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.locator("[data-theme-filter-card=\"party\"]").click();
+  const themeValue = await getOptionValue(
+    page,
+    "#createPathThemeSelect",
+    /birthday/
+  );
+  await expect(themeValue).not.toBe("");
+  await page.selectOption("#createPathThemeSelect", themeValue);
+  await expect(page.locator("#createPathBirthdayFields")).toHaveClass(/hidden/);
+  await expect(page.locator("#createPathDateFields")).toHaveClass(/hidden/);
+  await page.locator("#createEventBtn").click();
+  await expect(page.locator("#createPathValidationMessage")).toHaveClass(
+    /hidden/
+  );
+  await page.locator("#startBoothButton").click({ force: true });
+  await expect(page.locator("#boothScreen")).not.toHaveClass(/hidden/);
 });
 
 test("wedding theme filtering keeps the create-path selector on wedding themes", async ({

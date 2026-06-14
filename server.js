@@ -126,6 +126,120 @@ function writeJsonFile(filename, data) {
   fs.renameSync(tempPath, filepath);
 }
 
+function normalizeGalleryTag(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase();
+}
+
+function normalizeGalleryPayload(payload, tag) {
+  const resources = Array.isArray(payload && payload.resources)
+    ? payload.resources
+    : [];
+  return {
+    tag,
+    title: String((payload && payload.title) || ""),
+    resources: resources
+      .map((item) => {
+        const url = String((item && (item.secure_url || item.url)) || "").trim();
+        if (!/^https?:\/\//i.test(url)) return null;
+        const resourceType =
+          item && (item.resource_type === "video" || item.type === "video")
+            ? "video"
+            : "image";
+        return {
+          capture_id: String((item && item.capture_id) || ""),
+          secure_url: url,
+          url,
+          created_at: String((item && item.created_at) || ""),
+          resource_type: resourceType,
+          type: resourceType,
+          mode: String((item && item.mode) || ""),
+        };
+      })
+      .filter(Boolean),
+  };
+}
+
+const VALID_ASSET_CATEGORIES = new Set(["background", "overlay", "template"]);
+
+function normalizeAssetCategory(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (raw === "backgrounds" || raw === "greenbackgrounds") return "background";
+  if (raw === "overlays") return "overlay";
+  if (raw === "templates") return "template";
+  return VALID_ASSET_CATEGORIES.has(raw) ? raw : "";
+}
+
+function normalizeAssetTags(value) {
+  const source = Array.isArray(value)
+    ? value
+    : String(value || "")
+        .split(",")
+        .map((tag) => tag.trim());
+  const seen = new Set();
+  const out = [];
+  source.forEach((tag) => {
+    const clean = String(tag || "").trim().toLowerCase();
+    if (!clean || seen.has(clean)) return;
+    seen.add(clean);
+    out.push(clean);
+  });
+  return out;
+}
+
+function normalizeAssetRecord(item) {
+  if (!item || typeof item !== "object") return null;
+  const url = String(item.url || item.secure_url || item.src || "").trim();
+  if (!/^https?:\/\//i.test(url)) return null;
+  const category = normalizeAssetCategory(item.category || item.kind);
+  if (!category) return null;
+  const id = String(item.id || `${category}:${url}`).trim();
+  return {
+    id,
+    category,
+    url,
+    secure_url: url,
+    name: String(item.name || item.originalName || path.basename(url) || category).trim(),
+    tags: normalizeAssetTags(item.tags),
+    folder: String(item.folder || "").trim(),
+    hash: String(item.hash || "").trim(),
+    contentType: String(item.contentType || item.type || "").trim(),
+    createdAt: String(item.createdAt || item.created_at || new Date().toISOString()),
+    updatedAt: String(item.updatedAt || item.updated_at || new Date().toISOString()),
+    archived: item.archived === true,
+    hidden: item.hidden === true || item.archived === true,
+  };
+}
+
+function normalizeAssetLibraryPayload(payload) {
+  const assets = Array.isArray(payload && payload.assets)
+    ? payload.assets
+    : Array.isArray(payload)
+      ? payload
+      : [];
+  const byId = new Map();
+  assets.map(normalizeAssetRecord).filter(Boolean).forEach((asset) => {
+    byId.set(asset.id, asset);
+  });
+  return {
+    assets: Array.from(byId.values()).sort((a, b) =>
+      String(b.createdAt).localeCompare(String(a.createdAt))
+    ),
+  };
+}
+
+function readGalleryIndex() {
+  return readJsonFile("gallery-index.json", {});
+}
+
+function writeGalleryIndex(index) {
+  writeJsonFile("gallery-index.json", index && typeof index === "object" ? index : {});
+}
+
 function resolveUploadFilepath(reference) {
   if (typeof reference !== "string" || !reference.trim()) return null;
   let pathname = "";
@@ -234,6 +348,156 @@ app.put('/api/events', (req, res) => {
   }
 });
 
+// API: GET/POST /api/gallery (public gallery index, independent of Cloudinary list mode)
+app.get('/api/gallery', (req, res) => {
+  try {
+    const tag = normalizeGalleryTag(req.query && req.query.tag);
+    if (!tag) return res.status(400).json({ ok: false, error: "Missing gallery tag." });
+    const index = readGalleryIndex();
+    res.json(normalizeGalleryPayload(index[tag], tag));
+  } catch (err) {
+    console.error('Error reading gallery index:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/gallery', (req, res) => {
+  try {
+    const tag = normalizeGalleryTag(req.query && req.query.tag);
+    if (!tag) return res.status(400).json({ ok: false, error: "Missing gallery tag." });
+    const url = String((req.body && (req.body.secure_url || req.body.url)) || "").trim();
+    if (!/^https?:\/\//i.test(url)) {
+      return res.status(400).json({ ok: false, error: "Invalid gallery photo URL." });
+    }
+    const index = readGalleryIndex();
+    const existing = normalizeGalleryPayload(index[tag], tag);
+    const nextResource = {
+      capture_id: String((req.body && req.body.capture_id) || ""),
+      secure_url: url,
+      url,
+      created_at: String((req.body && req.body.created_at) || new Date().toISOString()),
+      resource_type:
+        req.body && (req.body.resource_type === "video" || req.body.type === "video")
+          ? "video"
+          : "image",
+      type:
+        req.body && (req.body.resource_type === "video" || req.body.type === "video")
+          ? "video"
+          : "image",
+      mode: String((req.body && req.body.mode) || ""),
+    };
+    const resources = [
+      nextResource,
+      ...existing.resources.filter(
+        (item) =>
+          item &&
+          item.secure_url !== url &&
+          item.url !== url &&
+          (!nextResource.capture_id ||
+            item.capture_id !== nextResource.capture_id)
+      ),
+    ].slice(0, 500);
+    index[tag] = {
+      tag,
+      title: String((req.body && req.body.title) || existing.title || ""),
+      resources,
+    };
+    writeGalleryIndex(index);
+    res.json({ ok: true, count: resources.length });
+  } catch (err) {
+    console.error('Error saving gallery index:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// API: GET/POST/PATCH/DELETE /api/assets (persistent uploaded asset library)
+app.get('/api/assets', (req, res) => {
+  try {
+    res.json(normalizeAssetLibraryPayload(readJsonFile('asset-library.json', { assets: [] })));
+  } catch (err) {
+    console.error('Error reading asset library:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/assets', (req, res) => {
+  try {
+    const incoming = normalizeAssetRecord(req.body);
+    if (!incoming) {
+      return res.status(400).json({ ok: false, error: 'Invalid asset payload.' });
+    }
+    const library = normalizeAssetLibraryPayload(readJsonFile('asset-library.json', { assets: [] }));
+    const existingIndex = library.assets.findIndex(
+      (asset) => asset.id === incoming.id || asset.url === incoming.url
+    );
+    if (existingIndex >= 0) {
+      const existing = library.assets[existingIndex];
+      library.assets[existingIndex] = {
+        ...existing,
+        ...incoming,
+        tags: normalizeAssetTags([...(existing.tags || []), ...(incoming.tags || [])]),
+        archived: incoming.archived === true ? true : existing.archived === true,
+        hidden:
+          incoming.hidden === true ||
+          incoming.archived === true ||
+          existing.hidden === true ||
+          existing.archived === true,
+        createdAt: existing.createdAt || incoming.createdAt,
+        updatedAt: new Date().toISOString(),
+      };
+    } else {
+      library.assets.unshift(incoming);
+    }
+    const next = normalizeAssetLibraryPayload(library);
+    writeJsonFile('asset-library.json', next);
+    res.json({ ok: true, asset: incoming, count: next.assets.length });
+  } catch (err) {
+    console.error('Error saving asset library:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.patch('/api/assets', (req, res) => {
+  try {
+    const id = String((req.body && req.body.id) || '').trim();
+    const url = String((req.body && req.body.url) || '').trim();
+    if (!id && !url) return res.status(400).json({ ok: false, error: 'Missing asset id.' });
+    const library = normalizeAssetLibraryPayload(readJsonFile('asset-library.json', { assets: [] }));
+    const index = library.assets.findIndex((asset) => asset.id === id || asset.url === url);
+    if (index < 0) return res.status(404).json({ ok: false, error: 'Asset not found.' });
+    library.assets[index] = normalizeAssetRecord({
+      ...library.assets[index],
+      ...req.body,
+      updatedAt: new Date().toISOString(),
+    });
+    const next = normalizeAssetLibraryPayload(library);
+    writeJsonFile('asset-library.json', next);
+    res.json({ ok: true, count: next.assets.length });
+  } catch (err) {
+    console.error('Error updating asset library:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.delete('/api/assets', (req, res) => {
+  try {
+    const id = String((req.body && req.body.id) || '').trim();
+    const url = String((req.body && req.body.url) || '').trim();
+    if (!id && !url) return res.status(400).json({ ok: false, error: 'Missing asset id.' });
+    const library = normalizeAssetLibraryPayload(readJsonFile('asset-library.json', { assets: [] }));
+    const nextAssets = library.assets.filter((asset) => asset.id !== id && asset.url !== url);
+    if (nextAssets.length === library.assets.length) {
+      return res.status(404).json({ ok: false, error: 'Asset not found.' });
+    }
+    const next = normalizeAssetLibraryPayload({ assets: nextAssets });
+    writeJsonFile('asset-library.json', next);
+    res.json({ ok: true, count: next.assets.length });
+  } catch (err) {
+    console.error('Error deleting asset library item:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // API: POST /api/upload (file upload)
 app.post('/api/upload', (req, res) => {
   upload.single('file')(req, res, err => {
@@ -320,6 +584,8 @@ function startServer(port = PORT, host = HOST) {
     console.log('   GET/PUT  /api/fonts');
     console.log('   GET/PUT  /api/themes');
     console.log('   GET/PUT  /api/events');
+    console.log('   GET/POST /api/gallery');
+    console.log('   GET/POST/PATCH/DELETE /api/assets');
     console.log('   POST     /api/upload');
     console.log('   DELETE   /api/upload');
     console.log('');

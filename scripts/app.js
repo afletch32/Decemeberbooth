@@ -44,6 +44,7 @@ const APP_CONFIG = {
     EVENTS: "photoboothEvents",
     ACTIVE_EVENT: "photoboothActiveEventId",
     GLOBAL_LOGO: "photoboothGlobalLogo",
+    ASSET_LIBRARY: "photoboothAssetLibrary",
   },
 };
 
@@ -169,6 +170,25 @@ let themes = {
         templatesFolder: "assets/general/birthday/templates/",
         welcome: {
           title: "Happy Birthday!",
+          portrait: "",
+          landscape: "",
+          prompt: "Touch to start",
+        },
+      },
+      summer: {
+        name: "☀️ Summer",
+        eventTypes: ["party", "community", "general"],
+        fontPairingStyle: "party",
+        accent: "#00a6c8",
+        accent2: "#fff8dc",
+        font: "'Comic Neue', cursive",
+        background: "assets/general/basic/backgrounds/",
+        backgroundFolder: "assets/general/basic/backgrounds/",
+        logo: "",
+        overlaysFolder: "assets/general/Summer/overlays/",
+        templatesFolder: "assets/general/basic/templates/",
+        welcome: {
+          title: "Hello Summer!",
           portrait: "",
           landscape: "",
           prompt: "Touch to start",
@@ -779,6 +799,15 @@ const DOM = {
   bulkToTemplates: document.getElementById("bulkToTemplates"),
   bulkAssetCancel: document.getElementById("bulkAssetCancel"),
   bulkAssetApply: document.getElementById("bulkAssetApply"),
+  uploadedAssetLibraryPanel: document.getElementById(
+    "uploadedAssetLibraryPanel"
+  ),
+  assetLibrarySearch: document.getElementById("assetLibrarySearch"),
+  assetLibraryCategory: document.getElementById("assetLibraryCategory"),
+  assetUploadTags: document.getElementById("assetUploadTags"),
+  refreshAssetLibraryBtn: document.getElementById("refreshAssetLibraryBtn"),
+  assetLibraryGrid: document.getElementById("assetLibraryGrid"),
+  assetLibraryStatus: document.getElementById("assetLibraryStatus"),
   addCharacterBtn: document.getElementById("addCharacterBtn"),
   currentCharacter: document.getElementById("currentCharacter"),
   themeGreenBackgrounds: document.getElementById("themeGreenBackgrounds"),
@@ -821,6 +850,23 @@ const DOM = {
   currentLogo: document.getElementById("currentLogo"),
   currentFont: document.getElementById("currentFont"),
   currentAccents: document.getElementById("currentAccents"),
+  backgroundThumbnailsPanel: document.getElementById("backgroundThumbnailsPanel"),
+  backgroundThumbnailsHeader: document.getElementById(
+    "backgroundThumbnailsHeader"
+  ),
+  backgroundThumbnailsSelected: document.getElementById(
+    "launchBackgroundCount"
+  ),
+  backgroundThumbnailsCount: document.getElementById("launchBackgroundCount"),
+  backgroundThumbnailsAction: null,
+  backgroundThumbnailsBody: document.getElementById("backgroundThumbnailsBody"),
+  backgroundThumbnailsLoading: document.getElementById(
+    "backgroundThumbnailsLoading"
+  ),
+  backgroundThumbnailsError: document.getElementById(
+    "backgroundThumbnailsError"
+  ),
+  sessionBackgrounds: document.getElementById("sessionBackgrounds"),
   currentOverlays: document.getElementById("currentOverlays"),
   currentTemplates: document.getElementById("currentTemplates"),
   overlayThumbnailsPanel: document.getElementById("overlayThumbnailsPanel"),
@@ -912,6 +958,53 @@ function getSelectedCaptureMode(value = mode) {
   return "photo";
 }
 
+const PRINT_SIZES = {
+  landscape: { width: 1800, height: 1200, aspect: 3 / 2, cssAspect: "3 / 2" },
+  portrait: { width: 1200, height: 1800, aspect: 2 / 3, cssAspect: "2 / 3" },
+};
+
+function getPrintSizeForOrientation(orientation = "landscape") {
+  return PRINT_SIZES[orientation] || PRINT_SIZES.landscape;
+}
+
+function createPrintCanvas(orientation = "landscape") {
+  const size = getPrintSizeForOrientation(orientation);
+  const canvas = document.createElement("canvas");
+  canvas.width = size.width;
+  canvas.height = size.height;
+  const ctx = canvas.getContext("2d", { alpha: false });
+  if (ctx) {
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+  }
+  return { canvas, ctx, size };
+}
+
+function normalizePhotoOverlayOrientation(value) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
+  if (normalized === "portrait" || normalized === "vertical") {
+    return "portrait";
+  }
+  if (normalized === "landscape" || normalized === "horizontal") {
+    return "landscape";
+  }
+  return "";
+}
+
+function getPhotoOverlayAspectForOrientation(orientation = photoOverlayOrientation) {
+  const normalized = normalizePhotoOverlayOrientation(orientation) || "landscape";
+  return getPrintSizeForOrientation(normalized).aspect;
+}
+
+function getLiveCameraAspectStyle() {
+  if (getSelectedCaptureMode() !== "photo") return PRINT_SIZES.landscape.cssAspect;
+  const normalized = normalizePhotoOverlayOrientation(photoOverlayOrientation) || "landscape";
+  return getPrintSizeForOrientation(normalized).cssAspect;
+}
+
 function applyBoothModeClass(nextMode = mode) {
   const normalizedMode = normalizeBoothModeValue(nextMode);
   const captureMode = getSelectedCaptureMode(normalizedMode);
@@ -932,10 +1025,15 @@ function applyBoothModeClass(nextMode = mode) {
 }
 
 function getLiveCameraAspectValue() {
-  return 4 / 3;
+  return getSelectedCaptureMode() === "photo"
+    ? getPhotoOverlayAspectForOrientation()
+    : PRINT_SIZES.landscape.aspect;
 }
 
 function getLiveCameraWidthValue() {
+  if (getSelectedCaptureMode() === "photo" && photoOverlayOrientation === "portrait") {
+    return isMobileBoothViewport() ? "76vw" : "540px";
+  }
   return isMobileBoothViewport() ? "86vw" : "860px";
 }
 
@@ -947,7 +1045,7 @@ function applyLiveCameraSizing() {
     );
     DOM.boothScreen.style.setProperty(
       "--live-camera-aspect",
-      "4 / 3"
+      getLiveCameraAspectStyle()
     );
   }
   if (DOM.videoContainer) {
@@ -985,6 +1083,7 @@ function getSelectionDebugSummary(targetMode = mode) {
           layout: template.layout || null,
         }
       : null,
+    photoOverlayOrientation,
     liveCameraAspect: getLiveCameraAspectValue(),
     finalExportAspect:
       typeof captureAspectRatio === "number" && captureAspectRatio > 0
@@ -1056,6 +1155,75 @@ function getAssetCaptureType(asset) {
   return "photo";
 }
 
+function inferPhotoOverlayOrientationFromText(asset) {
+  const raw = [
+    asset && asset.id,
+    asset && asset.name,
+    asset && asset.src,
+    asset && asset.renderSrc,
+    asset && asset.layout,
+    asset && asset.layoutClass,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (/\b(landscape|horizontal|wide)\b/.test(raw)) return "landscape";
+  if (/\b(portrait|vertical|tall)\b/.test(raw)) return "portrait";
+  return "";
+}
+
+function getPhotoOverlayOrientation(asset) {
+  if (!asset) return "";
+  const explicit =
+    normalizePhotoOverlayOrientation(asset.orientation) ||
+    normalizePhotoOverlayOrientation(asset.overlayOrientation) ||
+    normalizePhotoOverlayOrientation(asset.layoutClass) ||
+    normalizePhotoOverlayOrientation(asset.layout);
+  if (explicit) return explicit;
+  const aspect =
+    parseAspectRatioValue(asset.aspectRatio) ||
+    parseAspectRatioValue(asset.layoutAspectRatio);
+  if (aspect) return aspect >= 1 ? "landscape" : "portrait";
+  const textOrientation = inferPhotoOverlayOrientationFromText(asset);
+  if (textOrientation) return textOrientation;
+  const src = String(asset.renderSrc || asset.src || "");
+  return photoOverlayOrientationCache[src] || "";
+}
+
+function queuePhotoOverlayOrientationProbe(asset) {
+  const src = String((asset && (asset.renderSrc || asset.src)) || "");
+  if (!src || photoOverlayOrientationCache[src] || photoOverlayOrientationPending[src]) {
+    return;
+  }
+  photoOverlayOrientationPending[src] = true;
+  loadImage(resolveOverlayRenderSrc(activeTheme, src))
+    .then((img) => {
+      const width = img.naturalWidth || img.width || 0;
+      const height = img.naturalHeight || img.height || 0;
+      if (width && height) {
+        photoOverlayOrientationCache[src] =
+          width >= height ? "landscape" : "portrait";
+        if (getSelectedCaptureMode() === "photo") renderOptions();
+      }
+    })
+    .catch(() => {})
+    .finally(() => {
+      delete photoOverlayOrientationPending[src];
+    });
+}
+
+function filterPhotoOverlaysByOrientation(overlays, orientation = photoOverlayOrientation) {
+  const target = normalizePhotoOverlayOrientation(orientation) || "portrait";
+  return filterAssetsForMode(overlays, "photo").filter((overlay) => {
+    const overlayOrientation = getPhotoOverlayOrientation(overlay);
+    if (!overlayOrientation) {
+      queuePhotoOverlayOrientationProbe(overlay);
+      return true;
+    }
+    return overlayOrientation === target;
+  });
+}
+
 function filterAssetsForMode(assets, modeValue) {
   const captureMode = getSelectedCaptureMode(modeValue);
   return Array.isArray(assets)
@@ -1076,11 +1244,19 @@ function isMobileBoothViewport() {
   );
 }
 
-function setMobileSettingsOpen(open) {
-  const shouldOpen =
-    !!open &&
+function canShowFrameSettings() {
+  return !!(
     DOM.boothScreen &&
-    !DOM.boothScreen.classList.contains("hidden");
+    !DOM.boothScreen.classList.contains("hidden") &&
+    DOM.boothScreen.classList.contains("booth-ready") &&
+    !DOM.boothScreen.classList.contains("welcome-active") &&
+    !DOM.boothScreen.classList.contains("share-mode") &&
+    !DOM.boothScreen.classList.contains("countdown-mode")
+  );
+}
+
+function setMobileSettingsOpen(open) {
+  const shouldOpen = !!open && canShowFrameSettings();
   if (DOM.boothScreen) {
     DOM.boothScreen.classList.toggle("mobile-settings-open", shouldOpen);
   }
@@ -1101,8 +1277,7 @@ function setMobileSettingsOpen(open) {
 function syncMobileSettingsUi() {
   const available = !!(
     DOM.mobileSettingsToggle &&
-    DOM.boothScreen &&
-    !DOM.boothScreen.classList.contains("hidden") &&
+    canShowFrameSettings() &&
     isMobileBoothViewport()
   );
   if (DOM.mobileSettingsToggle) {
@@ -1183,6 +1358,10 @@ let stream;
 let torchEnabled = false;
 let selectedOverlay = null;
 let lastPhotoOverlay = null;
+let photoOverlayOrientation = "portrait";
+let lastPhotoOverlayByOrientation = { portrait: null, landscape: null };
+let photoOverlayOrientationCache = {};
+let photoOverlayOrientationPending = {};
 let pendingTemplate = null;
 let hidePreviewTimer = null;
 let allowRetake = true;
@@ -1247,6 +1426,7 @@ let aiSegmentation = null;
 let aiSegmentationResolver = null;
 let aiSegmentationPromise = null;
 let pendingBulkAssetFiles = [];
+let uploadedAssetLibrary = { assets: [] };
 function createEmptySessionAssets() {
   return {
     backgrounds: [],
@@ -1260,6 +1440,7 @@ function createEmptySessionAssets() {
   };
 }
 let activeSessionAssets = createEmptySessionAssets();
+let activeSessionTextDetails = {};
 const ACCENT_PRESET_COLORS = [
   "#ffffff",
   "#0f1222",
@@ -1539,7 +1720,9 @@ function createAssetTile(src, options = {}) {
 const ASSET_PANEL_STATE_KEY = "photoboothAssetPanels";
 
 function getAssetPanelKind(kind) {
-  return kind === "template" ? "template" : "overlay";
+  if (kind === "template") return "template";
+  if (kind === "background") return "background";
+  return "overlay";
 }
 
 function readAssetPanelState() {
@@ -1560,6 +1743,18 @@ function writeAssetPanelState(state) {
 
 function getAssetPanelControls(kind) {
   const resolved = getAssetPanelKind(kind);
+  if (resolved === "background") {
+    return {
+      panel: DOM.backgroundThumbnailsPanel,
+      header: DOM.backgroundThumbnailsHeader,
+      selected: DOM.backgroundThumbnailsSelected,
+      count: DOM.backgroundThumbnailsCount,
+      action: DOM.backgroundThumbnailsAction,
+      body: DOM.backgroundThumbnailsBody,
+      loading: DOM.backgroundThumbnailsLoading,
+      error: DOM.backgroundThumbnailsError,
+    };
+  }
   if (resolved === "template") {
     return {
       panel: DOM.templateThumbnailsPanel,
@@ -1602,18 +1797,20 @@ function syncAssetPanelHeader(kind, list = [], selectedValue = "") {
   const controls = getAssetPanelControls(kind);
   const resolved = getAssetPanelKind(kind);
   const count = Array.isArray(list) ? list.length : 0;
+  const noun =
+    resolved === "template"
+      ? "template"
+      : resolved === "background"
+      ? "background"
+      : "overlay";
   const selectedText = !count
-    ? `No ${resolved === "template" ? "templates" : "overlays"} uploaded yet`
-    : `${count} ${resolved === "template" ? "template" : "overlay"}${
-        count === 1 ? "" : "s"
-      } assigned`;
+    ? `No ${noun}s available yet`
+    : `${count} ${noun}${count === 1 ? "" : "s"} available`;
   if (controls.selected) {
     controls.selected.textContent = selectedText;
   }
   if (controls.count && controls.count !== controls.selected) {
-    controls.count.textContent = `${count} ${
-      resolved === "template" ? "template" : "overlay"
-    }${count === 1 ? "" : "s"}`;
+    controls.count.textContent = `${count} ${noun}${count === 1 ? "" : "s"}`;
   }
   if (controls.action) {
     const isOpen = !!(controls.panel && controls.panel.classList.contains("open"));
@@ -1648,7 +1845,7 @@ function setAssetPanelOpen(kind, open, options = {}) {
 
 function restoreAssetPanelState() {
   const state = readAssetPanelState();
-  ["overlay", "template"].forEach((kind) => {
+  ["background", "overlay", "template"].forEach((kind) => {
     setAssetPanelOpen(kind, !!state[getAssetPanelKind(kind)], {
       persist: false,
     });
@@ -1995,6 +2192,46 @@ function addSessionAssetUrl(kind, url) {
     return true;
   }
   return false;
+}
+
+function selectSessionBackground(src) {
+  if (!src) return;
+  if (!Array.isArray(activeSessionAssets.backgrounds)) {
+    activeSessionAssets.backgrounds = [];
+  }
+  let index = activeSessionAssets.backgrounds.indexOf(src);
+  if (index < 0) {
+    activeSessionAssets.backgrounds.unshift(src);
+    index = 0;
+  }
+  activeSessionAssets.backgroundIndex = index;
+  applyThemeBackground(activeTheme);
+  renderCurrentAssets(activeTheme);
+  updateCreatePathAssetSummary();
+  updateLaunchSummary();
+  showToast("Session background selected");
+}
+
+function selectSessionOverlay(entry) {
+  const normalized = normalizeOverlayDefinition(entry);
+  const src = normalized && normalized.src ? normalized.src : "";
+  if (!src) return;
+  if (!Array.isArray(activeSessionAssets.overlays)) {
+    activeSessionAssets.overlays = [];
+  }
+  const exists = activeSessionAssets.overlays.some(
+    (item) => (typeof item === "string" ? item : item && item.src) === src
+  );
+  if (!exists) activeSessionAssets.overlays.unshift(normalized);
+  selectedOverlay = src;
+  lastPhotoOverlay = src;
+  lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
+  renderOptions();
+  syncOverlayPreviewSurface({ mode: "live" });
+  renderCurrentAssets(activeTheme);
+  updateCreatePathAssetSummary();
+  updateLaunchSummary();
+  showToast("Session overlay selected");
 }
 
 function getSessionAssetSummaryText() {
@@ -2826,6 +3063,17 @@ function setupThemeEditorControls() {
       if (event.target === DOM.bulkAssetModal) closeBulkAssetModal();
     });
   }
+  if (DOM.assetLibrarySearch)
+    DOM.assetLibrarySearch.addEventListener("input", renderAssetLibrary);
+  if (DOM.assetLibraryCategory)
+    DOM.assetLibraryCategory.addEventListener("change", renderAssetLibrary);
+  if (DOM.refreshAssetLibraryBtn)
+    DOM.refreshAssetLibraryBtn.addEventListener("click", () => {
+      loadAssetLibraryRemote().catch((err) => {
+        console.warn("Asset library refresh failed", err);
+        showToast("Asset library refresh failed.");
+      });
+    });
   if (DOM.eventToSubThemeBtn)
     DOM.eventToSubThemeBtn.addEventListener("click", createSubThemeFromEvent);
   if (DOM.themeBackground)
@@ -3550,6 +3798,7 @@ function setupOfflineControls() {
   window.addEventListener("online", () => {
     updatePendingUI();
     flushPendingUploads();
+    flushPendingGalleryRecords();
   });
   window.addEventListener("offline", () => updatePendingUI());
 }
@@ -4644,6 +4893,7 @@ function setupEventNameInput() {
       updateActiveEventDetails({ name });
     } else {
       const key = DOM.eventSelect && DOM.eventSelect.value;
+      updateActiveSessionTextDetails({ name });
       if (key) saveStoredEventName(key, name);
     }
     updateStylePreview();
@@ -4655,9 +4905,12 @@ function setupEventVisualEditorControls() {
     if (!node) return;
     node.addEventListener("input", () => {
       const active = getActiveEvent();
-      if (!active) return;
       const nextValue = node.value.trim();
-      updateActiveEventDetails({ [key]: nextValue });
+      if (active) {
+        updateActiveEventDetails({ [key]: nextValue });
+      } else {
+        updateActiveSessionTextDetails({ [key]: nextValue });
+      }
     });
   };
 
@@ -4673,24 +4926,30 @@ function setupEventVisualEditorControls() {
   if (DOM.eventBannerSizeInput) {
     DOM.eventBannerSizeInput.addEventListener("input", () => {
       const active = getActiveEvent();
-      if (!active) return;
       const size = parseInt(DOM.eventBannerSizeInput.value, 10);
       if (!Number.isFinite(size)) return;
       if (DOM.eventBannerSizeValue)
         DOM.eventBannerSizeValue.textContent = `${size}px`;
-      updateActiveEventDetails({ bannerSize: size });
+      if (active) {
+        updateActiveEventDetails({ bannerSize: size });
+      } else {
+        updateActiveThemeTextDetails({ bannerSize: size });
+      }
     });
   }
 
   if (DOM.eventWelcomeTitleSizeInput) {
     DOM.eventWelcomeTitleSizeInput.addEventListener("input", () => {
       const active = getActiveEvent();
-      if (!active) return;
       const size = parseInt(DOM.eventWelcomeTitleSizeInput.value, 10);
       if (!Number.isFinite(size)) return;
       if (DOM.eventWelcomeTitleSizeValue)
         DOM.eventWelcomeTitleSizeValue.textContent = `${size}px`;
-      updateActiveEventDetails({ welcomeTitleSize: size });
+      if (active) {
+        updateActiveEventDetails({ welcomeTitleSize: size });
+      } else {
+        updateActiveThemeTextDetails({ welcomeTitleSize: size });
+      }
     });
   }
 }
@@ -4744,6 +5003,7 @@ function setupEventDateInput() {
       updateActiveEventDetails({ date: dateValue });
     } else {
       const key = DOM.eventSelect && DOM.eventSelect.value;
+      updateActiveSessionTextDetails({ date: dateValue });
       if (key) saveStoredEventDate(key, dateValue);
     }
     updateStylePreview();
@@ -4790,6 +5050,7 @@ function init() {
   loadEmailJsSettings();
   updatePendingUI();
   flushPendingUploads();
+  flushPendingGalleryRecords();
   applyPreviewOrientation();
   applyViewportProfile();
   syncMobileSettingsUi();
@@ -4803,6 +5064,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadThemesFromStorage();
   loadEventsFromStorage();
   loadFontsFromStorage();
+  loadAssetLibraryLocal();
+  loadAssetLibraryRemote().catch(() => renderAssetLibrary());
   try {
     await setupFontPicker();
   } catch (e) {
@@ -5067,6 +5330,13 @@ function scheduleFontsRemoteSync(fonts) {
   }, REMOTE_SYNC_DEBOUNCE_MS);
 }
 
+async function syncAssetLibraryRemote() {
+  if (!canSyncRemote()) return;
+  for (const asset of uploadedAssetLibrary.assets || []) {
+    await syncAssetLibraryRemoteAsset(asset);
+  }
+}
+
 // --- Manual sync UI ---
 function updateSyncStatus(text) {
   if (DOM.syncStatus) DOM.syncStatus.textContent = text || "";
@@ -5082,9 +5352,11 @@ async function syncNow() {
     await syncThemesRemote();
     await syncEventsRemote();
     await syncFontsRemote(getStoredFonts());
+    await syncAssetLibraryRemote();
     // Reload from server to confirm and merge
     await loadThemesRemote();
     await loadEventsRemote();
+    await loadAssetLibraryRemote();
     const remoteFonts = await loadFontsRemote();
     if (Array.isArray(remoteFonts) && remoteFonts.length) {
       const merged = mergeFonts(getStoredFonts(), remoteFonts);
@@ -5104,10 +5376,11 @@ async function ensureRemoteSeed() {
   if (!canSyncRemote()) return;
   try {
     if (localStorage.getItem("kvSeeded") === "true") return;
-    const [tRes, eRes, fRes] = await Promise.all([
+    const [tRes, eRes, fRes, aRes] = await Promise.all([
       fetch("/api/themes", { cache: "no-store" }),
       fetch("/api/events", { cache: "no-store" }),
       fetch("/api/fonts", { cache: "no-store" }),
+      fetch("/api/assets", { cache: "no-store" }),
     ]);
     let needSeed = false;
     if (tRes.ok) {
@@ -5128,10 +5401,15 @@ async function ensureRemoteSeed() {
       const f = await fRes.text();
       if (!f || f.trim() === "" || f.trim() === "[]") needSeed = true;
     }
+    if (aRes.ok) {
+      const a = await aRes.text();
+      if (!a || a.trim() === "" || a.trim() === '{"assets":[]}') needSeed = true;
+    }
     if (needSeed) {
       await syncThemesRemote();
       await syncEventsRemote();
       await syncFontsRemote(getStoredFonts());
+      await syncAssetLibraryRemote();
       localStorage.setItem("kvSeeded", "true");
       updateSyncStatus("Seeded to server");
     }
@@ -6000,7 +6278,13 @@ async function process360Video(file) {
       DOM.shareStatus.textContent = "Uploading video…";
       DOM.shareStatus.style.display = "inline-flex";
     }
-    const publicUrl = await publishShareVideo(file);
+    const uploadResult = await uploadCaptureOnce({
+      previewUrl: previewPlaceholder,
+      mediaBlob: file,
+      resourceType: "video",
+      modeName: "360",
+    });
+    const publicUrl = uploadResult.publicUrl;
     if (!publicUrl) {
       if (DOM.qrHint) {
         DOM.qrHint.textContent = cloudinaryEnabled()
@@ -6853,7 +7137,7 @@ function renderCurrentAssets(theme) {
     selectedValue = ""
   ) => {
     if (!wrap) return;
-    if (kind === "overlay" || kind === "template") {
+    if (kind === "background" || kind === "overlay" || kind === "template") {
       setAssetPanelMessage(kind, null);
     }
     wrap.innerHTML = "";
@@ -6862,7 +7146,12 @@ function renderCurrentAssets(theme) {
       const src = typeof entry === "string" ? entry : entry.src;
       const fromFolder = typeof entry === "object" && !!entry.__folder;
       const isEvent = typeof entry === "object" && !!entry.__event;
-      const isSession = typeof entry === "object" && !!entry.__session;
+      const isSession =
+        (typeof entry === "object" && !!entry.__session) ||
+        (kind === "background" &&
+          Array.isArray(activeSessionAssets.backgrounds) &&
+          activeSessionAssets.backgrounds.includes(src));
+      const isLibrary = typeof entry === "object" && !!entry.__library;
       const localIndex = getLocalIndex(kind, src);
       const badge =
         withBadge && typeof entry === "object" && entry.layout
@@ -6872,15 +7161,29 @@ function renderCurrentAssets(theme) {
       if (selectedValue && src === selectedValue) {
         item.classList.add("selected");
       }
+      if (kind === "background" || kind === "overlay") {
+        item.addEventListener("click", () => {
+          if (kind === "background") {
+            selectSessionBackground(src);
+          } else if (kind === "overlay") {
+            selectSessionOverlay(entry);
+          }
+        });
+      }
       item.draggable =
         allowReorder &&
         !lockBaseThemeAssets &&
         !fromFolder &&
         !isEvent &&
         !isSession &&
+        !isLibrary &&
         localIndex >= 0;
       item.dataset.index = localIndex;
-      if (!lockBaseThemeAssets || isEvent || isSession) {
+      if (
+        kind === "background"
+          ? isSession
+          : !lockBaseThemeAssets || isEvent || isSession
+      ) {
         const btn = document.createElement("button");
         btn.className = "asset-remove";
         btn.textContent = "×";
@@ -6888,14 +7191,20 @@ function renderCurrentAssets(theme) {
           ? "Remove from this event"
           : isSession
           ? "Remove from this session"
+          : isLibrary
+          ? "Hide from shared library"
           : fromFolder
           ? "Hide from this theme"
           : "Remove";
-        btn.onclick = () => {
+        btn.onclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
           const promptText = isEvent
             ? "Remove this item from this event?"
             : isSession
             ? "Remove this item from this session?"
+            : isLibrary
+            ? "Hide this item from the shared library?"
             : fromFolder
             ? "Hide this item for this theme?"
             : "Remove this item?";
@@ -6903,11 +7212,15 @@ function renderCurrentAssets(theme) {
           if (kind === "overlay") {
             if (isSession) removeSessionOverlay(src);
             else if (isEvent) removeEventOverlay(src);
+            else if (isLibrary) archiveLibraryAssetByUrl(src);
             else if (fromFolder) removeFolderOverlay(src);
             else if (localIndex >= 0) removeOverlay(localIndex);
+          } else if (kind === "background") {
+            if (isSession) removeSessionBackground(src);
           } else if (kind === "template") {
             if (isSession) removeSessionTemplate(src);
             else if (isEvent) removeEventTemplate(src);
+            else if (isLibrary) archiveLibraryAssetByUrl(src);
             else if (fromFolder) removeFolderTemplate(src);
             else if (localIndex >= 0) removeTemplate(localIndex);
           }
@@ -6921,6 +7234,7 @@ function renderCurrentAssets(theme) {
         !fromFolder &&
         !isEvent &&
         !isSession &&
+        !isLibrary &&
         localIndex >= 0
       ) {
         item.addEventListener("dragstart", (ev) => {
@@ -6951,6 +7265,15 @@ function renderCurrentAssets(theme) {
       wrap.appendChild(span);
     }
   };
+  const selectedBackgroundSrc = getActiveBackground(theme);
+  setGrid(
+    DOM.sessionBackgrounds,
+    getSessionBackgroundPickerList(theme),
+    false,
+    "background",
+    false,
+    selectedBackgroundSrc || ""
+  );
   // Backgrounds grid with selection
   if (DOM.currentBackgrounds) {
     const wrap = DOM.currentBackgrounds;
@@ -7141,7 +7464,7 @@ function renderCurrentAssets(theme) {
   }
   setGrid(
     DOM.currentOverlays,
-    getOverlayList(theme),
+    getAllThemeOverlayCatalogList(theme),
     false,
     "overlay",
     false,
@@ -7156,8 +7479,13 @@ function renderCurrentAssets(theme) {
     pendingTemplate && pendingTemplate.src ? pendingTemplate.src : ""
   );
   syncAssetPanelHeader(
+    "background",
+    getSessionBackgroundPickerList(theme),
+    getActiveBackground(theme) || ""
+  );
+  syncAssetPanelHeader(
     "overlay",
-    getOverlayList(theme),
+    getAllThemeOverlayCatalogList(theme),
     selectedOverlay || lastPhotoOverlay || ""
   );
   syncAssetPanelHeader(
@@ -7165,6 +7493,7 @@ function renderCurrentAssets(theme) {
     getTemplateList(theme),
     pendingTemplate && pendingTemplate.src ? pendingTemplate.src : ""
   );
+  setAssetPanelMessage("background", null);
   setAssetPanelMessage("overlay", null);
   setAssetPanelMessage("template", null);
   restoreAssetPanelState();
@@ -7296,8 +7625,13 @@ function renderOverlayPhotoSlots(overlay, options = {}) {
     }
     const media = document.createElement(isLive ? "video" : "img");
     media.className = "photo-slot-media";
+    media.classList.toggle("is-live", isLive);
     media.style.objectFit = slot.objectFit || "cover";
     media.style.objectPosition = slot.objectPosition || "center";
+    if (isLive) {
+      media.style.setProperty("transform", "scaleX(-1)", "important");
+      media.style.setProperty("-webkit-transform", "scaleX(-1)", "important");
+    }
     if (isLive) {
       media.autoplay = true;
       media.playsInline = true;
@@ -7379,7 +7713,12 @@ function setMode(m) {
     clearOverlayPreviewSurface();
   }
   if (captureMode === "photo") {
-    if (!selectedOverlay && lastPhotoOverlay) {
+    syncPhotoOverlayOrientationWithAssets();
+    if (
+      !selectedOverlay &&
+      lastPhotoOverlay &&
+      photoOverlayMatchesOrientation(lastPhotoOverlay, photoOverlayOrientation)
+    ) {
       selectedOverlay = lastPhotoOverlay;
     }
     syncOverlayPreviewSurface({ mode: "live" });
@@ -7392,6 +7731,87 @@ function setMode(m) {
   setMobileSettingsOpen(false);
   requestAnimationFrame(syncFrameSizeVars);
 }
+
+function getPhotoOverlayBySrc(src) {
+  if (!src) return null;
+  return filterAssetsForMode(getOverlayList(activeTheme), "photo").find(
+    (overlay) => overlay && overlay.src === src
+  );
+}
+
+function photoOverlayMatchesOrientation(src, orientation = photoOverlayOrientation) {
+  const overlay = getPhotoOverlayBySrc(src);
+  if (!overlay) return false;
+  const resolved = getPhotoOverlayOrientation(overlay);
+  return !resolved || resolved === orientation;
+}
+
+function getFirstPhotoOverlayForOrientation(orientation = photoOverlayOrientation) {
+  const overlays = filterPhotoOverlaysByOrientation(
+    getOverlayList(activeTheme),
+    orientation
+  );
+  return overlays[0] || null;
+}
+
+function syncPhotoOverlayOrientationWithAssets() {
+  const current = normalizePhotoOverlayOrientation(photoOverlayOrientation) || "portrait";
+  photoOverlayOrientation = current;
+  const currentOverlays = filterPhotoOverlaysByOrientation(
+    getOverlayList(activeTheme),
+    current
+  );
+  const opposite = current === "portrait" ? "landscape" : "portrait";
+  const oppositeOverlays = filterPhotoOverlaysByOrientation(
+    getOverlayList(activeTheme),
+    opposite
+  );
+  if (!currentOverlays.length && oppositeOverlays.length) {
+    photoOverlayOrientation = opposite;
+  }
+  if (
+    selectedOverlay &&
+    !photoOverlayMatchesOrientation(selectedOverlay, photoOverlayOrientation)
+  ) {
+    lastPhotoOverlayByOrientation[current] = selectedOverlay;
+    selectedOverlay = null;
+    lastPhotoOverlay = null;
+  }
+  const remembered = lastPhotoOverlayByOrientation[photoOverlayOrientation];
+  if (!selectedOverlay && photoOverlayMatchesOrientation(remembered, photoOverlayOrientation)) {
+    selectedOverlay = remembered;
+    lastPhotoOverlay = remembered;
+  }
+}
+
+function setPhotoOverlayOrientation(nextOrientation) {
+  const next = normalizePhotoOverlayOrientation(nextOrientation);
+  if (!next || next === photoOverlayOrientation) return;
+  if (selectedOverlay) {
+    lastPhotoOverlayByOrientation[photoOverlayOrientation] = selectedOverlay;
+  }
+  photoOverlayOrientation = next;
+  selectedOverlay = null;
+  lastPhotoOverlay = null;
+  const remembered = lastPhotoOverlayByOrientation[next];
+  if (photoOverlayMatchesOrientation(remembered, next)) {
+    selectedOverlay = remembered;
+    lastPhotoOverlay = remembered;
+  } else {
+    const first = getFirstPhotoOverlayForOrientation(next);
+    if (first && first.src) {
+      selectedOverlay = first.src;
+      lastPhotoOverlay = first.src;
+      lastPhotoOverlayByOrientation[next] = first.src;
+    }
+  }
+  renderOptionsForMode(mode);
+  syncOverlayPreviewSurface({ mode: "live" });
+  applyPreviewOrientation();
+  logBoothFrameState("overlay-orientation-change", mode);
+  setMobileSettingsOpen(false);
+}
+
 function renderOptionsForMode(targetMode = mode) {
   const captureMode = getSelectedCaptureMode(targetMode);
   const container = DOM.options;
@@ -7415,6 +7835,33 @@ function renderOptionsForMode(targetMode = mode) {
     section.appendChild(grid);
     container.appendChild(section);
     return grid;
+  };
+  const addPhotoOrientationSection = () => {
+    const section = document.createElement("div");
+    section.className = "options-section photo-orientation-section";
+    const heading = document.createElement("div");
+    heading.className = "options-section-title";
+    heading.textContent = "Overlay Format";
+    section.appendChild(heading);
+    const group = document.createElement("div");
+    group.className = "photo-orientation-toggle";
+    [
+      ["portrait", "Portrait"],
+      ["landscape", "Landscape"],
+    ].forEach(([value, label]) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "photo-orientation-btn";
+      button.textContent = label;
+      button.dataset.orientation = value;
+      const active = photoOverlayOrientation === value;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+      button.onclick = () => setPhotoOverlayOrientation(value);
+      group.appendChild(button);
+    });
+    section.appendChild(group);
+    container.appendChild(section);
   };
   const greenGrid = addSection("Green Screen BGs");
   const greenList = getGreenBackgroundList(activeTheme);
@@ -7445,6 +7892,8 @@ function renderOptionsForMode(targetMode = mode) {
   }
 
   if (captureMode === "photo") {
+    syncPhotoOverlayOrientationWithAssets();
+    addPhotoOrientationSection();
     const overlayGrid = addSection("Choose Your Overlay");
     const noOverlay = document.createElement("div");
     noOverlay.className = "thumb";
@@ -7463,15 +7912,17 @@ function renderOptionsForMode(targetMode = mode) {
       noOverlay.classList.add("selected");
       selectedOverlay = null;
       lastPhotoOverlay = null;
+      lastPhotoOverlayByOrientation[photoOverlayOrientation] = null;
       clearOverlayPreviewSurface();
+      applyPreviewOrientation();
       setMobileSettingsOpen(false);
     };
     if (!selectedOverlay) noOverlay.classList.add("selected");
     overlayGrid.appendChild(noOverlay);
 
-    const photoOverlays = filterAssetsForMode(
+    const photoOverlays = filterPhotoOverlaysByOrientation(
       getOverlayList(activeTheme),
-      "photo"
+      photoOverlayOrientation
     );
     if (!photoOverlays.length) {
       const note = document.createElement("div");
@@ -7502,6 +7953,7 @@ function renderOptionsForMode(targetMode = mode) {
         wrap.classList.add("selected");
         selectedOverlay = src;
         lastPhotoOverlay = src;
+        lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
         syncOverlayPreviewSurface({ mode: "live" });
         applyPreviewOrientation();
         logBoothFrameState("overlay-selected", mode);
@@ -7628,12 +8080,10 @@ function applyPreviewOrientation() {
     }
     return;
   }
-  DOM.videoWrap.className = isMobileBoothViewport()
-    ? "view-portrait"
-    : "view-landscape";
+  DOM.videoWrap.className =
+    photoOverlayOrientation === "portrait" ? "view-portrait" : "view-landscape";
   applyLiveCameraSizing();
-  setCaptureAspect(null);
-  updateCaptureAspect();
+  setCaptureAspect(getPhotoOverlayAspectForOrientation());
 }
 
 function capturePreviewState() {
@@ -7966,8 +8416,8 @@ function startBoothFlow() {
   document.documentElement.classList.remove("admin-open");
   setBoothControlsVisible(true);
   setCaptureAspect(null);
-  showWelcome();
   setMode(resolveBoothLaunchMode());
+  showWelcome();
   syncCaptureStatusIndicators();
   updateCaptureModeUi();
   syncMobileSettingsUi();
@@ -8019,13 +8469,26 @@ async function capturePhotoFlow() {
   if (!livePhotoEnabled) showPreviewFreezeFrame(photo);
   try {
     const finalUrl = await finalizeToPrint(photo, selectedOverlay);
+    const uploadResult = await uploadCaptureOnce({
+      previewUrl: finalUrl,
+      mediaBlob: livePhotoEnabled ? lastLiveClipBlob : null,
+      resourceType: livePhotoEnabled && lastLiveClipBlob ? "video" : "image",
+      modeName: livePhotoEnabled ? "live-photo" : "photo",
+    });
     showFinal(
       finalUrl,
       livePhotoEnabled && lastLiveClipBlob
-        ? { shareType: "video", shareBlob: lastLiveClipBlob }
-        : {}
+        ? {
+            shareType: "video",
+            shareBlob: lastLiveClipBlob,
+            shareUrl: uploadResult.publicUrl,
+            uploadQueued: uploadResult.queued,
+          }
+        : {
+            shareUrl: uploadResult.publicUrl,
+            uploadQueued: uploadResult.queued,
+          }
     );
-    handleCaptureUpload(finalUrl);
     recordAnalytics(livePhotoEnabled ? "live-photo" : "photo", selectedOverlay);
     addToGallery(finalUrl);
   } finally {
@@ -8057,7 +8520,18 @@ async function captureMessageFlow() {
     setLiveClip(clip);
     const posterCanvas = drawToCanvasFromVideo();
     const posterUrl = posterCanvas.toDataURL("image/jpeg", 0.9);
-    showFinal(posterUrl, { shareType: "video", shareBlob: clip });
+    const uploadResult = await uploadCaptureOnce({
+      previewUrl: posterUrl,
+      mediaBlob: clip,
+      resourceType: "video",
+      modeName: "message",
+    });
+    showFinal(posterUrl, {
+      shareType: "video",
+      shareBlob: clip,
+      shareUrl: uploadResult.publicUrl,
+      uploadQueued: uploadResult.queued,
+    });
     recordAnalytics("message", "video");
   } finally {
     if (DOM.captureBtn) {
@@ -8104,6 +8578,9 @@ function handlePrimaryAction() {
 
 function getResolvedCaptureAspectRatio() {
   const captureMode = getSelectedCaptureMode();
+  if (captureMode === "photo") {
+    return getPhotoOverlayAspectForOrientation();
+  }
   if (
     (captureMode === "strip" || captureMode === "layout") &&
     typeof captureAspectRatio === "number" &&
@@ -8118,8 +8595,8 @@ function getResolvedCaptureAspectRatio() {
   if (rect && rect.width > 0 && rect.height > 0)
     return rect.width / rect.height;
   return DOM.videoWrap && DOM.videoWrap.classList.contains("view-portrait")
-    ? 3 / 4
-    : 4 / 3;
+    ? PRINT_SIZES.portrait.aspect
+    : PRINT_SIZES.landscape.aspect;
 }
 
 function drawToCanvasFromVideo() {
@@ -8129,10 +8606,8 @@ function drawToCanvasFromVideo() {
 
   // Demo or no camera stream ready: draw a placeholder frame
   if (demoMode || !v || !v.videoWidth || !v.videoHeight) {
-    const aspectW = isPortrait ? 3 : 4;
-    const aspectH = isPortrait ? 4 : 3;
     const baseSize = 900; // arbitrary base size
-    const width = Math.round((baseSize * aspectW) / aspectH);
+    const width = Math.round(baseSize * targetAspect);
     const height = baseSize;
     const buffer = CanvasBuffer.get("snapshot", width, height);
     const ctx = buffer.getContext("2d");
@@ -8146,7 +8621,7 @@ function drawToCanvasFromVideo() {
     ctx.font = "28px system-ui";
     ctx.textAlign = "center";
     ctx.fillText("Demo Mode", width / 2, height / 2 - 10);
-    ctx.fillText(isPortrait ? "3:4" : "4:3", width / 2, height / 2 + 26);
+    ctx.fillText(isPortrait ? "2:3" : "3:2", width / 2, height / 2 + 26);
     return buffer;
   }
 
@@ -8513,14 +8988,6 @@ function syncFrameSizeVars() {
     "--frame-preview-aspect",
     `${width} / ${height}`
   );
-  if (DOM.finalPreviewContent) {
-    DOM.finalPreviewContent.style.setProperty("--review-width", `${width}px`);
-    DOM.finalPreviewContent.style.setProperty("--review-height", `${height}px`);
-    DOM.finalPreviewContent.style.setProperty(
-      "--review-aspect",
-      `${width} / ${height}`
-    );
-  }
 }
 
 function setFinalPreviewSharePanelVisible(visible) {
@@ -8585,7 +9052,7 @@ async function applyOverlay(canvas, overlaySrc) {
     const overlayToDraw = SPOT_MASK.enabled
       ? createMaskedOverlayCanvas(ov, SPOT_MASK.color, SPOT_MASK.tolerance)
       : ov;
-    drawImageContain(ctx, overlayToDraw, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(overlayToDraw, 0, 0, canvas.width, canvas.height);
   } catch (e) {
     console.error("Failed to apply overlay:", overlaySrc, e);
   }
@@ -8604,7 +9071,12 @@ function drawCoverInRect(ctx, source, dx, dy, dw, dh) {
   const rh = ih * scale;
   const rx = dx + (dw - rw) / 2;
   const ry = dy + (dh - rh) / 2;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(dx, dy, dw, dh);
+  ctx.clip();
   ctx.drawImage(img, rx, ry, rw, rh);
+  ctx.restore();
 }
 
 function drawImageCover(ctx, img, dx, dy, dw, dh) {
@@ -8706,7 +9178,7 @@ async function renderOverlayToCanvas(ctx, overlay, sources, outputW, outputH) {
   if (foreground && foreground.type === "image" && foreground.src) {
     try {
       const fgImage = await loadImage(foreground.src);
-      drawImageContain(ctx, fgImage, 0, 0, outputW, outputH);
+      ctx.drawImage(fgImage, 0, 0, outputW, outputH);
     } catch (_) {}
   }
 }
@@ -8759,10 +9231,27 @@ function getTemplateRowCount(layout, slots) {
   return 3;
 }
 
+const STANDARD_DOUBLE_COLUMN_STRIP_SLOTS = [
+  { x: 50, y: 357, w: 500, h: 414 },
+  { x: 50, y: 823, w: 500, h: 414 },
+  { x: 50, y: 1288, w: 500, h: 413 },
+  { x: 650, y: 357, w: 500, h: 414 },
+  { x: 650, y: 823, w: 500, h: 414 },
+  { x: 650, y: 1288, w: 500, h: 413 },
+];
+
+function getStandardDoubleColumnStripSlots() {
+  return STANDARD_DOUBLE_COLUMN_STRIP_SLOTS.map((slot) => ({ ...slot }));
+}
+
 function normalizeTemplateSlots(slots, columnCount = 1) {
   const normalized = normalizeAssetSlots(slots);
   if (!normalized.length) return null;
   if (columnCount <= 1) return [normalized];
+  const maxRight = Math.max(
+    ...normalized.map((slot) => (slot.x || 0) + (slot.w || 0))
+  );
+  const xScale = maxRight > 1 ? maxRight : 1;
   const groups = Array.from({ length: columnCount }, () => []);
   const sorted = normalized.slice().sort((a, b) => {
     if (Math.abs(a.x - b.x) > 4) return a.x - b.x;
@@ -8773,7 +9262,7 @@ function normalizeTemplateSlots(slots, columnCount = 1) {
     let targetIndex = 0;
     let bestDistance = Infinity;
     for (let index = 0; index < columnCount; index++) {
-      const expectedCenter = (index + 0.5) / columnCount;
+      const expectedCenter = ((index + 0.5) / columnCount) * xScale;
       const distance = Math.abs(centerX - expectedCenter);
       if (distance < bestDistance) {
         bestDistance = distance;
@@ -8916,11 +9405,12 @@ async function runStripSequence(template) {
   for (let i = 0; i < 3; i++) {
     if (lastShotImg) lastShotImg.style.display = "none";
     const snap = await countdownAndSnap();
-    shots.push(snap);
+    const frozenSnap = cloneCanvasForStrip(snap) || snap;
+    shots.push(frozenSnap);
     if (i < 2) {
       try {
         if (lastShotImg) {
-          lastShotImg.src = snap.toDataURL("image/png");
+          lastShotImg.src = frozenSnap.toDataURL("image/png");
           lastShotImg.style.display = "block";
           await delay(1200);
           lastShotImg.style.display = "none";
@@ -8936,8 +9426,15 @@ async function runStripSequence(template) {
     previewRestored = true;
     if (DOM.liveOverlay)
       DOM.liveOverlay.style.opacity = previewState.overlayOpacity || "";
-    showFinal(stripUrl);
-    handleCaptureUpload(stripUrl);
+    const uploadResult = await uploadCaptureOnce({
+      previewUrl: stripUrl,
+      resourceType: "image",
+      modeName: "strip",
+    });
+    showFinal(stripUrl, {
+      shareUrl: uploadResult.publicUrl,
+      uploadQueued: uploadResult.queued,
+    });
     recordAnalytics("strip", template.src);
   } finally {
     if (!previewRestored) restorePreviewState(previewState);
@@ -9197,7 +9694,7 @@ async function composeStrip(template, photos) {
   let targetH = bg.naturalHeight || bg.height || 1200;
   if (layout === "double_column") {
     targetW = 1200;
-    targetH = bg.naturalHeight || bg.height || 1800;
+    targetH = 1800;
   } else if (layout === "vertical") {
     targetW = 1200;
     targetH = 1800;
@@ -9301,12 +9798,11 @@ async function composeStrip(template, photos) {
 async function finalizeToPrint(photoCanvas, overlaySrc) {
   const enhancedPhotoCanvas = ensureEnhancedCanvas(photoCanvas);
   const resolvedAspect = getResolvedCaptureAspectRatio();
-  const isPortrait = resolvedAspect < 1;
-  const longEdge = 1800;
-  const targetW = isPortrait ? Math.round(longEdge * resolvedAspect) : longEdge;
-  const targetH = isPortrait ? longEdge : Math.round(longEdge / resolvedAspect);
-  const c = CanvasBuffer.get("print-finalizer", targetW, targetH);
-  const ctx = c.getContext("2d");
+  const orientation = resolvedAspect < 1 ? "portrait" : "landscape";
+  const { canvas: c, ctx, size } = createPrintCanvas(orientation);
+  if (!ctx) return "";
+  const targetW = size.width;
+  const targetH = size.height;
   const resolvedOverlaySrc = overlaySrc
     ? resolveOverlayRenderSrc(activeTheme, overlaySrc)
     : "";
@@ -9396,9 +9892,7 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
     drawDynamicEventText(ctx, targetW, targetH, active, activeTheme);
   }
 
-  return c instanceof HTMLCanvasElement
-    ? c.toDataURL("image/png")
-    : await offscreenToDataURL(c);
+  return c.toDataURL("image/png");
 }
 
 /**
@@ -9407,7 +9901,8 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
 function renderDoubleColumn(canvas, photos, overlayImage, template, rows = 3) {
   const ctx = canvas.getContext("2d");
   const cols = 2; // duplicate columns
-  // Reserve a header area at the top for graphics/logo on the template
+  drawImageContain(ctx, overlayImage, 0, 0, canvas.width, canvas.height);
+
   const headerPct = Math.max(
     0,
     Math.min(
@@ -9438,27 +9933,18 @@ function renderDoubleColumn(canvas, photos, overlayImage, template, rows = 3) {
   const slotH = Math.max(1, usableH / rows);
   const startY = headerH + slotSpacing;
 
-  const cachedSlots =
-    (template && template.__slotMetrics && template.__slotMetrics.slots) ||
-    normalizeTemplateSlots(template && template.slots, cols);
-  const detectedSlots =
-    cachedSlots || detectTransparentColumnSlots(overlayImage, rows, cols);
-  if (detectedSlots) {
-    const scaleX =
-      canvas.width / (overlayImage.naturalWidth || overlayImage.width || 1);
-    const scaleY =
-      canvas.height / (overlayImage.naturalHeight || overlayImage.height || 1);
+  const standardSlots = normalizeTemplateSlots(
+    getStandardDoubleColumnStripSlots(),
+    cols
+  );
+  if (standardSlots) {
     for (let row = 0; row < rows; row++) {
       const photo = photos[row];
       if (!photo) continue;
       for (let col = 0; col < cols; col++) {
-        const slot = detectedSlots[col] && detectedSlots[col][row];
+        const slot = standardSlots[col] && standardSlots[col][row];
         if (!slot) continue;
-        const x = slot.x * scaleX;
-        const y = slot.y * scaleY;
-        const w = slot.w * scaleX;
-        const h = slot.h * scaleY;
-        drawImageContain(ctx, photo, x, y, w, h);
+        drawImageCover(ctx, photo, slot.x, slot.y, slot.w, slot.h);
       }
     }
   } else {
@@ -9468,13 +9954,10 @@ function renderDoubleColumn(canvas, photos, overlayImage, template, rows = 3) {
         if (!photo) continue;
         const x = Math.round(col * columnW + columnPad);
         const y = Math.round(startY + row * (slotH + slotSpacing));
-        drawImageContain(ctx, photo, x, y, slotW, slotH);
+        drawImageCover(ctx, photo, x, y, slotW, slotH);
       }
     }
   }
-
-  // Draw the overlay last so its frames sit on top
-  drawImageContain(ctx, overlayImage, 0, 0, canvas.width, canvas.height);
 }
 
 function renderSingleColumnStrip(canvas, photos, overlayImage, template, rows = 3) {
@@ -9535,7 +10018,7 @@ function renderSingleColumnStrip(canvas, photos, overlayImage, template, rows = 
       const photo = photos[row];
       const slot = detectedSlots[0][row];
       if (!photo || !slot) continue;
-      drawImageContain(
+      drawImageCover(
         ctx,
         photo,
         slot.x * scaleX,
@@ -9559,7 +10042,7 @@ function renderSingleColumnStrip(canvas, photos, overlayImage, template, rows = 
       const photo = photos[row];
       if (!photo) continue;
       const y = Math.round(startY + row * (slotH + slotSpacing));
-      drawImageContain(ctx, photo, x, y, slotW, slotH);
+      drawImageCover(ctx, photo, x, y, slotW, slotH);
     }
   }
 
@@ -9644,6 +10127,11 @@ async function detectMaskRegions(img, hexColor, tolerance) {
 }
 
 // Final preview
+function setFinalMediaOrientation(element, width, height) {
+  if (!element || !width || !height) return;
+  element.dataset.orientation = height > width ? "portrait" : "landscape";
+}
+
 function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
   if (DOM.boothScreen) {
@@ -9659,6 +10147,10 @@ function showFinal(url, options = {}) {
   lastShareType = shareType;
   const shareBlob = options.shareBlob || null;
   const skipShare = !!options.skipShare;
+  const providedShareUrl =
+    options.shareUrl && /^https?:/i.test(String(options.shareUrl))
+      ? String(options.shareUrl)
+      : "";
   const qrContainer = DOM.qrCodeContainer;
   const qrCanvas = DOM.qrCode;
   const panel = DOM.finalPreview;
@@ -9676,7 +10168,25 @@ function showFinal(url, options = {}) {
   }
   if (DOM.closePreviewBtn) DOM.closePreviewBtn.style.display = "block";
 
-  img.src = url;
+  if (img) {
+    img.onload = () => {
+      setFinalMediaOrientation(
+        img,
+        img.naturalWidth || img.width,
+        img.naturalHeight || img.height
+      );
+      if (DOM.finalLive) {
+        DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
+      }
+    };
+    img.src = url;
+    if (img.complete) {
+      setFinalMediaOrientation(img, img.naturalWidth || img.width, img.naturalHeight || img.height);
+      if (DOM.finalLive) {
+        DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
+      }
+    }
+  }
   const useLiveClip = !!(
     DOM.finalLive &&
     (lastLiveClipUrl || shareBlob) &&
@@ -9687,6 +10197,7 @@ function showFinal(url, options = {}) {
     clearPreviewFreezeFrame();
     DOM.finalLive.src = lastLiveClipUrl;
     DOM.finalLive.poster = url;
+    if (img) DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
     DOM.finalLive.classList.remove("hidden");
     if (img) img.classList.add("hidden");
     DOM.finalLive.play().catch(() => {});
@@ -9709,59 +10220,22 @@ function showFinal(url, options = {}) {
     DOM.shareStatus.style.display = "none";
   }
   setFinalPreviewSharePanelVisible(false);
-  if (!skipShare && !offline && cloudinaryEnabled()) {
-    // Prepare a public Cloudinary link, then show QR when ready
-    lastShareUrl = null;
-    if (DOM.shareStatus) {
-      DOM.shareStatus.textContent = "Preparing link…";
-      DOM.shareStatus.style.display = "inline-flex";
+  if (!skipShare && providedShareUrl) {
+    lastShareUrl = providedShareUrl;
+    renderQrCode(qrCanvas, lastShareUrl);
+    if (DOM.shareLink) {
+      DOM.shareLink.href = lastShareUrl;
+      DOM.shareLink.textContent = lastShareUrl;
     }
-    const sharePromise = publishFinalShareUrl(shareType, shareBlob, url);
-    if (!sharePromise) {
-      if (DOM.shareStatus) {
-        DOM.shareStatus.textContent = "Upload failed";
-      }
-      return;
-    }
-    sharePromise
-      .then((publicUrl) => {
-        lastShareUrl =
-          publicUrl && /^https?:/i.test(publicUrl) ? publicUrl : null;
-        if (lastShareUrl) {
-          renderQrCode(qrCanvas, lastShareUrl);
-          if (DOM.shareLink) {
-            DOM.shareLink.href = lastShareUrl;
-            DOM.shareLink.textContent = lastShareUrl;
-          }
-          if (qrContainer) qrContainer.classList.remove("hidden");
-          if (DOM.shareStatus) {
-            DOM.shareStatus.textContent = "Link ready";
-            DOM.shareStatus.style.display = "none";
-          }
-          setFinalPreviewSharePanelVisible(true);
-        } else {
-          if (DOM.qrHint) {
-            DOM.qrHint.textContent =
-              "QR disabled: Cloudinary link not available.";
-            DOM.qrHint.style.display = "block";
-          }
-          if (DOM.shareStatus) {
-            DOM.shareStatus.textContent = "Upload failed";
-          }
-        }
-      })
-      .catch(() => {
-        if (DOM.qrHint) {
-          DOM.qrHint.textContent =
-            "QR disabled: Cloudinary link not available.";
-          DOM.qrHint.style.display = "block";
-        }
-        if (DOM.shareStatus) {
-          DOM.shareStatus.textContent = "Upload failed";
-        }
-      });
+    if (qrContainer) qrContainer.classList.remove("hidden");
+    if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
+    setFinalPreviewSharePanelVisible(true);
   } else if (!skipShare) {
-    // No internet or Cloudinary disabled
+    lastShareUrl = null;
+    if (options.uploadQueued && DOM.qrHint) {
+      DOM.qrHint.textContent = "Upload queued: QR will be available after retry.";
+      DOM.qrHint.style.display = "block";
+    }
     if (offline && DOM.qrHint) {
       DOM.qrHint.textContent = "Offline: QR disabled";
       DOM.qrHint.style.display = "block";
@@ -9869,6 +10343,7 @@ function getActiveEventId() {
 function setActiveEventId(id, options = {}) {
   if (id) localStorage.setItem(ACTIVE_EVENT_KEY, id);
   else localStorage.removeItem(ACTIVE_EVENT_KEY);
+  if (id) activeSessionTextDetails = {};
   if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = id || "";
   if (!options.skipRemoteSync) scheduleEventsRemoteSync();
 }
@@ -9926,6 +10401,34 @@ function hasOwnEventTextValue(active, key) {
   );
 }
 
+function getSavedEventTextValue(active, key) {
+  return hasOwnEventTextValue(active, key) ? active[key] : "";
+}
+
+function isDefaultEventTextValue(value, fallback = "") {
+  const current = typeof value === "string" ? value.trim() : "";
+  const defaultValue = typeof fallback === "string" ? fallback.trim() : "";
+  return !!current && !!defaultValue && current === defaultValue;
+}
+
+function setTextFieldValueAndPlaceholder(
+  node,
+  value = "",
+  placeholder = "",
+  disabled = false
+) {
+  if (!node) return;
+  const safeValue = typeof value === "string" ? value : "";
+  const safePlaceholder = typeof placeholder === "string" ? placeholder : "";
+  node.placeholder = safePlaceholder;
+  if (typeof document === "undefined" || document.activeElement !== node) {
+    node.value = isDefaultEventTextValue(safeValue, safePlaceholder)
+      ? ""
+      : safeValue;
+  }
+  node.disabled = !!disabled;
+}
+
 function describeAssetSummaryCounts({
   backgrounds = 0,
   greenBackgrounds = 0,
@@ -9973,74 +10476,96 @@ function syncEventSetupEditor(theme = null) {
   const active = getActiveEvent();
   const themeObj = getEventEditorTheme(theme);
   const hasActiveEvent = !!active;
+  const hasEditableTarget = hasActiveEvent || !!themeObj;
+  const textSource = hasActiveEvent ? active : activeSessionTextDetails;
   const setDisabled = (node) => {
     if (!node) return;
-    node.disabled = !hasActiveEvent;
+    node.disabled = !hasEditableTarget;
   };
 
   if (DOM.eventNameInput)
-    DOM.eventNameInput.value = hasActiveEvent ? active.name || "" : "";
+    setTextFieldValueAndPlaceholder(
+      DOM.eventNameInput,
+      getSavedEventTextValue(textSource, "name"),
+      "Event name",
+      !hasEditableTarget
+    );
   if (DOM.eventPartner1Input)
-    DOM.eventPartner1Input.value = hasActiveEvent ? active.partner1 || "" : "";
+    setTextFieldValueAndPlaceholder(
+      DOM.eventPartner1Input,
+      getSavedEventTextValue(textSource, "partner1"),
+      "Partner 1",
+      !hasEditableTarget
+    );
   if (DOM.eventPartner2Input)
-    DOM.eventPartner2Input.value = hasActiveEvent ? active.partner2 || "" : "";
+    setTextFieldValueAndPlaceholder(
+      DOM.eventPartner2Input,
+      getSavedEventTextValue(textSource, "partner2"),
+      "Partner 2",
+      !hasEditableTarget
+    );
   if (DOM.eventBirthdayNameInput)
-    DOM.eventBirthdayNameInput.value = hasActiveEvent
-      ? active.birthdayName || ""
-      : "";
+    setTextFieldValueAndPlaceholder(
+      DOM.eventBirthdayNameInput,
+      getSavedEventTextValue(textSource, "birthdayName"),
+      "Birthday person",
+      !hasEditableTarget
+    );
   if (DOM.eventExpoCompanyInput)
-    DOM.eventExpoCompanyInput.value = hasActiveEvent
-      ? active.expoCompany || ""
-      : "";
+    setTextFieldValueAndPlaceholder(
+      DOM.eventExpoCompanyInput,
+      getSavedEventTextValue(textSource, "expoCompany"),
+      "Company name",
+      !hasEditableTarget
+    );
   if (DOM.eventDateInput)
-    DOM.eventDateInput.value = hasActiveEvent ? active.date || "" : "";
-  if (DOM.eventBannerTextInput) {
-    DOM.eventBannerTextInput.value = hasActiveEvent
-      ? getEventEditorTextValue(active, "bannerText", resolveThemeBannerText())
-      : "";
-    setDisabled(DOM.eventBannerTextInput);
-  }
-  if (DOM.eventWelcomeTitleInput) {
-    DOM.eventWelcomeTitleInput.value = hasActiveEvent
-      ? getEventEditorTextValue(
-          active,
-          "welcomeTitle",
-          resolveThemeWelcomeTitle()
-        )
-      : "";
-    setDisabled(DOM.eventWelcomeTitleInput);
-  }
-  if (DOM.eventStartButtonTextInput) {
-    DOM.eventStartButtonTextInput.value = hasActiveEvent
-      ? getEventEditorTextValue(
-          active,
-          "startButtonText",
-          resolveThemeStartButtonText()
-        )
-      : "";
-    setDisabled(DOM.eventStartButtonTextInput);
-  }
-  if (DOM.eventCaptureLabelInput) {
-    DOM.eventCaptureLabelInput.value = hasActiveEvent
-      ? getEventEditorTextValue(
-          active,
-          "captureLabel",
-          resolveThemeCaptureLabel()
-        )
-      : "";
-    setDisabled(DOM.eventCaptureLabelInput);
-  }
+    setTextFieldValueAndPlaceholder(
+      DOM.eventDateInput,
+      getSavedEventTextValue(textSource, "date"),
+      "e.g., April 2026",
+      !hasEditableTarget
+    );
+  if (DOM.eventBannerTextInput)
+    setTextFieldValueAndPlaceholder(
+      DOM.eventBannerTextInput,
+      getSavedEventTextValue(textSource, "bannerText"),
+      hasEditableTarget ? resolveThemeBannerText() : "Top booth banner",
+      !hasEditableTarget
+    );
+  if (DOM.eventWelcomeTitleInput)
+    setTextFieldValueAndPlaceholder(
+      DOM.eventWelcomeTitleInput,
+      getSavedEventTextValue(textSource, "welcomeTitle"),
+      hasEditableTarget ? resolveThemeWelcomeTitle() : "Welcome screen title",
+      !hasEditableTarget
+    );
+  if (DOM.eventStartButtonTextInput)
+    setTextFieldValueAndPlaceholder(
+      DOM.eventStartButtonTextInput,
+      getSavedEventTextValue(textSource, "startButtonText"),
+      hasEditableTarget ? resolveThemeStartButtonText() : "Touch to start",
+      !hasEditableTarget
+    );
+  if (DOM.eventCaptureLabelInput)
+    setTextFieldValueAndPlaceholder(
+      DOM.eventCaptureLabelInput,
+      getSavedEventTextValue(textSource, "captureLabel"),
+      hasEditableTarget
+        ? resolveThemeCaptureLabel() || resolveBoothCaptureButtonLabel(mode)
+        : "Take Photo",
+      !hasEditableTarget
+    );
   const bannerSize = getBannerSize(themeObj);
   if (DOM.eventBannerSizeInput) {
     DOM.eventBannerSizeInput.value = String(bannerSize);
-    DOM.eventBannerSizeInput.disabled = !hasActiveEvent;
+    DOM.eventBannerSizeInput.disabled = !hasEditableTarget;
   }
   if (DOM.eventBannerSizeValue)
     DOM.eventBannerSizeValue.textContent = `${bannerSize}px`;
   const welcomeSize = resolveWelcomeTitleSize(themeObj);
   if (DOM.eventWelcomeTitleSizeInput) {
     DOM.eventWelcomeTitleSizeInput.value = String(welcomeSize);
-    DOM.eventWelcomeTitleSizeInput.disabled = !hasActiveEvent;
+    DOM.eventWelcomeTitleSizeInput.disabled = !hasEditableTarget;
   }
   if (DOM.eventWelcomeTitleSizeValue)
     DOM.eventWelcomeTitleSizeValue.textContent = `${welcomeSize}px`;
@@ -10166,6 +10691,42 @@ function updateActiveEventDetails({
   syncEventSetupEditor(themeObj);
   renderCurrentAssets(themeObj);
   updateCurrentEventAssetsPanel(themeObj);
+  updateStylePreview();
+}
+
+function updateActiveThemeTextDetails({
+  bannerText,
+  welcomeTitle,
+  welcomeTitleSize,
+  startButtonText,
+  captureLabel,
+  bannerSize,
+}) {
+  const target = activeTheme || getSelectedThemeTarget();
+  if (!target || typeof target !== "object") return;
+  applyThemeText(target, {
+    bannerText,
+    welcomeTitle,
+    startButtonText,
+    captureLabel,
+  });
+  if (typeof welcomeTitleSize === "number" && welcomeTitleSize > 0) {
+    target.welcomeTitleSize = welcomeTitleSize;
+  } else if (welcomeTitleSize === null) {
+    delete target.welcomeTitleSize;
+  }
+  if (typeof bannerSize === "number" && bannerSize > 0) {
+    target.bannerSize = bannerSize;
+  } else if (bannerSize === null) {
+    delete target.bannerSize;
+  }
+  if (activeTheme === target) {
+    applyThemeBasics(target);
+  }
+  saveThemesToStorage();
+  syncEventSetupEditor(target);
+  renderCurrentAssets(target);
+  updateCurrentEventAssetsPanel(target);
   updateStylePreview();
 }
 
@@ -10553,6 +11114,15 @@ function getEventGalleryUrl() {
   }/gallery.html?cloud=${cloud}&tag=${encodeURIComponent(tag)}&title=${title}`;
 }
 
+function getEventGalleryTitle() {
+  const quickStartDate = getQuickStartFolderDate();
+  return quickStartDate
+    ? `Photos - ${quickStartDate}`
+    : `${getEventNameForUploads()}${
+        getEventDateForUploads() ? " (" + getEventDateForUploads() + ")" : ""
+      }`;
+}
+
 // --- Event name storage helpers ---
 function getEventNamesMap() {
   try {
@@ -10659,6 +11229,27 @@ async function uploadImageToCloudinary(blob, options = {}) {
   return "";
 }
 
+function updateActiveSessionTextDetails(changes = {}) {
+  if (!changes || typeof changes !== "object") return;
+  [
+    "name",
+    "date",
+    "bannerText",
+    "welcomeTitle",
+    "startButtonText",
+    "captureLabel",
+    "partner1",
+    "partner2",
+    "birthdayName",
+    "expoCompany",
+  ].forEach((key) => {
+    if (typeof changes[key] === "string") {
+      activeSessionTextDetails[key] = changes[key];
+    }
+  });
+  updateStylePreview();
+}
+
 async function uploadVideoToCloudinary(blob, options = {}) {
   const cfg = getCloudinaryConfig();
   if ((!cfg.use && !options.force) || !cfg.cloud || !cfg.preset) return "";
@@ -10685,103 +11276,267 @@ async function uploadVideoToCloudinary(blob, options = {}) {
   return "";
 }
 
-async function uploadEventPhoto(dataUrl, options = {}) {
+async function dataUrlToBlob(dataUrl) {
   const res = await fetch(dataUrl);
-  const blob = await res.blob();
+  if (!res.ok) throw new Error("Capture data could not be read.");
+  return res.blob();
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    try {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error || new Error("Blob read failed"));
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+function createCaptureUploadId(prefix = "capture") {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 9)}`;
+}
+
+function getCaptureUploadMeta(options = {}) {
   const slug = options.slug || getEventUploadSlug();
-  const folder = options.folder || getEventUploadFolderPath();
-  const url = await uploadImageToCloudinary(blob, {
-    baseName: slug || "photo",
-    folder,
-    tags: slug,
-    force: true,
-  });
-  if (!url) throw new Error("Cloudinary upload failed");
+  return {
+    captureId: options.captureId || createCaptureUploadId(options.modeName),
+    slug,
+    folder: options.folder || getEventUploadFolderPath(),
+    title: options.title || getEventGalleryTitle(),
+  };
 }
 
-function handleCaptureUpload(dataUrl) {
+async function uploadCloudinaryWithRetry(
+  uploadFn,
+  blob,
+  options = {},
+  label = "capture"
+) {
+  const attempts = Math.max(1, options.attempts || 2);
+  let lastUrl = "";
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    lastUrl = await uploadFn(blob, options);
+    if (lastUrl) return lastUrl;
+    console.warn(
+      `Cloudinary ${label} upload attempt ${attempt} failed${
+        attempt < attempts ? "; retrying" : ""
+      }.`
+    );
+    if (attempt < attempts) await delay(700 * attempt);
+  }
+  return "";
+}
+
+async function queueCaptureForRetry(options = {}) {
+  const {
+    previewUrl = "",
+    mediaBlob = null,
+    resourceType = "image",
+    meta = {},
+    modeName = "pending",
+  } = options;
+  let retryDataUrl = previewUrl;
+  let retryResourceType = "image";
+  if (resourceType === "video" && mediaBlob) {
+    try {
+      retryDataUrl = await blobToDataUrl(mediaBlob);
+      retryResourceType = "video";
+    } catch (err) {
+      console.warn("Video retry queue failed; falling back to poster", err);
+      retryDataUrl = previewUrl;
+      retryResourceType = "image";
+      showToast("Video could not be stored offline; poster queued instead");
+    }
+  }
+  if (!retryDataUrl) return false;
+  const queued = queuePendingUpload(retryDataUrl, {
+    captureId: meta.captureId,
+    slug: meta.slug,
+    folder: meta.folder,
+    resourceType: retryResourceType,
+    modeName,
+    title: meta.title,
+  });
+  if (!queued && retryResourceType === "video" && previewUrl) {
+    console.warn("Video retry queue was too large; falling back to poster");
+    showToast("Video could not be stored offline; poster queued instead");
+    return queuePendingUpload(previewUrl, {
+      captureId: meta.captureId,
+      slug: meta.slug,
+      folder: meta.folder,
+      resourceType: "image",
+      modeName,
+      title: meta.title,
+    });
+  }
+  return queued;
+}
+
+async function uploadCaptureOnce(options = {}) {
+  const previewUrl = options.previewUrl || "";
+  const resourceType = options.resourceType === "video" ? "video" : "image";
+  const mediaBlob = options.mediaBlob || null;
+  const modeName = options.modeName || resourceType;
+  const meta = getCaptureUploadMeta(options);
+  const result = {
+    publicUrl: "",
+    queued: false,
+    galleryQueued: false,
+    captureId: meta.captureId,
+    slug: meta.slug,
+    folder: meta.folder,
+    resourceType,
+  };
+
   if (!cloudinaryConfigured()) {
-    showToast("Cloudinary not configured: photo not uploaded");
-    return;
+    showToast("Cloudinary not configured: capture not uploaded");
+    return result;
   }
-  const slug = getEventUploadSlug();
-  const folder = getEventUploadFolderPath();
+
   if (offlineModeActive() || !navigator.onLine) {
-    const ok = queuePendingUpload(dataUrl, { slug, folder });
-    if (ok) showToast("Offline: photo queued for upload");
-    else alert("Offline upload queue is full or unavailable.");
-    return;
+    const ok = await queueCaptureForRetry({
+      previewUrl,
+      mediaBlob,
+      resourceType,
+      meta,
+      modeName,
+    });
+    if (ok) {
+      showToast("Offline: capture queued for upload");
+      result.queued = true;
+      return result;
+    }
+    alert("Offline upload queue is full or unavailable.");
+    return result;
   }
-  uploadEventPhoto(dataUrl, { slug, folder }).catch(() => {
-    const ok = queuePendingUpload(dataUrl, { slug, folder });
-    if (ok) showToast("Upload failed, queued for retry");
+
+  const safetyQueued = await queueCaptureForRetry({
+    previewUrl,
+    mediaBlob,
+    resourceType,
+    meta,
+    modeName,
   });
-}
-
-async function publishShareImage(dataUrl) {
-  // Convert data URL to Blob once
-  const res = await fetch(dataUrl);
-  const blob = await res.blob();
-
-  // 1) Prefer Cloudinary if configured (cross-device HTTPS link)
-  const slug = getEventUploadSlug();
-  const folder = getEventUploadFolderPath();
-  const cloudUrl = await uploadImageToCloudinary(blob, {
-    baseName: slug || "photo",
-    folder,
-    tags: slug,
-  });
-  if (cloudUrl) return cloudUrl;
-
-  // 2) Otherwise try Service Worker (works on same device/origin after SW installs)
-  if (!("serviceWorker" in navigator) || !location.protocol.startsWith("http"))
-    return null;
-  try {
-    await Promise.race([
-      navigator.serviceWorker.ready,
-      new Promise((_, rej) =>
-        setTimeout(() => rej(new Error("sw-timeout")), 2000)
-      ),
-    ]);
-  } catch (_e) {}
-  const reg = await navigator.serviceWorker.getRegistration();
-  const active = reg?.active || navigator.serviceWorker.controller;
-  if (!active) return null;
-  const buffer = await blob.arrayBuffer();
-  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  const channel = new MessageChannel();
-  const ack = new Promise((resolve) => {
-    channel.port1.onmessage = (ev) => resolve(ev.data);
-  });
-  active.postMessage({ type: "store-share", id, buffer, mime: blob.type }, [
-    channel.port2,
-  ]);
-  const reply = await ack; // {ok, url}
-  if (reply && reply.ok && reply.url)
-    return new URL(reply.url, location.origin).href;
-  return null;
-}
-
-async function publishShareVideo(blob) {
-  if (!blob) return null;
-  const slug = getEventUploadSlug();
-  const folder = getEventUploadFolderPath();
-  const cloudUrl = await uploadVideoToCloudinary(blob, {
-    baseName: slug || "message",
-    folder,
-    tags: slug,
-    force: true,
-  });
-  if (cloudUrl) return cloudUrl;
-  return null;
-}
-
-async function publishFinalShareUrl(shareType, shareBlob, posterUrl) {
-  if (shareType === "video") {
-    publishShareVideo(shareBlob).catch(() => null);
-    return publishShareImage(posterUrl);
+  if (!safetyQueued) {
+    console.warn("Capture retry backup could not be saved before upload.");
+    showToast("Capture backup unavailable; keep this screen open until upload finishes");
   }
-  return publishShareImage(posterUrl);
+
+  const blob = mediaBlob || (previewUrl ? await dataUrlToBlob(previewUrl) : null);
+  if (!blob) return result;
+
+  const publicUrl =
+    resourceType === "video"
+      ? await uploadCloudinaryWithRetry(
+          uploadVideoToCloudinary,
+          blob,
+          {
+            baseName: meta.slug || modeName || "message",
+            folder: meta.folder,
+            tags: meta.slug,
+            force: true,
+          },
+          "video"
+        )
+      : await uploadCloudinaryWithRetry(
+          uploadImageToCloudinary,
+          blob,
+          {
+            baseName: meta.slug || modeName || "photo",
+            folder: meta.folder,
+            tags: meta.slug,
+            force: true,
+          },
+          "image"
+        );
+
+  if (!publicUrl) {
+    const ok = await queueCaptureForRetry({
+      previewUrl,
+      mediaBlob,
+      resourceType,
+      meta,
+      modeName,
+    });
+    if (ok) {
+      showToast("Upload failed, queued for retry");
+      result.queued = true;
+    }
+    return result;
+  }
+
+  result.publicUrl = publicUrl;
+  removePendingUpload(meta.captureId);
+  const galleryOk = await recordGalleryPhoto(meta.slug, publicUrl, {
+    captureId: meta.captureId,
+    title: meta.title,
+    resourceType,
+    modeName,
+  });
+  if (!galleryOk) {
+    const queued = queuePendingGalleryRecord({
+      captureId: meta.captureId,
+      slug: meta.slug,
+      url: publicUrl,
+      title: meta.title,
+      resourceType,
+      modeName,
+    });
+    result.galleryQueued = queued;
+    if (queued) showToast("Photo uploaded; gallery update queued for retry");
+    else showToast("Photo uploaded; gallery update needs retry");
+  }
+  return result;
+}
+
+async function uploadEventPhoto(dataUrl, options = {}) {
+  const result = await uploadCaptureOnce({
+    previewUrl: dataUrl,
+    resourceType: options.resourceType || "image",
+    modeName: options.modeName || "pending",
+    captureId: options.captureId,
+    slug: options.slug,
+    folder: options.folder,
+    title: options.title,
+  });
+  if (!result.publicUrl) throw new Error("Cloudinary upload failed");
+  return result.publicUrl;
+}
+
+async function recordGalleryPhoto(tag, url, options = {}) {
+  const cleanTag = String(tag || "").trim();
+  if (!cleanTag || !/^https?:\/\//i.test(String(url || ""))) return false;
+  const resourceType = options.resourceType === "video" ? "video" : "image";
+  const payload = {
+    capture_id: options.captureId || createCaptureUploadId(options.modeName),
+    url,
+    secure_url: url,
+    title: options.title || getEventGalleryTitle(),
+    created_at: options.createdAt || new Date().toISOString(),
+    resource_type: resourceType,
+    type: resourceType,
+    mode: options.modeName || "",
+  };
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const resp = await fetch(`/api/gallery?tag=${encodeURIComponent(cleanTag)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (resp.ok) return true;
+      console.warn(`Gallery index update failed with HTTP ${resp.status}.`);
+    } catch (err) {
+      console.warn("Gallery index update failed", err);
+    }
+    if (attempt < 2) await delay(500);
+  }
+  return false;
 }
 
 async function openShareLink() {
@@ -11034,6 +11789,9 @@ function updatePendingUI() {
 }
 
 // --- Offline upload queue (Cloudinary) ---
+let isFlushingPendingUploads = false;
+let isFlushingPendingGalleryRecords = false;
+
 function getPendingUploads() {
   try {
     return JSON.parse(localStorage.getItem("photoboothPendingUploads") || "[]");
@@ -11047,13 +11805,24 @@ function setPendingUploads(arr) {
 function queuePendingUpload(dataUrl, meta = {}) {
   try {
     const q = getPendingUploads();
-    q.push({
-      id: Date.now().toString(36),
+    const captureId = meta.captureId || createCaptureUploadId(meta.modeName);
+    const next = {
+      id: captureId,
+      captureId,
       image: dataUrl,
       createdAt: new Date().toISOString(),
       slug: meta.slug || getEventUploadSlug(),
       folder: meta.folder || getEventUploadFolderPath(),
-    });
+      title: meta.title || getEventGalleryTitle(),
+      resourceType: meta.resourceType === "video" ? "video" : "image",
+      modeName: meta.modeName || "pending",
+      attempts: Number(meta.attempts || 0),
+    };
+    const existingIndex = q.findIndex(
+      (item) => item && (item.captureId === captureId || item.id === captureId)
+    );
+    if (existingIndex >= 0) q[existingIndex] = { ...q[existingIndex], ...next };
+    else q.push(next);
     setPendingUploads(q);
     return true;
   } catch (e) {
@@ -11061,29 +11830,150 @@ function queuePendingUpload(dataUrl, meta = {}) {
     return false;
   }
 }
+
+function removePendingUpload(captureId) {
+  if (!captureId) return;
+  const q = getPendingUploads();
+  const next = q.filter(
+    (item) => item && item.captureId !== captureId && item.id !== captureId
+  );
+  if (next.length !== q.length) setPendingUploads(next);
+}
+
+function getPendingGalleryRecords() {
+  try {
+    return JSON.parse(localStorage.getItem("photoboothPendingGallery") || "[]");
+  } catch (_) {
+    return [];
+  }
+}
+
+function setPendingGalleryRecords(arr) {
+  localStorage.setItem("photoboothPendingGallery", JSON.stringify(arr || []));
+}
+
+function queuePendingGalleryRecord(record = {}) {
+  try {
+    const url = String(record.url || record.secure_url || "").trim();
+    const slug = String(record.slug || getEventUploadSlug()).trim();
+    if (!slug || !/^https?:\/\//i.test(url)) return false;
+    const captureId = record.captureId || createCaptureUploadId(record.modeName);
+    const q = getPendingGalleryRecords();
+    const next = {
+      id: captureId,
+      captureId,
+      slug,
+      url,
+      title: record.title || getEventGalleryTitle(),
+      createdAt: record.createdAt || new Date().toISOString(),
+      resourceType: record.resourceType === "video" ? "video" : "image",
+      modeName: record.modeName || "",
+      attempts: Number(record.attempts || 0),
+    };
+    const existingIndex = q.findIndex(
+      (item) =>
+        item &&
+        (item.captureId === captureId ||
+          item.id === captureId ||
+          item.url === url ||
+          item.secure_url === url)
+    );
+    if (existingIndex >= 0) q[existingIndex] = { ...q[existingIndex], ...next };
+    else q.push(next);
+    setPendingGalleryRecords(q);
+    return true;
+  } catch (e) {
+    console.warn("Queue gallery update failed", e);
+    return false;
+  }
+}
+
 async function flushPendingUploads() {
-  if (!cloudinaryConfigured() || !navigator.onLine) return;
+  if (isFlushingPendingUploads || !cloudinaryConfigured() || !navigator.onLine)
+    return;
   const q = getPendingUploads();
   if (!q.length) return;
+  isFlushingPendingUploads = true;
   let sent = 0;
-  for (const item of q.slice()) {
-    try {
-      await uploadEventPhoto(item.image, {
-        slug: item.slug,
-        folder: item.folder,
-      });
-      sent++;
-      const cur = getPendingUploads();
-      const idx = cur.findIndex((x) => x.id === item.id);
-      if (idx >= 0) {
-        cur.splice(idx, 1);
-        setPendingUploads(cur);
+  try {
+    for (const item of q.slice()) {
+      try {
+        await uploadEventPhoto(item.image, {
+          captureId: item.captureId || item.id,
+          slug: item.slug,
+          folder: item.folder,
+          title: item.title,
+          resourceType: item.resourceType || "image",
+          modeName: item.modeName || "pending",
+        });
+        sent++;
+        const cur = getPendingUploads();
+        const idx = cur.findIndex((x) => x.id === item.id);
+        if (idx >= 0) {
+          cur.splice(idx, 1);
+          setPendingUploads(cur);
+        }
+      } catch (err) {
+        console.warn("Pending upload retry failed", err);
+        const cur = getPendingUploads();
+        const idx = cur.findIndex((x) => x.id === item.id);
+        if (idx >= 0) {
+          cur[idx].attempts = Number(cur[idx].attempts || 0) + 1;
+          cur[idx].lastError =
+            err && err.message ? err.message : "Pending upload failed";
+          setPendingUploads(cur);
+        }
       }
-    } catch (_) {
-      /* keep queued */
     }
+  } finally {
+    isFlushingPendingUploads = false;
   }
   if (sent) showToast(`Uploaded ${sent} pending photo${sent === 1 ? "" : "s"}`);
+  flushPendingGalleryRecords();
+}
+
+async function flushPendingGalleryRecords() {
+  if (isFlushingPendingGalleryRecords || !navigator.onLine) return;
+  const q = getPendingGalleryRecords();
+  if (!q.length) return;
+  isFlushingPendingGalleryRecords = true;
+  let sent = 0;
+  try {
+    for (const item of q.slice()) {
+      try {
+        const ok = await recordGalleryPhoto(item.slug, item.url, {
+          captureId: item.captureId || item.id,
+          title: item.title,
+          resourceType: item.resourceType,
+          modeName: item.modeName,
+          createdAt: item.createdAt,
+        });
+        if (!ok) throw new Error("Gallery API rejected retry");
+        sent++;
+        const cur = getPendingGalleryRecords();
+        const idx = cur.findIndex((x) => x.id === item.id);
+        if (idx >= 0) {
+          cur.splice(idx, 1);
+          setPendingGalleryRecords(cur);
+        }
+      } catch (err) {
+        console.warn("Pending gallery retry failed", err);
+        const cur = getPendingGalleryRecords();
+        const idx = cur.findIndex((x) => x.id === item.id);
+        if (idx >= 0) {
+          cur[idx].attempts = Number(cur[idx].attempts || 0) + 1;
+          cur[idx].lastError =
+            err && err.message ? err.message : "Pending gallery retry failed";
+          setPendingGalleryRecords(cur);
+        }
+      }
+    }
+  } finally {
+    isFlushingPendingGalleryRecords = false;
+  }
+  if (sent) {
+    showToast(`Updated ${sent} pending gallery entr${sent === 1 ? "y" : "ies"}`);
+  }
 }
 async function sendPendingNow() {
   const q = getPending();
@@ -11102,7 +11992,12 @@ async function sendPendingNow() {
       // Try to publish to Cloudinary/SW for a link if available
       let share = null;
       try {
-        share = await publishShareImage(item.image);
+        const result = await uploadCaptureOnce({
+          previewUrl: item.image,
+          resourceType: "image",
+          modeName: "pending-email",
+        });
+        share = result.publicUrl || null;
       } catch (_) {}
       const params = {
         to_email: item.email,
@@ -11810,6 +12705,381 @@ function extFromName(name, fallback) {
   return m ? m[1].toLowerCase() : fallback || "png";
 }
 
+function normalizeUploadedAssetCategory(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (raw === "backgrounds" || raw === "greenbackgrounds") return "background";
+  if (raw === "overlays") return "overlay";
+  if (raw === "templates") return "template";
+  if (raw === "background" || raw === "overlay" || raw === "template")
+    return raw;
+  return "";
+}
+
+function getUploadTagList() {
+  const raw = DOM.assetUploadTags ? DOM.assetUploadTags.value : "";
+  const seen = new Set();
+  return String(raw || "")
+    .split(",")
+    .map((tag) => tag.trim().toLowerCase())
+    .filter((tag) => {
+      if (!tag || seen.has(tag)) return false;
+      seen.add(tag);
+      return true;
+    });
+}
+
+function normalizeAssetLibraryPayload(payload) {
+  const assets = Array.isArray(payload && payload.assets)
+    ? payload.assets
+    : Array.isArray(payload)
+    ? payload
+    : [];
+  const byId = new Map();
+  assets.forEach((item) => {
+    if (!item || typeof item !== "object") return;
+    const url = String(item.url || item.secure_url || item.src || "").trim();
+    if (!/^https?:\/\//i.test(url)) return;
+    const category = normalizeUploadedAssetCategory(item.category || item.kind);
+    if (!category) return;
+    const id = String(item.id || `${category}:${url}`).trim();
+    const tags = Array.isArray(item.tags)
+      ? item.tags
+      : String(item.tags || "")
+          .split(",")
+          .map((tag) => tag.trim());
+    byId.set(id, {
+      id,
+      category,
+      url,
+      secure_url: url,
+      name: String(item.name || item.originalName || url.split("/").pop() || category).trim(),
+      tags: tags
+        .map((tag) => String(tag || "").trim().toLowerCase())
+        .filter(Boolean),
+      folder: String(item.folder || "").trim(),
+      hash: String(item.hash || "").trim(),
+      contentType: String(item.contentType || item.type || "").trim(),
+      createdAt: String(item.createdAt || item.created_at || new Date().toISOString()),
+      updatedAt: String(item.updatedAt || item.updated_at || new Date().toISOString()),
+      archived: item.archived === true,
+      hidden: item.hidden === true || item.archived === true,
+    });
+  });
+  return {
+    assets: Array.from(byId.values()).sort((a, b) =>
+      String(b.createdAt).localeCompare(String(a.createdAt))
+    ),
+  };
+}
+
+function saveAssetLibraryLocal() {
+  try {
+    localStorage.setItem(
+      APP_CONFIG.STORAGE_KEYS.ASSET_LIBRARY,
+      JSON.stringify(normalizeAssetLibraryPayload(uploadedAssetLibrary))
+    );
+  } catch (_) {}
+}
+
+function loadAssetLibraryLocal() {
+  try {
+    uploadedAssetLibrary = normalizeAssetLibraryPayload(
+      JSON.parse(
+        localStorage.getItem(APP_CONFIG.STORAGE_KEYS.ASSET_LIBRARY) || "{}"
+      )
+    );
+  } catch (_) {
+    uploadedAssetLibrary = { assets: [] };
+  }
+}
+
+function getVisibleLibraryAssets(category = "") {
+  const normalizedCategory = normalizeUploadedAssetCategory(category);
+  return (uploadedAssetLibrary.assets || []).filter((asset) => {
+    if (!asset || asset.hidden || asset.archived) return false;
+    if (normalizedCategory && asset.category !== normalizedCategory) return false;
+    return true;
+  });
+}
+
+function getLibraryBackgroundUrls() {
+  return getVisibleLibraryAssets("background").map((asset) => asset.url);
+}
+
+function getLibraryOverlayEntries() {
+  return getVisibleLibraryAssets("overlay").map((asset) => ({
+    src: asset.url,
+    name: asset.name,
+    category: "uploaded",
+    tags: asset.tags,
+    __library: true,
+  }));
+}
+
+function getLibraryTemplateEntries() {
+  return getVisibleLibraryAssets("template").map((asset) => ({
+    src: asset.url,
+    name: asset.name,
+    tags: asset.tags,
+    layout: "double_column",
+    __library: true,
+  }));
+}
+
+function mergeLibraryAsset(asset) {
+  const normalized = normalizeAssetLibraryPayload({ assets: [asset] }).assets[0];
+  if (!normalized) return false;
+  const library = normalizeAssetLibraryPayload(uploadedAssetLibrary);
+  const existingIndex = library.assets.findIndex(
+    (item) => item.id === normalized.id || item.url === normalized.url
+  );
+  if (existingIndex >= 0) {
+    const existing = library.assets[existingIndex];
+    const tags = Array.from(
+      new Set([...(existing.tags || []), ...(normalized.tags || [])])
+    );
+    library.assets[existingIndex] = {
+      ...existing,
+      ...normalized,
+      tags,
+      createdAt: existing.createdAt || normalized.createdAt,
+      hidden: existing.hidden === true ? true : normalized.hidden,
+      archived: existing.archived === true ? true : normalized.archived,
+      updatedAt: new Date().toISOString(),
+    };
+  } else {
+    library.assets.unshift(normalized);
+  }
+  uploadedAssetLibrary = normalizeAssetLibraryPayload(library);
+  saveAssetLibraryLocal();
+  renderAssetLibrary();
+  return true;
+}
+
+async function syncAssetLibraryRemoteAsset(asset) {
+  if (!canSyncRemote()) return false;
+  try {
+    const resp = await fetch("/api/assets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(asset),
+    });
+    return resp.ok;
+  } catch (err) {
+    console.warn("Asset library sync failed", err);
+    return false;
+  }
+}
+
+async function loadAssetLibraryRemote() {
+  loadAssetLibraryLocal();
+  if (!canSyncRemote()) {
+    renderAssetLibrary();
+    return;
+  }
+  try {
+    const resp = await fetch("/api/assets", { cache: "no-store" });
+    if (!resp.ok) {
+      renderAssetLibrary();
+      return;
+    }
+    const remote = normalizeAssetLibraryPayload(await resp.json());
+    const merged = normalizeAssetLibraryPayload({
+      assets: [...(uploadedAssetLibrary.assets || []), ...(remote.assets || [])],
+    });
+    uploadedAssetLibrary = merged;
+    saveAssetLibraryLocal();
+    renderAssetLibrary();
+    if (activeTheme) {
+      renderCurrentAssets(activeTheme);
+      renderOptions();
+    }
+  } catch (err) {
+    console.warn("Asset library load failed", err);
+    renderAssetLibrary();
+  }
+}
+
+function scheduleAssetLibraryRender() {
+  renderAssetLibrary();
+  if (activeTheme) {
+    renderCurrentAssets(activeTheme);
+    renderOptions();
+  }
+}
+
+async function updateAssetLibraryItem(id, patch = {}) {
+  if (!id) return;
+  const library = normalizeAssetLibraryPayload(uploadedAssetLibrary);
+  const index = library.assets.findIndex((asset) => asset.id === id);
+  if (index < 0) return;
+  library.assets[index] = {
+    ...library.assets[index],
+    ...patch,
+    updatedAt: new Date().toISOString(),
+  };
+  uploadedAssetLibrary = normalizeAssetLibraryPayload(library);
+  saveAssetLibraryLocal();
+  scheduleAssetLibraryRender();
+  if (canSyncRemote()) {
+    try {
+      await fetch("/api/assets", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...patch }),
+      });
+    } catch (err) {
+      console.warn("Asset library update failed", err);
+    }
+  }
+}
+
+async function deleteAssetLibraryItem(id) {
+  if (!id) return;
+  const library = normalizeAssetLibraryPayload(uploadedAssetLibrary);
+  const next = library.assets.filter((asset) => asset.id !== id);
+  if (next.length === library.assets.length) return;
+  uploadedAssetLibrary = { assets: next };
+  saveAssetLibraryLocal();
+  scheduleAssetLibraryRender();
+  if (canSyncRemote()) {
+    try {
+      await fetch("/api/assets", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+    } catch (err) {
+      console.warn("Asset library delete failed", err);
+    }
+  }
+}
+
+function archiveLibraryAssetByUrl(url) {
+  const asset = (uploadedAssetLibrary.assets || []).find(
+    (item) => item && item.url === url
+  );
+  if (!asset) return;
+  updateAssetLibraryItem(asset.id, { hidden: true, archived: true });
+}
+
+function registerUploadedAsset(url, kind, details = {}) {
+  const category = normalizeUploadedAssetCategory(kind);
+  if (!url || !category) return;
+  const asset = {
+    id: `${category}:${url}`,
+    category,
+    url,
+    secure_url: url,
+    name: details.name || details.originalName || url.split("/").pop() || category,
+    tags: details.tags || getUploadTagList(),
+    folder: details.folder || "",
+    hash: details.hash || "",
+    contentType: details.contentType || "",
+    createdAt: details.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    hidden: false,
+    archived: false,
+  };
+  if (mergeLibraryAsset(asset)) {
+    syncAssetLibraryRemoteAsset(asset).catch(() => {});
+  }
+}
+
+function renderAssetLibrary() {
+  const grid = DOM.assetLibraryGrid;
+  const status = DOM.assetLibraryStatus;
+  if (!grid && !status) return;
+  const query = DOM.assetLibrarySearch
+    ? DOM.assetLibrarySearch.value.trim().toLowerCase()
+    : "";
+  const category = DOM.assetLibraryCategory
+    ? normalizeUploadedAssetCategory(DOM.assetLibraryCategory.value)
+    : "";
+  const assets = (uploadedAssetLibrary.assets || []).filter((asset) => {
+    if (!asset || asset.hidden || asset.archived) return false;
+    if (category && asset.category !== category) return false;
+    if (!query) return true;
+    const haystack = [
+      asset.name,
+      asset.category,
+      asset.url,
+      ...(Array.isArray(asset.tags) ? asset.tags : []),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(query);
+  });
+  if (grid) {
+    grid.innerHTML = "";
+    assets.forEach((asset) => {
+      const card = document.createElement("div");
+      card.className = "asset-library-card";
+      const img = document.createElement("img");
+      img.src = withBust(asset.url);
+      img.alt = asset.name || asset.category;
+      img.onerror = () => renderMissingThumbnail(card, asset.url);
+      const name = document.createElement("div");
+      name.className = "asset-library-name";
+      name.title = `${asset.name}${asset.tags && asset.tags.length ? ` (${asset.tags.join(", ")})` : ""}`;
+      name.textContent = asset.name || asset.category;
+      const actions = document.createElement("div");
+      actions.className = "asset-library-actions";
+      const useBtn = document.createElement("button");
+      useBtn.type = "button";
+      useBtn.textContent = "Use";
+      useBtn.addEventListener("click", () => useLibraryAsset(asset));
+      const archiveBtn = document.createElement("button");
+      archiveBtn.type = "button";
+      archiveBtn.textContent = "Hide";
+      archiveBtn.addEventListener("click", () =>
+        updateAssetLibraryItem(asset.id, { hidden: true, archived: true })
+      );
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", () => {
+        if (confirm("Delete this uploaded asset from the shared library?")) {
+          deleteAssetLibraryItem(asset.id);
+        }
+      });
+      actions.appendChild(useBtn);
+      actions.appendChild(archiveBtn);
+      actions.appendChild(deleteBtn);
+      card.appendChild(img);
+      card.appendChild(name);
+      card.appendChild(actions);
+      grid.appendChild(card);
+    });
+  }
+  if (status) {
+    const total = (uploadedAssetLibrary.assets || []).filter(
+      (asset) => asset && !asset.hidden && !asset.archived
+    ).length;
+    status.textContent = assets.length
+      ? `${assets.length} of ${total} uploaded asset${total === 1 ? "" : "s"} shown`
+      : total
+      ? "No uploaded assets match this search."
+      : "No uploaded assets yet.";
+  }
+}
+
+function useLibraryAsset(asset) {
+  if (!asset || !asset.url) return;
+  if (asset.category === "background") {
+    addSessionAssetUrl("backgrounds", asset.url);
+  } else if (asset.category === "overlay") {
+    addSessionAssetUrl("overlays", asset.url);
+  } else if (asset.category === "template") {
+    addSessionAssetUrl("templates", asset.url);
+  }
+  const key = DOM.eventSelect && DOM.eventSelect.value;
+  if (key) loadTheme(key);
+  updateCreatePathAssetSummary();
+  updateLaunchSummary();
+  showToast("Asset added to this session");
+}
+
 // Upload an asset to a shared Cloudinary URL.
 async function uploadAsset(file, kind, options = {}) {
   try {
@@ -11819,7 +13089,15 @@ async function uploadAsset(file, kind, options = {}) {
       options.folder || getThemeAssetUploadFolderPath(kind)
     ).replace(/\/+$/g, "");
     const indexKey = buildAssetIndexKey({ hash, folder });
-    if (index[indexKey]) return index[indexKey];
+    if (index[indexKey]) {
+      registerUploadedAsset(index[indexKey], kind, {
+        name: file && file.name,
+        hash,
+        folder,
+        contentType: file && file.type,
+      });
+      return index[indexKey];
+    }
     const cfg = getCloudinaryConfig();
     if (!cfg.use || !cfg.cloud || !cfg.preset) return "";
     const form = new FormData();
@@ -11841,6 +13119,12 @@ async function uploadAsset(file, kind, options = {}) {
     if (json && json.secure_url) {
       index[indexKey] = json.secure_url;
       saveThemesToStorage();
+      registerUploadedAsset(json.secure_url, kind, {
+        name: file && file.name,
+        hash,
+        folder,
+        contentType: file && file.type,
+      });
       return json.secure_url;
     }
   } catch (_) {}
@@ -14371,6 +15655,10 @@ function resolveBannerText() {
   const active = getActiveEvent();
   if (hasOwnEventTextValue(active, "bannerText"))
     return normalizeBannerText(active.bannerText);
+  if (hasOwnEventTextValue(activeSessionTextDetails, "bannerText")) {
+    const sessionText = normalizeBannerText(activeSessionTextDetails.bannerText);
+    if (sessionText) return sessionText;
+  }
   return resolveThemeBannerText();
 }
 
@@ -14396,6 +15684,17 @@ function resolveThemeBannerText() {
 }
 
 function resolveCaptureLabel() {
+  const active = getActiveEvent();
+  if (hasOwnEventTextValue(active, "captureLabel")) {
+    const eventLabel = active.captureLabel.trim();
+    if (eventLabel) return eventLabel;
+  }
+  if (hasOwnEventTextValue(activeSessionTextDetails, "captureLabel")) {
+    const sessionLabel = activeSessionTextDetails.captureLabel.trim();
+    if (sessionLabel) return sessionLabel;
+  }
+  const themeLabel = resolveThemeCaptureLabel();
+  if (themeLabel) return themeLabel;
   return resolveBoothCaptureButtonLabel(mode);
 }
 
@@ -14412,7 +15711,7 @@ function resolveThemeCaptureLabel() {
   ) {
     return target.captureLabel.trim();
   }
-  return "Take Photo";
+  return "";
 }
 
 function resolveBoothCaptureButtonLabel(targetMode = mode) {
@@ -14420,6 +15719,17 @@ function resolveBoothCaptureButtonLabel(targetMode = mode) {
   if (normalizedMode === "message") {
     return isMessageRecording ? "Stop Recording" : "Start Recording";
   }
+  const active = getActiveEvent();
+  if (hasOwnEventTextValue(active, "captureLabel")) {
+    const eventLabel = active.captureLabel.trim();
+    if (eventLabel) return eventLabel;
+  }
+  if (hasOwnEventTextValue(activeSessionTextDetails, "captureLabel")) {
+    const sessionLabel = activeSessionTextDetails.captureLabel.trim();
+    if (sessionLabel) return sessionLabel;
+  }
+  const themeLabel = resolveThemeCaptureLabel();
+  if (themeLabel) return themeLabel;
   if (normalizedMode === "strip") return "Start Strip";
   if (normalizedMode === "layout") return "Start Layout";
   if (normalizedMode === "live-photo") return "Take Live Photo";
@@ -14440,13 +15750,23 @@ function resolveWelcomeTitle() {
   const active = getActiveEvent();
   if (hasOwnEventTextValue(active, "welcomeTitle"))
     return active.welcomeTitle.trim();
+  if (hasOwnEventTextValue(activeSessionTextDetails, "welcomeTitle")) {
+    const sessionTitle = activeSessionTextDetails.welcomeTitle.trim();
+    if (sessionTitle) return sessionTitle;
+  }
   return resolveThemeWelcomeTitle();
 }
 
 function resolveStartButtonText() {
   const active = getActiveEvent();
-  if (hasOwnEventTextValue(active, "startButtonText"))
-    return active.startButtonText.trim();
+  if (hasOwnEventTextValue(active, "startButtonText")) {
+    const eventLabel = active.startButtonText.trim();
+    if (eventLabel) return eventLabel;
+  }
+  if (hasOwnEventTextValue(activeSessionTextDetails, "startButtonText")) {
+    const sessionLabel = activeSessionTextDetails.startButtonText.trim();
+    if (sessionLabel) return sessionLabel;
+  }
   return resolveThemeStartButtonText();
 }
 
@@ -15547,6 +16867,27 @@ function removeSessionOverlay(src) {
   showToast("Session overlay removed");
 }
 
+function removeSessionBackground(src) {
+  activeSessionAssets.backgrounds = activeSessionAssets.backgrounds.filter(
+    (item) => item !== src
+  );
+  if (
+    activeSessionAssets.backgroundIndex >= activeSessionAssets.backgrounds.length
+  ) {
+    activeSessionAssets.backgroundIndex = Math.max(
+      0,
+      activeSessionAssets.backgrounds.length - 1
+    );
+  }
+  applyThemeBackground(activeTheme);
+  renderOptions();
+  renderCurrentAssets(activeTheme);
+  updateCreatePathAssetSummary();
+  updateLaunchSummary();
+  scheduleLocalAssetCleanup(src);
+  showToast("Session background removed");
+}
+
 function removeSessionTemplate(src) {
   activeSessionAssets.templates = activeSessionAssets.templates.filter(
     (item) => (typeof item === "string" ? item : item && item.src) !== src
@@ -15683,10 +17024,13 @@ function getBaseBackgroundList(theme) {
   const folder = Array.isArray(theme.backgroundsTmp)
     ? theme.backgroundsTmp.filter((src) => src && !removed.has(src))
     : [];
-  if (explicit.length || folder.length) return [...folder, ...explicit];
-  return typeof theme.background === "string" && theme.background.trim()
+  const library = getLibraryBackgroundUrls().filter((src) => !removed.has(src));
+  if (explicit.length || folder.length || library.length)
+    return mergeUniqueUrls([...folder, ...explicit], library);
+  const fallback = typeof theme.background === "string" && theme.background.trim()
     ? [theme.background]
     : [];
+  return mergeUniqueUrls(fallback, library);
 }
 
 function getBackgroundList(theme) {
@@ -15699,6 +17043,48 @@ function getBackgroundList(theme) {
     ? overrides.backgrounds.filter(Boolean)
     : [];
   return mergeUniqueUrls(sessionList, mergeUniqueUrls(eventList, baseList));
+}
+
+function getThemeBackgroundCatalogList(theme) {
+  if (!theme || typeof theme !== "object") return [];
+  const removed = new Set(
+    Array.isArray(theme.backgroundsRemoved) ? theme.backgroundsRemoved : []
+  );
+  const explicit = Array.isArray(theme.backgrounds)
+    ? theme.backgrounds.filter(Boolean)
+    : [];
+  const tmp = Array.isArray(theme.backgroundsTmp)
+    ? theme.backgroundsTmp.filter(Boolean)
+    : [];
+  const folder = resolveBackgroundFolderPath(theme);
+  const builtin = folder ? getBuiltinFolderStrings(folder) : [];
+  const single =
+    typeof theme.background === "string" &&
+    theme.background.trim() &&
+    !theme.background.trim().endsWith("/")
+      ? [theme.background.trim()]
+      : [];
+  return mergeUniqueUrls([...tmp, ...builtin, ...explicit, ...single], [])
+    .filter((src) => src && !src.endsWith("/") && !removed.has(src));
+}
+
+function getAllThemeBackgroundCatalogList() {
+  const out = [];
+  forEachThemeEntry((theme) => {
+    out.push(...getThemeBackgroundCatalogList(theme));
+  });
+  return mergeUniqueUrls(out, getLibraryBackgroundUrls());
+}
+
+function getSessionBackgroundPickerList(theme) {
+  const sessionList = Array.isArray(activeSessionAssets.backgrounds)
+    ? activeSessionAssets.backgrounds.filter(Boolean)
+    : [];
+  const activeThemeList = getThemeBackgroundCatalogList(theme);
+  return mergeUniqueUrls(
+    sessionList,
+    mergeUniqueUrls(activeThemeList, getAllThemeBackgroundCatalogList())
+  );
 }
 
 function getGreenBackgroundList(theme) {
@@ -16598,12 +17984,15 @@ function getBaseOverlayList(theme) {
           }),
       ]
     : builtinFolderArr;
+  const libraryArr = getLibraryOverlayEntries()
+    .map((item) => normalizeOverlayDefinition(item))
+    .filter((item) => item && !removed.has(item.src));
   const localArr = Array.isArray(theme.overlays)
     ? theme.overlays.map((item) => normalizeOverlayDefinition(item))
     : [];
   const seen = new Set();
   const out = [];
-  for (const o of [...folderArr, ...localArr]) {
+  for (const o of [...folderArr, ...libraryArr, ...localArr]) {
     const k = (o && o.src ? o.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
@@ -16628,6 +18017,15 @@ function getBaseTemplateList(theme) {
           __folder: true,
         }))
     : [];
+  const libraryArr = getLibraryTemplateEntries()
+    .filter((t) => t && t.src && !removed.has(t.src))
+    .map((t) => ({
+      src: t.src,
+      layout: normalizeTemplateLayout(t.layout),
+      slots: t.slots,
+      textFields: normalizeTemplateTextFields(t.textFields),
+      __library: true,
+    }));
   const localArr = Array.isArray(theme.templates)
     ? theme.templates.map((t) => ({
         src: t.src,
@@ -16638,7 +18036,7 @@ function getBaseTemplateList(theme) {
     : [];
   const seen = new Set();
   const out = [];
-  for (const t of [...folderArr, ...localArr]) {
+  for (const t of [...folderArr, ...libraryArr, ...localArr]) {
     const k = (t && t.src ? t.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
@@ -16689,18 +18087,49 @@ function getOverlayList(theme) {
           }),
       ]
     : builtinFolderArr;
+  const libraryArr = getLibraryOverlayEntries()
+    .map((item) => normalizeOverlayDefinition(item))
+    .filter((item) => item && !removed.has(item.src));
   const localArr = Array.isArray(theme.overlays)
     ? theme.overlays.map((item) => normalizeOverlayDefinition(item))
     : [];
   const seen = new Set();
   const out = [];
-  for (const o of [...sessionArr, ...eventArr, ...folderArr, ...localArr]) {
+  for (const o of [...sessionArr, ...eventArr, ...folderArr, ...libraryArr, ...localArr]) {
     const k = (o && o.src ? o.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
     out.push(o);
   }
   return out;
+}
+
+function getAllThemeOverlayCatalogList(theme) {
+  const activeThemeList = getBaseOverlayList(theme);
+  const sessionList = Array.isArray(activeSessionAssets.overlays)
+    ? activeSessionAssets.overlays
+    : [];
+  const out = [];
+  forEachThemeEntry((entryTheme) => {
+    out.push(...getBaseOverlayList(entryTheme));
+  });
+  const seen = new Set();
+  const merged = [];
+  [
+    ...sessionList.map((item) =>
+      typeof item === "string" ? { src: item, __session: true } : { ...item, __session: true }
+    ),
+    ...activeThemeList,
+    ...out,
+    ...getLibraryOverlayEntries(),
+  ].forEach((item) => {
+    const normalized = normalizeOverlayDefinition(item);
+    const src = normalized && normalized.src ? normalized.src : "";
+    if (!src || seen.has(src)) return;
+    seen.add(src);
+    merged.push(normalized);
+  });
+  return merged;
 }
 
 function getTemplateList(theme) {
@@ -16771,6 +18200,15 @@ function getTemplateList(theme) {
         })),
       ]
     : builtinFolderArr;
+  const libraryArr = getLibraryTemplateEntries()
+    .filter((t) => t && t.src && !removed.has(t.src))
+    .map((t) => ({
+      src: t.src,
+      layout: normalizeTemplateLayout(t.layout),
+      slots: t.slots,
+      textFields: normalizeTemplateTextFields(t.textFields),
+      __library: true,
+    }));
   const localArr = Array.isArray(theme.templates)
     ? theme.templates.map((t) => ({
         src: t.src,
@@ -16781,7 +18219,7 @@ function getTemplateList(theme) {
     : [];
   const seen = new Set();
   const out = [];
-  for (const t of [...sessionArr, ...eventArr, ...folderArr, ...localArr]) {
+  for (const t of [...sessionArr, ...eventArr, ...folderArr, ...libraryArr, ...localArr]) {
     const k = (t && t.src ? t.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
@@ -16853,6 +18291,13 @@ Object.assign(window, {
     getActiveEvent: () => getActiveEvent(),
     getOverlayList: () => getOverlayList(activeTheme),
     getActiveTheme: () => activeTheme,
+    getPhotoOverlayOrientation: (entry) => getPhotoOverlayOrientation(entry),
+    getPhotoOverlayFormat: () => photoOverlayOrientation,
+    setPhotoOverlayFormat: (orientation) => setPhotoOverlayOrientation(orientation),
+    getResolvedCaptureAspectRatio: () => getResolvedCaptureAspectRatio(),
+    getPrintSizeForOrientation: (orientation) =>
+      getPrintSizeForOrientation(orientation),
+    createPrintCanvas: (orientation) => createPrintCanvas(orientation).canvas,
     patchActiveTheme: (patch = {}) => {
       if (!activeTheme || !patch || typeof patch !== "object") return null;
       Object.assign(activeTheme, patch);
@@ -16877,6 +18322,7 @@ Object.assign(window, {
         ? activeTheme.overlays[0].src
         : null;
       lastPhotoOverlay = selectedOverlay;
+      lastPhotoOverlayByOrientation[photoOverlayOrientation] = selectedOverlay;
       renderOptions();
       syncOverlayPreviewSurface({ mode: "live" });
       return activeTheme.overlays;

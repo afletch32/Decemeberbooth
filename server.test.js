@@ -144,3 +144,133 @@ test("events payloads are stored and loaded via /api/events", withTempEnv(async 
     await new Promise((resolve) => server.close(() => resolve()));
   }
 }));
+
+test("gallery index stores Cloudinary URLs by tag", withTempEnv(async (_tmp, t) => {
+  const server = await startTempServer(t);
+  if (!server) return;
+  try {
+    const { port } = server.address();
+    const firstUrl = "https://res.cloudinary.com/demo/image/upload/v1/booth/first.jpg";
+    const secondUrl = "https://res.cloudinary.com/demo/image/upload/v1/booth/second.jpg";
+
+    const postFirst = await fetch(`http://127.0.0.1:${port}/api/gallery?tag=Photos 2026/06/07`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: firstUrl,
+        title: "Photos - 2026-06-07",
+        created_at: "2026-06-07T12:00:00.000Z",
+        capture_id: "capture-one",
+      }),
+    });
+
+    assert.equal(postFirst.status, 200);
+    assert.deepEqual(await postFirst.json(), { ok: true, count: 1 });
+
+    const postSecond = await fetch(`http://127.0.0.1:${port}/api/gallery?tag=photos-2026-06-07`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        secure_url: secondUrl,
+        title: "Updated title",
+        created_at: "2026-06-07T12:01:00.000Z",
+        capture_id: "capture-two",
+        resource_type: "video",
+        mode: "message",
+      }),
+    });
+
+    assert.equal(postSecond.status, 200);
+    assert.deepEqual(await postSecond.json(), { ok: true, count: 2 });
+
+    const getResp = await fetch(`http://127.0.0.1:${port}/api/gallery?tag=photos-2026-06-07`);
+    assert.equal(getResp.status, 200);
+    const getJson = await getResp.json();
+    assert.equal(getJson.tag, "photos-2026-06-07");
+    assert.equal(getJson.title, "Updated title");
+    assert.deepEqual(
+      getJson.resources.map((item) => item.secure_url),
+      [secondUrl, firstUrl]
+    );
+    assert.equal(getJson.resources[0].resource_type, "video");
+    assert.equal(getJson.resources[0].type, "video");
+    assert.equal(getJson.resources[0].mode, "message");
+    assert.equal(getJson.resources[0].capture_id, "capture-two");
+    assert.equal(getJson.resources[1].resource_type, "image");
+
+    const retryUrl = "https://res.cloudinary.com/demo/image/upload/v1/booth/retry.jpg";
+    const retryResp = await fetch(`http://127.0.0.1:${port}/api/gallery?tag=photos-2026-06-07`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        secure_url: retryUrl,
+        title: "Retry title",
+        created_at: "2026-06-07T12:02:00.000Z",
+        capture_id: "capture-two",
+      }),
+    });
+    assert.equal(retryResp.status, 200);
+    assert.deepEqual(await retryResp.json(), { ok: true, count: 2 });
+    const retryGetResp = await fetch(`http://127.0.0.1:${port}/api/gallery?tag=photos-2026-06-07`);
+    const retryJson = await retryGetResp.json();
+    assert.deepEqual(
+      retryJson.resources.map((item) => item.secure_url),
+      [retryUrl, firstUrl]
+    );
+  } finally {
+    await new Promise((resolve) => server.close(() => resolve()));
+  }
+}));
+
+test("asset library stores uploaded Cloudinary asset metadata", withTempEnv(async (_tmp, t) => {
+  const server = await startTempServer(t);
+  if (!server) return;
+  try {
+    const { port } = server.address();
+    const assetUrl = "https://res.cloudinary.com/demo/image/upload/v1/booth/summer-overlay.png";
+
+    const postResp = await fetch(`http://127.0.0.1:${port}/api/assets`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: "overlay:summer",
+        category: "overlays",
+        url: assetUrl,
+        name: "Summer Overlay",
+        tags: ["Summer", "party", "summer"],
+        folder: "photobooth/assets/overlays",
+      }),
+    });
+    assert.equal(postResp.status, 200);
+    assert.equal((await postResp.json()).ok, true);
+
+    const getResp = await fetch(`http://127.0.0.1:${port}/api/assets`);
+    assert.equal(getResp.status, 200);
+    const getJson = await getResp.json();
+    assert.equal(getJson.assets.length, 1);
+    assert.equal(getJson.assets[0].category, "overlay");
+    assert.deepEqual(getJson.assets[0].tags, ["summer", "party"]);
+
+    const patchResp = await fetch(`http://127.0.0.1:${port}/api/assets`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: "overlay:summer", archived: true, hidden: true }),
+    });
+    assert.equal(patchResp.status, 200);
+    const archivedResp = await fetch(`http://127.0.0.1:${port}/api/assets`);
+    const archivedJson = await archivedResp.json();
+    assert.equal(archivedJson.assets[0].archived, true);
+    assert.equal(archivedJson.assets[0].hidden, true);
+
+    const deleteResp = await fetch(`http://127.0.0.1:${port}/api/assets`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: "overlay:summer" }),
+    });
+    assert.equal(deleteResp.status, 200);
+    const emptyResp = await fetch(`http://127.0.0.1:${port}/api/assets`);
+    assert.deepEqual(await emptyResp.json(), { assets: [] });
+  } finally {
+    await new Promise((resolve) => server.close(() => resolve()));
+  }
+}));

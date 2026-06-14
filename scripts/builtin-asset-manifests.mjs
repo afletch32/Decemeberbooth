@@ -7,7 +7,8 @@ const BUILTIN_ASSET_MANIFESTS = {
     "blue smoke frame.png",
     "flowers frame.png",
     "general-frame-black.png",
-    "general-frame-blue-flowers.png"
+    "general-frame-blue-flowers.png",
+    "shes a good man overlay.png"
   ],
   "assets/general/basic/templates/": [],
   "assets/general/birthday/backgrounds/": [
@@ -22,9 +23,38 @@ const BUILTIN_ASSET_MANIFESTS = {
     "happy birthday balloons frame.png",
     "sparkle sides frame.png"
   ],
+  "assets/general/Summer/overlays/": [
+    "13.png",
+    "4th of july.png",
+    "border with frame.png",
+    "border.png",
+    "Enchanted Woodland Photo Booth Frame.png",
+    "fantasy.png",
+    "hello summer.png",
+    "pink and yellow.png",
+    "pool with frame 2.png",
+    "pool with frame.png",
+    "tropical border 2.png",
+    "tropical border with frame.png",
+    "tropical border.png"
+  ],
   "assets/general/birthday/templates/": [
-    { src: "birthday banner.png", layout: "double_column" },
-    { src: "birthday.png", layout: "double_column" }
+    { src: "birthday banner.png", layout: "double_column", slots: [
+      { x: 50, y: 357, w: 500, h: 414 },
+      { x: 50, y: 823, w: 500, h: 414 },
+      { x: 50, y: 1288, w: 500, h: 413 },
+      { x: 650, y: 357, w: 500, h: 414 },
+      { x: 650, y: 823, w: 500, h: 414 },
+      { x: 650, y: 1288, w: 500, h: 413 }
+    ] },
+    { src: "birthday.png", layout: "double_column", slots: [
+      { x: 50, y: 357, w: 500, h: 414 },
+      { x: 50, y: 823, w: 500, h: 414 },
+      { x: 50, y: 1288, w: 500, h: 413 },
+      { x: 650, y: 357, w: 500, h: 414 },
+      { x: 650, y: 823, w: 500, h: 414 },
+      { x: 650, y: 1288, w: 500, h: 413 }
+    ] }
   ],
   "assets/wedding/timeless-romance/backgrounds/": [
     "background.svg",
@@ -136,7 +166,18 @@ const BUILTIN_ASSET_MANIFESTS = {
     "hawks-frame-players.png"
   ],
   "assets/Hawks/templates/": [
-    { src: "go hawks.png", layout: "double_column" }
+    {
+      src: "go hawks.png",
+      layout: "double_column",
+      slots: [
+        { x: 50, y: 357, w: 500, h: 414 },
+        { x: 50, y: 823, w: 500, h: 414 },
+        { x: 50, y: 1288, w: 500, h: 413 },
+        { x: 650, y: 357, w: 500, h: 414 },
+        { x: 650, y: 823, w: 500, h: 414 },
+        { x: 650, y: 1288, w: 500, h: 413 }
+      ]
+    }
   ],
   "assets/school/ANE/overlays/": [
     "ANE-frame-stream-night-landscape-2.png",
@@ -191,8 +232,22 @@ const BUILTIN_ASSET_MANIFESTS = {
   ],
   "assets/holidays/winter/christmas/overlays/": [],
   "assets/holidays/winter/christmas/templates/": [
-    { src: "chritsmas-template-1.png", layout: "double_column" },
-    { src: "mrery christmas.png", layout: "double_column" }
+    { src: "chritsmas-template-1.png", layout: "double_column", slots: [
+      { x: 50, y: 357, w: 500, h: 414 },
+      { x: 50, y: 823, w: 500, h: 414 },
+      { x: 50, y: 1288, w: 500, h: 413 },
+      { x: 650, y: 357, w: 500, h: 414 },
+      { x: 650, y: 823, w: 500, h: 414 },
+      { x: 650, y: 1288, w: 500, h: 413 }
+    ] },
+    { src: "mrery christmas.png", layout: "double_column", slots: [
+      { x: 50, y: 357, w: 500, h: 414 },
+      { x: 50, y: 823, w: 500, h: 414 },
+      { x: 50, y: 1288, w: 500, h: 413 },
+      { x: 650, y: 357, w: 500, h: 414 },
+      { x: 650, y: 823, w: 500, h: 414 },
+      { x: 650, y: 1288, w: 500, h: 413 }
+    ] }
   ],
   "assets/holidays/winter/Valentines/backgrounds/": [
     "valentines-background-1.png",

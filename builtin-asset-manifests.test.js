@@ -50,3 +50,12 @@ test("wedding overlays remain available in built-in asset manifests", async () =
   assert.equal(gardenEntries[1].src, "garden-vows-single-overlay.svg");
   assert.equal(gardenEntries[1].photoSlots.length, 1);
 });
+
+test("summer overlays remain available in built-in asset manifests", async () => {
+  const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
+  const entries = getBuiltinAssetManifest("assets/general/Summer/overlays/");
+
+  assert.equal(entries.length, 13);
+  assert.ok(entries.includes("hello summer.png"));
+  assert.ok(entries.includes("tropical border with frame.png"));
+});
