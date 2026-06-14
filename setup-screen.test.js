@@ -302,6 +302,24 @@ test("asset picker selections have a strong visible and accessible state", () =>
   );
 });
 
+test("guest idle screen hides operator booth mode controls", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes("#boothScreen.welcome-active #boothModeBar") &&
+      html.includes("#boothScreen.booth-ready #boothModeBar"),
+    "guest welcome and capture screens should hide the operator mode bar"
+  );
+  assert.ok(
+    appScript.includes("function showWelcome(step = null)") &&
+      appScript.includes("setBoothControlsVisible(false);") &&
+      appScript.includes("function hideWelcome()") &&
+      appScript.includes("setMode(resolveBoothLaunchMode());"),
+    "welcome flow should hide controls while preserving the selected booth mode before capture"
+  );
+});
+
 test("advanced theme controls keep defaults as editable placeholders", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts/app.js");

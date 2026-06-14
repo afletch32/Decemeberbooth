@@ -983,11 +983,13 @@ test("frame picker stays hidden until the welcome flow reaches capture", async (
 
   await page.locator("#startBoothButton").click({ force: true });
   await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
+  await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
   await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
 
   await page.locator("#startButton").click({ force: true });
   await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
+  await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
   await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
 
@@ -996,6 +998,8 @@ test("frame picker stays hidden until the welcome flow reaches capture", async (
     .filter({ hasText: "Single Still Photo" })
     .click({ force: true });
   await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
+  await expect(page.locator("#boothScreen")).toHaveClass(/mode-still-photo/);
+  await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#captureBtn")).toBeVisible();
   await expect(page.locator("#mobileSettingsSheet")).toBeVisible();
 });

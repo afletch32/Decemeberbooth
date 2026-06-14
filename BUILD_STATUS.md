@@ -150,9 +150,11 @@ What is done
 - Removed visible source labels from Asset Library cards and kept simple category/date metadata only.
 - Changed rename, tag editing, field editing, and delete/hide actions to work through shared metadata for uploaded and repo-backed assets.
 - Kept full-screen booth background rendering on the existing background URL path; only picker/library discovery now uses the unified provider.
+- Hid booth operator mode controls on the guest idle/start screen while keeping capture mode selection active after Touch to Start.
+- Verified setup to idle to capture to Go Back on desktop and tablet viewports.
 
 What is in progress
-- Unified Asset Library verification.
+- Ready for the next booth UI fix or deploy.
 
 Next steps
 - Test one real device capture with Cloudinary configured to confirm the photo is recorded into the app gallery index.
@@ -213,4 +215,5 @@ Important decisions
 - Customizable assets use the existing asset metadata model with `customizable` and `editableFields`; no separate asset-management store is being added.
 - Asset source labels are intentionally hidden from operator-facing cards; source is only an internal implementation detail.
 - Repo-backed default assets are hidden through stored metadata tombstones instead of physical file deletion.
+- Guest idle/start mode hides operator controls; the booth mode bar remains an operator/setup control, not a guest-facing control.
 - The current verified Pages URL is `https://e432f899.decemeberbooth.pages.dev`.
