@@ -5138,6 +5138,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadEventsFromStorage();
   loadFontsFromStorage();
   loadAssetLibraryLocal();
+  populateAllThemeAssetTmp();
   loadAssetLibraryRemote().catch(() => renderAssetLibrary());
   try {
     await setupFontPicker();
@@ -17902,6 +17903,17 @@ function getBuiltinTemplateEntries(folder) {
       return null;
     })
     .filter(Boolean);
+}
+
+function populateAllThemeAssetTmp() {
+  forEachThemeEntry((theme) => {
+    const bgFolder = theme.backgroundFolder || theme.background || "";
+    if (bgFolder) theme.backgroundsTmp = getBuiltinFolderStrings(bgFolder);
+    const ovFolder = theme.overlaysFolder || "";
+    if (ovFolder) theme.overlaysTmp = getBuiltinOverlayEntries(ovFolder);
+    const tpFolder = theme.templatesFolder || "";
+    if (tpFolder) theme.templatesTmp = getBuiltinTemplateEntries(tpFolder);
+  });
 }
 
 function normalizeAssetSlots(slots) {
