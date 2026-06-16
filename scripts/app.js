@@ -13010,7 +13010,7 @@ function loadAssetLibraryLocal() {
 
 function getVisibleLibraryAssets(category = "") {
   const normalizedCategory = normalizeUploadedAssetCategory(category);
-  return (uploadedAssetLibrary.assets || []).filter((asset) => {
+  return getCanonicalAssetCollection(category).filter((asset) => {
     if (!asset || asset.hidden || asset.archived) return false;
     if (normalizedCategory && asset.category !== normalizedCategory) return false;
     return true;
