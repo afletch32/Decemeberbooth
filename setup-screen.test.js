@@ -336,8 +336,8 @@ test("setup trays are assigned-only and asset library owns selected state", () =
     "background, overlay, and template tray counts should share assigned sources"
   );
   assert.ok(
-    appScript.includes("getSessionAssignedAssetSourceSet(asset.category)") &&
-      appScript.includes('useBtn.textContent = isAssigned ? "Using" : "Use";') &&
+    appScript.includes("getSessionEffectiveAssetSourceSet(asset.category)") &&
+      appScript.includes('useBtn.addEventListener("click", () => useLibraryAsset(asset));') &&
       appScript.includes("renderAssetLibrary();"),
     "asset library should show assigned state and refresh when Use/remove changes the tray"
   );

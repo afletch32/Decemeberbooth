@@ -153,6 +153,10 @@ What is done
 - Hid booth operator mode controls on the guest idle/start screen while keeping capture mode selection active after Touch to Start.
 - Verified setup to idle to capture to Go Back on desktop and tablet viewports.
 - Split setup assets into clean assigned trays while Asset Library remains the full searchable catalog with selected styling for already-assigned assets.
+- Added session-only removal state for backgrounds, overlays, and templates so theme assets can be deselected for the current session without mutating the theme.
+- Added effective asset helpers that resolve `theme assets + session additions - session removals` for backgrounds, overlays, and templates.
+- Updated setup selection-state logic and asset-library selected state to use effective session lists.
+- `npm test` passes with 75/75 tests after the effective session asset update.
 
 What is in progress
 - Ready for the next booth UI fix or deploy.
@@ -169,6 +173,7 @@ Next steps
 - Test a real Cloudinary asset upload on the deployed Pages app and confirm it appears on a second device after refresh.
 - Confirm archive/delete library metadata updates on the deployed Pages app.
 - Smoke test selecting a background from one theme and an overlay from another theme before launching a no-event session.
+- Smoke test theme-asset deselection in a current session to confirm removals stay session-only and do not change the theme.
 - Browser smoke test the Asset Library screen with search, sort, category/customizable filters, rename, tags, fields, and delete.
 - Smoke test selected asset visibility on the deployed Pages app after the next deploy.
 - Smoke test setup picker/library count parity and repo-backed delete/hide behavior on the deployed Pages app after the next deploy.
@@ -207,6 +212,7 @@ Important decisions
 - No legacy event-first behavior needs to be preserved because this booth has only been used for tests.
 - No-event sessions save photos under the booth browser's local date using `YYYY-MM-DD`.
 - Session-only uploads affect the current booth run only and are not persisted to saved themes or event records.
+- Session-only asset removals affect the current booth run only and are not persisted to saved themes or event records.
 - Capture QR/share links and gallery entries must use the same Cloudinary URL from `uploadCaptureOnce()`.
 - Retried gallery writes are idempotent by `capture_id`, so duplicate submissions update one gallery entry instead of creating multiples.
 - Uploaded asset library metadata lives in `THEMES_KV` under `assetLibrary`; Cloudinary remains the file store.
