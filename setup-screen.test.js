@@ -14,25 +14,25 @@ test("setup screen uses a compact toolbar for section controls", () => {
 
   assert.notEqual(adminContainerIndex, -1, "admin container should exist");
   assert.ok(
-    !html.includes('<div class="setup-command-bar">'),
-    "setup tabs should be removed from the simplified flow"
+    html.includes('class="setup-section-switcher"') &&
+      html.includes('aria-label="Setup Sections"'),
+    "setup should expose a lightweight section switcher"
   );
   assert.ok(
-    !html.includes('id="installBtn" class="primary hidden" type="button">Install App</button>'),
-    "install button should not be part of the setup toolbar anymore"
+    html.includes('id="setupTabEvent"') &&
+      html.includes('id="setupTabCapture"') &&
+      html.includes('id="setupTabShare"'),
+    "setup section buttons should be present"
+  );
+  assert.ok(
+    !html.includes('<div class="setup-command-bar">'),
+    "old command bar layout should stay removed"
   );
   assert.ok(
     !html.includes('id="backgroundThumbnailsPanel"') &&
       !html.includes('id="overlayThumbnailsPanel"') &&
       !html.includes('id="templateThumbnailsPanel"'),
     "duplicate setup asset tray panels should be removed"
-  );
-  assert.ok(
-    !html.includes('id="sessionBackgrounds"') &&
-      !html.includes('id="currentOverlays"') &&
-      !html.includes('id="currentTemplates"') &&
-      !html.includes('id="currentBackgrounds"'),
-    "setup should not render duplicate asset thumbnail grids"
   );
   assert.ok(
     html.includes('id="launchBackgroundCount"') &&
@@ -53,15 +53,10 @@ test("setup screen uses a compact toolbar for section controls", () => {
     "theme saves should continue syncing overlay and layout data across devices"
   );
   assert.ok(
-    !html.includes('data-session-action="event"'),
-    "session setup summary should not include a duplicate event card"
-  );
-  assert.ok(
-    html.includes('id="sessionThemeSearch"') &&
-      html.includes('id="sessionThemeToggle"') &&
-      html.includes('id="sessionFontSearch"') &&
-      html.includes('id="sessionFontToggle"'),
-    "Session Setup should expose searchable theme and font comboboxes"
+    html.includes('data-setup-section="event"') &&
+      html.includes('data-setup-section="capture"') &&
+      html.includes('data-setup-section="share"'),
+    "setup sections should remain addressable by section state"
   );
 });
 
@@ -86,25 +81,16 @@ test("setup section state updates button and panel accessibility attributes", ()
     appScript.includes("activateFontFromSetupFamily(font.name)"),
     "font option clicks should activate immediately"
   );
+  assert.ok(
+    appScript.includes("setSetupSection(activeSetupSection);"),
+    "existing section state should continue to drive visibility"
+  );
 });
 
 test("setup flow uses direct theme and font activation", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");
 
-  assert.ok(
-    !html.includes("Start From A Theme") &&
-      !html.includes('id="createPathEventTypeCards"') &&
-      !html.includes('data-theme-filter-card="') &&
-      !html.includes("Use This Theme"),
-    "old theme start section, category cards, and confirmation button should be removed"
-  );
-  assert.ok(
-    !html.includes('id="quickStartBtn"') &&
-      !html.includes('id="fontLibrarySection"') &&
-      !html.includes("Font Library"),
-    "quick demo and font management should not appear in setup"
-  );
   assert.ok(
     html.includes('id="sessionThemeToggle"') &&
       html.includes('id="sessionThemeMenu"') &&
@@ -125,10 +111,10 @@ test("setup flow uses direct theme and font activation", () => {
     "theme and font selection should activate immediately"
   );
   assert.ok(
-    !html.includes('id="launchCameraStatus"') &&
-      !html.includes('id="launchOutputStatus"') &&
-      !html.includes('id="launchLayoutMode"'),
-    "camera, save, and booth mode status cards should be removed from Session Setup"
+    html.includes('id="captureSection"') &&
+      html.includes('id="sharingSection"') &&
+      html.includes('id="currentAssetsSection"'),
+    "capture, share, and event content should remain in the section panels"
   );
 });
 

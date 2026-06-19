@@ -1,7 +1,8 @@
 Current goal
-- Simplify the Setup workflow to Theme, Font, Asset Library, Booth Mode, and Launch.
+- Restore reachable Setup sections with a lightweight Event / Capture / Share switcher.
 
 What is done
+- Added a compact Setup Sections switcher that reuses the existing section state machinery.
 - Removed Asset Library "Use" buttons and setup workflow remove buttons.
 - Removed setup theme browsing sections, theme filter cards, and the `Use This Theme` confirmation button.
 - Added searchable Theme and Font controls directly in Session Setup with immediate activation.
@@ -195,26 +196,14 @@ What is done
 - `npm test` passes with 75/75 tests after the asset source-boundary audit.
 - `npm test` passes with 75/75 tests after the Asset Library card-state simplification.
 - `npm test` passes with 75/75 tests after removing duplicate setup asset trays.
+- `npm test` passes with 78/78 tests after restoring the setup section switcher.
 
 What is in progress
 - Ready for the next booth UI fix or deploy.
 
 Next steps
-- Test one real device capture with Cloudinary configured to confirm the photo is recorded into the app gallery index.
-- Test Live Photo frame selection plus Photostrip template selection on the preview URL.
-- Test a Hawks photostrip and one non-Hawks photostrip on the preview URL.
-- Test portrait and landscape photo overlay selection on the preview URL.
-- Open the new setup `Overlay Builder` button and confirm it launches `overlay-maker.html`.
-- Verify one live portrait and one live landscape capture on the 4x6 preview deployment.
-- Run a real Cloudinary capture pass for photo, strip, live/video, and message modes to confirm each produces one URL shared by QR and gallery.
-- Test a forced gallery API failure on the deployed Pages app to confirm the queued gallery retry clears after connectivity/API recovery.
-- Test a real Cloudinary asset upload on the deployed Pages app and confirm it appears on a second device after refresh.
-- Confirm archive/delete library metadata updates on the deployed Pages app.
-- Smoke test selecting a background from one theme and an overlay from another theme before launching a no-event session.
-- Smoke test theme-asset deselection in a current session to confirm removals stay session-only and do not change the theme.
-- Browser smoke test the Asset Library screen with search, sort, category/customizable filters, rename, tags, fields, and delete.
-- Smoke test selected asset visibility on the deployed Pages app after the next deploy.
-- Smoke test setup picker/library count parity and repo-backed delete/hide behavior on the deployed Pages app after the next deploy.
+- Verify Event, Capture, and Share panels remain reachable from the new switcher.
+- Smoke test Live Photo and Green Screen visibility in the Capture panel.
 
 Known bugs/blockers
 - Cross-device sync still depends on using the live HTTP/HTTPS deployment rather than `file://`.

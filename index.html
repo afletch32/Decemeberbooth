@@ -534,17 +534,25 @@
       font-size: 1rem;
     }
 
-    .setup-command-bar {
+    .setup-section-switcher {
       max-width: 1220px;
       width: min(1220px, 100%);
       margin: 0 auto 14px;
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 12px 16px;
-      flex-wrap: wrap;
+      gap: 10px 14px;
       position: relative;
       z-index: 1;
+    }
+
+    .setup-section-switcher-label {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
 
     .setup-tabs {
@@ -5382,6 +5390,14 @@
     <div class="btn-row admin-actions">
       <button type="button" id="openLayoutBuilderBtn" onclick="openLayoutBuilder()">Overlay Builder</button>
       <button type="button" id="startBoothButton" class="start-booth-hero">Start Booth</button>
+    </div>
+    <div class="setup-section-switcher" aria-label="Setup Sections">
+      <div class="setup-section-switcher-label">Setup Sections</div>
+      <div class="setup-tabs">
+        <button type="button" id="setupTabEvent" class="setup-tab active" data-setup-tab="event" aria-pressed="true">Event</button>
+        <button type="button" id="setupTabCapture" class="setup-tab" data-setup-tab="capture" aria-pressed="false">Capture</button>
+        <button type="button" id="setupTabShare" class="setup-tab" data-setup-tab="share" aria-pressed="false">Share</button>
+      </div>
     </div>
     <div class="setup-session-card glass-panel rounded-2xl p-4">
       <div class="flex items-center gap-2 mb-1">
