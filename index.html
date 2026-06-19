@@ -294,6 +294,7 @@
     }
 
     .setup-session-item span,
+    .setup-session-item label,
     .setup-session-mode span,
     .setup-launch-warning {
       display: block;
@@ -301,6 +302,92 @@
       font-size: 0.8rem;
       letter-spacing: 0.04em;
       text-transform: uppercase;
+    }
+
+    .setup-session-item input,
+    .setup-combobox-button,
+    .setup-combobox-search {
+      width: 100%;
+      margin-top: 6px;
+      min-height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #111111;
+      font: inherit;
+    }
+
+    .setup-combobox {
+      position: relative;
+    }
+
+    .setup-combobox-button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .setup-combobox-caret {
+      color: var(--text-muted);
+      font-size: 0.9em;
+      margin-left: 10px;
+    }
+
+    .setup-combobox-menu {
+      position: absolute;
+      z-index: 30;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #ffffff;
+      box-shadow: 0 18px 34px rgba(17, 17, 17, 0.16);
+      padding: 8px;
+    }
+
+    .setup-combobox-menu.hidden {
+      display: none;
+    }
+
+    .setup-combobox-search {
+      margin-top: 0;
+      min-height: 38px;
+    }
+
+    .setup-combobox-options {
+      max-height: 240px;
+      overflow-y: auto;
+      padding-top: 6px;
+    }
+
+    .setup-combobox-option,
+    .setup-combobox-empty {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: #111111;
+      cursor: pointer;
+      display: block;
+      font: inherit;
+      padding: 9px 10px;
+      text-align: left;
+    }
+
+    .setup-combobox-option:hover,
+    .setup-combobox-option:focus-visible,
+    .setup-combobox-option[aria-selected="true"] {
+      background: rgba(116, 191, 157, 0.18);
+      outline: none;
+    }
+
+    .setup-combobox-empty {
+      color: var(--text-muted);
+      cursor: default;
     }
 
     .setup-session-item strong,
@@ -312,27 +399,24 @@
       line-height: 1.25;
     }
 
-    .session-asset-panel {
+    .session-asset-count {
       border: 1px solid var(--border);
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 255, 251, 0.92));
       box-shadow: 0 14px 28px rgba(17, 17, 17, 0.05);
-      overflow: hidden;
-    }
-
-    .session-asset-panel .asset-collapsible-header {
-      min-height: 74px;
       padding: 14px 16px;
     }
 
-    .session-asset-panel .asset-collapsible-title {
+    .session-asset-count span {
+      display: block;
       font-size: 0.8rem;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--text-muted);
     }
 
-    .session-asset-panel .asset-collapsible-selected {
+    .session-asset-count strong {
+      display: block;
       margin-top: 4px;
       font-size: 1rem;
       line-height: 1.25;
@@ -1714,26 +1798,6 @@
       z-index: 5;
     }
 
-    .asset-item.selected::after {
-      content: "✓ Selected";
-      position: absolute;
-      top: 7px;
-      left: 7px;
-      min-width: 88px;
-      height: 28px;
-      padding: 0 9px;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      background: #0f3d37;
-      color: #fff;
-      font-size: 0.74rem;
-      font-weight: 800;
-      letter-spacing: 0;
-      z-index: 8;
-      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.24);
-    }
-
     .asset-grid.has-selection .asset-item:not(.selected) {
       opacity: 0.62;
     }
@@ -1741,31 +1805,6 @@
     .asset-grid.has-selection .asset-item:not(.selected):hover,
     .asset-grid.has-selection .asset-item:not(.selected):focus-within {
       opacity: 1;
-    }
-
-    .asset-remove {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 24px;
-      height: 24px;
-      padding: 0;
-      border-radius: 999px;
-      line-height: 1;
-      display: grid;
-      place-items: center;
-      z-index: 6;
-    }
-
-    .asset-use {
-      position: absolute;
-      left: 4px;
-      bottom: 4px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      line-height: 1.1;
-      z-index: 6;
     }
 
     .asset-library-panel {
@@ -1809,54 +1848,46 @@
     .asset-library-card {
       border: 1px solid #d7e1f2;
       border-radius: 8px;
-      background: #fff;
+      background: #eef2f7;
       padding: 8px;
       display: grid;
       gap: 6px;
       min-width: 0;
       position: relative;
+      cursor: pointer;
+      opacity: 0.48;
+      filter: grayscale(0.55);
       transition: border-color 0.16s ease, box-shadow 0.16s ease,
         opacity 0.16s ease, transform 0.16s ease;
     }
 
+    .asset-library-card:focus-visible {
+      outline: 3px solid rgba(22, 163, 74, 0.42);
+      outline-offset: 3px;
+    }
+
     .asset-library-card.selected {
-      border-color: #0f766e;
-      box-shadow:
-        0 0 0 4px #facc15,
-        0 0 0 7px rgba(15, 118, 110, 0.34),
-        0 14px 28px rgba(15, 118, 110, 0.28);
+      border-color: #16a34a;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
       opacity: 1;
-      transform: translateY(-1px);
+      filter: none;
       z-index: 5;
     }
 
     .asset-library-card.selected::after {
-      content: "✓ Selected";
+      content: "Selected";
       position: absolute;
-      top: 7px;
-      left: 7px;
-      min-width: 88px;
-      height: 28px;
-      padding: 0 9px;
+      top: 8px;
+      right: 8px;
       border-radius: 999px;
-      display: grid;
-      place-items: center;
-      background: #0f3d37;
+      background: #16a34a;
       color: #fff;
-      font-size: 0.74rem;
+      font-size: 0.7em;
       font-weight: 800;
-      letter-spacing: 0;
-      z-index: 8;
-      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.24);
-    }
-
-    .asset-library-grid.has-selection .asset-library-card:not(.selected) {
-      opacity: 0.62;
-    }
-
-    .asset-library-grid.has-selection .asset-library-card:not(.selected):hover,
-    .asset-library-grid.has-selection .asset-library-card:not(.selected):focus-within {
-      opacity: 1;
+      letter-spacing: 0.04em;
+      padding: 4px 7px;
+      text-transform: uppercase;
     }
 
     .asset-library-card img {
@@ -5349,7 +5380,6 @@
       <div class="status-pill">Queue: <strong id="statusQueue">0 Pending</strong></div>
     </div>
     <div class="btn-row admin-actions">
-      <button type="button" id="quickStartBtn">Demo Booth Now</button>
       <button type="button" id="openLayoutBuilderBtn" onclick="openLayoutBuilder()">Overlay Builder</button>
       <button type="button" id="startBoothButton" class="start-booth-hero">Start Booth</button>
     </div>
@@ -5370,117 +5400,42 @@
         >
       </div>
       <div class="setup-session-grid">
-        <div class="setup-session-item setup-session-action" role="button" tabindex="0" data-session-action="capture" aria-label="Go to capture settings">
-          <span>Booth Type</span>
-          <strong id="launchLayoutMode">Normal</strong>
+        <div class="setup-session-item setup-combobox" data-setup-combobox="theme">
+          <label for="sessionThemeSearch">Theme</label>
+          <button type="button" id="sessionThemeToggle" class="setup-combobox-button" aria-expanded="false" aria-controls="sessionThemeMenu">
+            <span id="sessionThemeValue">Choose theme</span>
+            <span class="setup-combobox-caret" aria-hidden="true">▼</span>
+          </button>
+          <div id="sessionThemeMenu" class="setup-combobox-menu hidden">
+            <input type="search" id="sessionThemeSearch" class="setup-combobox-search" placeholder="Search themes" autocomplete="off">
+            <div id="sessionThemeOptions" class="setup-combobox-options" role="listbox" aria-label="Theme options"></div>
+          </div>
+          <select id="createPathThemeSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
         </div>
-        <div class="setup-session-item setup-session-action" role="button" tabindex="0" data-session-action="theme" aria-label="Go to theme settings">
-          <span>Theme</span>
-          <strong id="launchOverlayName">No theme selected</strong>
-        </div>
-        <div class="setup-session-item setup-session-action" role="button" tabindex="0" data-session-action="font" aria-label="Go to font settings">
-          <span>Font</span>
-          <strong id="launchFontStatus">Use theme fonts</strong>
-        </div>
-        <div class="setup-session-item setup-session-action" role="button" tabindex="0" data-session-action="camera" aria-label="Go to camera settings">
-          <span>Camera</span>
-          <strong id="launchCameraStatus">Not checked yet</strong>
-        </div>
-        <div class="setup-session-item setup-session-action" role="button" tabindex="0" data-session-action="save" aria-label="Go to sharing settings">
-          <span>Save</span>
-          <strong id="launchOutputStatus">Local uploads</strong>
+        <div class="setup-session-item setup-combobox" data-setup-combobox="font">
+          <label for="sessionFontSearch">Font</label>
+          <button type="button" id="sessionFontToggle" class="setup-combobox-button" aria-expanded="false" aria-controls="sessionFontMenu">
+            <span id="sessionFontValue">Choose font</span>
+            <span class="setup-combobox-caret" aria-hidden="true">▼</span>
+          </button>
+          <div id="sessionFontMenu" class="setup-combobox-menu hidden">
+            <input type="search" id="sessionFontSearch" class="setup-combobox-search" placeholder="Search fonts" autocomplete="off">
+            <div id="sessionFontOptions" class="setup-combobox-options" role="listbox" aria-label="Font options"></div>
+          </div>
         </div>
       </div>
-      <div class="setup-session-assets" aria-label="Assigned backgrounds, overlays, and templates">
-        <div class="asset-collapsible session-asset-panel" data-asset-panel="background" id="backgroundThumbnailsPanel">
-          <button
-            type="button"
-            class="asset-collapsible-header"
-            id="backgroundThumbnailsHeader"
-            aria-controls="backgroundThumbnailsBody"
-            aria-expanded="false"
-          >
-            <span class="asset-collapsible-copy">
-              <span class="asset-collapsible-title">Backgrounds</span>
-              <span class="asset-collapsible-selected" id="launchBackgroundCount">0 available</span>
-            </span>
-            <span class="asset-collapsible-meta">
-              <span class="asset-collapsible-chevron" aria-hidden="true">⌄</span>
-            </span>
-          </button>
-          <div class="asset-collapsible-body" id="backgroundThumbnailsBody">
-            <div class="asset-collapsible-body-inner">
-              <div class="asset-row">
-                <div
-                  id="sessionBackgrounds"
-                  class="asset-grid asset-grid-thumbs"
-                  data-empty-text="No backgrounds available yet."
-                ></div>
-              </div>
-              <div class="asset-panel-state hidden" id="backgroundThumbnailsLoading" aria-live="polite">Loading backgrounds...</div>
-              <div class="asset-panel-state hidden" id="backgroundThumbnailsError" aria-live="polite">Couldn't load background thumbnails.</div>
-            </div>
-          </div>
+      <div class="setup-session-assets" aria-label="Selected asset counts">
+        <div class="session-asset-count">
+          <span>Backgrounds</span>
+          <strong id="launchBackgroundCount">0 selected</strong>
         </div>
-        <div class="asset-collapsible session-asset-panel" data-asset-panel="overlay" id="overlayThumbnailsPanel">
-          <button
-            type="button"
-            class="asset-collapsible-header"
-            id="overlayThumbnailsHeader"
-            aria-controls="overlayThumbnailsBody"
-            aria-expanded="false"
-          >
-            <span class="asset-collapsible-copy">
-              <span class="asset-collapsible-title">Overlays</span>
-              <span class="asset-collapsible-selected" id="launchOverlayCount">0 assigned</span>
-            </span>
-            <span class="asset-collapsible-meta">
-              <span class="asset-collapsible-chevron" aria-hidden="true">⌄</span>
-            </span>
-          </button>
-          <div class="asset-collapsible-body" id="overlayThumbnailsBody">
-            <div class="asset-collapsible-body-inner">
-              <div class="asset-row">
-                <div
-                  id="currentOverlays"
-                  class="asset-grid asset-grid-thumbs"
-                  data-empty-text="No overlays uploaded yet."
-                ></div>
-              </div>
-              <div class="asset-panel-state hidden" id="overlayThumbnailsLoading" aria-live="polite">Loading overlays...</div>
-              <div class="asset-panel-state hidden" id="overlayThumbnailsError" aria-live="polite">Couldn't load overlay thumbnails.</div>
-            </div>
-          </div>
+        <div class="session-asset-count">
+          <span>Overlays</span>
+          <strong id="launchOverlayCount">0 selected</strong>
         </div>
-        <div class="asset-collapsible session-asset-panel" data-asset-panel="template" id="templateThumbnailsPanel">
-          <button
-            type="button"
-            class="asset-collapsible-header"
-            id="templateThumbnailsHeader"
-            aria-controls="templateThumbnailsBody"
-            aria-expanded="false"
-          >
-            <span class="asset-collapsible-copy">
-              <span class="asset-collapsible-title">Templates</span>
-              <span class="asset-collapsible-selected" id="launchStripStatus">0 assigned</span>
-            </span>
-            <span class="asset-collapsible-meta">
-              <span class="asset-collapsible-chevron" aria-hidden="true">⌄</span>
-            </span>
-          </button>
-          <div class="asset-collapsible-body" id="templateThumbnailsBody">
-            <div class="asset-collapsible-body-inner">
-              <div class="asset-row">
-                <div
-                  id="currentTemplates"
-                  class="asset-grid asset-grid-thumbs"
-                  data-empty-text="No templates uploaded yet."
-                ></div>
-              </div>
-              <div class="asset-panel-state hidden" id="templateThumbnailsLoading" aria-live="polite">Loading templates...</div>
-              <div class="asset-panel-state hidden" id="templateThumbnailsError" aria-live="polite">Couldn't load template thumbnails.</div>
-            </div>
-          </div>
+        <div class="session-asset-count">
+          <span>Templates</span>
+          <strong id="launchStripStatus">0 selected</strong>
         </div>
       </div>
       <div id="launchWarning" class="setup-launch-warning hidden"></div>
@@ -5492,158 +5447,8 @@
       </div>
       <button type="button" id="modeToggle">Switch to 360 Mode</button>
     </div>
-    <div class="setup-command-bar">
-      <div class="setup-tabs" aria-label="Setup Sections">
-        <button type="button" id="setupTabEvent" class="setup-tab active" data-setup-tab="event" aria-pressed="true">Settings</button>
-        <button type="button" id="setupTabCapture" class="setup-tab" data-setup-tab="capture" aria-pressed="false">Capture</button>
-        <button type="button" id="setupTabShare" class="setup-tab" data-setup-tab="share" aria-pressed="false">Share</button>
-      </div>
-    </div>
     <div class="admin-container">
       <div class="admin-left panel">
-        <details class="panel-section" id="eventBasicsSection" data-setup-section="event" open>
-          <summary>Theme Session</summary>
-          <div class="section-content">
-            <div class="btn-row event-path-switcher">
-              <button type="button" id="eventPathCreateBtn">Theme Session</button>
-              <button type="button" id="eventPathSelectBtn">Saved Events</button>
-            </div>
-            <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Pick a theme, add any one-off assets you want, then start the booth. No event setup is required.</p>
-            <div class="panel hidden create-path-panel" id="eventPathCreatePanel" style="margin-bottom:10px;">
-              <div class="create-path-header">
-                <h3>Start From A Theme</h3>
-                <p>Choose the look for this booth session. Optional uploads only apply to this run.</p>
-              </div>
-              <div class="create-path-grid">
-                <div class="create-path-field create-path-field-full">
-                  <span class="control-label">Theme Filter</span>
-                  <div class="theme-filter-cards" id="createPathEventTypeCards" role="group" aria-label="Theme Filter">
-                    <button type="button" class="theme-filter-card active" data-theme-filter-card="all" aria-pressed="true">
-                      <strong>All Themes</strong>
-                      <span>Browse every look</span>
-                    </button>
-                    <button type="button" class="theme-filter-card" data-theme-filter-card="wedding" aria-pressed="false">
-                      <strong>Wedding</strong>
-                      <span>Couples and formal</span>
-                    </button>
-                    <button type="button" class="theme-filter-card" data-theme-filter-card="expo" aria-pressed="false">
-                      <strong>Expo</strong>
-                      <span>Vendor booths</span>
-                    </button>
-                    <button type="button" class="theme-filter-card" data-theme-filter-card="party" aria-pressed="false">
-                      <strong>Party</strong>
-                      <span>Birthday and fun</span>
-                    </button>
-                    <button type="button" class="theme-filter-card" data-theme-filter-card="community" aria-pressed="false">
-                      <strong>Community</strong>
-                      <span>School and events</span>
-                    </button>
-                  </div>
-                  <select id="createPathEventType" class="hidden" aria-hidden="true" tabindex="-1">
-                    <option value="all">All Themes</option>
-                    <option value="wedding">Wedding</option>
-                    <option value="expo">Expo</option>
-                    <option value="party">Party</option>
-                    <option value="community">Community</option>
-                  </select>
-                </div>
-                <select id="createPathThemeType" class="hidden" aria-hidden="true">
-                  <option value="favorite">Favorite</option>
-                  <option value="standard" selected>Standard</option>
-                  <option value="custom">Custom</option>
-                </select>
-                <div class="create-path-field">
-                  <label for="createPathThemeSelect">Theme</label>
-                  <select id="createPathThemeSelect"></select>
-                </div>
-              </div>
-              <div id="createPathWeddingFields" class="hidden p-3 bg-purple-50/50 rounded-2xl border border-purple-100 space-y-2 mt-2" aria-hidden="true">
-                <span class="control-label block" style="font-size: 10px; color: #a090b0;">Wedding Details</span>
-                <div class="grid grid-cols-2 gap-2">
-                  <input type="text" id="createPathPartner1" placeholder="Partner 1" style="font-size: 13px;">
-                  <input type="text" id="createPathPartner2" placeholder="Partner 2" style="font-size: 13px;">
-                </div>
-              </div>
-              <div id="createPathBirthdayFields" class="hidden p-3 bg-green-50/50 rounded-2xl border border-green-100 space-y-2 mt-2" aria-hidden="true">
-                <span class="control-label block" style="font-size: 10px; color: #5c8a67;">Birthday Details</span>
-                <input type="text" id="createPathBirthdayName" placeholder="Birthday Person's Name" style="font-size: 13px;">
-              </div>
-              <div id="createPathDateFields" class="hidden p-3 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-2 mt-2" aria-hidden="true">
-                <span class="control-label block" style="font-size: 10px; color: #9b7a3c;">Event Date</span>
-                <input type="text" id="createPathEventDate" placeholder="e.g., April 27, 2026" style="font-size: 13px;">
-              </div>
-              <div id="createPathExpoFields" class="hidden p-3 bg-green-50/50 rounded-2xl border border-green-100 space-y-2 mt-2" aria-hidden="true">
-                <span class="control-label block" style="font-size: 10px; color: #5c8a67;">Expo Details</span>
-                <input type="text" id="createPathExpoCompany" placeholder="Company Name" style="font-size: 13px;">
-              </div>
-              <details class="create-optional-panel">
-                <summary>
-                  <span class="create-optional-title">Optional fonts</span>
-                  <span id="createPathFontNote" class="create-optional-note">Theme-based font suggestions update with the selected theme.</span>
-                </summary>
-                <div class="create-optional-body">
-                  <label for="createPathFontPairingSelect" class="hidden" aria-hidden="true">Choose Font Pairing</label>
-                  <select id="createPathFontPairingSelect" class="hidden" aria-hidden="true"></select>
-                  <div id="createPathFontPreviewCards" class="event-style-cards"></div>
-                </div>
-              </details>
-              <details class="create-optional-panel">
-                <summary>
-                  <span class="create-optional-title">Optional uploads</span>
-                  <span id="createPathAssetSummary" class="create-optional-note">No session assets selected yet.</span>
-                </summary>
-                <div class="create-optional-body">
-                  <div class="create-asset-grid">
-                    <div class="create-path-field">
-                      <label for="createPathBackgrounds">Backgrounds</label>
-                      <input type="file" id="createPathBackgrounds" accept="image/*" multiple>
-                    </div>
-                    <div class="create-path-field">
-                      <label for="createPathGreenBackgrounds">Green Screen Backgrounds</label>
-                      <input type="file" id="createPathGreenBackgrounds" accept="image/*" multiple>
-                    </div>
-                    <div class="create-path-field">
-                      <label for="createPathOverlays">Overlays</label>
-                      <input type="file" id="createPathOverlays" accept="image/*" multiple>
-                    </div>
-                    <div class="create-path-field">
-                      <label for="createPathTemplates">Templates</label>
-                      <input type="file" id="createPathTemplates" accept="image/*" multiple>
-                    </div>
-                    <div class="create-path-field create-path-field-full">
-                      <label for="createPathLogo">Logo</label>
-                      <input type="file" id="createPathLogo" accept="image/*">
-                    </div>
-                  </div>
-                </div>
-              </details>
-              <div class="btn-row hidden" style="justify-content:flex-start; margin-bottom:10px;" aria-hidden="true">
-                <button type="button" id="toggleThemeFavoriteBtn">Add to Favorites</button>
-              </div>
-              <div
-                id="createPathValidationMessage"
-                class="hidden"
-                role="alert"
-                aria-live="polite"
-                style="margin:0 0 10px; padding:10px 12px; border-radius:12px; border:1px solid #f1b7c3; background:#fff3f6; color:#9f2442; font-size:0.92em;"
-              ></div>
-              <div class="btn-row">
-                <button type="button" id="createEventBtn" class="primary">Use This Theme</button>
-              </div>
-            </div>
-            <div class="panel hidden" id="eventPathSelectPanel">
-              <h3 style="margin:0 0 6px;">Saved Events</h3>
-              <p style="margin:0 0 10px; color:#9aa; font-size:0.92em;">Optional saved profiles. The normal booth setup does not need one.</p>
-              <label for="eventProfileSelect">Existing Event</label>
-              <select id="eventProfileSelect"></select>
-              <div id="eventOverridesSummary" style="color:#9aa; font-size:0.9em;"></div>
-              <div class="btn-row">
-                <button type="button" id="chooseEventBtn">Open Event Setup</button>
-                <button type="button" onclick="exportCurrentEvent()">Export Event</button>
-              </div>
-            </div>
-          </div>
-        </details>
         <details class="panel-section" id="captureSection" data-setup-section="capture">
           <summary>Capture Modes</summary>
           <div class="section-content">
@@ -5958,10 +5763,6 @@
                 </span>
               </div>
               <div class="asset-row">
-                <label>Backgrounds:</label>
-                <div id="currentBackgrounds" class="asset-grid"></div>
-              </div>
-              <div class="asset-row">
                 <label>Green Screen BGs:</label>
                 <div id="currentGreenBackgrounds" class="asset-grid"></div>
               </div>
@@ -6154,39 +5955,6 @@
 
       </div>
       </div>
-      <details class="panel font-panel" id="fontLibrarySection" data-setup-section="capture">
-        <summary>Font Library</summary>
-        <p style="color:#9aa; margin:0;">Use quick picks when you need a fast event-ready look. The grouped library below is tuned for weddings, expos, community events, and seasonal booths.</p>
-        <div class="btn-row" style="justify-content:flex-end; margin-top:8px;">
-          <button type="button" onclick="closeAdminModal()">Done</button>
-        </div>
-        <div class="quick-picks-header">
-          <span>Quick Picks</span>
-          <button type="button" id="qpToggle" class="button-ghost" onclick="toggleQuickPicks()">show all</button>
-        </div>
-        <div id="quickPicks" class="quick-picks-grid"></div>
-        <div id="quickPicksGrouped" class="quick-pick-groups"></div>
-        <form id="quickPickForm" class="theme-editor-group">
-          <div class="theme-field">
-            <label for="addPairingHeading">Heading Font</label>
-            <input type="text" id="addPairingHeading" list="fontSuggestions">
-          </div>
-          <div class="theme-field">
-            <label for="addPairingBody">Body Font</label>
-            <input type="text" id="addPairingBody" list="fontSuggestions">
-          </div>
-          <div class="theme-field">
-            <label for="addPairingNotes">Notes</label>
-            <input type="text" id="addPairingNotes" placeholder="Optional notes">
-          </div>
-          <div class="theme-field">
-            <label for="addPairingPreview">Preview Text</label>
-            <input type="text" id="addPairingPreview" placeholder="Preview text">
-          </div>
-          <button type="submit" id="addPairingBtn" class="primary">Add Quick Pick</button>
-        </form>
-        <div id="customPairingsList" style="margin-top:10px;"></div>
-      </details>
     </div>
   </div>
 
@@ -6335,24 +6103,12 @@
             <strong id="launchConfirmEventName">No event selected</strong>
           </div>
           <div class="setup-session-item">
-            <span>Capture Mode</span>
-            <strong id="launchConfirmLayoutMode">Normal</strong>
-          </div>
-          <div class="setup-session-item">
             <span>Theme</span>
             <strong id="launchConfirmOverlayName">No theme selected</strong>
           </div>
           <div class="setup-session-item">
             <span>Font</span>
             <strong id="launchConfirmFontStatus">Use theme fonts</strong>
-          </div>
-          <div class="setup-session-item">
-            <span>Camera</span>
-            <strong id="launchConfirmCameraStatus">Not checked yet</strong>
-          </div>
-          <div class="setup-session-item">
-            <span>Save</span>
-            <strong id="launchConfirmOutputStatus">Local uploads</strong>
           </div>
           <div class="setup-session-item">
             <span>Overlays</span>

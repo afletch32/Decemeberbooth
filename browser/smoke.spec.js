@@ -81,6 +81,27 @@ async function gotoApp(page, path) {
   await page.goto(path, { waitUntil: "domcontentloaded" });
 }
 
+async function launchStillPhotoBooth(page) {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+  await page.locator("#startBoothButton").click({ force: true });
+  await page.locator("#startButton").click({ force: true });
+  await page
+    .locator(".welcome-mode-btn")
+    .filter({ hasText: "Single Still Photo" })
+    .click({ force: true });
+  await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
+  await expect(page.locator("#captureBtn")).toBeVisible();
+}
+
+async function getViewportOverflow(page) {
+  return page.evaluate(() => ({
+    viewportHeight: window.innerHeight,
+    documentHeight: document.documentElement.scrollHeight,
+    bodyHeight: document.body.scrollHeight,
+  }));
+}
+
 async function expectCreatePathValidation(page, options) {
   const {
     themePattern,
@@ -256,6 +277,25 @@ test("overlay and template thumbnail sections remember their open state", async 
     JSON.parse(localStorage.getItem("photoboothAssetPanels") || "{}")
   );
   expect(storedAfterReload).toMatchObject(storedPanels);
+});
+
+test("asset library cards toggle selection from the full card surface", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  const card = page.locator("#assetLibraryGrid .asset-library-card").first();
+  await expect(card).toBeVisible();
+
+  const initialState = (await card.getAttribute("aria-selected")) || "false";
+  const toggledState = initialState === "true" ? "false" : "true";
+
+  await card.click({ position: { x: 24, y: 24 } });
+  await expect(card).toHaveAttribute("aria-selected", toggledState);
+
+  await card.click({ position: { x: 24, y: 24 } });
+  await expect(card).toHaveAttribute("aria-selected", initialState);
 });
 
 test("admin can open the layout builder and return to booth setup", async ({
@@ -576,6 +616,72 @@ test("double-column strips use canonical slots with distinct photos", async ({
   expect(brightness(samples.rightBottomCenter)).toBeGreaterThan(120);
   expect(samples.ignoredMetadata[1]).toBeGreaterThan(150);
   expect(samples.ignoredMetadata[2]).toBeGreaterThan(150);
+});
+
+test("strip rendering honors manifest photoSlots before default geometry", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+  const samples = await page.evaluate(async () => {
+    const makePhoto = (color) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 40;
+      canvas.height = 40;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      return canvas;
+    };
+    const templateSvg = [
+      '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="180" viewBox="0 0 120 180">',
+      '<rect x="10" y="20" width="40" height="30" fill="none" stroke="#111" stroke-width="2"/>',
+      '<rect x="62" y="70" width="44" height="34" fill="none" stroke="#111" stroke-width="2"/>',
+      '<rect x="20" y="126" width="72" height="28" fill="none" stroke="#111" stroke-width="2"/>',
+      "</svg>",
+    ].join("");
+    const url = await window.__photoboothTest.composeStrip(
+      {
+        src: `data:image/svg+xml,${encodeURIComponent(templateSvg)}`,
+        layout: "photo_strip_3",
+        background: { type: "color", value: "#ffffff" },
+        foreground: {
+          type: "image",
+          src: `data:image/svg+xml,${encodeURIComponent(templateSvg)}`,
+        },
+        photoSlots: [
+          { x: 10 / 120, y: 20 / 180, width: 40 / 120, height: 30 / 180 },
+          { x: 62 / 120, y: 70 / 180, width: 44 / 120, height: 34 / 180 },
+          { x: 20 / 120, y: 126 / 180, width: 72 / 120, height: 28 / 180 },
+        ],
+      },
+      [makePhoto("#ff0000"), makePhoto("#00ff00"), makePhoto("#0000ff")]
+    );
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const pixelAt = (x, y) => Array.from(ctx.getImageData(x, y, 1, 1).data);
+    return {
+      size: [img.naturalWidth, img.naturalHeight],
+      firstSlot: pixelAt(30, 35),
+      secondSlot: pixelAt(84, 88),
+      thirdSlot: pixelAt(56, 140),
+      defaultFallbackArea: pixelAt(60, 38),
+    };
+  });
+
+  expect(samples.size).toEqual([120, 180]);
+  expect(samples.firstSlot[0]).toBeGreaterThan(200);
+  expect(samples.firstSlot[1]).toBeLessThan(80);
+  expect(samples.secondSlot[1]).toBeGreaterThan(150);
+  expect(samples.secondSlot[0]).toBeLessThan(100);
+  expect(samples.thirdSlot[2]).toBeGreaterThan(150);
+  expect(samples.defaultFallbackArea.slice(0, 3)).toEqual([255, 255, 255]);
 });
 
 test("single-photo overlays fall back to one full-frame photo slot", async ({
@@ -1002,6 +1108,29 @@ test("frame picker stays hidden until the welcome flow reaches capture", async (
   await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#captureBtn")).toBeVisible();
   await expect(page.locator("#mobileSettingsSheet")).toBeVisible();
+});
+
+test("booth capture layout does not vertically overflow common viewports", async ({
+  page,
+}) => {
+  const viewports = [
+    { width: 1440, height: 900, label: "chrome-desktop" },
+    { width: 1024, height: 768, label: "ipad-landscape" },
+    { width: 768, height: 1024, label: "ipad-portrait" },
+  ];
+
+  for (const viewport of viewports) {
+    await page.setViewportSize({
+      width: viewport.width,
+      height: viewport.height,
+    });
+    await launchStillPhotoBooth(page);
+    await page.waitForTimeout(100);
+    const metrics = await getViewportOverflow(page);
+    expect(metrics.documentHeight, viewport.label).toBeLessThanOrEqual(
+      metrics.viewportHeight
+    );
+  }
 });
 
 test("theme session wedding start does not require names or date", async ({

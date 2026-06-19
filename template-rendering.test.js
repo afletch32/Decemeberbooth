@@ -75,3 +75,21 @@ test("wedding templates use transparent photo windows", () => {
   assert.ok(timelessStrip.includes('width="548" height="380" rx="4" fill="none"'));
   assert.ok(timelessSingle.includes('width="1504" height="558" rx="6" fill="none"'));
 });
+
+test("final preview clears temporary capture overlays before display", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("function resetTransientCaptureOverlays()") &&
+      appScript.includes("DOM.countdownOverlay.classList.remove(\"show\")") &&
+      appScript.includes("DOM.lastShot.style.display = \"none\"") &&
+      appScript.includes("clearOverlayPreviewSurface();"),
+    "final preview should clear countdown, last-shot, and live overlay layers"
+  );
+  assert.ok(
+    appScript.includes("resetTransientCaptureOverlays();\n  if (DOM.boothScreen)") &&
+      appScript.includes("DOM.qrCodeContainer.classList.toggle(\"hidden\", !visible)") &&
+      appScript.includes("ctx.fillStyle = \"#ffffff\""),
+    "final preview should reset transient layers, hide empty QR panels, and avoid black canvas fills"
+  );
+});

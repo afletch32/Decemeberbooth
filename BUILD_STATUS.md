@@ -1,7 +1,32 @@
 Current goal
-- Build Asset Library Management for uploaded and built-in overlays, templates, and backgrounds.
+- Simplify the Setup workflow to Theme, Font, Asset Library, Booth Mode, and Launch.
 
 What is done
+- Removed Asset Library "Use" buttons and setup workflow remove buttons.
+- Removed setup theme browsing sections, theme filter cards, and the `Use This Theme` confirmation button.
+- Added searchable Theme and Font controls directly in Session Setup with immediate activation.
+- Removed duplicate setup status cards for camera, save/Cloudinary, and booth mode; those statuses stay in the top status bar.
+- Removed the visible Font Management section from Setup.
+- Changed Theme and Font setup controls from search-only inputs to dropdown comboboxes that show all options on click and filter only when typed into.
+- Changed final strip rendering to honor exported `manifest.photoSlots` before any legacy strip geometry fallback.
+- Preserved Overlay Builder `photoSlots`, `background`, and `foreground` fields when loading `templates.json`.
+- Added slot debug logging for raw manifest slots, normalized slots, and final draw coordinates.
+- Cleared countdown, last-shot, live overlay, and stale final media layers before final preview display.
+- Changed final canvas initialization and empty QR-panel visibility to avoid leftover black rectangles on the share screen.
+- Constrained booth-ready layout to `100dvh`, moved the capture button back into normal flex flow, and gave the camera preview a viewport-derived max height to prevent vertical page overflow.
+- Added temporary viewport overflow logging with `viewportHeight` and `documentHeight`.
+- Added browser coverage for Chrome desktop plus iPad-sized landscape and portrait viewports asserting no document overflow.
+- Restored Asset Library selected badges while keeping selected/unselected state driven by effective assets.
+- Restored remote `/api/assets` DELETE calls for library deletion while keeping local hide/archive fallback.
+- `npm test` passes with 75/75 tests after the Setup cleanup.
+- `npm test` passes with 75/75 tests after the Theme/Font combobox update.
+- `npm test` passes with 77/77 tests after the final render fixes.
+- `npm test` passes with 78/78 tests after the booth viewport-height fix.
+- Targeted Playwright passes for default double-column strip rendering and explicit manifest `photoSlots` rendering.
+- Targeted Playwright passes for booth viewport overflow in Chromium at desktop, iPad landscape, and iPad portrait dimensions.
+- Direct WebKit/Safari verification is not configured in the current Playwright project; the available automated coverage is Chromium with iPad-sized viewports.
+- Kept card-level selection toggles and adjusted theme reselect handling to clear session removals.
+- Verified the refactor with `npm test` and a targeted Playwright smoke for full-card toggling.
 - Disabled browser autofill on Advanced Theme Controls text inputs so manual edits are not overridden.
 - Changed Advanced Theme Controls text defaults to display as placeholders instead of pre-filled field values.
 - Added session-only text override state so no-event theme sessions can edit labels without mutating saved theme defaults.
@@ -156,7 +181,20 @@ What is done
 - Added session-only removal state for backgrounds, overlays, and templates so theme assets can be deselected for the current session without mutating the theme.
 - Added effective asset helpers that resolve `theme assets + session additions - session removals` for backgrounds, overlays, and templates.
 - Updated setup selection-state logic and asset-library selected state to use effective session lists.
+- Removed shared library overlays from the theme base overlay list so theme overlay counts no longer inherit the full library catalog.
+- Removed shared library backgrounds and templates from theme base lists so active themes no longer inherit catalog assets from other themes.
+- Removed canonical template catalog injection from the runtime template list; library templates now become active only through session selection.
+- Added temporary effective asset logging at theme load with theme name, category counts, and first 10 sources per category.
+- Changed launch-summary overlay/template effective counts from `assigned` wording to `selected` so they do not conflict with session-only assigned trays.
+- Simplified Asset Library card visuals to effective selected/not-selected only; selected cards use a green border and selected badge, while unselected cards stay normal.
+- Changed Asset Library cards to toggle selection from the full card using the effective asset set.
+- Removed setup Backgrounds, Overlays, and Templates tray panels and duplicate thumbnail grids; Asset Library is now the setup asset state surface.
+- Changed setup asset counts for backgrounds, overlays, and templates to use the same effective collections as Asset Library selected state.
+- Changed unselected Asset Library cards to render muted grey with reduced opacity, while selected cards remain full opacity with a green border.
 - `npm test` passes with 75/75 tests after the effective session asset update.
+- `npm test` passes with 75/75 tests after the asset source-boundary audit.
+- `npm test` passes with 75/75 tests after the Asset Library card-state simplification.
+- `npm test` passes with 75/75 tests after removing duplicate setup asset trays.
 
 What is in progress
 - Ready for the next booth UI fix or deploy.
@@ -221,6 +259,7 @@ Important decisions
 - All Asset Library cards expose the same management actions; repo-backed assets use metadata overrides/tombstones when files cannot be physically changed.
 - Customizable assets use the existing asset metadata model with `customizable` and `editableFields`; no separate asset-management store is being added.
 - Asset source labels are intentionally hidden from operator-facing cards; source is only an internal implementation detail.
+- Asset Library selection is expressed through the whole card surface and border/opacity state instead of badges or inline use/remove controls.
 - Repo-backed default assets are hidden through stored metadata tombstones instead of physical file deletion.
 - Guest idle/start mode hides operator controls; the booth mode bar remains an operator/setup control, not a guest-facing control.
 - Setup assigned trays render only current-session assets without selected styling; Asset Library cards show selected styling when already assigned.

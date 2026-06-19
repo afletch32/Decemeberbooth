@@ -1,18 +1,127 @@
 :root {
   --preview-landscape-width: min(96vw, 1200px);
   --preview-portrait-width: min(92vw, 720px);
+  --booth-ready-top-space: clamp(70px, 9dvh, 98px);
+  --booth-ready-bottom-space: max(8px, env(safe-area-inset-bottom, 0px) + 8px);
+  --booth-preview-max-height: min(56dvh, calc(100dvh - 232px));
+  --booth-preview-max-width: calc(100vw - clamp(20px, 4vw, 48px));
 }
 
-#videoWrap.view-landscape #videoContainer {
-  width: var(--preview-landscape-width);
+#boothScreen {
+  height: 100dvh;
+  min-height: 0;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+#boothScreen.booth-ready #boothMain {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  max-height: 100dvh;
+  justify-content: flex-start;
+  gap: clamp(6px, 1dvh, 12px);
+  overflow: hidden;
+  padding:
+    var(--booth-ready-top-space)
+    clamp(10px, 2vw, 22px)
+    var(--booth-ready-bottom-space);
+}
+
+#boothScreen.booth-ready #boothModeBar {
+  flex: 0 0 auto;
+  width: min(100%, 980px);
+  margin: 0 auto clamp(4px, 0.8dvh, 8px);
+}
+
+#boothScreen.booth-ready #videoWrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  width: 100%;
+  max-width: min(100%, calc(var(--live-camera-width, 860px) + 40px));
+  gap: clamp(6px, 1dvh, 10px);
+  justify-content: center;
+  overflow: visible;
+  padding: 0;
+}
+
+#boothScreen.booth-ready #videoContainer {
+  flex: 0 1 auto;
+  max-width: var(--booth-preview-max-width);
+  max-height: var(--booth-preview-max-height) !important;
+  width: min(100%, var(--live-camera-width, 860px)) !important;
+  min-height: 0;
+}
+
+#boothScreen.booth-ready #videoWrap.view-landscape #videoContainer {
   aspect-ratio: 3 / 2;
-  max-height: 82svh;
 }
 
-#videoWrap.view-portrait #videoContainer {
-  width: var(--preview-portrait-width);
+#boothScreen.booth-ready #videoWrap.view-portrait #videoContainer {
+  width: min(82vw, var(--live-camera-width, 540px)) !important;
   aspect-ratio: 2 / 3;
-  max-height: 86svh;
+}
+
+#boothScreen.booth-ready #captureStatusBar {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+#boothScreen.booth-ready #captureBtn {
+  position: static !important;
+  left: auto;
+  bottom: auto;
+  flex: 0 0 auto;
+  transform:
+    translateY(var(--edit-capture-button-y))
+    scale(var(--edit-capture-button-scale)) !important;
+}
+
+#boothScreen.booth-ready #captureBtn.primary {
+  width: clamp(104px, 13vw, 148px);
+  height: clamp(72px, 10dvh, 104px);
+  min-height: 0;
+  padding: 10px 12px;
+  font-size: clamp(0.82rem, 1.5vw, 1.08rem);
+}
+
+#boothScreen.booth-ready #captureBtn.primary.message-mode {
+  width: clamp(132px, 18vw, 184px);
+  min-height: clamp(76px, 11dvh, 104px);
+  height: auto;
+}
+
+@media (orientation: portrait) {
+  :root {
+    --booth-ready-top-space: clamp(66px, 8dvh, 92px);
+    --booth-preview-max-height: min(52dvh, calc(100dvh - 236px));
+  }
+}
+
+@media (max-height: 760px) {
+  :root {
+    --booth-ready-top-space: clamp(54px, 7dvh, 76px);
+    --booth-preview-max-height: min(50dvh, calc(100dvh - 198px));
+  }
+
+  #boothScreen.booth-ready #boothMain {
+    gap: 6px;
+  }
+
+  #boothScreen.booth-ready #boothHeader {
+    padding: 7px 14px;
+  }
+
+  #boothScreen.booth-ready #videoContainer {
+    border-width: 8px;
+    border-radius: 24px;
+  }
+
+  #boothScreen.booth-ready #captureBtn.primary {
+    height: clamp(62px, 9dvh, 84px);
+    border-radius: 26px;
+  }
 }
 
 #video,

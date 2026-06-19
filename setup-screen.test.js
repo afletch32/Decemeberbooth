@@ -10,47 +10,43 @@ function readProjectFile(...parts) {
 test("setup screen uses a compact toolbar for section controls", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts/app.js");
-  const commandBarIndex = html.indexOf('<div class="setup-command-bar">');
   const adminContainerIndex = html.indexOf('<div class="admin-container">');
 
-  assert.notEqual(commandBarIndex, -1, "setup command bar should exist");
   assert.notEqual(adminContainerIndex, -1, "admin container should exist");
-  assert.ok(commandBarIndex < adminContainerIndex, "toolbar should appear before the admin panels");
+  assert.ok(
+    !html.includes('<div class="setup-command-bar">'),
+    "setup tabs should be removed from the simplified flow"
+  );
   assert.ok(
     !html.includes('id="installBtn" class="primary hidden" type="button">Install App</button>'),
     "install button should not be part of the setup toolbar anymore"
   );
   assert.ok(
-    html.includes('id="backgroundThumbnailsPanel"'),
-    "background thumbnails panel should exist"
+    !html.includes('id="backgroundThumbnailsPanel"') &&
+      !html.includes('id="overlayThumbnailsPanel"') &&
+      !html.includes('id="templateThumbnailsPanel"'),
+    "duplicate setup asset tray panels should be removed"
   );
   assert.ok(
-    html.includes('id="overlayThumbnailsPanel"'),
-    "overlay thumbnails panel should exist"
+    !html.includes('id="sessionBackgrounds"') &&
+      !html.includes('id="currentOverlays"') &&
+      !html.includes('id="currentTemplates"') &&
+      !html.includes('id="currentBackgrounds"'),
+    "setup should not render duplicate asset thumbnail grids"
   );
   assert.ok(
-    html.includes('id="templateThumbnailsPanel"'),
-    "template thumbnails panel should exist"
+    html.includes('id="launchBackgroundCount"') &&
+      html.includes('id="launchOverlayCount"') &&
+      html.includes('id="launchStripStatus"'),
+    "selected asset counts should remain visible"
   );
   assert.ok(
-    html.includes('data-empty-text="No backgrounds available yet."'),
-    "background panel should expose an empty state"
+    html.includes('id="assetLibraryGrid"'),
+    "Asset Library should remain the setup asset surface"
   );
   assert.ok(
-    html.includes('data-empty-text="No overlays uploaded yet."'),
-    "overlay panel should expose an empty state"
-  );
-  assert.ok(
-    html.includes('data-empty-text="No templates uploaded yet."'),
-    "template panel should expose an empty state"
-  );
-  assert.ok(
-    appScript.includes('const ASSET_PANEL_STATE_KEY = "photoboothAssetPanels";'),
-    "asset panel state should persist locally per device"
-  );
-  assert.ok(
-    appScript.includes("function setupAssetPanelControls()"),
-    "asset panels should be wired through a reusable collapsible helper"
+    appScript.includes("function renderAssetLibrary()"),
+    "Asset Library should be wired as the setup asset renderer"
   );
   assert.ok(
     appScript.includes("scheduleThemesRemoteSync();"),
@@ -60,10 +56,13 @@ test("setup screen uses a compact toolbar for section controls", () => {
     !html.includes('data-session-action="event"'),
     "session setup summary should not include a duplicate event card"
   );
-  assert.ok(html.includes('id="setupTabEvent" class="setup-tab active" data-setup-tab="event" aria-pressed="true"'));
-  assert.ok(html.includes('id="setupTabCapture" class="setup-tab" data-setup-tab="capture" aria-pressed="false"'));
-  assert.ok(html.includes('id="setupTabShare" class="setup-tab" data-setup-tab="share" aria-pressed="false"'));
-  assert.ok(html.includes('<div class="btn-row event-path-switcher">'));
+  assert.ok(
+    html.includes('id="sessionThemeSearch"') &&
+      html.includes('id="sessionThemeToggle"') &&
+      html.includes('id="sessionFontSearch"') &&
+      html.includes('id="sessionFontToggle"'),
+    "Session Setup should expose searchable theme and font comboboxes"
+  );
 });
 
 test("setup section state updates button and panel accessibility attributes", () => {
@@ -71,98 +70,65 @@ test("setup section state updates button and panel accessibility attributes", ()
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    html.includes(".event-path-switcher > * {\n      flex: 0 1 280px;\n    }"),
-    "event path buttons should use content-sized flex values"
+    html.includes(".setup-combobox-button") &&
+      html.includes(".setup-combobox-options"),
+    "session setup controls should style dropdown comboboxes"
   );
   assert.ok(
-    html.includes("      flex: 0 0 auto;"),
-    "setup tabs should avoid stretching across the full row on desktop"
+    html.includes('id="modeToggle"'),
+    "Booth Mode control should remain in the simplified setup flow"
   );
   assert.ok(
-    appScript.includes('btn.setAttribute("aria-pressed", isActive ? "true" : "false");'),
-    "setup buttons should expose pressed state"
+    appScript.includes("activateThemeFromSetupKey(option.value)"),
+    "theme option clicks should activate immediately"
   );
   assert.ok(
-    appScript.includes('panel.classList.toggle("hidden", !show);'),
-    "setup panels should still be filtered by section"
+    appScript.includes("activateFontFromSetupFamily(font.name)"),
+    "font option clicks should activate immediately"
   );
 });
 
-test("setup flow is theme-first and quick start is a demo action", () => {
+test("setup flow uses direct theme and font activation", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    html.includes('id="quickStartBtn">Demo Booth Now</button>'),
-    "quick start should read as a one-tap booth demo action"
+    !html.includes("Start From A Theme") &&
+      !html.includes('id="createPathEventTypeCards"') &&
+      !html.includes('data-theme-filter-card="') &&
+      !html.includes("Use This Theme"),
+    "old theme start section, category cards, and confirmation button should be removed"
   );
   assert.ok(
-    html.includes('id="createPathEventTypeCards"'),
-    "setup flow should present theme filters as cards"
+    !html.includes('id="quickStartBtn"') &&
+      !html.includes('id="fontLibrarySection"') &&
+      !html.includes("Font Library"),
+    "quick demo and font management should not appear in setup"
   );
   assert.ok(
-    html.includes('data-theme-filter-card="all"') &&
-      html.includes('data-theme-filter-card="wedding"') &&
-      html.includes('data-theme-filter-card="expo"') &&
-      html.includes('data-theme-filter-card="party"') &&
-      html.includes('data-theme-filter-card="community"'),
-    "theme filter cards should expose all supported filter values"
+    html.includes('id="sessionThemeToggle"') &&
+      html.includes('id="sessionThemeMenu"') &&
+      html.includes('id="sessionThemeOptions" class="setup-combobox-options"') &&
+      html.includes('id="sessionFontToggle"') &&
+      html.includes('id="sessionFontMenu"') &&
+      html.includes('id="sessionFontOptions" class="setup-combobox-options"'),
+    "theme and font should be dropdown comboboxes with optional search"
   );
   assert.ok(
-    html.includes('id="createPathEventType" class="hidden"'),
-    "filter cards should keep the existing filter value as hidden state"
+    appScript.includes("function activateThemeFromSetupSearch()") &&
+      appScript.includes("loadTheme(key);") &&
+      appScript.includes("function activateFontFromSetupSearch()") &&
+      appScript.includes("applyFontSelection(family, family") &&
+      appScript.includes("function openSetupCombobox(kind)") &&
+      appScript.includes("renderSessionThemeOptions(DOM.sessionThemeSearch.value)") &&
+      appScript.includes("renderSessionFontOptions(DOM.sessionFontSearch.value)"),
+    "theme and font selection should activate immediately"
   );
   assert.ok(
-    html.includes('id="createPathDateFields" class="hidden'),
-    "theme sessions should not ask for an event date by default"
-  );
-  assert.ok(
-    html.includes('id="createEventBtn" class="primary">Use This Theme</button>'),
-    "default setup action should prepare a theme session instead of creating an event"
-  );
-  assert.ok(
-    appScript.includes('DOM.createPathEventType.value = "all";'),
-    "theme session flow should default to showing all themes"
-  );
-  assert.ok(
-    appScript.includes('function setCreatePathThemeFilter(value = "all")'),
-    "theme filter cards should update through a dedicated helper"
-  );
-  assert.ok(
-    appScript.includes('button.dataset.themeFilterCard || "all"'),
-    "filter card clicks should drive theme filtering"
-  );
-  assert.ok(
-    appScript.includes('const selectedType = inferThemeEventStyle(themeKey, theme);'),
-    "font suggestions should follow the selected theme"
-  );
-  assert.ok(
-    appScript.includes("updateCreatePathDetailFields("),
-    "setup flow should still refresh style-aware font suggestions from the chosen theme"
-  );
-  assert.ok(
-    appScript.includes("function shouldIncludeThemeForSelectedType(themeKey, theme, selectedType)"),
-    "theme selection should be filtered through a shared event-type helper"
-  );
-  assert.ok(
-    appScript.includes('normalizedSelected === "wedding" && isHolidayThemeKey(themeKey)'),
-    "wedding selections should exclude holiday themes"
-  );
-  assert.ok(
-    html.includes('id="createPathValidationMessage"'),
-    "setup flow should retain the inline validation/status area"
-  );
-  assert.ok(
-    appScript.includes("function prepareThemeSessionFromSetup()"),
-    "start flow should prepare a no-event theme session"
-  );
-  assert.ok(
-    appScript.includes('setActiveEventId("");'),
-    "theme session start should clear saved event selection"
-  );
-  assert.ok(
-    appScript.includes("getDateSessionSlug()"),
-    "theme sessions should save photos under a date slug"
+    !html.includes('id="launchCameraStatus"') &&
+      !html.includes('id="launchOutputStatus"') &&
+      !html.includes('id="launchLayoutMode"'),
+    "camera, save, and booth mode status cards should be removed from Session Setup"
   );
 });
 
@@ -200,25 +166,14 @@ test("demo booth mode showcases wedding, birthday, and general looks", () => {
   );
 });
 
-test("theme filter cards keep accessible selected state", () => {
+test("setup removes duplicate launch confirmation statuses", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    html.includes('class="theme-filter-card active" data-theme-filter-card="all" aria-pressed="true"'),
-    "all themes card should start selected"
-  );
-  assert.ok(
-    html.includes('data-theme-filter-card="wedding" aria-pressed="false"'),
-    "inactive filter cards should expose unpressed state"
-  );
-  assert.ok(
-    appScript.includes('button.classList.toggle("active", active);'),
-    "filter card sync should update visual selected state"
-  );
-  assert.ok(
-    appScript.includes('button.setAttribute("aria-pressed", active ? "true" : "false");'),
-    "filter card sync should update aria-pressed state"
+    !html.includes('id="launchConfirmCameraStatus"') &&
+      !html.includes('id="launchConfirmOutputStatus"') &&
+      !html.includes('id="launchConfirmLayoutMode"'),
+    "launch confirmation should not duplicate top-bar camera, upload, or booth-mode status"
   );
 });
 
@@ -259,16 +214,10 @@ test("event setup owns the day-to-day event editing controls", () => {
     "event-only asset uploads should require an active event"
   );
   assert.ok(
-    appScript.includes("setGrid(\n    DOM.sessionBackgrounds,\n    getSessionAssignedAssetEntries(\"background\"),"),
-    "session setup should render assigned backgrounds only"
-  );
-  assert.ok(
-    appScript.includes("setGrid(\n    DOM.currentOverlays,\n    getSessionAssignedAssetEntries(\"overlay\"),"),
-    "session setup should render assigned overlays only"
-  );
-  assert.ok(
-    appScript.includes("setGrid(\n    DOM.currentTemplates,\n    getSessionAssignedAssetEntries(\"template\"),"),
-    "session setup should render assigned templates only"
+    !appScript.includes("DOM.sessionBackgrounds,\n    getSessionAssignedAssetEntries(\"background\")") &&
+      !appScript.includes("DOM.currentOverlays,\n    getSessionAssignedAssetEntries(\"overlay\")") &&
+      !appScript.includes("DOM.currentTemplates,\n    getSessionAssignedAssetEntries(\"template\")"),
+    "session setup should not render assigned-only asset trays"
   );
   assert.ok(
     appScript.includes('if (hasOwnEventTextValue(active, key)) return active[key];'),
@@ -289,16 +238,17 @@ test("asset library selections have a strong visible and accessible state", () =
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    html.includes('content: "✓ Selected";') &&
-      html.includes("box-shadow:\n        0 0 0 4px #facc15") &&
-      html.includes(".asset-library-grid.has-selection .asset-library-card:not(.selected)"),
-    "selected asset library cards should have a prominent badge, border/glow, and optional unselected dimming"
+    html.includes('content: "Selected";') &&
+      html.includes("border-color: #16a34a;") &&
+      html.includes("opacity: 0.48;") &&
+      html.includes("filter: grayscale(0.55);"),
+    "selected asset library cards should have a green border and badge while unselected cards are muted"
   );
   assert.ok(
-    appScript.includes('card.classList.toggle("selected", isAssigned);') &&
-      appScript.includes('card.setAttribute("aria-selected", isAssigned ? "true" : "false");') &&
-      appScript.includes('grid.classList.toggle("has-selection", hasAssigned);'),
-    "asset library cards should expose assigned selected state to assistive tech"
+    appScript.includes("const effectiveAssetSet = getSessionEffectiveAssetSourceSet(asset.category);") &&
+      appScript.includes('card.classList.toggle("selected", isSelected);') &&
+      appScript.includes('card.setAttribute("aria-selected", isSelected ? "true" : "false");'),
+    "asset library cards should expose effective selected state to assistive tech"
   );
 });
 
@@ -320,26 +270,57 @@ test("guest idle screen hides operator booth mode controls", () => {
   );
 });
 
-test("setup trays are assigned-only and asset library owns selected state", () => {
+test("booth capture layout is constrained to the visible viewport", () => {
+  const html = readProjectFile("index.html");
+  const sizingCss = readProjectFile("final-preview-sizing-fix.css");
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    appScript.includes("function getSessionAssignedAssetEntries(category = \"\")") &&
-      appScript.includes("const assignedTray = options.assignedTray === true;") &&
-      appScript.includes("{ assignedTray: true }"),
-    "setup trays should render session-assigned assets only"
+    sizingCss.includes("#boothScreen {\n  height: 100dvh;") &&
+      sizingCss.includes("max-height: 100dvh;") &&
+      sizingCss.includes("overflow: hidden;"),
+    "booth screen should be fixed to the visible viewport"
   );
   assert.ok(
-    appScript.includes("getSessionAssignedAssetEntries(\"background\")") &&
-      appScript.includes("getSessionAssignedAssetEntries(\"overlay\")") &&
-      appScript.includes("getSessionAssignedAssetEntries(\"template\")"),
-    "background, overlay, and template tray counts should share assigned sources"
+    sizingCss.includes("#boothScreen.booth-ready #boothMain") &&
+      sizingCss.includes("min-height: 0;") &&
+      sizingCss.includes("var(--booth-preview-max-height)") &&
+      sizingCss.includes("position: static !important"),
+    "ready-state layout should flex and keep preview/capture controls in flow"
+  );
+  assert.ok(
+    appScript.includes("function logBoothViewportOverflow()") &&
+      appScript.includes("viewportHeight: window.innerHeight") &&
+      appScript.includes("documentHeight: document.documentElement.scrollHeight"),
+    "temporary viewport overflow logging should report the requested dimensions"
+  );
+  assert.ok(
+    html.includes('<link rel="stylesheet" href="final-preview-sizing-fix.css">'),
+    "viewport-fit overrides should load after the main booth CSS"
+  );
+});
+
+test("asset library is the only setup asset state surface", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("function getLaunchBackgroundCountLabel()") &&
+      appScript.includes("getSessionEffectiveAssetSourceSet(\"background\")") &&
+      appScript.includes("getSessionEffectiveAssetSourceSet(\"overlay\")") &&
+      appScript.includes("getSessionEffectiveAssetSourceSet(\"template\")"),
+    "visible setup counts should use effective asset collections"
+  );
+  assert.ok(
+    appScript.includes("renderAssetLibrary();") &&
+      appScript.includes('logEffectiveAssetState(theme, "loadTheme");'),
+    "theme loading should refresh Asset Library selected state"
   );
   assert.ok(
     appScript.includes("getSessionEffectiveAssetSourceSet(asset.category)") &&
-      appScript.includes('useBtn.addEventListener("click", () => useLibraryAsset(asset));') &&
+      appScript.includes('card.addEventListener("click", () => toggleLibraryAsset(asset));') &&
+      appScript.includes("removeSessionAssetBySrc(category, src);") &&
       appScript.includes("renderAssetLibrary();"),
-    "asset library should show assigned state and refresh when Use/remove changes the tray"
+    "asset library should toggle effective selection from the full card and refresh after changes"
   );
 });
 
