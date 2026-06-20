@@ -940,8 +940,8 @@ function setBoothControlsVisible(show) {
   if (DOM.boothControls) DOM.boothControls.classList.toggle("hidden", hidden);
   if (DOM.boothBackBtn) DOM.boothBackBtn.classList.toggle("hidden", hidden);
   if (DOM.captureBtn) DOM.captureBtn.classList.toggle("hidden", hidden);
-  if (DOM.boothScreen) {
-    DOM.boothScreen.classList.toggle("booth-ready", !!show);
+  if (DOM.boothScreen && show) {
+    DOM.boothScreen.classList.add("booth-ready");
   }
   if (!show) {
     setMobileSettingsOpen(false);
@@ -10306,7 +10306,9 @@ function setFinalMediaOrientation(element, width, height) {
   element.dataset.orientation = height > width ? "portrait" : "landscape";
 }
 
-function resetTransientCaptureOverlays() {
+function resetTransientCaptureOverlays(options = {}) {
+  const keepFinalStrip = !!options.keepFinalStrip;
+  const keepFinalLive = !!options.keepFinalLive;
   if (DOM.countdownOverlay) {
     DOM.countdownOverlay.classList.remove("show");
     DOM.countdownOverlay.textContent = "";
@@ -10317,14 +10319,14 @@ function resetTransientCaptureOverlays() {
     DOM.lastShot.removeAttribute("src");
   }
   clearOverlayPreviewSurface();
-  if (DOM.finalLive) {
+  if (DOM.finalLive && !keepFinalLive) {
     DOM.finalLive.pause();
     DOM.finalLive.removeAttribute("src");
     DOM.finalLive.removeAttribute("poster");
     DOM.finalLive.load();
     DOM.finalLive.classList.add("hidden");
   }
-  if (DOM.finalStrip) {
+  if (DOM.finalStrip && !keepFinalStrip) {
     DOM.finalStrip.classList.remove("hidden");
     DOM.finalStrip.removeAttribute("src");
     DOM.finalStrip.dataset.orientation = "";
@@ -10333,11 +10335,6 @@ function resetTransientCaptureOverlays() {
 
 function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
-  resetTransientCaptureOverlays();
-  if (DOM.boothScreen) {
-    DOM.boothScreen.classList.remove("countdown-mode");
-    DOM.boothScreen.classList.add("share-mode");
-  }
   const img = DOM.finalStrip;
   const previewFit = getSelectedCaptureMode() === "strip" ? "contain" : "cover";
   if (img) img.style.objectFit = previewFit;
@@ -10354,6 +10351,72 @@ function showFinal(url, options = {}) {
   const qrContainer = DOM.qrCodeContainer;
   const qrCanvas = DOM.qrCode;
   const panel = DOM.finalPreview;
+  const useLiveClip = !!(
+    DOM.finalLive &&
+    (lastLiveClipUrl || shareBlob) &&
+    !options.forceImage
+  );
+  if (useLiveClip) {
+    if (!lastLiveClipUrl && shareBlob) setLiveClip(shareBlob);
+    DOM.finalLive.src = lastLiveClipUrl;
+    DOM.finalLive.poster = url;
+    if (img) DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
+  } else if (DOM.finalLive) {
+    DOM.finalLive.pause();
+    DOM.finalLive.removeAttribute("src");
+    DOM.finalLive.removeAttribute("poster");
+    DOM.finalLive.load();
+    DOM.finalLive.classList.add("hidden");
+  }
+  let finalPreviewShown = false;
+  const revealFinalPreview = () => {
+    if (finalPreviewShown) return;
+    finalPreviewShown = true;
+    resetTransientCaptureOverlays({
+      keepFinalStrip: true,
+      keepFinalLive: useLiveClip,
+    });
+    if (DOM.boothScreen) {
+      DOM.boothScreen.classList.remove("countdown-mode");
+      DOM.boothScreen.classList.add("share-mode");
+    }
+    if (img) {
+      img.classList.remove("hidden");
+    }
+      if (DOM.finalLive && DOM.finalLive.src) {
+        DOM.finalLive.classList.remove("hidden");
+      }
+    panel.classList.add("show");
+    setFinalPreviewSharePanelVisible(false);
+    if (!skipShare && providedShareUrl) {
+      lastShareUrl = providedShareUrl;
+      renderQrCode(qrCanvas, lastShareUrl);
+      if (DOM.shareLink) {
+        DOM.shareLink.href = lastShareUrl;
+        DOM.shareLink.textContent = lastShareUrl;
+      }
+      if (qrContainer) qrContainer.classList.remove("hidden");
+      if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
+      setFinalPreviewSharePanelVisible(true);
+    } else if (!skipShare) {
+      lastShareUrl = null;
+      if (options.uploadQueued && DOM.qrHint) {
+        DOM.qrHint.textContent =
+          "Upload queued: QR will be available after retry.";
+        DOM.qrHint.style.display = "block";
+      }
+      if (offline && DOM.qrHint) {
+        DOM.qrHint.textContent = "Offline: QR disabled";
+        DOM.qrHint.style.display = "block";
+      }
+      if (!cloudinaryEnabled() && DOM.qrHint) {
+        DOM.qrHint.textContent = "Enable Cloudinary in Admin to show QR";
+        DOM.qrHint.style.display = "block";
+      }
+    }
+    resetIdleTimer();
+    hidePreviewTimer = setTimeout(hideFinal, 15000);
+  };
 
   // Reset form from previous use
   if (DOM.emailInput) DOM.emailInput.value = "";
@@ -10378,77 +10441,24 @@ function showFinal(url, options = {}) {
       if (DOM.finalLive) {
         DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
       }
+      revealFinalPreview();
     };
     img.src = url;
     if (img.complete) {
-      setFinalMediaOrientation(img, img.naturalWidth || img.width, img.naturalHeight || img.height);
+      setFinalMediaOrientation(
+        img,
+        img.naturalWidth || img.width,
+        img.naturalHeight || img.height
+      );
       if (DOM.finalLive) {
         DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
       }
+      revealFinalPreview();
     }
+  } else {
+    revealFinalPreview();
   }
-  const useLiveClip = !!(
-    DOM.finalLive &&
-    (lastLiveClipUrl || shareBlob) &&
-    !options.forceImage
-  );
-  if (useLiveClip) {
-    if (!lastLiveClipUrl && shareBlob) setLiveClip(shareBlob);
-    clearPreviewFreezeFrame();
-    DOM.finalLive.src = lastLiveClipUrl;
-    DOM.finalLive.poster = url;
-    if (img) DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
-    DOM.finalLive.classList.remove("hidden");
-    if (img) img.classList.add("hidden");
-    DOM.finalLive.play().catch(() => {});
-  } else if (DOM.finalLive) {
-    DOM.finalLive.pause();
-    DOM.finalLive.removeAttribute("src");
-    DOM.finalLive.load();
-    DOM.finalLive.classList.add("hidden");
-    if (img) img.classList.remove("hidden");
-  }
-  const offline = offlineModeActive();
-  // Default: hide QR/link until we have a public URL
-  if (qrContainer) qrContainer.classList.add("hidden");
-  if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "none";
-  if (DOM.qrHint) {
-    DOM.qrHint.style.display = "none";
-    DOM.qrHint.textContent = "";
-  }
-  if (DOM.shareStatus) {
-    DOM.shareStatus.style.display = "none";
-  }
-  setFinalPreviewSharePanelVisible(false);
-  if (!skipShare && providedShareUrl) {
-    lastShareUrl = providedShareUrl;
-    renderQrCode(qrCanvas, lastShareUrl);
-    if (DOM.shareLink) {
-      DOM.shareLink.href = lastShareUrl;
-      DOM.shareLink.textContent = lastShareUrl;
-    }
-    if (qrContainer) qrContainer.classList.remove("hidden");
-    if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
-    setFinalPreviewSharePanelVisible(true);
-  } else if (!skipShare) {
-    lastShareUrl = null;
-    if (options.uploadQueued && DOM.qrHint) {
-      DOM.qrHint.textContent = "Upload queued: QR will be available after retry.";
-      DOM.qrHint.style.display = "block";
-    }
-    if (offline && DOM.qrHint) {
-      DOM.qrHint.textContent = "Offline: QR disabled";
-      DOM.qrHint.style.display = "block";
-    }
-    if (!cloudinaryEnabled() && DOM.qrHint) {
-      DOM.qrHint.textContent = "Enable Cloudinary in Admin to show QR";
-      DOM.qrHint.style.display = "block";
-    }
-  }
-  panel.classList.add("show");
-  resetIdleTimer();
-  hidePreviewTimer = setTimeout(hideFinal, 15000);
-
+  if (useLiveClip && DOM.finalLive) DOM.finalLive.play().catch(() => {});
   // No local-QR fallback: only show QR when a public link is ready (handled above)
 }
 

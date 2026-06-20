@@ -1133,6 +1133,23 @@ test("booth capture layout does not vertically overflow common viewports", async
   }
 });
 
+test("countdown does not resize the live preview frame", async ({ page }) => {
+  await launchStillPhotoBooth(page);
+  const before = await page.locator("#videoContainer").boundingBox();
+  expect(before).not.toBeNull();
+
+  await page.evaluate(() => {
+    const booth = document.querySelector("#boothScreen");
+    if (booth) booth.classList.add("countdown-mode");
+  });
+  await page.waitForTimeout(50);
+
+  const after = await page.locator("#videoContainer").boundingBox();
+  expect(after).not.toBeNull();
+  expect(after.width).toBeCloseTo(before.width, 0);
+  expect(after.height).toBeCloseTo(before.height, 0);
+});
+
 test("theme session wedding start does not require names or date", async ({
   page,
 }) => {

@@ -1,5 +1,5 @@
 Current goal
-- Restore reachable Setup sections with a lightweight Event / Capture / Share switcher.
+- Fix the capture-to-share transition so the frame stays stable and the final preview never flashes white.
 
 What is done
 - Added a compact Setup Sections switcher that reuses the existing section state machinery.
@@ -23,6 +23,10 @@ What is done
 - `npm test` passes with 75/75 tests after the Theme/Font combobox update.
 - `npm test` passes with 77/77 tests after the final render fixes.
 - `npm test` passes with 78/78 tests after the booth viewport-height fix.
+- Fixed countdown layout so the live preview frame keeps the same geometry during preview, countdown, capture, freeze frame, and share.
+- Kept the captured image visible until the final preview image is loaded, then revealed the share shell without an empty frame.
+- Added regression coverage for no countdown resize and no empty frame between capture and share.
+- `npm test` passes with 78/78 tests after the capture-to-share transition fix.
 - Targeted Playwright passes for default double-column strip rendering and explicit manifest `photoSlots` rendering.
 - Targeted Playwright passes for booth viewport overflow in Chromium at desktop, iPad landscape, and iPad portrait dimensions.
 - Direct WebKit/Safari verification is not configured in the current Playwright project; the available automated coverage is Chromium with iPad-sized viewports.
@@ -202,8 +206,7 @@ What is in progress
 - Ready for the next booth UI fix or deploy.
 
 Next steps
-- Verify Event, Capture, and Share panels remain reachable from the new switcher.
-- Smoke test Live Photo and Green Screen visibility in the Capture panel.
+- Verify the capture/share transition in the browser if a live smoke is needed.
 
 Known bugs/blockers
 - Cross-device sync still depends on using the live HTTP/HTTPS deployment rather than `file://`.
@@ -218,6 +221,7 @@ Known bugs/blockers
 - Live-photo video preview now prioritizes the recorded clip; the poster image is still used as the fallback/thumbnail.
 - Live-photo and message QR links now use the canonical uploaded video URL when a video blob is available.
 - Wedding demo currently ships one single-photo overlay and one photostrip template per wedding theme.
+- The capture/share transition now waits for the final preview image to load before revealing the shell, so any remaining flicker would likely be browser-specific.
 - All double-column photostrips duplicate the three captured photos into both columns using the canonical six-slot grid.
 - Wedding strip templates remain single-column because their SVG art is 720x2160 and has three native photo windows.
 - Photo overlay format selection affects photo modes only; strip and layout modes keep their existing template selection flow.

@@ -80,16 +80,18 @@ test("final preview clears temporary capture overlays before display", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    appScript.includes("function resetTransientCaptureOverlays()") &&
-      appScript.includes("DOM.countdownOverlay.classList.remove(\"show\")") &&
-      appScript.includes("DOM.lastShot.style.display = \"none\"") &&
-      appScript.includes("clearOverlayPreviewSurface();"),
-    "final preview should clear countdown, last-shot, and live overlay layers"
+    appScript.includes("function resetTransientCaptureOverlays(options = {})") &&
+      appScript.includes("keepFinalStrip") &&
+      appScript.includes("keepFinalLive"),
+    "final preview should be able to preserve the final media while clearing transient layers"
   );
   assert.ok(
-    appScript.includes("resetTransientCaptureOverlays();\n  if (DOM.boothScreen)") &&
-      appScript.includes("DOM.qrCodeContainer.classList.toggle(\"hidden\", !visible)") &&
-      appScript.includes("ctx.fillStyle = \"#ffffff\""),
-    "final preview should reset transient layers, hide empty QR panels, and avoid black canvas fills"
+    appScript.includes("const revealFinalPreview = () => {") &&
+      appScript.includes("resetTransientCaptureOverlays({") &&
+      appScript.includes("keepFinalStrip: true") &&
+      appScript.includes("keepFinalLive: useLiveClip") &&
+      appScript.includes("img.onload = () => {") &&
+      appScript.includes("revealFinalPreview();"),
+    "final preview should wait for the image load before revealing the share shell"
   );
 });
