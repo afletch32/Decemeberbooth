@@ -90,6 +90,9 @@ test("final preview clears temporary capture overlays before display", () => {
       appScript.includes("resetTransientCaptureOverlays({") &&
       appScript.includes("keepFinalStrip: true") &&
       appScript.includes("keepFinalLive: useLiveClip") &&
+      appScript.includes("const offline = offlineModeActive();") &&
+      appScript.includes("if (img) img.classList.add(\"hidden\");") &&
+      appScript.includes("img.classList.toggle(\"hidden\", useLiveClip);") &&
       appScript.includes("img.onload = () => {") &&
       appScript.includes("revealFinalPreview();"),
     "final preview should wait for the image load before revealing the share shell"

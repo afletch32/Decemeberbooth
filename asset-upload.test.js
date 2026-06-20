@@ -156,6 +156,13 @@ test("uploaded assets register in a persistent shared library", () => {
       appScript.includes('method: "DELETE"'),
     "library assets should support hiding/archiving and deletion"
   );
+  assert.ok(
+    appScript.includes(
+      'const repoBackedAsset = fallbackAsset && fallbackAsset.source === "theme";'
+    ) &&
+      appScript.includes("if (repoBackedAsset || !canSyncRemote()) {\n    return;\n  }"),
+    "repo-backed asset deletes should keep a remote tombstone instead of disappearing"
+  );
 });
 
 test("asset library management supports sorting and editable metadata", () => {

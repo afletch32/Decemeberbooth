@@ -10348,6 +10348,7 @@ function showFinal(url, options = {}) {
     options.shareUrl && /^https?:/i.test(String(options.shareUrl))
       ? String(options.shareUrl)
       : "";
+  const offline = offlineModeActive();
   const qrContainer = DOM.qrCodeContainer;
   const qrCanvas = DOM.qrCode;
   const panel = DOM.finalPreview;
@@ -10360,6 +10361,7 @@ function showFinal(url, options = {}) {
     if (!lastLiveClipUrl && shareBlob) setLiveClip(shareBlob);
     DOM.finalLive.src = lastLiveClipUrl;
     DOM.finalLive.poster = url;
+    if (img) img.classList.add("hidden");
     if (img) DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
   } else if (DOM.finalLive) {
     DOM.finalLive.pause();
@@ -10380,12 +10382,10 @@ function showFinal(url, options = {}) {
       DOM.boothScreen.classList.remove("countdown-mode");
       DOM.boothScreen.classList.add("share-mode");
     }
-    if (img) {
-      img.classList.remove("hidden");
+    if (img) img.classList.toggle("hidden", useLiveClip);
+    if (DOM.finalLive && DOM.finalLive.src) {
+      DOM.finalLive.classList.remove("hidden");
     }
-      if (DOM.finalLive && DOM.finalLive.src) {
-        DOM.finalLive.classList.remove("hidden");
-      }
     panel.classList.add("show");
     setFinalPreviewSharePanelVisible(false);
     if (!skipShare && providedShareUrl) {
@@ -13273,11 +13273,15 @@ async function updateAssetLibraryItem(id, patch = {}, fallbackAsset = null) {
 
 async function deleteAssetLibraryItem(id, fallbackAsset = null) {
   if (!id) return;
+  const repoBackedAsset = fallbackAsset && fallbackAsset.source === "theme";
   await updateAssetLibraryItem(
     id,
     { hidden: true, archived: true },
     fallbackAsset
   );
+  if (repoBackedAsset || !canSyncRemote()) {
+    return;
+  }
   if (canSyncRemote()) {
     try {
       await fetch("/api/assets", {
