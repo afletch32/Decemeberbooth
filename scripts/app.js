@@ -185,7 +185,7 @@ let themes = {
         background: "assets/general/basic/backgrounds/",
         backgroundFolder: "assets/general/basic/backgrounds/",
         logo: "",
-        overlaysFolder: "assets/general/Summer/overlays/",
+        overlaysFolder: "assets/general/summer/overlays/",
         templatesFolder: "assets/general/basic/templates/",
         welcome: {
           title: "Hello Summer!",
@@ -302,8 +302,8 @@ let themes = {
         font: "'Comic Neue', cursive",
         background: "",
         logo: "",
-        overlaysFolder: "assets/Hawks/overlays/",
-        templatesFolder: "assets/Hawks/templates/",
+        overlaysFolder: "assets/school/hawks/overlays/",
+        templatesFolder: "assets/school/hawks/templates/",
         welcome: {
           title: "Go Hawks!",
           portrait: "",
@@ -320,7 +320,7 @@ let themes = {
         font: "'Comic Neue', cursive",
         backgroundFolder: "",
         logo: "",
-        overlaysFolder: "assets/school/ANE/overlays/",
+        overlaysFolder: "assets/school/ane/overlays/",
         templatesFolder: "",
         welcome: {
           title: "ANE",
@@ -431,8 +431,8 @@ let themes = {
         accent: "#ff5e91",
         accent2: "white",
         font: "'Comic Neue', cursive",
-        backgroundFolder: "assets/holidays/winter/Valentines/backgrounds/",
-        templatesFolder: "assets/holidays/winter/Valentines/templates/",
+        backgroundFolder: "assets/holidays/winter/valentines/backgrounds/",
+        templatesFolder: "assets/holidays/winter/valentines/templates/",
         welcome: {
           title: "Happy Valentine's Day!",
           portrait: "",
@@ -452,9 +452,9 @@ themes.spring = {
       accent: "#0f6d2f",
       accent2: "white",
       font: "'Comic Neue', cursive",
-      backgroundFolder: "assets/holidays/spring/st.patricksday/backgrounds/",
+      backgroundFolder: "assets/holidays/spring/st-patricks-day/backgrounds/",
       overlaysFolder: "",
-      templatesFolder: "assets/holidays/spring/st.patricksday/templates/",
+      templatesFolder: "assets/holidays/spring/st-patricks-day/templates/",
       welcome: {
         title: "Happy St. Patrick's Day!",
         portrait: "",

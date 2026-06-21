@@ -1,5 +1,6 @@
 [
   {
+    "src": "garden-vows-strip-overlay.svg",
     "id": "garden-vows-strip",
     "name": "Garden Vows Strip",
     "type": "photo-strip-layout",
@@ -44,6 +45,7 @@
     ]
   },
   {
+    "src": "garden-vows-single-overlay.svg",
     "id": "garden-vows-single",
     "name": "Garden Vows Single",
     "type": "overlay",

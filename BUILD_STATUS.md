@@ -1,7 +1,37 @@
-Current goal
-- Fix the capture-to-share transition so the frame stays stable and the final preview never flashes white.
+History
+- Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.
 
 What is done
+- Renamed the Hawks, Summer, ANE, birthday, Halloween, Christmas, Valentines, and St. Patrick's Day asset folders/files to normalized names.
+- Regenerated folder manifests under `assets/` with normalized filenames.
+- Updated `scripts/builtin-asset-manifests.mjs` and the related manifest/tests for normalized birthday and summer asset names.
+- Regenerated `themes.from_assets.cleaned.json` and `themes_from_assets_manifest.csv` from the normalized asset tree.
+- Restored wedding overlay manifest metadata so `photoSlots`, `background`, and `foreground` remain intact.
+- `npm test` passes with 78/78 tests after the normalization pass.
+
+What is in progress
+- None.
+
+Next steps
+- Review the diff or proceed with any follow-up cleanup.
+
+Known bugs/blockers
+- Cross-device sync still depends on using the live HTTP/HTTPS deployment rather than `file://`.
+- Asset file persistence still depends on shared Cloudinary storage being configured for uploads.
+- Hard deletion removes app library metadata; unsigned browser uploads do not provide Cloudinary destroy permissions, so Cloudinary media cleanup must be done from Cloudinary unless a signed backend delete flow is added.
+
+Important decisions
+- Kept the logical theme/group IDs intact while normalizing filesystem names and generated asset paths.
+- Wedding overlay manifests must preserve `photoSlots`, `background`, and `foreground` metadata for overlay-slot rendering tests.
+
+Current goal
+- Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.
+
+What is done
+- Renamed the Hawks, Summer, ANE, birthday, Halloween, Christmas, Valentines, and St. Patrick's Day asset folders/files to normalized names.
+- Regenerated folder manifests under `assets/` with normalized filenames.
+- Updated `scripts/builtin-asset-manifests.mjs` and the related manifest/tests for normalized birthday and summer asset names.
+- Regenerated `themes.from_assets.cleaned.json` and `themes_from_assets_manifest.csv` from the normalized asset tree.
 - Added a compact Setup Sections switcher that reuses the existing section state machinery.
 - Removed Asset Library "Use" buttons and setup workflow remove buttons.
 - Removed setup theme browsing sections, theme filter cards, and the `Use This Theme` confirmation button.
@@ -203,10 +233,10 @@ What is done
 - `npm test` passes with 78/78 tests after restoring the setup section switcher.
 
 What is in progress
-- Ready for the next booth UI fix or deploy.
+- Verifying the renamed asset tree and generated outputs with the test suite.
 
 Next steps
-- Verify the capture/share transition in the browser if a live smoke is needed.
+- Run `npm test` and confirm no stale asset references remain in runtime or tests.
 
 Known bugs/blockers
 - Cross-device sync still depends on using the live HTTP/HTTPS deployment rather than `file://`.

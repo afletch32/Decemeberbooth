@@ -1,5 +1,6 @@
 [
   {
+    "src": "timeless-romance-strip-overlay.svg",
     "id": "timeless-romance-strip",
     "name": "Timeless Romance Strip",
     "type": "photo-strip-layout",
@@ -44,6 +45,7 @@
     ]
   },
   {
+    "src": "timeless-romance-single-overlay.svg",
     "id": "timeless-romance-single",
     "name": "Timeless Romance Single",
     "type": "overlay",

@@ -4,11 +4,11 @@ const BUILTIN_ASSET_MANIFESTS = {
     "sparkles.png"
   ],
   "assets/general/basic/overlays/": [
-    "blue smoke frame.png",
-    "flowers frame.png",
+    "blue-smoke-frame.png",
+    "flowers-frame.png",
     "general-frame-black.png",
     "general-frame-blue-flowers.png",
-    "shes a good man overlay.png"
+    "shes-a-good-man-overlay.png"
   ],
   "assets/general/basic/templates/": [],
   "assets/general/birthday/backgrounds/": [
@@ -16,30 +16,30 @@ const BUILTIN_ASSET_MANIFESTS = {
   ],
   "assets/general/birthday/overlays/": [
     "7.png",
-    "banner frame.png",
-    "birthday confetti frame.png",
-    "colorful sparkle frame.png",
-    "double photo birthday frame.png",
-    "happy birthday balloons frame.png",
-    "sparkle sides frame.png"
+    "banner-frame.png",
+    "birthday-confetti-frame.png",
+    "colorful-sparkle-frame.png",
+    "double-photo-birthday-frame.png",
+    "happy-birthday-balloons-frame.png",
+    "sparkle-sides-frame.png"
   ],
-  "assets/general/Summer/overlays/": [
+  "assets/general/summer/overlays/": [
     "13.png",
-    "4th of july.png",
-    "border with frame.png",
+    "4th-of-july.png",
+    "border-with-frame.png",
     "border.png",
-    "Enchanted Woodland Photo Booth Frame.png",
+    "enchanted-woodland-photo-booth-frame.png",
     "fantasy.png",
-    "hello summer.png",
-    "pink and yellow.png",
-    "pool with frame 2.png",
-    "pool with frame.png",
-    "tropical border 2.png",
-    "tropical border with frame.png",
-    "tropical border.png"
+    "hello-summer.png",
+    "pink-and-yellow.png",
+    "pool-with-frame-2.png",
+    "pool-with-frame.png",
+    "tropical-border-2.png",
+    "tropical-border-with-frame.png",
+    "tropical-border.png"
   ],
   "assets/general/birthday/templates/": [
-    { src: "birthday banner.png", layout: "double_column", slots: [
+    { src: "birthday-banner.png", layout: "double_column", slots: [
       { x: 50, y: 357, w: 500, h: 414 },
       { x: 50, y: 823, w: 500, h: 414 },
       { x: 50, y: 1288, w: 500, h: 413 },
@@ -154,7 +154,7 @@ const BUILTIN_ASSET_MANIFESTS = {
     },
     { src: "garden-vows-single-template.svg", layout: "single_photo" }
   ],
-  "assets/Hawks/overlays/": [
+  "assets/school/hawks/overlays/": [
     "1.png",
     "2.png",
     "3.png",
@@ -165,9 +165,9 @@ const BUILTIN_ASSET_MANIFESTS = {
     "hawks-frame-helmets.png",
     "hawks-frame-players.png"
   ],
-  "assets/Hawks/templates/": [
+  "assets/school/hawks/templates/": [
     {
-      src: "go hawks.png",
+      src: "go-hawks.png",
       layout: "double_column",
       slots: [
         { x: 50, y: 357, w: 500, h: 414 },
@@ -179,9 +179,9 @@ const BUILTIN_ASSET_MANIFESTS = {
       ]
     }
   ],
-  "assets/school/ANE/overlays/": [
-    "ANE-frame-stream-night-landscape-2.png",
-    "School-frame-landscape-1.png"
+  "assets/school/ane/overlays/": [
+    "ane-frame-stream-night-landscape-2.png",
+    "school-frame-landscape-1.png"
   ],
   "assets/holidays/fall/halloween/backgrounds/": [
     "halloween-background-grey-1.jpg",
@@ -197,9 +197,9 @@ const BUILTIN_ASSET_MANIFESTS = {
     "4.png",
     "5.png",
     "6.png",
-    "fall leaves frame.png",
-    "graveyard transparent frame.png",
-    "halloween overlay ghosts.png",
+    "fall-leaves-frame.png",
+    "graveyard-transparent-frame.png",
+    "halloween-overlay-ghosts.png",
     "halloween-frame-boo.png",
     "halloween-frame-fog.png",
     "halloween-frame-groovy-ghosties.png",
@@ -209,11 +209,11 @@ const BUILTIN_ASSET_MANIFESTS = {
     "halloween-frame-landscape-5.png",
     "halloween-frame-landscape-6.png",
     "halloween-frame-landscape-7.png",
-    "halloween-frame-landscaspe-6.png",
-    "halloween-frame-lanscape-10.png",
-    "halloween-frame-lanscape-9.png",
+    "halloween-frame-landscape-6.png",
+    "halloween-frame-landscape-10.png",
+    "halloween-frame-landscape-9.png",
     "halloween-frame-skeletons.png",
-    "smoke corner frame.png"
+    "smoke-corner-frame.png"
   ],
   "assets/holidays/fall/halloween/templates/": [
     { src: "halloween-template-2.png", layout: "double_column", headerPct: 0.22, columnPadPct: 0.055, slotSpacingPct: 0.024, footerPct: 0.035 },
@@ -226,13 +226,13 @@ const BUILTIN_ASSET_MANIFESTS = {
     "christmas-background-2.png",
     "christmas-background-3.png",
     "christmas-background-4.png",
-    "christmas-backlground-5.png",
+    "christmas-background-5.png",
     "christmas.png",
     "winter.png"
   ],
   "assets/holidays/winter/christmas/overlays/": [],
   "assets/holidays/winter/christmas/templates/": [
-    { src: "chritsmas-template-1.png", layout: "double_column", slots: [
+    { src: "christmas-template-1.png", layout: "double_column", slots: [
       { x: 50, y: 357, w: 500, h: 414 },
       { x: 50, y: 823, w: 500, h: 414 },
       { x: 50, y: 1288, w: 500, h: 413 },
@@ -240,7 +240,7 @@ const BUILTIN_ASSET_MANIFESTS = {
       { x: 650, y: 823, w: 500, h: 414 },
       { x: 650, y: 1288, w: 500, h: 413 }
     ] },
-    { src: "mrery christmas.png", layout: "double_column", slots: [
+    { src: "merry-christmas.png", layout: "double_column", slots: [
       { x: 50, y: 357, w: 500, h: 414 },
       { x: 50, y: 823, w: 500, h: 414 },
       { x: 50, y: 1288, w: 500, h: 413 },
@@ -249,19 +249,19 @@ const BUILTIN_ASSET_MANIFESTS = {
       { x: 650, y: 1288, w: 500, h: 413 }
     ] }
   ],
-  "assets/holidays/winter/Valentines/backgrounds/": [
+  "assets/holidays/winter/valentines/backgrounds/": [
     "valentines-background-1.png",
     "valentines-background-2.png"
   ],
-  "assets/holidays/winter/Valentines/templates/": [
-    { src: "valentines pink.png", layout: "double_column" }
+  "assets/holidays/winter/valentines/templates/": [
+    { src: "valentines-pink.png", layout: "double_column" }
   ],
-  "assets/holidays/spring/st.patricksday/backgrounds/": [
-    "st.patricksday-background-1.png"
+  "assets/holidays/spring/st-patricks-day/backgrounds/": [
+    "st-patricks-day-background-1.png"
   ],
-  "assets/holidays/spring/st.patricksday/templates/": [
-    { src: "st patricks.png", layout: "double_column" },
-    { src: "stpatricksday-template-1.png", layout: "double_column" }
+  "assets/holidays/spring/st-patricks-day/templates/": [
+    { src: "st-patricks-day.png", layout: "double_column" },
+    { src: "st-patricks-day-template-1.png", layout: "double_column" }
   ]
 };
 

@@ -29,7 +29,7 @@ test("getBuiltinAssetManifest returns cloned objects", async () => {
 
   first[0].src = "changed.png";
 
-  assert.equal(second[0].src, "birthday banner.png");
+  assert.equal(second[0].src, "birthday-banner.png");
 });
 
 test("wedding overlays remain available in built-in asset manifests", async () => {
@@ -53,9 +53,9 @@ test("wedding overlays remain available in built-in asset manifests", async () =
 
 test("summer overlays remain available in built-in asset manifests", async () => {
   const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
-  const entries = getBuiltinAssetManifest("assets/general/Summer/overlays/");
+  const entries = getBuiltinAssetManifest("assets/general/summer/overlays/");
 
   assert.equal(entries.length, 13);
-  assert.ok(entries.includes("hello summer.png"));
-  assert.ok(entries.includes("tropical border with frame.png"));
+  assert.ok(entries.includes("hello-summer.png"));
+  assert.ok(entries.includes("tropical-border-with-frame.png"));
 });

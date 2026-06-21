@@ -8,8 +8,6 @@ const ASSETS_DIR = "assets";              // your current assets tree
 const THEMES_PUBLIC_ROOT = "public/themes"; // where static files should live
 const OUTPUT_JSON = "themes.from_assets.cleaned.json"; // KV-ready JSON
 const OUTPUT_MANIFEST = "themes_from_assets_manifest.csv";
-const FORCE_GENERAL_ROOT = true; // keep "general" as the top when found
-
 // ------------------------
 // Helpers
 // ------------------------
@@ -43,24 +41,15 @@ function toPublicUrl(absDst) {
   return "/" + rel; // => /themes/...
 }
 
-// Derive a theme ID and layout from folder names
-// Expecting assets/(general/)?<category>/<themeName>/{backgrounds,overlays,templates}
+// Derive a theme ID and output path from the asset folder hierarchy.
 function deriveThemeInfo(absThemeDir) {
-  const rel = path.relative(ASSETS_DIR, absThemeDir).split(path.sep); // e.g., ["general","birthday","sam"]
-  // Find "general" prefix if present
-  let idx = 0;
-  if (rel[0] && rel[0].toLowerCase() === "general") idx = 1;
+  const relParts = path.relative(ASSETS_DIR, absThemeDir).split(path.sep).filter(Boolean);
+  const themeName = safe(relParts.pop() || "misc");
+  const categoryPath = relParts.map(safe).filter(Boolean).join("/");
+  const themeId = [categoryPath, themeName].filter(Boolean).join("-");
+  const destBase = path.join(THEMES_PUBLIC_ROOT, ...relParts, themeName);
 
-  const category = safe(rel[idx] || "misc");
-  const themeName = safe(rel[idx + 1] || category);
-  const themeId = `${category}-${themeName}`; // e.g., birthday-sam
-
-  // destination base dir under public/themes
-  const destBase = FORCE_GENERAL_ROOT
-    ? path.join(THEMES_PUBLIC_ROOT, "general", category, themeName)
-    : path.join(THEMES_PUBLIC_ROOT, category, themeName);
-
-  return { themeId, category, themeName, destBase };
+  return { themeId, categoryPath, themeName, destBase };
 }
 
 // ------------------------
@@ -95,7 +84,7 @@ function main() {
   const results = [];
 
   for (const themeDir of themes) {
-    const { themeId, category, themeName, destBase } = deriveThemeInfo(themeDir);
+    const { themeId, categoryPath, themeName, destBase } = deriveThemeInfo(themeDir);
 
     const bgDir = path.join(themeDir, "backgrounds");
     const ovDir = path.join(themeDir, "overlays");
@@ -115,7 +104,7 @@ function main() {
         const url = toPublicUrl(dst);
         urls.push(url);
         const bytes = fs.existsSync(dst) ? fs.statSync(dst).size : 0;
-        manifestRows.push([themeId, category, themeName, fieldLabel, src, dst, url, bytes]);
+        manifestRows.push([themeId, categoryPath, themeName, fieldLabel, src, dst, url, bytes]);
       }
       return urls;
     };
@@ -128,7 +117,7 @@ function main() {
     const themeObj = {
       id: themeId,
       name: themeName.replace(/_/g, " "),
-      category,
+      category: categoryPath,
       background: bgUrls[0] || undefined,
       overlay: ovUrls[0] || undefined,
       template: tpUrls[0] || undefined,

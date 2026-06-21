@@ -2,7 +2,7 @@
 // Rebuild overlays.json, templates.json, backgrounds.json by scanning asset folders.
 // Usage:
 //   node tools/update-manifests.js               # scan repo under ./assets
-//   node tools/update-manifests.js assets/Hawks  # scan a subfolder only
+//   node tools/update-manifests.js assets/school/hawks  # scan a subfolder only
 
 const fs = require("fs");
 const fsp = require("fs/promises");

@@ -1236,7 +1236,7 @@ test("opaque wedding svg overlays are auto-fixed before render", async ({
       );
     const birthdayPng =
       await window.__photoboothTest.getOverlayFixedAsset(
-        "assets/general/birthday/overlays/banner frame.png"
+        "assets/general/birthday/overlays/banner-frame.png"
       );
     return {
       timeless,
@@ -1254,7 +1254,7 @@ test("opaque wedding svg overlays are auto-fixed before render", async ({
   });
   expect(result.garden.renderSrc).toContain("data:image/svg+xml");
   expect(result.birthdayPng).toBe(
-    "assets/general/birthday/overlays/banner frame.png"
+    "assets/general/birthday/overlays/banner-frame.png"
   );
 });
 
