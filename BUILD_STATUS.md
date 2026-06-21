@@ -1,3 +1,17 @@
+Current goal
+- Fix Summer theme defaults so only overlays are selected.
+
+What is done
+- Removed Summer background and template defaults from the built-in theme seed and persisted local theme data.
+- Verified Summer no longer references the Basic background/template folders.
+- `npm test` passes with 78/78 tests.
+
+What is in progress
+- None.
+
+Next steps
+- Review the UI again if you want to confirm the Summer counts in the browser.
+
 History
 - Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.
 
