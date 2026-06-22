@@ -99,6 +99,40 @@
         font-weight: 600;
         color: #5a9e74;
       }
+      .style-preset-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .style-preset-button {
+        border: 1px solid #e2dce6;
+        border-radius: 10px;
+        padding: 9px 12px;
+        background: #fff;
+        color: #6b5f70;
+        font-size: 12px;
+        font-weight: 600;
+        text-align: left;
+        transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s;
+      }
+      .style-preset-button:hover,
+      .style-preset-button:focus-visible {
+        border-color: #a8d5ba;
+        box-shadow: 0 4px 14px rgba(168, 213, 186, 0.22);
+        transform: translateY(-1px);
+        outline: none;
+      }
+      .style-preset-button strong {
+        display: block;
+        color: #3d3442;
+        font-size: 13px;
+        margin-bottom: 2px;
+      }
+      .style-preset-button span {
+        color: #8a7f8e;
+        font-size: 11px;
+        font-weight: 500;
+      }
       .manifest-box {
         background: #f9f6fb;
         border: 1px solid #e2dce6;
@@ -273,6 +307,27 @@
                   cursor: pointer;
                 "
               />
+            </div>
+            <div>
+              <label class="control-label">Style Presets</label>
+              <div class="style-preset-grid" id="stylePresetGrid">
+                <button type="button" class="style-preset-button" data-style-preset="classic">
+                  <strong>Classic</strong>
+                  <span>Soft neutral tones</span>
+                </button>
+                <button type="button" class="style-preset-button" data-style-preset="midnight">
+                  <strong>Midnight</strong>
+                  <span>High-contrast event look</span>
+                </button>
+                <button type="button" class="style-preset-button" data-style-preset="sunset">
+                  <strong>Sunset</strong>
+                  <span>Warm celebratory palette</span>
+                </button>
+                <button type="button" class="style-preset-button" data-style-preset="garden">
+                  <strong>Garden</strong>
+                  <span>Fresh wedding-friendly colors</span>
+                </button>
+              </div>
             </div>
             <div style="display: none">
               <label class="control-label" for="layoutGuide"
@@ -1028,6 +1083,48 @@
         $("accentColor").value = defaults.accent;
         $("headline").value = defaults.headline;
         $("footer").value = defaults.footer;
+      }
+
+      const STYLE_PRESETS = {
+        classic: {
+          label: "Classic",
+          description: "Soft neutral tones",
+          background: "#f5e6d3",
+          text: "#3d3442",
+          accent: "#a8d5ba",
+        },
+        midnight: {
+          label: "Midnight",
+          description: "High-contrast event look",
+          background: "#241f24",
+          text: "#f7f2eb",
+          accent: "#b89d7c",
+        },
+        sunset: {
+          label: "Sunset",
+          description: "Warm celebratory palette",
+          background: "#ffd8d1",
+          text: "#8b5c2f",
+          accent: "#f07d3f",
+        },
+        garden: {
+          label: "Garden",
+          description: "Fresh wedding-friendly colors",
+          background: "#edf6e8",
+          text: "#4d3c40",
+          accent: "#4f9a43",
+        },
+      };
+
+      function applyStylePreset(presetKey) {
+        const preset = STYLE_PRESETS[presetKey];
+        if (!preset) {
+          return;
+        }
+        $("templateBgColor").value = preset.background;
+        $("templateTextColor").value = preset.text;
+        $("accentColor").value = preset.accent;
+        updatePreview();
       }
 
       function cloneSlots(slots) {
@@ -2578,6 +2675,11 @@
       $("templateVariant").addEventListener("change", () => {
         applyTemplateDefaults();
         updatePreview();
+      });
+      document.querySelectorAll("[data-style-preset]").forEach((button) => {
+        button.addEventListener("click", () =>
+          applyStylePreset(button.dataset.stylePreset || "")
+        );
       });
       $("layoutGuide").addEventListener("change", () => {
         customSlots = null;
