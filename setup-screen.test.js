@@ -192,6 +192,16 @@ test("asset library background selection only reflects explicit theme defaults",
   );
 });
 
+test("asset library state uses the concise variable name", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("let assetLibrary = { assets: [] };") &&
+      !appScript.includes("uploadedAssetLibrary"),
+    "asset library state should not use the old uploaded-only variable name"
+  );
+});
+
 test("demo booth mode showcases wedding, birthday, and general looks", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");

@@ -809,9 +809,6 @@ const DOM = {
   bulkToTemplates: document.getElementById("bulkToTemplates"),
   bulkAssetCancel: document.getElementById("bulkAssetCancel"),
   bulkAssetApply: document.getElementById("bulkAssetApply"),
-  uploadedAssetLibraryPanel: document.getElementById(
-    "uploadedAssetLibraryPanel"
-  ),
   assetLibrarySearch: document.getElementById("assetLibrarySearch"),
   assetLibraryCategory: document.getElementById("assetLibraryCategory"),
   assetLibraryReadiness: document.getElementById("assetLibraryReadiness"),
