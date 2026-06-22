@@ -176,6 +176,31 @@ test("overlay builder uses a template catalog with a single uploaded logo slot",
   );
 });
 
+test("overlay builder exposes friendly style presets for existing style inputs", () => {
+  const overlayMaker = readProjectFile("overlay-maker.html");
+
+  assert.ok(
+    overlayMaker.includes('id="stylePresetGrid"') &&
+      overlayMaker.includes('data-style-preset="classic"') &&
+      overlayMaker.includes('data-style-preset="midnight"') &&
+      overlayMaker.includes('data-style-preset="sunset"') &&
+      overlayMaker.includes('data-style-preset="garden"'),
+    "style presets should be visible as simple preset buttons"
+  );
+  assert.ok(
+    overlayMaker.includes("const STYLE_PRESETS = {") &&
+      overlayMaker.includes('background: "#241f24"') &&
+      overlayMaker.includes('accent: "#4f9a43"') &&
+      overlayMaker.includes("function applyStylePreset(presetKey)"),
+    "preset buttons should map to the existing color controls"
+  );
+  assert.ok(
+    overlayMaker.includes('document.querySelectorAll("[data-style-preset]")') &&
+      overlayMaker.includes("applyStylePreset(button.dataset.stylePreset || \"\")"),
+    "preset buttons should wire into the existing preview update flow"
+  );
+});
+
 test("overlay builder navigation and markup avoid known broken states", () => {
   const overlayMaker = readProjectFile("overlay-maker.html");
 

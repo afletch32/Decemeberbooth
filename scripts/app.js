@@ -2435,6 +2435,8 @@ function renderSessionThemeOptions(filter = "") {
       const title = document.createElement("div");
       title.className = "setup-combobox-group-title";
       title.textContent = groupName;
+      title.setAttribute("role", "presentation");
+      title.setAttribute("aria-hidden", "true");
       const list = document.createElement("div");
       list.className = "setup-combobox-group-options";
       groupEntries.forEach((entry) => {
@@ -13721,6 +13723,12 @@ function promptForAssetName(asset) {
 
 function getSelectableThemeEntries() {
   const entries = [];
+  const seenKeys = new Set();
+  const addEntry = (entry) => {
+    if (!entry || !entry.key || seenKeys.has(entry.key)) return;
+    seenKeys.add(entry.key);
+    entries.push(entry);
+  };
   for (const rootKey of Object.keys(themes || {})) {
     if (rootKey === "_meta") continue;
     const group = themes[rootKey];
@@ -13732,7 +13740,7 @@ function getSelectableThemeEntries() {
       for (const leafKey of Object.keys(children)) {
         const theme = children[leafKey];
         if (!theme || typeof theme !== "object") continue;
-        entries.push({
+        addEntry({
           key: `${rootKey}:${leafKey}`,
           group: groupName,
           label: String(theme.name || leafKey).trim(),
@@ -13741,7 +13749,7 @@ function getSelectableThemeEntries() {
       }
     }
     if (!group.themes && !group.holidays && group.name) {
-      entries.push({ key: rootKey, group: "Other", label: groupName, theme: group });
+      addEntry({ key: rootKey, group: "Other", label: groupName, theme: group });
     }
   }
   return entries.sort((a, b) =>
@@ -17993,7 +18001,7 @@ function removeEventTemplate(src) {
 function getThemeAssetSourceSet(kind, theme) {
   const target = theme && typeof theme === "object" ? theme : null;
   if (kind === "background") {
-    return new Set(getBaseBackgroundList(target));
+    return new Set(getExplicitBackgroundList(target));
   }
   if (kind === "overlay") {
     return new Set(
@@ -18190,6 +18198,10 @@ function undoLastRemoval() {
 }
 
 function getBaseBackgroundList(theme) {
+  return getExplicitBackgroundList(theme);
+}
+
+function getExplicitBackgroundList(theme) {
   if (!theme || typeof theme !== "object") return [];
   const removed = new Set(
     Array.isArray(theme.backgroundsRemoved) ? theme.backgroundsRemoved : []
@@ -18197,11 +18209,24 @@ function getBaseBackgroundList(theme) {
   const explicit = Array.isArray(theme.backgrounds)
     ? theme.backgrounds.filter((src) => src && !removed.has(src))
     : [];
-  if (explicit.length) return mergeUniqueUrls(explicit);
-  const fallback = typeof theme.background === "string" && theme.background.trim()
-    ? [theme.background]
-    : [];
-  return fallback.filter((src) => src && !removed.has(src));
+  const uniqueExplicit = mergeUniqueUrls(explicit);
+  if (uniqueExplicit.length) {
+    const catalog = getThemeBackgroundCatalogList(theme);
+    if (catalog.length) {
+      const selected = new Set(uniqueExplicit);
+      if (
+        selected.size === catalog.length &&
+        catalog.every((src) => selected.has(src))
+      ) {
+        return [];
+      }
+    }
+    return uniqueExplicit;
+  }
+  const fallback =
+    typeof theme.background === "string" ? theme.background.trim() : "";
+  if (!fallback || fallback.endsWith("/") || removed.has(fallback)) return [];
+  return [fallback];
 }
 
 function getBackgroundList(theme) {

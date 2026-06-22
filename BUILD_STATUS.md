@@ -1,21 +1,19 @@
 Current goal
-- Organize the setup Theme dropdown into friendly grouped sections without changing theme keys.
+- Fix the setup-screen Theme dropdown duplicates and Asset Library background selection without changing stored theme keys or export format.
 
 What is done
-- Inspected the setup screen theme combobox flow and the backing theme select population path.
-- Added grouped setup-theme display helpers, clean friendly labels, and stable value-to-label mapping.
-- Kept theme keys and option values unchanged while rendering setup options by user-facing sections.
-- Added a regression test for grouped theme display and key-preserving selection behavior.
+- Added grouped setup-theme rendering with friendlier labels and stronger section headers.
+- Added a defensive explicit-background selector so catalog-sized background lists do not show as selected.
+- Kept the setup screen theme keys and option values stable.
 
 What is in progress
-- None.
+- Verifying the setup-screen regressions with tests.
 
 Next steps
-- Review the diff if a visual pass is needed.
+- Run `npm test` and `git diff --check`, then review any failures.
 
 Validation
-- `npm test` passes with 80/80 tests.
-- `git diff --check` passes.
+- Pending.
 
 History
 - Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.

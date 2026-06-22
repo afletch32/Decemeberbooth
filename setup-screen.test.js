@@ -126,6 +126,8 @@ test("setup theme dropdown groups themes by user-facing category", () => {
   assert.ok(
     html.includes(".setup-combobox-group") &&
       html.includes(".setup-combobox-group-title") &&
+      html.includes("pointer-events: none;") &&
+      html.includes("user-select: none;") &&
       html.includes(".setup-combobox-group-options"),
     "theme dropdown should style grouped section headers"
   );
@@ -140,6 +142,13 @@ test("setup theme dropdown groups themes by user-facing category", () => {
     "theme setup should define friendly group and label mappings"
   );
   assert.ok(
+    appScript.includes("const seenKeys = new Set();") &&
+      appScript.includes("seenKeys.has(entry.key)") &&
+      appScript.includes('title.setAttribute("role", "presentation");') &&
+      appScript.includes('title.setAttribute("aria-hidden", "true");'),
+    "grouped theme options should dedupe by key and render non-selectable section headers"
+  );
+  assert.ok(
     appScript.includes("option.value = entry.key;") &&
       appScript.includes("activateThemeFromSetupKey(entry.key)") &&
       appScript.includes('option.textContent = entry.label;'),
@@ -149,6 +158,26 @@ test("setup theme dropdown groups themes by user-facing category", () => {
     !appScript.includes('${theme.name} > ${subTheme.name}') &&
       !appScript.includes('theme.name = `${theme.name} >'),
     "theme dropdown should not use arrow labels"
+  );
+});
+
+test("asset library background selection only reflects explicit theme defaults", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("function getExplicitBackgroundList(theme)") &&
+      appScript.includes("if (!fallback || fallback.endsWith(\"/\") || removed.has(fallback)) return [];"),
+    "themes without explicit background defaults should not treat folder discovery as selected state"
+  );
+  assert.ok(
+    appScript.includes("selected.size === catalog.length") &&
+      appScript.includes("getExplicitBackgroundList(target)"),
+    "catalog-sized background defaults should be ignored by the selected-state source set"
+  );
+  assert.ok(
+    appScript.includes("Array.isArray(theme.backgrounds)") &&
+      appScript.includes("mergeUniqueUrls(explicit)"),
+    "background defaults should still come from explicit theme state"
   );
 });
 

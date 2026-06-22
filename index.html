@@ -366,23 +366,30 @@
 
     .setup-combobox-group {
       display: grid;
-      gap: 4px;
-      padding: 4px 0 8px;
+      gap: 8px;
+      padding: 10px 0 12px;
     }
 
     .setup-combobox-group + .setup-combobox-group {
-      border-top: 1px solid rgba(148, 163, 184, 0.2);
-      margin-top: 4px;
-      padding-top: 10px;
+      border-top: 1px solid rgba(148, 163, 184, 0.28);
+      margin-top: 2px;
+      padding-top: 14px;
     }
 
     .setup-combobox-group-title {
-      color: #64748b;
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      padding: 0 10px;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(116, 191, 157, 0.18), rgba(116, 191, 157, 0.08));
+      border-left: 4px solid #74bf9d;
+      border-radius: 10px;
+      color: #29403a;
+      display: flex;
+      font-size: 0.74rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      padding: 8px 10px;
       text-transform: uppercase;
+      user-select: none;
+      pointer-events: none;
     }
 
     .setup-combobox-group-options {
