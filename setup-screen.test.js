@@ -74,7 +74,8 @@ test("setup section state updates button and panel accessibility attributes", ()
     "Booth Mode control should remain in the simplified setup flow"
   );
   assert.ok(
-    appScript.includes("activateThemeFromSetupKey(option.value)"),
+    appScript.includes("option.value = entry.key;") &&
+      appScript.includes("activateThemeFromSetupKey(entry.key)"),
     "theme option clicks should activate immediately"
   );
   assert.ok(
@@ -115,6 +116,39 @@ test("setup flow uses direct theme and font activation", () => {
       html.includes('id="sharingSection"') &&
       html.includes('id="currentAssetsSection"'),
     "capture, share, and event content should remain in the section panels"
+  );
+});
+
+test("setup theme dropdown groups themes by user-facing category", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes(".setup-combobox-group") &&
+      html.includes(".setup-combobox-group-title") &&
+      html.includes(".setup-combobox-group-options"),
+    "theme dropdown should style grouped section headers"
+  );
+  assert.ok(
+    appScript.includes("const THEME_SETUP_GROUP_ORDER = [") &&
+      appScript.includes('"General",') &&
+      appScript.includes('"Youth",') &&
+      appScript.includes('const THEME_SETUP_LABEL_OVERRIDES = {') &&
+      appScript.includes('hawks: "Hawks"') &&
+      appScript.includes('ane: "Amanda North"') &&
+      appScript.includes('"st patricks day": "St. Patrick\'s Day"'),
+    "theme setup should define friendly group and label mappings"
+  );
+  assert.ok(
+    appScript.includes("option.value = entry.key;") &&
+      appScript.includes("activateThemeFromSetupKey(entry.key)") &&
+      appScript.includes('option.textContent = entry.label;'),
+    "setup options should keep the original keys while showing friendly labels"
+  );
+  assert.ok(
+    !appScript.includes('${theme.name} > ${subTheme.name}') &&
+      !appScript.includes('theme.name = `${theme.name} >'),
+    "theme dropdown should not use arrow labels"
   );
 });
 
