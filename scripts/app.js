@@ -1890,7 +1890,7 @@ function getSessionEffectiveAssetSourceSet(category = "") {
   const normalized = normalizeUploadedAssetCategory(category);
   const theme = activeTheme || getSelectedThemeTarget();
   if (normalized === "background") {
-    return new Set(getEffectiveBackgroundList(theme));
+    return new Set(getSelectedBackgroundSourceList(theme));
   }
   if (normalized === "overlay") {
     return new Set(
@@ -18001,7 +18001,7 @@ function removeEventTemplate(src) {
 function getThemeAssetSourceSet(kind, theme) {
   const target = theme && typeof theme === "object" ? theme : null;
   if (kind === "background") {
-    return new Set(getExplicitBackgroundList(target));
+    return new Set(getBaseBackgroundList(target));
   }
   if (kind === "overlay") {
     return new Set(
@@ -18198,10 +18198,22 @@ function undoLastRemoval() {
 }
 
 function getBaseBackgroundList(theme) {
-  return getExplicitBackgroundList(theme);
+  if (!theme || typeof theme !== "object") return [];
+  const removed = new Set(
+    Array.isArray(theme.backgroundsRemoved) ? theme.backgroundsRemoved : []
+  );
+  const explicit = Array.isArray(theme.backgrounds)
+    ? theme.backgrounds.filter((src) => src && !removed.has(src))
+    : [];
+  if (explicit.length) return mergeUniqueUrls(explicit);
+  const fallback =
+    typeof theme.background === "string" && theme.background.trim()
+      ? [theme.background]
+      : [];
+  return fallback.filter((src) => src && !removed.has(src));
 }
 
-function getExplicitBackgroundList(theme) {
+function getSelectedBackgroundSourceList(theme) {
   if (!theme || typeof theme !== "object") return [];
   const removed = new Set(
     Array.isArray(theme.backgroundsRemoved) ? theme.backgroundsRemoved : []
