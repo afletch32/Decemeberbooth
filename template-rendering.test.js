@@ -75,3 +75,26 @@ test("wedding templates use transparent photo windows", () => {
   assert.ok(timelessStrip.includes('width="548" height="380" rx="4" fill="none"'));
   assert.ok(timelessSingle.includes('width="1504" height="558" rx="6" fill="none"'));
 });
+
+test("final preview clears temporary capture overlays before display", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("function resetTransientCaptureOverlays(options = {})") &&
+      appScript.includes("keepFinalStrip") &&
+      appScript.includes("keepFinalLive"),
+    "final preview should be able to preserve the final media while clearing transient layers"
+  );
+  assert.ok(
+    appScript.includes("const revealFinalPreview = () => {") &&
+      appScript.includes("resetTransientCaptureOverlays({") &&
+      appScript.includes("keepFinalStrip: true") &&
+      appScript.includes("keepFinalLive: useLiveClip") &&
+      appScript.includes("const offline = offlineModeActive();") &&
+      appScript.includes("if (img) img.classList.add(\"hidden\");") &&
+      appScript.includes("img.classList.toggle(\"hidden\", useLiveClip);") &&
+      appScript.includes("img.onload = () => {") &&
+      appScript.includes("revealFinalPreview();"),
+    "final preview should wait for the image load before revealing the share shell"
+  );
+});

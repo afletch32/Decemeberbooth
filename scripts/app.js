@@ -182,11 +182,11 @@ let themes = {
         accent: "#00a6c8",
         accent2: "#fff8dc",
         font: "'Comic Neue', cursive",
-        background: "assets/general/basic/backgrounds/",
-        backgroundFolder: "assets/general/basic/backgrounds/",
+        background: "",
+        backgroundFolder: "",
         logo: "",
-        overlaysFolder: "assets/general/Summer/overlays/",
-        templatesFolder: "assets/general/basic/templates/",
+        overlaysFolder: "assets/general/summer/overlays/",
+        templatesFolder: "",
         welcome: {
           title: "Hello Summer!",
           portrait: "",
@@ -302,8 +302,8 @@ let themes = {
         font: "'Comic Neue', cursive",
         background: "",
         logo: "",
-        overlaysFolder: "assets/Hawks/overlays/",
-        templatesFolder: "assets/Hawks/templates/",
+        overlaysFolder: "assets/school/hawks/overlays/",
+        templatesFolder: "assets/school/hawks/templates/",
         welcome: {
           title: "Go Hawks!",
           portrait: "",
@@ -320,7 +320,7 @@ let themes = {
         font: "'Comic Neue', cursive",
         backgroundFolder: "",
         logo: "",
-        overlaysFolder: "assets/school/ANE/overlays/",
+        overlaysFolder: "assets/school/ane/overlays/",
         templatesFolder: "",
         welcome: {
           title: "ANE",
@@ -431,8 +431,8 @@ let themes = {
         accent: "#ff5e91",
         accent2: "white",
         font: "'Comic Neue', cursive",
-        backgroundFolder: "assets/holidays/winter/Valentines/backgrounds/",
-        templatesFolder: "assets/holidays/winter/Valentines/templates/",
+        backgroundFolder: "assets/holidays/winter/valentines/backgrounds/",
+        templatesFolder: "assets/holidays/winter/valentines/templates/",
         welcome: {
           title: "Happy Valentine's Day!",
           portrait: "",
@@ -452,9 +452,9 @@ themes.spring = {
       accent: "#0f6d2f",
       accent2: "white",
       font: "'Comic Neue', cursive",
-      backgroundFolder: "assets/holidays/spring/st.patricksday/backgrounds/",
+      backgroundFolder: "assets/holidays/spring/st-patricks-day/backgrounds/",
       overlaysFolder: "",
-      templatesFolder: "assets/holidays/spring/st.patricksday/templates/",
+      templatesFolder: "assets/holidays/spring/st-patricks-day/templates/",
       welcome: {
         title: "Happy St. Patrick's Day!",
         portrait: "",
@@ -514,6 +514,16 @@ const DOM = {
   ),
   createPathThemeType: document.getElementById("createPathThemeType"),
   createPathThemeSelect: document.getElementById("createPathThemeSelect"),
+  sessionThemeToggle: document.getElementById("sessionThemeToggle"),
+  sessionThemeValue: document.getElementById("sessionThemeValue"),
+  sessionThemeMenu: document.getElementById("sessionThemeMenu"),
+  sessionThemeSearch: document.getElementById("sessionThemeSearch"),
+  sessionThemeOptions: document.getElementById("sessionThemeOptions"),
+  sessionFontToggle: document.getElementById("sessionFontToggle"),
+  sessionFontValue: document.getElementById("sessionFontValue"),
+  sessionFontMenu: document.getElementById("sessionFontMenu"),
+  sessionFontSearch: document.getElementById("sessionFontSearch"),
+  sessionFontOptions: document.getElementById("sessionFontOptions"),
   createPathFontPairingSelect: document.getElementById(
     "createPathFontPairingSelect"
   ),
@@ -813,6 +823,12 @@ const DOM = {
   refreshAssetLibraryBtn: document.getElementById("refreshAssetLibraryBtn"),
   assetLibraryGrid: document.getElementById("assetLibraryGrid"),
   assetLibraryStatus: document.getElementById("assetLibraryStatus"),
+  assetThemeDefaultsModal: document.getElementById("assetThemeDefaultsModal"),
+  assetThemeDefaultsTitle: document.getElementById("assetThemeDefaultsTitle"),
+  assetThemeDefaultsSummary: document.getElementById("assetThemeDefaultsSummary"),
+  assetThemeDefaultsList: document.getElementById("assetThemeDefaultsList"),
+  assetThemeDefaultsCancel: document.getElementById("assetThemeDefaultsCancel"),
+  assetThemeDefaultsSave: document.getElementById("assetThemeDefaultsSave"),
   addCharacterBtn: document.getElementById("addCharacterBtn"),
   currentCharacter: document.getElementById("currentCharacter"),
   themeGreenBackgrounds: document.getElementById("themeGreenBackgrounds"),
@@ -930,13 +946,23 @@ function setBoothControlsVisible(show) {
   if (DOM.boothControls) DOM.boothControls.classList.toggle("hidden", hidden);
   if (DOM.boothBackBtn) DOM.boothBackBtn.classList.toggle("hidden", hidden);
   if (DOM.captureBtn) DOM.captureBtn.classList.toggle("hidden", hidden);
-  if (DOM.boothScreen) {
-    DOM.boothScreen.classList.toggle("booth-ready", !!show);
+  if (DOM.boothScreen && show) {
+    DOM.boothScreen.classList.add("booth-ready");
   }
   if (!show) {
     setMobileSettingsOpen(false);
   }
   syncMobileSettingsUi();
+  requestAnimationFrame(() => logBoothViewportOverflow());
+}
+
+function logBoothViewportOverflow() {
+  try {
+    console.log({
+      viewportHeight: window.innerHeight,
+      documentHeight: document.documentElement.scrollHeight,
+    });
+  } catch (_) {}
 }
 
 function normalizeBoothModeValue(value) {
@@ -1026,6 +1052,7 @@ function applyBoothModeClass(nextMode = mode) {
     DOM.boothScreen.dataset.mode = normalizedMode;
     DOM.boothScreen.dataset.captureMode = captureMode;
   }
+  requestAnimationFrame(() => logBoothViewportOverflow());
   return { normalizedMode, captureMode };
 }
 
@@ -1445,6 +1472,10 @@ function createEmptySessionAssets() {
   };
 }
 let activeSessionAssets = createEmptySessionAssets();
+let sessionRemovedBackgrounds = [];
+let sessionRemovedOverlays = [];
+let sessionRemovedTemplates = [];
+let activeThemeDefaultsAsset = null;
 let activeSessionTextDetails = {};
 const ACCENT_PRESET_COLORS = [
   "#ffffff",
@@ -1851,6 +1882,33 @@ function getSessionAssignedAssetSourceSet(category = "") {
   return createAssetSelectionSet(getSessionAssignedAssetEntries(category));
 }
 
+/**
+ * Returns a Set of asset source URLs representing all assets effectively
+ * assigned to the session across all sources.
+ */
+function getSessionEffectiveAssetSourceSet(category = "") {
+  const normalized = normalizeUploadedAssetCategory(category);
+  const theme = activeTheme || getSelectedThemeTarget();
+  if (normalized === "background") {
+    return new Set(getEffectiveBackgroundList(theme));
+  }
+  if (normalized === "overlay") {
+    return new Set(
+      getEffectiveOverlayList(theme)
+        .map((o) => (o && o.src ? o.src : null))
+        .filter(Boolean)
+    );
+  }
+  if (normalized === "template") {
+    return new Set(
+      getEffectiveTemplateList(theme)
+        .map((t) => (t && t.src ? t.src : null))
+        .filter(Boolean)
+    );
+  }
+  return new Set();
+}
+
 function syncAssetPanelHeader(kind, list = [], selectedValue = "") {
   const controls = getAssetPanelControls(kind);
   const resolved = getAssetPanelKind(kind);
@@ -2111,7 +2169,7 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
   if (!DOM.createPathThemeSelect) return;
   const filter = DOM.createPathThemeType
     ? DOM.createPathThemeType.value
-    : "favorite";
+    : "";
   const options = Array.from(
     (DOM.eventSelect && DOM.eventSelect.options) || []
   ).filter((opt) => opt && opt.value);
@@ -2129,7 +2187,7 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
       value: key,
       theme: resolveThemeByKey(key),
     };
-    if (getThemeTypeForKey(key, favorites) !== filter) return false;
+    if (filter && getThemeTypeForKey(key, favorites) !== filter) return false;
     if (selectedTypeRaw === "all") return true;
     return shouldIncludeCreatePathTheme(key, item.theme, selectedType);
   });
@@ -2172,6 +2230,160 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
     loadTheme(selectedKey);
     highlightThemeQuickSelect(selectedKey);
   }
+  syncSessionThemeSearch();
+}
+
+function getThemeOptionLabel(key = "") {
+  const options = Array.from((DOM.eventSelect && DOM.eventSelect.options) || []);
+  const match = options.find((option) => option.value === key);
+  return match ? match.textContent || key : key;
+}
+
+function getSessionThemeOptions(filter = "") {
+  const needle = String(filter || "").trim().toLowerCase();
+  return Array.from((DOM.eventSelect && DOM.eventSelect.options) || []).filter(
+    (option) => {
+      if (!option || !option.value) return false;
+      if (!needle) return true;
+      return (
+        String(option.textContent || "").toLowerCase().includes(needle) ||
+        String(option.value || "").toLowerCase().includes(needle)
+      );
+    }
+  );
+}
+
+function renderSessionThemeOptions(filter = "") {
+  if (DOM.sessionThemeOptions && DOM.eventSelect) {
+    DOM.sessionThemeOptions.innerHTML = "";
+    const selectedKey =
+      (DOM.createPathThemeSelect && DOM.createPathThemeSelect.value) ||
+      (DOM.eventSelect && DOM.eventSelect.value) ||
+      "";
+    const options = getSessionThemeOptions(filter);
+    options.forEach((option) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "setup-combobox-option";
+      item.textContent = option.textContent || option.value;
+      item.dataset.themeKey = option.value;
+      item.setAttribute("role", "option");
+      item.setAttribute(
+        "aria-selected",
+        option.value === selectedKey ? "true" : "false"
+      );
+      item.addEventListener("click", () => activateThemeFromSetupKey(option.value));
+      DOM.sessionThemeOptions.appendChild(item);
+    });
+    if (!options.length) {
+      const empty = document.createElement("div");
+      empty.className = "setup-combobox-empty";
+      empty.textContent = "No themes found";
+      DOM.sessionThemeOptions.appendChild(empty);
+    }
+  }
+}
+
+function syncSessionThemeSearch() {
+  renderSessionThemeOptions();
+  const key =
+    (DOM.createPathThemeSelect && DOM.createPathThemeSelect.value) ||
+    (DOM.eventSelect && DOM.eventSelect.value) ||
+    "";
+  if (DOM.sessionThemeValue)
+    DOM.sessionThemeValue.textContent = getThemeOptionLabel(key) || "Choose theme";
+  if (DOM.sessionThemeSearch) DOM.sessionThemeSearch.value = "";
+}
+
+function resolveThemeKeyFromSearchValue(value = "") {
+  const needle = String(value || "").trim().toLowerCase();
+  if (!needle || !DOM.eventSelect) return "";
+  const options = Array.from(DOM.eventSelect.options || []);
+  const byLabel = options.find(
+    (option) => String(option.textContent || "").trim().toLowerCase() === needle
+  );
+  if (byLabel) return byLabel.value;
+  const byValue = options.find(
+    (option) => String(option.value || "").trim().toLowerCase() === needle
+  );
+  return byValue ? byValue.value : "";
+}
+
+function activateThemeFromSetupSearch() {
+  const key = resolveThemeKeyFromSearchValue(
+    DOM.sessionThemeSearch ? DOM.sessionThemeSearch.value : ""
+  );
+  activateThemeFromSetupKey(key);
+}
+
+function activateThemeFromSetupKey(key) {
+  if (!key) return;
+  disableShowcaseDemo();
+  setActiveEventId("");
+  setQuickStartSessionDate(getLocalIsoDate());
+  setEventSelection(key);
+  if (DOM.createPathThemeSelect) DOM.createPathThemeSelect.value = key;
+  loadTheme(key);
+  populateCreatePathFontPairingSelect();
+  updateLaunchSummary();
+  closeSetupCombobox("theme");
+}
+
+function getSetupComboboxParts(kind) {
+  if (kind === "theme") {
+    return {
+      toggle: DOM.sessionThemeToggle,
+      menu: DOM.sessionThemeMenu,
+      search: DOM.sessionThemeSearch,
+      render: renderSessionThemeOptions,
+    };
+  }
+  if (kind === "font") {
+    return {
+      toggle: DOM.sessionFontToggle,
+      menu: DOM.sessionFontMenu,
+      search: DOM.sessionFontSearch,
+      render: renderSessionFontOptions,
+    };
+  }
+  return {};
+}
+
+function closeSetupCombobox(kind) {
+  const parts = getSetupComboboxParts(kind);
+  if (!parts.menu) return;
+  parts.menu.classList.add("hidden");
+  if (parts.toggle) parts.toggle.setAttribute("aria-expanded", "false");
+  if (parts.search) parts.search.value = "";
+}
+
+function openSetupCombobox(kind) {
+  ["theme", "font"].forEach((name) => {
+    if (name !== kind) closeSetupCombobox(name);
+  });
+  const parts = getSetupComboboxParts(kind);
+  if (!parts.menu) return;
+  if (typeof parts.render === "function") parts.render("");
+  parts.menu.classList.remove("hidden");
+  if (parts.toggle) parts.toggle.setAttribute("aria-expanded", "true");
+  if (parts.search) {
+    parts.search.value = "";
+    requestAnimationFrame(() => parts.search.focus());
+  }
+}
+
+function toggleSetupCombobox(kind) {
+  const parts = getSetupComboboxParts(kind);
+  if (!parts.menu) return;
+  if (parts.menu.classList.contains("hidden")) openSetupCombobox(kind);
+  else closeSetupCombobox(kind);
+}
+
+function selectFirstVisibleComboboxOption(kind) {
+  const parts = getSetupComboboxParts(kind);
+  if (!parts.menu) return;
+  const option = parts.menu.querySelector(".setup-combobox-option");
+  if (option) option.click();
 }
 
 function syncCreatePathFilterCards() {
@@ -2214,6 +2426,9 @@ function resetCreatePathAssetInputs() {
 
 function resetActiveSessionAssets() {
   activeSessionAssets = createEmptySessionAssets();
+  sessionRemovedBackgrounds = [];
+  sessionRemovedOverlays = [];
+  sessionRemovedTemplates = [];
 }
 
 function getSessionAssetUploadOptions(kind = "") {
@@ -2226,6 +2441,7 @@ function getSessionAssetUploadOptions(kind = "") {
 function addSessionAssetUrl(kind, url) {
   if (!url) return false;
   if (kind === "templates") {
+    clearSessionRemovedAsset("template", url);
     const exists = activeSessionAssets.templates.some(
       (item) => getAssetEntrySrc(item) === url
     );
@@ -2233,6 +2449,7 @@ function addSessionAssetUrl(kind, url) {
     return true;
   }
   if (kind === "overlays") {
+    clearSessionRemovedAsset("overlay", url);
     const exists = activeSessionAssets.overlays.some(
       (item) => getAssetEntrySrc(item) === url
     );
@@ -2240,6 +2457,7 @@ function addSessionAssetUrl(kind, url) {
     return true;
   }
   if (kind === "backgrounds") {
+    clearSessionRemovedAsset("background", url);
     const exists = activeSessionAssets.backgrounds.some(
       (item) => getAssetEntrySrc(item) === url
     );
@@ -2263,6 +2481,7 @@ function addSessionAssetUrl(kind, url) {
 
 function selectSessionBackground(src) {
   if (!src) return;
+  clearSessionRemovedAsset("background", src);
   if (!Array.isArray(activeSessionAssets.backgrounds)) {
     activeSessionAssets.backgrounds = [];
   }
@@ -2283,6 +2502,7 @@ function selectSessionOverlay(entry) {
   const normalized = normalizeOverlayDefinition(entry);
   const src = normalized && normalized.src ? normalized.src : "";
   if (!src) return;
+  clearSessionRemovedAsset("overlay", src);
   if (!Array.isArray(activeSessionAssets.overlays)) {
     activeSessionAssets.overlays = [];
   }
@@ -2789,6 +3009,52 @@ function setupEventProfileControls() {
       highlightThemeQuickSelect(key);
     });
   }
+  if (DOM.sessionThemeToggle) {
+    DOM.sessionThemeToggle.addEventListener("click", () =>
+      toggleSetupCombobox("theme")
+    );
+  }
+  if (DOM.sessionThemeSearch) {
+    DOM.sessionThemeSearch.addEventListener("input", () =>
+      renderSessionThemeOptions(DOM.sessionThemeSearch.value)
+    );
+    DOM.sessionThemeSearch.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        disableShowcaseDemo();
+        selectFirstVisibleComboboxOption("theme");
+      } else if (event.key === "Escape") {
+        closeSetupCombobox("theme");
+      }
+    });
+  }
+  if (DOM.sessionFontToggle) {
+    DOM.sessionFontToggle.addEventListener("click", () =>
+      toggleSetupCombobox("font")
+    );
+  }
+  if (DOM.sessionFontSearch) {
+    DOM.sessionFontSearch.addEventListener("input", () =>
+      renderSessionFontOptions(DOM.sessionFontSearch.value)
+    );
+    DOM.sessionFontSearch.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        selectFirstVisibleComboboxOption("font");
+      } else if (event.key === "Escape") {
+        closeSetupCombobox("font");
+      }
+    });
+  }
+  document.addEventListener("click", (event) => {
+    if (
+      !event.target.closest("[data-setup-combobox=\"theme\"]") &&
+      !event.target.closest("[data-setup-combobox=\"font\"]")
+    ) {
+      closeSetupCombobox("theme");
+      closeSetupCombobox("font");
+    }
+  });
   const sessionAssetInputs = [
     [DOM.createPathBackgrounds, "backgrounds"],
     [DOM.createPathGreenBackgrounds, "greenBackgrounds"],
@@ -2857,6 +3123,8 @@ function setupEventProfileControls() {
     (DOM.eventSelect && DOM.eventSelect.value) || ""
   );
   populateCreatePathFontPairingSelect();
+  syncSessionThemeSearch();
+  syncSessionFontSearch();
   updateCreatePathAssetSummary();
   if (DOM.eventProfileSelect) {
     DOM.eventProfileSelect.addEventListener("change", (event) => {
@@ -3128,6 +3396,16 @@ function setupThemeEditorControls() {
   if (DOM.bulkAssetModal) {
     DOM.bulkAssetModal.addEventListener("click", (event) => {
       if (event.target === DOM.bulkAssetModal) closeBulkAssetModal();
+    });
+  }
+  if (DOM.assetThemeDefaultsCancel)
+    DOM.assetThemeDefaultsCancel.addEventListener("click", closeAssetThemeDefaultsModal);
+  if (DOM.assetThemeDefaultsSave)
+    DOM.assetThemeDefaultsSave.addEventListener("click", saveAssetThemeDefaults);
+  if (DOM.assetThemeDefaultsModal) {
+    DOM.assetThemeDefaultsModal.addEventListener("click", (event) => {
+      if (event.target === DOM.assetThemeDefaultsModal)
+        closeAssetThemeDefaultsModal();
     });
   }
   if (DOM.assetLibrarySearch)
@@ -4131,7 +4409,7 @@ function setupAdminModalNavigation() {
     btn.addEventListener("click", () => openAdminModal(btn.dataset.adminModal));
   });
   document
-    .querySelectorAll("#adminScreen details.panel-section, #fontLibrarySection")
+    .querySelectorAll("#adminScreen details.panel-section")
     .forEach((panel) => {
       panel.addEventListener("toggle", () => {
         if (!panel.open && panel.classList.contains("admin-modal-target"))
@@ -4304,16 +4582,7 @@ function routeSetupSessionCard(action) {
   }
   if (key === "theme") {
     setSetupSection("event");
-    requestAnimationFrame(() => focusSetupElement("#createPathThemeSelect"));
-    return;
-  }
-  if (key === "font") {
-    setSetupSection("capture");
-    const panel = document.getElementById("fontLibrarySection");
-    if (panel && panel.tagName === "DETAILS") {
-      panel.open = true;
-    }
-    requestAnimationFrame(() => focusSetupElement("#addPairingBtn"));
+    requestAnimationFrame(() => focusSetupElement("#sessionThemeToggle"));
     return;
   }
   if (key === "camera") {
@@ -4392,16 +4661,22 @@ function getLaunchFontLabel() {
   return heading || body || "Use theme fonts";
 }
 
+function getLaunchBackgroundCountLabel() {
+  const backgroundCount = getSessionEffectiveAssetSourceSet("background").size;
+  if (!backgroundCount) return "No backgrounds selected";
+  return `${backgroundCount} background${backgroundCount === 1 ? "" : "s"} selected`;
+}
+
 function getLaunchOverlayCountLabel() {
-  const overlayCount = getSessionAssignedAssetEntries("overlay").length;
-  if (!overlayCount) return "No overlays assigned";
-  return `${overlayCount} overlay${overlayCount === 1 ? "" : "s"} assigned`;
+  const overlayCount = getSessionEffectiveAssetSourceSet("overlay").size;
+  if (!overlayCount) return "No overlays selected";
+  return `${overlayCount} overlay${overlayCount === 1 ? "" : "s"} selected`;
 }
 
 function getLaunchTemplateCountLabel() {
-  const templateCount = getSessionAssignedAssetEntries("template").length;
-  if (!templateCount) return "No templates assigned";
-  return `${templateCount} template${templateCount === 1 ? "" : "s"} assigned`;
+  const templateCount = getSessionEffectiveAssetSourceSet("template").size;
+  if (!templateCount) return "No templates selected";
+  return `${templateCount} template${templateCount === 1 ? "" : "s"} selected`;
 }
 
 function getLaunchStripTemplate() {
@@ -4486,6 +4761,7 @@ async function updateLaunchSummary() {
   const layoutMode = currentMode === "360" ? "360 Mode" : "Normal Mode";
   const themeLabel = getLaunchThemeLabel();
   const fontLabel = getLaunchFontLabel();
+  const backgroundCountLabel = getLaunchBackgroundCountLabel();
   const overlayCountLabel = getLaunchOverlayCountLabel();
   const templateCountLabel = getLaunchTemplateCountLabel();
   const outputLabel = getLaunchOutputLabel();
@@ -4507,6 +4783,7 @@ async function updateLaunchSummary() {
     ["launchFontStatus", "launchConfirmFontStatus"],
     fontLabel
   );
+  setLaunchSummaryText(["launchBackgroundCount"], backgroundCountLabel);
   setLaunchSummaryText(
     ["launchOverlayCount", "launchConfirmOverlayCount"],
     overlayCountLabel
@@ -5138,6 +5415,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadEventsFromStorage();
   loadFontsFromStorage();
   loadAssetLibraryLocal();
+  populateAllThemeAssetTmp();
+  if (repairCorruptedBackgroundDefaults()) saveThemesToStorage();
   loadAssetLibraryRemote().catch(() => renderAssetLibrary());
   try {
     await setupFontPicker();
@@ -5185,6 +5464,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     fitBannerTextToViewport();
     fitWelcomeTitleToViewport();
     requestAnimationFrame(syncFrameSizeVars);
+    requestAnimationFrame(() => logBoothViewportOverflow());
+  });
+  window.addEventListener("orientationchange", () => {
+    requestAnimationFrame(() => {
+      applyViewportProfile();
+      syncMobileSettingsUi();
+      syncFrameSizeVars();
+      logBoothViewportOverflow();
+    });
   });
 });
 
@@ -5241,9 +5529,12 @@ async function loadThemesRemote() {
     try {
       normalizeAllThemes();
     } catch (_e) {}
+    populateAllThemeAssetTmp();
+    const repairedBackgroundDefaults = repairCorruptedBackgroundDefaults();
     const globalLogo = getGlobalLogo();
     if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
     localStorage.setItem("photoboothThemes", JSON.stringify(themes));
+    if (repairedBackgroundDefaults) scheduleThemesRemoteSync();
     // Refresh UI if already initialized
     const selected = populateThemeSelector(DEFAULT_THEME_KEY);
     if (selected) {
@@ -6693,12 +6984,6 @@ function refreshBackgroundList(theme) {
       if (!Array.isArray(list) || !list.length) return;
       theme.backgroundsTmp = list;
       const combined = getBaseBackgroundList(theme);
-      if (
-        !Array.isArray(theme.backgrounds) ||
-        theme.backgrounds.length !== combined.length
-      ) {
-        theme.backgrounds = combined.slice();
-      }
       if (combined.length > 0) {
         if (
           typeof theme.backgroundIndex !== "number" ||
@@ -6803,7 +7088,11 @@ function loadTheme(themeKey) {
   refreshBackgroundList(theme);
   refreshOverlaysFromFolder(theme);
   refreshTemplatesFromFolder(theme);
+  logEffectiveAssetState(theme, "loadTheme");
   syncAdminUiWithTheme(themeKey, theme);
+  renderAssetLibrary();
+  syncSessionThemeSearch();
+  syncSessionFontSearch();
 }
 
 // Convert any CSS color string to hex (#rrggbb); returns '' on failure
@@ -7109,76 +7398,16 @@ function renderCurrentAssets(theme) {
     Array.isArray(eventOverrides.greenBackgrounds) &&
     eventOverrides.greenBackgrounds.length > 0;
   const selectedBg = bgList.length
-    ? hasSessionBackgrounds
-      ? Math.min(
-          Math.max(activeSessionAssets.backgroundIndex || 0, 0),
-          activeSessionAssets.backgrounds.length - 1
-        )
-      : Number.isFinite(eventOverrides.useBaseBackgroundIndex)
-      ? Math.min(
-          Math.max(eventOverrides.useBaseBackgroundIndex, 0),
-          baseBgList.length - 1
-        )
-      : hasEventBackgrounds
-      ? -1
-      : typeof theme.backgroundIndex === "number"
-      ? Math.min(Math.max(theme.backgroundIndex, 0), bgList.length - 1)
-      : 0
+    ? bgList.indexOf(getActiveBackground(theme))
     : -1;
   const selectedGreenBg = greenBgList.length
-    ? hasSessionGreenBackgrounds
-      ? Math.min(
-          Math.max(activeSessionAssets.greenBackgroundIndex || 0, 0),
-          activeSessionAssets.greenBackgrounds.length - 1
-        )
-      : Number.isFinite(eventOverrides.useBaseGreenBackgroundIndex)
-      ? Math.min(
-          Math.max(eventOverrides.useBaseGreenBackgroundIndex, 0),
-          baseGreenList.length - 1
-        )
-      : hasEventGreenBackgrounds
-      ? -1
-      : typeof theme.greenBackgroundIndex === "number"
-      ? Math.min(
-          Math.max(theme.greenBackgroundIndex, 0),
-          greenBgList.length - 1
-        )
-      : 0
+    ? greenBgList.indexOf(getActiveGreenBackground(theme))
     : -1;
   const setSingle = (wrap, src, type, isEventOwned = false) => {
     if (!wrap) return;
     wrap.innerHTML = "";
     if (src) {
       const item = createAssetTile(src);
-      if (!lockBaseThemeAssets || isEventOwned) {
-        const btn = document.createElement("button");
-        btn.className = "asset-remove";
-        btn.textContent = "×";
-        btn.title = isEventOwned ? "Remove from this event" : "Remove";
-        btn.onclick = () => {
-          if (!confirm("Remove this " + type + "?")) return;
-          if (type === "background") removeBackground();
-          if (type === "logo") {
-            if (activeSessionAssets.logo === src) {
-              activeSessionAssets.logo = "";
-              renderCurrentAssets(activeTheme);
-              updateCreatePathAssetSummary();
-              updateLaunchSummary();
-            } else if (isEventOwned) updateActiveEventDetails({ logo: "" });
-            else removeLogo();
-          }
-          if (type === "character") {
-            if (activeSessionAssets.character === src) {
-              activeSessionAssets.character = "";
-              renderCurrentAssets(activeTheme);
-              updateCreatePathAssetSummary();
-              updateLaunchSummary();
-            } else if (isEventOwned) updateActiveEventDetails({ character: "" });
-            else removeCharacter();
-          }
-        };
-        item.appendChild(btn);
-      }
       wrap.appendChild(item);
     } else {
       const span = document.createElement("span");
@@ -7265,62 +7494,6 @@ function renderCurrentAssets(theme) {
         !isLibrary &&
         localIndex >= 0;
       item.dataset.index = localIndex;
-      if (assignedTray || (kind === "background"
-        ? isSession
-        : !lockBaseThemeAssets || isEvent || isSession)) {
-        const btn = document.createElement("button");
-        btn.className = "asset-remove";
-        btn.textContent = "×";
-        btn.title = assignedTray
-          ? "Remove from this session"
-          : isEvent
-          ? "Remove from this event"
-          : isSession
-          ? "Remove from this session"
-          : isLibrary
-          ? "Hide from shared library"
-          : fromFolder
-          ? "Hide from this theme"
-          : "Remove";
-        btn.onclick = (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          const promptText = assignedTray
-            ? "Remove this item from this session?"
-            : isEvent
-            ? "Remove this item from this event?"
-            : isSession
-            ? "Remove this item from this session?"
-            : isLibrary
-            ? "Hide this item from the shared library?"
-            : fromFolder
-            ? "Hide this item for this theme?"
-            : "Remove this item?";
-          if (!confirm(promptText)) return;
-          if (assignedTray) {
-            if (kind === "overlay") removeSessionOverlay(src);
-            else if (kind === "background") removeSessionBackground(src);
-            else if (kind === "template") removeSessionTemplate(src);
-            return;
-          }
-          if (kind === "overlay") {
-            if (isSession) removeSessionOverlay(src);
-            else if (isEvent) removeEventOverlay(src);
-            else if (isLibrary) archiveLibraryAssetByUrl(src);
-            else if (fromFolder) removeFolderOverlay(src);
-            else if (localIndex >= 0) removeOverlay(localIndex);
-          } else if (kind === "background") {
-            if (isSession) removeSessionBackground(src);
-          } else if (kind === "template") {
-            if (isSession) removeSessionTemplate(src);
-            else if (isEvent) removeEventTemplate(src);
-            else if (isLibrary) archiveLibraryAssetByUrl(src);
-            else if (fromFolder) removeFolderTemplate(src);
-            else if (localIndex >= 0) removeTemplate(localIndex);
-          }
-        };
-        item.appendChild(btn);
-      }
       // Drag & drop reordering
       if (
         allowReorder &&
@@ -7360,90 +7533,6 @@ function renderCurrentAssets(theme) {
       wrap.appendChild(span);
     }
   };
-  setGrid(
-    DOM.sessionBackgrounds,
-    getSessionAssignedAssetEntries("background"),
-    false,
-    "background",
-    false,
-    "",
-    { assignedTray: true }
-  );
-  // Backgrounds grid with selection
-  if (DOM.currentBackgrounds) {
-    const wrap = DOM.currentBackgrounds;
-    const assignedBackgrounds = createAssetSelectionSet(bgList);
-    wrap.innerHTML = "";
-    const markSelected = (idxToMark) => {
-      const items = wrap.querySelectorAll(".asset-item");
-      items.forEach((node, i) => {
-        if (i === idxToMark) {
-          node.classList.add("selected");
-          node.setAttribute("aria-selected", "true");
-        } else {
-          node.classList.remove("selected");
-          node.setAttribute("aria-selected", "false");
-        }
-        const btn = node.querySelector(".asset-use");
-        if (btn) btn.textContent = i === idxToMark ? "Using" : "Use";
-      });
-      wrap.classList.toggle("has-selection", idxToMark >= 0);
-    };
-    if (bgList.length === 0) {
-      wrap.classList.remove("has-selection");
-      const span = document.createElement("span");
-      span.style.color = "#888";
-      span.textContent = "None";
-      wrap.appendChild(span);
-    } else {
-      bgList.forEach((src, idx) => {
-        const isFolder = baseFolderSet.has(src);
-        const item = document.createElement("div");
-        item.className = "asset-item";
-        if (assignedBackgrounds.has(src)) {
-          item.classList.add("selected");
-          item.setAttribute("aria-selected", "true");
-        } else {
-          item.setAttribute("aria-selected", "false");
-        }
-        const img = document.createElement("img");
-        img.src = withBust(src);
-        img.onerror = () => renderMissingThumbnail(item, src);
-        item.appendChild(img);
-        const useBtn = document.createElement("button");
-        useBtn.className = "asset-use";
-        useBtn.textContent = idx === selectedBg ? "Using" : "Use";
-        useBtn.style.marginTop = "4px";
-        useBtn.onclick = (ev) => {
-          ev.preventDefault();
-          markSelected(idx);
-          setBackgroundIndex(idx);
-        };
-        img.addEventListener("click", () => {
-          markSelected(idx);
-          setBackgroundIndex(idx);
-        });
-        item.appendChild(useBtn);
-        const remBtn = document.createElement("button");
-        if (!lockBaseThemeAssets) {
-          remBtn.className = "asset-remove";
-          remBtn.textContent = "×";
-          remBtn.title = isFolder ? "Hide from this theme" : "Remove";
-          remBtn.onclick = () => {
-            const promptText = isFolder
-              ? "Hide this background for this theme?"
-              : "Remove this background?";
-            if (!confirm(promptText)) return;
-            if (isFolder) removeFolderBackground(src);
-            else removeBackgroundAt(idx);
-          };
-          item.appendChild(remBtn);
-        }
-        wrap.appendChild(item);
-      });
-      wrap.classList.toggle("has-selection", assignedBackgrounds.size > 0);
-    }
-  }
   // Green screen backgrounds grid
   if (DOM.currentGreenBackgrounds) {
     const wrap = DOM.currentGreenBackgrounds;
@@ -7461,17 +7550,6 @@ function renderCurrentAssets(theme) {
         img.src = withBust(src);
         img.onerror = () => renderMissingThumbnail(item, src);
         item.appendChild(img);
-        if (!lockBaseThemeAssets) {
-          const remBtn = document.createElement("button");
-          remBtn.className = "asset-remove";
-          remBtn.textContent = "×";
-          remBtn.title = "Remove";
-          remBtn.onclick = () => {
-            if (confirm("Remove this green screen background?"))
-              removeGreenBackgroundAt(idx);
-          };
-          item.appendChild(remBtn);
-        }
         wrap.appendChild(item);
       });
     }
@@ -7571,40 +7649,6 @@ function renderCurrentAssets(theme) {
     addColor("Accent", "accent", theme.accent || cssAccent || "#ff7a18");
     addColor("Accent 2", "accent2", theme.accent2 || cssAccent2 || "#ffffff");
   }
-  setGrid(
-    DOM.currentOverlays,
-    getSessionAssignedAssetEntries("overlay"),
-    false,
-    "overlay",
-    false,
-    "",
-    { assignedTray: true }
-  );
-  setGrid(
-    DOM.currentTemplates,
-    getSessionAssignedAssetEntries("template"),
-    true,
-    "template",
-    false,
-    "",
-    { assignedTray: true }
-  );
-  syncAssetPanelHeader(
-    "background",
-    getSessionAssignedAssetEntries("background")
-  );
-  syncAssetPanelHeader(
-    "overlay",
-    getSessionAssignedAssetEntries("overlay")
-  );
-  syncAssetPanelHeader(
-    "template",
-    getSessionAssignedAssetEntries("template")
-  );
-  setAssetPanelMessage("background", null);
-  setAssetPanelMessage("overlay", null);
-  setAssetPanelMessage("template", null);
-  restoreAssetPanelState();
 }
 
 function getCharacterPlacement() {
@@ -9104,7 +9148,7 @@ function setFinalPreviewSharePanelVisible(visible) {
     DOM.finalPreviewActions.classList.toggle("share-panel-empty", !visible);
   }
   if (DOM.qrCodeContainer) {
-    DOM.qrCodeContainer.classList.remove("hidden");
+    DOM.qrCodeContainer.classList.toggle("hidden", !visible);
   }
 }
 
@@ -9233,6 +9277,12 @@ function drawPhotoSlot(ctx, source, slot, outputW, outputH) {
   const img = source;
   const rect = normalizeSlotRect(slot, outputW, outputH);
   if (rect.w <= 0 || rect.h <= 0) return;
+  console.debug("[photo-slot-render]", {
+    slot,
+    outputW,
+    outputH,
+    drawImage: rect,
+  });
   ctx.save();
   if (Number.isFinite(slot.rotation) && slot.rotation !== 0) {
     ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
@@ -9248,7 +9298,11 @@ function drawPhotoSlot(ctx, source, slot, outputW, outputH) {
     Math.min(rect.w, rect.h) * clamp01(slot.borderRadius || 0)
   );
   ctx.clip();
-  drawCoverInRect(ctx, img, rect.x, rect.y, rect.w, rect.h);
+  if (slot.objectFit === "contain") {
+    drawImageContain(ctx, img, rect.x, rect.y, rect.w, rect.h);
+  } else {
+    drawCoverInRect(ctx, img, rect.x, rect.y, rect.w, rect.h);
+  }
   ctx.restore();
 }
 
@@ -9278,7 +9332,17 @@ async function renderOverlayToCanvas(ctx, overlay, sources, outputW, outputH) {
     : normalizeOverlayPhotoSlots({});
   const usePhotos = sourcePhotos.length ? sourcePhotos : [sourcePhoto];
   slots.forEach((slot, index) => {
-    const photo = slot.sourceIndex != null ? usePhotos[slot.sourceIndex] : usePhotos[index] || usePhotos[0];
+    const sourceIndex =
+      slot.sourceIndex != null
+        ? slot.sourceIndex
+        : sources && sources.repeatPhotos && usePhotos.length
+        ? index % usePhotos.length
+        : index;
+    const photo =
+      usePhotos[sourceIndex] ||
+      (sources && sources.repeatPhotos && usePhotos.length
+        ? usePhotos[index % usePhotos.length]
+        : usePhotos[0]);
     if (!photo) return;
     drawPhotoSlot(ctx, photo, slot, outputW, outputH);
   });
@@ -9792,6 +9856,10 @@ async function composeStrip(template, photos) {
     ? photos.map((photo) => cloneCanvasForStrip(ensureEnhancedCanvas(photo)))
     : [];
   const layout = normalizeTemplateLayout(template && template.layout);
+  const explicitPhotoSlots = hasExplicitPhotoSlots(template);
+  const normalizedPhotoSlots = explicitPhotoSlots
+    ? normalizeOverlayPhotoSlots(template)
+    : [];
   const rows =
     (template && template.__slotMetrics && template.__slotMetrics.rows) ||
     getTemplateRowCount(layout, template && template.slots) ||
@@ -9800,10 +9868,10 @@ async function composeStrip(template, photos) {
     (bg.naturalWidth || bg.width || 1) / (bg.naturalHeight || bg.height || 1);
   let targetW = bg.naturalWidth || bg.width || 1800;
   let targetH = bg.naturalHeight || bg.height || 1200;
-  if (layout === "double_column") {
+  if (!explicitPhotoSlots && layout === "double_column") {
     targetW = 1200;
     targetH = 1800;
-  } else if (layout === "vertical") {
+  } else if (!explicitPhotoSlots && layout === "vertical") {
     targetW = 1200;
     targetH = 1800;
   } else if (layout === "custom" && Array.isArray(template && template.slots)) {
@@ -9812,11 +9880,24 @@ async function composeStrip(template, photos) {
   }
   const c = CanvasBuffer.get("strip-composer", targetW, targetH);
   const ctx = c.getContext("2d");
-  // Fill background
-  ctx.fillStyle = "#000";
+  ctx.clearRect(0, 0, targetW, targetH);
+  ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, targetW, targetH);
 
-  if (layout === "double_column") {
+  if (explicitPhotoSlots) {
+    logTemplateSlotResolution(template, normalizedPhotoSlots, targetW, targetH);
+    const overlayDefinition = normalizeOverlayDefinition(template);
+    await renderOverlayToCanvas(
+      ctx,
+      {
+        ...(overlayDefinition || {}),
+        photoSlots: normalizedPhotoSlots,
+      },
+      { photos: enhancedPhotos, repeatPhotos: true },
+      targetW,
+      targetH
+    );
+  } else if (layout === "double_column") {
     // Two identical strips on one print sheet
     renderDoubleColumn(c, enhancedPhotos, bg, template, rows);
   } else if (layout === "photo_strip_2" || layout === "photo_strip_3" || layout === "photo_strip_4") {
@@ -9918,7 +9999,7 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
     ? getOverlayEntryBySrc(activeTheme, overlaySrc)
     : null;
   // Background fill
-  ctx.fillStyle = "#000";
+  ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, targetW, targetH);
   const aiEnabled = getAiBackgroundEnabled();
   // Background scene
@@ -10240,12 +10321,35 @@ function setFinalMediaOrientation(element, width, height) {
   element.dataset.orientation = height > width ? "portrait" : "landscape";
 }
 
+function resetTransientCaptureOverlays(options = {}) {
+  const keepFinalStrip = !!options.keepFinalStrip;
+  const keepFinalLive = !!options.keepFinalLive;
+  if (DOM.countdownOverlay) {
+    DOM.countdownOverlay.classList.remove("show");
+    DOM.countdownOverlay.textContent = "";
+  }
+  if (DOM.flashOverlay) DOM.flashOverlay.classList.remove("flash");
+  if (DOM.lastShot) {
+    DOM.lastShot.style.display = "none";
+    DOM.lastShot.removeAttribute("src");
+  }
+  clearOverlayPreviewSurface();
+  if (DOM.finalLive && !keepFinalLive) {
+    DOM.finalLive.pause();
+    DOM.finalLive.removeAttribute("src");
+    DOM.finalLive.removeAttribute("poster");
+    DOM.finalLive.load();
+    DOM.finalLive.classList.add("hidden");
+  }
+  if (DOM.finalStrip && !keepFinalStrip) {
+    DOM.finalStrip.classList.remove("hidden");
+    DOM.finalStrip.removeAttribute("src");
+    DOM.finalStrip.dataset.orientation = "";
+  }
+}
+
 function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
-  if (DOM.boothScreen) {
-    DOM.boothScreen.classList.remove("countdown-mode");
-    DOM.boothScreen.classList.add("share-mode");
-  }
   const img = DOM.finalStrip;
   const previewFit = getSelectedCaptureMode() === "strip" ? "contain" : "cover";
   if (img) img.style.objectFit = previewFit;
@@ -10259,9 +10363,75 @@ function showFinal(url, options = {}) {
     options.shareUrl && /^https?:/i.test(String(options.shareUrl))
       ? String(options.shareUrl)
       : "";
+  const offline = offlineModeActive();
   const qrContainer = DOM.qrCodeContainer;
   const qrCanvas = DOM.qrCode;
   const panel = DOM.finalPreview;
+  const useLiveClip = !!(
+    DOM.finalLive &&
+    (lastLiveClipUrl || shareBlob) &&
+    !options.forceImage
+  );
+  if (useLiveClip) {
+    if (!lastLiveClipUrl && shareBlob) setLiveClip(shareBlob);
+    DOM.finalLive.src = lastLiveClipUrl;
+    DOM.finalLive.poster = url;
+    if (img) img.classList.add("hidden");
+    if (img) DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
+  } else if (DOM.finalLive) {
+    DOM.finalLive.pause();
+    DOM.finalLive.removeAttribute("src");
+    DOM.finalLive.removeAttribute("poster");
+    DOM.finalLive.load();
+    DOM.finalLive.classList.add("hidden");
+  }
+  let finalPreviewShown = false;
+  const revealFinalPreview = () => {
+    if (finalPreviewShown) return;
+    finalPreviewShown = true;
+    resetTransientCaptureOverlays({
+      keepFinalStrip: true,
+      keepFinalLive: useLiveClip,
+    });
+    if (DOM.boothScreen) {
+      DOM.boothScreen.classList.remove("countdown-mode");
+      DOM.boothScreen.classList.add("share-mode");
+    }
+    if (img) img.classList.toggle("hidden", useLiveClip);
+    if (DOM.finalLive && DOM.finalLive.src) {
+      DOM.finalLive.classList.remove("hidden");
+    }
+    panel.classList.add("show");
+    setFinalPreviewSharePanelVisible(false);
+    if (!skipShare && providedShareUrl) {
+      lastShareUrl = providedShareUrl;
+      renderQrCode(qrCanvas, lastShareUrl);
+      if (DOM.shareLink) {
+        DOM.shareLink.href = lastShareUrl;
+        DOM.shareLink.textContent = lastShareUrl;
+      }
+      if (qrContainer) qrContainer.classList.remove("hidden");
+      if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
+      setFinalPreviewSharePanelVisible(true);
+    } else if (!skipShare) {
+      lastShareUrl = null;
+      if (options.uploadQueued && DOM.qrHint) {
+        DOM.qrHint.textContent =
+          "Upload queued: QR will be available after retry.";
+        DOM.qrHint.style.display = "block";
+      }
+      if (offline && DOM.qrHint) {
+        DOM.qrHint.textContent = "Offline: QR disabled";
+        DOM.qrHint.style.display = "block";
+      }
+      if (!cloudinaryEnabled() && DOM.qrHint) {
+        DOM.qrHint.textContent = "Enable Cloudinary in Admin to show QR";
+        DOM.qrHint.style.display = "block";
+      }
+    }
+    resetIdleTimer();
+    hidePreviewTimer = setTimeout(hideFinal, 15000);
+  };
 
   // Reset form from previous use
   if (DOM.emailInput) DOM.emailInput.value = "";
@@ -10286,77 +10456,24 @@ function showFinal(url, options = {}) {
       if (DOM.finalLive) {
         DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
       }
+      revealFinalPreview();
     };
     img.src = url;
     if (img.complete) {
-      setFinalMediaOrientation(img, img.naturalWidth || img.width, img.naturalHeight || img.height);
+      setFinalMediaOrientation(
+        img,
+        img.naturalWidth || img.width,
+        img.naturalHeight || img.height
+      );
       if (DOM.finalLive) {
         DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
       }
+      revealFinalPreview();
     }
+  } else {
+    revealFinalPreview();
   }
-  const useLiveClip = !!(
-    DOM.finalLive &&
-    (lastLiveClipUrl || shareBlob) &&
-    !options.forceImage
-  );
-  if (useLiveClip) {
-    if (!lastLiveClipUrl && shareBlob) setLiveClip(shareBlob);
-    clearPreviewFreezeFrame();
-    DOM.finalLive.src = lastLiveClipUrl;
-    DOM.finalLive.poster = url;
-    if (img) DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
-    DOM.finalLive.classList.remove("hidden");
-    if (img) img.classList.add("hidden");
-    DOM.finalLive.play().catch(() => {});
-  } else if (DOM.finalLive) {
-    DOM.finalLive.pause();
-    DOM.finalLive.removeAttribute("src");
-    DOM.finalLive.load();
-    DOM.finalLive.classList.add("hidden");
-    if (img) img.classList.remove("hidden");
-  }
-  const offline = offlineModeActive();
-  // Default: hide QR/link until we have a public URL
-  if (qrContainer) qrContainer.classList.add("hidden");
-  if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "none";
-  if (DOM.qrHint) {
-    DOM.qrHint.style.display = "none";
-    DOM.qrHint.textContent = "";
-  }
-  if (DOM.shareStatus) {
-    DOM.shareStatus.style.display = "none";
-  }
-  setFinalPreviewSharePanelVisible(false);
-  if (!skipShare && providedShareUrl) {
-    lastShareUrl = providedShareUrl;
-    renderQrCode(qrCanvas, lastShareUrl);
-    if (DOM.shareLink) {
-      DOM.shareLink.href = lastShareUrl;
-      DOM.shareLink.textContent = lastShareUrl;
-    }
-    if (qrContainer) qrContainer.classList.remove("hidden");
-    if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
-    setFinalPreviewSharePanelVisible(true);
-  } else if (!skipShare) {
-    lastShareUrl = null;
-    if (options.uploadQueued && DOM.qrHint) {
-      DOM.qrHint.textContent = "Upload queued: QR will be available after retry.";
-      DOM.qrHint.style.display = "block";
-    }
-    if (offline && DOM.qrHint) {
-      DOM.qrHint.textContent = "Offline: QR disabled";
-      DOM.qrHint.style.display = "block";
-    }
-    if (!cloudinaryEnabled() && DOM.qrHint) {
-      DOM.qrHint.textContent = "Enable Cloudinary in Admin to show QR";
-      DOM.qrHint.style.display = "block";
-    }
-  }
-  panel.classList.add("show");
-  resetIdleTimer();
-  hidePreviewTimer = setTimeout(hideFinal, 15000);
-
+  if (useLiveClip && DOM.finalLive) DOM.finalLive.play().catch(() => {});
   // No local-QR fallback: only show QR when a public link is ready (handled above)
 }
 
@@ -11029,12 +11146,12 @@ function updateCurrentEventAssetsPanel(theme = null) {
     DOM.currentEventTheme.textContent =
       themeObj && themeObj.name ? themeObj.name : "No theme selected";
     DOM.currentEventAssetsSummary.textContent = getSessionAssetSummaryText();
-    const baseBackgrounds = themeObj ? getBaseBackgroundList(themeObj) : [];
+    const baseBackgrounds = themeObj ? getEffectiveBackgroundList(themeObj) : [];
     const baseGreen = Array.isArray(themeObj && themeObj.greenBackgrounds)
       ? themeObj.greenBackgrounds.filter(Boolean)
       : [];
-    const baseOverlays = themeObj ? getBaseOverlayList(themeObj).length : 0;
-    const baseTemplates = themeObj ? getBaseTemplateList(themeObj).length : 0;
+    const baseOverlays = themeObj ? getEffectiveOverlayList(themeObj).length : 0;
+    const baseTemplates = themeObj ? getEffectiveTemplateList(themeObj).length : 0;
     DOM.currentThemeAssetsSummary.textContent = `Theme assets: ${describeAssetSummaryCounts(
       {
         backgrounds: baseBackgrounds.length,
@@ -13010,7 +13127,7 @@ function loadAssetLibraryLocal() {
 
 function getVisibleLibraryAssets(category = "") {
   const normalizedCategory = normalizeUploadedAssetCategory(category);
-  return (uploadedAssetLibrary.assets || []).filter((asset) => {
+  return getCanonicalAssetCollection(category).filter((asset) => {
     if (!asset || asset.hidden || asset.archived) return false;
     if (normalizedCategory && asset.category !== normalizedCategory) return false;
     return true;
@@ -13171,11 +13288,29 @@ async function updateAssetLibraryItem(id, patch = {}, fallbackAsset = null) {
 
 async function deleteAssetLibraryItem(id, fallbackAsset = null) {
   if (!id) return;
+  const repoBackedAsset = fallbackAsset && fallbackAsset.source === "theme";
   await updateAssetLibraryItem(
     id,
     { hidden: true, archived: true },
     fallbackAsset
   );
+  if (repoBackedAsset || !canSyncRemote()) {
+    return;
+  }
+  if (canSyncRemote()) {
+    try {
+      await fetch("/api/assets", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
+          url: fallbackAsset && (fallbackAsset.url || fallbackAsset.secure_url),
+        }),
+      });
+    } catch (err) {
+      console.warn("Asset library delete failed", err);
+    }
+  }
 }
 
 function archiveLibraryAssetByUrl(url) {
@@ -13423,6 +13558,174 @@ function promptForAssetName(asset) {
   updateAssetLibraryItem(asset.id, { name }, asset);
 }
 
+function getSelectableThemeEntries() {
+  const entries = [];
+  for (const rootKey of Object.keys(themes || {})) {
+    if (rootKey === "_meta") continue;
+    const group = themes[rootKey];
+    if (!group || typeof group !== "object") continue;
+    const groupName = String(group.name || rootKey).trim();
+    for (const bucket of ["themes", "holidays"]) {
+      const children = group[bucket];
+      if (!children || typeof children !== "object") continue;
+      for (const leafKey of Object.keys(children)) {
+        const theme = children[leafKey];
+        if (!theme || typeof theme !== "object") continue;
+        entries.push({
+          key: `${rootKey}:${leafKey}`,
+          group: groupName,
+          label: String(theme.name || leafKey).trim(),
+          theme,
+        });
+      }
+    }
+    if (!group.themes && !group.holidays && group.name) {
+      entries.push({ key: rootKey, group: "Other", label: groupName, theme: group });
+    }
+  }
+  return entries.sort((a, b) =>
+    `${a.group} ${a.label}`.localeCompare(`${b.group} ${b.label}`)
+  );
+}
+
+function getExplicitThemeAssetEntries(category, theme) {
+  if (!theme || typeof theme !== "object") return [];
+  if (category === "background")
+    return Array.isArray(theme.backgrounds) ? theme.backgrounds : [];
+  if (category === "overlay")
+    return Array.isArray(theme.overlays) ? theme.overlays : [];
+  if (category === "template")
+    return Array.isArray(theme.templates) ? theme.templates : [];
+  return [];
+}
+
+function buildThemeDefaultAssetEntry(asset) {
+  const src = getAssetEntrySrc(asset);
+  if (!src) return null;
+  const category = normalizeUploadedAssetCategory(asset.category);
+  if (category === "background") return src;
+  const raw = asset.raw && typeof asset.raw === "object" ? asset.raw : {};
+  if (category === "overlay") return { ...cloneThemeValue(raw), src };
+  if (category === "template") {
+    return {
+      ...cloneThemeValue(raw),
+      src,
+      layout: normalizeTemplateLayout(raw.layout || asset.layout || "double_column"),
+      slots: raw.slots,
+      photoSlots: raw.photoSlots,
+      background: raw.background,
+      foreground: raw.foreground,
+      textFields: normalizeTemplateTextFields(raw.textFields || asset.textFields),
+    };
+  }
+  return null;
+}
+
+function getThemeDefaultArrayName(category) {
+  if (category === "background") return "backgrounds";
+  if (category === "overlay") return "overlays";
+  if (category === "template") return "templates";
+  return "";
+}
+
+function getThemeRemovedArrayName(category) {
+  if (category === "background") return "backgroundsRemoved";
+  if (category === "overlay") return "overlaysRemoved";
+  if (category === "template") return "templatesRemoved";
+  return "";
+}
+
+function openAssetThemeDefaultsModal(asset) {
+  const category = normalizeUploadedAssetCategory(asset && asset.category);
+  const src = getAssetEntrySrc(asset);
+  if (!asset || !category || !src || !DOM.assetThemeDefaultsModal) return;
+  activeThemeDefaultsAsset = asset;
+  if (DOM.assetThemeDefaultsTitle)
+    DOM.assetThemeDefaultsTitle.textContent = "Theme Defaults";
+  if (DOM.assetThemeDefaultsSummary)
+    DOM.assetThemeDefaultsSummary.textContent = `${getAssetDisplayName(asset)} (${category})`;
+  const list = DOM.assetThemeDefaultsList;
+  if (list) {
+    list.innerHTML = "";
+    const groups = new Map();
+    getSelectableThemeEntries().forEach((entry) => {
+      if (!groups.has(entry.group)) groups.set(entry.group, []);
+      groups.get(entry.group).push(entry);
+    });
+    groups.forEach((entries, groupName) => {
+      const group = document.createElement("div");
+      group.className = "theme-defaults-group";
+      const title = document.createElement("div");
+      title.className = "theme-defaults-group-title";
+      title.textContent = groupName;
+      group.appendChild(title);
+      entries.forEach((entry) => {
+        const label = document.createElement("label");
+        label.className = "theme-defaults-option";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = entry.key;
+        checkbox.checked = getExplicitThemeAssetEntries(category, entry.theme)
+          .some((item) => getAssetEntrySrc(item) === src);
+        const text = document.createElement("span");
+        text.textContent = entry.label;
+        label.append(checkbox, text);
+        group.appendChild(label);
+      });
+      list.appendChild(group);
+    });
+  }
+  DOM.assetThemeDefaultsModal.classList.remove("hidden");
+  DOM.assetThemeDefaultsModal.classList.add("show");
+}
+
+function closeAssetThemeDefaultsModal() {
+  activeThemeDefaultsAsset = null;
+  if (DOM.assetThemeDefaultsModal) {
+    DOM.assetThemeDefaultsModal.classList.remove("show");
+    DOM.assetThemeDefaultsModal.classList.add("hidden");
+  }
+}
+
+function saveAssetThemeDefaults() {
+  const asset = activeThemeDefaultsAsset;
+  const category = normalizeUploadedAssetCategory(asset && asset.category);
+  const src = getAssetEntrySrc(asset);
+  const arrayName = getThemeDefaultArrayName(category);
+  const removedArrayName = getThemeRemovedArrayName(category);
+  if (!asset || !category || !src || !arrayName) return;
+  const selected = new Set(
+    Array.from(
+      DOM.assetThemeDefaultsList
+        ? DOM.assetThemeDefaultsList.querySelectorAll("input[type=checkbox]:checked")
+        : []
+    ).map((input) => input.value)
+  );
+  const entryForDefaults = buildThemeDefaultAssetEntry(asset);
+  getSelectableThemeEntries().forEach(({ key, theme }) => {
+    const current = getExplicitThemeAssetEntries(category, theme);
+    const hasAsset = current.some((item) => getAssetEntrySrc(item) === src);
+    if (selected.has(key) && !hasAsset && entryForDefaults) {
+      theme[arrayName] = [...current, cloneThemeValue(entryForDefaults)];
+      if (removedArrayName && Array.isArray(theme[removedArrayName])) {
+        theme[removedArrayName] = theme[removedArrayName].filter(
+          (item) => getAssetEntrySrc(item) !== src
+        );
+      }
+    } else if (!selected.has(key) && hasAsset) {
+      theme[arrayName] = current.filter((item) => getAssetEntrySrc(item) !== src);
+    }
+  });
+  saveThemesToStorage();
+  const selectedThemeKey = DOM.eventSelect && DOM.eventSelect.value;
+  if (selectedThemeKey) loadTheme(selectedThemeKey);
+  renderAssetLibrary();
+  updateCreatePathAssetSummary();
+  updateLaunchSummary();
+  closeAssetThemeDefaultsModal();
+  showToast("Theme defaults saved");
+}
+
 function registerUploadedAsset(url, kind, details = {}) {
   const category = normalizeUploadedAssetCategory(kind);
   if (!url || !category) return;
@@ -13455,19 +13758,28 @@ function renderAssetLibrary() {
   const assets = getFilteredAssetLibraryRows();
   if (grid) {
     grid.innerHTML = "";
-    let hasAssigned = false;
+    let hasSelected = false;
     assets.forEach((asset) => {
-      const assignedSources = getSessionAssignedAssetSourceSet(asset.category);
-      const isAssigned = assignedSources.has(asset.url);
-      hasAssigned = hasAssigned || isAssigned;
+      const assetSrc = getAssetEntrySrc(asset);
+      const effectiveAssetSet = getSessionEffectiveAssetSourceSet(asset.category);
+      const isSelected = effectiveAssetSet.has(assetSrc);
+      hasSelected = hasSelected || isSelected;
       const card = document.createElement("div");
       card.className = "asset-library-card";
-      card.classList.toggle("selected", isAssigned);
-      card.setAttribute("aria-selected", isAssigned ? "true" : "false");
+      card.classList.toggle("selected", isSelected);
+      card.setAttribute("aria-selected", isSelected ? "true" : "false");
+      card.setAttribute("role", "button");
+      card.tabIndex = 0;
+      card.addEventListener("click", () => toggleLibraryAsset(asset));
+      card.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        toggleLibraryAsset(asset);
+      });
       const img = document.createElement("img");
-      img.src = withBust(asset.url);
+      img.src = withBust(assetSrc);
       img.alt = asset.name || asset.category;
-      img.onerror = () => renderMissingThumbnail(card, asset.url);
+      img.onerror = () => renderMissingThumbnail(card, assetSrc);
       const name = document.createElement("div");
       name.className = "asset-library-name";
       name.title = `${asset.name}${asset.tags && asset.tags.length ? ` (${asset.tags.join(", ")})` : ""}`;
@@ -13487,29 +13799,39 @@ function renderAssetLibrary() {
       });
       const actions = document.createElement("div");
       actions.className = "asset-library-actions";
-      const useBtn = document.createElement("button");
-      useBtn.type = "button";
-      useBtn.textContent = isAssigned ? "Using" : "Use";
-      useBtn.addEventListener("click", () => useLibraryAsset(asset));
-      actions.appendChild(useBtn);
       const renameBtn = document.createElement("button");
       renameBtn.type = "button";
       renameBtn.textContent = "Rename";
-      renameBtn.addEventListener("click", () => promptForAssetName(asset));
+      renameBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        promptForAssetName(asset);
+      });
       const tagsBtn = document.createElement("button");
       tagsBtn.type = "button";
       tagsBtn.textContent = "Tags";
-      tagsBtn.addEventListener("click", () => promptForAssetTags(asset));
+      tagsBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        promptForAssetTags(asset);
+      });
       const fieldsBtn = document.createElement("button");
       fieldsBtn.type = "button";
       fieldsBtn.textContent = "Fields";
-      fieldsBtn.addEventListener("click", () =>
-        promptForAssetEditableFields(asset)
-      );
+      fieldsBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        promptForAssetEditableFields(asset);
+      });
+      const defaultsBtn = document.createElement("button");
+      defaultsBtn.type = "button";
+      defaultsBtn.textContent = "Defaults";
+      defaultsBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openAssetThemeDefaultsModal(asset);
+      });
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.textContent = "Delete";
-      deleteBtn.addEventListener("click", () => {
+      deleteBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
         if (confirm("Remove this asset from the library?")) {
           deleteAssetLibraryItem(asset.id, asset);
         }
@@ -13517,6 +13839,7 @@ function renderAssetLibrary() {
       actions.appendChild(renameBtn);
       actions.appendChild(tagsBtn);
       actions.appendChild(fieldsBtn);
+      actions.appendChild(defaultsBtn);
       actions.appendChild(deleteBtn);
       card.appendChild(img);
       card.appendChild(name);
@@ -13525,7 +13848,7 @@ function renderAssetLibrary() {
       card.appendChild(actions);
       grid.appendChild(card);
     });
-    grid.classList.toggle("has-selection", hasAssigned);
+    grid.classList.toggle("has-selection", hasSelected);
   }
   if (status) {
     const total = getAllAssetLibraryRows().length;
@@ -13537,14 +13860,27 @@ function renderAssetLibrary() {
   }
 }
 
-function useLibraryAsset(asset) {
-  if (!asset || !asset.url) return;
-  if (asset.category === "background") {
-    addSessionAssetUrl("backgrounds", asset.url);
-  } else if (asset.category === "overlay") {
-    addSessionAssetUrl("overlays", asset.url);
-  } else if (asset.category === "template") {
-    addSessionAssetUrl("templates", asset.url);
+function toggleLibraryAsset(asset) {
+  if (!asset) return;
+  const src = getAssetEntrySrc(asset);
+  const category = normalizeUploadedAssetCategory(asset.category);
+  if (!src || !category) return;
+  const effectiveAssetSet = getSessionEffectiveAssetSourceSet(category);
+  const isSelected = effectiveAssetSet.has(src);
+  const themeSources = getThemeAssetSourceSet(
+    category,
+    activeTheme || getSelectedThemeTarget()
+  );
+  if (isSelected) {
+    removeSessionAssetBySrc(category, src);
+  } else if (themeSources.has(src)) {
+    clearSessionRemovedAsset(category, src);
+  } else if (category === "background") {
+    addSessionAssetUrl("backgrounds", src);
+  } else if (category === "overlay") {
+    addSessionAssetUrl("overlays", src);
+  } else if (category === "template") {
+    addSessionAssetUrl("templates", src);
   }
   const key = DOM.eventSelect && DOM.eventSelect.value;
   if (key) loadTheme(key);
@@ -13552,7 +13888,7 @@ function useLibraryAsset(asset) {
   renderAssetLibrary();
   updateCreatePathAssetSummary();
   updateLaunchSummary();
-  showToast("Asset added to this session");
+  showToast(isSelected ? "Asset removed from this session" : "Asset added to this session");
 }
 
 // Upload an asset to a shared Cloudinary URL.
@@ -14525,6 +14861,7 @@ function findPairingPreview(pairing, fonts = fontCatalog.available) {
 
 function populateFontPickerOptions(fonts) {
   const list = Array.isArray(fonts) ? fonts : [];
+  renderSessionFontOptions();
   const selects = [
     DOM.headingFontSelect,
     DOM.bodyFontSelect,
@@ -14548,6 +14885,7 @@ function populateFontPickerOptions(fonts) {
       sel.value = current;
     }
   });
+  syncSessionFontSearch();
 }
 
 function ensureOptionExists(select, family) {
@@ -14672,6 +15010,76 @@ function refreshFontPickerUI(theme, options = {}) {
     fallback ||
     "";
   setFontPickerSelection(heading, body, { keepPairing: true });
+  syncSessionFontSearch();
+}
+
+function syncSessionFontSearch() {
+  const theme = activeTheme || getSelectedThemeTarget() || {};
+  const heading = primaryFontFamily(theme.fontHeading || theme.font || "");
+  const body = primaryFontFamily(theme.fontBody || theme.font || "") || heading;
+  const label =
+    heading && body && heading === body
+      ? heading
+      : heading && body
+      ? `${heading} + ${body}`
+      : heading || body || "";
+  if (DOM.sessionFontValue) DOM.sessionFontValue.textContent = label || "Choose font";
+  if (DOM.sessionFontSearch) DOM.sessionFontSearch.value = "";
+  renderSessionFontOptions();
+}
+
+function getSessionFontOptions(filter = "") {
+  const needle = String(filter || "").trim().toLowerCase();
+  return (fontCatalog.available || []).filter((font) => {
+    if (!font || !font.name) return false;
+    if (!needle) return true;
+    return String(font.name || "").toLowerCase().includes(needle);
+  });
+}
+
+function renderSessionFontOptions(filter = "") {
+  if (!DOM.sessionFontOptions) return;
+  DOM.sessionFontOptions.innerHTML = "";
+  const theme = activeTheme || getSelectedThemeTarget() || {};
+  const selected = primaryFontFamily(theme.fontHeading || theme.font || "");
+  const options = getSessionFontOptions(filter);
+  options.forEach((font) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "setup-combobox-option";
+    item.textContent = font.name;
+    item.dataset.fontName = font.name;
+    item.setAttribute("role", "option");
+    item.setAttribute("aria-selected", font.name === selected ? "true" : "false");
+    item.addEventListener("click", () => activateFontFromSetupFamily(font.name));
+    DOM.sessionFontOptions.appendChild(item);
+  });
+  if (!options.length) {
+    const empty = document.createElement("div");
+    empty.className = "setup-combobox-empty";
+    empty.textContent = "No fonts found";
+    DOM.sessionFontOptions.appendChild(empty);
+  }
+}
+
+function activateFontFromSetupFamily(family) {
+  if (!family) return;
+  applyFontSelection(family, family, { keepPairing: true });
+  updateLaunchSummary();
+  syncSessionFontSearch();
+  closeSetupCombobox("font");
+}
+
+function activateFontFromSetupSearch() {
+  if (!DOM.sessionFontSearch) return;
+  const value = DOM.sessionFontSearch.value.trim();
+  if (!value) return;
+  const normalized = value.toLowerCase();
+  const match = (fontCatalog.available || []).find(
+    (font) => font && String(font.name || "").toLowerCase() === normalized
+  );
+  const family = match ? match.name : value;
+  activateFontFromSetupFamily(family);
 }
 
 function updateQuickPickExpansion() {
@@ -16970,7 +17378,16 @@ function arrayUniqueTemplates(arr) {
     if (!s) continue;
     if (!seen.has(s)) {
       seen.add(s);
-      out.push({ src: s, layout: t.layout || "double_column", slots: t.slots });
+      out.push({
+        ...cloneThemeValue(t),
+        src: s,
+        layout: normalizeTemplateLayout(t.layout || "double_column"),
+        slots: t.slots,
+        photoSlots: t.photoSlots,
+        background: t.background,
+        foreground: t.foreground,
+        textFields: normalizeTemplateTextFields(t.textFields),
+      });
     }
   }
   return out;
@@ -17022,6 +17439,36 @@ function normalizeAllThemes() {
       normalizeThemeObject(group);
     }
   }
+}
+
+const ASSET_DEFAULT_REPAIR_VERSION = 1;
+
+function repairCorruptedBackgroundDefaults() {
+  if (!themes || typeof themes !== "object") return false;
+  if (!themes._meta || typeof themes._meta !== "object") themes._meta = {};
+  if (themes._meta.assetDefaultRepairVersion >= ASSET_DEFAULT_REPAIR_VERSION)
+    return false;
+  const catalog = new Set(getAllThemeBackgroundCatalogList());
+  let repaired = false;
+  if (catalog.size) {
+    forEachThemeEntry((theme) => {
+      const backgrounds = Array.isArray(theme.backgrounds)
+        ? theme.backgrounds.filter(Boolean)
+        : [];
+      const selected = new Set(backgrounds);
+      if (
+        selected.size === catalog.size &&
+        backgrounds.length === selected.size &&
+        [...catalog].every((src) => selected.has(src))
+      ) {
+        theme.backgrounds = [];
+        if (theme.background && catalog.has(theme.background)) theme.background = "";
+        repaired = true;
+      }
+    });
+  }
+  themes._meta.assetDefaultRepairVersion = ASSET_DEFAULT_REPAIR_VERSION;
+  return repaired;
 }
 
 function forEachThemeEntry(callback) {
@@ -17120,26 +17567,19 @@ function removeBackground() {
     showToast("Event background removed");
     return;
   }
-  const list = getBaseBackgroundList(t);
-  if (!list.length) return;
-  if (!Array.isArray(t.backgrounds)) t.backgrounds = list.slice();
-  const idx =
-    typeof t.backgroundIndex === "number"
-      ? Math.min(Math.max(t.backgroundIndex, 0), t.backgrounds.length - 1)
-      : 0;
-  if (t.backgrounds[idx])
-    pushRemoved(key, "background", t.backgrounds[idx], idx);
-  t.backgrounds.splice(idx, 1);
-  if (t.backgrounds.length === 0) {
-    t.background = "";
-    delete t.backgrounds;
-    delete t.backgroundIndex;
-  } else {
-    t.backgroundIndex = Math.min(idx, t.backgrounds.length - 1);
-    t.background = t.backgrounds[t.backgroundIndex] || "";
+  if (!selected) return;
+  const themeSources = getThemeAssetSourceSet("background", t);
+  if (themeSources.has(selected)) {
+    removeSessionAssetBySrc("background", selected);
+    applyThemeBackground(t);
+    renderCurrentAssets(t);
+    renderAssetLibrary();
+    updateCreatePathAssetSummary();
+    updateLaunchSummary();
+    scheduleLocalAssetCleanup(selected);
+    showToast("Session background removed");
+    return;
   }
-  saveThemesToStorage();
-  loadTheme(key);
   scheduleLocalAssetCleanup(selected);
   showToast("Background removed");
 }
@@ -17148,24 +17588,17 @@ function removeBackgroundAt(index) {
   const t = getSelectedThemeTarget();
   if (!t) return;
   const overrides = getActiveEventOverrides();
-  const sessionList = Array.isArray(activeSessionAssets.backgrounds)
-    ? activeSessionAssets.backgrounds.filter(Boolean)
-    : [];
   const eventList = Array.isArray(overrides.backgrounds)
     ? overrides.backgrounds.filter(Boolean)
     : [];
-  const combined = mergeUniqueUrls(
-    sessionList,
-    mergeUniqueUrls(eventList, getBaseBackgroundList(t))
-  );
+  const combined = getBackgroundList(t).filter(Boolean);
   if (index < 0 || index >= combined.length) return;
   const selected = combined[index];
-  if (sessionList.includes(selected)) {
-    activeSessionAssets.backgrounds = activeSessionAssets.backgrounds.filter(
-      (item) => item !== selected
-    );
-    if (activeSessionAssets.backgroundIndex >= activeSessionAssets.backgrounds.length)
-      activeSessionAssets.backgroundIndex = 0;
+  const sessionList = Array.isArray(activeSessionAssets.backgrounds)
+    ? activeSessionAssets.backgrounds.filter(Boolean)
+    : [];
+  if (sessionList.includes(selected) || getThemeAssetSourceSet("background", t).has(selected)) {
+    removeSessionAssetBySrc("background", selected);
     applyThemeBackground(t);
     renderCurrentAssets(t);
     updateCreatePathAssetSummary();
@@ -17282,25 +17715,91 @@ function removeLogo() {
 function removeOverlay(index) {
   const key = DOM.eventSelect.value;
   const t = getSelectedThemeTarget();
-  if (!t || !Array.isArray(t.overlays)) return;
-  const removed = t.overlays.splice(index, 1)[0];
-  pushRemoved(key, "overlay", removed, index);
+  if (!t) return;
+  const list = getEffectiveOverlayList(t);
+  const removed = list[index];
+  const src = getAssetEntrySrc(removed);
+  if (!src) return;
+  if (
+    Array.isArray(activeSessionAssets.overlays) &&
+    activeSessionAssets.overlays.some((item) => getAssetEntrySrc(item) === src)
+  ) {
+    removeSessionAssetBySrc("overlay", src);
+    renderOptions();
+    renderCurrentAssets(activeTheme);
+    renderAssetLibrary();
+    updateCreatePathAssetSummary();
+    updateLaunchSummary();
+    scheduleLocalAssetCleanup(src);
+    showToast("Session overlay removed");
+    return;
+  }
+  if (getThemeAssetSourceSet("overlay", t).has(src)) {
+    addSessionRemovedAsset("overlay", src);
+    renderOptions();
+    renderCurrentAssets(activeTheme);
+    renderAssetLibrary();
+    updateCreatePathAssetSummary();
+    updateLaunchSummary();
+    scheduleLocalAssetCleanup(src);
+    showToast("Session overlay removed");
+    return;
+  }
+  if (!Array.isArray(t.overlays)) return;
+  const localIndex = t.overlays.findIndex(
+    (item) => (typeof item === "string" ? item : item && item.src) === src
+  );
+  if (localIndex < 0) return;
+  const removedLocal = t.overlays.splice(localIndex, 1)[0];
+  pushRemoved(key, "overlay", removedLocal, localIndex);
   saveThemesToStorage();
   loadTheme(key);
-  scheduleLocalAssetCleanup(removed);
+  scheduleLocalAssetCleanup(src);
   showToast("Overlay removed");
 }
 function removeTemplate(index) {
   const key = DOM.eventSelect.value;
   const t = getSelectedThemeTarget();
-  if (!t || !Array.isArray(t.templates)) return;
-  const removed = t.templates.splice(index, 1)[0];
-  pushRemoved(key, "template", removed, index);
+  if (!t) return;
+  const list = getEffectiveTemplateList(t);
+  const removed = list[index];
+  const src = getAssetEntrySrc(removed);
+  if (!src) return;
+  if (
+    Array.isArray(activeSessionAssets.templates) &&
+    activeSessionAssets.templates.some((item) => getAssetEntrySrc(item) === src)
+  ) {
+    removeSessionAssetBySrc("template", src);
+    renderOptions();
+    renderCurrentAssets(activeTheme);
+    renderAssetLibrary();
+    updateCreatePathAssetSummary();
+    updateLaunchSummary();
+    scheduleLocalAssetCleanup(src);
+    showToast("Session template removed");
+    return;
+  }
+  if (getThemeAssetSourceSet("template", t).has(src)) {
+    addSessionRemovedAsset("template", src);
+    renderOptions();
+    renderCurrentAssets(activeTheme);
+    renderAssetLibrary();
+    updateCreatePathAssetSummary();
+    updateLaunchSummary();
+    scheduleLocalAssetCleanup(src);
+    showToast("Session template removed");
+    return;
+  }
+  if (!Array.isArray(t.templates)) return;
+  const localIndex = t.templates.findIndex(
+    (item) => (typeof item === "string" ? item : item && item.src) === src
+  );
+  if (localIndex < 0) return;
+  const removedLocal = t.templates.splice(localIndex, 1)[0];
+  pushRemoved(key, "template", removedLocal, localIndex);
   saveThemesToStorage();
   loadTheme(key);
-  scheduleLocalAssetCleanup(
-    typeof removed === "string" ? removed : removed && removed.src
-  );
+  scheduleLocalAssetCleanup(src);
   showToast("Template removed");
 }
 
@@ -17330,10 +17829,60 @@ function removeEventTemplate(src) {
   showToast("Event template removed");
 }
 
+function getThemeAssetSourceSet(kind, theme) {
+  const target = theme && typeof theme === "object" ? theme : null;
+  if (kind === "background") {
+    return new Set(getBaseBackgroundList(target));
+  }
+  if (kind === "overlay") {
+    return new Set(
+      getBaseOverlayList(target)
+        .map((item) => getAssetEntrySrc(item))
+        .filter(Boolean)
+    );
+  }
+  if (kind === "template") {
+    return new Set(
+      getBaseTemplateList(target)
+        .map((item) => getAssetEntrySrc(item))
+        .filter(Boolean)
+    );
+  }
+  return new Set();
+}
+
+function removeSessionAssetBySrc(kind, src) {
+  const cleanSrc = getAssetEntrySrc(src);
+  if (!cleanSrc) return;
+  const baseTheme = activeTheme || getSelectedThemeTarget();
+  const themeSources = getThemeAssetSourceSet(kind, baseTheme);
+  if (kind === "background") {
+    activeSessionAssets.backgrounds = activeSessionAssets.backgrounds.filter(
+      (item) => getAssetEntrySrc(item) !== cleanSrc
+    );
+    if (
+      activeSessionAssets.backgroundIndex >= activeSessionAssets.backgrounds.length
+    ) {
+      activeSessionAssets.backgroundIndex = Math.max(
+        0,
+        activeSessionAssets.backgrounds.length - 1
+      );
+    }
+  } else if (kind === "overlay") {
+    activeSessionAssets.overlays = activeSessionAssets.overlays.filter(
+      (item) => getAssetEntrySrc(item) !== cleanSrc
+    );
+  } else if (kind === "template") {
+    activeSessionAssets.templates = activeSessionAssets.templates.filter(
+      (item) => getAssetEntrySrc(item) !== cleanSrc
+    );
+  }
+  if (themeSources.has(cleanSrc)) addSessionRemovedAsset(kind, cleanSrc);
+  else clearSessionRemovedAsset(kind, cleanSrc);
+}
+
 function removeSessionOverlay(src) {
-  activeSessionAssets.overlays = activeSessionAssets.overlays.filter(
-    (item) => getAssetEntrySrc(item) !== src
-  );
+  removeSessionAssetBySrc("overlay", src);
   renderOptions();
   renderCurrentAssets(activeTheme);
   renderAssetLibrary();
@@ -17344,17 +17893,7 @@ function removeSessionOverlay(src) {
 }
 
 function removeSessionBackground(src) {
-  activeSessionAssets.backgrounds = activeSessionAssets.backgrounds.filter(
-    (item) => getAssetEntrySrc(item) !== src
-  );
-  if (
-    activeSessionAssets.backgroundIndex >= activeSessionAssets.backgrounds.length
-  ) {
-    activeSessionAssets.backgroundIndex = Math.max(
-      0,
-      activeSessionAssets.backgrounds.length - 1
-    );
-  }
+  removeSessionAssetBySrc("background", src);
   applyThemeBackground(activeTheme);
   renderOptions();
   renderCurrentAssets(activeTheme);
@@ -17366,9 +17905,7 @@ function removeSessionBackground(src) {
 }
 
 function removeSessionTemplate(src) {
-  activeSessionAssets.templates = activeSessionAssets.templates.filter(
-    (item) => getAssetEntrySrc(item) !== src
-  );
+  removeSessionAssetBySrc("template", src);
   renderOptions();
   renderCurrentAssets(activeTheme);
   renderAssetLibrary();
@@ -17497,30 +18034,22 @@ function getBaseBackgroundList(theme) {
     Array.isArray(theme.backgroundsRemoved) ? theme.backgroundsRemoved : []
   );
   const explicit = Array.isArray(theme.backgrounds)
-    ? theme.backgrounds.filter(Boolean)
+    ? theme.backgrounds.filter((src) => src && !removed.has(src))
     : [];
-  const folder = Array.isArray(theme.backgroundsTmp)
-    ? theme.backgroundsTmp.filter((src) => src && !removed.has(src))
-    : [];
-  const library = getLibraryBackgroundUrls().filter((src) => !removed.has(src));
-  if (explicit.length || folder.length || library.length)
-    return mergeUniqueUrls([...folder, ...explicit], library);
+  if (explicit.length) return mergeUniqueUrls(explicit);
   const fallback = typeof theme.background === "string" && theme.background.trim()
     ? [theme.background]
     : [];
-  return mergeUniqueUrls(fallback, library);
+  return fallback.filter((src) => src && !removed.has(src));
 }
 
 function getBackgroundList(theme) {
-  const baseList = getBaseBackgroundList(theme);
+  const baseList = getEffectiveBackgroundList(theme);
   const overrides = getActiveEventOverrides();
-  const sessionList = Array.isArray(activeSessionAssets.backgrounds)
-    ? activeSessionAssets.backgrounds.filter(Boolean)
-    : [];
   const eventList = Array.isArray(overrides.backgrounds)
     ? overrides.backgrounds.filter(Boolean)
     : [];
-  return mergeUniqueUrls(sessionList, mergeUniqueUrls(eventList, baseList));
+  return mergeUniqueUrls(baseList, eventList);
 }
 
 function getThemeBackgroundCatalogList(theme) {
@@ -17573,7 +18102,7 @@ function getGreenBackgroundList(theme) {
 
 function getActiveBackground(theme) {
   const overrides = getActiveEventOverrides();
-  const baseList = getBaseBackgroundList(theme);
+  const baseList = getEffectiveBackgroundList(theme);
   if (
     Array.isArray(activeSessionAssets.backgrounds) &&
     activeSessionAssets.backgrounds.length
@@ -17895,13 +18424,30 @@ function getBuiltinTemplateEntries(folder) {
       if (typeof it === "string")
         return { src: folder + it, layout: "double_column" };
       if (it && typeof it === "object" && typeof it.src === "string") {
-        const entry = { ...it, src: folder + it.src };
+        const entry = { ...it, src: qualifyAssetPath(it.src, folder) };
         entry.layout = normalizeTemplateLayout(entry.layout);
+        if (it.foreground && typeof it.foreground === "object") {
+          entry.foreground = {
+            ...it.foreground,
+            src: qualifyAssetPath(it.foreground.src, folder),
+          };
+        }
         return entry;
       }
       return null;
     })
     .filter(Boolean);
+}
+
+function populateAllThemeAssetTmp() {
+  forEachThemeEntry((theme) => {
+    const bgFolder = theme.backgroundFolder || theme.background || "";
+    if (bgFolder) theme.backgroundsTmp = getBuiltinFolderStrings(bgFolder);
+    const ovFolder = theme.overlaysFolder || "";
+    if (ovFolder) theme.overlaysTmp = getBuiltinOverlayEntries(ovFolder);
+    const tpFolder = theme.templatesFolder || "";
+    if (tpFolder) theme.templatesTmp = getBuiltinTemplateEntries(tpFolder);
+  });
 }
 
 function normalizeAssetSlots(slots) {
@@ -18034,6 +18580,20 @@ function normalizeOverlayPhotoSlots(entry) {
       sourceIndex: 0,
     },
   ];
+}
+
+function hasExplicitPhotoSlots(entry) {
+  return Array.isArray(entry && entry.photoSlots) && entry.photoSlots.length > 0;
+}
+
+function logTemplateSlotResolution(template, normalizedSlots, outputW, outputH) {
+  console.debug("[template-photo-slots]", {
+    template: template && (template.src || template.id || template.name),
+    rawManifestPhotoSlots: template && template.photoSlots,
+    normalizedSlots,
+    outputW,
+    outputH,
+  });
 }
 
 function normalizeOverlayDefinition(entry) {
@@ -18392,13 +18952,25 @@ async function resolveTemplatesFromFolder(theme) {
       for (const it of json) {
         if (typeof it === "string")
           out.push({ src: folder + it, layout: "double_column" });
-        else if (it && typeof it === "object" && typeof it.src === "string")
-          out.push({
-            src: folder + it.src,
+        else if (it && typeof it === "object" && typeof it.src === "string") {
+          const entry = {
+            ...it,
+            src: qualifyAssetPath(it.src, folder),
             layout: normalizeTemplateLayout(it.layout),
             slots: it.slots,
+            photoSlots: it.photoSlots,
+            background: it.background,
+            foreground: it.foreground,
             textFields: normalizeTemplateTextFields(it.textFields),
-          });
+          };
+          if (entry.foreground && typeof entry.foreground === "object") {
+            entry.foreground = {
+              ...entry.foreground,
+              src: qualifyAssetPath(entry.foreground.src, folder),
+            };
+          }
+          out.push(entry);
+        }
       }
     }
     return out.length ? out : builtin;
@@ -18426,43 +18998,14 @@ function getBaseOverlayList(theme) {
   const removed = new Set(
     Array.isArray(theme.overlaysRemoved) ? theme.overlaysRemoved : []
   );
-  const builtinFolderArr =
-    typeof theme.overlaysFolder === "string"
-      ? getBuiltinOverlayEntries(theme.overlaysFolder)
-          .map((item) => normalizeOverlayDefinition(item))
-          .filter((item) => item && !removed.has(item.src))
-      : [];
-  const builtinFolderSrcs = new Set(
-    builtinFolderArr.map((item) => item && item.src).filter(Boolean)
-  );
-  const folderArr = Array.isArray(theme.overlaysTmp)
-    ? [
-        ...builtinFolderArr,
-        ...theme.overlaysTmp
-          .map((item) => normalizeOverlayDefinition(item))
-          .filter((item) => {
-            if (!item || removed.has(item.src)) return false;
-            if (
-              theme.overlaysFolder &&
-              item.src &&
-              item.src.startsWith(theme.overlaysFolder) &&
-              builtinFolderSrcs.size
-            ) {
-              return builtinFolderSrcs.has(item.src);
-            }
-            return true;
-          }),
-      ]
-    : builtinFolderArr;
-  const libraryArr = getLibraryOverlayEntries()
-    .map((item) => normalizeOverlayDefinition(item))
-    .filter((item) => item && !removed.has(item.src));
   const localArr = Array.isArray(theme.overlays)
-    ? theme.overlays.map((item) => normalizeOverlayDefinition(item))
+    ? theme.overlays
+        .map((item) => normalizeOverlayDefinition(item))
+        .filter((item) => item && !removed.has(item.src))
     : [];
   const seen = new Set();
   const out = [];
-  for (const o of [...folderArr, ...libraryArr, ...localArr]) {
+  for (const o of localArr) {
     const k = (o && o.src ? o.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
@@ -18476,37 +19019,23 @@ function getBaseTemplateList(theme) {
   const removed = new Set(
     Array.isArray(theme.templatesRemoved) ? theme.templatesRemoved : []
   );
-  const folderArr = Array.isArray(theme.templatesTmp)
-    ? theme.templatesTmp
+  const localArr = Array.isArray(theme.templates)
+    ? theme.templates
         .filter((t) => t && t.src && !removed.has(t.src))
         .map((t) => ({
+          ...cloneThemeValue(t),
           src: t.src,
           layout: normalizeTemplateLayout(t.layout),
           slots: t.slots,
+          photoSlots: t.photoSlots,
+          background: t.background,
+          foreground: t.foreground,
           textFields: normalizeTemplateTextFields(t.textFields),
-          __folder: true,
         }))
-    : [];
-  const libraryArr = getLibraryTemplateEntries()
-    .filter((t) => t && t.src && !removed.has(t.src))
-    .map((t) => ({
-      src: t.src,
-      layout: normalizeTemplateLayout(t.layout),
-      slots: t.slots,
-      textFields: normalizeTemplateTextFields(t.textFields),
-      __library: true,
-    }));
-  const localArr = Array.isArray(theme.templates)
-    ? theme.templates.map((t) => ({
-        src: t.src,
-        layout: normalizeTemplateLayout(t.layout),
-        slots: t.slots,
-        textFields: normalizeTemplateTextFields(t.textFields),
-      }))
     : [];
   const seen = new Set();
   const out = [];
-  for (const t of [...folderArr, ...libraryArr, ...localArr]) {
+  for (const t of localArr) {
     const k = (t && t.src ? t.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
@@ -18515,61 +19044,169 @@ function getBaseTemplateList(theme) {
   return out;
 }
 
-function getOverlayList(theme) {
+function getSessionRemovedAssetList(category = "") {
+  const normalized = normalizeUploadedAssetCategory(category);
+  if (normalized === "background") return sessionRemovedBackgrounds;
+  if (normalized === "overlay") return sessionRemovedOverlays;
+  if (normalized === "template") return sessionRemovedTemplates;
+  return [];
+}
+
+function getSessionRemovedAssetSourceSet(category = "") {
+  return createAssetSelectionSet(getSessionRemovedAssetList(category));
+}
+
+function clearSessionRemovedAsset(category = "", src = "") {
+  const normalized = normalizeUploadedAssetCategory(category);
+  const cleanSrc = getAssetEntrySrc(src);
+  if (!cleanSrc) return;
+  if (normalized === "background") {
+    sessionRemovedBackgrounds = sessionRemovedBackgrounds.filter(
+      (item) => item !== cleanSrc
+    );
+  } else if (normalized === "overlay") {
+    sessionRemovedOverlays = sessionRemovedOverlays.filter(
+      (item) => item !== cleanSrc
+    );
+  } else if (normalized === "template") {
+    sessionRemovedTemplates = sessionRemovedTemplates.filter(
+      (item) => item !== cleanSrc
+    );
+  }
+}
+
+function addSessionRemovedAsset(category = "", src = "") {
+  const normalized = normalizeUploadedAssetCategory(category);
+  const cleanSrc = getAssetEntrySrc(src);
+  if (!cleanSrc) return;
+  if (normalized === "background") {
+    if (!sessionRemovedBackgrounds.includes(cleanSrc))
+      sessionRemovedBackgrounds.push(cleanSrc);
+  } else if (normalized === "overlay") {
+    if (!sessionRemovedOverlays.includes(cleanSrc))
+      sessionRemovedOverlays.push(cleanSrc);
+  } else if (normalized === "template") {
+    if (!sessionRemovedTemplates.includes(cleanSrc))
+      sessionRemovedTemplates.push(cleanSrc);
+  }
+}
+
+function getEffectiveAssetList(baseEntries = [], sessionEntries = [], removedEntries = []) {
+  const removed = new Set(
+    (Array.isArray(removedEntries) ? removedEntries : [])
+      .map(getAssetEntrySrc)
+      .filter(Boolean)
+  );
+  const seen = new Set();
+  const out = [];
+  for (const entry of [...sessionEntries, ...baseEntries]) {
+    const src = getAssetEntrySrc(entry);
+    if (!src || removed.has(src) || seen.has(src)) continue;
+    seen.add(src);
+    out.push(entry);
+  }
+  return out;
+}
+
+function getEffectiveBackgroundList(theme) {
   if (!theme || typeof theme !== "object") return [];
-  const overrides = getActiveEventOverrides();
-  const sessionArr = Array.isArray(activeSessionAssets.overlays)
+  const sessionList = Array.isArray(activeSessionAssets.backgrounds)
+    ? activeSessionAssets.backgrounds.filter(Boolean)
+    : [];
+  return getEffectiveAssetList(
+    getBaseBackgroundList(theme),
+    sessionList,
+    sessionRemovedBackgrounds
+  );
+}
+
+function getEffectiveOverlayList(theme) {
+  if (!theme || typeof theme !== "object") return [];
+  const sessionList = Array.isArray(activeSessionAssets.overlays)
     ? activeSessionAssets.overlays
         .map((item) => normalizeOverlayDefinition(item))
         .filter(Boolean)
     : [];
+  return getEffectiveAssetList(
+    getBaseOverlayList(theme),
+    sessionList,
+    sessionRemovedOverlays
+  );
+}
+
+function getEffectiveTemplateList(theme) {
+  if (!theme || typeof theme !== "object") return [];
+  const sessionList = Array.isArray(activeSessionAssets.templates)
+    ? activeSessionAssets.templates
+        .map((item) => {
+          const src = getAssetEntrySrc(item);
+          if (!src) return null;
+          return typeof item === "object"
+            ? {
+                ...cloneThemeValue(item),
+                src,
+                layout: normalizeTemplateLayout(item.layout),
+                slots: item.slots,
+                photoSlots: item.photoSlots,
+                background: item.background,
+                foreground: item.foreground,
+                textFields: normalizeTemplateTextFields(item.textFields),
+              }
+            : {
+                src,
+                layout: "double_column",
+                __session: true,
+              };
+        })
+        .filter(Boolean)
+    : [];
+  return getEffectiveAssetList(
+    getBaseTemplateList(theme),
+    sessionList,
+    sessionRemovedTemplates
+  );
+}
+
+function getAssetDebugSources(list = []) {
+  return (Array.isArray(list) ? list : [])
+    .map(getAssetEntrySrc)
+    .filter(Boolean)
+    .slice(0, 10);
+}
+
+function logEffectiveAssetState(theme, reason = "effective-assets") {
+  if (!theme || typeof theme !== "object") return;
+  const backgrounds = getEffectiveBackgroundList(theme);
+  const overlays = getEffectiveOverlayList(theme);
+  const templates = getEffectiveTemplateList(theme);
+  console.info("[photobooth effective assets]", {
+    reason,
+    theme: theme.name || theme.key || "(unnamed theme)",
+    backgroundCount: backgrounds.length,
+    overlayCount: overlays.length,
+    templateCount: templates.length,
+    backgroundFirst10: getAssetDebugSources(backgrounds),
+    overlayFirst10: getAssetDebugSources(overlays),
+    templateFirst10: getAssetDebugSources(templates),
+  });
+}
+
+function getOverlayList(theme) {
+  if (!theme || typeof theme !== "object") return [];
+  const overrides = getActiveEventOverrides();
   const eventArr = Array.isArray(overrides.overlays)
-    ? overrides.overlays.map((item) => normalizeOverlayDefinition(item)).filter(Boolean)
+    ? overrides.overlays
+        .map((item) => normalizeOverlayDefinition(item))
+        .filter(Boolean)
     : [];
-  const removed = new Set(
-    Array.isArray(theme.overlaysRemoved) ? theme.overlaysRemoved : []
-  );
-  const builtinFolderArr =
-    typeof theme.overlaysFolder === "string"
-      ? getBuiltinOverlayEntries(theme.overlaysFolder)
-          .map((item) => normalizeOverlayDefinition(item))
-          .filter((item) => item && !removed.has(item.src))
-      : [];
-  const builtinFolderSrcs = new Set(
-    builtinFolderArr.map((item) => item && item.src).filter(Boolean)
-  );
-  const folderArr = Array.isArray(theme.overlaysTmp)
-    ? [
-        ...builtinFolderArr,
-        ...theme.overlaysTmp
-          .map((item) => normalizeOverlayDefinition(item))
-          .filter((item) => {
-            if (!item || removed.has(item.src)) return false;
-            if (
-              theme.overlaysFolder &&
-              item.src &&
-              item.src.startsWith(theme.overlaysFolder) &&
-              builtinFolderSrcs.size
-            ) {
-              return builtinFolderSrcs.has(item.src);
-            }
-            return true;
-          }),
-      ]
-    : builtinFolderArr;
-  const libraryArr = getLibraryOverlayEntries()
-    .map((item) => normalizeOverlayDefinition(item))
-    .filter((item) => item && !removed.has(item.src));
-  const localArr = Array.isArray(theme.overlays)
-    ? theme.overlays.map((item) => normalizeOverlayDefinition(item))
-    : [];
+  const effective = getEffectiveOverlayList(theme);
   const seen = new Set();
   const out = [];
-  for (const o of [...sessionArr, ...eventArr, ...folderArr, ...libraryArr, ...localArr]) {
-    const k = (o && o.src ? o.src : "").toString().trim();
-    if (!k || seen.has(k)) continue;
-    seen.add(k);
-    out.push(o);
+  for (const item of [...effective, ...eventArr]) {
+    const src = getAssetEntrySrc(item);
+    if (!src || seen.has(src)) continue;
+    seen.add(src);
+    out.push(item);
   }
   return out;
 }
@@ -18599,19 +19236,41 @@ function getAllThemeOverlayCatalogList(theme) {
 }
 
 function getTemplateList(theme) {
-  return getCanonicalAssetCollection("template").map((asset) => {
-    const raw = asset.raw && typeof asset.raw === "object" ? asset.raw : {};
-    return {
-      ...raw,
-      src: asset.url,
-      name: asset.name,
-      tags: asset.tags,
-      layout: normalizeTemplateLayout(raw.layout),
-      slots: raw.slots,
-      textFields: normalizeTemplateTextFields(raw.textFields),
-      __library: true,
-    };
-  });
+  if (!theme || typeof theme !== "object") return [];
+  const overrides = getActiveEventOverrides();
+  const eventArr = Array.isArray(overrides.templates)
+    ? overrides.templates
+        .map((item) =>
+          typeof item === "string"
+            ? {
+                src: item,
+                layout: "double_column",
+                __event: true,
+              }
+            : {
+                ...cloneThemeValue(item),
+                src: item.src,
+                layout: normalizeTemplateLayout(item.layout),
+                slots: item.slots,
+                photoSlots: item.photoSlots,
+                background: item.background,
+                foreground: item.foreground,
+                textFields: normalizeTemplateTextFields(item.textFields),
+                __event: true,
+              }
+        )
+        .filter((item) => item && item.src)
+    : [];
+  const effective = getEffectiveTemplateList(theme);
+  const seen = new Set();
+  const out = [];
+  for (const item of [...effective, ...eventArr]) {
+    const src = getAssetEntrySrc(item);
+    if (!src || seen.has(src)) continue;
+    seen.add(src);
+    out.push(item);
+  }
+  return out;
 }
 
 // --- PWA Install Button ---
@@ -18675,6 +19334,15 @@ Object.assign(window, {
     composeStrip,
     finalizeToPrint,
     getActiveEvent: () => getActiveEvent(),
+    getThemes: () => themes,
+    getBaseBackgroundList: (theme = activeTheme) => getBaseBackgroundList(theme),
+    getBaseTemplateList: (theme = activeTheme) => getBaseTemplateList(theme),
+    getAllThemeBackgroundCatalogList,
+    repairCorruptedBackgroundDefaults,
+    openAssetThemeDefaultsModal,
+    getEffectiveBackgroundList: () => getEffectiveBackgroundList(activeTheme),
+    getEffectiveOverlayList: () => getEffectiveOverlayList(activeTheme),
+    getEffectiveTemplateList: () => getEffectiveTemplateList(activeTheme),
     getOverlayList: () => getOverlayList(activeTheme),
     getActiveTheme: () => activeTheme,
     getPhotoOverlayOrientation: (entry) => getPhotoOverlayOrientation(entry),

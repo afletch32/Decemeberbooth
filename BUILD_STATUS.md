@@ -1,7 +1,88 @@
 Current goal
-- Build Asset Library Management for uploaded and built-in overlays, templates, and backgrounds.
+- Add multi-theme default assignment in Asset Library and stop manifest catalogs from being treated as selected theme defaults.
 
 What is done
+- Added a Defaults action on each Asset Library card with a grouped theme checklist and explicit Save defaults action.
+- Kept backgrounds, overlays, and templates as explicit defaults while retaining manifest-derived `*Tmp` lists as catalog data only.
+- Preserved template rendering metadata when shared defaults are assigned or normalized.
+- Added a versioned repair for the saved full-background-catalog selection corruption.
+- Replaced obsolete thumbnail-panel browser smoke tests with Asset Library category, defaults-action, count, and selection coverage.
+
+What is in progress
+- None.
+
+Next steps
+- Review the defaults workflow and Summer background count in the deployed app.
+
+Validation
+- `npm test` passes with 79/79 tests.
+- Targeted Playwright smoke passes for multi-theme template defaults, metadata preservation, and the full-background-catalog repair.
+- Targeted Playwright smoke passes for the replacement Asset Library tests.
+
+History
+- Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.
+
+What is done
+- Renamed the Hawks, Summer, ANE, birthday, Halloween, Christmas, Valentines, and St. Patrick's Day asset folders/files to normalized names.
+- Regenerated folder manifests under `assets/` with normalized filenames.
+- Updated `scripts/builtin-asset-manifests.mjs` and the related manifest/tests for normalized birthday and summer asset names.
+- Regenerated `themes.from_assets.cleaned.json` and `themes_from_assets_manifest.csv` from the normalized asset tree.
+- Restored wedding overlay manifest metadata so `photoSlots`, `background`, and `foreground` remain intact.
+- `npm test` passes with 78/78 tests after the normalization pass.
+
+What is in progress
+- None.
+
+Next steps
+- Review the diff or proceed with any follow-up cleanup.
+
+Known bugs/blockers
+- Cross-device sync still depends on using the live HTTP/HTTPS deployment rather than `file://`.
+- Asset file persistence still depends on shared Cloudinary storage being configured for uploads.
+- Hard deletion removes app library metadata; unsigned browser uploads do not provide Cloudinary destroy permissions, so Cloudinary media cleanup must be done from Cloudinary unless a signed backend delete flow is added.
+
+Important decisions
+- Kept the logical theme/group IDs intact while normalizing filesystem names and generated asset paths.
+- Wedding overlay manifests must preserve `photoSlots`, `background`, and `foreground` metadata for overlay-slot rendering tests.
+
+Current goal
+- Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.
+
+What is done
+- Renamed the Hawks, Summer, ANE, birthday, Halloween, Christmas, Valentines, and St. Patrick's Day asset folders/files to normalized names.
+- Regenerated folder manifests under `assets/` with normalized filenames.
+- Updated `scripts/builtin-asset-manifests.mjs` and the related manifest/tests for normalized birthday and summer asset names.
+- Regenerated `themes.from_assets.cleaned.json` and `themes_from_assets_manifest.csv` from the normalized asset tree.
+- Added a compact Setup Sections switcher that reuses the existing section state machinery.
+- Removed Asset Library "Use" buttons and setup workflow remove buttons.
+- Removed setup theme browsing sections, theme filter cards, and the `Use This Theme` confirmation button.
+- Added searchable Theme and Font controls directly in Session Setup with immediate activation.
+- Removed duplicate setup status cards for camera, save/Cloudinary, and booth mode; those statuses stay in the top status bar.
+- Removed the visible Font Management section from Setup.
+- Changed Theme and Font setup controls from search-only inputs to dropdown comboboxes that show all options on click and filter only when typed into.
+- Changed final strip rendering to honor exported `manifest.photoSlots` before any legacy strip geometry fallback.
+- Preserved Overlay Builder `photoSlots`, `background`, and `foreground` fields when loading `templates.json`.
+- Added slot debug logging for raw manifest slots, normalized slots, and final draw coordinates.
+- Cleared countdown, last-shot, live overlay, and stale final media layers before final preview display.
+- Changed final canvas initialization and empty QR-panel visibility to avoid leftover black rectangles on the share screen.
+- Constrained booth-ready layout to `100dvh`, moved the capture button back into normal flex flow, and gave the camera preview a viewport-derived max height to prevent vertical page overflow.
+- Added temporary viewport overflow logging with `viewportHeight` and `documentHeight`.
+- Added browser coverage for Chrome desktop plus iPad-sized landscape and portrait viewports asserting no document overflow.
+- Restored Asset Library selected badges while keeping selected/unselected state driven by effective assets.
+- Restored remote `/api/assets` DELETE calls for library deletion while keeping local hide/archive fallback.
+- `npm test` passes with 75/75 tests after the Setup cleanup.
+- `npm test` passes with 75/75 tests after the Theme/Font combobox update.
+- `npm test` passes with 77/77 tests after the final render fixes.
+- `npm test` passes with 78/78 tests after the booth viewport-height fix.
+- Fixed countdown layout so the live preview frame keeps the same geometry during preview, countdown, capture, freeze frame, and share.
+- Kept the captured image visible until the final preview image is loaded, then revealed the share shell without an empty frame.
+- Added regression coverage for no countdown resize and no empty frame between capture and share.
+- `npm test` passes with 78/78 tests after the capture-to-share transition fix.
+- Targeted Playwright passes for default double-column strip rendering and explicit manifest `photoSlots` rendering.
+- Targeted Playwright passes for booth viewport overflow in Chromium at desktop, iPad landscape, and iPad portrait dimensions.
+- Direct WebKit/Safari verification is not configured in the current Playwright project; the available automated coverage is Chromium with iPad-sized viewports.
+- Kept card-level selection toggles and adjusted theme reselect handling to clear session removals.
+- Verified the refactor with `npm test` and a targeted Playwright smoke for full-card toggling.
 - Disabled browser autofill on Advanced Theme Controls text inputs so manual edits are not overridden.
 - Changed Advanced Theme Controls text defaults to display as placeholders instead of pre-filled field values.
 - Added session-only text override state so no-event theme sessions can edit labels without mutating saved theme defaults.
@@ -153,25 +234,30 @@ What is done
 - Hid booth operator mode controls on the guest idle/start screen while keeping capture mode selection active after Touch to Start.
 - Verified setup to idle to capture to Go Back on desktop and tablet viewports.
 - Split setup assets into clean assigned trays while Asset Library remains the full searchable catalog with selected styling for already-assigned assets.
+- Added session-only removal state for backgrounds, overlays, and templates so theme assets can be deselected for the current session without mutating the theme.
+- Added effective asset helpers that resolve `theme assets + session additions - session removals` for backgrounds, overlays, and templates.
+- Updated setup selection-state logic and asset-library selected state to use effective session lists.
+- Removed shared library overlays from the theme base overlay list so theme overlay counts no longer inherit the full library catalog.
+- Removed shared library backgrounds and templates from theme base lists so active themes no longer inherit catalog assets from other themes.
+- Removed canonical template catalog injection from the runtime template list; library templates now become active only through session selection.
+- Added temporary effective asset logging at theme load with theme name, category counts, and first 10 sources per category.
+- Changed launch-summary overlay/template effective counts from `assigned` wording to `selected` so they do not conflict with session-only assigned trays.
+- Simplified Asset Library card visuals to effective selected/not-selected only; selected cards use a green border and selected badge, while unselected cards stay normal.
+- Changed Asset Library cards to toggle selection from the full card using the effective asset set.
+- Removed setup Backgrounds, Overlays, and Templates tray panels and duplicate thumbnail grids; Asset Library is now the setup asset state surface.
+- Changed setup asset counts for backgrounds, overlays, and templates to use the same effective collections as Asset Library selected state.
+- Changed unselected Asset Library cards to render muted grey with reduced opacity, while selected cards remain full opacity with a green border.
+- `npm test` passes with 75/75 tests after the effective session asset update.
+- `npm test` passes with 75/75 tests after the asset source-boundary audit.
+- `npm test` passes with 75/75 tests after the Asset Library card-state simplification.
+- `npm test` passes with 75/75 tests after removing duplicate setup asset trays.
+- `npm test` passes with 78/78 tests after restoring the setup section switcher.
 
 What is in progress
-- Ready for the next booth UI fix or deploy.
+- Verifying the renamed asset tree and generated outputs with the test suite.
 
 Next steps
-- Test one real device capture with Cloudinary configured to confirm the photo is recorded into the app gallery index.
-- Test Live Photo frame selection plus Photostrip template selection on the preview URL.
-- Test a Hawks photostrip and one non-Hawks photostrip on the preview URL.
-- Test portrait and landscape photo overlay selection on the preview URL.
-- Open the new setup `Overlay Builder` button and confirm it launches `overlay-maker.html`.
-- Verify one live portrait and one live landscape capture on the 4x6 preview deployment.
-- Run a real Cloudinary capture pass for photo, strip, live/video, and message modes to confirm each produces one URL shared by QR and gallery.
-- Test a forced gallery API failure on the deployed Pages app to confirm the queued gallery retry clears after connectivity/API recovery.
-- Test a real Cloudinary asset upload on the deployed Pages app and confirm it appears on a second device after refresh.
-- Confirm archive/delete library metadata updates on the deployed Pages app.
-- Smoke test selecting a background from one theme and an overlay from another theme before launching a no-event session.
-- Browser smoke test the Asset Library screen with search, sort, category/customizable filters, rename, tags, fields, and delete.
-- Smoke test selected asset visibility on the deployed Pages app after the next deploy.
-- Smoke test setup picker/library count parity and repo-backed delete/hide behavior on the deployed Pages app after the next deploy.
+- Run `npm test` and confirm no stale asset references remain in runtime or tests.
 
 Known bugs/blockers
 - Cross-device sync still depends on using the live HTTP/HTTPS deployment rather than `file://`.
@@ -186,6 +272,7 @@ Known bugs/blockers
 - Live-photo video preview now prioritizes the recorded clip; the poster image is still used as the fallback/thumbnail.
 - Live-photo and message QR links now use the canonical uploaded video URL when a video blob is available.
 - Wedding demo currently ships one single-photo overlay and one photostrip template per wedding theme.
+- The capture/share transition now waits for the final preview image to load before revealing the shell, so any remaining flicker would likely be browser-specific.
 - All double-column photostrips duplicate the three captured photos into both columns using the canonical six-slot grid.
 - Wedding strip templates remain single-column because their SVG art is 720x2160 and has three native photo windows.
 - Photo overlay format selection affects photo modes only; strip and layout modes keep their existing template selection flow.
@@ -207,6 +294,7 @@ Important decisions
 - No legacy event-first behavior needs to be preserved because this booth has only been used for tests.
 - No-event sessions save photos under the booth browser's local date using `YYYY-MM-DD`.
 - Session-only uploads affect the current booth run only and are not persisted to saved themes or event records.
+- Session-only asset removals affect the current booth run only and are not persisted to saved themes or event records.
 - Capture QR/share links and gallery entries must use the same Cloudinary URL from `uploadCaptureOnce()`.
 - Retried gallery writes are idempotent by `capture_id`, so duplicate submissions update one gallery entry instead of creating multiples.
 - Uploaded asset library metadata lives in `THEMES_KV` under `assetLibrary`; Cloudinary remains the file store.
@@ -215,6 +303,7 @@ Important decisions
 - All Asset Library cards expose the same management actions; repo-backed assets use metadata overrides/tombstones when files cannot be physically changed.
 - Customizable assets use the existing asset metadata model with `customizable` and `editableFields`; no separate asset-management store is being added.
 - Asset source labels are intentionally hidden from operator-facing cards; source is only an internal implementation detail.
+- Asset Library selection is expressed through the whole card surface and border/opacity state instead of badges or inline use/remove controls.
 - Repo-backed default assets are hidden through stored metadata tombstones instead of physical file deletion.
 - Guest idle/start mode hides operator controls; the booth mode bar remains an operator/setup control, not a guest-facing control.
 - Setup assigned trays render only current-session assets without selected styling; Asset Library cards show selected styling when already assigned.

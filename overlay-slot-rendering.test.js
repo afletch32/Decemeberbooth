@@ -26,6 +26,32 @@ test("overlay preview renders into explicit photo slots", () => {
   assert.ok(appJs.includes("photoSlots: normalizeOverlayPhotoSlots"));
 });
 
+test("final strip rendering uses manifest photo slots before legacy strip geometry", () => {
+  const appJs = readProjectFile("scripts/app.js");
+
+  assert.ok(
+    appJs.includes("const explicitPhotoSlots = hasExplicitPhotoSlots(template);"),
+    "strip composition should detect exported photoSlots"
+  );
+  assert.ok(
+    appJs.includes("if (explicitPhotoSlots)") &&
+      appJs.includes("await renderOverlayToCanvas(") &&
+      appJs.includes("{ photos: enhancedPhotos, repeatPhotos: true }"),
+    "explicit photoSlots should render through the overlay slot renderer"
+  );
+  assert.ok(
+    appJs.includes("rawManifestPhotoSlots: template && template.photoSlots") &&
+      appJs.includes("drawImage: rect"),
+    "slot debugging should log raw slots, normalized slots, and draw coordinates"
+  );
+  assert.ok(
+    appJs.includes("photoSlots: it.photoSlots") &&
+      appJs.includes("background: it.background") &&
+      appJs.includes("foreground: it.foreground"),
+    "folder template manifests should preserve Overlay Builder render metadata"
+  );
+});
+
 test("wedding overlay manifests define explicit photo windows", () => {
   const timeless = readProjectFile(
     "assets/wedding/timeless-romance/overlays/overlays.json"

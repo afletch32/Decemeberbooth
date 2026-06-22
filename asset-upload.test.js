@@ -146,15 +146,22 @@ test("uploaded assets register in a persistent shared library", () => {
   );
   assert.ok(
     appScript.includes("function getCanonicalAssetCollection(category = \"\")") &&
-      appScript.includes('getCanonicalAssetCollection("background")') &&
-      appScript.includes('getCanonicalAssetCollection("overlay")') &&
-      appScript.includes('getCanonicalAssetCollection("template")'),
+      appScript.includes('getVisibleLibraryAssets("background")') &&
+      appScript.includes('getVisibleLibraryAssets("overlay")') &&
+      appScript.includes('getVisibleLibraryAssets("template")'),
     "setup pickers and Asset Library should share one canonical asset collection"
   );
   assert.ok(
-    appScript.includes("archiveLibraryAssetByUrl(src)") &&
+    appScript.includes("function archiveLibraryAssetByUrl(url)") &&
       appScript.includes('method: "DELETE"'),
     "library assets should support hiding/archiving and deletion"
+  );
+  assert.ok(
+    appScript.includes(
+      'const repoBackedAsset = fallbackAsset && fallbackAsset.source === "theme";'
+    ) &&
+      appScript.includes("if (repoBackedAsset || !canSyncRemote()) {\n    return;\n  }"),
+    "repo-backed asset deletes should keep a remote tombstone instead of disappearing"
   );
 });
 
@@ -204,12 +211,19 @@ test("asset library cards hide source labels and manage every asset through meta
   );
   assert.ok(
     appScript.includes('meta.textContent = [asset.category, getAssetCreatedAtLabel(asset)]') &&
-      appScript.includes('confirm("Remove this asset from the library?")'),
-    "asset cards should show simple category/date metadata and delete through a generic library action"
+      !appScript.includes('useBtn.textContent = isSelected ? "Deselect" : "Select";') &&
+      !appScript.includes("asset-library-card.selected::after") &&
+      !appScript.includes("asset-item.selected::after"),
+    "asset cards should show simple category/date metadata and rely on border/opacity state instead of badges"
   );
   assert.ok(
     appScript.includes("method: index >= 0 ? \"PATCH\" : \"POST\"") &&
       appScript.includes("{ hidden: true, archived: true }"),
     "renaming/tagging/deleting repo-backed assets should create stored metadata overrides or tombstones"
+  );
+  assert.ok(
+    appScript.includes("clearSessionRemovedAsset(category, src);") &&
+      appScript.includes("addSessionAssetUrl(\"backgrounds\", src);"),
+    "card toggles should restore theme assets from session removals and add session-only assets"
   );
 });

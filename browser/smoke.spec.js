@@ -81,6 +81,27 @@ async function gotoApp(page, path) {
   await page.goto(path, { waitUntil: "domcontentloaded" });
 }
 
+async function launchStillPhotoBooth(page) {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+  await page.locator("#startBoothButton").click({ force: true });
+  await page.locator("#startButton").click({ force: true });
+  await page
+    .locator(".welcome-mode-btn")
+    .filter({ hasText: "Single Still Photo" })
+    .click({ force: true });
+  await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
+  await expect(page.locator("#captureBtn")).toBeVisible();
+}
+
+async function getViewportOverflow(page) {
+  return page.evaluate(() => ({
+    viewportHeight: window.innerHeight,
+    documentHeight: document.documentElement.scrollHeight,
+    bodyHeight: document.body.scrollHeight,
+  }));
+}
+
 async function expectCreatePathValidation(page, options) {
   const {
     themePattern,
@@ -212,50 +233,125 @@ test("overlay builder theme assignment dropdown loads saved themes", async ({
   expect(optionTexts.join(" ")).toContain("Wedding");
 });
 
-test("overlay and template thumbnail sections remember their open state", async ({
+test("Asset Library filters the setup catalog by category", async ({
   page,
 }) => {
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
-  await Promise.all([
-    page.waitForLoadState("domcontentloaded"),
-    page.evaluate(() => {
-      localStorage.removeItem("photoboothAssetPanels");
-      window.location.reload();
-    }),
-  ]);
+  await page.locator("#assetLibraryCategory").selectOption("template");
+  const cards = page.locator("#assetLibraryGrid .asset-library-card");
+  expect(await cards.count()).toBeGreaterThan(0);
+  await expect(page.locator("#assetLibraryStatus")).toContainText("shown");
+  await expect(
+    page.locator("#assetLibraryGrid .asset-library-actions button", {
+      hasText: "Defaults",
+    })
+  ).toHaveCount(await cards.count());
+});
+
+test("asset library cards toggle selection from the full card surface", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
 
-  const overlayPanel = page.locator("#overlayThumbnailsPanel");
-  const overlayHeader = page.locator("#overlayThumbnailsHeader");
-  const templatePanel = page.locator("#templateThumbnailsPanel");
-  const templateHeader = page.locator("#templateThumbnailsHeader");
+  const card = page.locator("#assetLibraryGrid .asset-library-card").first();
+  await expect(card).toBeVisible();
 
-  await expect(overlayHeader).toHaveAttribute("aria-expanded", "false");
-  await expect(templateHeader).toHaveAttribute("aria-expanded", "false");
+  const initialState = (await card.getAttribute("aria-selected")) || "false";
+  const toggledState = initialState === "true" ? "false" : "true";
 
-  await overlayHeader.evaluate((node) => node.click());
-  await expect(overlayHeader).toHaveAttribute("aria-expanded", "true");
-  await expect(overlayPanel).toHaveClass(/open/);
+  await card.click({ position: { x: 24, y: 24 } });
+  await expect(card).toHaveAttribute("aria-selected", toggledState);
 
-  await templateHeader.evaluate((node) => node.click());
-  await expect(templateHeader).toHaveAttribute("aria-expanded", "true");
-  await expect(templatePanel).toHaveClass(/open/);
+  await card.click({ position: { x: 24, y: 24 } });
+  await expect(card).toHaveAttribute("aria-selected", initialState);
+});
 
-  const storedPanels = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("photoboothAssetPanels") || "{}")
-  );
-  expect(storedPanels).toMatchObject({
-    overlay: true,
-    template: true,
+test("asset defaults can be assigned to multiple themes without losing template metadata", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  await page.locator("#assetLibraryCategory").selectOption("template");
+  const defaultsButton = page
+    .locator("#assetLibraryGrid .asset-library-actions button", { hasText: "Defaults" })
+    .first();
+  await defaultsButton.click();
+  await expect(page.locator("#assetThemeDefaultsModal")).not.toHaveClass(/hidden/);
+  await page.locator("#assetThemeDefaultsCancel").click();
+
+  const assigned = await page.evaluate(() => {
+    const api = window.__photoboothTest;
+    const targetKeys = [
+      "general:basic",
+      "general:birthday",
+      "general:summer",
+      "fall:halloween",
+    ];
+    api.openAssetThemeDefaultsModal({
+      id: "template:data:test/shared-neutral-strip",
+      category: "template",
+      url: "data:test/shared-neutral-strip",
+      name: "Shared Neutral Strip",
+      raw: {
+        src: "data:test/shared-neutral-strip",
+        layout: "double_column",
+        photoSlots: [{ x: 10, y: 20, w: 30, h: 40 }],
+        background: { color: "#fff" },
+        foreground: { src: "data:test/foreground" },
+        textFields: [{ key: "title", x: 4, y: 5, w: 80, h: 20 }],
+      },
+    });
+    document.querySelectorAll("#assetThemeDefaultsList input").forEach((input) => {
+      input.checked = targetKeys.includes(input.value);
+    });
+    document.querySelector("#assetThemeDefaultsSave").click();
+    const themes = api.getThemes();
+    const targetThemes = targetKeys.map((key) => {
+      const [root, leaf] = key.split(":");
+      const group = themes[root];
+      const theme = group.themes?.[leaf] || group.holidays?.[leaf];
+      return theme.templates.find((entry) => entry.src === "data:test/shared-neutral-strip");
+    });
+    return targetThemes.map((entry) => ({
+      layout: entry.layout,
+      photoSlots: entry.photoSlots,
+      background: entry.background,
+      foreground: entry.foreground,
+      textFields: entry.textFields,
+    }));
   });
 
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => !!window.__photoboothTest);
-  const storedAfterReload = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("photoboothAssetPanels") || "{}")
-  );
-  expect(storedAfterReload).toMatchObject(storedPanels);
+  expect(assigned).toHaveLength(4);
+  assigned.forEach((entry) => {
+    expect(entry).toMatchObject({
+      layout: "double_column",
+      photoSlots: [{ x: 10, y: 20, w: 30, h: 40 }],
+      background: { color: "#fff" },
+      foreground: { src: "data:test/foreground" },
+    });
+    expect(entry.textFields).toHaveLength(1);
+  });
+
+  const backgroundRepair = await page.evaluate(() => {
+    const api = window.__photoboothTest;
+    const themes = api.getThemes();
+    const catalog = api.getAllThemeBackgroundCatalogList();
+    const summer = themes.general.themes.summer;
+    summer.backgrounds = catalog.slice();
+    delete themes._meta.assetDefaultRepairVersion;
+    const repaired = api.repairCorruptedBackgroundDefaults();
+    return {
+      repaired,
+      summerBackgrounds: summer.backgrounds,
+      summerBase: api.getBaseBackgroundList(summer),
+    };
+  });
+  expect(backgroundRepair.repaired).toBe(true);
+  expect(backgroundRepair.summerBackgrounds).toEqual([]);
+  expect(backgroundRepair.summerBase).toEqual([]);
 });
 
 test("admin can open the layout builder and return to booth setup", async ({
@@ -310,33 +406,16 @@ test("session setup cards route to the right admin actions", async ({
   await expect(page.locator("#eventBasicsSection")).not.toHaveClass(/hidden/);
 });
 
-test("overlay and template summary panels toggle their thumbnail bodies", async ({
+test("Asset Library presents current default selections", async ({
   page,
 }) => {
-  await page.addInitScript(() => {
-    localStorage.removeItem("photoboothAssetPanels");
-  });
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
-
-  const overlayHeader = page.locator("#overlayThumbnailsHeader");
-  const templateHeader = page.locator("#templateThumbnailsHeader");
-  const overlayPanel = page.locator("#overlayThumbnailsPanel");
-  const templatePanel = page.locator("#templateThumbnailsPanel");
-
-  await expect(overlayHeader).toHaveAttribute("aria-expanded", "false");
-  await expect(templateHeader).toHaveAttribute("aria-expanded", "false");
-
-  await overlayHeader.evaluate((node) => node.click());
-  await expect(overlayHeader).toHaveAttribute("aria-expanded", "true");
-  await expect(overlayPanel).toHaveClass(/open/);
-
-  await templateHeader.evaluate((node) => node.click());
-  await expect(templateHeader).toHaveAttribute("aria-expanded", "true");
-  await expect(templatePanel).toHaveClass(/open/);
-
-  await expect(page.locator("#currentOverlays")).toBeVisible();
-  await expect(page.locator("#currentTemplates")).toBeVisible();
+  await expect(page.locator("#launchBackgroundCount")).toContainText("selected");
+  await expect(page.locator("#launchOverlayCount")).toContainText("selected");
+  expect(
+    await page.locator("#assetLibraryGrid .asset-library-card.selected").count()
+  ).toBeGreaterThan(0);
 });
 
 test("overlay builder keeps strip slot metadata consistent across template families", async ({
@@ -576,6 +655,72 @@ test("double-column strips use canonical slots with distinct photos", async ({
   expect(brightness(samples.rightBottomCenter)).toBeGreaterThan(120);
   expect(samples.ignoredMetadata[1]).toBeGreaterThan(150);
   expect(samples.ignoredMetadata[2]).toBeGreaterThan(150);
+});
+
+test("strip rendering honors manifest photoSlots before default geometry", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+  const samples = await page.evaluate(async () => {
+    const makePhoto = (color) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 40;
+      canvas.height = 40;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      return canvas;
+    };
+    const templateSvg = [
+      '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="180" viewBox="0 0 120 180">',
+      '<rect x="10" y="20" width="40" height="30" fill="none" stroke="#111" stroke-width="2"/>',
+      '<rect x="62" y="70" width="44" height="34" fill="none" stroke="#111" stroke-width="2"/>',
+      '<rect x="20" y="126" width="72" height="28" fill="none" stroke="#111" stroke-width="2"/>',
+      "</svg>",
+    ].join("");
+    const url = await window.__photoboothTest.composeStrip(
+      {
+        src: `data:image/svg+xml,${encodeURIComponent(templateSvg)}`,
+        layout: "photo_strip_3",
+        background: { type: "color", value: "#ffffff" },
+        foreground: {
+          type: "image",
+          src: `data:image/svg+xml,${encodeURIComponent(templateSvg)}`,
+        },
+        photoSlots: [
+          { x: 10 / 120, y: 20 / 180, width: 40 / 120, height: 30 / 180 },
+          { x: 62 / 120, y: 70 / 180, width: 44 / 120, height: 34 / 180 },
+          { x: 20 / 120, y: 126 / 180, width: 72 / 120, height: 28 / 180 },
+        ],
+      },
+      [makePhoto("#ff0000"), makePhoto("#00ff00"), makePhoto("#0000ff")]
+    );
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const pixelAt = (x, y) => Array.from(ctx.getImageData(x, y, 1, 1).data);
+    return {
+      size: [img.naturalWidth, img.naturalHeight],
+      firstSlot: pixelAt(30, 35),
+      secondSlot: pixelAt(84, 88),
+      thirdSlot: pixelAt(56, 140),
+      defaultFallbackArea: pixelAt(60, 38),
+    };
+  });
+
+  expect(samples.size).toEqual([120, 180]);
+  expect(samples.firstSlot[0]).toBeGreaterThan(200);
+  expect(samples.firstSlot[1]).toBeLessThan(80);
+  expect(samples.secondSlot[1]).toBeGreaterThan(150);
+  expect(samples.secondSlot[0]).toBeLessThan(100);
+  expect(samples.thirdSlot[2]).toBeGreaterThan(150);
+  expect(samples.defaultFallbackArea.slice(0, 3)).toEqual([255, 255, 255]);
 });
 
 test("single-photo overlays fall back to one full-frame photo slot", async ({
@@ -1004,6 +1149,46 @@ test("frame picker stays hidden until the welcome flow reaches capture", async (
   await expect(page.locator("#mobileSettingsSheet")).toBeVisible();
 });
 
+test("booth capture layout does not vertically overflow common viewports", async ({
+  page,
+}) => {
+  const viewports = [
+    { width: 1440, height: 900, label: "chrome-desktop" },
+    { width: 1024, height: 768, label: "ipad-landscape" },
+    { width: 768, height: 1024, label: "ipad-portrait" },
+  ];
+
+  for (const viewport of viewports) {
+    await page.setViewportSize({
+      width: viewport.width,
+      height: viewport.height,
+    });
+    await launchStillPhotoBooth(page);
+    await page.waitForTimeout(100);
+    const metrics = await getViewportOverflow(page);
+    expect(metrics.documentHeight, viewport.label).toBeLessThanOrEqual(
+      metrics.viewportHeight
+    );
+  }
+});
+
+test("countdown does not resize the live preview frame", async ({ page }) => {
+  await launchStillPhotoBooth(page);
+  const before = await page.locator("#videoContainer").boundingBox();
+  expect(before).not.toBeNull();
+
+  await page.evaluate(() => {
+    const booth = document.querySelector("#boothScreen");
+    if (booth) booth.classList.add("countdown-mode");
+  });
+  await page.waitForTimeout(50);
+
+  const after = await page.locator("#videoContainer").boundingBox();
+  expect(after).not.toBeNull();
+  expect(after.width).toBeCloseTo(before.width, 0);
+  expect(after.height).toBeCloseTo(before.height, 0);
+});
+
 test("theme session wedding start does not require names or date", async ({
   page,
 }) => {
@@ -1090,7 +1275,7 @@ test("opaque wedding svg overlays are auto-fixed before render", async ({
       );
     const birthdayPng =
       await window.__photoboothTest.getOverlayFixedAsset(
-        "assets/general/birthday/overlays/banner frame.png"
+        "assets/general/birthday/overlays/banner-frame.png"
       );
     return {
       timeless,
@@ -1108,7 +1293,7 @@ test("opaque wedding svg overlays are auto-fixed before render", async ({
   });
   expect(result.garden.renderSrc).toContain("data:image/svg+xml");
   expect(result.birthdayPng).toBe(
-    "assets/general/birthday/overlays/banner frame.png"
+    "assets/general/birthday/overlays/banner-frame.png"
   );
 });
 
