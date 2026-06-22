@@ -1,7 +1,11 @@
 Current goal
-- Keep theme defaults assigned to canonical selectable theme keys.
+- Make Asset Library actions and theme-default choices easier to understand.
 
 What is done
+- Added filter-aware Asset Library counts, a clear-filters action, and saved-state feedback.
+- Clarified deletion with default-use warnings while keeping built-in assets hidden rather than deleted from disk.
+- Added per-asset default selection counts plus Select current theme and Clear all actions.
+- Added theme-specific confirmation after the bulk defaults helper saves.
 - Normalize stale built-in category selections such as `winter` to a canonical child theme before loading or saving defaults.
 - Migrate saved root-level default assets into the canonical child before built-in normalization removes the invalid root fields.
 - Exclude built-in category roots from the selectable theme list.
@@ -12,10 +16,10 @@ What is done
 - Kept setup theme keys, labels, and overlay-builder Style Presets intact.
 
 What is in progress
-- Verify theme default persistence for stale category selections.
+- Verify Asset Library action feedback and default-theme selection controls.
 
 Next steps
-- Test theme default saves and confirm a stale category selection reloads its canonical child assets.
+- Run the full regression suite and verify the library controls in the browser.
 
 Validation
 - Pending final verification.

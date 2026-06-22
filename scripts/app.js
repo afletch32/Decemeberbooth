@@ -817,15 +817,25 @@ const DOM = {
   ),
   assetLibrarySort: document.getElementById("assetLibrarySort"),
   assetUploadTags: document.getElementById("assetUploadTags"),
+  assetLibraryClearFilters: document.getElementById("assetLibraryClearFilters"),
   refreshAssetLibraryBtn: document.getElementById("refreshAssetLibraryBtn"),
   assetLibraryGrid: document.getElementById("assetLibraryGrid"),
   assetLibraryStatus: document.getElementById("assetLibraryStatus"),
   assetThemeDefaultsModal: document.getElementById("assetThemeDefaultsModal"),
   assetThemeDefaultsTitle: document.getElementById("assetThemeDefaultsTitle"),
   assetThemeDefaultsSummary: document.getElementById("assetThemeDefaultsSummary"),
+  assetThemeDefaultsSelectionCount: document.getElementById(
+    "assetThemeDefaultsSelectionCount"
+  ),
   assetThemeDefaultsList: document.getElementById("assetThemeDefaultsList"),
   assetThemeDefaultsCancel: document.getElementById("assetThemeDefaultsCancel"),
   assetThemeDefaultsSave: document.getElementById("assetThemeDefaultsSave"),
+  assetThemeDefaultsSelectCurrent: document.getElementById(
+    "assetThemeDefaultsSelectCurrent"
+  ),
+  assetThemeDefaultsClearAll: document.getElementById(
+    "assetThemeDefaultsClearAll"
+  ),
   setupThemeDefaultsBtn: document.getElementById("setupThemeDefaultsBtn"),
   themeDefaultsSetupModal: document.getElementById("themeDefaultsSetupModal"),
   themeDefaultsSetupTitle: document.getElementById("themeDefaultsSetupTitle"),
@@ -3595,6 +3605,16 @@ function setupThemeEditorControls() {
     DOM.assetThemeDefaultsCancel.addEventListener("click", closeAssetThemeDefaultsModal);
   if (DOM.assetThemeDefaultsSave)
     DOM.assetThemeDefaultsSave.addEventListener("click", saveAssetThemeDefaults);
+  if (DOM.assetThemeDefaultsSelectCurrent)
+    DOM.assetThemeDefaultsSelectCurrent.addEventListener(
+      "click",
+      selectCurrentThemeForAssetDefaults
+    );
+  if (DOM.assetThemeDefaultsClearAll)
+    DOM.assetThemeDefaultsClearAll.addEventListener(
+      "click",
+      clearAssetThemeDefaults
+    );
   if (DOM.assetThemeDefaultsModal) {
     DOM.assetThemeDefaultsModal.addEventListener("click", (event) => {
       if (event.target === DOM.assetThemeDefaultsModal)
@@ -3623,6 +3643,11 @@ function setupThemeEditorControls() {
     DOM.assetLibraryEditableField.addEventListener("change", renderAssetLibrary);
   if (DOM.assetLibrarySort)
     DOM.assetLibrarySort.addEventListener("change", renderAssetLibrary);
+  if (DOM.assetLibraryClearFilters)
+    DOM.assetLibraryClearFilters.addEventListener(
+      "click",
+      clearAssetLibraryFilters
+    );
   if (DOM.refreshAssetLibraryBtn)
     DOM.refreshAssetLibraryBtn.addEventListener("click", () => {
       loadAssetLibraryRemote().catch((err) => {
@@ -13726,6 +13751,43 @@ function getFilteredAssetLibraryRows() {
   return rows;
 }
 
+function getActiveAssetLibraryFilterLabels() {
+  const labels = [];
+  if (DOM.assetLibraryCategory && DOM.assetLibraryCategory.value)
+    labels.push("Category");
+  if (DOM.assetLibrarySearch && DOM.assetLibrarySearch.value.trim())
+    labels.push("Search");
+  if (DOM.assetLibraryReadiness && DOM.assetLibraryReadiness.value)
+    labels.push("Asset type");
+  if (DOM.assetLibraryEditableField && DOM.assetLibraryEditableField.value)
+    labels.push("Editable field");
+  return labels;
+}
+
+function clearAssetLibraryFilters() {
+  if (DOM.assetLibrarySearch) DOM.assetLibrarySearch.value = "";
+  if (DOM.assetLibraryCategory) DOM.assetLibraryCategory.value = "";
+  if (DOM.assetLibraryReadiness) DOM.assetLibraryReadiness.value = "";
+  if (DOM.assetLibraryEditableField) DOM.assetLibraryEditableField.value = "";
+  renderAssetLibrary();
+}
+
+function isAssetHiddenByCurrentLibraryFilters(asset) {
+  if (!asset) return false;
+  return !getFilteredAssetLibraryRows().some((row) => row.id === asset.id);
+}
+
+function getAssetThemeDefaultCount(asset) {
+  const category = normalizeUploadedAssetCategory(asset && asset.category);
+  const src = getAssetEntrySrc(asset);
+  if (!category || !src) return 0;
+  return getSelectableThemeEntries().filter(({ theme }) =>
+    getExplicitThemeAssetEntries(category, theme).some(
+      (item) => getAssetEntrySrc(item) === src
+    )
+  ).length;
+}
+
 function promptForAssetEditableFields(asset) {
   if (!asset) return;
   const current = normalizeEditableFields(asset.editableFields);
@@ -13861,7 +13923,8 @@ function openAssetThemeDefaultsModal(asset) {
   if (DOM.assetThemeDefaultsTitle)
     DOM.assetThemeDefaultsTitle.textContent = "Theme Defaults";
   if (DOM.assetThemeDefaultsSummary)
-    DOM.assetThemeDefaultsSummary.textContent = `${getAssetDisplayName(asset)} (${category})`;
+    DOM.assetThemeDefaultsSummary.textContent =
+      "Choose which themes use this asset by default.";
   const list = DOM.assetThemeDefaultsList;
   if (list) {
     list.innerHTML = "";
@@ -13885,6 +13948,7 @@ function openAssetThemeDefaultsModal(asset) {
         checkbox.value = entry.key;
         checkbox.checked = getExplicitThemeAssetEntries(category, entry.theme)
           .some((item) => getAssetEntrySrc(item) === src);
+        checkbox.addEventListener("change", updateAssetThemeDefaultsSelectionCount);
         const text = document.createElement("span");
         text.textContent = entry.label;
         label.append(checkbox, text);
@@ -13893,8 +13957,41 @@ function openAssetThemeDefaultsModal(asset) {
       list.appendChild(group);
     });
   }
+  updateAssetThemeDefaultsSelectionCount();
   DOM.assetThemeDefaultsModal.classList.remove("hidden");
   DOM.assetThemeDefaultsModal.classList.add("show");
+}
+
+function updateAssetThemeDefaultsSelectionCount() {
+  if (!DOM.assetThemeDefaultsSelectionCount) return;
+  const count = DOM.assetThemeDefaultsList
+    ? DOM.assetThemeDefaultsList.querySelectorAll("input[type=checkbox]:checked")
+        .length
+    : 0;
+  DOM.assetThemeDefaultsSelectionCount.textContent = `Selected for ${count} theme${
+    count === 1 ? "" : "s"
+  }`;
+}
+
+function selectCurrentThemeForAssetDefaults() {
+  const key = normalizeThemeSelectionKey(getSelectedThemeKey());
+  if (!key || !DOM.assetThemeDefaultsList) return;
+  const checkbox = Array.from(
+    DOM.assetThemeDefaultsList.querySelectorAll("input[type=checkbox]")
+  ).find((input) => input.value === key);
+  if (!checkbox) return;
+  checkbox.checked = true;
+  updateAssetThemeDefaultsSelectionCount();
+}
+
+function clearAssetThemeDefaults() {
+  if (!DOM.assetThemeDefaultsList) return;
+  DOM.assetThemeDefaultsList
+    .querySelectorAll("input[type=checkbox]")
+    .forEach((input) => {
+      input.checked = false;
+    });
+  updateAssetThemeDefaultsSelectionCount();
 }
 
 function closeAssetThemeDefaultsModal() {
@@ -13941,7 +14038,7 @@ function saveAssetThemeDefaults() {
   updateCreatePathAssetSummary();
   updateLaunchSummary();
   closeAssetThemeDefaultsModal();
-  showToast("Theme defaults saved");
+  showToast("Default theme choices saved.");
 }
 
 const THEME_DEFAULTS_SETUP_CATEGORIES = [
@@ -14071,7 +14168,7 @@ function saveThemeDefaultsSetup() {
   updateCreatePathAssetSummary();
   updateLaunchSummary();
   closeThemeDefaultsSetupModal();
-  showToast("Theme defaults saved");
+  showToast(`Theme defaults saved for ${getThemeSetupDisplayLabel(key, theme)}.`);
 }
 
 function registerUploadedAsset(url, kind, details = {}) {
@@ -14096,6 +14193,11 @@ function registerUploadedAsset(url, kind, details = {}) {
   };
   if (mergeLibraryAsset(asset)) {
     syncAssetLibraryRemoteAsset(asset).catch(() => {});
+    showToast(
+      isAssetHiddenByCurrentLibraryFilters(asset)
+        ? "Asset saved, but hidden by current filters. Clear filters to view it."
+        : "Asset saved and visible in Asset Library."
+    );
   }
 }
 
@@ -14170,7 +14272,7 @@ function renderAssetLibrary() {
       });
       const defaultsBtn = document.createElement("button");
       defaultsBtn.type = "button";
-      defaultsBtn.textContent = "Defaults";
+      defaultsBtn.textContent = "Theme defaults";
       defaultsBtn.addEventListener("click", (event) => {
         event.stopPropagation();
         openAssetThemeDefaultsModal(asset);
@@ -14178,11 +14280,16 @@ function renderAssetLibrary() {
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.textContent = "Delete";
-      deleteBtn.addEventListener("click", (event) => {
+      deleteBtn.className = "asset-library-delete";
+      deleteBtn.addEventListener("click", async (event) => {
         event.stopPropagation();
-        if (confirm("Remove this asset from the library?")) {
-          deleteAssetLibraryItem(asset.id, asset);
-        }
+        const defaultCount = getAssetThemeDefaultCount(asset);
+        const warning = defaultCount
+          ? "\n\nThis asset is used by theme defaults."
+          : "";
+        if (!confirm(`Remove this asset from the Asset Library?${warning}`)) return;
+        await deleteAssetLibraryItem(asset.id, asset);
+        showToast("Asset removed from Asset Library.");
       });
       actions.appendChild(renameBtn);
       actions.appendChild(tagsBtn);
@@ -14200,10 +14307,16 @@ function renderAssetLibrary() {
   }
   if (status) {
     const total = getAllAssetLibraryRows().length;
-    status.textContent = assets.length
-      ? `${assets.length} of ${total} asset${total === 1 ? "" : "s"} shown`
-      : total
-      ? "No assets match these filters."
+    const filterLabels = getActiveAssetLibraryFilterLabels();
+    if (DOM.assetLibraryClearFilters)
+      DOM.assetLibraryClearFilters.classList.toggle(
+        "hidden",
+        filterLabels.length === 0
+      );
+    status.textContent = total
+      ? filterLabels.length
+        ? `Showing ${assets.length} of ${total} assets. Filters active: ${filterLabels.join(", ")}`
+        : `Showing ${assets.length} assets`
       : "No assets available yet.";
   }
 }

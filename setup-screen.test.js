@@ -407,13 +407,17 @@ test("asset library supports explicit multi-theme defaults without manifest auto
   assert.ok(
     html.includes('id="assetThemeDefaultsModal"') &&
       html.includes('id="assetThemeDefaultsSave"') &&
-      html.includes(">Save defaults</button>"),
+      html.includes('id="assetThemeDefaultsSelectCurrent"') &&
+      html.includes('id="assetThemeDefaultsClearAll"') &&
+      html.includes(">Save theme choices</button>"),
     "Asset Library should expose a confirmed multi-theme defaults editor"
   );
   assert.ok(
     appScript.includes("function openAssetThemeDefaultsModal(asset)") &&
       appScript.includes("function saveAssetThemeDefaults()") &&
-      appScript.includes('defaultsBtn.textContent = "Defaults"'),
+      appScript.includes('defaultsBtn.textContent = "Theme defaults"') &&
+      appScript.includes("Choose which themes use this asset by default.") &&
+      appScript.includes("Selected for ${count} theme"),
     "asset cards should open a defaults editor and save checked themes"
   );
   assert.ok(
@@ -431,6 +435,29 @@ test("asset library supports explicit multi-theme defaults without manifest auto
       appScript.includes("ASSET_DEFAULT_REPAIR_VERSION") &&
       appScript.includes("isCompleteBackgroundCatalogSelection(backgrounds, globalCatalog)"),
     "theme and global all-backgrounds selection signatures should be repaired once"
+  );
+});
+
+test("asset library explains saved, filtered, and removal actions", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes('id="assetLibraryClearFilters"') &&
+      appScript.includes("function getActiveAssetLibraryFilterLabels()") &&
+      appScript.includes("function clearAssetLibraryFilters()") &&
+      appScript.includes("Filters active: ${filterLabels.join(\", \")}"),
+    "the library should show filter-aware counts and provide a clear filters action"
+  );
+  assert.ok(
+    appScript.includes("Asset saved and visible in Asset Library.") &&
+      appScript.includes(
+        "Asset saved, but hidden by current filters. Clear filters to view it."
+      ) &&
+      appScript.includes("Remove this asset from the Asset Library?") &&
+      appScript.includes("This asset is used by theme defaults.") &&
+      appScript.includes("Asset removed from Asset Library."),
+    "asset save and removal feedback should explain the visible result and default impact"
   );
 });
 
