@@ -823,6 +823,12 @@ const DOM = {
   refreshAssetLibraryBtn: document.getElementById("refreshAssetLibraryBtn"),
   assetLibraryGrid: document.getElementById("assetLibraryGrid"),
   assetLibraryStatus: document.getElementById("assetLibraryStatus"),
+  assetThemeDefaultsModal: document.getElementById("assetThemeDefaultsModal"),
+  assetThemeDefaultsTitle: document.getElementById("assetThemeDefaultsTitle"),
+  assetThemeDefaultsSummary: document.getElementById("assetThemeDefaultsSummary"),
+  assetThemeDefaultsList: document.getElementById("assetThemeDefaultsList"),
+  assetThemeDefaultsCancel: document.getElementById("assetThemeDefaultsCancel"),
+  assetThemeDefaultsSave: document.getElementById("assetThemeDefaultsSave"),
   addCharacterBtn: document.getElementById("addCharacterBtn"),
   currentCharacter: document.getElementById("currentCharacter"),
   themeGreenBackgrounds: document.getElementById("themeGreenBackgrounds"),
@@ -1469,6 +1475,7 @@ let activeSessionAssets = createEmptySessionAssets();
 let sessionRemovedBackgrounds = [];
 let sessionRemovedOverlays = [];
 let sessionRemovedTemplates = [];
+let activeThemeDefaultsAsset = null;
 let activeSessionTextDetails = {};
 const ACCENT_PRESET_COLORS = [
   "#ffffff",
@@ -3389,6 +3396,16 @@ function setupThemeEditorControls() {
   if (DOM.bulkAssetModal) {
     DOM.bulkAssetModal.addEventListener("click", (event) => {
       if (event.target === DOM.bulkAssetModal) closeBulkAssetModal();
+    });
+  }
+  if (DOM.assetThemeDefaultsCancel)
+    DOM.assetThemeDefaultsCancel.addEventListener("click", closeAssetThemeDefaultsModal);
+  if (DOM.assetThemeDefaultsSave)
+    DOM.assetThemeDefaultsSave.addEventListener("click", saveAssetThemeDefaults);
+  if (DOM.assetThemeDefaultsModal) {
+    DOM.assetThemeDefaultsModal.addEventListener("click", (event) => {
+      if (event.target === DOM.assetThemeDefaultsModal)
+        closeAssetThemeDefaultsModal();
     });
   }
   if (DOM.assetLibrarySearch)
@@ -5399,6 +5416,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadFontsFromStorage();
   loadAssetLibraryLocal();
   populateAllThemeAssetTmp();
+  if (repairCorruptedBackgroundDefaults()) saveThemesToStorage();
   loadAssetLibraryRemote().catch(() => renderAssetLibrary());
   try {
     await setupFontPicker();
@@ -5511,9 +5529,12 @@ async function loadThemesRemote() {
     try {
       normalizeAllThemes();
     } catch (_e) {}
+    populateAllThemeAssetTmp();
+    const repairedBackgroundDefaults = repairCorruptedBackgroundDefaults();
     const globalLogo = getGlobalLogo();
     if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
     localStorage.setItem("photoboothThemes", JSON.stringify(themes));
+    if (repairedBackgroundDefaults) scheduleThemesRemoteSync();
     // Refresh UI if already initialized
     const selected = populateThemeSelector(DEFAULT_THEME_KEY);
     if (selected) {
@@ -6963,12 +6984,6 @@ function refreshBackgroundList(theme) {
       if (!Array.isArray(list) || !list.length) return;
       theme.backgroundsTmp = list;
       const combined = getBaseBackgroundList(theme);
-      if (
-        !Array.isArray(theme.backgrounds) ||
-        theme.backgrounds.length !== combined.length
-      ) {
-        theme.backgrounds = combined.slice();
-      }
       if (combined.length > 0) {
         if (
           typeof theme.backgroundIndex !== "number" ||
@@ -13543,6 +13558,174 @@ function promptForAssetName(asset) {
   updateAssetLibraryItem(asset.id, { name }, asset);
 }
 
+function getSelectableThemeEntries() {
+  const entries = [];
+  for (const rootKey of Object.keys(themes || {})) {
+    if (rootKey === "_meta") continue;
+    const group = themes[rootKey];
+    if (!group || typeof group !== "object") continue;
+    const groupName = String(group.name || rootKey).trim();
+    for (const bucket of ["themes", "holidays"]) {
+      const children = group[bucket];
+      if (!children || typeof children !== "object") continue;
+      for (const leafKey of Object.keys(children)) {
+        const theme = children[leafKey];
+        if (!theme || typeof theme !== "object") continue;
+        entries.push({
+          key: `${rootKey}:${leafKey}`,
+          group: groupName,
+          label: String(theme.name || leafKey).trim(),
+          theme,
+        });
+      }
+    }
+    if (!group.themes && !group.holidays && group.name) {
+      entries.push({ key: rootKey, group: "Other", label: groupName, theme: group });
+    }
+  }
+  return entries.sort((a, b) =>
+    `${a.group} ${a.label}`.localeCompare(`${b.group} ${b.label}`)
+  );
+}
+
+function getExplicitThemeAssetEntries(category, theme) {
+  if (!theme || typeof theme !== "object") return [];
+  if (category === "background")
+    return Array.isArray(theme.backgrounds) ? theme.backgrounds : [];
+  if (category === "overlay")
+    return Array.isArray(theme.overlays) ? theme.overlays : [];
+  if (category === "template")
+    return Array.isArray(theme.templates) ? theme.templates : [];
+  return [];
+}
+
+function buildThemeDefaultAssetEntry(asset) {
+  const src = getAssetEntrySrc(asset);
+  if (!src) return null;
+  const category = normalizeUploadedAssetCategory(asset.category);
+  if (category === "background") return src;
+  const raw = asset.raw && typeof asset.raw === "object" ? asset.raw : {};
+  if (category === "overlay") return { ...cloneThemeValue(raw), src };
+  if (category === "template") {
+    return {
+      ...cloneThemeValue(raw),
+      src,
+      layout: normalizeTemplateLayout(raw.layout || asset.layout || "double_column"),
+      slots: raw.slots,
+      photoSlots: raw.photoSlots,
+      background: raw.background,
+      foreground: raw.foreground,
+      textFields: normalizeTemplateTextFields(raw.textFields || asset.textFields),
+    };
+  }
+  return null;
+}
+
+function getThemeDefaultArrayName(category) {
+  if (category === "background") return "backgrounds";
+  if (category === "overlay") return "overlays";
+  if (category === "template") return "templates";
+  return "";
+}
+
+function getThemeRemovedArrayName(category) {
+  if (category === "background") return "backgroundsRemoved";
+  if (category === "overlay") return "overlaysRemoved";
+  if (category === "template") return "templatesRemoved";
+  return "";
+}
+
+function openAssetThemeDefaultsModal(asset) {
+  const category = normalizeUploadedAssetCategory(asset && asset.category);
+  const src = getAssetEntrySrc(asset);
+  if (!asset || !category || !src || !DOM.assetThemeDefaultsModal) return;
+  activeThemeDefaultsAsset = asset;
+  if (DOM.assetThemeDefaultsTitle)
+    DOM.assetThemeDefaultsTitle.textContent = "Theme Defaults";
+  if (DOM.assetThemeDefaultsSummary)
+    DOM.assetThemeDefaultsSummary.textContent = `${getAssetDisplayName(asset)} (${category})`;
+  const list = DOM.assetThemeDefaultsList;
+  if (list) {
+    list.innerHTML = "";
+    const groups = new Map();
+    getSelectableThemeEntries().forEach((entry) => {
+      if (!groups.has(entry.group)) groups.set(entry.group, []);
+      groups.get(entry.group).push(entry);
+    });
+    groups.forEach((entries, groupName) => {
+      const group = document.createElement("div");
+      group.className = "theme-defaults-group";
+      const title = document.createElement("div");
+      title.className = "theme-defaults-group-title";
+      title.textContent = groupName;
+      group.appendChild(title);
+      entries.forEach((entry) => {
+        const label = document.createElement("label");
+        label.className = "theme-defaults-option";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = entry.key;
+        checkbox.checked = getExplicitThemeAssetEntries(category, entry.theme)
+          .some((item) => getAssetEntrySrc(item) === src);
+        const text = document.createElement("span");
+        text.textContent = entry.label;
+        label.append(checkbox, text);
+        group.appendChild(label);
+      });
+      list.appendChild(group);
+    });
+  }
+  DOM.assetThemeDefaultsModal.classList.remove("hidden");
+  DOM.assetThemeDefaultsModal.classList.add("show");
+}
+
+function closeAssetThemeDefaultsModal() {
+  activeThemeDefaultsAsset = null;
+  if (DOM.assetThemeDefaultsModal) {
+    DOM.assetThemeDefaultsModal.classList.remove("show");
+    DOM.assetThemeDefaultsModal.classList.add("hidden");
+  }
+}
+
+function saveAssetThemeDefaults() {
+  const asset = activeThemeDefaultsAsset;
+  const category = normalizeUploadedAssetCategory(asset && asset.category);
+  const src = getAssetEntrySrc(asset);
+  const arrayName = getThemeDefaultArrayName(category);
+  const removedArrayName = getThemeRemovedArrayName(category);
+  if (!asset || !category || !src || !arrayName) return;
+  const selected = new Set(
+    Array.from(
+      DOM.assetThemeDefaultsList
+        ? DOM.assetThemeDefaultsList.querySelectorAll("input[type=checkbox]:checked")
+        : []
+    ).map((input) => input.value)
+  );
+  const entryForDefaults = buildThemeDefaultAssetEntry(asset);
+  getSelectableThemeEntries().forEach(({ key, theme }) => {
+    const current = getExplicitThemeAssetEntries(category, theme);
+    const hasAsset = current.some((item) => getAssetEntrySrc(item) === src);
+    if (selected.has(key) && !hasAsset && entryForDefaults) {
+      theme[arrayName] = [...current, cloneThemeValue(entryForDefaults)];
+      if (removedArrayName && Array.isArray(theme[removedArrayName])) {
+        theme[removedArrayName] = theme[removedArrayName].filter(
+          (item) => getAssetEntrySrc(item) !== src
+        );
+      }
+    } else if (!selected.has(key) && hasAsset) {
+      theme[arrayName] = current.filter((item) => getAssetEntrySrc(item) !== src);
+    }
+  });
+  saveThemesToStorage();
+  const selectedThemeKey = DOM.eventSelect && DOM.eventSelect.value;
+  if (selectedThemeKey) loadTheme(selectedThemeKey);
+  renderAssetLibrary();
+  updateCreatePathAssetSummary();
+  updateLaunchSummary();
+  closeAssetThemeDefaultsModal();
+  showToast("Theme defaults saved");
+}
+
 function registerUploadedAsset(url, kind, details = {}) {
   const category = normalizeUploadedAssetCategory(kind);
   if (!url || !category) return;
@@ -13637,6 +13820,13 @@ function renderAssetLibrary() {
         event.stopPropagation();
         promptForAssetEditableFields(asset);
       });
+      const defaultsBtn = document.createElement("button");
+      defaultsBtn.type = "button";
+      defaultsBtn.textContent = "Defaults";
+      defaultsBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openAssetThemeDefaultsModal(asset);
+      });
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.textContent = "Delete";
@@ -13649,6 +13839,7 @@ function renderAssetLibrary() {
       actions.appendChild(renameBtn);
       actions.appendChild(tagsBtn);
       actions.appendChild(fieldsBtn);
+      actions.appendChild(defaultsBtn);
       actions.appendChild(deleteBtn);
       card.appendChild(img);
       card.appendChild(name);
@@ -17187,7 +17378,16 @@ function arrayUniqueTemplates(arr) {
     if (!s) continue;
     if (!seen.has(s)) {
       seen.add(s);
-      out.push({ src: s, layout: t.layout || "double_column", slots: t.slots });
+      out.push({
+        ...cloneThemeValue(t),
+        src: s,
+        layout: normalizeTemplateLayout(t.layout || "double_column"),
+        slots: t.slots,
+        photoSlots: t.photoSlots,
+        background: t.background,
+        foreground: t.foreground,
+        textFields: normalizeTemplateTextFields(t.textFields),
+      });
     }
   }
   return out;
@@ -17239,6 +17439,36 @@ function normalizeAllThemes() {
       normalizeThemeObject(group);
     }
   }
+}
+
+const ASSET_DEFAULT_REPAIR_VERSION = 1;
+
+function repairCorruptedBackgroundDefaults() {
+  if (!themes || typeof themes !== "object") return false;
+  if (!themes._meta || typeof themes._meta !== "object") themes._meta = {};
+  if (themes._meta.assetDefaultRepairVersion >= ASSET_DEFAULT_REPAIR_VERSION)
+    return false;
+  const catalog = new Set(getAllThemeBackgroundCatalogList());
+  let repaired = false;
+  if (catalog.size) {
+    forEachThemeEntry((theme) => {
+      const backgrounds = Array.isArray(theme.backgrounds)
+        ? theme.backgrounds.filter(Boolean)
+        : [];
+      const selected = new Set(backgrounds);
+      if (
+        selected.size === catalog.size &&
+        backgrounds.length === selected.size &&
+        [...catalog].every((src) => selected.has(src))
+      ) {
+        theme.backgrounds = [];
+        if (theme.background && catalog.has(theme.background)) theme.background = "";
+        repaired = true;
+      }
+    });
+  }
+  themes._meta.assetDefaultRepairVersion = ASSET_DEFAULT_REPAIR_VERSION;
+  return repaired;
 }
 
 function forEachThemeEntry(callback) {
@@ -17804,13 +18034,9 @@ function getBaseBackgroundList(theme) {
     Array.isArray(theme.backgroundsRemoved) ? theme.backgroundsRemoved : []
   );
   const explicit = Array.isArray(theme.backgrounds)
-    ? theme.backgrounds.filter(Boolean)
+    ? theme.backgrounds.filter((src) => src && !removed.has(src))
     : [];
-  const folder = Array.isArray(theme.backgroundsTmp)
-    ? theme.backgroundsTmp.filter((src) => src && !removed.has(src))
-    : [];
-  if (explicit.length || folder.length)
-    return mergeUniqueUrls(folder, explicit);
+  if (explicit.length) return mergeUniqueUrls(explicit);
   const fallback = typeof theme.background === "string" && theme.background.trim()
     ? [theme.background]
     : [];
@@ -18772,40 +18998,14 @@ function getBaseOverlayList(theme) {
   const removed = new Set(
     Array.isArray(theme.overlaysRemoved) ? theme.overlaysRemoved : []
   );
-  const builtinFolderArr =
-    typeof theme.overlaysFolder === "string"
-      ? getBuiltinOverlayEntries(theme.overlaysFolder)
-          .map((item) => normalizeOverlayDefinition(item))
-          .filter((item) => item && !removed.has(item.src))
-      : [];
-  const builtinFolderSrcs = new Set(
-    builtinFolderArr.map((item) => item && item.src).filter(Boolean)
-  );
-  const folderArr = Array.isArray(theme.overlaysTmp)
-    ? [
-        ...builtinFolderArr,
-        ...theme.overlaysTmp
-          .map((item) => normalizeOverlayDefinition(item))
-          .filter((item) => {
-            if (!item || removed.has(item.src)) return false;
-            if (
-              theme.overlaysFolder &&
-              item.src &&
-              item.src.startsWith(theme.overlaysFolder) &&
-              builtinFolderSrcs.size
-            ) {
-              return builtinFolderSrcs.has(item.src);
-            }
-            return true;
-          }),
-      ]
-    : builtinFolderArr;
   const localArr = Array.isArray(theme.overlays)
-    ? theme.overlays.map((item) => normalizeOverlayDefinition(item))
+    ? theme.overlays
+        .map((item) => normalizeOverlayDefinition(item))
+        .filter((item) => item && !removed.has(item.src))
     : [];
   const seen = new Set();
   const out = [];
-  for (const o of [...folderArr, ...localArr]) {
+  for (const o of localArr) {
     const k = (o && o.src ? o.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
@@ -18819,28 +19019,23 @@ function getBaseTemplateList(theme) {
   const removed = new Set(
     Array.isArray(theme.templatesRemoved) ? theme.templatesRemoved : []
   );
-  const folderArr = Array.isArray(theme.templatesTmp)
-    ? theme.templatesTmp
+  const localArr = Array.isArray(theme.templates)
+    ? theme.templates
         .filter((t) => t && t.src && !removed.has(t.src))
         .map((t) => ({
+          ...cloneThemeValue(t),
           src: t.src,
           layout: normalizeTemplateLayout(t.layout),
           slots: t.slots,
+          photoSlots: t.photoSlots,
+          background: t.background,
+          foreground: t.foreground,
           textFields: normalizeTemplateTextFields(t.textFields),
-          __folder: true,
         }))
-    : [];
-  const localArr = Array.isArray(theme.templates)
-    ? theme.templates.map((t) => ({
-        src: t.src,
-        layout: normalizeTemplateLayout(t.layout),
-        slots: t.slots,
-        textFields: normalizeTemplateTextFields(t.textFields),
-      }))
     : [];
   const seen = new Set();
   const out = [];
-  for (const t of [...folderArr, ...localArr]) {
+  for (const t of localArr) {
     const k = (t && t.src ? t.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
@@ -18948,9 +19143,13 @@ function getEffectiveTemplateList(theme) {
           if (!src) return null;
           return typeof item === "object"
             ? {
-                ...item,
+                ...cloneThemeValue(item),
                 src,
                 layout: normalizeTemplateLayout(item.layout),
+                slots: item.slots,
+                photoSlots: item.photoSlots,
+                background: item.background,
+                foreground: item.foreground,
                 textFields: normalizeTemplateTextFields(item.textFields),
               }
             : {
@@ -19049,9 +19248,13 @@ function getTemplateList(theme) {
                 __event: true,
               }
             : {
+                ...cloneThemeValue(item),
                 src: item.src,
                 layout: normalizeTemplateLayout(item.layout),
                 slots: item.slots,
+                photoSlots: item.photoSlots,
+                background: item.background,
+                foreground: item.foreground,
                 textFields: normalizeTemplateTextFields(item.textFields),
                 __event: true,
               }
@@ -19131,6 +19334,12 @@ Object.assign(window, {
     composeStrip,
     finalizeToPrint,
     getActiveEvent: () => getActiveEvent(),
+    getThemes: () => themes,
+    getBaseBackgroundList: (theme = activeTheme) => getBaseBackgroundList(theme),
+    getBaseTemplateList: (theme = activeTheme) => getBaseTemplateList(theme),
+    getAllThemeBackgroundCatalogList,
+    repairCorruptedBackgroundDefaults,
+    openAssetThemeDefaultsModal,
     getEffectiveBackgroundList: () => getEffectiveBackgroundList(activeTheme),
     getEffectiveOverlayList: () => getEffectiveOverlayList(activeTheme),
     getEffectiveTemplateList: () => getEffectiveTemplateList(activeTheme),

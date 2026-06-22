@@ -1,22 +1,14 @@
 [
   {
     "src": "guide-single-photo-landscape.svg",
-    "layout": "double_column"
+    "layout": "single_photo"
   },
   {
     "src": "guide-single-photo-portrait.svg",
-    "layout": "double_column"
+    "layout": "single_photo"
   },
   {
     "src": "guide-strip-double-column.svg",
-    "layout": "double_column"
-  },
-  {
-    "src": "guide-strip-horizontal.svg",
-    "layout": "double_column"
-  },
-  {
-    "src": "guide-strip-vertical.svg",
     "layout": "double_column"
   }
 ]

@@ -298,6 +298,92 @@ test("asset library cards toggle selection from the full card surface", async ({
   await expect(card).toHaveAttribute("aria-selected", initialState);
 });
 
+test("asset defaults can be assigned to multiple themes without losing template metadata", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  await page.locator("#assetLibraryCategory").selectOption("template");
+  const defaultsButton = page
+    .locator("#assetLibraryGrid .asset-library-actions button", { hasText: "Defaults" })
+    .first();
+  await defaultsButton.click();
+  await expect(page.locator("#assetThemeDefaultsModal")).not.toHaveClass(/hidden/);
+  await page.locator("#assetThemeDefaultsCancel").click();
+
+  const assigned = await page.evaluate(() => {
+    const api = window.__photoboothTest;
+    const targetKeys = [
+      "general:basic",
+      "general:birthday",
+      "general:summer",
+      "fall:halloween",
+    ];
+    api.openAssetThemeDefaultsModal({
+      id: "template:data:test/shared-neutral-strip",
+      category: "template",
+      url: "data:test/shared-neutral-strip",
+      name: "Shared Neutral Strip",
+      raw: {
+        src: "data:test/shared-neutral-strip",
+        layout: "double_column",
+        photoSlots: [{ x: 10, y: 20, w: 30, h: 40 }],
+        background: { color: "#fff" },
+        foreground: { src: "data:test/foreground" },
+        textFields: [{ key: "title", x: 4, y: 5, w: 80, h: 20 }],
+      },
+    });
+    document.querySelectorAll("#assetThemeDefaultsList input").forEach((input) => {
+      input.checked = targetKeys.includes(input.value);
+    });
+    document.querySelector("#assetThemeDefaultsSave").click();
+    const themes = api.getThemes();
+    const targetThemes = targetKeys.map((key) => {
+      const [root, leaf] = key.split(":");
+      const group = themes[root];
+      const theme = group.themes?.[leaf] || group.holidays?.[leaf];
+      return theme.templates.find((entry) => entry.src === "data:test/shared-neutral-strip");
+    });
+    return targetThemes.map((entry) => ({
+      layout: entry.layout,
+      photoSlots: entry.photoSlots,
+      background: entry.background,
+      foreground: entry.foreground,
+      textFields: entry.textFields,
+    }));
+  });
+
+  expect(assigned).toHaveLength(4);
+  assigned.forEach((entry) => {
+    expect(entry).toMatchObject({
+      layout: "double_column",
+      photoSlots: [{ x: 10, y: 20, w: 30, h: 40 }],
+      background: { color: "#fff" },
+      foreground: { src: "data:test/foreground" },
+    });
+    expect(entry.textFields).toHaveLength(1);
+  });
+
+  const backgroundRepair = await page.evaluate(() => {
+    const api = window.__photoboothTest;
+    const themes = api.getThemes();
+    const catalog = api.getAllThemeBackgroundCatalogList();
+    const summer = themes.general.themes.summer;
+    summer.backgrounds = catalog.slice();
+    delete themes._meta.assetDefaultRepairVersion;
+    const repaired = api.repairCorruptedBackgroundDefaults();
+    return {
+      repaired,
+      summerBackgrounds: summer.backgrounds,
+      summerBase: api.getBaseBackgroundList(summer),
+    };
+  });
+  expect(backgroundRepair.repaired).toBe(true);
+  expect(backgroundRepair.summerBackgrounds).toEqual([]);
+  expect(backgroundRepair.summerBase).toEqual([]);
+});
+
 test("admin can open the layout builder and return to booth setup", async ({
   page,
 }) => {

@@ -310,6 +310,40 @@ test("asset library is the only setup asset state surface", () => {
   );
 });
 
+test("asset library supports explicit multi-theme defaults without manifest auto-selection", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes('id="assetThemeDefaultsModal"') &&
+      html.includes('id="assetThemeDefaultsSave"') &&
+      html.includes(">Save defaults</button>"),
+    "Asset Library should expose a confirmed multi-theme defaults editor"
+  );
+  assert.ok(
+    appScript.includes("function openAssetThemeDefaultsModal(asset)") &&
+      appScript.includes("function saveAssetThemeDefaults()") &&
+      appScript.includes('defaultsBtn.textContent = "Defaults"'),
+    "asset cards should open a defaults editor and save checked themes"
+  );
+  assert.ok(
+    appScript.includes("function buildThemeDefaultAssetEntry(asset)") &&
+      appScript.includes("photoSlots: raw.photoSlots") &&
+      appScript.includes("foreground: raw.foreground"),
+    "shared template defaults should preserve rendering metadata"
+  );
+  assert.ok(
+    !appScript.includes("theme.backgrounds = combined.slice();"),
+    "manifest background discovery must not become a selected default list"
+  );
+  assert.ok(
+    appScript.includes("function repairCorruptedBackgroundDefaults()") &&
+      appScript.includes("ASSET_DEFAULT_REPAIR_VERSION") &&
+      appScript.includes("selected.size === catalog.size"),
+    "the known all-backgrounds selection signature should be repaired once"
+  );
+});
+
 test("advanced theme controls keep defaults as editable placeholders", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts/app.js");

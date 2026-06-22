@@ -1,16 +1,21 @@
 Current goal
-- Fix Summer theme defaults so only overlays are selected.
+- Add multi-theme default assignment in Asset Library and stop manifest catalogs from being treated as selected theme defaults.
 
 What is done
-- Removed Summer background and template defaults from the built-in theme seed and persisted local theme data.
-- Verified Summer no longer references the Basic background/template folders.
-- `npm test` passes with 78/78 tests.
+- Added a Defaults action on each Asset Library card with a grouped theme checklist and explicit Save defaults action.
+- Kept backgrounds, overlays, and templates as explicit defaults while retaining manifest-derived `*Tmp` lists as catalog data only.
+- Preserved template rendering metadata when shared defaults are assigned or normalized.
+- Added a versioned repair for the saved full-background-catalog selection corruption.
 
 What is in progress
 - None.
 
 Next steps
-- Review the UI again if you want to confirm the Summer counts in the browser.
+- Review the defaults workflow and Summer background count in the deployed app.
+
+Validation
+- `npm test` passes with 79/79 tests.
+- Targeted Playwright smoke passes for multi-theme template defaults, metadata preservation, and the full-background-catalog repair.
 
 History
 - Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.
