@@ -165,13 +165,13 @@ test("asset library background selection only reflects explicit theme defaults",
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    appScript.includes("function getExplicitBackgroundList(theme)") &&
+    appScript.includes("function getSelectedBackgroundSourceList(theme)") &&
       appScript.includes("if (!fallback || fallback.endsWith(\"/\") || removed.has(fallback)) return [];"),
     "themes without explicit background defaults should not treat folder discovery as selected state"
   );
   assert.ok(
     appScript.includes("selected.size === catalog.length") &&
-      appScript.includes("getExplicitBackgroundList(target)"),
+      appScript.includes("getSelectedBackgroundSourceList(theme)"),
     "catalog-sized background defaults should be ignored by the selected-state source set"
   );
   assert.ok(

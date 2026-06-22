@@ -1,19 +1,20 @@
 Current goal
-- Fix the setup-screen Theme dropdown duplicates and Asset Library background selection without changing stored theme keys or export format.
+- Fix the setup-screen dropdown/background-selection regression with a forward-only commit.
 
 What is done
-- Added grouped setup-theme rendering with friendlier labels and stronger section headers.
-- Added a defensive explicit-background selector so catalog-sized background lists do not show as selected.
-- Kept the setup screen theme keys and option values stable.
+- Restored render-time background lists so the setup screen stays clickable and shows the active theme assets.
+- Split background selection state into a separate helper so catalog-sized lists do not appear selected.
+- Kept the setup screen theme keys, labels, and overlay-builder preset changes intact.
 
 What is in progress
-- Verifying the setup-screen regressions with tests.
+- Preparing the forward commit.
 
 Next steps
-- Run `npm test` and `git diff --check`, then review any failures.
+- Commit the fix and report the resulting hash.
 
 Validation
-- Pending.
+- `npm test` passed.
+- `git diff --check` passed.
 
 History
 - Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.
