@@ -464,6 +464,23 @@ test("selected themes can configure all default assets in one modal", () => {
   );
 });
 
+test("theme default setup normalizes corrupted built-in category selections", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("function normalizeThemeSelectionKey(themeKey)") &&
+      appScript.includes("const builtinGroup = BUILTIN_THEMES[key];") &&
+      appScript.includes("key = normalizeThemeSelectionKey(activeThemeDefaultsSetupKey);"),
+    "theme defaults should target a canonical child key rather than a built-in category root"
+  );
+  assert.ok(
+    appScript.includes("function migrateLegacyBuiltinRootThemeDefaults()") &&
+      appScript.includes("migrateLegacyBuiltinRootThemeDefaults();") &&
+      appScript.includes("const isBuiltinCategory = !!("),
+    "legacy root defaults should be migrated and category roots excluded from selectable themes"
+  );
+});
+
 test("advanced theme controls keep defaults as editable placeholders", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts/app.js");

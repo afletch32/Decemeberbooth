@@ -1,7 +1,10 @@
 Current goal
-- Fix setup dropdown and Asset Library selection regressions with a forward-only commit.
+- Keep theme defaults assigned to canonical selectable theme keys.
 
 What is done
+- Normalize stale built-in category selections such as `winter` to a canonical child theme before loading or saving defaults.
+- Migrate saved root-level default assets into the canonical child before built-in normalization removes the invalid root fields.
+- Exclude built-in category roots from the selectable theme list.
 - Kept setup theme dropdown rendering on the canonical deduplicated theme option list.
 - Kept background folders as catalog entries rather than selected defaults, including repair of existing per-theme catalog fills.
 - Restored overlay and template folder manifests as active theme defaults.
@@ -9,10 +12,10 @@ What is done
 - Kept setup theme keys, labels, and overlay-builder Style Presets intact.
 
 What is in progress
-- Fixing the existing per-asset Defaults modal viewport positioning.
+- Verify theme default persistence for stale category selections.
 
 Next steps
-- Verify the centered modal and report the commit result.
+- Test theme default saves and confirm a stale category selection reloads its canonical child assets.
 
 Validation
 - Pending final verification.

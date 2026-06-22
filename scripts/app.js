@@ -7000,6 +7000,7 @@ function setup360ModeControls() {
 
 function setEventSelection(key) {
   if (!DOM.eventSelect || !key) return false;
+  key = normalizeThemeSelectionKey(key);
   const options = Array.from(DOM.eventSelect.options || []);
   const match = options.find((opt) => opt.value === key);
   if (!match) return false;
@@ -7010,6 +7011,7 @@ function setEventSelection(key) {
 }
 
 function resolvePreferredThemeKey(preferredKey) {
+  preferredKey = normalizeThemeSelectionKey(preferredKey);
   if (!DOM.eventSelect) return preferredKey || DEFAULT_THEME_KEY || null;
   const options = Array.from(DOM.eventSelect.options || []);
   const hasKey = (key) => !!key && options.some((opt) => opt.value === key);
@@ -7025,6 +7027,7 @@ function resolvePreferredThemeKey(preferredKey) {
 }
 
 function resolveThemeByKey(themeKey) {
+  themeKey = normalizeThemeSelectionKey(themeKey);
   if (!themeKey) return null;
   if (themeKey.includes(":")) {
     const [rootKey, leafKey] = themeKey.split(":");
@@ -7035,6 +7038,20 @@ function resolveThemeByKey(themeKey) {
     return null;
   }
   return themes[themeKey] || null;
+}
+
+function normalizeThemeSelectionKey(themeKey) {
+  const key = String(themeKey || "").trim();
+  if (!key || key.includes(":")) return key;
+  const builtinGroup = BUILTIN_THEMES[key];
+  if (!builtinGroup || typeof builtinGroup !== "object") return key;
+  for (const bucket of ["themes", "holidays"]) {
+    const children = builtinGroup[bucket];
+    if (!children || typeof children !== "object") continue;
+    const firstChildKey = Object.keys(children)[0];
+    if (firstChildKey) return `${key}:${firstChildKey}`;
+  }
+  return key;
 }
 
 function resolveThemeStorage(key) {
@@ -7257,6 +7274,7 @@ function syncAdminUiWithTheme(themeKey, theme) {
 }
 
 function loadTheme(themeKey) {
+  themeKey = normalizeThemeSelectionKey(themeKey);
   console.log("Loading theme:", themeKey);
   if (!themeKey) {
     console.warn("No theme key provided to loadTheme");
@@ -7267,6 +7285,7 @@ function loadTheme(themeKey) {
     console.warn("Theme not found for key:", themeKey);
     return;
   }
+  setEventSelection(themeKey);
   highlightThemeQuickSelect(themeKey);
   activeTheme = theme;
   const globalLogo = getGlobalLogo();
@@ -13773,7 +13792,12 @@ function getSelectableThemeEntries() {
         });
       }
     }
-    if (!group.themes && !group.holidays && group.name) {
+    const builtinGroup = BUILTIN_THEMES[rootKey];
+    const isBuiltinCategory = !!(
+      builtinGroup &&
+      (builtinGroup.themes || builtinGroup.holidays)
+    );
+    if (!isBuiltinCategory && !group.themes && !group.holidays && group.name) {
       addEntry({ key: rootKey, group: "Other", label: groupName, theme: group });
     }
   }
@@ -13927,7 +13951,9 @@ const THEME_DEFAULTS_SETUP_CATEGORIES = [
 ];
 
 function openThemeDefaultsSetupModal() {
-  const key = (DOM.eventSelect && DOM.eventSelect.value) || "";
+  const key = normalizeThemeSelectionKey(
+    (DOM.eventSelect && DOM.eventSelect.value) || ""
+  );
   const theme = resolveThemeByKey(key);
   if (!key || !theme || !DOM.themeDefaultsSetupModal) return;
   activeThemeDefaultsSetupKey = key;
@@ -14003,7 +14029,7 @@ function closeThemeDefaultsSetupModal() {
 }
 
 function saveThemeDefaultsSetup() {
-  const key = activeThemeDefaultsSetupKey;
+  const key = normalizeThemeSelectionKey(activeThemeDefaultsSetupKey);
   const theme = resolveThemeByKey(key);
   if (!key || !theme) return;
   const assetsById = new Map(
@@ -14346,6 +14372,7 @@ function pruneMisplacedBuiltinThemes(target) {
 
 function ensureBuiltinThemes() {
   if (!themes || typeof themes !== "object") themes = {};
+  migrateLegacyBuiltinRootThemeDefaults();
   for (const rootKey of Object.keys(BUILTIN_THEMES)) {
     const builtinGroup = BUILTIN_THEMES[rootKey];
     if (!builtinGroup || typeof builtinGroup !== "object") continue;
@@ -14374,6 +14401,42 @@ function ensureBuiltinThemes() {
     }
   }
   pruneMisplacedBuiltinThemes(themes);
+}
+
+function migrateLegacyBuiltinRootThemeDefaults() {
+  for (const rootKey of Object.keys(BUILTIN_THEMES)) {
+    const builtinGroup = BUILTIN_THEMES[rootKey];
+    const storedGroup = themes[rootKey];
+    if (!builtinGroup || !storedGroup || typeof storedGroup !== "object")
+      continue;
+    if (storedGroup.themes || storedGroup.holidays) continue;
+
+    const bucket = builtinGroup.themes ? "themes" : builtinGroup.holidays ? "holidays" : "";
+    const builtinChildren = bucket ? builtinGroup[bucket] : null;
+    const leafKey = builtinChildren && Object.keys(builtinChildren)[0];
+    if (!leafKey) continue;
+
+    const defaultFields = [
+      "backgrounds",
+      "overlays",
+      "templates",
+      "backgroundsRemoved",
+      "overlaysRemoved",
+      "templatesRemoved",
+    ];
+    const savedDefaults = defaultFields.filter((field) =>
+      Array.isArray(storedGroup[field])
+    );
+    if (!savedDefaults.length) continue;
+
+    storedGroup[bucket] = storedGroup[bucket] || {};
+    const target =
+      storedGroup[bucket][leafKey] || cloneThemeValue(builtinChildren[leafKey]);
+    savedDefaults.forEach((field) => {
+      target[field] = cloneThemeValue(storedGroup[field]);
+    });
+    storedGroup[bucket][leafKey] = target;
+  }
 }
 
 function hasCoreBuiltins(obj) {
@@ -16362,16 +16425,7 @@ function getSelectedThemeKey() {
 }
 function getSelectedThemeTarget() {
   const key = getSelectedThemeKey();
-  if (!key) return null;
-  if (key.includes(":")) {
-    const [rootKey, subKey] = key.split(":");
-    const root = themes[rootKey];
-    if (!root) return null;
-    if (root.themes && root.themes[subKey]) return root.themes[subKey];
-    if (root.holidays && root.holidays[subKey]) return root.holidays[subKey];
-    return null;
-  }
-  return themes[key] || null;
+  return resolveThemeByKey(key);
 }
 
 async function updateSelectedTheme(reason = "") {
