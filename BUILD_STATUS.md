@@ -1,23 +1,21 @@
 Current goal
-- Add multi-theme default assignment in Asset Library and stop manifest catalogs from being treated as selected theme defaults.
+- Organize the setup Theme dropdown into friendly grouped sections without changing theme keys.
 
 What is done
-- Added a Defaults action on each Asset Library card with a grouped theme checklist and explicit Save defaults action.
-- Kept backgrounds, overlays, and templates as explicit defaults while retaining manifest-derived `*Tmp` lists as catalog data only.
-- Preserved template rendering metadata when shared defaults are assigned or normalized.
-- Added a versioned repair for the saved full-background-catalog selection corruption.
-- Replaced obsolete thumbnail-panel browser smoke tests with Asset Library category, defaults-action, count, and selection coverage.
+- Inspected the setup screen theme combobox flow and the backing theme select population path.
+- Added grouped setup-theme display helpers, clean friendly labels, and stable value-to-label mapping.
+- Kept theme keys and option values unchanged while rendering setup options by user-facing sections.
+- Added a regression test for grouped theme display and key-preserving selection behavior.
 
 What is in progress
 - None.
 
 Next steps
-- Review the defaults workflow and Summer background count in the deployed app.
+- Review the diff if a visual pass is needed.
 
 Validation
-- `npm test` passes with 79/79 tests.
-- Targeted Playwright smoke passes for multi-theme template defaults, metadata preservation, and the full-background-catalog repair.
-- Targeted Playwright smoke passes for the replacement Asset Library tests.
+- `npm test` passes with 80/80 tests.
+- `git diff --check` passes.
 
 History
 - Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.

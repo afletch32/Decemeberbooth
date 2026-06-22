@@ -2236,7 +2236,161 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
 function getThemeOptionLabel(key = "") {
   const options = Array.from((DOM.eventSelect && DOM.eventSelect.options) || []);
   const match = options.find((option) => option.value === key);
-  return match ? match.textContent || key : key;
+  if (match) return match.textContent || key;
+  return getThemeSetupDisplayLabel(key, resolveThemeByKey(key));
+}
+
+const THEME_SETUP_GROUP_ORDER = [
+  "General",
+  "Seasonal",
+  "Holidays",
+  "Wedding",
+  "Youth",
+];
+
+const THEME_SETUP_GROUP_ITEM_ORDER = {
+  General: [
+    "Basic",
+    "Birthday",
+    "Expo",
+    "Brand Studio",
+    "Lead Capture",
+  ],
+  Seasonal: [
+    "Summer",
+    "Fall",
+    "Winter",
+    "Winter Wonderland",
+    "Santa's Workshop",
+    "New Year",
+    "Spring",
+  ],
+  Holidays: [
+    "Halloween",
+    "Christmas",
+    "Valentine's Day",
+    "St. Patrick's Day",
+  ],
+  Wedding: ["Garden Vows", "Timeless Romance"],
+  Youth: ["Hawks", "Amanda North"],
+};
+
+const THEME_SETUP_LABEL_OVERRIDES = {
+  basic: "Basic",
+  birthday: "Birthday",
+  summer: "Summer",
+  fall: "Fall",
+  winter: "Winter",
+  spring: "Spring",
+  expo: "Expo",
+  "brand studio": "Brand Studio",
+  "lead capture": "Lead Capture",
+  halloween: "Halloween",
+  christmas: "Christmas",
+  valentines: "Valentine's Day",
+  "valentine's day": "Valentine's Day",
+  "st patricks day": "St. Patrick's Day",
+  "st patrick's day": "St. Patrick's Day",
+  "st patricks": "St. Patrick's Day",
+  "st patrick's": "St. Patrick's Day",
+  "garden vows": "Garden Vows",
+  "timeless romance": "Timeless Romance",
+  hawks: "Hawks",
+  ane: "Amanda North",
+  "winter wonderland": "Winter Wonderland",
+  "santa's workshop": "Santa's Workshop",
+  "new year": "New Year",
+};
+
+function normalizeThemeSetupText(value = "") {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function titleCaseThemeSetupText(value = "") {
+  const clean = normalizeThemeSetupText(value);
+  if (!clean) return "";
+  const override = THEME_SETUP_LABEL_OVERRIDES[clean];
+  if (override) return override;
+  return clean
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => {
+      if (part === "st") return "St.";
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    })
+    .join(" ");
+}
+
+function getThemeSetupDisplayLabel(themeKey, theme) {
+  const normalizedKey = normalizeThemeSetupText(themeKey);
+  const normalizedName = normalizeThemeSetupText(theme && theme.name);
+  const normalizedText = [normalizedKey, normalizedName].filter(Boolean).join(" ");
+  const directOverride =
+    THEME_SETUP_LABEL_OVERRIDES[normalizedKey] ||
+    THEME_SETUP_LABEL_OVERRIDES[normalizedName] ||
+    THEME_SETUP_LABEL_OVERRIDES[normalizedText];
+  if (directOverride) return directOverride;
+  return titleCaseThemeSetupText((theme && theme.name) || themeKey || "");
+}
+
+function getThemeSetupDisplayGroup(themeKey, theme) {
+  const normalized = [
+    normalizeThemeSetupText(themeKey),
+    normalizeThemeSetupText(getThemeSetupDisplayLabel(themeKey, theme)),
+    normalizeThemeSetupText(theme && theme.category),
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (/(hawks|amanda north|ane)/.test(normalized)) return "Youth";
+  if (/(garden vows|timeless romance|wedding)/.test(normalized)) return "Wedding";
+  if (/(halloween|christmas|valentine|st patrick)/.test(normalized)) return "Holidays";
+  if (
+    /(summer|fall|winter|spring|winter wonderland|santa s workshop|new year)/.test(
+      normalized
+    )
+  ) {
+    return "Seasonal";
+  }
+  return "General";
+}
+
+function getThemeSetupGroupIndex(group) {
+  const index = THEME_SETUP_GROUP_ORDER.indexOf(group);
+  return index === -1 ? THEME_SETUP_GROUP_ORDER.length : index;
+}
+
+function getThemeSetupItemIndex(group, label) {
+  const items = THEME_SETUP_GROUP_ITEM_ORDER[group] || [];
+  const index = items.indexOf(label);
+  return index === -1 ? items.length : index;
+}
+
+function getSetupThemeEntries(filter = "") {
+  const needle = normalizeThemeSetupText(filter);
+  return getSelectableThemeEntries()
+    .map((entry) => {
+      const label = getThemeSetupDisplayLabel(entry.key, entry.theme);
+      const group = getThemeSetupDisplayGroup(entry.key, entry.theme);
+      return { ...entry, label, group };
+    })
+    .filter((entry) => {
+      if (!needle) return true;
+      return normalizeThemeSetupText([entry.group, entry.label, entry.key].join(" "))
+        .includes(needle);
+    })
+    .sort((a, b) => {
+      const groupDiff =
+        getThemeSetupGroupIndex(a.group) - getThemeSetupGroupIndex(b.group);
+      if (groupDiff !== 0) return groupDiff;
+      const itemDiff =
+        getThemeSetupItemIndex(a.group, a.label) -
+        getThemeSetupItemIndex(b.group, b.label);
+      if (itemDiff !== 0) return itemDiff;
+      return a.label.localeCompare(b.label);
+    });
 }
 
 function getSessionThemeOptions(filter = "") {
@@ -2260,22 +2414,51 @@ function renderSessionThemeOptions(filter = "") {
       (DOM.createPathThemeSelect && DOM.createPathThemeSelect.value) ||
       (DOM.eventSelect && DOM.eventSelect.value) ||
       "";
-    const options = getSessionThemeOptions(filter);
-    options.forEach((option) => {
-      const item = document.createElement("button");
-      item.type = "button";
-      item.className = "setup-combobox-option";
-      item.textContent = option.textContent || option.value;
-      item.dataset.themeKey = option.value;
-      item.setAttribute("role", "option");
-      item.setAttribute(
-        "aria-selected",
-        option.value === selectedKey ? "true" : "false"
-      );
-      item.addEventListener("click", () => activateThemeFromSetupKey(option.value));
-      DOM.sessionThemeOptions.appendChild(item);
+    const entries = getSetupThemeEntries(filter);
+    const groupedEntries = new Map();
+    entries.forEach((entry) => {
+      if (!groupedEntries.has(entry.group)) groupedEntries.set(entry.group, []);
+      groupedEntries.get(entry.group).push(entry);
     });
-    if (!options.length) {
+    const orderedGroups = THEME_SETUP_GROUP_ORDER.filter((group) =>
+      groupedEntries.has(group)
+    ).concat(
+      Array.from(groupedEntries.keys()).filter(
+        (group) => !THEME_SETUP_GROUP_ORDER.includes(group)
+      )
+    );
+    orderedGroups.forEach((groupName) => {
+      const groupEntries = groupedEntries.get(groupName);
+      if (!groupEntries || !groupEntries.length) return;
+      const group = document.createElement("div");
+      group.className = "setup-combobox-group";
+      const title = document.createElement("div");
+      title.className = "setup-combobox-group-title";
+      title.textContent = groupName;
+      const list = document.createElement("div");
+      list.className = "setup-combobox-group-options";
+      groupEntries.forEach((entry) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "setup-combobox-option";
+        item.textContent = entry.label;
+        item.dataset.themeKey = entry.key;
+        item.dataset.themeGroup = entry.group;
+        item.setAttribute("role", "option");
+        item.setAttribute(
+          "aria-selected",
+          entry.key === selectedKey ? "true" : "false"
+        );
+        item.addEventListener("click", () =>
+          activateThemeFromSetupKey(entry.key)
+        );
+        list.appendChild(item);
+      });
+      group.appendChild(title);
+      group.appendChild(list);
+      DOM.sessionThemeOptions.appendChild(group);
+    });
+    if (!entries.length) {
       const empty = document.createElement("div");
       empty.className = "setup-combobox-empty";
       empty.textContent = "No themes found";
@@ -4639,13 +4822,10 @@ function getLaunchThemeName() {
 }
 
 function getLaunchThemeLabel() {
-  const themeName =
-    (activeTheme && activeTheme.name) ||
-    (DOM.eventSelect &&
-      DOM.eventSelect.selectedOptions[0] &&
-      DOM.eventSelect.selectedOptions[0].textContent) ||
-    "No theme selected";
-  return themeName;
+  return getThemeSetupDisplayLabel(
+    DOM.eventSelect ? DOM.eventSelect.value : "",
+    activeTheme || resolveThemeByKey(DOM.eventSelect ? DOM.eventSelect.value : "")
+  );
 }
 
 function getLaunchFontLabel() {
@@ -5927,54 +6107,36 @@ function populateThemeSelector(preferredKey, attempt = 0) {
   if (!select) return null;
   select.innerHTML = "";
   const selectedType = getSelectedEventType();
+  const entries = getSetupThemeEntries().filter((entry) =>
+    shouldIncludeThemeForSelectedType(entry.key, entry.theme, selectedType)
+  );
+  const groupedEntries = new Map();
+  entries.forEach((entry) => {
+    if (!groupedEntries.has(entry.group)) groupedEntries.set(entry.group, []);
+    groupedEntries.get(entry.group).push(entry);
+  });
   let optionCount = 0;
-  for (const themeKey in themes) {
-    if (themeKey.startsWith("_")) continue; // skip meta buckets
-    const theme = themes[themeKey];
-    if (theme.themes || theme.holidays) {
-      const optgroup = document.createElement("optgroup");
-      optgroup.label = theme.name;
-      let groupCount = 0;
-      const subThemes = theme.themes || theme.holidays;
-      for (const subThemeKey in subThemes) {
-        const loc = BUILTIN_THEME_LOCATIONS[subThemeKey];
-        if (
-          loc &&
-          (loc.root !== themeKey ||
-            loc.bucket !== (theme.themes ? "themes" : "holidays"))
-        ) {
-          continue;
-        }
-        const subTheme = subThemes[subThemeKey];
-        const optionValue = `${themeKey}:${subThemeKey}`;
-        if (
-          !shouldIncludeThemeForSelectedType(
-            optionValue,
-            subTheme,
-            selectedType
-          )
-        ) {
-          continue;
-        }
-        const option = document.createElement("option");
-        option.value = optionValue;
-        option.textContent = `${theme.name} > ${subTheme.name}`;
-        optgroup.appendChild(option);
-        optionCount += 1;
-        groupCount += 1;
-      }
-      if (groupCount) select.appendChild(optgroup);
-    } else {
-      if (!shouldIncludeThemeForSelectedType(themeKey, theme, selectedType)) {
-        continue;
-      }
+  const orderedGroups = THEME_SETUP_GROUP_ORDER.filter((group) =>
+    groupedEntries.has(group)
+  ).concat(
+    Array.from(groupedEntries.keys()).filter(
+      (group) => !THEME_SETUP_GROUP_ORDER.includes(group)
+    )
+  );
+  orderedGroups.forEach((groupName) => {
+    const groupEntries = groupedEntries.get(groupName);
+    if (!groupEntries || !groupEntries.length) return;
+    const optgroup = document.createElement("optgroup");
+    optgroup.label = groupName;
+    groupEntries.forEach((entry) => {
       const option = document.createElement("option");
-      option.value = themeKey;
-      option.textContent = theme.name;
-      select.appendChild(option);
+      option.value = entry.key;
+      option.textContent = entry.label;
+      optgroup.appendChild(option);
       optionCount += 1;
-    }
-  }
+    });
+    select.appendChild(optgroup);
+  });
   if (optionCount === 0) {
     renderThemeQuickSelect(select);
     if (attempt === 0) {
@@ -7140,8 +7302,7 @@ function hideFontPickerModal() {
 }
 
 function describeActiveTheme(theme, key) {
-  if (theme && theme.name) return theme.name;
-  if (key) return key;
+  if (theme || key) return getThemeSetupDisplayLabel(key, theme);
   return "None selected";
 }
 
