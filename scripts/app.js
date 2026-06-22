@@ -809,9 +809,6 @@ const DOM = {
   bulkToTemplates: document.getElementById("bulkToTemplates"),
   bulkAssetCancel: document.getElementById("bulkAssetCancel"),
   bulkAssetApply: document.getElementById("bulkAssetApply"),
-  uploadedAssetLibraryPanel: document.getElementById(
-    "uploadedAssetLibraryPanel"
-  ),
   assetLibrarySearch: document.getElementById("assetLibrarySearch"),
   assetLibraryCategory: document.getElementById("assetLibraryCategory"),
   assetLibraryReadiness: document.getElementById("assetLibraryReadiness"),
@@ -1458,7 +1455,7 @@ let aiSegmentation = null;
 let aiSegmentationResolver = null;
 let aiSegmentationPromise = null;
 let pendingBulkAssetFiles = [];
-let uploadedAssetLibrary = { assets: [] };
+let assetLibrary = { assets: [] };
 function createEmptySessionAssets() {
   return {
     backgrounds: [],
@@ -1890,7 +1887,7 @@ function getSessionEffectiveAssetSourceSet(category = "") {
   const normalized = normalizeUploadedAssetCategory(category);
   const theme = activeTheme || getSelectedThemeTarget();
   if (normalized === "background") {
-    return new Set(getSelectedBackgroundSourceList(theme));
+    return new Set(getEffectiveSelectedBackgroundList(theme));
   }
   if (normalized === "overlay") {
     return new Set(
@@ -2290,6 +2287,7 @@ const THEME_SETUP_LABEL_OVERRIDES = {
   valentines: "Valentine's Day",
   "valentine's day": "Valentine's Day",
   "st patricks day": "St. Patrick's Day",
+  "st patrick s day": "St. Patrick's Day",
   "st patrick's day": "St. Patrick's Day",
   "st patricks": "St. Patrick's Day",
   "st patrick's": "St. Patrick's Day",
@@ -2298,7 +2296,9 @@ const THEME_SETUP_LABEL_OVERRIDES = {
   hawks: "Hawks",
   ane: "Amanda North",
   "winter wonderland": "Winter Wonderland",
+  "santa s workshop": "Santa's Workshop",
   "santa's workshop": "Santa's Workshop",
+  "valentine s day": "Valentine's Day",
   "new year": "New Year",
 };
 
@@ -5878,7 +5878,7 @@ function scheduleFontsRemoteSync(fonts) {
 
 async function syncAssetLibraryRemote() {
   if (!canSyncRemote()) return;
-  for (const asset of uploadedAssetLibrary.assets || []) {
+  for (const asset of assetLibrary.assets || []) {
     await syncAssetLibraryRemoteAsset(asset);
   }
 }
@@ -13271,20 +13271,20 @@ function saveAssetLibraryLocal() {
   try {
     localStorage.setItem(
       APP_CONFIG.STORAGE_KEYS.ASSET_LIBRARY,
-      JSON.stringify(normalizeAssetLibraryPayload(uploadedAssetLibrary))
+      JSON.stringify(normalizeAssetLibraryPayload(assetLibrary))
     );
   } catch (_) {}
 }
 
 function loadAssetLibraryLocal() {
   try {
-    uploadedAssetLibrary = normalizeAssetLibraryPayload(
+    assetLibrary = normalizeAssetLibraryPayload(
       JSON.parse(
         localStorage.getItem(APP_CONFIG.STORAGE_KEYS.ASSET_LIBRARY) || "{}"
       )
     );
   } catch (_) {
-    uploadedAssetLibrary = { assets: [] };
+    assetLibrary = { assets: [] };
   }
 }
 
@@ -13326,7 +13326,7 @@ function getLibraryTemplateEntries() {
 function mergeLibraryAsset(asset) {
   const normalized = normalizeAssetLibraryPayload({ assets: [asset] }).assets[0];
   if (!normalized) return false;
-  const library = normalizeAssetLibraryPayload(uploadedAssetLibrary);
+  const library = normalizeAssetLibraryPayload(assetLibrary);
   const existingIndex = library.assets.findIndex(
     (item) => item.id === normalized.id || item.url === normalized.url
   );
@@ -13347,7 +13347,7 @@ function mergeLibraryAsset(asset) {
   } else {
     library.assets.unshift(normalized);
   }
-  uploadedAssetLibrary = normalizeAssetLibraryPayload(library);
+  assetLibrary = normalizeAssetLibraryPayload(library);
   saveAssetLibraryLocal();
   renderAssetLibrary();
   return true;
@@ -13382,9 +13382,9 @@ async function loadAssetLibraryRemote() {
     }
     const remote = normalizeAssetLibraryPayload(await resp.json());
     const merged = normalizeAssetLibraryPayload({
-      assets: [...(uploadedAssetLibrary.assets || []), ...(remote.assets || [])],
+      assets: [...(assetLibrary.assets || []), ...(remote.assets || [])],
     });
-    uploadedAssetLibrary = merged;
+    assetLibrary = merged;
     saveAssetLibraryLocal();
     renderAssetLibrary();
     if (activeTheme) {
@@ -13407,7 +13407,7 @@ function scheduleAssetLibraryRender() {
 
 async function updateAssetLibraryItem(id, patch = {}, fallbackAsset = null) {
   if (!id) return;
-  const library = normalizeAssetLibraryPayload(uploadedAssetLibrary);
+  const library = normalizeAssetLibraryPayload(assetLibrary);
   const index = library.assets.findIndex((asset) => asset.id === id);
   const baseRecord =
     index >= 0
@@ -13433,7 +13433,7 @@ async function updateAssetLibraryItem(id, patch = {}, fallbackAsset = null) {
   };
   if (index >= 0) library.assets[index] = nextRecord;
   else library.assets.unshift(nextRecord);
-  uploadedAssetLibrary = normalizeAssetLibraryPayload(library);
+  assetLibrary = normalizeAssetLibraryPayload(library);
   saveAssetLibraryLocal();
   scheduleAssetLibraryRender();
   if (canSyncRemote()) {
@@ -13477,7 +13477,7 @@ async function deleteAssetLibraryItem(id, fallbackAsset = null) {
 }
 
 function archiveLibraryAssetByUrl(url) {
-  const asset = (uploadedAssetLibrary.assets || []).find(
+  const asset = (assetLibrary.assets || []).find(
     (item) => item && item.url === url
   );
   const fallback = getCanonicalAssetCollection().find(
@@ -13610,7 +13610,7 @@ function mergeCanonicalAssetWithStoredRecord(base, stored) {
 function getCanonicalAssetCollection(category = "") {
   const filterCategory = normalizeUploadedAssetCategory(category);
   const themeRows = collectThemeAssetRows(filterCategory);
-  const storedRows = (uploadedAssetLibrary.assets || []).filter((asset) => {
+  const storedRows = (assetLibrary.assets || []).filter((asset) => {
     if (!asset) return false;
     if (filterCategory && asset.category !== filterCategory) return false;
     return true;
@@ -17610,32 +17610,33 @@ function normalizeAllThemes() {
   }
 }
 
-const ASSET_DEFAULT_REPAIR_VERSION = 1;
+const ASSET_DEFAULT_REPAIR_VERSION = 2;
 
 function repairCorruptedBackgroundDefaults() {
   if (!themes || typeof themes !== "object") return false;
   if (!themes._meta || typeof themes._meta !== "object") themes._meta = {};
   if (themes._meta.assetDefaultRepairVersion >= ASSET_DEFAULT_REPAIR_VERSION)
     return false;
-  const catalog = new Set(getAllThemeBackgroundCatalogList());
   let repaired = false;
-  if (catalog.size) {
-    forEachThemeEntry((theme) => {
-      const backgrounds = Array.isArray(theme.backgrounds)
-        ? theme.backgrounds.filter(Boolean)
-        : [];
-      const selected = new Set(backgrounds);
-      if (
-        selected.size === catalog.size &&
-        backgrounds.length === selected.size &&
-        [...catalog].every((src) => selected.has(src))
-      ) {
-        theme.backgrounds = [];
-        if (theme.background && catalog.has(theme.background)) theme.background = "";
-        repaired = true;
-      }
-    });
-  }
+  forEachThemeEntry((theme) => {
+    const backgrounds = Array.isArray(theme.backgrounds)
+      ? theme.backgrounds.filter(Boolean)
+      : [];
+    const selected = new Set(backgrounds);
+    const catalog = new Set(getThemeBackgroundCatalogList(theme));
+    const folderBackedTheme =
+      typeof theme.background === "string" && theme.background.trim().endsWith("/");
+    if (
+      folderBackedTheme &&
+      catalog.size &&
+      selected.size === catalog.size &&
+      backgrounds.length === selected.size &&
+      [...catalog].every((src) => selected.has(src))
+    ) {
+      theme.backgrounds = [];
+      repaired = true;
+    }
+  });
   themes._meta.assetDefaultRepairVersion = ASSET_DEFAULT_REPAIR_VERSION;
   return repaired;
 }
@@ -18001,7 +18002,7 @@ function removeEventTemplate(src) {
 function getThemeAssetSourceSet(kind, theme) {
   const target = theme && typeof theme === "object" ? theme : null;
   if (kind === "background") {
-    return new Set(getBaseBackgroundList(target));
+    return new Set(getSelectedBackgroundSourceList(target));
   }
   if (kind === "overlay") {
     return new Set(
@@ -18239,6 +18240,18 @@ function getSelectedBackgroundSourceList(theme) {
     typeof theme.background === "string" ? theme.background.trim() : "";
   if (!fallback || fallback.endsWith("/") || removed.has(fallback)) return [];
   return [fallback];
+}
+
+function getEffectiveSelectedBackgroundList(theme) {
+  if (!theme || typeof theme !== "object") return [];
+  const sessionList = Array.isArray(activeSessionAssets.backgrounds)
+    ? activeSessionAssets.backgrounds.filter(Boolean)
+    : [];
+  return getEffectiveAssetList(
+    getSelectedBackgroundSourceList(theme),
+    sessionList,
+    sessionRemovedBackgrounds
+  );
 }
 
 function getBackgroundList(theme) {
@@ -19201,9 +19214,14 @@ function getBaseOverlayList(theme) {
         .map((item) => normalizeOverlayDefinition(item))
         .filter((item) => item && !removed.has(item.src))
     : [];
+  const folderArr = Array.isArray(theme.overlaysTmp)
+    ? theme.overlaysTmp
+        .map((item) => normalizeOverlayDefinition(item))
+        .filter((item) => item && !removed.has(item.src))
+    : [];
   const seen = new Set();
   const out = [];
-  for (const o of localArr) {
+  for (const o of [...localArr, ...folderArr]) {
     const k = (o && o.src ? o.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
@@ -19231,9 +19249,23 @@ function getBaseTemplateList(theme) {
           textFields: normalizeTemplateTextFields(t.textFields),
         }))
     : [];
+  const folderArr = Array.isArray(theme.templatesTmp)
+    ? theme.templatesTmp
+        .filter((t) => t && t.src && !removed.has(t.src))
+        .map((t) => ({
+          ...cloneThemeValue(t),
+          src: t.src,
+          layout: normalizeTemplateLayout(t.layout),
+          slots: t.slots,
+          photoSlots: t.photoSlots,
+          background: t.background,
+          foreground: t.foreground,
+          textFields: normalizeTemplateTextFields(t.textFields),
+        }))
+    : [];
   const seen = new Set();
   const out = [];
-  for (const t of localArr) {
+  for (const t of [...localArr, ...folderArr]) {
     const k = (t && t.src ? t.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);

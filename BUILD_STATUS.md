@@ -1,20 +1,23 @@
 Current goal
-- Fix the setup-screen dropdown/background-selection regression with a forward-only commit.
+- Fix setup dropdown and Asset Library selection regressions with a forward-only commit.
 
 What is done
-- Restored render-time background lists so the setup screen stays clickable and shows the active theme assets.
-- Split background selection state into a separate helper so catalog-sized lists do not appear selected.
-- Kept the setup screen theme keys, labels, and overlay-builder preset changes intact.
+- Kept setup theme dropdown rendering on the canonical deduplicated theme option list.
+- Kept background folders as catalog entries rather than selected defaults, including repair of existing per-theme catalog fills.
+- Restored overlay and template folder manifests as active theme defaults.
+- Kept manual background card selection in the effective selected state so a card can toggle on and off.
+- Kept setup theme keys, labels, and overlay-builder Style Presets intact.
 
 What is in progress
-- Preparing the forward commit.
+- Preparing the forward-only commit.
 
 Next steps
-- Commit the fix and report the resulting hash.
+- Verify the committed working tree and report the verification results.
 
 Validation
-- `npm test` passed.
+- `npm test` passed: 82/82.
 - `git diff --check` passed.
+- Local browser interaction check passed for the grouped dropdown and background card toggles.
 
 History
 - Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.
