@@ -175,9 +175,10 @@ test("asset library background selection only reflects explicit theme defaults",
     "themes without explicit background defaults should not treat folder discovery as selected state"
   );
   assert.ok(
-    appScript.includes("selected.size === catalog.length") &&
+    appScript.includes("function isCompleteBackgroundCatalogSelection(sources, catalog)") &&
+      appScript.includes("getAllThemeBackgroundCatalogList()") &&
       appScript.includes("getSelectedBackgroundSourceList(theme)"),
-    "catalog-sized background defaults should be ignored by the selected-state source set"
+    "theme and global catalog-sized background defaults should be ignored by the selected-state source set"
   );
   assert.ok(
     appScript.includes("function getEffectiveSelectedBackgroundList(theme)") &&
@@ -428,8 +429,8 @@ test("asset library supports explicit multi-theme defaults without manifest auto
   assert.ok(
     appScript.includes("function repairCorruptedBackgroundDefaults()") &&
       appScript.includes("ASSET_DEFAULT_REPAIR_VERSION") &&
-      appScript.includes("selected.size === catalog.size"),
-    "the known all-backgrounds selection signature should be repaired once"
+      appScript.includes("isCompleteBackgroundCatalogSelection(backgrounds, globalCatalog)"),
+    "theme and global all-backgrounds selection signatures should be repaired once"
   );
 });
 

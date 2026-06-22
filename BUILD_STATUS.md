@@ -9,7 +9,7 @@ What is done
 - Kept setup theme keys, labels, and overlay-builder Style Presets intact.
 
 What is in progress
-- Removing emoji-prefixed names and flat duplicate built-in themes during theme normalization.
+- Removing emoji-prefixed names, flat duplicate built-in themes, and catalog-sized background defaults during theme normalization.
 
 Next steps
 - Verify the committed working tree and report the verification results.

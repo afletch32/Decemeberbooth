@@ -17644,13 +17644,14 @@ function removeLegacyFlatBuiltinThemes() {
   return removed;
 }
 
-const ASSET_DEFAULT_REPAIR_VERSION = 2;
+const ASSET_DEFAULT_REPAIR_VERSION = 3;
 
 function repairCorruptedBackgroundDefaults() {
   if (!themes || typeof themes !== "object") return false;
   if (!themes._meta || typeof themes._meta !== "object") themes._meta = {};
   if (themes._meta.assetDefaultRepairVersion >= ASSET_DEFAULT_REPAIR_VERSION)
     return false;
+  const globalCatalog = new Set(getAllThemeBackgroundCatalogList());
   let repaired = false;
   forEachThemeEntry((theme) => {
     const backgrounds = Array.isArray(theme.backgrounds)
@@ -17661,11 +17662,9 @@ function repairCorruptedBackgroundDefaults() {
     const folderBackedTheme =
       typeof theme.background === "string" && theme.background.trim().endsWith("/");
     if (
-      folderBackedTheme &&
-      catalog.size &&
-      selected.size === catalog.size &&
-      backgrounds.length === selected.size &&
-      [...catalog].every((src) => selected.has(src))
+      (folderBackedTheme &&
+        isCompleteBackgroundCatalogSelection(backgrounds, catalog)) ||
+      isCompleteBackgroundCatalogSelection(backgrounds, globalCatalog)
     ) {
       theme.backgrounds = [];
       repaired = true;
@@ -18259,21 +18258,30 @@ function getSelectedBackgroundSourceList(theme) {
   const uniqueExplicit = mergeUniqueUrls(explicit);
   if (uniqueExplicit.length) {
     const catalog = getThemeBackgroundCatalogList(theme);
-    if (catalog.length) {
-      const selected = new Set(uniqueExplicit);
-      if (
-        selected.size === catalog.length &&
-        catalog.every((src) => selected.has(src))
-      ) {
-        return [];
-      }
-    }
+    const globalCatalog = getAllThemeBackgroundCatalogList();
+    if (
+      isCompleteBackgroundCatalogSelection(uniqueExplicit, catalog) ||
+      isCompleteBackgroundCatalogSelection(uniqueExplicit, globalCatalog)
+    )
+      return [];
     return uniqueExplicit;
   }
   const fallback =
     typeof theme.background === "string" ? theme.background.trim() : "";
   if (!fallback || fallback.endsWith("/") || removed.has(fallback)) return [];
   return [fallback];
+}
+
+function isCompleteBackgroundCatalogSelection(sources, catalog) {
+  const selected = new Set(Array.isArray(sources) ? sources : []);
+  const catalogSet = catalog instanceof Set ? catalog : new Set(catalog || []);
+  return (
+    selected.size > 0 &&
+    selected.size === catalogSet.size &&
+    Array.isArray(sources) &&
+    sources.length === selected.size &&
+    [...catalogSet].every((src) => selected.has(src))
+  );
 }
 
 function getEffectiveSelectedBackgroundList(theme) {
