@@ -135,10 +135,10 @@ if ("serviceWorker" in navigator) {
 
 let themes = {
   general: {
-    name: "🎉 General",
+    name: "General",
     themes: {
       basic: {
-        name: "✨ Basic",
+        name: "Basic",
         eventTypes: ["general", "wedding", "expo", "community"],
         fontPairingStyle: "general",
         accent: "#3f51b5",
@@ -157,7 +157,7 @@ let themes = {
         },
       },
       birthday: {
-        name: "🎂 Birthday",
+        name: "Birthday",
         eventTypes: ["party", "general"],
         fontPairingStyle: "party",
         accent: "pink",
@@ -176,7 +176,7 @@ let themes = {
         },
       },
       summer: {
-        name: "☀️ Summer",
+        name: "Summer",
         eventTypes: ["party", "community", "general"],
         fontPairingStyle: "party",
         accent: "#00a6c8",
@@ -197,10 +197,10 @@ let themes = {
     },
   },
   wedding: {
-    name: "💍 Wedding",
+    name: "Wedding",
     themes: {
       timeless: {
-        name: "🤍 Timeless Romance",
+        name: "Timeless Romance",
         eventTypes: ["wedding"],
         fontPairingStyle: "wedding",
         accent: "#d7b48a",
@@ -221,7 +221,7 @@ let themes = {
         vibeSummary: "Classic, polished, formal",
       },
       romantic: {
-        name: "🌿 Garden Vows",
+        name: "Garden Vows",
         eventTypes: ["wedding"],
         fontPairingStyle: "wedding",
         accent: "#93b29b",
@@ -244,10 +244,10 @@ let themes = {
     },
   },
   expo: {
-    name: "🎪 Expo",
+    name: "Expo",
     themes: {
       brandStudio: {
-        name: "📣 Brand Studio",
+        name: "Brand Studio",
         eventTypes: ["expo"],
         fontPairingStyle: "expo",
         accent: "#1f5eff",
@@ -268,7 +268,7 @@ let themes = {
         vibeSummary: "Clean, branded, high traffic",
       },
       leadCapture: {
-        name: "🚀 Lead Capture",
+        name: "Lead Capture",
         eventTypes: ["expo"],
         fontPairingStyle: "expo",
         accent: "#0f766e",
@@ -291,10 +291,10 @@ let themes = {
     },
   },
   school: {
-    name: "🏫 School",
+    name: "School",
     themes: {
       hawks: {
-        name: "🦅 Hawks",
+        name: "Hawks",
         eventTypes: ["community"],
         fontPairingStyle: "community",
         accent: "#041E42",
@@ -312,7 +312,7 @@ let themes = {
         },
       },
       ane: {
-        name: "🏫 ANE",
+        name: "ANE",
         eventTypes: ["community"],
         fontPairingStyle: "community",
         accent: "#041E42",
@@ -332,10 +332,10 @@ let themes = {
     },
   },
   fall: {
-    name: "🍂 Fall",
+    name: "Fall",
     holidays: {
       halloween: {
-        name: "🎃 Halloween",
+        name: "Halloween",
         accent: "orange",
         accent2: "white",
         font: "'Creepster', cursive",
@@ -354,10 +354,10 @@ let themes = {
     },
   },
   winter: {
-    name: "❄️ Winter",
+    name: "Winter",
     holidays: {
       christmas: {
-        name: "🎄 Christmas",
+        name: "Christmas",
         accent: "#c41e3a",
         accent2: "white",
         font: "'Comic Neue', cursive",
@@ -373,7 +373,7 @@ let themes = {
         },
       },
       winterWonderland: {
-        name: "❄️ Winter Wonderland",
+        name: "Winter Wonderland",
         accent: "#b7e3ff",
         accent2: "#ffffff",
         fontHeading: "'Playfair Display', serif",
@@ -392,7 +392,7 @@ let themes = {
         vibeSummary: "Timeless, snowy, magical",
       },
       santasWorkshop: {
-        name: "🎅 Santa's Workshop",
+        name: "Santa's Workshop",
         accent: "#d62828",
         accent2: "#ffffff",
         fontHeading: "'Mountains of Christmas', cursive",
@@ -411,7 +411,7 @@ let themes = {
         vibeSummary: "Playful, festive, nostalgic",
       },
       newyear: {
-        name: "🎉 New Year",
+        name: "New Year",
         accent: "#FFD700",
         accent2: "white",
         font: "'Comic Neue', cursive",
@@ -427,7 +427,7 @@ let themes = {
         },
       },
       valentines: {
-        name: "💕 Valentine's Day",
+        name: "Valentine's Day",
         accent: "#ff5e91",
         accent2: "white",
         font: "'Comic Neue', cursive",
@@ -445,10 +445,10 @@ let themes = {
 };
 
 themes.spring = {
-  name: "🌸 Spring",
+  name: "Spring",
   holidays: {
     stpatricksday: {
-      name: "🍀 St. Patrick's Day",
+      name: "St. Patrick's Day",
       accent: "#0f6d2f",
       accent2: "white",
       font: "'Comic Neue', cursive",
@@ -5711,12 +5711,14 @@ async function loadThemesRemote() {
     try {
       normalizeAllThemes();
     } catch (_e) {}
+    const removedLegacyThemes = removeLegacyFlatBuiltinThemes();
     populateAllThemeAssetTmp();
     const repairedBackgroundDefaults = repairCorruptedBackgroundDefaults();
     const globalLogo = getGlobalLogo();
     if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
     localStorage.setItem("photoboothThemes", JSON.stringify(themes));
-    if (repairedBackgroundDefaults) scheduleThemesRemoteSync();
+    if (repairedBackgroundDefaults || removedLegacyThemes)
+      scheduleThemesRemoteSync();
     // Refresh UI if already initialized
     const selected = populateThemeSelector(DEFAULT_THEME_KEY);
     if (selected) {
@@ -6147,6 +6149,9 @@ function populateThemeSelector(preferredKey, attempt = 0) {
       try {
         normalizeAllThemes();
       } catch (_e) {}
+      if (removeLegacyFlatBuiltinThemes()) {
+        localStorage.setItem("photoboothThemes", JSON.stringify(themes));
+      }
       return populateThemeSelector(preferredKey, attempt + 1);
     }
     highlightThemeQuickSelect(null);
@@ -17563,6 +17568,7 @@ function arrayUniqueTemplates(arr) {
 }
 function normalizeThemeObject(t) {
   if (!t || typeof t !== "object") return;
+  if (typeof t.name === "string") t.name = normalizeThemeName(t.name);
   if (Array.isArray(t.overlays)) t.overlays = arrayUniqueStrings(t.overlays);
   if (Array.isArray(t.templates))
     t.templates = arrayUniqueTemplates(t.templates);
@@ -17596,11 +17602,21 @@ function normalizeThemeObject(t) {
   if (!t.font || !t.font.trim())
     t.font = t.fontBody || t.fontHeading || "'Comic Neue', cursive";
 }
+
+function normalizeThemeName(value = "") {
+  return String(value)
+    .replace(/\p{Extended_Pictographic}/gu, "")
+    .replace(/[\u200D\uFE0F]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function normalizeAllThemes() {
   const keys = Object.keys(themes || {});
   for (const k of keys) {
     const group = themes[k];
     if (!group || typeof group !== "object") continue;
+    if (typeof group.name === "string") group.name = normalizeThemeName(group.name);
     if (group.themes || group.holidays) {
       const dict = group.themes || group.holidays;
       for (const sk in dict) normalizeThemeObject(dict[sk]);
@@ -17610,13 +17626,32 @@ function normalizeAllThemes() {
   }
 }
 
-const ASSET_DEFAULT_REPAIR_VERSION = 2;
+function removeLegacyFlatBuiltinThemes() {
+  let removed = false;
+  for (const key of Object.keys(themes || {})) {
+    const theme = themes[key];
+    if (
+      BUILTIN_THEME_LOCATIONS[key] &&
+      theme &&
+      typeof theme === "object" &&
+      !theme.themes &&
+      !theme.holidays
+    ) {
+      delete themes[key];
+      removed = true;
+    }
+  }
+  return removed;
+}
+
+const ASSET_DEFAULT_REPAIR_VERSION = 3;
 
 function repairCorruptedBackgroundDefaults() {
   if (!themes || typeof themes !== "object") return false;
   if (!themes._meta || typeof themes._meta !== "object") themes._meta = {};
   if (themes._meta.assetDefaultRepairVersion >= ASSET_DEFAULT_REPAIR_VERSION)
     return false;
+  const globalCatalog = new Set(getAllThemeBackgroundCatalogList());
   let repaired = false;
   forEachThemeEntry((theme) => {
     const backgrounds = Array.isArray(theme.backgrounds)
@@ -17627,11 +17662,9 @@ function repairCorruptedBackgroundDefaults() {
     const folderBackedTheme =
       typeof theme.background === "string" && theme.background.trim().endsWith("/");
     if (
-      folderBackedTheme &&
-      catalog.size &&
-      selected.size === catalog.size &&
-      backgrounds.length === selected.size &&
-      [...catalog].every((src) => selected.has(src))
+      (folderBackedTheme &&
+        isCompleteBackgroundCatalogSelection(backgrounds, catalog)) ||
+      isCompleteBackgroundCatalogSelection(backgrounds, globalCatalog)
     ) {
       theme.backgrounds = [];
       repaired = true;
@@ -18225,21 +18258,30 @@ function getSelectedBackgroundSourceList(theme) {
   const uniqueExplicit = mergeUniqueUrls(explicit);
   if (uniqueExplicit.length) {
     const catalog = getThemeBackgroundCatalogList(theme);
-    if (catalog.length) {
-      const selected = new Set(uniqueExplicit);
-      if (
-        selected.size === catalog.length &&
-        catalog.every((src) => selected.has(src))
-      ) {
-        return [];
-      }
-    }
+    const globalCatalog = getAllThemeBackgroundCatalogList();
+    if (
+      isCompleteBackgroundCatalogSelection(uniqueExplicit, catalog) ||
+      isCompleteBackgroundCatalogSelection(uniqueExplicit, globalCatalog)
+    )
+      return [];
     return uniqueExplicit;
   }
   const fallback =
     typeof theme.background === "string" ? theme.background.trim() : "";
   if (!fallback || fallback.endsWith("/") || removed.has(fallback)) return [];
   return [fallback];
+}
+
+function isCompleteBackgroundCatalogSelection(sources, catalog) {
+  const selected = new Set(Array.isArray(sources) ? sources : []);
+  const catalogSet = catalog instanceof Set ? catalog : new Set(catalog || []);
+  return (
+    selected.size > 0 &&
+    selected.size === catalogSet.size &&
+    Array.isArray(sources) &&
+    sources.length === selected.size &&
+    [...catalogSet].every((src) => selected.has(src))
+  );
 }
 
 function getEffectiveSelectedBackgroundList(theme) {
