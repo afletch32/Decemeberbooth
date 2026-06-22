@@ -5871,17 +5871,6 @@
               <div id="assetLibraryGrid" class="asset-library-grid"></div>
               <div id="assetLibraryStatus" class="asset-library-empty" aria-live="polite"></div>
             </div>
-            <div id="assetThemeDefaultsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="assetThemeDefaultsTitle">
-              <div class="modal-card">
-                <h3 id="assetThemeDefaultsTitle">Theme Defaults</h3>
-                <p id="assetThemeDefaultsSummary" style="margin:0 0 12px; color:#5c6b93;"></p>
-                <div id="assetThemeDefaultsList" class="theme-defaults-list"></div>
-                <div class="modal-footer">
-                  <button type="button" id="assetThemeDefaultsCancel">Cancel</button>
-                  <button type="button" id="assetThemeDefaultsSave" class="primary">Save defaults</button>
-                </div>
-              </div>
-            </div>
             <div id="assetUploadInputs" class="hidden">
               <input type="file" id="themeBackground" accept="image/*">
               <input type="file" id="themeLogo" accept="image/*">
@@ -6350,6 +6339,17 @@
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
+    <div id="assetThemeDefaultsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="assetThemeDefaultsTitle">
+      <div class="modal-card">
+        <h3 id="assetThemeDefaultsTitle">Theme Defaults</h3>
+        <p id="assetThemeDefaultsSummary" style="margin:0 0 12px; color:#5c6b93;"></p>
+        <div id="assetThemeDefaultsList" class="theme-defaults-list"></div>
+        <div class="modal-footer">
+          <button type="button" id="assetThemeDefaultsCancel">Cancel</button>
+          <button type="button" id="assetThemeDefaultsSave" class="primary">Save defaults</button>
+        </div>
+      </div>
+    </div>
     <div id="themeDefaultsSetupModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="themeDefaultsSetupTitle">
       <div class="modal-card theme-defaults-setup-card">
         <h3 id="themeDefaultsSetupTitle">Set Up Defaults</h3>

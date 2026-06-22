@@ -9,10 +9,10 @@ What is done
 - Kept setup theme keys, labels, and overlay-builder Style Presets intact.
 
 What is in progress
-- Preparing the selected-theme defaults setup commit.
+- Fixing the existing per-asset Defaults modal viewport positioning.
 
 Next steps
-- Verify the committed working tree and report the setup modal results.
+- Verify the centered modal and report the commit result.
 
 Validation
 - Pending final verification.
