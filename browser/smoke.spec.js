@@ -233,50 +233,20 @@ test("overlay builder theme assignment dropdown loads saved themes", async ({
   expect(optionTexts.join(" ")).toContain("Wedding");
 });
 
-test("overlay and template thumbnail sections remember their open state", async ({
+test("Asset Library filters the setup catalog by category", async ({
   page,
 }) => {
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
-  await Promise.all([
-    page.waitForLoadState("domcontentloaded"),
-    page.evaluate(() => {
-      localStorage.removeItem("photoboothAssetPanels");
-      window.location.reload();
-    }),
-  ]);
-  await page.waitForFunction(() => !!window.__photoboothTest);
-
-  const overlayPanel = page.locator("#overlayThumbnailsPanel");
-  const overlayHeader = page.locator("#overlayThumbnailsHeader");
-  const templatePanel = page.locator("#templateThumbnailsPanel");
-  const templateHeader = page.locator("#templateThumbnailsHeader");
-
-  await expect(overlayHeader).toHaveAttribute("aria-expanded", "false");
-  await expect(templateHeader).toHaveAttribute("aria-expanded", "false");
-
-  await overlayHeader.evaluate((node) => node.click());
-  await expect(overlayHeader).toHaveAttribute("aria-expanded", "true");
-  await expect(overlayPanel).toHaveClass(/open/);
-
-  await templateHeader.evaluate((node) => node.click());
-  await expect(templateHeader).toHaveAttribute("aria-expanded", "true");
-  await expect(templatePanel).toHaveClass(/open/);
-
-  const storedPanels = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("photoboothAssetPanels") || "{}")
-  );
-  expect(storedPanels).toMatchObject({
-    overlay: true,
-    template: true,
-  });
-
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => !!window.__photoboothTest);
-  const storedAfterReload = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("photoboothAssetPanels") || "{}")
-  );
-  expect(storedAfterReload).toMatchObject(storedPanels);
+  await page.locator("#assetLibraryCategory").selectOption("template");
+  const cards = page.locator("#assetLibraryGrid .asset-library-card");
+  expect(await cards.count()).toBeGreaterThan(0);
+  await expect(page.locator("#assetLibraryStatus")).toContainText("shown");
+  await expect(
+    page.locator("#assetLibraryGrid .asset-library-actions button", {
+      hasText: "Defaults",
+    })
+  ).toHaveCount(await cards.count());
 });
 
 test("asset library cards toggle selection from the full card surface", async ({
@@ -436,33 +406,16 @@ test("session setup cards route to the right admin actions", async ({
   await expect(page.locator("#eventBasicsSection")).not.toHaveClass(/hidden/);
 });
 
-test("overlay and template summary panels toggle their thumbnail bodies", async ({
+test("Asset Library presents current default selections", async ({
   page,
 }) => {
-  await page.addInitScript(() => {
-    localStorage.removeItem("photoboothAssetPanels");
-  });
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
-
-  const overlayHeader = page.locator("#overlayThumbnailsHeader");
-  const templateHeader = page.locator("#templateThumbnailsHeader");
-  const overlayPanel = page.locator("#overlayThumbnailsPanel");
-  const templatePanel = page.locator("#templateThumbnailsPanel");
-
-  await expect(overlayHeader).toHaveAttribute("aria-expanded", "false");
-  await expect(templateHeader).toHaveAttribute("aria-expanded", "false");
-
-  await overlayHeader.evaluate((node) => node.click());
-  await expect(overlayHeader).toHaveAttribute("aria-expanded", "true");
-  await expect(overlayPanel).toHaveClass(/open/);
-
-  await templateHeader.evaluate((node) => node.click());
-  await expect(templateHeader).toHaveAttribute("aria-expanded", "true");
-  await expect(templatePanel).toHaveClass(/open/);
-
-  await expect(page.locator("#currentOverlays")).toBeVisible();
-  await expect(page.locator("#currentTemplates")).toBeVisible();
+  await expect(page.locator("#launchBackgroundCount")).toContainText("selected");
+  await expect(page.locator("#launchOverlayCount")).toContainText("selected");
+  expect(
+    await page.locator("#assetLibraryGrid .asset-library-card.selected").count()
+  ).toBeGreaterThan(0);
 });
 
 test("overlay builder keeps strip slot metadata consistent across template families", async ({

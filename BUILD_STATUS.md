@@ -6,6 +6,7 @@ What is done
 - Kept backgrounds, overlays, and templates as explicit defaults while retaining manifest-derived `*Tmp` lists as catalog data only.
 - Preserved template rendering metadata when shared defaults are assigned or normalized.
 - Added a versioned repair for the saved full-background-catalog selection corruption.
+- Replaced obsolete thumbnail-panel browser smoke tests with Asset Library category, defaults-action, count, and selection coverage.
 
 What is in progress
 - None.
@@ -16,6 +17,7 @@ Next steps
 Validation
 - `npm test` passes with 79/79 tests.
 - Targeted Playwright smoke passes for multi-theme template defaults, metadata preservation, and the full-background-catalog repair.
+- Targeted Playwright smoke passes for the replacement Asset Library tests.
 
 History
 - Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.
