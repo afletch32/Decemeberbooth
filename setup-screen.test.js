@@ -159,6 +159,11 @@ test("setup theme dropdown groups themes by user-facing category", () => {
       !appScript.includes('theme.name = `${theme.name} >'),
     "theme dropdown should not use arrow labels"
   );
+  assert.ok(
+    appScript.includes("function removeLegacyFlatBuiltinThemes()") &&
+      appScript.includes('function normalizeThemeName(value = "")'),
+    "legacy flat built-in copies and emoji-prefixed theme names should be normalized"
+  );
 });
 
 test("asset library background selection only reflects explicit theme defaults", () => {
