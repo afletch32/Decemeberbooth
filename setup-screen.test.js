@@ -175,9 +175,20 @@ test("asset library background selection only reflects explicit theme defaults",
     "catalog-sized background defaults should be ignored by the selected-state source set"
   );
   assert.ok(
+    appScript.includes("function getEffectiveSelectedBackgroundList(theme)") &&
+      appScript.includes("getSessionEffectiveAssetSourceSet(category") &&
+      appScript.includes("new Set(getEffectiveSelectedBackgroundList(theme))"),
+    "manual background selections should stay clickable without selecting the catalog"
+  );
+  assert.ok(
     appScript.includes("Array.isArray(theme.backgrounds)") &&
       appScript.includes("mergeUniqueUrls(explicit)"),
     "background defaults should still come from explicit theme state"
+  );
+  assert.ok(
+    appScript.includes("const folderArr = Array.isArray(theme.overlaysTmp)") &&
+      appScript.includes("const folderArr = Array.isArray(theme.templatesTmp)"),
+    "overlay and template folder manifests should remain theme defaults"
   );
 });
 
