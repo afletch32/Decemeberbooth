@@ -1458,7 +1458,7 @@ let aiSegmentation = null;
 let aiSegmentationResolver = null;
 let aiSegmentationPromise = null;
 let pendingBulkAssetFiles = [];
-let uploadedAssetLibrary = { assets: [] };
+let assetLibrary = { assets: [] };
 function createEmptySessionAssets() {
   return {
     backgrounds: [],
@@ -5881,7 +5881,7 @@ function scheduleFontsRemoteSync(fonts) {
 
 async function syncAssetLibraryRemote() {
   if (!canSyncRemote()) return;
-  for (const asset of uploadedAssetLibrary.assets || []) {
+  for (const asset of assetLibrary.assets || []) {
     await syncAssetLibraryRemoteAsset(asset);
   }
 }
@@ -13274,20 +13274,20 @@ function saveAssetLibraryLocal() {
   try {
     localStorage.setItem(
       APP_CONFIG.STORAGE_KEYS.ASSET_LIBRARY,
-      JSON.stringify(normalizeAssetLibraryPayload(uploadedAssetLibrary))
+      JSON.stringify(normalizeAssetLibraryPayload(assetLibrary))
     );
   } catch (_) {}
 }
 
 function loadAssetLibraryLocal() {
   try {
-    uploadedAssetLibrary = normalizeAssetLibraryPayload(
+    assetLibrary = normalizeAssetLibraryPayload(
       JSON.parse(
         localStorage.getItem(APP_CONFIG.STORAGE_KEYS.ASSET_LIBRARY) || "{}"
       )
     );
   } catch (_) {
-    uploadedAssetLibrary = { assets: [] };
+    assetLibrary = { assets: [] };
   }
 }
 
@@ -13329,7 +13329,7 @@ function getLibraryTemplateEntries() {
 function mergeLibraryAsset(asset) {
   const normalized = normalizeAssetLibraryPayload({ assets: [asset] }).assets[0];
   if (!normalized) return false;
-  const library = normalizeAssetLibraryPayload(uploadedAssetLibrary);
+  const library = normalizeAssetLibraryPayload(assetLibrary);
   const existingIndex = library.assets.findIndex(
     (item) => item.id === normalized.id || item.url === normalized.url
   );
@@ -13350,7 +13350,7 @@ function mergeLibraryAsset(asset) {
   } else {
     library.assets.unshift(normalized);
   }
-  uploadedAssetLibrary = normalizeAssetLibraryPayload(library);
+  assetLibrary = normalizeAssetLibraryPayload(library);
   saveAssetLibraryLocal();
   renderAssetLibrary();
   return true;
@@ -13385,9 +13385,9 @@ async function loadAssetLibraryRemote() {
     }
     const remote = normalizeAssetLibraryPayload(await resp.json());
     const merged = normalizeAssetLibraryPayload({
-      assets: [...(uploadedAssetLibrary.assets || []), ...(remote.assets || [])],
+      assets: [...(assetLibrary.assets || []), ...(remote.assets || [])],
     });
-    uploadedAssetLibrary = merged;
+    assetLibrary = merged;
     saveAssetLibraryLocal();
     renderAssetLibrary();
     if (activeTheme) {
@@ -13410,7 +13410,7 @@ function scheduleAssetLibraryRender() {
 
 async function updateAssetLibraryItem(id, patch = {}, fallbackAsset = null) {
   if (!id) return;
-  const library = normalizeAssetLibraryPayload(uploadedAssetLibrary);
+  const library = normalizeAssetLibraryPayload(assetLibrary);
   const index = library.assets.findIndex((asset) => asset.id === id);
   const baseRecord =
     index >= 0
@@ -13436,7 +13436,7 @@ async function updateAssetLibraryItem(id, patch = {}, fallbackAsset = null) {
   };
   if (index >= 0) library.assets[index] = nextRecord;
   else library.assets.unshift(nextRecord);
-  uploadedAssetLibrary = normalizeAssetLibraryPayload(library);
+  assetLibrary = normalizeAssetLibraryPayload(library);
   saveAssetLibraryLocal();
   scheduleAssetLibraryRender();
   if (canSyncRemote()) {
@@ -13480,7 +13480,7 @@ async function deleteAssetLibraryItem(id, fallbackAsset = null) {
 }
 
 function archiveLibraryAssetByUrl(url) {
-  const asset = (uploadedAssetLibrary.assets || []).find(
+  const asset = (assetLibrary.assets || []).find(
     (item) => item && item.url === url
   );
   const fallback = getCanonicalAssetCollection().find(
@@ -13613,7 +13613,7 @@ function mergeCanonicalAssetWithStoredRecord(base, stored) {
 function getCanonicalAssetCollection(category = "") {
   const filterCategory = normalizeUploadedAssetCategory(category);
   const themeRows = collectThemeAssetRows(filterCategory);
-  const storedRows = (uploadedAssetLibrary.assets || []).filter((asset) => {
+  const storedRows = (assetLibrary.assets || []).filter((asset) => {
     if (!asset) return false;
     if (filterCategory && asset.category !== filterCategory) return false;
     return true;
