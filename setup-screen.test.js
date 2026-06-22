@@ -434,6 +434,36 @@ test("asset library supports explicit multi-theme defaults without manifest auto
   );
 });
 
+test("selected themes can configure all default assets in one modal", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes('id="setupThemeDefaultsBtn"') &&
+      html.includes('id="themeDefaultsSetupModal"') &&
+      html.includes('id="themeDefaultsSetupList"'),
+    "setup should expose a selected-theme defaults button and modal"
+  );
+  assert.ok(
+    appScript.includes("function openThemeDefaultsSetupModal()") &&
+      appScript.includes("Set Up Defaults: ${label}") &&
+      appScript.includes("getCanonicalAssetCollection()"),
+    "theme defaults setup should use the canonical background, overlay, and template catalog"
+  );
+  assert.ok(
+    appScript.includes("function saveThemeDefaultsSetup()") &&
+      appScript.includes("theme[arrayName] = selectedAssets") &&
+      appScript.includes("buildThemeDefaultAssetEntry(asset)"),
+    "save should update the selected theme with the existing asset entry shapes"
+  );
+  assert.ok(
+    appScript.includes("saveThemesToStorage();") &&
+      appScript.includes("renderAssetLibrary();") &&
+      appScript.includes("updateLaunchSummary();"),
+    "save should persist and refresh setup state"
+  );
+});
+
 test("advanced theme controls keep defaults as editable placeholders", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts/app.js");

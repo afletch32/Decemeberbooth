@@ -9,15 +9,13 @@ What is done
 - Kept setup theme keys, labels, and overlay-builder Style Presets intact.
 
 What is in progress
-- Removing emoji-prefixed names, flat duplicate built-in themes, and catalog-sized background defaults during theme normalization.
+- Preparing the selected-theme defaults setup commit.
 
 Next steps
-- Verify the committed working tree and report the verification results.
+- Verify the committed working tree and report the setup modal results.
 
 Validation
-- `npm test` passed: 82/82.
-- `git diff --check` passed.
-- Local browser interaction check passed for the grouped dropdown and background card toggles.
+- Pending final verification.
 
 History
 - Normalize asset filenames, folder names, folder manifests, and derived asset JSON/CSV outputs.

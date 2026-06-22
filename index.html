@@ -2016,6 +2016,64 @@
       padding: 7px 9px;
     }
 
+    .setup-theme-defaults-btn {
+      width: 100%;
+      margin-top: 8px;
+      min-height: 34px;
+      font-size: 0.82em;
+    }
+
+    .theme-defaults-setup-card {
+      width: min(920px, 96vw);
+    }
+
+    .theme-defaults-setup-list {
+      display: grid;
+      gap: 16px;
+      max-height: min(62svh, 620px);
+      overflow: auto;
+      padding: 4px 2px;
+    }
+
+    .theme-defaults-setup-section {
+      display: grid;
+      gap: 8px;
+    }
+
+    .theme-defaults-setup-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+    }
+
+    .theme-defaults-setup-option {
+      display: grid;
+      grid-template-columns: auto 42px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      min-height: 56px;
+      border: 1px solid #d7e1f2;
+      border-radius: 10px;
+      background: #f8fbff;
+      color: #334155;
+      padding: 7px;
+    }
+
+    .theme-defaults-setup-option img {
+      width: 42px;
+      height: 42px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #e8eff8;
+    }
+
+    .theme-defaults-setup-name {
+      min-width: 0;
+      font-size: 0.82em;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
     .asset-library-empty {
       color: #718096;
       font-size: 0.92em;
@@ -5493,6 +5551,7 @@
             <div id="sessionThemeOptions" class="setup-combobox-options" role="listbox" aria-label="Theme options"></div>
           </div>
           <select id="createPathThemeSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
+          <button type="button" id="setupThemeDefaultsBtn" class="setup-theme-defaults-btn">Set Up Theme Defaults</button>
         </div>
         <div class="setup-session-item setup-combobox" data-setup-combobox="font">
           <label for="sessionFontSearch">Font</label>
@@ -6291,6 +6350,17 @@
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
+    <div id="themeDefaultsSetupModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="themeDefaultsSetupTitle">
+      <div class="modal-card theme-defaults-setup-card">
+        <h3 id="themeDefaultsSetupTitle">Set Up Defaults</h3>
+        <p id="themeDefaultsSetupSummary" style="margin:0 0 12px; color:#5c6b93;">Choose the default assets for this theme.</p>
+        <div id="themeDefaultsSetupList" class="theme-defaults-setup-list"></div>
+        <div class="modal-footer">
+          <button type="button" id="themeDefaultsSetupCancel">Cancel</button>
+          <button type="button" id="themeDefaultsSetupSave" class="primary">Save defaults</button>
+        </div>
+      </div>
+    </div>
     <div id="fontPickerModal" class="modal-backdrop">
       <div class="modal-card font-picker-modal">
         <h3>Choose Fonts</h3>

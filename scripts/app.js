@@ -826,6 +826,13 @@ const DOM = {
   assetThemeDefaultsList: document.getElementById("assetThemeDefaultsList"),
   assetThemeDefaultsCancel: document.getElementById("assetThemeDefaultsCancel"),
   assetThemeDefaultsSave: document.getElementById("assetThemeDefaultsSave"),
+  setupThemeDefaultsBtn: document.getElementById("setupThemeDefaultsBtn"),
+  themeDefaultsSetupModal: document.getElementById("themeDefaultsSetupModal"),
+  themeDefaultsSetupTitle: document.getElementById("themeDefaultsSetupTitle"),
+  themeDefaultsSetupSummary: document.getElementById("themeDefaultsSetupSummary"),
+  themeDefaultsSetupList: document.getElementById("themeDefaultsSetupList"),
+  themeDefaultsSetupCancel: document.getElementById("themeDefaultsSetupCancel"),
+  themeDefaultsSetupSave: document.getElementById("themeDefaultsSetupSave"),
   addCharacterBtn: document.getElementById("addCharacterBtn"),
   currentCharacter: document.getElementById("currentCharacter"),
   themeGreenBackgrounds: document.getElementById("themeGreenBackgrounds"),
@@ -1473,6 +1480,7 @@ let sessionRemovedBackgrounds = [];
 let sessionRemovedOverlays = [];
 let sessionRemovedTemplates = [];
 let activeThemeDefaultsAsset = null;
+let activeThemeDefaultsSetupKey = "";
 let activeSessionTextDetails = {};
 const ACCENT_PRESET_COLORS = [
   "#ffffff",
@@ -3591,6 +3599,18 @@ function setupThemeEditorControls() {
     DOM.assetThemeDefaultsModal.addEventListener("click", (event) => {
       if (event.target === DOM.assetThemeDefaultsModal)
         closeAssetThemeDefaultsModal();
+    });
+  }
+  if (DOM.setupThemeDefaultsBtn)
+    DOM.setupThemeDefaultsBtn.addEventListener("click", openThemeDefaultsSetupModal);
+  if (DOM.themeDefaultsSetupCancel)
+    DOM.themeDefaultsSetupCancel.addEventListener("click", closeThemeDefaultsSetupModal);
+  if (DOM.themeDefaultsSetupSave)
+    DOM.themeDefaultsSetupSave.addEventListener("click", saveThemeDefaultsSetup);
+  if (DOM.themeDefaultsSetupModal) {
+    DOM.themeDefaultsSetupModal.addEventListener("click", (event) => {
+      if (event.target === DOM.themeDefaultsSetupModal)
+        closeThemeDefaultsSetupModal();
     });
   }
   if (DOM.assetLibrarySearch)
@@ -13897,6 +13917,134 @@ function saveAssetThemeDefaults() {
   updateCreatePathAssetSummary();
   updateLaunchSummary();
   closeAssetThemeDefaultsModal();
+  showToast("Theme defaults saved");
+}
+
+const THEME_DEFAULTS_SETUP_CATEGORIES = [
+  { key: "background", label: "Backgrounds" },
+  { key: "overlay", label: "Overlays" },
+  { key: "template", label: "Templates" },
+];
+
+function openThemeDefaultsSetupModal() {
+  const key = (DOM.eventSelect && DOM.eventSelect.value) || "";
+  const theme = resolveThemeByKey(key);
+  if (!key || !theme || !DOM.themeDefaultsSetupModal) return;
+  activeThemeDefaultsSetupKey = key;
+  const label = getThemeSetupDisplayLabel(key, theme);
+  if (DOM.themeDefaultsSetupTitle)
+    DOM.themeDefaultsSetupTitle.textContent = `Set Up Defaults: ${label}`;
+  if (DOM.themeDefaultsSetupSummary)
+    DOM.themeDefaultsSetupSummary.textContent =
+      "Choose the assets included by default whenever this theme is selected.";
+
+  const list = DOM.themeDefaultsSetupList;
+  if (list) {
+    list.innerHTML = "";
+    const assets = getCanonicalAssetCollection();
+    THEME_DEFAULTS_SETUP_CATEGORIES.forEach(({ key: category, label: title }) => {
+      const section = document.createElement("section");
+      section.className = "theme-defaults-setup-section";
+      const heading = document.createElement("div");
+      heading.className = "theme-defaults-group-title";
+      heading.textContent = title;
+      const grid = document.createElement("div");
+      grid.className = "theme-defaults-setup-grid";
+      const explicitSources = new Set(
+        getExplicitThemeAssetEntries(category, theme)
+          .map(getAssetEntrySrc)
+          .filter(Boolean)
+      );
+      assets
+        .filter(
+          (asset) =>
+            asset.category === category && !getAssetEntrySrc(asset).endsWith("/")
+        )
+        .forEach((asset) => {
+          const src = getAssetEntrySrc(asset);
+          if (!src) return;
+          const option = document.createElement("label");
+          option.className = "theme-defaults-setup-option";
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.value = asset.id;
+          checkbox.dataset.category = category;
+          checkbox.checked = explicitSources.has(src);
+          const thumbnail = document.createElement("img");
+          thumbnail.src = withBust(src);
+          thumbnail.alt = "";
+          thumbnail.onerror = () => thumbnail.remove();
+          const name = document.createElement("span");
+          name.className = "theme-defaults-setup-name";
+          name.textContent = getAssetDisplayName(asset);
+          option.append(checkbox, thumbnail, name);
+          grid.appendChild(option);
+        });
+      if (!grid.childNodes.length) {
+        const empty = document.createElement("div");
+        empty.className = "asset-library-empty";
+        empty.textContent = "No assets available.";
+        grid.appendChild(empty);
+      }
+      section.append(heading, grid);
+      list.appendChild(section);
+    });
+  }
+  DOM.themeDefaultsSetupModal.classList.remove("hidden");
+  DOM.themeDefaultsSetupModal.classList.add("show");
+}
+
+function closeThemeDefaultsSetupModal() {
+  activeThemeDefaultsSetupKey = "";
+  if (DOM.themeDefaultsSetupModal) {
+    DOM.themeDefaultsSetupModal.classList.remove("show");
+    DOM.themeDefaultsSetupModal.classList.add("hidden");
+  }
+}
+
+function saveThemeDefaultsSetup() {
+  const key = activeThemeDefaultsSetupKey;
+  const theme = resolveThemeByKey(key);
+  if (!key || !theme) return;
+  const assetsById = new Map(
+    getCanonicalAssetCollection().map((asset) => [asset.id, asset])
+  );
+  const selectedByCategory = new Map(
+    THEME_DEFAULTS_SETUP_CATEGORIES.map(({ key: category }) => [category, []])
+  );
+  const checked = DOM.themeDefaultsSetupList
+    ? DOM.themeDefaultsSetupList.querySelectorAll("input[type=checkbox]:checked")
+    : [];
+  checked.forEach((input) => {
+    const asset = assetsById.get(input.value);
+    const category = normalizeUploadedAssetCategory(input.dataset.category);
+    if (asset && selectedByCategory.has(category)) {
+      selectedByCategory.get(category).push(asset);
+    }
+  });
+
+  THEME_DEFAULTS_SETUP_CATEGORIES.forEach(({ key: category }) => {
+    const arrayName = getThemeDefaultArrayName(category);
+    const removedArrayName = getThemeRemovedArrayName(category);
+    const selectedAssets = selectedByCategory.get(category) || [];
+    const selectedSources = new Set(selectedAssets.map(getAssetEntrySrc).filter(Boolean));
+    theme[arrayName] = selectedAssets
+      .map((asset) => buildThemeDefaultAssetEntry(asset))
+      .filter(Boolean);
+    if (removedArrayName && Array.isArray(theme[removedArrayName])) {
+      theme[removedArrayName] = theme[removedArrayName].filter(
+        (item) => !selectedSources.has(getAssetEntrySrc(item))
+      );
+    }
+  });
+
+  saveThemesToStorage();
+  loadTheme(key);
+  renderAssetLibrary();
+  renderCurrentAssets(activeTheme || theme);
+  updateCreatePathAssetSummary();
+  updateLaunchSummary();
+  closeThemeDefaultsSetupModal();
   showToast("Theme defaults saved");
 }
 
