@@ -93,6 +93,69 @@ test("resolveUploadFilepath only accepts direct /uploads references", withTempEn
   assert.equal(resolveUploadFilepath("/not-uploads/test.png"), null);
 }));
 
+test("print queue shares items by event and requires manual payment before staff workflow", withTempEnv(async (_tmp, t) => {
+  const server = await startTempServer(t);
+  if (!server) return;
+  try {
+    const { port } = server.address();
+    const imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/booth/final.jpg";
+    const post = await fetch(`http://127.0.0.1:${port}/api/print-queue`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventId: "summer fair", imageUrl }),
+    });
+    assert.equal(post.status, 201);
+    const created = await post.json();
+    assert.equal(created.item.status, "waiting_payment");
+    assert.equal(created.item.paymentStatus, "unpaid");
+
+    const duplicate = await fetch(`http://127.0.0.1:${port}/api/print-queue`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventId: "summer-fair", imageUrl }),
+    });
+    assert.equal((await duplicate.json()).created, false);
+
+    const paid = await fetch(`http://127.0.0.1:${port}/api/print-queue/${created.item.id}?eventId=summer-fair`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventId: "summer-fair", status: "paid", paymentStatus: "manual_paid" }),
+    });
+    const paidItem = (await paid.json()).item;
+    assert.equal(paidItem.status, "paid");
+    assert.equal(paidItem.paymentStatus, "manual_paid");
+    assert.ok(paidItem.paidAt);
+
+    const listed = await fetch(`http://127.0.0.1:${port}/api/print-queue?eventId=summer-fair`);
+    assert.equal((await listed.json()).items.length, 1);
+  } finally {
+    await new Promise((resolve) => server.close(() => resolve()));
+  }
+}));
+
+test("print queue supports sponsor-covered prints without payment", withTempEnv(async (_tmp, t) => {
+  const server = await startTempServer(t);
+  if (!server) return;
+  try {
+    const { port } = server.address();
+    const post = await fetch(`http://127.0.0.1:${port}/api/print-queue`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventId: "included-prints",
+        imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/booth/included.jpg",
+        paymentRequired: false,
+      }),
+    });
+    const item = (await post.json()).item;
+    assert.equal(item.status, "ready");
+    assert.equal(item.paymentStatus, "not_required");
+    assert.equal(item.paymentRequired, false);
+  } finally {
+    await new Promise((resolve) => server.close(() => resolve()));
+  }
+}));
+
 test("local uploads can be deleted through /api/upload", withTempEnv(async (_tmp, t) => {
   const { UPLOADS_DIR } = loadServerModule();
   const server = await startTempServer(t);

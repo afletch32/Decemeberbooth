@@ -13,6 +13,8 @@ test("pages functions provide live sync endpoints for themes, events, and fonts"
   const fontsFn = readProjectFile("functions", "api", "fonts.js");
   const galleryFn = readProjectFile("functions", "api", "gallery.js");
   const assetsFn = readProjectFile("functions", "api", "assets.js");
+  const printQueueFn = readProjectFile("functions", "api", "print-queue.js");
+  const printQueueItemFn = readProjectFile("functions", "api", "print-queue", "[id].js");
 
   assert.ok(
     themesFn.includes('await env.THEMES_KV.put("themes"'),
@@ -66,5 +68,13 @@ test("pages functions provide live sync endpoints for themes, events, and fonts"
   assert.ok(
     assetsFn.includes('const VALID_CATEGORIES = new Set(["background", "overlay", "template"])'),
     "asset library endpoint should constrain uploaded asset categories"
+  );
+  assert.ok(
+    printQueueFn.includes('return `print-queue:${eventId}`') && printQueueFn.includes('request.method !== "POST"'),
+    "print queue endpoint should store shared event queues and accept booth submissions"
+  );
+  assert.ok(
+    printQueueItemFn.includes("PRINT_QUEUE_STAFF_TOKEN") && printQueueItemFn.includes('request.method !== "PATCH" && request.method !== "DELETE"'),
+    "print queue mutations should support server-side staff authorization"
   );
 });
