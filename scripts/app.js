@@ -591,6 +591,7 @@ const DOM = {
   launchConfirmWarning: document.getElementById("launchConfirmWarning"),
   launchConfirmCancel: document.getElementById("launchConfirmCancel"),
   launchConfirmStart: document.getElementById("launchConfirmStart"),
+  startKioskButton: document.getElementById("startKioskButton"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
@@ -3415,6 +3416,27 @@ function confirmBoothLaunch() {
   startBooth();
 }
 
+function startBoothInKioskMode() {
+  const root = document.documentElement;
+  const requestFullscreen =
+    root.requestFullscreen || root.webkitRequestFullscreen;
+  if (typeof requestFullscreen === "function") {
+    try {
+      const result = requestFullscreen.call(root);
+      if (result && typeof result.catch === "function") {
+        result.catch(() => {
+          showToast("Fullscreen was blocked by this browser.");
+        });
+      }
+    } catch (_) {
+      showToast("Fullscreen was blocked by this browser.");
+    }
+  } else {
+    showToast("Use the browser fullscreen control for kiosk mode.");
+  }
+  startBooth();
+}
+
 function setupBoothButtons() {
   const startCameraBtn = document.getElementById("startCameraButton");
   if (startCameraBtn) startCameraBtn.addEventListener("click", startCamera);
@@ -3425,6 +3447,10 @@ function setupBoothButtons() {
     startBoothBtn.addEventListener("click", startBooth);
   }
   else console.warn("Start Booth button not found in DOM.");
+
+  if (DOM.startKioskButton) {
+    DOM.startKioskButton.addEventListener("click", startBoothInKioskMode);
+  }
 
   if (DOM.launchConfirmCancel) {
     DOM.launchConfirmCancel.addEventListener("click", closeBoothLaunchConfirm);
@@ -9016,6 +9042,22 @@ function showPreviewFreezeFrame(canvasOrUrl) {
   } catch (_) {}
 }
 
+function enterFinalizingState(finalUrl) {
+  if (!finalUrl || !DOM.finalStrip) return;
+  const reveal = () => {
+    if (!DOM.boothScreen) return;
+    DOM.boothScreen.classList.remove("countdown-mode");
+    DOM.boothScreen.classList.add("finalizing-mode");
+  };
+  DOM.finalStrip.onload = reveal;
+  DOM.finalStrip.src = finalUrl;
+  if (DOM.finalStrip.complete && DOM.finalStrip.naturalWidth) reveal();
+}
+
+function leaveFinalizingState() {
+  if (DOM.boothScreen) DOM.boothScreen.classList.remove("finalizing-mode");
+}
+
 // Photo mode capture
 async function capturePhotoFlow() {
   lastCaptureFlow = capturePhotoFlow; // Store this function for retake
@@ -9025,9 +9067,10 @@ async function capturePhotoFlow() {
     live: livePhotoEnabled,
     instant: getInstantCaptureEnabled(),
   });
-  if (!livePhotoEnabled) showPreviewFreezeFrame(photo);
+  let finalPreviewStarted = false;
   try {
     const finalUrl = await finalizeToPrint(photo, selectedOverlay);
+    enterFinalizingState(finalUrl);
     const uploadResult = await uploadCaptureOnce({
       previewUrl: finalUrl,
       mediaBlob: livePhotoEnabled ? lastLiveClipBlob : null,
@@ -9046,12 +9089,13 @@ async function capturePhotoFlow() {
         : {
             shareUrl: uploadResult.publicUrl,
             uploadQueued: uploadResult.queued,
-          }
+        }
     );
+    finalPreviewStarted = true;
     recordAnalytics(livePhotoEnabled ? "live-photo" : "photo", selectedOverlay);
     addToGallery(finalUrl);
   } finally {
-    if (livePhotoEnabled) clearPreviewFreezeFrame();
+    if (!finalPreviewStarted) leaveFinalizingState();
   }
 }
 
@@ -10001,10 +10045,9 @@ async function runStripSequence(template) {
   }
   try {
     const stripUrl = await composeStrip(template, shots);
-    restorePreviewState(previewState);
-    previewRestored = true;
-    if (DOM.liveOverlay)
-      DOM.liveOverlay.style.opacity = previewState.overlayOpacity || "";
+    // Keep the capture surface cleared until the completed strip is ready for
+    // showFinal(); restoring it here briefly exposed an empty template frame.
+    enterFinalizingState(stripUrl);
     const uploadResult = await uploadCaptureOnce({
       previewUrl: stripUrl,
       resourceType: "image",
@@ -10014,6 +10057,7 @@ async function runStripSequence(template) {
       shareUrl: uploadResult.publicUrl,
       uploadQueued: uploadResult.queued,
     });
+    previewRestored = true;
     recordAnalytics("strip", template.src);
   } finally {
     if (!previewRestored) restorePreviewState(previewState);
@@ -10801,7 +10845,7 @@ function showFinal(url, options = {}) {
       keepFinalLive: useLiveClip,
     });
     if (DOM.boothScreen) {
-      DOM.boothScreen.classList.remove("countdown-mode");
+      DOM.boothScreen.classList.remove("countdown-mode", "finalizing-mode");
       DOM.boothScreen.classList.add("share-mode");
     }
     if (img) img.classList.toggle("hidden", useLiveClip);
@@ -12231,7 +12275,8 @@ async function downloadShareImage() {
 function hideFinal() {
   clearPreviewFreezeFrame();
   DOM.finalPreview.classList.remove("show");
-  if (DOM.boothScreen) DOM.boothScreen.classList.remove("share-mode");
+  if (DOM.boothScreen)
+    DOM.boothScreen.classList.remove("share-mode", "finalizing-mode");
   DOM.qrCodeContainer.classList.add("hidden");
   if (DOM.paidPrintPanel) DOM.paidPrintPanel.classList.remove("show");
   setFinalPreviewSharePanelVisible(false);
