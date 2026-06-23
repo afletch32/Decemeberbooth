@@ -641,6 +641,11 @@ const DOM = {
   finalLive: document.getElementById("finalLive"),
   qrCodeContainer: document.getElementById("qrCodeContainer"),
   qrCode: document.getElementById("qrCode"),
+  paidPrintPanel: document.getElementById("paidPrintPanel"),
+  paidPrintTitle: document.getElementById("paidPrintTitle"),
+  paidPrintBody: document.getElementById("paidPrintBody"),
+  paidPrintInstructions: document.getElementById("paidPrintInstructions"),
+  paidPrintPaymentQr: document.getElementById("paidPrintPaymentQr"),
   lastShot: document.getElementById("lastShot"),
   qrHint: document.getElementById("qrHint"),
   shareStatus: document.getElementById("shareStatus"),
@@ -773,6 +778,15 @@ const DOM = {
   cloudPresetInput: document.getElementById("cloudPresetInput"),
   cloudFolderInput: document.getElementById("cloudFolderInput"),
   cloudUseToggle: document.getElementById("cloudUseToggle"),
+  printModeInput: document.getElementById("printModeInput"),
+  printNoPaymentRequiredInput: document.getElementById("printNoPaymentRequiredInput"),
+  printPriceLabelInput: document.getElementById("printPriceLabelInput"),
+  printPanelTitleInput: document.getElementById("printPanelTitleInput"),
+  printPanelBodyInput: document.getElementById("printPanelBodyInput"),
+  printInstructionsInput: document.getElementById("printInstructionsInput"),
+  printPaymentQrInput: document.getElementById("printPaymentQrInput"),
+  printEventIdInput: document.getElementById("printEventIdInput"),
+  staffPrintQueueUrl: document.getElementById("staffPrintQueueUrl"),
   migrateAssetsBtn: document.getElementById("migrateAssetsBtn"),
   emailJsPublic: document.getElementById("emailJsPublic"),
   emailJsService: document.getElementById("emailJsService"),
@@ -1897,12 +1911,42 @@ function getSessionAssignedAssetSourceSet(category = "") {
   return createAssetSelectionSet(getSessionAssignedAssetEntries(category));
 }
 
+function discardStaleSessionLibraryAssets() {
+  const canonicalSources = {
+    background: new Set(getCanonicalAssetCollection("background").map((asset) => asset.url)),
+    overlay: new Set(getCanonicalAssetCollection("overlay").map((asset) => asset.url)),
+    template: new Set(getCanonicalAssetCollection("template").map((asset) => asset.url)),
+  };
+  activeSessionAssets.backgrounds = (Array.isArray(activeSessionAssets.backgrounds)
+    ? activeSessionAssets.backgrounds
+    : [])
+    .filter((entry) => canonicalSources.background.has(getAssetEntrySrc(entry)))
+    .slice(0, 1);
+  activeSessionAssets.backgroundIndex = 0;
+  activeSessionAssets.overlays = (Array.isArray(activeSessionAssets.overlays)
+    ? activeSessionAssets.overlays
+    : []).filter((entry) => canonicalSources.overlay.has(getAssetEntrySrc(entry)));
+  activeSessionAssets.templates = (Array.isArray(activeSessionAssets.templates)
+    ? activeSessionAssets.templates
+    : []).filter((entry) => canonicalSources.template.has(getAssetEntrySrc(entry)));
+  sessionRemovedBackgrounds = sessionRemovedBackgrounds.filter((src) =>
+    canonicalSources.background.has(getAssetEntrySrc(src))
+  );
+  sessionRemovedOverlays = sessionRemovedOverlays.filter((src) =>
+    canonicalSources.overlay.has(getAssetEntrySrc(src))
+  );
+  sessionRemovedTemplates = sessionRemovedTemplates.filter((src) =>
+    canonicalSources.template.has(getAssetEntrySrc(src))
+  );
+}
+
 /**
  * Returns a Set of asset source URLs representing all assets effectively
  * assigned to the session across all sources.
  */
 function getSessionEffectiveAssetSourceSet(category = "") {
   const normalized = normalizeUploadedAssetCategory(category);
+  discardStaleSessionLibraryAssets();
   const theme = activeTheme || getSelectedThemeTarget();
   if (normalized === "background") {
     return new Set(getEffectiveSelectedBackgroundList(theme));
@@ -2661,10 +2705,8 @@ function addSessionAssetUrl(kind, url) {
   }
   if (kind === "backgrounds") {
     clearSessionRemovedAsset("background", url);
-    const exists = activeSessionAssets.backgrounds.some(
-      (item) => getAssetEntrySrc(item) === url
-    );
-    if (!exists) activeSessionAssets.backgrounds.push(url);
+    activeSessionAssets.backgrounds = [url];
+    activeSessionAssets.backgroundIndex = 0;
     return true;
   }
   if (kind === "greenBackgrounds") {
@@ -2685,15 +2727,8 @@ function addSessionAssetUrl(kind, url) {
 function selectSessionBackground(src) {
   if (!src) return;
   clearSessionRemovedAsset("background", src);
-  if (!Array.isArray(activeSessionAssets.backgrounds)) {
-    activeSessionAssets.backgrounds = [];
-  }
-  let index = activeSessionAssets.backgrounds.indexOf(src);
-  if (index < 0) {
-    activeSessionAssets.backgrounds.unshift(src);
-    index = 0;
-  }
-  activeSessionAssets.backgroundIndex = index;
+  activeSessionAssets.backgrounds = [src];
+  activeSessionAssets.backgroundIndex = 0;
   applyThemeBackground(activeTheme);
   renderCurrentAssets(activeTheme);
   updateCreatePathAssetSummary();
@@ -5621,6 +5656,7 @@ function init() {
   setupSetupTabs();
   setupWelcomeInteractions();
   loadCloudinarySettings();
+  loadPrintSettings();
   setThemeEditorMode(
     DOM.themeEditorModeSelect ? DOM.themeEditorModeSelect.value : "edit"
   );
@@ -6139,6 +6175,145 @@ function cloudinaryEnabled() {
 function cloudinaryConfigured() {
   const cfg = getCloudinaryConfig();
   return Boolean(cfg.cloud && cfg.preset);
+}
+
+const PRINT_SETTINGS_STORAGE_KEY = "photoboothPrintSettings";
+const DEFAULT_PRINT_SETTINGS = {
+  mode: "off",
+  priceLabel: "$3",
+  panelTitle: "Printed Photo Upgrade",
+  panelBody: "Take home a 4x6 keepsake print for $3.",
+  instructions: "Scan the payment code below to complete your purchase. Your print will be prepared after payment is confirmed.",
+  paymentQr: "",
+  eventId: "",
+  noPaymentRequired: false,
+};
+
+function getPrintSettings() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(PRINT_SETTINGS_STORAGE_KEY) || "{}");
+    return { ...DEFAULT_PRINT_SETTINGS, ...(stored && typeof stored === "object" ? stored : {}) };
+  } catch (_) {
+    return { ...DEFAULT_PRINT_SETTINGS };
+  }
+}
+
+function getPrintQueueEventId() {
+  const settings = getPrintSettings();
+  const activeEvent = getActiveEvent();
+  return String(settings.eventId || (activeEvent && (activeEvent.id || activeEvent.name)) || "default")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || "default";
+}
+
+function getStaffPrintQueueUrl() {
+  const url = new URL("staff-print", window.location.href);
+  url.searchParams.set("eventId", getPrintQueueEventId());
+  return url.toString();
+}
+
+function updateStaffPrintQueueUrl() {
+  if (DOM.staffPrintQueueUrl) DOM.staffPrintQueueUrl.textContent = getStaffPrintQueueUrl();
+}
+
+function loadPrintSettings() {
+  const settings = getPrintSettings();
+  if (DOM.printModeInput) DOM.printModeInput.value = settings.mode === "paid-queue" ? "paid-queue" : "off";
+  if (DOM.printNoPaymentRequiredInput) DOM.printNoPaymentRequiredInput.checked = settings.noPaymentRequired === true;
+  if (DOM.printPriceLabelInput) DOM.printPriceLabelInput.value = settings.priceLabel;
+  if (DOM.printPanelTitleInput) DOM.printPanelTitleInput.value = settings.panelTitle;
+  if (DOM.printPanelBodyInput) DOM.printPanelBodyInput.value = settings.panelBody;
+  if (DOM.printInstructionsInput) DOM.printInstructionsInput.value = settings.instructions;
+  if (DOM.printPaymentQrInput) DOM.printPaymentQrInput.value = settings.paymentQr;
+  if (DOM.printEventIdInput) DOM.printEventIdInput.value = settings.eventId;
+  updateStaffPrintQueueUrl();
+}
+
+function savePrintSettings() {
+  const settings = {
+    mode: DOM.printModeInput && DOM.printModeInput.value === "paid-queue" ? "paid-queue" : "off",
+    noPaymentRequired: !!(DOM.printNoPaymentRequiredInput && DOM.printNoPaymentRequiredInput.checked),
+    priceLabel: (DOM.printPriceLabelInput && DOM.printPriceLabelInput.value.trim()) || DEFAULT_PRINT_SETTINGS.priceLabel,
+    panelTitle: (DOM.printPanelTitleInput && DOM.printPanelTitleInput.value.trim()) || DEFAULT_PRINT_SETTINGS.panelTitle,
+    panelBody: (DOM.printPanelBodyInput && DOM.printPanelBodyInput.value.trim()) || DEFAULT_PRINT_SETTINGS.panelBody,
+    instructions: (DOM.printInstructionsInput && DOM.printInstructionsInput.value.trim()) || DEFAULT_PRINT_SETTINGS.instructions,
+    paymentQr: (DOM.printPaymentQrInput && DOM.printPaymentQrInput.value.trim()) || "",
+    eventId: (DOM.printEventIdInput && DOM.printEventIdInput.value.trim()) || "",
+  };
+  localStorage.setItem(PRINT_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  updateStaffPrintQueueUrl();
+  showToast("Print settings saved");
+}
+
+async function copyStaffPrintQueueUrl() {
+  const url = getStaffPrintQueueUrl();
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast("Staff queue URL copied");
+  } catch (_) {
+    showToast("Copy failed");
+  }
+}
+
+function renderPaidPrintPanel() {
+  const settings = getPrintSettings();
+  const enabled = settings.mode === "paid-queue";
+  if (DOM.paidPrintPanel) DOM.paidPrintPanel.classList.toggle("show", enabled);
+  if (!enabled) return;
+  const noPaymentRequired = settings.noPaymentRequired === true;
+  if (DOM.paidPrintTitle) DOM.paidPrintTitle.textContent = noPaymentRequired ? "Printed Photo Included" : settings.panelTitle;
+  if (DOM.paidPrintBody) DOM.paidPrintBody.textContent = noPaymentRequired ? "Your event includes a 4x6 keepsake print." : settings.panelBody.replace("$3", settings.priceLabel);
+  if (DOM.paidPrintInstructions) DOM.paidPrintInstructions.textContent = noPaymentRequired ? "Your print will be prepared shortly." : settings.instructions;
+  if (!DOM.paidPrintPaymentQr) return;
+  if (noPaymentRequired) {
+    DOM.paidPrintPaymentQr.removeAttribute("src");
+    DOM.paidPrintPaymentQr.classList.remove("show");
+    return;
+  }
+  const paymentValue = settings.paymentQr;
+  if (!/^https?:\/\//i.test(paymentValue)) {
+    DOM.paidPrintPaymentQr.removeAttribute("src");
+    DOM.paidPrintPaymentQr.classList.remove("show");
+    return;
+  }
+  if (/\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(paymentValue)) {
+    DOM.paidPrintPaymentQr.src = paymentValue;
+    DOM.paidPrintPaymentQr.classList.add("show");
+    return;
+  }
+  if (window.QRCode) {
+    const canvas = document.createElement("canvas");
+    QRCode.toCanvas(canvas, paymentValue, { width: 176, margin: 1 }, (error) => {
+      if (!error) {
+        DOM.paidPrintPaymentQr.src = canvas.toDataURL("image/png");
+        DOM.paidPrintPaymentQr.classList.add("show");
+      }
+    });
+  }
+}
+
+async function enqueueFinalPrintIfNeeded() {
+  const settings = getPrintSettings();
+  if (settings.mode !== "paid-queue") return;
+  const imageUrl = lastShareUrl || (DOM.finalStrip && DOM.finalStrip.src);
+  if (!/^https?:\/\//i.test(String(imageUrl || ""))) return;
+  try {
+    const response = await fetch("/api/print-queue", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventId: getPrintQueueEventId(),
+        imageUrl,
+        thumbnailUrl: imageUrl,
+        paymentRequired: settings.noPaymentRequired !== true,
+      }),
+    });
+    if (!response.ok) console.warn("Print queue enqueue failed", await response.text());
+  } catch (error) {
+    console.warn("Print queue enqueue failed", error);
+  }
 }
 
 // --- Overlay Spot-Color Mask (optional) ---
@@ -10661,6 +10836,8 @@ function showFinal(url, options = {}) {
         DOM.qrHint.style.display = "block";
       }
     }
+    renderPaidPrintPanel();
+    enqueueFinalPrintIfNeeded();
     resetIdleTimer();
     hidePreviewTimer = setTimeout(hideFinal, 15000);
   };
@@ -12056,6 +12233,7 @@ function hideFinal() {
   DOM.finalPreview.classList.remove("show");
   if (DOM.boothScreen) DOM.boothScreen.classList.remove("share-mode");
   DOM.qrCodeContainer.classList.add("hidden");
+  if (DOM.paidPrintPanel) DOM.paidPrintPanel.classList.remove("show");
   setFinalPreviewSharePanelVisible(false);
   if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "none";
   if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
@@ -13629,7 +13807,22 @@ function collectThemeAssetRows(category = "") {
   };
   forEachThemeEntry((theme, themeKey) => {
     const themeName = theme && theme.name ? theme.name : themeKey;
-    if (theme && theme.background) add(theme.background, "background", themeName, themeKey);
+    const backgroundFolder = ensureFolderPath(
+      (theme && theme.backgroundFolder) ||
+        (theme && typeof theme.background === "string" && theme.background.endsWith("/")
+          ? theme.background
+          : "")
+    );
+    const overlaysFolder = ensureFolderPath(theme && theme.overlaysFolder);
+    const templatesFolder = ensureFolderPath(theme && theme.templatesFolder);
+    if (
+      theme &&
+      typeof theme.background === "string" &&
+      theme.background &&
+      !theme.background.endsWith("/")
+    ) {
+      add(theme.background, "background", themeName, themeKey);
+    }
     if (Array.isArray(theme && theme.backgrounds)) {
       theme.backgrounds.forEach((src) => add(src, "background", themeName, themeKey));
     }
@@ -13647,6 +13840,21 @@ function collectThemeAssetRows(category = "") {
     }
     if (Array.isArray(theme && theme.templatesTmp)) {
       theme.templatesTmp.forEach((entry) => add(entry, "template", themeName, themeKey));
+    }
+    if (backgroundFolder) {
+      getBuiltinFolderStrings(backgroundFolder).forEach((src) =>
+        add(src, "background", themeName, themeKey)
+      );
+    }
+    if (overlaysFolder) {
+      getBuiltinOverlayEntries(overlaysFolder).forEach((entry) =>
+        add(entry, "overlay", themeName, themeKey)
+      );
+    }
+    if (templatesFolder) {
+      getBuiltinTemplateEntries(templatesFolder).forEach((entry) =>
+        add(entry, "template", themeName, themeKey)
+      );
     }
   });
   return Array.from(byKey.values());
@@ -18604,11 +18812,11 @@ function getEffectiveSelectedBackgroundList(theme) {
   const sessionList = Array.isArray(activeSessionAssets.backgrounds)
     ? activeSessionAssets.backgrounds.filter(Boolean)
     : [];
-  return getEffectiveAssetList(
-    getSelectedBackgroundSourceList(theme),
-    sessionList,
-    sessionRemovedBackgrounds
-  );
+  if (sessionList.length) return mergeUniqueUrls(sessionList).slice(0, 1);
+  const removed = new Set(sessionRemovedBackgrounds.map(getAssetEntrySrc));
+  return getSelectedBackgroundSourceList(theme)
+    .filter((src) => !removed.has(src))
+    .slice(0, 1);
 }
 
 function getBackgroundList(theme) {
@@ -20023,6 +20231,7 @@ Object.assign(window, {
   copyEventGalleryLink,
   connectMotorRelay,
   copyShareLink,
+  copyStaffPrintQueueUrl,
   downloadShareImage,
   exitFinalPreview,
   exportCurrentEvent,
@@ -20042,6 +20251,7 @@ Object.assign(window, {
   openBoothLaunchConfirm,
   retakePhoto,
   saveCloudinarySettings,
+  savePrintSettings,
   saveEmailJsSettings,
   saveTheme,
   sendEmail,

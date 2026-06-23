@@ -198,6 +198,22 @@ test("asset library background selection only reflects explicit theme defaults",
   );
 });
 
+test("asset library keeps backgrounds single-select while overlays and templates remain multi-select", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("activeSessionAssets.backgrounds = [url];") &&
+      appScript.includes("activeSessionAssets.backgroundIndex = 0;") &&
+      appScript.includes("return mergeUniqueUrls(sessionList).slice(0, 1);"),
+    "selecting a background should replace the session selection and limit its effective count to one"
+  );
+  assert.ok(
+    appScript.includes('addSessionAssetUrl("overlays", src);') &&
+      appScript.includes('addSessionAssetUrl("templates", src);'),
+    "overlay and template card selections should retain their multi-select behavior"
+  );
+});
+
 test("asset library state uses the concise variable name", () => {
   const appScript = readProjectFile("scripts", "app.js");
 

@@ -200,6 +200,27 @@ test("asset library management supports sorting and editable metadata", () => {
   );
 });
 
+test("canonical asset collection includes folder manifests and deduplicates category URLs", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("getBuiltinFolderStrings(backgroundFolder)") &&
+      appScript.includes("getBuiltinOverlayEntries(overlaysFolder)") &&
+      appScript.includes("getBuiltinTemplateEntries(templatesFolder)"),
+    "folder-manifest backgrounds, overlays, and templates should feed the canonical collection"
+  );
+  assert.ok(
+    appScript.includes("const key = row.id;") &&
+      appScript.includes("getAssetLibraryId(normalizedCategory, src)"),
+    "canonical entries should deduplicate by category and URL"
+  );
+  assert.ok(
+    appScript.includes("discardStaleSessionLibraryAssets") &&
+      appScript.includes("canonicalSources.background.has"),
+    "stale session selections should be excluded when they are absent from the canonical collection"
+  );
+});
+
 test("asset library cards hide source labels and manage every asset through metadata", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
