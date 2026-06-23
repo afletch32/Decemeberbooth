@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staff Print Queue | Decemeberbooth</title>
+  <meta name="description" content="Staff-only manual payment and print queue for Decemeberbooth.">
+  <style>
+    :root { color-scheme: light; font-family: Inter, system-ui, sans-serif; background: #f4f7f6; color: #163d38; }
+    body { margin: 0; }
+    header, main { max-width: 1100px; margin: auto; padding: 18px; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: clamp(1.4rem, 4vw, 2rem); }
+    .controls, .queue-item-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    input, button { font: inherit; border-radius: 9px; min-height: 42px; box-sizing: border-box; }
+    input { border: 1px solid #b7cbc7; padding: 8px 10px; background: white; }
+    button { border: 0; padding: 8px 12px; background: #176a61; color: white; cursor: pointer; }
+    button.secondary { background: #e2ece9; color: #17443e; }
+    button.danger { background: #a63f3f; }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    #queueStatus { color: #52716c; margin: 0 0 16px; }
+    #queueList { display: grid; gap: 12px; }
+    .queue-item { display: grid; grid-template-columns: 130px 1fr; gap: 14px; background: white; border: 1px solid #d8e5e2; padding: 12px; border-radius: 14px; box-shadow: 0 3px 12px rgba(20, 67, 61, .06); }
+    .queue-item img { width: 130px; height: 170px; object-fit: contain; background: #f2f2f2; border-radius: 8px; }
+    .queue-item h2 { margin: 0 0 8px; font-size: 1.05rem; }
+    .metadata { margin: 0 0 12px; color: #5b716d; font-size: .9rem; }
+    .badge { display: inline-block; padding: 3px 8px; margin-right: 5px; border-radius: 999px; background: #edf4f2; font-size: .78rem; font-weight: 700; text-transform: capitalize; }
+    .badge.paid, .badge.printed { background: #d9f0e2; color: #175d35; }
+    .badge.waiting_payment, .badge.unpaid { background: #fff0cf; color: #75520b; }
+    .empty { padding: 28px; text-align: center; background: white; border-radius: 14px; color: #5b716d; }
+    @media (max-width: 540px) { .queue-item { grid-template-columns: 92px 1fr; } .queue-item img { width: 92px; height: 126px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Staff Print Queue</h1>
+      <p id="queueStatus">Loading queue…</p>
+    </div>
+    <div class="controls">
+      <input id="eventId" aria-label="Event ID" placeholder="Event ID">
+      <button type="button" id="setToken" class="secondary">Set Staff Token</button>
+      <button type="button" id="refreshQueue">Refresh</button>
+    </div>
+  </header>
+  <main>
+    <div id="queueList" aria-live="polite"></div>
+  </main>
+  <script src="scripts/staff-print.js"></script>
+</body>
+</html>

@@ -3306,6 +3306,29 @@
       border-radius: 16px;
       background: #fff;
     }
+    #paidPrintPanel {
+      display: none;
+      width: min(100%, 360px);
+      padding: 18px;
+      border: 1px solid rgba(23, 73, 68, 0.18);
+      border-radius: 18px;
+      background: #fff;
+      color: #173f3b;
+      box-shadow: 0 10px 24px rgba(16, 68, 63, 0.11);
+      text-align: center;
+    }
+    #paidPrintPanel.show { display: block; }
+    #paidPrintPanel h2 { margin: 0 0 8px; font-size: 1.15rem; }
+    #paidPrintPanel p { margin: 7px 0; line-height: 1.4; }
+    #paidPrintPaymentQr {
+      display: none;
+      width: 176px;
+      height: 176px;
+      object-fit: contain;
+      margin: 14px auto 0;
+      background: #fff;
+    }
+    #paidPrintPaymentQr.show { display: block; }
 
     #emailForm input {
       padding: 8px 10px;
@@ -5670,6 +5693,33 @@
               <input type="checkbox" id="cloudUseToggle"> Use Cloudinary for share links
             </label>
             <small style="display:block; color:#5d6c69;">Uploads for overlays/backgrounds/templates are shared immediately across devices when online.</small>
+            <h3 style="margin:16px 0 0;">Paid Print Queue</h3>
+            <label for="printModeInput">Print Mode</label>
+            <select id="printModeInput">
+              <option value="off">Off</option>
+              <option value="paid-queue">Paid queue</option>
+            </select>
+            <label style="display:inline-flex; align-items:center; gap:8px; margin:12px 0 0;">
+              <input type="checkbox" id="printNoPaymentRequiredInput"> No payment required for prints
+            </label>
+            <small style="display:block; color:#5d6c69;">Use this when prints are included with the event or sponsor-covered.</small>
+            <label for="printPriceLabelInput">Print price label</label>
+            <input type="text" id="printPriceLabelInput" value="$3" placeholder="$3">
+            <label for="printPanelTitleInput">Payment panel title</label>
+            <input type="text" id="printPanelTitleInput" value="Printed Photo Upgrade">
+            <label for="printPanelBodyInput">Payment panel body</label>
+            <input type="text" id="printPanelBodyInput" value="Take home a 4x6 keepsake print for $3.">
+            <label for="printInstructionsInput">Payment instructions</label>
+            <textarea id="printInstructionsInput" rows="3">Scan the payment code below to complete your purchase. Your print will be prepared after payment is confirmed.</textarea>
+            <label for="printPaymentQrInput">Payment QR image URL or payment link</label>
+            <input type="url" id="printPaymentQrInput" placeholder="https://...">
+            <label for="printEventIdInput">Optional event ID / slug</label>
+            <input type="text" id="printEventIdInput" placeholder="summer-fair-2026">
+            <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
+              <button type="button" onclick="savePrintSettings()">Save Print Settings</button>
+              <button type="button" onclick="copyStaffPrintQueueUrl()">Copy Staff Queue URL</button>
+            </div>
+            <small id="staffPrintQueueUrl" style="display:block; overflow-wrap:anywhere; color:#5d6c69;"></small>
             <h3 style="margin:0;">Email (EmailJS)</h3>
             <label for="emailJsPublic">Public Key</label>
             <input type="text" id="emailJsPublic" placeholder="public_xxxxx">
@@ -6231,6 +6281,12 @@
             <div id="qrHint" style="display:none; font-size:0.9em; color:#ccc; margin-top:6px;"></div>
             <!-- Guest mode must not expose local device download actions. -->
           </div>
+          <section id="paidPrintPanel" aria-live="polite">
+            <h2 id="paidPrintTitle">Printed Photo Upgrade</h2>
+            <p id="paidPrintBody">Take home a 4x6 keepsake print for $3.</p>
+            <p id="paidPrintInstructions">Scan the payment code below to complete your purchase. Your print will be prepared after payment is confirmed.</p>
+            <img id="paidPrintPaymentQr" alt="Payment code">
+          </section>
         </div>
       </div>
     </div>
