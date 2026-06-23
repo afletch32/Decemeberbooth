@@ -1,7 +1,7 @@
 {
-  "name": "Event Photobooth – Works Oct",
-  "short_name": "Booth Works",
-  "id": "/apps/photobooth-works-oct",
+  "name": "Fletch Photo",
+  "short_name": "Fletch Photo",
+  "id": "/apps/fletch-photo",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
