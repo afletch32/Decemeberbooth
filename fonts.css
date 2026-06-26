@@ -413,3 +413,16 @@
   font-display: swap;
   src: url('./fonts/WorkSans-700.woff2') format('woff2');
 }
+
+/* Keep the setup/admin screen scrollable on mobile while the booth UI keeps body scrolling locked. */
+@media (max-width: 1100px) {
+  #adminScreen {
+    height: 100svh !important;
+    min-height: 100svh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: max(18px, env(safe-area-inset-bottom, 0px));
+  }
+}
