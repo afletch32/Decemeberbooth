@@ -998,14 +998,17 @@ function normalizeBoothModeValue(value) {
   const normalized = String(value || "")
     .trim()
     .toLowerCase();
-  if (!normalized || normalized === "photo") return "live-photo";
-  if (normalized === "live-photo" || normalized === "still-photo") {
-    return normalized;
+  if (!normalized || normalized === "photo") {
+    return getLivePhotoEnabled() ? "live-photo" : "still-photo";
   }
+  if (normalized === "live-photo") {
+    return getLivePhotoEnabled() ? "live-photo" : "still-photo";
+  }
+  if (normalized === "still-photo") return "still-photo";
   if (normalized === "strip" || normalized === "photo-strip") return "strip";
   if (normalized === "layout" || normalized === "collage") return "layout";
   if (normalized === "message" || normalized === "recording") return "message";
-  return "live-photo";
+  return getLivePhotoEnabled() ? "live-photo" : "still-photo";
 }
 
 function getSelectedCaptureMode(value = mode) {
@@ -1351,7 +1354,11 @@ function syncMobileSettingsUi() {
 
 function syncBoothModeButtons() {
   document.querySelectorAll("#controls .mode-btn").forEach((button) => {
-    const isActive = (button.dataset.mode || "") === mode;
+    const buttonMode = button.dataset.mode || "";
+    const hidden = buttonMode === "live-photo" && !getLivePhotoEnabled();
+    button.classList.toggle("hidden", hidden);
+    if (hidden && mode === "live-photo") mode = "still-photo";
+    const isActive = buttonMode === mode;
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
@@ -4466,6 +4473,11 @@ function setupLivePhotoToggle() {
   syncCaptureStatusIndicators();
   DOM.livePhotoToggle.addEventListener("change", () => {
     setLivePhotoEnabled(DOM.livePhotoToggle.checked);
+    if (!DOM.livePhotoToggle.checked && mode === "live-photo") {
+      setMode("still-photo");
+      return;
+    }
+    syncBoothModeButtons();
     syncCaptureStatusIndicators();
   });
 }
@@ -8885,8 +8897,9 @@ function resolveBoothLaunchMode() {
     return mode;
   }
   if (mode === "still-photo") return "still-photo";
-  if (mode === "live-photo") return "live-photo";
-  return "live-photo";
+  if (mode === "live-photo" && getLivePhotoEnabled()) return "live-photo";
+  if (mode === "still-photo") return "still-photo";
+  return getLivePhotoEnabled() ? "live-photo" : "still-photo";
 }
 
 // Camera
@@ -9062,7 +9075,7 @@ function leaveFinalizingState() {
 async function capturePhotoFlow() {
   lastCaptureFlow = capturePhotoFlow; // Store this function for retake
   setBoothControlsVisible(false);
-  const livePhotoEnabled = mode === "live-photo";
+  const livePhotoEnabled = mode === "live-photo" && getLivePhotoEnabled();
   const photo = await countdownAndSnap({
     live: livePhotoEnabled,
     instant: getInstantCaptureEnabled(),
@@ -10130,6 +10143,7 @@ async function countdownAndSnap(options = {}) {
     } catch (_) {}
   }
   if (torchUsed) await setTorch(false);
+  freezeCapturePreview(shot);
   if (livePromise) {
     const clip = await livePromise;
     setLiveClip(clip);
@@ -10140,6 +10154,34 @@ async function countdownAndSnap(options = {}) {
   }
   if (guide) guide.style.display = "";
   return shot;
+}
+
+function freezeCapturePreview(photoCanvas) {
+  if (!photoCanvas) return;
+  let stillUrl = "";
+  try {
+    stillUrl = photoCanvas.toDataURL("image/png");
+  } catch (_) {
+    stillUrl = "";
+  }
+  if (!stillUrl) return;
+  const overlay = getActivePhotoOverlay();
+  if (overlayUsesPhotoSlots(overlay)) {
+    syncOverlayPreviewSurface({
+      mode: "still",
+      source: stillUrl,
+      keepLastShot: true,
+    });
+    return;
+  }
+  if (DOM.video) {
+    DOM.video.classList.add("hidden");
+    DOM.video.style.display = "none";
+  }
+  if (DOM.lastShot) {
+    DOM.lastShot.src = stillUrl;
+    DOM.lastShot.style.display = "block";
+  }
 }
 
 function triggerFlash() {
@@ -10465,9 +10507,10 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
     } catch (_) {}
   }
   // Character overlay (optional)
-  if (activeTheme && activeTheme.character) {
+  const characterSrc = resolveEventCharacter(activeTheme);
+  if (characterSrc) {
     try {
-      const charImg = await loadImage(activeTheme.character);
+      const charImg = await loadImage(characterSrc);
       const placement = getCharacterPlacement();
       if (placement) {
         const x = placement.leftRatio * targetW;
@@ -17357,7 +17400,9 @@ function resolveBoothCaptureButtonLabel(targetMode = mode) {
   if (themeLabel) return themeLabel;
   if (normalizedMode === "strip") return "Start Strip";
   if (normalizedMode === "layout") return "Start Layout";
-  if (normalizedMode === "live-photo") return "Take Live Photo";
+  if (normalizedMode === "live-photo" && getLivePhotoEnabled()) {
+    return "Take Live Photo";
+  }
   if (normalizedMode === "still-photo") return "Take Photo";
   return "Take Photo";
 }
