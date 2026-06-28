@@ -31,3 +31,4 @@ Important decisions
 - Mapped and tightened the mobile guest photo flow: live-photo mode now honors the Live Photo Capture toggle, still-photo becomes the fallback when live is disabled, and the live button is hidden when unavailable.
 - Froze the captured frame immediately after countdown for both classic video preview and slot-based overlay previews while the final image/upload is prepared.
 - Aligned final single-photo character rendering with the same event/session character resolver used by the live preview, avoiding direct theme-only character lookup during export.
+- Restored the operator-only fullscreen launch button and expanded live/countdown desktop camera width expected by setup-screen coverage so the full `npm test` suite passes again.

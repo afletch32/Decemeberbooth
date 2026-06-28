@@ -5518,7 +5518,7 @@
     #boothScreen.mode-strip,
     #boothScreen.mode-message,
     #boothScreen.mode-layout {
-      --live-camera-width: 920px;
+      --live-camera-width: min(96vw, 1400px);
       --live-camera-aspect: 3 / 2;
     }
 
@@ -5548,6 +5548,7 @@
     <div class="btn-row admin-actions">
       <button type="button" id="openLayoutBuilderBtn" onclick="openLayoutBuilder()">Overlay Builder</button>
       <button type="button" id="startBoothButton" class="start-booth-hero">Start Booth</button>
+      <button type="button" id="startKioskButton" class="button-ghost" title="Fullscreen hides browser controls.">Start Booth Fullscreen</button>
     </div>
     <div class="setup-section-switcher" aria-label="Setup Sections">
       <div class="setup-section-switcher-label">Setup Sections</div>
