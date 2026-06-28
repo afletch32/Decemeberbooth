@@ -1,5 +1,5 @@
 Current goal
-- Support shared asset library manifest references for overlays/templates and safe folder-only theme launch.
+- Keep post-capture preview frozen and hide frame chooser UI during capture/finalizing on desktop and mobile.
 
 What is done
 - Added paid-print setup settings stored locally on the booth: mode, price/copy, payment QR or link, event slug, and staff queue URL copy.
@@ -13,6 +13,7 @@ What is done
 - Added a finalizing state for single-photo and strip capture that displays the fully composed final image (photo plus selected frame) while upload completes, without exposing a partial or empty live-overlay frame; expanded the live/countdown camera width on wide displays.
 - Added URL-based overlay/template manifest asset resolution so simple filenames, root paths, full URLs, data/blob URLs, and relative shared-library paths resolve correctly.
 - Hardened welcome launch overlay selection to use `getOverlayList(activeTheme || {})` and select the first real photo overlay tile after the No Overlay tile.
+- Preserved the frozen post-capture still until final/share preview replaces it and hid frame settings during countdown, finalizing, and share states on desktop and mobile.
 
 What is in progress
 - None.

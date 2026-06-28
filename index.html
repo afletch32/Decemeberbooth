@@ -3419,6 +3419,9 @@
     }
 
     #boothScreen.finalizing-mode #boothHeader,
+    #boothScreen.finalizing-mode #mobileSettingsToggle,
+    #boothScreen.finalizing-mode #mobileSettingsBackdrop,
+    #boothScreen.finalizing-mode #mobileSettingsSheet,
     #boothScreen.finalizing-mode #options,
     #boothScreen.finalizing-mode #controls,
     #boothScreen.finalizing-mode #countdownOverlay,
@@ -5509,13 +5512,16 @@
     #boothScreen.countdown-mode #mobileSettingsToggle,
     #boothScreen.countdown-mode #mobileSettingsBackdrop,
     #boothScreen.countdown-mode #mobileSettingsSheet,
+    #boothScreen.finalizing-mode #mobileSettingsToggle,
+    #boothScreen.finalizing-mode #mobileSettingsBackdrop,
+    #boothScreen.finalizing-mode #mobileSettingsSheet,
     #boothScreen.welcome-active #mobileSettingsToggle,
     #boothScreen.welcome-active #mobileSettingsBackdrop,
     #boothScreen.welcome-active #mobileSettingsSheet,
     #boothScreen.share-mode #mobileSettingsToggle,
     #boothScreen.share-mode #mobileSettingsBackdrop,
     #boothScreen.share-mode #mobileSettingsSheet {
-      display: none;
+      display: none !important;
     }
 
     #boothScreen.booth-ready:not(.mode-360) #captureBtn {

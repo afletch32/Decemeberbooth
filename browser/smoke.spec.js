@@ -1143,10 +1143,35 @@ test("frame picker stays hidden until the welcome flow reaches capture", async (
     .filter({ hasText: "Single Still Photo" })
     .click({ force: true });
   await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
-  await expect(page.locator("#boothScreen")).toHaveClass(/mode-still-photo/);
   await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#captureBtn")).toBeVisible();
+  await expect(page.locator("#captureBtn")).toContainText("Take Photo");
   await expect(page.locator("#mobileSettingsSheet")).toBeVisible();
+});
+
+test("frame picker hides during finalizing on desktop and mobile", async ({
+  page,
+}) => {
+  const viewports = [
+    { width: 1440, height: 900, label: "desktop" },
+    { width: 390, height: 844, label: "mobile" },
+  ];
+
+  for (const viewport of viewports) {
+    await page.setViewportSize({
+      width: viewport.width,
+      height: viewport.height,
+    });
+    await launchStillPhotoBooth(page);
+    await page.evaluate(() => {
+      const booth = document.getElementById("boothScreen");
+      if (!booth) return;
+      booth.classList.add("finalizing-mode");
+      booth.classList.remove("mobile-settings-open");
+    });
+    await expect(page.locator("#mobileSettingsSheet"), viewport.label).toBeHidden();
+    await expect(page.locator("#mobileSettingsToggle"), viewport.label).toBeHidden();
+  }
 });
 
 test("booth capture layout does not vertically overflow common viewports", async ({

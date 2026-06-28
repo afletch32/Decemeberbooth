@@ -1314,7 +1314,8 @@ function canShowFrameSettings() {
     DOM.boothScreen.classList.contains("booth-ready") &&
     !DOM.boothScreen.classList.contains("welcome-active") &&
     !DOM.boothScreen.classList.contains("share-mode") &&
-    !DOM.boothScreen.classList.contains("countdown-mode")
+    !DOM.boothScreen.classList.contains("countdown-mode") &&
+    !DOM.boothScreen.classList.contains("finalizing-mode")
   );
 }
 
@@ -1433,6 +1434,7 @@ let pendingTemplate = null;
 let hidePreviewTimer = null;
 let allowRetake = true;
 let isStartingCamera = false;
+let capturePreviewFrozen = false;
 let lastCaptureFlow = null; // To store the function for retake
 let removedStack = []; // For undo of removed assets in session
 let toastTimer = null;
@@ -8235,6 +8237,13 @@ function renderOverlayPhotoSlots(overlay, options = {}) {
 }
 
 function syncOverlayPreviewSurface(options = {}) {
+  if (
+    capturePreviewFrozen &&
+    options.mode === "live" &&
+    !options.allowLiveDuringFreeze
+  ) {
+    return;
+  }
   const overlay = options.overlay || getActivePhotoOverlay();
   const slotsEnabled = overlayUsesPhotoSlots(overlay);
   if (DOM.video) {
@@ -9025,6 +9034,7 @@ const startCameraFlow = (...args) => startCamera(...args);
 const startBoothFromAdmin = (...args) => startBooth(...args);
 
 function clearPreviewFreezeFrame() {
+  capturePreviewFrozen = false;
   if (!DOM.lastShot) return;
   DOM.lastShot.style.display = "none";
   DOM.lastShot.removeAttribute("src");
@@ -9035,6 +9045,8 @@ function clearPreviewFreezeFrame() {
 
 function showPreviewFreezeFrame(canvasOrUrl) {
   const stillUrl = resolveStillPhotoUrl(canvasOrUrl);
+  if (!stillUrl) return;
+  capturePreviewFrozen = true;
   const overlay = getActivePhotoOverlay();
   if (overlayUsesPhotoSlots(overlay)) {
     syncOverlayPreviewSurface({
@@ -9045,6 +9057,10 @@ function showPreviewFreezeFrame(canvasOrUrl) {
     });
     return;
   }
+  if (DOM.video) {
+    DOM.video.classList.add("hidden");
+    DOM.video.style.display = "none";
+  }
   if (!DOM.lastShot || !stillUrl) return;
   try {
     DOM.lastShot.src = stillUrl;
@@ -9054,6 +9070,7 @@ function showPreviewFreezeFrame(canvasOrUrl) {
 
 function enterFinalizingState(finalUrl) {
   if (!finalUrl || !DOM.finalStrip) return;
+  setMobileSettingsOpen(false);
   const reveal = () => {
     if (!DOM.boothScreen) return;
     DOM.boothScreen.classList.remove("countdown-mode");
@@ -9071,6 +9088,7 @@ function leaveFinalizingState() {
 // Photo mode capture
 async function capturePhotoFlow() {
   lastCaptureFlow = capturePhotoFlow; // Store this function for retake
+  setMobileSettingsOpen(false);
   setBoothControlsVisible(false);
   const livePhotoEnabled = mode === "live-photo" && getLivePhotoEnabled();
   const photo = await countdownAndSnap({
@@ -10102,6 +10120,7 @@ async function setTorch(enabled) {
   }
 }
 async function showCountdown(text) {
+  setMobileSettingsOpen(false);
   const co = DOM.countdownOverlay;
   co.textContent = text;
   updateCountdownFontSize();
@@ -10161,24 +10180,7 @@ function freezeCapturePreview(photoCanvas) {
   } catch (_) {
     stillUrl = "";
   }
-  if (!stillUrl) return;
-  const overlay = getActivePhotoOverlay();
-  if (overlayUsesPhotoSlots(overlay)) {
-    syncOverlayPreviewSurface({
-      mode: "still",
-      source: stillUrl,
-      keepLastShot: true,
-    });
-    return;
-  }
-  if (DOM.video) {
-    DOM.video.classList.add("hidden");
-    DOM.video.style.display = "none";
-  }
-  if (DOM.lastShot) {
-    DOM.lastShot.src = stillUrl;
-    DOM.lastShot.style.display = "block";
-  }
+  showPreviewFreezeFrame(stillUrl);
 }
 
 function triggerFlash() {
@@ -10813,6 +10815,7 @@ function setFinalMediaOrientation(element, width, height) {
 }
 
 function resetTransientCaptureOverlays(options = {}) {
+  capturePreviewFrozen = false;
   const keepFinalStrip = !!options.keepFinalStrip;
   const keepFinalLive = !!options.keepFinalLive;
   if (DOM.countdownOverlay) {

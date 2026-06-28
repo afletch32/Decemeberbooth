@@ -13,8 +13,29 @@ test("mobile photo flow freezes the captured frame after countdown", () => {
   assert.ok(
     appScript.includes("function freezeCapturePreview(photoCanvas)") &&
       appScript.includes("freezeCapturePreview(shot)") &&
-      appScript.includes('mode: "still"'),
+      appScript.includes("showPreviewFreezeFrame(stillUrl)") &&
+      appScript.includes("let capturePreviewFrozen = false") &&
+      appScript.includes("capturePreviewFrozen = true") &&
+      appScript.includes("!options.allowLiveDuringFreeze"),
     "countdown capture should freeze the still frame for classic and slotted previews"
+  );
+});
+
+test("frame chooser is hidden during countdown and finalizing on desktop and mobile", () => {
+  const appScript = readProjectFile("scripts/app.js");
+  const html = readProjectFile("index.html");
+
+  assert.ok(
+    appScript.includes('!DOM.boothScreen.classList.contains("finalizing-mode")') &&
+      appScript.includes("setMobileSettingsOpen(false);") &&
+      appScript.includes("function enterFinalizingState(finalUrl)"),
+    "frame settings should close and stay unavailable while finalizing"
+  );
+  assert.ok(
+    html.includes("#boothScreen.finalizing-mode #mobileSettingsToggle,") &&
+      html.includes("#boothScreen.finalizing-mode #mobileSettingsBackdrop,") &&
+      html.includes("#boothScreen.finalizing-mode #mobileSettingsSheet,"),
+    "desktop and mobile frame settings UI should be hidden during finalizing"
   );
 });
 
