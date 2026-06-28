@@ -10,7 +10,11 @@ const BUILTIN_ASSET_MANIFESTS = {
     "general-frame-blue-flowers.png",
     "shes-a-good-man-overlay.png"
   ],
-  "assets/general/basic/templates/": [],
+  "assets/general/basic/templates/": [
+    { src: "guide-single-photo-landscape.svg", layout: "single_photo" },
+    { src: "guide-single-photo-portrait.svg", layout: "single_photo" },
+    { src: "guide-strip-double-column.svg", layout: "double_column" }
+  ],
   "assets/general/birthday/backgrounds/": [
     "birthday-background-1.png"
   ],
