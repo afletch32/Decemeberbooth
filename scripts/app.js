@@ -5747,8 +5747,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   window.addEventListener("orientationchange", () => {
     requestAnimationFrame(() => {
+      updateCountdownFontSize();
       applyViewportProfile();
       syncMobileSettingsUi();
+      fitBannerTextToViewport();
+      fitWelcomeTitleToViewport();
       syncFrameSizeVars();
       logBoothViewportOverflow();
     });
