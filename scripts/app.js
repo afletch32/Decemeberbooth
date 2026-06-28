@@ -1501,6 +1501,7 @@ function createEmptySessionAssets() {
   };
 }
 let activeSessionAssets = createEmptySessionAssets();
+let activeSessionThemeKey = "";
 let sessionRemovedBackgrounds = [];
 let sessionRemovedOverlays = [];
 let sessionRemovedTemplates = [];
@@ -2674,6 +2675,7 @@ function resetCreatePathAssetInputs() {
 
 function resetActiveSessionAssets() {
   activeSessionAssets = createEmptySessionAssets();
+  activeSessionThemeKey = "";
   sessionRemovedBackgrounds = [];
   sessionRemovedOverlays = [];
   sessionRemovedTemplates = [];
@@ -7513,6 +7515,10 @@ function loadTheme(themeKey) {
   }
   setEventSelection(themeKey);
   highlightThemeQuickSelect(themeKey);
+  if (activeSessionThemeKey && activeSessionThemeKey !== themeKey) {
+    resetActiveSessionAssets();
+  }
+  activeSessionThemeKey = themeKey;
   activeTheme = theme;
   const globalLogo = getGlobalLogo();
   if (globalLogo !== null) applyGlobalLogoToTheme(activeTheme, globalLogo);
@@ -7525,6 +7531,8 @@ function loadTheme(themeKey) {
   logEffectiveAssetState(theme, "loadTheme");
   syncAdminUiWithTheme(themeKey, theme);
   renderAssetLibrary();
+  updateCreatePathAssetSummary();
+  updateLaunchSummary();
   syncSessionThemeSearch();
   syncSessionFontSearch();
 }

@@ -28,3 +28,4 @@ Important decisions
 - When no payment is required, the booth creates ready queue items but still never exposes print controls.
 - Payment is manual only: no payment processor, webhook, or automatic verification is included.
 - `npm test` passes with 93/93 tests; focused countdown sizing and viewport browser smokes pass. The full parallel browser suite currently has unrelated setup/asset smoke failures that need separate triage.
+- Fixed Asset Library manifest coverage and theme-switch selection state so built-in assets that exist on disk appear in the library, case-sensitive asset paths match deployed URLs, and session-only selections do not leak into another selected theme's summary counts.
