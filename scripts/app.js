@@ -8849,6 +8849,20 @@ function goBackFromBooth(event) {
   showWelcome("mode");
 }
 
+function selectFirstPhotoOverlayAfterWelcome() {
+  if (getSelectedCaptureMode() !== "photo" || selectedOverlay) return;
+  const firstOverlay = filterPhotoOverlaysByOrientation(
+    getOverlayList(activeTheme || {}),
+    photoOverlayOrientation
+  )[0];
+  if (!firstOverlay || !firstOverlay.src) return;
+  const thumbs = DOM.options ? DOM.options.querySelectorAll(".thumb") : [];
+  const firstOverlayThumb = thumbs[1];
+  if (firstOverlayThumb && typeof firstOverlayThumb.click === "function") {
+    firstOverlayThumb.click();
+  }
+}
+
 function hideWelcome() {
   const ws = DOM.welcomeScreen;
   if (!ws) return;
@@ -8857,6 +8871,7 @@ function hideWelcome() {
   if (DOM.boothScreen) DOM.boothScreen.classList.remove("welcome-active");
   if (currentMode !== "360") {
     setMode(resolveBoothLaunchMode());
+    selectFirstPhotoOverlayAfterWelcome();
   }
   updateCaptureModeUi();
   setBoothControlsVisible(true);
@@ -19235,15 +19250,25 @@ function getBuiltinFolderStrings(folder) {
     .map((it) => folder + it);
 }
 
-function qualifyAssetPath(path, folder) {
-  const value = String(path || "").trim();
+function resolveAssetPath(baseFolder, src) {
+  const value = String(src || "").trim();
   if (!value) return value;
-  if (/^(https?:|data:|\/)/i.test(value)) return value;
-  return folder + value;
+  if (/^(https?:|data:|blob:)/i.test(value)) return value;
+  if (value.startsWith("/")) return value;
+  try {
+    const folder = ensureFolderPath(String(baseFolder || "").trim());
+    return new URL(value, location.origin + "/" + folder).pathname;
+  } catch (_) {
+    return ensureFolderPath(String(baseFolder || "")) + value;
+  }
+}
+
+function qualifyAssetPath(path, folder) {
+  return resolveAssetPath(folder, path);
 }
 
 function qualifyOverlayEntry(entry, folder) {
-  if (typeof entry === "string") return folder + entry;
+  if (typeof entry === "string") return resolveAssetPath(folder, entry);
   if (!entry || typeof entry !== "object" || typeof entry.src !== "string") {
     return null;
   }
@@ -19270,7 +19295,10 @@ function getBuiltinTemplateEntries(folder) {
   return getBuiltinAssetManifest(folder)
     .map((it) => {
       if (typeof it === "string")
-        return { src: folder + it, layout: "double_column" };
+        return {
+          src: resolveAssetPath(folder, it),
+          layout: "double_column",
+        };
       if (it && typeof it === "object" && typeof it.src === "string") {
         const entry = { ...it, src: qualifyAssetPath(it.src, folder) };
         entry.layout = normalizeTemplateLayout(entry.layout);
@@ -19799,7 +19827,10 @@ async function resolveTemplatesFromFolder(theme) {
     if (Array.isArray(json)) {
       for (const it of json) {
         if (typeof it === "string")
-          out.push({ src: folder + it, layout: "double_column" });
+          out.push({
+            src: resolveAssetPath(folder, it),
+            layout: "double_column",
+          });
         else if (it && typeof it === "object" && typeof it.src === "string") {
           const entry = {
             ...it,
@@ -20239,14 +20270,13 @@ Object.assign(window, {
             .filter(Boolean)
         : [];
       activeTheme.overlaysTmp = [];
-      selectedOverlay = activeTheme.overlays[0]
-        ? activeTheme.overlays[0].src
-        : null;
+      const overlayList = getOverlayList(activeTheme);
+      selectedOverlay = overlayList[0] ? overlayList[0].src : null;
       lastPhotoOverlay = selectedOverlay;
       lastPhotoOverlayByOrientation[photoOverlayOrientation] = selectedOverlay;
       renderOptions();
       syncOverlayPreviewSurface({ mode: "live" });
-      return activeTheme.overlays;
+      return overlayList;
     },
     probeOverlayAutofill: (overlaySrc, width = 1800, height = 1350) => {
       const overlayDefinition = getOverlayList(activeTheme).find(

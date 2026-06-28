@@ -7,6 +7,28 @@ function readProjectFile(...parts) {
   return readFileSync(join(process.cwd(), ...parts), "utf8");
 }
 
+function extractFunction(source, name) {
+  const start = source.indexOf(`function ${name}`);
+  assert.notEqual(start, -1, `${name} should exist`);
+  const bodyStart = source.indexOf("{", start);
+  let depth = 0;
+  for (let index = bodyStart; index < source.length; index += 1) {
+    if (source[index] === "{") depth += 1;
+    if (source[index] === "}") depth -= 1;
+    if (depth === 0) return source.slice(start, index + 1);
+  }
+  throw new Error(`${name} function body should close`);
+}
+
+function loadResolveAssetPath(appScript) {
+  const ensureFolderPath = extractFunction(appScript, "ensureFolderPath");
+  const resolveAssetPath = extractFunction(appScript, "resolveAssetPath");
+  return Function(
+    "location",
+    `${ensureFolderPath}\n${resolveAssetPath}\nreturn resolveAssetPath;`
+  )({ origin: "https://example.com" });
+}
+
 test("setup screen uses a compact toolbar for section controls", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts/app.js");
@@ -57,6 +79,67 @@ test("setup screen uses a compact toolbar for section controls", () => {
       html.includes('data-setup-section="capture"') &&
       html.includes('data-setup-section="share"'),
     "setup sections should remain addressable by section state"
+  );
+});
+
+test("theme folder asset manifests resolve shared library paths", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const resolveAssetPath = loadResolveAssetPath(appScript);
+
+  assert.equal(
+    resolveAssetPath("assets/events/test/overlays/", "frame1.png"),
+    "/assets/events/test/overlays/frame1.png"
+  );
+  assert.equal(
+    resolveAssetPath(
+      "assets/events/test/overlays/",
+      "../../library/overlays/gold-stars.png"
+    ),
+    "/assets/events/library/overlays/gold-stars.png"
+  );
+  assert.equal(
+    resolveAssetPath(
+      "assets/events/test/overlays/",
+      "/assets/library/overlays/gold-stars.png"
+    ),
+    "/assets/library/overlays/gold-stars.png"
+  );
+  assert.equal(
+    resolveAssetPath(
+      "assets/events/test/overlays/",
+      "https://cdn.example.com/gold-stars.png"
+    ),
+    "https://cdn.example.com/gold-stars.png"
+  );
+  assert.equal(
+    resolveAssetPath("assets/events/test/overlays/", "data:image/png;base64,abc"),
+    "data:image/png;base64,abc"
+  );
+  assert.equal(
+    resolveAssetPath("assets/events/test/overlays/", "blob:https://example.com/id"),
+    "blob:https://example.com/id"
+  );
+});
+
+test("welcome launch uses overlay helpers and skips the No Overlay tile", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const hideWelcome = extractFunction(appScript, "hideWelcome");
+  const selectFirstPhotoOverlayAfterWelcome = extractFunction(
+    appScript,
+    "selectFirstPhotoOverlayAfterWelcome"
+  );
+
+  assert.ok(
+    !hideWelcome.includes("activeTheme.overlays.length"),
+    "hideWelcome should not read activeTheme.overlays.length directly"
+  );
+  assert.ok(
+    selectFirstPhotoOverlayAfterWelcome.includes("getOverlayList(activeTheme || {})"),
+    "welcome auto-selection should use the overlay list helper"
+  );
+  assert.ok(
+    selectFirstPhotoOverlayAfterWelcome.includes("const firstOverlayThumb = thumbs[1];"),
+    "welcome auto-selection should skip the first No Overlay thumb"
   );
 });
 
