@@ -14,11 +14,6 @@ test("setup screen uses a compact toolbar for section controls", () => {
 
   assert.notEqual(adminContainerIndex, -1, "admin container should exist");
   assert.ok(
-    html.includes('id="startKioskButton"') &&
-      html.includes("Fullscreen hides browser controls."),
-    "setup should offer an operator-only fullscreen booth launch"
-  );
-  assert.ok(
     html.includes('class="setup-section-switcher"') &&
       html.includes('aria-label="Setup Sections"'),
     "setup should expose a lightweight section switcher"
@@ -62,22 +57,6 @@ test("setup screen uses a compact toolbar for section controls", () => {
       html.includes('data-setup-section="capture"') &&
       html.includes('data-setup-section="share"'),
     "setup sections should remain addressable by section state"
-  );
-});
-
-test("kiosk booth launch requests native fullscreen before opening the booth", () => {
-  const appScript = readProjectFile("scripts", "app.js");
-
-  assert.ok(
-    appScript.includes("function startBoothInKioskMode()") &&
-      appScript.includes("root.requestFullscreen || root.webkitRequestFullscreen") &&
-      appScript.includes("requestFullscreen.call(root);") &&
-      appScript.includes("startBooth();"),
-    "kiosk launch should use the native browser fullscreen API and retain the existing booth flow"
-  );
-  assert.ok(
-    appScript.includes("DOM.startKioskButton.addEventListener(\"click\", startBoothInKioskMode);"),
-    "the fullscreen launch should be available only from setup"
   );
 });
 

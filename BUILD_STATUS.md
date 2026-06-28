@@ -11,7 +11,6 @@ What is done
 - Added folder-manifest backgrounds, overlays, and templates to canonical Asset Library discovery; stale session selections are ignored, backgrounds are single-select, and overlays/templates remain multi-select.
 - Kept strip preview layers cleared after the final countdown capture until the completed strip reaches `showFinal()`, preventing the empty template frame from flashing during upload.
 - Added a finalizing state for single-photo and strip capture that displays the fully composed final image (photo plus selected frame) while upload completes, without exposing a partial or empty live-overlay frame; expanded the live/countdown camera width on wide displays.
-- Added an operator-only Start Booth Fullscreen control that uses browser fullscreen to maximize the kiosk view; the booth itself still exposes no kiosk or print controls to guests.
 
 What is in progress
 - None.

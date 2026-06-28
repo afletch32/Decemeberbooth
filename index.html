@@ -2826,6 +2826,7 @@
     #lastShot {
       -webkit-transform: scaleX(1) scale(var(--camera-zoom));
       transform: scaleX(1) scale(var(--camera-zoom));
+      z-index: 2;
     }
 
     #liveOverlay {
@@ -3415,6 +3416,28 @@
 
     #boothScreen.countdown-mode #videoContainer {
       transform: translateY(var(--edit-camera-y)) scale(var(--edit-camera-scale));
+    }
+
+    #boothScreen.finalizing-mode #boothHeader,
+    #boothScreen.finalizing-mode #options,
+    #boothScreen.finalizing-mode #controls,
+    #boothScreen.finalizing-mode #countdownOverlay,
+    #boothScreen.finalizing-mode #flashOverlay {
+      display: none;
+    }
+
+    #boothScreen.finalizing-mode #video {
+      visibility: hidden;
+    }
+
+    #boothScreen.finalizing-mode #finalPreview {
+      opacity: 1;
+      pointer-events: none;
+    }
+
+    #boothScreen.finalizing-mode #finalPreviewActions,
+    #boothScreen.finalizing-mode #finalPreviewButtons {
+      display: none;
     }
 
     #boothScreen.share-mode #boothHeader,

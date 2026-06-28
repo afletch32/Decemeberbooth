@@ -98,3 +98,48 @@ test("final preview clears temporary capture overlays before display", () => {
     "final preview should wait for the image load before revealing the share shell"
   );
 });
+
+test("strip capture keeps the template preview cleared until the completed strip is shown", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const stripStart = appScript.indexOf("async function runStripSequence(template)");
+  const stripEnd = appScript.indexOf("function delay(ms)", stripStart);
+  const stripFlow = appScript.slice(stripStart, stripEnd);
+
+  assert.ok(
+    stripFlow.includes("enterFinalizingState(stripUrl);") &&
+      stripFlow.indexOf("enterFinalizingState(stripUrl);") <
+        stripFlow.indexOf("const uploadResult = await uploadCaptureOnce") &&
+      stripFlow.indexOf("restorePreviewState(previewState);") >
+        stripFlow.indexOf("const uploadResult = await uploadCaptureOnce"),
+    "strip flow should not restore an empty template preview while its final image is uploading"
+  );
+});
+
+test("photo capture freezes the completed print while upload is prepared", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const html = readProjectFile("index.html");
+  const photoStart = appScript.indexOf("async function capturePhotoFlow()");
+  const photoEnd = appScript.indexOf("async function captureMessageFlow()", photoStart);
+  const photoFlow = appScript.slice(photoStart, photoEnd);
+
+  assert.ok(
+    photoFlow.includes("const finalUrl = await finalizeToPrint(photo, selectedOverlay);") &&
+      photoFlow.indexOf("enterFinalizingState(finalUrl);") >
+        photoFlow.indexOf("const finalUrl = await finalizeToPrint(photo, selectedOverlay);") &&
+      photoFlow.indexOf("enterFinalizingState(finalUrl);") <
+        photoFlow.indexOf("const uploadResult = await uploadCaptureOnce"),
+    "single-photo capture should show the composed print before upload begins"
+  );
+  assert.ok(
+    appScript.includes("function enterFinalizingState(finalUrl)") &&
+      appScript.includes("DOM.finalStrip.src = finalUrl;") &&
+      appScript.includes("DOM.finalStrip.onload = reveal;"),
+    "the finalizing state should use the fully composed final image"
+  );
+  assert.ok(
+    html.includes("#boothScreen.finalizing-mode #finalPreview {") &&
+      html.includes("#boothScreen.finalizing-mode #finalPreviewActions,") &&
+      html.includes("#boothScreen.finalizing-mode #finalPreviewButtons"),
+    "the finalizing state should show the finished image without share controls"
+  );
+});

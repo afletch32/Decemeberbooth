@@ -591,7 +591,6 @@ const DOM = {
   launchConfirmWarning: document.getElementById("launchConfirmWarning"),
   launchConfirmCancel: document.getElementById("launchConfirmCancel"),
   launchConfirmStart: document.getElementById("launchConfirmStart"),
-  startKioskButton: document.getElementById("startKioskButton"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
@@ -3425,27 +3424,6 @@ function confirmBoothLaunch() {
   startBooth();
 }
 
-function startBoothInKioskMode() {
-  const root = document.documentElement;
-  const requestFullscreen =
-    root.requestFullscreen || root.webkitRequestFullscreen;
-  if (typeof requestFullscreen === "function") {
-    try {
-      const result = requestFullscreen.call(root);
-      if (result && typeof result.catch === "function") {
-        result.catch(() => {
-          showToast("Fullscreen was blocked by this browser.");
-        });
-      }
-    } catch (_) {
-      showToast("Fullscreen was blocked by this browser.");
-    }
-  } else {
-    showToast("Use the browser fullscreen control for kiosk mode.");
-  }
-  startBooth();
-}
-
 function setupBoothButtons() {
   const startCameraBtn = document.getElementById("startCameraButton");
   if (startCameraBtn) startCameraBtn.addEventListener("click", startCamera);
@@ -3456,10 +3434,6 @@ function setupBoothButtons() {
     startBoothBtn.addEventListener("click", startBooth);
   }
   else console.warn("Start Booth button not found in DOM.");
-
-  if (DOM.startKioskButton) {
-    DOM.startKioskButton.addEventListener("click", startBoothInKioskMode);
-  }
 
   if (DOM.launchConfirmCancel) {
     DOM.launchConfirmCancel.addEventListener("click", closeBoothLaunchConfirm);
