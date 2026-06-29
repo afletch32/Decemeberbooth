@@ -6268,13 +6268,38 @@ function renderPaidPrintPanel() {
     DOM.paidPrintPaymentQr.classList.remove("show");
     return;
   }
-  const paymentValue = settings.paymentQr;
-  if (!/^https?:\/\//i.test(paymentValue)) {
+  const paymentValue = String(settings.paymentQr || "").trim();
+  if (!paymentValue) {
     DOM.paidPrintPaymentQr.removeAttribute("src");
     DOM.paidPrintPaymentQr.classList.remove("show");
     return;
   }
-  if (/\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(paymentValue)) {
+  let parsedPaymentUrl = null;
+  try {
+    parsedPaymentUrl = new URL(paymentValue, window.location.href);
+  } catch (_error) {
+    parsedPaymentUrl = null;
+  }
+  if (!parsedPaymentUrl) {
+    DOM.paidPrintPaymentQr.removeAttribute("src");
+    DOM.paidPrintPaymentQr.classList.remove("show");
+    return;
+  }
+  const isHttpPaymentUrl =
+    parsedPaymentUrl.protocol === "http:" ||
+    parsedPaymentUrl.protocol === "https:";
+  if (!isHttpPaymentUrl) {
+    DOM.paidPrintPaymentQr.removeAttribute("src");
+    DOM.paidPrintPaymentQr.classList.remove("show");
+    return;
+  }
+  const hasImageExtension =
+    /\.png(\?.*)?$/i.test(paymentValue) ||
+    /\.jpe?g(\?.*)?$/i.test(paymentValue) ||
+    /\.webp(\?.*)?$/i.test(paymentValue) ||
+    /\.gif(\?.*)?$/i.test(paymentValue) ||
+    /\.svg(\?.*)?$/i.test(paymentValue);
+  if (hasImageExtension) {
     DOM.paidPrintPaymentQr.src = paymentValue;
     DOM.paidPrintPaymentQr.classList.add("show");
     return;
@@ -13628,7 +13653,7 @@ function detectEditableFieldsFromText(...values) {
     if (patterns.some((pattern) => pattern.test(text))) fields.push(field);
   };
   add("eventName", [/\bevent\s*name\b/, /\bevent\b/]);
-  add("date", [/\bdate\b/, /\byyyy\b/, /\bmm[/-]dd\b/]);
+  add("date", [/\bdate\b/, /\byyyy\b/, /\bmm(?:\/|-)dd\b/]);
   add("schoolName", [/\bschool\s*name\b/, /\bschool\b/]);
   add("title", [/\btitle\b/, /\bheadline\b/]);
   add("subtitle", [/\bsubtitle\b/, /\bsub\s*title\b/]);

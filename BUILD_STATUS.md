@@ -2,6 +2,8 @@ Current goal
 - Keep post-capture preview frozen and hide frame chooser UI during capture/finalizing on desktop and mobile.
 
 What is done
+- Fixed parser-sensitive validation in [`scripts/app.js`](scripts/app.js:6256) for the paid-print QR/link panel by normalizing the payment value, validating it with [`new URL()`](scripts/app.js:6279), and simplifying image-extension detection so the downstream [`'}' expected`](scripts/app.js:20448) editor/parser error no longer cascades into the final [`Object.assign(window, { ... })`](scripts/app.js:20288) block.
+- Replaced the date-field detection pattern in [`detectEditableFieldsFromText()`](scripts/app.js:13644) with a parser-safe regex variant at [`scripts/app.js`](scripts/app.js:13656) to avoid ambiguous slash handling in dense regex lists.
 - Fixed the broken end-of-file structure in [`scripts/app.js`](scripts/app.js:20238) by restoring the missing closing braces around the share/edit preview logic and the final [`Object.assign(window, { ... })`](scripts/app.js:20097) export block, which cleared the deployed `Unexpected end of input` failure.
 - Added paid-print setup settings stored locally on the booth: mode, price/copy, payment QR or link, event slug, and staff queue URL copy.
 - Added a guest final-screen payment panel that does not expose printing or staff actions.
