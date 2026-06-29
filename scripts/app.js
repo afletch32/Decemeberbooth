@@ -14662,7 +14662,7 @@ function renderAssetLibraryPills() {
 }
 
 function renderAssetLibrary() {
-const grid = DOM.assetLibraryGrid;
+  const grid = DOM.assetLibraryGrid;
   const status = DOM.assetLibraryStatus;
   if (!grid && !status) return;
   
@@ -14839,7 +14839,11 @@ const grid = DOM.assetLibraryGrid;
     const total = getAllAssetLibraryRows().length;
     const filterLabels = [];
     if (assetLibraryState.selectedCategory && assetLibraryState.selectedCategory !== "all") {
-
+      filterLabels.push(`Category: ${assetLibraryState.selectedCategory}`);
+    }
+    if (assetLibraryState.searchQuery) {
+      filterLabels.push(`Search: ${assetLibraryState.searchQuery}`);
+    }
     if (DOM.assetLibraryClearFilters)
       DOM.assetLibraryClearFilters.classList.toggle(
         "hidden",
@@ -14851,8 +14855,32 @@ const grid = DOM.assetLibraryGrid;
         : `Showing ${assets.length} of ${total} assets`
       : "No assets available yet.";
   }
+}
 
-      filterLabels.push(`Category: ${assetLibraryState.selectedCategory}`);
+function toggleLibraryAsset(asset) {
+  if (!asset) return;
+  const src = getAssetEntrySrc(asset);
+  const category = normalizeUploadedAssetCategory(asset.category);
+  if (!src || !category) return;
+  const effectiveAssetSet = getSessionEffectiveAssetSourceSet(category);
+  const isSelected = effectiveAssetSet.has(src);
+  const themeSources = getThemeAssetSourceSet(
+    category,
+    activeTheme || getSelectedThemeTarget()
+  );
+  if (isSelected) {
+    removeSessionAssetBySrc(category, src);
+  } else if (themeSources.has(src)) {
+    clearSessionRemovedAsset(category, src);
+  } else if (category === "background") {
+    addSessionAssetUrl("backgrounds", src);
+  } else if (category === "overlay") {
+    addSessionAssetUrl("overlays", src);
+  } else if (category === "template") {
+    addSessionAssetUrl("templates", src);
+  }
+  const key = DOM.eventSelect && DOM.eventSelect.value;
+  if (key) loadTheme(key);
   renderCurrentAssets(activeTheme || getSelectedThemeTarget());
   renderAssetLibrary();
   updateCreatePathAssetSummary();
