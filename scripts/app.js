@@ -20421,4 +20421,3 @@ Object.assign(window, {
   toggleAnalytics,
   undoLastRemoval,
 });
-}
