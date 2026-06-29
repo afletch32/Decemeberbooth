@@ -62,6 +62,11 @@ test("pages functions provide live sync endpoints for themes, events, and fonts"
     "asset library endpoint should persist uploaded asset metadata in KV"
   );
   assert.ok(
+    assetsFn.includes("function getAssetLibraryUrlKey(value)") &&
+      assetsFn.includes("function getAssetLibraryId(category, url)"),
+    "asset library endpoint should deduplicate URL variants before storing"
+  );
+  assert.ok(
     assetsFn.includes('"Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS"'),
     "asset library endpoint should allow listing, upsert, archive, and delete"
   );

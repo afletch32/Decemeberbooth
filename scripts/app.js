@@ -13879,10 +13879,49 @@ function normalizeUploadedAssetCategory(value) {
   return "";
 }
 
+function getAssetLibraryUrlKey(url) {
+  const raw = String(url || "").trim();
+  if (!raw) return "";
+  if (/^(data:|blob:)/i.test(raw)) return raw;
+  const withoutCache = raw.split("#")[0].split("?")[0].trim();
+  if (!withoutCache) return "";
+  if (/^https?:\/\//i.test(withoutCache)) {
+    try {
+      const parsed = new URL(withoutCache);
+      parsed.hash = "";
+      parsed.search = "";
+      return parsed.toString().replace(/\/+$/g, "").toLowerCase();
+    } catch (_) {
+      return withoutCache.replace(/\/+$/g, "").toLowerCase();
+    }
+  }
+  return withoutCache.replace(/^\/+/, "").replace(/\/+$/g, "").toLowerCase();
+}
+
 function getAssetLibraryId(category, url) {
   const normalizedCategory = normalizeUploadedAssetCategory(category);
-  const value = String(url || "").trim();
+  const value = getAssetLibraryUrlKey(url);
   return normalizedCategory && value ? `${normalizedCategory}:${value}` : "";
+}
+
+function normalizeAssetLibraryRecordId(category, url, id = "") {
+  const canonicalId = getAssetLibraryId(category, url);
+  const rawId = String(id || "").trim();
+  if (!rawId) return canonicalId;
+  const normalizedCategory = normalizeUploadedAssetCategory(category);
+  const prefix = normalizedCategory ? `${normalizedCategory}:` : "";
+  const suffix = prefix && rawId.startsWith(prefix) ? rawId.slice(prefix.length) : rawId;
+  const suffixKey = getAssetLibraryUrlKey(suffix);
+  const urlKey = getAssetLibraryUrlKey(url);
+  if (
+    canonicalId &&
+    suffixKey &&
+    urlKey &&
+    (suffixKey === urlKey || /[/?#]/.test(suffix) || /^https?:\/\//i.test(suffix))
+  ) {
+    return canonicalId;
+  }
+  return rawId;
 }
 
 function getAssetUrlValue(item) {
@@ -14003,7 +14042,8 @@ function normalizeAssetLibraryPayload(payload) {
     if (!isManageableAssetUrl(url)) return;
     const category = normalizeUploadedAssetCategory(item.category || item.kind);
     if (!category) return;
-    const id = String(item.id || getAssetLibraryId(category, url)).trim();
+    const id = normalizeAssetLibraryRecordId(category, url, item.id);
+    if (!id) return;
     const tags = normalizeAssetTags(item.tags);
     const editableFields = normalizeEditableFields(item.editableFields);
     const detectedFields = detectEditableFieldsFromText(
@@ -14016,7 +14056,7 @@ function normalizeAssetLibraryPayload(payload) {
       ...editableFields,
       ...detectedFields,
     ]);
-    byId.set(id, {
+    const normalized = {
       id,
       category,
       url,
@@ -14034,7 +14074,30 @@ function normalizeAssetLibraryPayload(payload) {
       editableFields: mergedFields,
       archived: item.archived === true,
       hidden: item.hidden === true || item.archived === true,
-    });
+    };
+    const mergeKey = getAssetLibraryId(category, url) || id;
+    const existing = byId.get(mergeKey);
+    if (existing) {
+      byId.set(mergeKey, {
+        ...existing,
+        ...normalized,
+        tags: normalizeAssetTags([...(existing.tags || []), ...(normalized.tags || [])]),
+        editableFields: normalizeEditableFields([
+          ...(existing.editableFields || []),
+          ...(normalized.editableFields || []),
+        ]),
+        createdAt: existing.createdAt || normalized.createdAt,
+        customizable: existing.customizable === true || normalized.customizable === true,
+        archived: existing.archived === true || normalized.archived === true,
+        hidden:
+          existing.hidden === true ||
+          existing.archived === true ||
+          normalized.hidden === true ||
+          normalized.archived === true,
+      });
+    } else {
+      byId.set(mergeKey, normalized);
+    }
   });
   return {
     assets: Array.from(byId.values()).sort((a, b) =>
@@ -14104,7 +14167,11 @@ function mergeLibraryAsset(asset) {
   if (!normalized) return false;
   const library = normalizeAssetLibraryPayload(assetLibrary);
   const existingIndex = library.assets.findIndex(
-    (item) => item.id === normalized.id || item.url === normalized.url
+    (item) =>
+      item.id === normalized.id ||
+      item.url === normalized.url ||
+      getAssetLibraryId(item.category, item.url) ===
+        getAssetLibraryId(normalized.category, normalized.url)
   );
   if (existingIndex >= 0) {
     const existing = library.assets[existingIndex];
@@ -14184,7 +14251,11 @@ function scheduleAssetLibraryRender() {
 async function updateAssetLibraryItem(id, patch = {}, fallbackAsset = null) {
   if (!id) return;
   const library = normalizeAssetLibraryPayload(assetLibrary);
-  const index = library.assets.findIndex((asset) => asset.id === id);
+  const index = library.assets.findIndex(
+    (asset) =>
+      asset.id === id ||
+      getAssetLibraryId(asset.category, asset.url) === id
+  );
   const baseRecord =
     index >= 0
       ? library.assets[index]
@@ -14254,10 +14325,16 @@ async function deleteAssetLibraryItem(id, fallbackAsset = null) {
 
 function archiveLibraryAssetByUrl(url) {
   const asset = (assetLibrary.assets || []).find(
-    (item) => item && item.url === url
+    (item) =>
+      item &&
+      (item.url === url ||
+        getAssetLibraryUrlKey(item.url) === getAssetLibraryUrlKey(url))
   );
   const fallback = getCanonicalAssetCollection().find(
-    (item) => item && item.url === url
+    (item) =>
+      item &&
+      (item.url === url ||
+        getAssetLibraryUrlKey(item.url) === getAssetLibraryUrlKey(url))
   );
   if (!asset && !fallback) return;
   updateAssetLibraryItem(
@@ -14421,7 +14498,13 @@ function getCanonicalAssetCollection(category = "") {
     if (filterCategory && asset.category !== filterCategory) return false;
     return true;
   });
-  const storedById = new Map(storedRows.map((asset) => [asset.id, asset]));
+  const storedById = new Map();
+  storedRows.forEach((asset) => {
+    if (!asset) return;
+    if (asset.id) storedById.set(asset.id, asset);
+    const canonicalId = getAssetLibraryId(asset.category, asset.url);
+    if (canonicalId) storedById.set(canonicalId, asset);
+  });
   const byId = new Map();
   themeRows.forEach((row) => {
     const merged = mergeCanonicalAssetWithStoredRecord(row, storedById.get(row.id));

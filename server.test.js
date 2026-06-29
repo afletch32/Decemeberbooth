@@ -93,6 +93,48 @@ test("resolveUploadFilepath only accepts direct /uploads references", withTempEn
   assert.equal(resolveUploadFilepath("/not-uploads/test.png"), null);
 }));
 
+test("asset library deduplicates URL variants by category", withTempEnv(async (_tmp, t) => {
+  const server = await startTempServer(t);
+  if (!server) return;
+  try {
+    const { port } = server.address();
+    const first = await fetch(`http://127.0.0.1:${port}/api/assets`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        category: "overlay",
+        url: "/assets/events/demo/overlays/frame.png?v=old",
+        name: "Frame",
+        tags: ["event"],
+      }),
+    });
+    assert.equal(first.status, 200);
+    const second = await fetch(`http://127.0.0.1:${port}/api/assets`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        category: "overlay",
+        url: "assets/events/demo/overlays/frame.png#cache",
+        name: "Frame Duplicate",
+        tags: ["duplicate"],
+      }),
+    });
+    assert.equal(second.status, 200);
+
+    const list = await fetch(`http://127.0.0.1:${port}/api/assets`);
+    assert.equal(list.status, 200);
+    const payload = await list.json();
+    assert.equal(payload.assets.length, 1);
+    assert.equal(
+      payload.assets[0].id,
+      "overlay:assets/events/demo/overlays/frame.png"
+    );
+    assert.deepEqual(payload.assets[0].tags.sort(), ["duplicate", "event"]);
+  } finally {
+    await new Promise((resolve) => server.close(() => resolve()));
+  }
+}));
+
 test("print queue shares items by event and requires manual payment before staff workflow", withTempEnv(async (_tmp, t) => {
   const server = await startTempServer(t);
   if (!server) return;

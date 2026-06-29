@@ -21,6 +21,64 @@ function normalizeCategory(value) {
   return VALID_CATEGORIES.has(raw) ? raw : "";
 }
 
+function getAssetLibraryUrlKey(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^(data:|blob:)/i.test(raw)) return raw;
+  const withoutCache = raw.split("#")[0].split("?")[0].trim();
+  if (!withoutCache) return "";
+  if (/^https?:\/\//i.test(withoutCache)) {
+    try {
+      const parsed = new URL(withoutCache);
+      parsed.hash = "";
+      parsed.search = "";
+      return parsed.toString().replace(/\/+$/g, "").toLowerCase();
+    } catch (_) {
+      return withoutCache.replace(/\/+$/g, "").toLowerCase();
+    }
+  }
+  return withoutCache.replace(/^\/+/, "").replace(/\/+$/g, "").toLowerCase();
+}
+
+function getAssetLibraryId(category, url) {
+  const normalizedCategory = normalizeCategory(category);
+  const key = getAssetLibraryUrlKey(url);
+  return normalizedCategory && key ? `${normalizedCategory}:${key}` : "";
+}
+
+function normalizeAssetLibraryRecordId(category, url, id = "") {
+  const canonicalId = getAssetLibraryId(category, url);
+  const rawId = String(id || "").trim();
+  if (!rawId) return canonicalId;
+  const normalizedCategory = normalizeCategory(category);
+  const prefix = normalizedCategory ? `${normalizedCategory}:` : "";
+  const suffix = prefix && rawId.startsWith(prefix) ? rawId.slice(prefix.length) : rawId;
+  const suffixKey = getAssetLibraryUrlKey(suffix);
+  const urlKey = getAssetLibraryUrlKey(url);
+  if (
+    canonicalId &&
+    suffixKey &&
+    urlKey &&
+    (suffixKey === urlKey || /[/?#]/.test(suffix) || /^https?:\/\//i.test(suffix))
+  ) {
+    return canonicalId;
+  }
+  return rawId;
+}
+
+function assetMatchesLookup(asset, id = "", url = "") {
+  if (!asset) return false;
+  const rawId = String(id || "").trim();
+  const rawUrl = String(url || "").trim();
+  const assetCanonicalId = getAssetLibraryId(asset.category, asset.url);
+  if (rawId && (asset.id === rawId || assetCanonicalId === rawId)) return true;
+  if (!rawUrl) return false;
+  return (
+    asset.url === rawUrl ||
+    getAssetLibraryUrlKey(asset.url) === getAssetLibraryUrlKey(rawUrl)
+  );
+}
+
 function isManageableAssetUrl(value) {
   const url = String(value || "").trim();
   if (!url) return false;
@@ -98,7 +156,8 @@ function normalizeAsset(item) {
   if (!isManageableAssetUrl(url)) return null;
   const category = normalizeCategory(item.category || item.kind);
   if (!category) return null;
-  const id = String(item.id || `${category}:${url}`).trim();
+  const id = normalizeAssetLibraryRecordId(category, url, item.id);
+  if (!id) return null;
   const editableFields = normalizeEditableFields(item.editableFields);
   return {
     id,
@@ -129,7 +188,29 @@ function normalizeLibraryPayload(payload) {
     : [];
   const byId = new Map();
   assets.map(normalizeAsset).filter(Boolean).forEach((asset) => {
-    byId.set(asset.id, asset);
+    const mergeKey = getAssetLibraryId(asset.category, asset.url) || asset.id;
+    const existing = byId.get(mergeKey);
+    if (existing) {
+      byId.set(mergeKey, {
+        ...existing,
+        ...asset,
+        tags: normalizeTags([...(existing.tags || []), ...(asset.tags || [])]),
+        editableFields: normalizeEditableFields([
+          ...(existing.editableFields || []),
+          ...(asset.editableFields || []),
+        ]),
+        createdAt: existing.createdAt || asset.createdAt,
+        customizable: existing.customizable === true || asset.customizable === true,
+        archived: existing.archived === true || asset.archived === true,
+        hidden:
+          existing.hidden === true ||
+          existing.archived === true ||
+          asset.hidden === true ||
+          asset.archived === true,
+      });
+    } else {
+      byId.set(mergeKey, asset);
+    }
   });
   return {
     assets: Array.from(byId.values()).sort((a, b) =>
@@ -180,7 +261,10 @@ export async function onRequest(context) {
       }
       const library = await readLibrary(env);
       const existingIndex = library.assets.findIndex(
-        (asset) => asset.id === incoming.id || asset.url === incoming.url
+        (asset) =>
+          assetMatchesLookup(asset, incoming.id, incoming.url) ||
+          getAssetLibraryId(asset.category, asset.url) ===
+            getAssetLibraryId(incoming.category, incoming.url)
       );
       if (existingIndex >= 0) {
         const existing = library.assets[existingIndex];
@@ -220,7 +304,7 @@ export async function onRequest(context) {
       }
       const library = await readLibrary(env);
       const index = library.assets.findIndex(
-        (asset) => asset.id === id || asset.url === url
+        (asset) => assetMatchesLookup(asset, id, url)
       );
       if (index < 0) {
         return buildJsonResponse({ ok: false, error: "Asset not found." }, 404);

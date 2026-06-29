@@ -210,9 +210,15 @@ test("canonical asset collection includes folder manifests and deduplicates cate
     "folder-manifest backgrounds, overlays, and templates should feed the canonical collection"
   );
   assert.ok(
-    appScript.includes("const key = row.id;") &&
+    appScript.includes("function getAssetLibraryUrlKey(url)") &&
+      appScript.includes("const key = row.id;") &&
       appScript.includes("getAssetLibraryId(normalizedCategory, src)"),
-    "canonical entries should deduplicate by category and URL"
+    "canonical entries should deduplicate by category and normalized URL"
+  );
+  assert.ok(
+    appScript.includes('replace(/^\\/+/, "")') &&
+      appScript.includes("raw.split(\"#\")[0].split(\"?\")[0]"),
+    "asset library ids should collapse leading-slash and cache-busted URL variants"
   );
   assert.ok(
     appScript.includes("discardStaleSessionLibraryAssets") &&

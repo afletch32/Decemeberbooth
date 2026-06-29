@@ -1,14 +1,12 @@
 Current goal
-- Fix booth asset picker sorting, selection stability, search, and persisted favorites/recent assets.
+- Fix duplicate rows in the Asset Library without renaming existing assets.
 
 What is done
-- Added picker search, 24-item initial rendering, and Show More controls for overlay/template options.
-- Added localStorage-backed asset picker favorites and recents.
-- Sorted picker assets by favorites, recents, current theme assets, then filename/category label.
-- Kept folder manifests in the catalog while avoiding manifest-first dominance in the picker.
-- Preserved selection behavior so overlay/template clicks update selected state, preview, and confirm flow without re-rendering or reordering the list.
-- Added static coverage for search, favorites/recents, Show More, scroll preservation wiring, and sorted getter use.
-- Verified locally with `npm test` and targeted Playwright smoke checks for sorting, search, recents, and favorite persistence.
+- Added canonical asset-library URL keys so `/assets/foo.png`, `assets/foo.png`, query strings, and hash variants collapse to one row per category.
+- Preserved existing custom asset IDs so old rename/tag/delete actions still work.
+- Applied the same dedupe behavior in browser state, the local Express API, and the Cloudflare Pages asset function.
+- Added regression coverage for URL-variant dedupe and production function guards.
+- Verified with `npm test`.
 
 What is in progress
 - None.
@@ -22,5 +20,4 @@ Known bugs/blockers
 
 Important decisions
 - Keep the vanilla HTML/CSS/JS stack and existing Cloudflare Pages deployment path.
-- Keep setup buttons exported through the existing `window` assignment because `index.html` uses inline handlers.
-- Keep the new parser test in `npm test` so a future unterminated app module fails before deployment.
+- Do not rename existing asset files; normalize identity at the asset-library layer to avoid breaking theme defaults, manifests, or stored metadata.
