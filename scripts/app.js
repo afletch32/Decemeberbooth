@@ -4403,6 +4403,12 @@ function setupOfflineControls() {
     flushPendingUploads();
     flushPendingGalleryRecords();
   });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    updatePendingUI();
+    flushPendingUploads();
+    flushPendingGalleryRecords();
+  });
   window.addEventListener("offline", () => updatePendingUI());
 }
 
@@ -6281,7 +6287,10 @@ function renderPaidPrintPanel() {
         DOM.paidPrintPaymentQr.classList.add("show");
       }
     });
+    return;
   }
+  DOM.paidPrintPaymentQr.removeAttribute("src");
+  DOM.paidPrintPaymentQr.classList.remove("show");
 }
 
 async function enqueueFinalPrintIfNeeded() {
@@ -11909,6 +11918,94 @@ async function uploadVideoToCloudinary(blob, options = {}) {
   return "";
 }
 
+const OFFLINE_DB_NAME = "PhotoboothOfflineQueue";
+const OFFLINE_DB_STORE = "pendingUploads";
+let offlineQueueDbPromise = null;
+
+function offlineQueueSupported() {
+  return typeof indexedDB !== "undefined";
+}
+
+function getOfflineQueueDb() {
+  if (!offlineQueueSupported()) {
+    return Promise.reject(new Error("IndexedDB offline queue unavailable"));
+  }
+  if (!offlineQueueDbPromise) {
+    offlineQueueDbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open(OFFLINE_DB_NAME, 1);
+      request.onupgradeneeded = (event) => {
+        const db = event && event.target ? event.target.result : null;
+        if (!db) return;
+        if (!db.objectStoreNames.contains(OFFLINE_DB_STORE)) {
+          db.createObjectStore(OFFLINE_DB_STORE, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
+        }
+      };
+      request.onsuccess = (event) => {
+        const db = event && event.target ? event.target.result : null;
+        if (!db) {
+          reject(new Error("IndexedDB open succeeded without database instance"));
+          return;
+        }
+        db.onclose = () => {
+          offlineQueueDbPromise = null;
+        };
+        resolve(db);
+      };
+      request.onerror = () => {
+        reject(request.error || new Error("IndexedDB open failed"));
+      };
+    });
+  }
+  return offlineQueueDbPromise;
+}
+
+function saveToOfflineQueue(imageBlob, metadata = {}) {
+  return getOfflineQueueDb().then(
+    (db) =>
+      new Promise((resolve, reject) => {
+        const tx = db.transaction(OFFLINE_DB_STORE, "readwrite");
+        const store = tx.objectStore(OFFLINE_DB_STORE);
+        const item = {
+          imageBlob,
+          metadata: { ...(metadata || {}) },
+          timestamp: Date.now(),
+        };
+        const request = store.add(item);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error("Offline queue save failed"));
+      })
+  );
+}
+
+function getAllFromOfflineQueue() {
+  return getOfflineQueueDb().then(
+    (db) =>
+      new Promise((resolve, reject) => {
+        const tx = db.transaction(OFFLINE_DB_STORE, "readonly");
+        const store = tx.objectStore(OFFLINE_DB_STORE);
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error || new Error("Offline queue read failed"));
+      })
+  );
+}
+
+function deleteFromOfflineQueue(id) {
+  return getOfflineQueueDb().then(
+    (db) =>
+      new Promise((resolve, reject) => {
+        const tx = db.transaction(OFFLINE_DB_STORE, "readwrite");
+        const store = tx.objectStore(OFFLINE_DB_STORE);
+        const request = store.delete(id);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error || new Error("Offline queue delete failed"));
+      })
+  );
+}
+
 async function dataUrlToBlob(dataUrl) {
   const res = await fetch(dataUrl);
   if (!res.ok) throw new Error("Capture data could not be read.");
@@ -11973,6 +12070,24 @@ async function queueCaptureForRetry(options = {}) {
     meta = {},
     modeName = "pending",
   } = options;
+  const queueMetadata = {
+    captureId: meta.captureId,
+    slug: meta.slug,
+    folder: meta.folder,
+    resourceType,
+    modeName,
+    title: meta.title,
+    email: meta.email || "",
+    createdAt: meta.createdAt || new Date().toISOString(),
+  };
+  if (mediaBlob && offlineQueueSupported()) {
+    try {
+      await saveToOfflineQueue(mediaBlob, queueMetadata);
+      return true;
+    } catch (error) {
+      console.warn("IndexedDB capture queue failed; falling back to local retry queue", error);
+    }
+  }
   let retryDataUrl = previewUrl;
   let retryResourceType = "image";
   if (resourceType === "video" && mediaBlob) {
@@ -12526,6 +12641,7 @@ function queuePendingGalleryRecord(record = {}) {
 async function flushPendingUploads() {
   if (isFlushingPendingUploads || !cloudinaryConfigured() || !navigator.onLine)
     return;
+  await flushPendingUploadsIndexedDB();
   const q = getPendingUploads();
   if (!q.length) return;
   isFlushingPendingUploads = true;
@@ -12565,6 +12681,78 @@ async function flushPendingUploads() {
   }
   if (sent) showToast(`Uploaded ${sent} pending photo${sent === 1 ? "" : "s"}`);
   flushPendingGalleryRecords();
+}
+
+async function flushPendingUploadsIndexedDB() {
+  if (!offlineQueueSupported() || !cloudinaryConfigured() || !navigator.onLine) return;
+  let pendingPhotos = [];
+  try {
+    pendingPhotos = await getAllFromOfflineQueue();
+  } catch (error) {
+    console.warn("IndexedDB offline queue read failed", error);
+    return;
+  }
+  if (!pendingPhotos.length) return;
+  let sent = 0;
+  for (const photo of pendingPhotos) {
+    if (!photo || !photo.imageBlob) continue;
+    const metadata = photo.metadata || {};
+    const resourceType = metadata.resourceType === "video" ? "video" : "image";
+    const publicUrl =
+      resourceType === "video"
+        ? await uploadCloudinaryWithRetry(
+            uploadVideoToCloudinary,
+            photo.imageBlob,
+            {
+              baseName: metadata.slug || metadata.modeName || "message",
+              folder: metadata.folder,
+              tags: metadata.slug,
+              force: true,
+            },
+            "video"
+          )
+        : await uploadCloudinaryWithRetry(
+            uploadImageToCloudinary,
+            photo.imageBlob,
+            {
+              baseName: metadata.slug || metadata.modeName || "photo",
+              folder: metadata.folder,
+              tags: metadata.slug,
+              force: true,
+            },
+            "image"
+          );
+    if (!publicUrl) continue;
+    if (metadata.slug) {
+      const galleryOk = await recordGalleryPhoto(metadata.slug, publicUrl, {
+        captureId: metadata.captureId,
+        title: metadata.title,
+        resourceType,
+        modeName: metadata.modeName,
+        createdAt: metadata.createdAt,
+      });
+      if (!galleryOk) {
+        queuePendingGalleryRecord({
+          captureId: metadata.captureId,
+          slug: metadata.slug,
+          url: publicUrl,
+          title: metadata.title,
+          resourceType,
+          modeName: metadata.modeName,
+          createdAt: metadata.createdAt,
+        });
+      }
+    }
+    try {
+      await deleteFromOfflineQueue(photo.id);
+      sent++;
+    } catch (error) {
+      console.warn("IndexedDB offline queue delete failed", error);
+    }
+  }
+  if (sent) {
+    showToast(`Uploaded ${sent} IndexedDB queued photo${sent === 1 ? "" : "s"}`);
+  }
 }
 
 async function flushPendingGalleryRecords() {
@@ -20232,3 +20420,5 @@ Object.assign(window, {
   confirmBoothLaunch,
   toggleAnalytics,
   undoLastRemoval,
+});
+}

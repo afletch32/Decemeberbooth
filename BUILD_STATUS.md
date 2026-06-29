@@ -2,6 +2,7 @@ Current goal
 - Keep post-capture preview frozen and hide frame chooser UI during capture/finalizing on desktop and mobile.
 
 What is done
+- Fixed the broken end-of-file structure in [`scripts/app.js`](scripts/app.js:20238) by restoring the missing closing braces around the share/edit preview logic and the final [`Object.assign(window, { ... })`](scripts/app.js:20097) export block, which cleared the deployed `Unexpected end of input` failure.
 - Added paid-print setup settings stored locally on the booth: mode, price/copy, payment QR or link, event slug, and staff queue URL copy.
 - Added a guest final-screen payment panel that does not expose printing or staff actions.
 - Added shared `GET/POST/PATCH/DELETE /api/print-queue` APIs using the existing Cloudflare Pages `THEMES_KV` binding, with matching local-development routes.
