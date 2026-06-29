@@ -14500,113 +14500,236 @@ function registerUploadedAsset(url, kind, details = {}) {
   }
 }
 
+let assetLibraryState = {
+  selectedCategory: "",
+  searchQuery: "",
+  visibleCount: 40,
+};
+
+function renderAssetLibraryPills() {
+  const pillsContainer = DOM.assetLibraryPills;
+  if (!pillsContainer) return;
+  
+  const allAssets = getAllAssetLibraryRows();
+  const counts = {
+    all: allAssets.length,
+    background: 0,
+    overlay: 0,
+    template: 0,
+  };
+  
+  allAssets.forEach((asset) => {
+    const category = normalizeUploadedAssetCategory(asset.category);
+    if (counts[category] !== undefined) {
+      counts[category]++;
+    }
+  });
+  
+  const categories = [
+    { key: "all", label: "All" },
+    { key: "background", label: "Backgrounds" },
+    { key: "overlay", label: "Overlays" },
+    { key: "template", label: "Templates" },
+  ];
+  
+  pillsContainer.innerHTML = "";
+  categories.forEach((cat) => {
+    const pill = document.createElement("button");
+    pill.type = "button";
+    pill.className = "asset-library-pill";
+    if (assetLibraryState.selectedCategory === cat.key) {
+      pill.classList.add("active");
+    }
+    pill.innerHTML = `${cat.label} <span class="asset-library-pill-count">${counts[cat.key] || 0}</span>`;
+    pill.addEventListener("click", () => {
+      assetLibraryState.selectedCategory = cat.key;
+      assetLibraryState.visibleCount = 40;
+      renderAssetLibraryPills();
+      renderAssetLibrary();
+    });
+    pillsContainer.appendChild(pill);
+  });
+}
+
 function renderAssetLibrary() {
-  const grid = DOM.assetLibraryGrid;
+const grid = DOM.assetLibraryGrid;
   const status = DOM.assetLibraryStatus;
   if (!grid && !status) return;
-  const assets = getFilteredAssetLibraryRows();
+  
+  // Update search query from DOM
+  if (DOM.assetLibrarySearch) {
+    assetLibraryState.searchQuery = DOM.assetLibrarySearch.value.trim().toLowerCase();
+  }
+  
+  // Get all assets
+  let assets = getAllAssetLibraryRows();
+  
+  // Filter by category if selected
+  if (assetLibraryState.selectedCategory && assetLibraryState.selectedCategory !== "all") {
+    assets = assets.filter((asset) => {
+      const category = normalizeUploadedAssetCategory(asset.category);
+      return category === assetLibraryState.selectedCategory;
+    });
+  }
+  
+  // Filter by search query
+  if (assetLibraryState.searchQuery) {
+    assets = assets.filter((asset) => {
+      const haystack = [
+        asset.name,
+        asset.category,
+        asset.url,
+        ...(Array.isArray(asset.tags) ? asset.tags : []),
+        ...normalizeEditableFields(asset.editableFields).map(getAssetEditableFieldLabel),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(assetLibraryState.searchQuery);
+    });
+  }
+  
+  // Sort assets
+  const sortMode = DOM.assetLibrarySort ? DOM.assetLibrarySort.value : "newest";
+  assets.sort((a, b) => {
+    if (sortMode === "name") {
+      return getAssetDisplayName(a).localeCompare(getAssetDisplayName(b));
+    }
+    const aTime = Date.parse(a.createdAt || "") || 0;
+    const bTime = Date.parse(b.createdAt || "") || 0;
+    return sortMode === "oldest" ? aTime - bTime : bTime - aTime;
+  });
+  
+  // Render grid
   if (grid) {
     grid.innerHTML = "";
-    let hasSelected = false;
-    assets.forEach((asset) => {
+    const visibleAssets = assets.slice(0, assetLibraryState.visibleCount);
+    
+    if (visibleAssets.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "asset-library-empty";
+      empty.textContent = "No assets available.";
+      grid.appendChild(empty);
+    } else {
+      visibleAssets.forEach((asset) => {
+        const assetSrc = getAssetEntrySrc(asset);
+        const effectiveAssetSet = getSessionEffectiveAssetSourceSet(asset.category);
+        const isSelected = effectiveAssetSet.has(assetSrc);
+        const card = document.createElement("div");
+        card.className = "asset-library-card";
+        card.classList.toggle("selected", isSelected);
+        card.setAttribute("aria-selected", isSelected ? "true" : "false");
+        card.setAttribute("role", "button");
+        card.tabIndex = 0;
+        card.addEventListener("click", () => toggleLibraryAsset(asset));
+        card.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          toggleLibraryAsset(asset);
+        });
+        const img = document.createElement("img");
+        img.src = withBust(assetSrc);
+        img.alt = asset.name || asset.category;
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.onerror = () => renderMissingThumbnail(card, assetSrc);
+        const name = document.createElement("div");
+        name.className = "asset-library-name";
+        name.title = `${asset.name}${asset.tags && asset.tags.length ? ` (${asset.tags.join(", ")})` : ""}`;
+        name.textContent = getAssetDisplayName(asset);
+        const meta = document.createElement("div");
+        meta.className = "asset-library-meta";
+        meta.textContent = [asset.category, getAssetCreatedAtLabel(asset)]
+          .filter(Boolean)
+          .join(" • ");
+        const badges = document.createElement("div");
+        badges.className = "asset-library-badges";
+        getAssetBadgeLabels(asset).forEach((label) => {
+          const badge = document.createElement("span");
+          badge.className = "asset-library-badge";
+          badge.textContent = label;
+          badges.appendChild(badge);
+        });
+        const actions = document.createElement("div");
+        actions.className = "asset-library-actions";
+        const renameBtn = document.createElement("button");
+        renameBtn.type = "button";
+        renameBtn.textContent = "Rename";
+        renameBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          promptForAssetName(asset);
+        });
+        const tagsBtn = document.createElement("button");
+        tagsBtn.type = "button";
+        tagsBtn.textContent = "Tags";
+        tagsBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          promptForAssetTags(asset);
+        });
+        const fieldsBtn = document.createElement("button");
+        fieldsBtn.type = "button";
+        fieldsBtn.textContent = "Fields";
+        fieldsBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          promptForAssetEditableFields(asset);
+        });
+        const defaultsBtn = document.createElement("button");
+        defaultsBtn.type = "button";
+        defaultsBtn.textContent = "Theme defaults";
+        defaultsBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openAssetThemeDefaultsModal(asset);
+        });
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.textContent = "Delete";
+        deleteBtn.className = "asset-library-delete";
+        deleteBtn.addEventListener("click", async (event) => {
+          event.stopPropagation();
+          const defaultCount = getAssetThemeDefaultCount(asset);
+          const warning = defaultCount
+            ? "\n\nThis asset is used by theme defaults."
+            : "";
+          if (!confirm(`Remove this asset from the Asset Library?${warning}`)) return;
+          await deleteAssetLibraryItem(asset.id, asset);
+          showToast("Asset removed from Asset Library.");
+        });
+        actions.appendChild(renameBtn);
+        actions.appendChild(tagsBtn);
+        actions.appendChild(fieldsBtn);
+        actions.appendChild(defaultsBtn);
+        actions.appendChild(deleteBtn);
+        card.appendChild(img);
+        card.appendChild(name);
+        card.appendChild(meta);
+        if (badges.childNodes.length) card.appendChild(badges);
+        card.appendChild(actions);
+        grid.appendChild(card);
+      });
+      
+      // Show More button
+      if (assets.length > assetLibraryState.visibleCount) {
+        const showMoreBtn = document.createElement("button");
+        showMoreBtn.type = "button";
+        showMoreBtn.className = "asset-library-show-more";
+        showMoreBtn.textContent = `Show More (${assets.length - assetLibraryState.visibleCount} remaining)`;
+        showMoreBtn.addEventListener("click", () => {
+          assetLibraryState.visibleCount += 40;
+          renderAssetLibrary();
+        });
+        grid.appendChild(showMoreBtn);
+      }
+    }
+    grid.classList.toggle("has-selection", assets.some((asset) => {
       const assetSrc = getAssetEntrySrc(asset);
       const effectiveAssetSet = getSessionEffectiveAssetSourceSet(asset.category);
-      const isSelected = effectiveAssetSet.has(assetSrc);
-      hasSelected = hasSelected || isSelected;
-      const card = document.createElement("div");
-      card.className = "asset-library-card";
-      card.classList.toggle("selected", isSelected);
-      card.setAttribute("aria-selected", isSelected ? "true" : "false");
-      card.setAttribute("role", "button");
-      card.tabIndex = 0;
-      card.addEventListener("click", () => toggleLibraryAsset(asset));
-      card.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        toggleLibraryAsset(asset);
-      });
-      const img = document.createElement("img");
-      img.src = withBust(assetSrc);
-      img.alt = asset.name || asset.category;
-      img.onerror = () => renderMissingThumbnail(card, assetSrc);
-      const name = document.createElement("div");
-      name.className = "asset-library-name";
-      name.title = `${asset.name}${asset.tags && asset.tags.length ? ` (${asset.tags.join(", ")})` : ""}`;
-      name.textContent = getAssetDisplayName(asset);
-      const meta = document.createElement("div");
-      meta.className = "asset-library-meta";
-      meta.textContent = [asset.category, getAssetCreatedAtLabel(asset)]
-        .filter(Boolean)
-        .join(" • ");
-      const badges = document.createElement("div");
-      badges.className = "asset-library-badges";
-      getAssetBadgeLabels(asset).forEach((label) => {
-        const badge = document.createElement("span");
-        badge.className = "asset-library-badge";
-        badge.textContent = label;
-        badges.appendChild(badge);
-      });
-      const actions = document.createElement("div");
-      actions.className = "asset-library-actions";
-      const renameBtn = document.createElement("button");
-      renameBtn.type = "button";
-      renameBtn.textContent = "Rename";
-      renameBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        promptForAssetName(asset);
-      });
-      const tagsBtn = document.createElement("button");
-      tagsBtn.type = "button";
-      tagsBtn.textContent = "Tags";
-      tagsBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        promptForAssetTags(asset);
-      });
-      const fieldsBtn = document.createElement("button");
-      fieldsBtn.type = "button";
-      fieldsBtn.textContent = "Fields";
-      fieldsBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        promptForAssetEditableFields(asset);
-      });
-      const defaultsBtn = document.createElement("button");
-      defaultsBtn.type = "button";
-      defaultsBtn.textContent = "Theme defaults";
-      defaultsBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        openAssetThemeDefaultsModal(asset);
-      });
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.textContent = "Delete";
-      deleteBtn.className = "asset-library-delete";
-      deleteBtn.addEventListener("click", async (event) => {
-        event.stopPropagation();
-        const defaultCount = getAssetThemeDefaultCount(asset);
-        const warning = defaultCount
-          ? "\n\nThis asset is used by theme defaults."
-          : "";
-        if (!confirm(`Remove this asset from the Asset Library?${warning}`)) return;
-        await deleteAssetLibraryItem(asset.id, asset);
-        showToast("Asset removed from Asset Library.");
-      });
-      actions.appendChild(renameBtn);
-      actions.appendChild(tagsBtn);
-      actions.appendChild(fieldsBtn);
-      actions.appendChild(defaultsBtn);
-      actions.appendChild(deleteBtn);
-      card.appendChild(img);
-      card.appendChild(name);
-      card.appendChild(meta);
-      if (badges.childNodes.length) card.appendChild(badges);
-      card.appendChild(actions);
-      grid.appendChild(card);
-    });
-    grid.classList.toggle("has-selection", hasSelected);
+      return effectiveAssetSet.has(assetSrc);
+    }));
   }
   if (status) {
     const total = getAllAssetLibraryRows().length;
-    const filterLabels = getActiveAssetLibraryFilterLabels();
+    const filterLabels = [];
+    if (assetLibraryState.selectedCategory && assetLibraryState.selectedCategory !== "all") {
+
     if (DOM.assetLibraryClearFilters)
       DOM.assetLibraryClearFilters.classList.toggle(
         "hidden",
@@ -14615,35 +14738,11 @@ function renderAssetLibrary() {
     status.textContent = total
       ? filterLabels.length
         ? `Showing ${assets.length} of ${total} assets. Filters active: ${filterLabels.join(", ")}`
-        : `Showing ${assets.length} assets`
+        : `Showing ${assets.length} of ${total} assets`
       : "No assets available yet.";
   }
-}
 
-function toggleLibraryAsset(asset) {
-  if (!asset) return;
-  const src = getAssetEntrySrc(asset);
-  const category = normalizeUploadedAssetCategory(asset.category);
-  if (!src || !category) return;
-  const effectiveAssetSet = getSessionEffectiveAssetSourceSet(category);
-  const isSelected = effectiveAssetSet.has(src);
-  const themeSources = getThemeAssetSourceSet(
-    category,
-    activeTheme || getSelectedThemeTarget()
-  );
-  if (isSelected) {
-    removeSessionAssetBySrc(category, src);
-  } else if (themeSources.has(src)) {
-    clearSessionRemovedAsset(category, src);
-  } else if (category === "background") {
-    addSessionAssetUrl("backgrounds", src);
-  } else if (category === "overlay") {
-    addSessionAssetUrl("overlays", src);
-  } else if (category === "template") {
-    addSessionAssetUrl("templates", src);
-  }
-  const key = DOM.eventSelect && DOM.eventSelect.value;
-  if (key) loadTheme(key);
+      filterLabels.push(`Category: ${assetLibraryState.selectedCategory}`);
   renderCurrentAssets(activeTheme || getSelectedThemeTarget());
   renderAssetLibrary();
   updateCreatePathAssetSummary();

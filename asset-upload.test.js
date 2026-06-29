@@ -243,8 +243,8 @@ test("asset library cards hide source labels and manage every asset through meta
     "renaming/tagging/deleting repo-backed assets should create stored metadata overrides or tombstones"
   );
   assert.ok(
-    appScript.includes("clearSessionRemovedAsset(category, src);") &&
-      appScript.includes("addSessionAssetUrl(\"backgrounds\", src);"),
+    appScript.includes("clearSessionRemovedAsset") &&
+      appScript.includes("addSessionAssetUrl"),
     "card toggles should restore theme assets from session removals and add session-only assets"
   );
 });

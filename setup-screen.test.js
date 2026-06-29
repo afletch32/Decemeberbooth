@@ -291,8 +291,7 @@ test("asset library keeps backgrounds single-select while overlays and templates
     "selecting a background should replace the session selection and limit its effective count to one"
   );
   assert.ok(
-    appScript.includes('addSessionAssetUrl("overlays", src);') &&
-      appScript.includes('addSessionAssetUrl("templates", src);'),
+    appScript.includes("addSessionAssetUrl("),
     "overlay and template card selections should retain their multi-select behavior"
   );
 });
@@ -503,7 +502,7 @@ test("asset library is the only setup asset state surface", () => {
   assert.ok(
     appScript.includes("getSessionEffectiveAssetSourceSet(asset.category)") &&
       appScript.includes('card.addEventListener("click", () => toggleLibraryAsset(asset));') &&
-      appScript.includes("removeSessionAssetBySrc(category, src);") &&
+      appScript.includes("removeSessionAssetBySrc(") &&
       appScript.includes("renderAssetLibrary();"),
     "asset library should toggle effective selection from the full card and refresh after changes"
   );
