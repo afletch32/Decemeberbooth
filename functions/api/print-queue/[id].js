@@ -1,4 +1,4 @@
-import { ALLOWED_PAYMENT_STATUSES, ALLOWED_STATUSES, normalizeEventId, queueKey, readQueue } from "../print-queue.js";
+import { ALLOWED_PAYMENT_STATUSES, ALLOWED_PRINT_STATUSES, normalizeEventId, queueKey, readQueue } from "../print-queue.js";
 
 function response(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -37,21 +37,15 @@ export async function onRequest(context) {
     const now = new Date().toISOString();
     const item = { ...items[index] };
     if (request.method === "DELETE") {
-      item.status = "removed";
+      item.printStatus = "void";
       item.removedAt = now;
     } else {
-      if (body.status && !ALLOWED_STATUSES.has(body.status)) return response({ ok: false, error: "Invalid status." }, 400);
+      if (body.printStatus && !ALLOWED_PRINT_STATUSES.has(body.printStatus)) return response({ ok: false, error: "Invalid print status." }, 400);
       if (body.paymentStatus && !ALLOWED_PAYMENT_STATUSES.has(body.paymentStatus)) return response({ ok: false, error: "Invalid payment status." }, 400);
-      if (body.status) item.status = body.status;
+      if (body.printStatus) item.printStatus = body.printStatus;
       if (body.paymentStatus) item.paymentStatus = body.paymentStatus;
-      if (item.paymentRequired === false) {
-        item.paymentStatus = "not_required";
-        if (item.status === "waiting_payment" || item.status === "paid") item.status = "ready";
-      }
-      if (item.paymentStatus === "manual_paid" && !item.paidAt) item.paidAt = now;
-      if (item.status === "paid") item.paymentStatus = "manual_paid";
-      if (item.status === "paid" && !item.paidAt) item.paidAt = now;
-      if (item.status === "printed" && !item.printedAt) item.printedAt = now;
+      if (item.paymentStatus === "paid" && !item.paidAt) item.paidAt = now;
+      if (item.printStatus === "printed" && !item.printedAt) item.printedAt = now;
       if (typeof body.notes === "string") item.notes = body.notes.slice(0, 1000);
     }
     items[index] = item;

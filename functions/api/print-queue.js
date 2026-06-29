@@ -1,5 +1,5 @@
-const ALLOWED_STATUSES = new Set(["waiting_payment", "ready", "paid", "printed", "removed", "error"]);
-const ALLOWED_PAYMENT_STATUSES = new Set(["unpaid", "manual_paid", "not_required"]);
+const ALLOWED_PRINT_STATUSES = new Set(["new", "printed", "reprint", "void"]);
+const ALLOWED_PAYMENT_STATUSES = new Set(["unpaid", "paid", "comped"]);
 
 function response(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -36,10 +36,38 @@ async function readQueue(env, eventId) {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map(normalizeQueueItem) : [];
   } catch (_) {
     return [];
   }
+}
+
+function normalizeQuantity(value) {
+  const quantity = Number.parseInt(value, 10);
+  if (!Number.isFinite(quantity)) return 1;
+  return Math.max(1, Math.min(99, quantity));
+}
+
+function normalizeQueueItem(item) {
+  if (!item || typeof item !== "object") return item;
+  let paymentStatus = item.paymentStatus;
+  if (paymentStatus === "manual_paid") paymentStatus = "paid";
+  if (paymentStatus === "not_required") paymentStatus = "comped";
+  if (!ALLOWED_PAYMENT_STATUSES.has(paymentStatus)) {
+    paymentStatus = item.paymentRequired === false ? "comped" : "unpaid";
+  }
+  let printStatus = item.printStatus;
+  if (!ALLOWED_PRINT_STATUSES.has(printStatus)) {
+    if (item.status === "printed") printStatus = "printed";
+    else if (item.status === "removed") printStatus = "void";
+    else printStatus = "new";
+  }
+  return {
+    ...item,
+    quantity: normalizeQuantity(item.quantity),
+    paymentStatus,
+    printStatus,
+  };
 }
 
 export async function onRequest(context) {
@@ -53,7 +81,7 @@ export async function onRequest(context) {
   const eventId = normalizeEventId(url.searchParams.get("eventId"));
   if (request.method === "GET") {
     const items = (await readQueue(env, eventId))
-      .filter((item) => item && item.status !== "removed")
+      .filter((item) => item && item.printStatus !== "void")
       .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
     return response({ ok: true, eventId, items });
   }
@@ -67,7 +95,7 @@ export async function onRequest(context) {
       return response({ ok: false, error: "A public image URL is required for the shared print queue." }, 400);
     }
     const items = await readQueue(env, itemEventId);
-    const existing = items.find((item) => item && item.imageUrl === imageUrl && item.status !== "removed");
+    const existing = items.find((item) => item && item.imageUrl === imageUrl && item.printStatus !== "void");
     if (existing) return response({ ok: true, created: false, item: existing });
     const createdAt = new Date().toISOString();
     const paymentRequired = body.paymentRequired !== false;
@@ -77,8 +105,9 @@ export async function onRequest(context) {
       imageUrl,
       thumbnailUrl: validImageUrl(body.thumbnailUrl) ? String(body.thumbnailUrl).trim() : imageUrl,
       createdAt,
-      status: paymentRequired ? "waiting_payment" : "ready",
-      paymentStatus: paymentRequired ? "unpaid" : "not_required",
+      quantity: normalizeQuantity(body.quantity),
+      paymentStatus: paymentRequired ? "unpaid" : "comped",
+      printStatus: "new",
       paymentRequired,
       paidAt: null,
       printedAt: null,
@@ -93,4 +122,4 @@ export async function onRequest(context) {
   }
 }
 
-export { ALLOWED_STATUSES, ALLOWED_PAYMENT_STATUSES, normalizeEventId, queueKey, readQueue };
+export { ALLOWED_PAYMENT_STATUSES, ALLOWED_PRINT_STATUSES, normalizeEventId, queueKey, readQueue };

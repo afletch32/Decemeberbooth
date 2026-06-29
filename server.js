@@ -176,7 +176,35 @@ function normalizePrintQueueEventId(value) {
 function readPrintQueue(eventId) {
   const allQueues = readJsonFile("print-queue.json", {});
   const items = allQueues[normalizePrintQueueEventId(eventId)];
-  return Array.isArray(items) ? items : [];
+  return Array.isArray(items) ? items.map(normalizePrintQueueItem) : [];
+}
+
+function normalizePrintQuantity(value) {
+  const quantity = Number.parseInt(value, 10);
+  if (!Number.isFinite(quantity)) return 1;
+  return Math.max(1, Math.min(99, quantity));
+}
+
+function normalizePrintQueueItem(item) {
+  if (!item || typeof item !== "object") return item;
+  let paymentStatus = item.paymentStatus;
+  if (paymentStatus === "manual_paid") paymentStatus = "paid";
+  if (paymentStatus === "not_required") paymentStatus = "comped";
+  if (!["unpaid", "paid", "comped"].includes(paymentStatus)) {
+    paymentStatus = item.paymentRequired === false ? "comped" : "unpaid";
+  }
+  let printStatus = item.printStatus;
+  if (!["new", "printed", "reprint", "void"].includes(printStatus)) {
+    if (item.status === "printed") printStatus = "printed";
+    else if (item.status === "removed") printStatus = "void";
+    else printStatus = "new";
+  }
+  return {
+    ...item,
+    quantity: normalizePrintQuantity(item.quantity),
+    paymentStatus,
+    printStatus,
+  };
 }
 
 function writePrintQueue(eventId, items) {
@@ -583,7 +611,7 @@ app.post('/api/gallery', (req, res) => {
 app.get('/api/print-queue', (req, res) => {
   const eventId = normalizePrintQueueEventId(req.query && req.query.eventId);
   const items = readPrintQueue(eventId)
-    .filter((item) => item && item.status !== "removed")
+    .filter((item) => item && item.printStatus !== "void")
     .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
   res.json({ ok: true, eventId, items });
 });
@@ -596,7 +624,7 @@ app.post('/api/print-queue', (req, res) => {
     return res.status(400).json({ ok: false, error: "A public image URL is required for the shared print queue." });
   }
   const items = readPrintQueue(eventId);
-  const existing = items.find((item) => item && item.imageUrl === imageUrl && item.status !== "removed");
+  const existing = items.find((item) => item && item.imageUrl === imageUrl && item.printStatus !== "void");
   if (existing) return res.json({ ok: true, created: false, item: existing });
   const item = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
@@ -604,8 +632,9 @@ app.post('/api/print-queue', (req, res) => {
     imageUrl,
     thumbnailUrl: /^https?:\/\//i.test(String(body.thumbnailUrl || "")) ? String(body.thumbnailUrl).trim() : imageUrl,
     createdAt: new Date().toISOString(),
-    status: body.paymentRequired !== false ? "waiting_payment" : "ready",
-    paymentStatus: body.paymentRequired !== false ? "unpaid" : "not_required",
+    quantity: normalizePrintQuantity(body.quantity),
+    paymentStatus: body.paymentRequired !== false ? "unpaid" : "comped",
+    printStatus: "new",
     paymentRequired: body.paymentRequired !== false,
     paidAt: null,
     printedAt: null,
@@ -625,19 +654,14 @@ app.patch('/api/print-queue/:id', requirePrintQueueStaff, (req, res) => {
   if (index < 0) return res.status(404).json({ ok: false, error: "Queue item not found." });
   const item = { ...items[index] };
   const now = new Date().toISOString();
-  const statuses = new Set(["waiting_payment", "ready", "paid", "printed", "removed", "error"]);
-  const payments = new Set(["unpaid", "manual_paid", "not_required"]);
-  if (body.status && !statuses.has(body.status)) return res.status(400).json({ ok: false, error: "Invalid status." });
+  const printStatuses = new Set(["new", "printed", "reprint", "void"]);
+  const payments = new Set(["unpaid", "paid", "comped"]);
+  if (body.printStatus && !printStatuses.has(body.printStatus)) return res.status(400).json({ ok: false, error: "Invalid print status." });
   if (body.paymentStatus && !payments.has(body.paymentStatus)) return res.status(400).json({ ok: false, error: "Invalid payment status." });
-  if (body.status) item.status = body.status;
+  if (body.printStatus) item.printStatus = body.printStatus;
   if (body.paymentStatus) item.paymentStatus = body.paymentStatus;
-  if (item.paymentRequired === false) {
-    item.paymentStatus = "not_required";
-    if (item.status === "waiting_payment" || item.status === "paid") item.status = "ready";
-  }
-  if (item.status === "paid") item.paymentStatus = "manual_paid";
-  if (item.paymentStatus === "manual_paid" && !item.paidAt) item.paidAt = now;
-  if (item.status === "printed" && !item.printedAt) item.printedAt = now;
+  if (item.paymentStatus === "paid" && !item.paidAt) item.paidAt = now;
+  if (item.printStatus === "printed" && !item.printedAt) item.printedAt = now;
   if (typeof body.notes === "string") item.notes = body.notes.slice(0, 1000);
   items[index] = item;
   writePrintQueue(eventId, items);
@@ -649,7 +673,7 @@ app.delete('/api/print-queue/:id', requirePrintQueueStaff, (req, res) => {
   const items = readPrintQueue(eventId);
   const index = items.findIndex((item) => item && item.id === req.params.id);
   if (index < 0) return res.status(404).json({ ok: false, error: "Queue item not found." });
-  items[index] = { ...items[index], status: "removed", removedAt: new Date().toISOString() };
+  items[index] = { ...items[index], printStatus: "void", removedAt: new Date().toISOString() };
   writePrintQueue(eventId, items);
   return res.json({ ok: true, item: items[index] });
 });

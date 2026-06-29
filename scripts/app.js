@@ -1428,7 +1428,7 @@ let capturePreviewFrozen = false;
 let lastCaptureFlow = null; // To store the function for retake
 let removedStack = []; // For undo of removed assets in session
 let toastTimer = null;
-let lastShareUrl = null; // Public share URL served by SW
+let lastShareUrl = null; // Public Cloudinary share URL; service-worker share cache is offline fallback only.
 let demoMode = false; // Allows running from file:// without camera
 let showcaseDemoActive = false;
 let showcaseDemoCurrentKey = "";
@@ -6480,9 +6480,9 @@ async function copyStaffPrintQueueUrl() {
   }
 }
 
-function renderPaidPrintPanel() {
+function renderPaidPrintPanel(printEligible = true) {
   const settings = getPrintSettings();
-  const enabled = settings.mode === "paid-queue";
+  const enabled = settings.mode === "paid-queue" && printEligible;
   if (DOM.paidPrintPanel) DOM.paidPrintPanel.classList.toggle("show", enabled);
   if (!enabled) return;
   const noPaymentRequired = settings.noPaymentRequired === true;
@@ -6545,11 +6545,17 @@ function renderPaidPrintPanel() {
   DOM.paidPrintPaymentQr.classList.remove("show");
 }
 
-async function enqueueFinalPrintIfNeeded() {
+async function enqueueFinalPrintIfNeeded(imageUrl, printEligible = true) {
   const settings = getPrintSettings();
-  if (settings.mode !== "paid-queue") return;
-  const imageUrl = lastShareUrl || (DOM.finalStrip && DOM.finalStrip.src);
-  if (!/^https?:\/\//i.test(String(imageUrl || ""))) return;
+  if (settings.mode !== "paid-queue" || !printEligible) return;
+  if (!/^https?:\/\//i.test(String(imageUrl || ""))) {
+    if (DOM.shareStatus) {
+      DOM.shareStatus.textContent = "Print queue waiting for shared upload";
+      DOM.shareStatus.style.display = "inline-flex";
+    }
+    showToast("Print queue needs an uploaded image before staff can print.");
+    return;
+  }
   try {
     const response = await fetch("/api/print-queue", {
       method: "POST",
@@ -6558,12 +6564,24 @@ async function enqueueFinalPrintIfNeeded() {
         eventId: getPrintQueueEventId(),
         imageUrl,
         thumbnailUrl: imageUrl,
+        quantity: 1,
         paymentRequired: settings.noPaymentRequired !== true,
       }),
     });
-    if (!response.ok) console.warn("Print queue enqueue failed", await response.text());
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || "Print queue request failed.");
+    }
+    if (DOM.shareStatus && DOM.shareStatus.textContent === "Print queue waiting for shared upload") {
+      DOM.shareStatus.style.display = "none";
+    }
   } catch (error) {
     console.warn("Print queue enqueue failed", error);
+    if (DOM.shareStatus) {
+      DOM.shareStatus.textContent = "Print queue failed";
+      DOM.shareStatus.style.display = "inline-flex";
+    }
+    showToast("Print queue failed. Staff may need to refresh and retry.");
   }
 }
 
@@ -11151,6 +11169,13 @@ function showFinal(url, options = {}) {
     options.shareUrl && /^https?:/i.test(String(options.shareUrl))
       ? String(options.shareUrl)
       : "";
+  const printImageUrl =
+    options.printImageUrl && /^https?:/i.test(String(options.printImageUrl))
+      ? String(options.printImageUrl)
+      : shareType === "image"
+        ? providedShareUrl
+        : "";
+  const printEligible = options.printEligible !== false && shareType === "image";
   const offline = offlineModeActive();
   const qrContainer = DOM.qrCodeContainer;
   const qrCanvas = DOM.qrCode;
@@ -11217,8 +11242,8 @@ function showFinal(url, options = {}) {
         DOM.qrHint.style.display = "block";
       }
     }
-    renderPaidPrintPanel();
-    enqueueFinalPrintIfNeeded();
+    renderPaidPrintPanel(printEligible);
+    enqueueFinalPrintIfNeeded(printImageUrl, printEligible);
     resetIdleTimer();
     hidePreviewTimer = setTimeout(hideFinal, 15000);
   };

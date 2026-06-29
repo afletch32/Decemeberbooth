@@ -20,8 +20,11 @@
 
   function label(value) {
     if (value === "ready") return "Ready to print";
-    if (value === "not_required") return "Not required";
-    if (value === "waiting_payment") return "Waiting for payment";
+    if (value === "paid") return "Paid";
+    if (value === "comped") return "Comped";
+    if (value === "new") return "New";
+    if (value === "reprint") return "Reprint";
+    if (value === "void") return "Void";
     return String(value || "").replace(/_/g, " ");
   }
 
@@ -37,27 +40,27 @@
   }
 
   function render() {
-    const visible = items.filter((item) => item.status !== "removed");
+    const visible = items.filter((item) => item.printStatus !== "void");
     status.textContent = `${visible.length} active ${visible.length === 1 ? "item" : "items"} · refreshes every 5 seconds`;
     if (!visible.length) {
       list.innerHTML = '<div class="empty">No queued photos for this event.</div>';
       return;
     }
     list.innerHTML = visible.map((item) => {
-      const paymentRequired = item.paymentRequired !== false;
-      const canPrint = !paymentRequired || item.paymentStatus === "manual_paid" || item.status === "paid" || item.status === "printed";
+      const quantity = Math.max(1, Number.parseInt(item.quantity, 10) || 1);
+      const printed = item.printStatus === "printed" || item.printStatus === "reprint";
       return `<article class="queue-item">
         <img src="${escapeText(item.thumbnailUrl || item.imageUrl)}" alt="Queued photo created ${escapeText(createdAt(item.createdAt))}">
         <div>
-          <h2>Queued photo</h2>
-          <p class="metadata">${escapeText(createdAt(item.createdAt))}</p>
-          <span class="badge ${escapeText(item.status)}">${escapeText(label(item.status))}</span>
+          <h2>Queued photo · Qty ${escapeText(quantity)}</h2>
+          <p class="metadata">Event ${escapeText(item.eventId || eventId)} · ${escapeText(createdAt(item.createdAt))}</p>
+          <span class="badge ${escapeText(item.printStatus)}">${escapeText(label(item.printStatus))}</span>
           <span class="badge ${escapeText(item.paymentStatus)}">${escapeText(label(item.paymentStatus))}</span>
           <div class="queue-item-actions" style="margin-top:12px">
-            ${paymentRequired ? `<button type="button" data-action="paid" data-id="${escapeText(item.id)}" ${canPrint ? "disabled" : ""}>Mark Paid</button>` : ""}
-            <button type="button" data-action="print" data-id="${escapeText(item.id)}" ${canPrint ? "" : "disabled"}>Print</button>
-            <button type="button" data-action="printed" data-id="${escapeText(item.id)}" ${canPrint ? "" : "disabled"}>Mark Printed</button>
-            <button type="button" data-action="remove" data-id="${escapeText(item.id)}" class="danger">Remove</button>
+            <button type="button" data-action="print" data-id="${escapeText(item.id)}">Open/Print</button>
+            <button type="button" data-action="printed" data-id="${escapeText(item.id)}">Mark Printed</button>
+            <button type="button" data-action="reprint" data-id="${escapeText(item.id)}" ${printed ? "" : "disabled"}>Reprint</button>
+            <button type="button" data-action="void" data-id="${escapeText(item.id)}" class="danger">Void</button>
           </div>
         </div>
       </article>`;
@@ -106,7 +109,7 @@
   }
 
   function printQueueItem(item) {
-    if (!item || (item.paymentRequired !== false && !(item.paymentStatus === "manual_paid" || item.status === "paid" || item.status === "printed"))) throw new Error("Mark this item paid before printing.");
+    if (!item || !item.imageUrl) throw new Error("This queue item has no printable image.");
     openPrintWindowForImage(item.imageUrl);
   }
 
@@ -116,10 +119,13 @@
     const item = items.find((candidate) => candidate.id === button.dataset.id);
     if (!item) return;
     try {
-      if (button.dataset.action === "paid") await updateItem(item.id, { paymentStatus: "manual_paid", status: "paid" });
       if (button.dataset.action === "print") printQueueItem(item);
-      if (button.dataset.action === "printed") await updateItem(item.id, { status: "printed" });
-      if (button.dataset.action === "remove" && window.confirm("Remove this queue item?")) await removeItem(item.id);
+      if (button.dataset.action === "printed") await updateItem(item.id, { printStatus: "printed" });
+      if (button.dataset.action === "reprint") {
+        await updateItem(item.id, { printStatus: "reprint" });
+        printQueueItem(item);
+      }
+      if (button.dataset.action === "void" && window.confirm("Void this queue item?")) await removeItem(item.id);
     } catch (error) {
       window.alert(error.message || "Queue action failed.");
     }

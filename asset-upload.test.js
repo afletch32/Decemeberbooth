@@ -71,6 +71,14 @@ test("capture modes share one canonical upload pipeline", () => {
     "final screens should receive the uploaded URL instead of uploading again"
   );
   assert.ok(
+    appScript.includes("enqueueFinalPrintIfNeeded(printImageUrl, printEligible)") &&
+      appScript.includes('shareType === "image"') &&
+      appScript.includes("service-worker share cache is offline fallback only") &&
+      appScript.includes("Print queue waiting for shared upload") &&
+      appScript.includes("Print queue failed"),
+    "print queue submissions should use remote image uploads, skip live/video captures, and surface failures"
+  );
+  assert.ok(
     !appScript.includes("handleCaptureUpload("),
     "capture flows should not use the old gallery-only upload path"
   );

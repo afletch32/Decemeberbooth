@@ -79,6 +79,12 @@ test("pages functions provide live sync endpoints for themes, events, and fonts"
     "print queue endpoint should store shared event queues and accept booth submissions"
   );
   assert.ok(
+    printQueueFn.includes("function normalizeQuantity(value)") &&
+      printQueueFn.includes('paymentStatus: paymentRequired ? "unpaid" : "comped"') &&
+      printQueueFn.includes('printStatus: "new"'),
+    "print queue endpoint should store quantity, payment state, and print state"
+  );
+  assert.ok(
     printQueueItemFn.includes("PRINT_QUEUE_STAFF_TOKEN") && printQueueItemFn.includes('request.method !== "PATCH" && request.method !== "DELETE"'),
     "print queue mutations should support server-side staff authorization"
   );

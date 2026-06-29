@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Staff Print Queue | Decemeberbooth</title>
-  <meta name="description" content="Staff-only manual payment and print queue for Decemeberbooth.">
+  <meta name="description" content="Staff print queue for Decemeberbooth events with shared final image links.">
   <style>
     :root { color-scheme: light; font-family: Inter, system-ui, sans-serif; background: #f4f7f6; color: #163d38; }
     body { margin: 0; }
@@ -25,8 +25,9 @@
     .queue-item h2 { margin: 0 0 8px; font-size: 1.05rem; }
     .metadata { margin: 0 0 12px; color: #5b716d; font-size: .9rem; }
     .badge { display: inline-block; padding: 3px 8px; margin-right: 5px; border-radius: 999px; background: #edf4f2; font-size: .78rem; font-weight: 700; text-transform: capitalize; }
-    .badge.paid, .badge.printed { background: #d9f0e2; color: #175d35; }
-    .badge.waiting_payment, .badge.unpaid { background: #fff0cf; color: #75520b; }
+    .badge.paid, .badge.comped, .badge.printed { background: #d9f0e2; color: #175d35; }
+    .badge.reprint, .badge.unpaid { background: #fff0cf; color: #75520b; }
+    .badge.void { background: #f8d6d6; color: #7c2222; }
     .empty { padding: 28px; text-align: center; background: white; border-radius: 14px; color: #5b716d; }
     @media (max-width: 540px) { .queue-item { grid-template-columns: 92px 1fr; } .queue-item img { width: 92px; height: 126px; } }
   </style>
