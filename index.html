@@ -5981,13 +5981,11 @@
                 <button type="button" id="resetEventTextToThemeBtn">Use Theme Text</button>
                 <button type="button" id="resetEventSizesToThemeBtn">Use Theme Sizes</button>
                 <button type="button" id="resetEventLogoToThemeBtn">Use Theme Logo</button>
-                <button type="button" id="resetEventCharacterToThemeBtn">Use Theme Character</button>
               </div>
             </div>
             <div class="asset-actions">
               <button type="button" id="addLogoBtn">Add Logo</button>
               <button type="button" id="addAssetsBtn">Add Assets</button>
-              <button type="button" id="addCharacterBtn">Add Character</button>
               <button type="button" onclick="openLayoutBuilder()">Open Layout Builder</button>
               <button type="button" id="eventToSubThemeBtn" class="hidden">Save Theme Preset</button>
             </div>
@@ -6058,7 +6056,6 @@
               <input type="file" id="themeGreenBackgrounds" accept="image/*" multiple>
               <input type="file" id="themeOverlays" accept="image/*" multiple>
               <input type="file" id="themeTemplates" accept="image/*" multiple>
-              <input type="file" id="themeCharacter" accept="image/*">
               <input type="file" id="bulkAssetsInput" accept="image/*" multiple>
             </div>
             <div id="bulkAssetModal" class="hidden" style="position:fixed; inset:0; background:rgba(28,40,72,0.35); z-index:10010; display:flex; align-items:center; justify-content:center; padding:16px;">
@@ -6091,28 +6088,6 @@
               <div class="asset-row">
                 <label>Logo:</label>
                 <div id="currentLogo" class="asset-single"></div>
-              </div>
-              <div class="asset-row">
-                <label>Character:</label>
-                <div id="currentCharacter" class="asset-single"></div>
-              </div>
-              <div class="asset-row">
-                <label>Character Position</label>
-                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                  <label for="characterXInput" style="min-width:64px;">Left</label>
-                  <input type="range" id="characterXInput" min="0" max="60" step="1">
-                  <span id="characterXValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
-                </div>
-                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
-                  <label for="characterBottomInput" style="min-width:64px;">Bottom</label>
-                  <input type="range" id="characterBottomInput" min="-10" max="20" step="1">
-                  <span id="characterBottomValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
-                </div>
-                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
-                  <label for="characterHeightInput" style="min-width:64px;">Height</label>
-                  <input type="range" id="characterHeightInput" min="20" max="110" step="1">
-                  <span id="characterHeightValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
-                </div>
               </div>
             </div>
           </div>
@@ -6343,7 +6318,6 @@
           <video id="video" class="hidden" autoplay playsinline muted></video>
           <img id="lastShot" />
           <img id="liveOverlay" />
-          <img id="character" alt="Character">
           <div id="recordingOverlay">
             <span class="rec-dot"></span>
             <span id="recordingTimer">REC 00:00</span>

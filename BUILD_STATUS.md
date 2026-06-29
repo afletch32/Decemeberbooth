@@ -35,3 +35,4 @@ Important decisions
 - Froze the captured frame immediately after countdown for both classic video preview and slot-based overlay previews while the final image/upload is prepared.
 - Aligned final single-photo character rendering with the same event/session character resolver used by the live preview, avoiding direct theme-only character lookup during export.
 - Restored the operator-only fullscreen launch button and expanded live/countdown desktop camera width expected by setup-screen coverage so the full `npm test` suite passes again.
+- Removed the character feature across the main booth stack, including theme/event data handling, export rendering, asset ingestion, and the remaining setup UI hooks.

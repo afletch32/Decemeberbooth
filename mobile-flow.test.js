@@ -49,14 +49,3 @@ test("live photo controls honor the admin toggle", () => {
     "live photo button, mode fallback, and capture should respect the live-photo toggle"
   );
 });
-
-test("final print uses event-resolved characters", () => {
-  const appScript = readProjectFile("scripts/app.js");
-
-  assert.ok(
-    appScript.includes("const characterSrc = resolveEventCharacter(activeTheme);") &&
-      appScript.includes("const charImg = await loadImage(characterSrc);") &&
-      !appScript.includes("const charImg = await loadImage(activeTheme.character);"),
-    "exports should use the same event/session character resolution as the live preview"
-  );
-});

@@ -121,9 +121,6 @@ test("buildEventFromThemeDefaults snapshots theme text and sizing into a new eve
     welcomeTitleSize: 62,
     bannerSize: 74,
     captureLabel: "Snap It",
-    characterX: 18,
-    characterBottom: 4,
-    characterHeight: 82,
     fontHeading: "'Playfair Display', serif",
     fontBody: "'Lora', serif",
     welcome: {
@@ -143,9 +140,6 @@ test("buildEventFromThemeDefaults snapshots theme text and sizing into a new eve
   assert.equal(event.captureLabel, "Snap It");
   assert.equal(event.bannerSize, 74);
   assert.equal(event.welcomeTitleSize, 62);
-  assert.equal(event.characterX, 18);
-  assert.equal(event.characterBottom, 4);
-  assert.equal(event.characterHeight, 82);
   assert.equal(event.fontHeading, "'Playfair Display', serif");
   assert.equal(event.fontBody, "'Lora', serif");
   assert.deepEqual(event.overrides, {

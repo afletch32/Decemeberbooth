@@ -624,7 +624,6 @@ const DOM = {
   photoSlotLayer: document.getElementById("photoSlotLayer"),
   video: document.getElementById("video"),
   liveOverlay: document.getElementById("liveOverlay"),
-  character: document.getElementById("character"),
   silhouette: document.getElementById("silhouette"),
   recordingOverlay: document.getElementById("recordingOverlay"),
   recordingTimer: document.getElementById("recordingTimer"),
@@ -728,9 +727,6 @@ const DOM = {
     "resetEventSizesToThemeBtn"
   ),
   resetEventLogoToThemeBtn: document.getElementById("resetEventLogoToThemeBtn"),
-  resetEventCharacterToThemeBtn: document.getElementById(
-    "resetEventCharacterToThemeBtn"
-  ),
   bannerSizeInput: document.getElementById("bannerSizeInput"),
   bannerSizeValue: document.getElementById("bannerSizeValue"),
   welcomeTitleSizeInput: document.getElementById("welcomeTitleSizeInput"),
@@ -857,17 +853,9 @@ const DOM = {
   themeDefaultsSetupList: document.getElementById("themeDefaultsSetupList"),
   themeDefaultsSetupCancel: document.getElementById("themeDefaultsSetupCancel"),
   themeDefaultsSetupSave: document.getElementById("themeDefaultsSetupSave"),
-  addCharacterBtn: document.getElementById("addCharacterBtn"),
-  currentCharacter: document.getElementById("currentCharacter"),
   themeGreenBackgrounds: document.getElementById("themeGreenBackgrounds"),
   addGreenBackgroundsBtn: document.getElementById("addGreenBackgroundsBtn"),
   currentGreenBackgrounds: document.getElementById("currentGreenBackgrounds"),
-  characterXInput: document.getElementById("characterXInput"),
-  characterXValue: document.getElementById("characterXValue"),
-  characterBottomInput: document.getElementById("characterBottomInput"),
-  characterBottomValue: document.getElementById("characterBottomValue"),
-  characterHeightInput: document.getElementById("characterHeightInput"),
-  characterHeightValue: document.getElementById("characterHeightValue"),
   themeFontSelect: document.getElementById("themeFontSelect"),
   themeEditorModeSelect: document.getElementById("themeEditorModeSelect"),
   themeCloneSection: document.getElementById("themeCloneSection"),
@@ -1505,7 +1493,6 @@ function createEmptySessionAssets() {
     backgroundIndex: 0,
     greenBackgroundIndex: 0,
     logo: "",
-    character: "",
   };
 }
 let activeSessionAssets = createEmptySessionAssets();
@@ -2728,10 +2715,6 @@ function addSessionAssetUrl(kind, url) {
     activeSessionAssets.logo = url;
     return true;
   }
-  if (kind === "character") {
-    activeSessionAssets.character = url;
-    return true;
-  }
   return false;
 }
 
@@ -2777,7 +2760,6 @@ function getSessionAssetSummaryText() {
     overlays: activeSessionAssets.overlays.length,
     templates: activeSessionAssets.templates.length,
     hasLogo: !!activeSessionAssets.logo,
-    hasCharacter: !!activeSessionAssets.character,
   });
   return summary === "none" ? "No session assets selected yet." : `Session assets: ${summary}`;
 }
@@ -3625,10 +3607,6 @@ function setupThemeEditorControls() {
     DOM.addTemplatesBtn.addEventListener("click", () =>
       DOM.themeTemplates.click()
     );
-  if (DOM.addCharacterBtn && DOM.themeCharacter)
-    DOM.addCharacterBtn.addEventListener("click", () =>
-      DOM.themeCharacter.click()
-    );
   if (DOM.bulkAssetsInput)
     DOM.bulkAssetsInput.addEventListener("change", () =>
       openBulkAssetModal(DOM.bulkAssetsInput.files)
@@ -3758,12 +3736,11 @@ function handleThemeAssetInputChange(kind) {
   else if (kind === "logo") input = DOM.themeLogo;
   else if (kind === "overlay") input = DOM.themeOverlays;
   else if (kind === "template") input = DOM.themeTemplates;
-  else if (kind === "character") input = DOM.themeCharacter;
   else if (kind === "greenBackgrounds") input = DOM.themeGreenBackgrounds;
   if (!input || !input.files || input.files.length === 0) return;
   const active = getActiveEvent();
   if (active) {
-    if (kind === "logo" || kind === "character") {
+    if (kind === "logo") {
       handleEventSingleAssetInput(kind, input.files)
         .catch((err) => {
           console.error("Failed to update event assets:", err);
@@ -3798,7 +3775,6 @@ function handleThemeAssetInputChange(kind) {
       template: "templates",
       greenBackgrounds: "greenBackgrounds",
       logo: "logo",
-      character: "character",
     };
     const sessionKind = kindMap[kind];
     if (sessionKind) {
@@ -5661,7 +5637,6 @@ function init() {
   setupEnhancementModeSelect();
   setupCameraZoomControls();
   setupEditModeControls();
-  setupCharacterPositionControls();
   setupCustomPairingControls();
   setupEventNameInput();
   setupEventVisualEditorControls();
@@ -7377,8 +7352,6 @@ function applyThemeBasics(theme) {
   applyBannerSize(theme);
   applyWelcomeTitleSize(theme);
   applyThemeBackground(theme);
-  applyThemeCharacter(theme);
-  applyCharacterPosition(theme);
 }
 
 function refreshFontSelectForTheme(theme) {
@@ -7987,11 +7960,6 @@ function renderCurrentAssets(theme) {
     }
   }
   setSingle(DOM.currentLogo, resolveEventLogo(theme), "logo");
-  setSingle(
-    DOM.currentCharacter,
-    resolveEventCharacter(theme),
-    "character"
-  );
   // Font preview
   if (DOM.currentFont) {
     DOM.currentFont.innerHTML = "";
@@ -8083,20 +8051,6 @@ function renderCurrentAssets(theme) {
   }
 }
 
-function getCharacterPlacement() {
-  if (!DOM.character || DOM.character.classList.contains("hidden")) return null;
-  const container = DOM.videoContainer;
-  if (!container) return null;
-  const containerRect = container.getBoundingClientRect();
-  const charRect = DOM.character.getBoundingClientRect();
-  if (!containerRect.width || !containerRect.height) return null;
-  const widthRatio = charRect.width / containerRect.width;
-  const heightRatio = charRect.height / containerRect.height;
-  const leftRatio = (charRect.left - containerRect.left) / containerRect.width;
-  const topRatio = (charRect.top - containerRect.top) / containerRect.height;
-  return { widthRatio, heightRatio, leftRatio, topRatio };
-}
-
 function goAdmin() {
   hideFinal();
   applyEditModeState(false);
@@ -8176,11 +8130,14 @@ function applyOverlayForegroundLayer(overlay) {
   if (!DOM.liveOverlay) return;
   const src = overlay ? resolveOverlayRenderSrc(activeTheme, overlay.src) : "";
   if (!src) {
-    DOM.liveOverlay.src = "";
+    if (DOM.liveOverlay.src) DOM.liveOverlay.src = "";
     DOM.liveOverlay.style.display = "none";
     return;
   }
-  DOM.liveOverlay.src = withBust(src);
+  const busted = withBust(src);
+  if (DOM.liveOverlay.src !== busted) {
+    DOM.liveOverlay.src = busted;
+  }
   DOM.liveOverlay.style.display = "block";
 }
 
@@ -10508,30 +10465,6 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
       drawImageCover(ctx, bgImg, 0, 0, targetW, targetH);
     } catch (_) {}
   }
-  // Character overlay (optional)
-  const characterSrc = resolveEventCharacter(activeTheme);
-  if (characterSrc) {
-    try {
-      const charImg = await loadImage(characterSrc);
-      const placement = getCharacterPlacement();
-      if (placement) {
-        const x = placement.leftRatio * targetW;
-        const y = placement.topRatio * targetH;
-        const w = placement.widthRatio * targetW;
-        const h = placement.heightRatio * targetH;
-        ctx.drawImage(charImg, x, y, w, h);
-      } else {
-        const h = Math.round(targetH * 0.75);
-        const w = Math.round(
-          (charImg.naturalWidth || charImg.width) *
-            (h / (charImg.naturalHeight || charImg.height))
-        );
-        const x = Math.round(targetW * 0.12);
-        const y = Math.round(targetH - h);
-        ctx.drawImage(charImg, x, y, w, h);
-      }
-  } catch (_) {}
-  }
   const photoForPrint = aiEnabled
     ? applyAiMaskToCanvas(
         enhancedPhotoCanvas,
@@ -11172,7 +11105,6 @@ function describeAssetSummaryCounts({
   if (templates)
     parts.push(`${templates} template${templates === 1 ? "" : "s"}`);
   if (hasLogo) parts.push("logo");
-  if (hasCharacter) parts.push("character");
   return parts.length ? parts.join(", ") : "none";
 }
 
@@ -11319,7 +11251,6 @@ function syncEventSetupEditor(theme = null) {
         overlays: themeOverlays,
         templates: themeTemplates,
         hasLogo: !!(themeObj && themeObj.logo),
-        hasCharacter: !!(themeObj && themeObj.character),
       }
     )}`;
   }
@@ -11335,8 +11266,7 @@ function syncEventSetupEditor(theme = null) {
         overlays: overrides.overlays.length,
         templates: overrides.templates.length,
         hasLogo: !!active.logo,
-        hasCharacter: !!active.character,
-      });
+          });
       DOM.eventThemeReferenceText.textContent = `Base theme: ${
         themeObj && themeObj.name ? themeObj.name : "None"
       }. Event-only assets: ${eventSpecific}.`;
@@ -11360,10 +11290,6 @@ function updateActiveEventDetails({
   expoCompany,
   bannerSize,
   logo,
-  character,
-  characterX,
-  characterBottom,
-  characterHeight,
 }) {
   const events = getStoredEvents();
   const id = getActiveEventId();
@@ -11398,15 +11324,6 @@ function updateActiveEventDetails({
     if (logo) target.logo = logo;
     else delete target.logo;
   }
-  if (typeof character === "string") {
-    if (character) target.character = character;
-    else delete target.character;
-  }
-  if (typeof characterX === "number") target.characterX = characterX;
-  if (typeof characterBottom === "number")
-    target.characterBottom = characterBottom;
-  if (typeof characterHeight === "number")
-    target.characterHeight = characterHeight;
   setStoredEvents(events);
   populateEventProfileSelect(id);
   updateEventOverridesSummary();
@@ -11604,7 +11521,6 @@ function updateEventOverridesSummary() {
     overlays: overrides.overlays.length,
     templates: overrides.templates.length,
     hasLogo: !!active.logo,
-    hasCharacter: !!active.character,
   });
   DOM.eventOverridesSummary.textContent =
     summary === "none"
@@ -11658,7 +11574,6 @@ function updateCurrentEventAssetsPanel(theme = null) {
         overlays: baseOverlays,
         templates: baseTemplates,
         hasLogo: !!(themeObj && themeObj.logo),
-        hasCharacter: !!(themeObj && themeObj.character),
       }
     )}`;
     if (DOM.eventGalleryLink)
@@ -11687,7 +11602,6 @@ function updateCurrentEventAssetsPanel(theme = null) {
     overlays: overrides.overlays.length,
     templates: overrides.templates.length,
     hasLogo: !!active.logo,
-    hasCharacter: !!active.character,
   });
   DOM.currentEventAssetsSummary.textContent = `Event-only assets: ${eventSummary}`;
 
@@ -11762,7 +11676,6 @@ async function handleEventSingleAssetInput(kind, fileList) {
   );
   if (!url) return;
   if (kind === "logo") updateActiveEventDetails({ logo: url });
-  if (kind === "character") updateActiveEventDetails({ character: url });
   renderOptions();
 }
 
@@ -13330,18 +13243,6 @@ async function migrateEventManagedLocalAssets(event) {
   }
   changed += logo.changed;
   cleanup.push(...logo.cleanup);
-
-  const character = await migrateManagedLocalSingle(
-    event.character,
-    "character",
-    getEventAssetUploadOptions(event, "character")
-  );
-  if (typeof event.character === "string" || character.changed) {
-    if (character.value) event.character = character.value;
-    else delete event.character;
-  }
-  changed += character.changed;
-  cleanup.push(...character.cleanup);
 
   return { changed, cleanup };
 }
@@ -17193,7 +17094,6 @@ function createSubThemeFromEvent() {
     newTheme.templates = mergedTemplates;
   }
   if (active.logo) newTheme.logo = active.logo;
-  if (active.character) newTheme.character = active.character;
   if (typeof active.bannerText === "string" && active.bannerText)
     newTheme.bannerText = active.bannerText;
   if (typeof active.welcomeTitle === "string" && active.welcomeTitle) {
@@ -17213,13 +17113,6 @@ function createSubThemeFromEvent() {
     active.welcomeTitleSize > 0
   )
     newTheme.welcomeTitleSize = active.welcomeTitleSize;
-  if (typeof active.characterX === "number")
-    newTheme.characterX = active.characterX;
-  if (typeof active.characterBottom === "number")
-    newTheme.characterBottom = active.characterBottom;
-  if (typeof active.characterHeight === "number")
-    newTheme.characterHeight = active.characterHeight;
-
   if (bucket) parent[bucket][slug] = newTheme;
   else themes[slug] = newTheme;
 
@@ -17274,9 +17167,6 @@ function describeThemeUpdate(changes, reason) {
   }
   if (changes.logoUrl) {
     parts.push("Logo applied to all themes");
-  }
-  if (changes.characterUrl) {
-    parts.push("Character updated");
   }
   if (parts.length) return parts.join(" • ");
   if (reason === "logo") return "Logo unchanged";
@@ -17584,7 +17474,6 @@ function ensureCreateThemeAssets() {
       overlays: [],
       templates: [],
       logos: [],
-      characters: [],
     };
   }
   return createThemeAssets;
@@ -17634,7 +17523,6 @@ function updateCreateThemeSummary() {
     overlays = [],
     templates = [],
     logos = [],
-    characters = [],
   } = createThemeAssets;
   if (backgrounds.length)
     parts.push(
@@ -17705,7 +17593,6 @@ function categorizeThemeAsset(file) {
   if (rel.includes("template")) return "templates";
   if (rel.includes("background")) return "backgrounds";
   if (rel.includes("logo")) return "logos";
-  if (rel.includes("character")) return "characters";
   return null;
 }
 
@@ -17849,14 +17736,6 @@ async function confirmCreateTheme() {
       })
     );
   }
-  if (assets.characters && assets.characters.length) {
-    const characterFile = assets.characters[0];
-    tasks.push(
-      uploadAsset(characterFile, "character").then((url) => {
-        if (url) newTheme.character = url;
-      })
-    );
-  }
 
   try {
     await Promise.all(tasks);
@@ -17963,59 +17842,12 @@ function applyThemeBasicsFromEditor(target) {
     target.welcome.prompt = "";
 }
 
-function applyThemeCharacter(theme) {
-  if (!DOM.character) return;
-  const src = resolveEventCharacter(theme);
-  if (src) {
-    DOM.character.src = withBust(src);
-    DOM.character.classList.remove("hidden");
-  } else {
-    DOM.character.removeAttribute("src");
-    DOM.character.classList.add("hidden");
-  }
-}
-
 function resolveEventLogo(theme) {
   const active = getActiveEvent();
   if (activeSessionAssets.logo) return activeSessionAssets.logo;
   if (active && typeof active.logo === "string" && active.logo)
     return active.logo;
   return theme && theme.logo ? theme.logo : "";
-}
-
-function resolveEventCharacter(theme) {
-  const active = getActiveEvent();
-  if (activeSessionAssets.character) return activeSessionAssets.character;
-  if (active && typeof active.character === "string" && active.character)
-    return active.character;
-  return theme && theme.character ? theme.character : "";
-}
-
-function getCharacterPosition(theme) {
-  const active = getActiveEvent();
-  const left =
-    active && typeof active.characterX === "number"
-      ? active.characterX
-      : theme && typeof theme.characterX === "number"
-      ? theme.characterX
-      : 12;
-  const bottom =
-    active && typeof active.characterBottom === "number"
-      ? active.characterBottom
-      : theme && typeof theme.characterBottom === "number"
-      ? theme.characterBottom
-      : 0;
-  const height =
-    active && typeof active.characterHeight === "number"
-      ? active.characterHeight
-      : theme && typeof theme.characterHeight === "number"
-      ? theme.characterHeight
-      : 75;
-  return {
-    left: Math.min(60, Math.max(0, left)),
-    bottom: Math.min(20, Math.max(-10, bottom)),
-    height: Math.min(110, Math.max(40, height)),
-  };
 }
 
 function applyCharacterPosition(theme) {
@@ -18033,57 +17865,6 @@ function applyCharacterPosition(theme) {
     DOM.characterHeightInput.value = String(pos.height);
   if (DOM.characterHeightValue)
     DOM.characterHeightValue.textContent = `${pos.height}%`;
-}
-
-function setupCharacterPositionControls() {
-  const update = () => {
-    const active = getActiveEvent();
-    const left = DOM.characterXInput
-      ? parseInt(DOM.characterXInput.value, 10)
-      : NaN;
-    const bottom = DOM.characterBottomInput
-      ? parseInt(DOM.characterBottomInput.value, 10)
-      : NaN;
-    const height = DOM.characterHeightInput
-      ? parseInt(DOM.characterHeightInput.value, 10)
-      : NaN;
-    if (active) {
-      updateActiveEventDetails({
-        characterX: Number.isFinite(left) ? left : active.characterX,
-        characterBottom: Number.isFinite(bottom)
-          ? bottom
-          : active.characterBottom,
-        characterHeight: Number.isFinite(height)
-          ? height
-          : active.characterHeight,
-      });
-      return;
-    }
-    const target = activeTheme || getSelectedThemeTarget();
-    if (!target) return;
-    if (Number.isFinite(left)) target.characterX = left;
-    if (Number.isFinite(bottom)) target.characterBottom = bottom;
-    if (Number.isFinite(height)) target.characterHeight = height;
-    applyCharacterPosition(target);
-    saveThemesToStorage();
-  };
-  if (DOM.characterXInput)
-    DOM.characterXInput.addEventListener("input", update);
-  if (DOM.characterBottomInput)
-    DOM.characterBottomInput.addEventListener("input", update);
-  if (DOM.characterHeightInput)
-    DOM.characterHeightInput.addEventListener("input", update);
-}
-
-function removeCharacter() {
-  const target = getSelectedThemeTarget();
-  if (!target) return;
-  const removed = target.character || "";
-  if (target.character) delete target.character;
-  applyThemeCharacter(target);
-  saveThemesToStorage();
-  renderCurrentAssets(target);
-  scheduleLocalAssetCleanup(removed);
 }
 
 function normalizeFolderInput(raw) {
@@ -18174,20 +17955,6 @@ async function uploadThemeAssetsFromEditor(target) {
     );
   }
 
-  const characterFile =
-    DOM.themeCharacter && DOM.themeCharacter.files
-      ? DOM.themeCharacter.files[0]
-      : null;
-  if (characterFile) {
-    tasks.push(
-      uploadAsset(characterFile, "character").then((url) => {
-        if (!url) return;
-        target.character = url;
-        characterUrl = url;
-      })
-    );
-  }
-
   const overlayFiles =
     DOM.themeOverlays && DOM.themeOverlays.files
       ? Array.from(DOM.themeOverlays.files)
@@ -18229,7 +17996,6 @@ async function uploadThemeAssetsFromEditor(target) {
     overlaysAdded,
     templatesAdded,
     logoUrl,
-    characterUrl,
   };
 }
 
@@ -18239,7 +18005,6 @@ function clearThemeFileInputs() {
   if (DOM.themeGreenBackgrounds) DOM.themeGreenBackgrounds.value = "";
   if (DOM.themeOverlays) DOM.themeOverlays.value = "";
   if (DOM.themeTemplates) DOM.themeTemplates.value = "";
-  if (DOM.themeCharacter) DOM.themeCharacter.value = "";
 }
 
 // --- De-duplication helpers ---
@@ -20471,6 +20236,3 @@ Object.assign(window, {
   confirmBoothLaunch,
   toggleAnalytics,
   undoLastRemoval,
-  updateCurrentThemeFont,
-  updateSelectedTheme,
-});
