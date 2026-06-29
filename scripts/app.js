@@ -5563,8 +5563,6 @@ function setupWelcomeInteractions() {
     if (!node || node.dataset.welcomeBound === "true") return;
     node.dataset.welcomeBound = "true";
     node.addEventListener("click", beginWelcome);
-    node.addEventListener("pointerup", beginWelcome);
-    node.addEventListener("touchend", beginWelcome, { passive: false });
     node.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") beginWelcome(event);
     });
@@ -5576,25 +5574,23 @@ function setupWelcomeInteractions() {
   ) {
     document.body.dataset.welcomeDelegationBound = "true";
     const delegatedWelcomeStart = (event) => {
+      if (welcomeFlowStep !== "idle") return;
       const target = event.target;
       if (!(target instanceof Element)) return;
       if (
-        !target.closest("#welcomeScreen, #welcomeOverlay, #startButton") ||
+        !target.closest("#welcomeScreen, #welcomeOverlay") ||
         target.closest(
-          "[data-demo-theme], .welcome-mode-btn, .welcome-back-button"
+          "button, a, input, select, textarea, label, [role=button], [data-demo-theme], .welcome-mode-btn, .welcome-back-button"
         )
-      )
+      ) {
         return;
-      if (!DOM.welcomeScreen || DOM.welcomeScreen.classList.contains("faded"))
+      }
+      if (!DOM.welcomeScreen || DOM.welcomeScreen.classList.contains("faded")) {
         return;
+      }
       beginWelcome(event);
     };
-    document.addEventListener("pointerdown", delegatedWelcomeStart, true);
     document.addEventListener("click", delegatedWelcomeStart, true);
-    document.addEventListener("touchstart", delegatedWelcomeStart, {
-      capture: true,
-      passive: false,
-    });
   }
 }
 

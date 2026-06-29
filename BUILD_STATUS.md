@@ -36,3 +36,4 @@ Important decisions
 - Aligned final single-photo character rendering with the same event/session character resolver used by the live preview, avoiding direct theme-only character lookup during export.
 - Restored the operator-only fullscreen launch button and expanded live/countdown desktop camera width expected by setup-screen coverage so the full `npm test` suite passes again.
 - Removed the character feature across the main booth stack, including theme/event data handling, export rendering, asset ingestion, and the remaining setup UI hooks.
+- Fixed a welcome-screen interaction regression where broad captured pointer/touch handlers in [`setupWelcomeInteractions()`](scripts/app.js:5561) consumed button presses before normal click behavior, leaving booth buttons effectively unclickable. Welcome delegation now only listens for plain background clicks and ignores interactive controls.
