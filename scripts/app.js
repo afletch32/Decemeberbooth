@@ -45,6 +45,8 @@ const APP_CONFIG = {
     ACTIVE_EVENT: "photoboothActiveEventId",
     GLOBAL_LOGO: "photoboothGlobalLogo",
     ASSET_LIBRARY: "photoboothAssetLibrary",
+    ASSET_PICKER_FAVORITES: "photoboothAssetPickerFavorites",
+    ASSET_PICKER_RECENTS: "photoboothAssetPickerRecents",
   },
 };
 
@@ -1435,6 +1437,21 @@ let captureAspectRatio = null; // Override capture aspect (width/height) when se
 const SETUP_LAUNCH_MODE_STORAGE_KEY = "photoboothSetupLaunchMode";
 let setupLaunchMode = "single_photo";
 let launchSummaryRevision = 0;
+const ASSET_PICKER_INITIAL_LIMIT = 24;
+const ASSET_PICKER_PAGE_SIZE = 24;
+const ASSET_PICKER_RECENT_LIMIT = 36;
+let assetPickerFavorites = readAssetPickerBuckets(
+  APP_CONFIG.STORAGE_KEYS.ASSET_PICKER_FAVORITES
+);
+let assetPickerRecents = readAssetPickerBuckets(
+  APP_CONFIG.STORAGE_KEYS.ASSET_PICKER_RECENTS
+);
+let assetPickerSearchQuery = "";
+let assetPickerVisibleLimits = {
+  photo: ASSET_PICKER_INITIAL_LIMIT,
+  strip: ASSET_PICKER_INITIAL_LIMIT,
+  layout: ASSET_PICKER_INITIAL_LIMIT,
+};
 const AUTO_ENHANCE_ENABLED = true;
 const AUTO_ENHANCE_FILTER = "brightness(1.05) contrast(1.08) saturate(1.08)";
 const ENHANCEMENT_MODE_DEFAULT = "bridal-glow";
@@ -1464,6 +1481,216 @@ const ENHANCEMENT_MODE_CONFIG = {
     smoothingBlend: 0.18,
   },
 };
+
+function createEmptyAssetPickerBuckets() {
+  return {
+    overlay: [],
+    template: [],
+  };
+}
+
+function normalizeAssetPickerKind(kind = "") {
+  const normalized = normalizeUploadedAssetCategory(kind);
+  return normalized === "overlay" || normalized === "template" ? normalized : "";
+}
+
+function readAssetPickerBuckets(storageKey) {
+  const fallback = createEmptyAssetPickerBuckets();
+  try {
+    const parsed = JSON.parse(localStorage.getItem(storageKey) || "{}");
+    return {
+      overlay: Array.isArray(parsed.overlay)
+        ? parsed.overlay.map(getAssetEntrySrc).filter(Boolean)
+        : [],
+      template: Array.isArray(parsed.template)
+        ? parsed.template.map(getAssetEntrySrc).filter(Boolean)
+        : [],
+    };
+  } catch (_) {
+    return fallback;
+  }
+}
+
+function saveAssetPickerBuckets(storageKey, buckets) {
+  try {
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        overlay: Array.isArray(buckets.overlay) ? buckets.overlay : [],
+        template: Array.isArray(buckets.template) ? buckets.template : [],
+      })
+    );
+  } catch (_) {}
+}
+
+function getAssetPickerBucket(buckets, kind) {
+  const normalized = normalizeAssetPickerKind(kind);
+  if (!normalized) return [];
+  if (!Array.isArray(buckets[normalized])) buckets[normalized] = [];
+  return buckets[normalized];
+}
+
+function isAssetPickerFavorite(kind, src) {
+  const cleanSrc = getAssetEntrySrc(src);
+  return !!cleanSrc && getAssetPickerBucket(assetPickerFavorites, kind).includes(cleanSrc);
+}
+
+function toggleAssetPickerFavorite(kind, src) {
+  const cleanSrc = getAssetEntrySrc(src);
+  const bucket = getAssetPickerBucket(assetPickerFavorites, kind);
+  if (!cleanSrc || !bucket) return false;
+  const index = bucket.indexOf(cleanSrc);
+  if (index >= 0) bucket.splice(index, 1);
+  else bucket.unshift(cleanSrc);
+  saveAssetPickerBuckets(
+    APP_CONFIG.STORAGE_KEYS.ASSET_PICKER_FAVORITES,
+    assetPickerFavorites
+  );
+  return index < 0;
+}
+
+function recordAssetPickerRecent(kind, src) {
+  const cleanSrc = getAssetEntrySrc(src);
+  const bucket = getAssetPickerBucket(assetPickerRecents, kind);
+  if (!cleanSrc || !bucket) return;
+  const index = bucket.indexOf(cleanSrc);
+  if (index >= 0) bucket.splice(index, 1);
+  bucket.unshift(cleanSrc);
+  bucket.splice(ASSET_PICKER_RECENT_LIMIT);
+  saveAssetPickerBuckets(
+    APP_CONFIG.STORAGE_KEYS.ASSET_PICKER_RECENTS,
+    assetPickerRecents
+  );
+}
+
+function getAssetPickerFilename(src = "") {
+  const value = String(src || "").split("?")[0].split("#")[0];
+  try {
+    return decodeURIComponent(value.split("/").pop() || value || "");
+  } catch (_) {
+    return value.split("/").pop() || value || "";
+  }
+}
+
+function getAssetPickerSortLabel(entry) {
+  const src = getAssetEntrySrc(entry);
+  return String(
+    (entry && typeof entry === "object" && (entry.name || entry.category)) ||
+      getAssetPickerFilename(src) ||
+      src
+  ).toLowerCase();
+}
+
+function getAssetPickerSearchText(entry) {
+  const src = getAssetEntrySrc(entry);
+  const tags = Array.isArray(entry && entry.tags) ? entry.tags : [];
+  return [
+    getAssetPickerSortLabel(entry),
+    getAssetPickerFilename(src),
+    src,
+    ...tags,
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+function getThemePickerSourceSet(kind, theme) {
+  const normalized = normalizeAssetPickerKind(kind);
+  const list =
+    normalized === "overlay"
+      ? getBaseOverlayList(theme)
+      : normalized === "template"
+      ? getBaseTemplateList(theme)
+      : [];
+  return createAssetSelectionSet(list);
+}
+
+function sortAssetPickerEntries(entries = [], kind = "", theme = activeTheme) {
+  const normalized = normalizeAssetPickerKind(kind);
+  if (!normalized) return Array.isArray(entries) ? entries.slice() : [];
+  const favorites = getAssetPickerBucket(assetPickerFavorites, normalized);
+  const recents = getAssetPickerBucket(assetPickerRecents, normalized);
+  const favoriteIndex = new Map(favorites.map((src, index) => [src, index]));
+  const recentIndex = new Map(recents.map((src, index) => [src, index]));
+  const themeSources = getThemePickerSourceSet(normalized, theme);
+
+  return (Array.isArray(entries) ? entries : [])
+    .map((entry, originalIndex) => {
+      const src = getAssetEntrySrc(entry);
+      const favoriteRank = favoriteIndex.has(src) ? favoriteIndex.get(src) : -1;
+      const recentRank = recentIndex.has(src) ? recentIndex.get(src) : -1;
+      const group =
+        favoriteRank >= 0
+          ? 0
+          : recentRank >= 0
+          ? 1
+          : themeSources.has(src)
+          ? 2
+          : 3;
+      const groupRank =
+        group === 0 ? favoriteRank : group === 1 ? recentRank : originalIndex;
+      return {
+        entry,
+        src,
+        group,
+        groupRank,
+        label: getAssetPickerSortLabel(entry),
+        originalIndex,
+      };
+    })
+    .sort((a, b) => {
+      if (a.group !== b.group) return a.group - b.group;
+      if (a.group <= 1 && a.groupRank !== b.groupRank) {
+        return a.groupRank - b.groupRank;
+      }
+      const labelCompare = a.label.localeCompare(b.label);
+      if (labelCompare) return labelCompare;
+      return a.originalIndex - b.originalIndex;
+    })
+    .map((item) => item.entry);
+}
+
+function filterAssetPickerEntries(entries = []) {
+  const query = assetPickerSearchQuery.trim().toLowerCase();
+  if (!query) return Array.isArray(entries) ? entries.slice() : [];
+  return (Array.isArray(entries) ? entries : []).filter((entry) =>
+    getAssetPickerSearchText(entry).includes(query)
+  );
+}
+
+function getAssetPickerVisibleLimit(modeKey, selectedSrc = "", entries = []) {
+  const base =
+    assetPickerVisibleLimits[modeKey] || ASSET_PICKER_INITIAL_LIMIT;
+  const cleanSelected = getAssetEntrySrc(selectedSrc);
+  if (!cleanSelected) return base;
+  const selectedIndex = entries.findIndex(
+    (entry) => getAssetEntrySrc(entry) === cleanSelected
+  );
+  return selectedIndex >= 0 ? Math.max(base, selectedIndex + 1) : base;
+}
+
+function renderOptionsPreservingSearchFocus() {
+  const input = DOM.options
+    ? DOM.options.querySelector("[data-asset-picker-search]")
+    : null;
+  const cursorStart = input ? input.selectionStart : null;
+  const cursorEnd = input ? input.selectionEnd : null;
+  renderOptionsForMode(mode, { preserveScroll: false });
+  requestAnimationFrame(() => {
+    const nextInput = DOM.options
+      ? DOM.options.querySelector("[data-asset-picker-search]")
+      : null;
+    if (!nextInput) return;
+    nextInput.focus();
+    if (
+      cursorStart !== null &&
+      cursorEnd !== null &&
+      typeof nextInput.setSelectionRange === "function"
+    ) {
+      nextInput.setSelectionRange(cursorStart, cursorEnd);
+    }
+  });
+}
 const LIVE_PHOTO_DEFAULT = true;
 const LIVE_PHOTO_DURATION_MS = 2000;
 const MESSAGE_DURATION_MS = 60000;
@@ -8390,15 +8617,78 @@ function setPhotoOverlayOrientation(nextOrientation) {
   setMobileSettingsOpen(false);
 }
 
-function renderOptionsForMode(targetMode = mode) {
+function renderAssetPickerControls(container, modeKey) {
+  const toolbar = document.createElement("div");
+  toolbar.className = "asset-picker-toolbar";
+
+  const search = document.createElement("input");
+  search.type = "search";
+  search.className = "asset-picker-search";
+  search.placeholder = "Search assets";
+  search.value = assetPickerSearchQuery;
+  search.setAttribute("data-asset-picker-search", "true");
+  search.addEventListener("input", () => {
+    assetPickerSearchQuery = search.value;
+    assetPickerVisibleLimits[modeKey] = ASSET_PICKER_INITIAL_LIMIT;
+    renderOptionsPreservingSearchFocus();
+  });
+
+  toolbar.appendChild(search);
+  container.appendChild(toolbar);
+}
+
+function appendAssetPickerFavoriteButton(tile, kind, src) {
+  if (!src) return;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "asset-picker-favorite";
+  const sync = () => {
+    const active = isAssetPickerFavorite(kind, src);
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+    button.setAttribute(
+      "aria-label",
+      active ? "Remove favorite asset" : "Favorite asset"
+    );
+    button.title = active ? "Remove favorite" : "Favorite";
+    button.textContent = "Fav";
+  };
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleAssetPickerFavorite(kind, src);
+    renderOptionsForMode(mode);
+  });
+  sync();
+  tile.appendChild(button);
+}
+
+function appendAssetPickerShowMore(grid, modeKey, total, visibleCount) {
+  if (visibleCount >= total) return;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "asset-picker-show-more";
+  button.textContent = `Show More (${total - visibleCount} more)`;
+  button.addEventListener("click", () => {
+    assetPickerVisibleLimits[modeKey] =
+      (assetPickerVisibleLimits[modeKey] || ASSET_PICKER_INITIAL_LIMIT) +
+      ASSET_PICKER_PAGE_SIZE;
+    renderOptionsForMode(mode);
+  });
+  grid.appendChild(button);
+}
+
+function renderOptionsForMode(targetMode = mode, options = {}) {
   const captureMode = getSelectedCaptureMode(targetMode);
   const container = DOM.options;
   if (!container) return;
+  const previousScrollTop =
+    options.preserveScroll === false ? 0 : container.scrollTop || 0;
   container.innerHTML = "";
   if (captureMode === "message") {
     syncMobileSettingsUi();
     return;
   }
+  renderAssetPickerControls(container, captureMode);
   const addSection = (title) => {
     const section = document.createElement("div");
     section.className = "options-section";
@@ -8499,7 +8789,7 @@ function renderOptionsForMode(targetMode = mode) {
     overlayGrid.appendChild(noOverlay);
 
     const photoOverlays = filterPhotoOverlaysByOrientation(
-      getOverlayList(activeTheme),
+      filterAssetPickerEntries(getOverlayList(activeTheme)),
       photoOverlayOrientation
     );
     if (!photoOverlays.length) {
@@ -8509,16 +8799,24 @@ function renderOptionsForMode(targetMode = mode) {
       note.textContent = "No overlays added";
       overlayGrid.appendChild(note);
     } else {
-      photoOverlays.forEach((overlay) => {
+      const visibleLimit = getAssetPickerVisibleLimit(
+        captureMode,
+        selectedOverlay,
+        photoOverlays
+      );
+      const visibleOverlays = photoOverlays.slice(0, visibleLimit);
+      visibleOverlays.forEach((overlay) => {
         const src = overlay && overlay.src ? overlay.src : "";
         const wrap = document.createElement("div");
         wrap.className = "thumb";
         if (src) wrap.dataset.overlaySrc = src;
+        wrap.title = getAssetPickerFilename(src);
         const img = document.createElement("img");
         wrap.appendChild(img);
         img.src = withBust(
           overlay && overlay.renderSrc ? overlay.renderSrc : src
         );
+        appendAssetPickerFavoriteButton(wrap, "overlay", src);
         if (selectedOverlay === src) wrap.classList.add("selected");
         img.onerror = () => {
           console.error("Failed to load thumbnail:", src);
@@ -8528,25 +8826,35 @@ function renderOptionsForMode(targetMode = mode) {
           overlayGrid
             .querySelectorAll(".thumb")
             .forEach((t) => t.classList.remove("selected"));
-        wrap.classList.add("selected");
-        selectedOverlay = src;
-        lastPhotoOverlay = src;
-        lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
-        syncOverlayPreviewSurface({ mode: "live" });
-        applyPreviewOrientation();
-        logBoothFrameState("overlay-selected", mode);
-        setMobileSettingsOpen(false);
-      };
-      overlayGrid.appendChild(wrap);
-    });
+          wrap.classList.add("selected");
+          selectedOverlay = src;
+          lastPhotoOverlay = src;
+          lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
+          recordAssetPickerRecent("overlay", src);
+          syncOverlayPreviewSurface({ mode: "live" });
+          applyPreviewOrientation();
+          logBoothFrameState("overlay-selected", mode);
+          setMobileSettingsOpen(false);
+        };
+        overlayGrid.appendChild(wrap);
+      });
+      appendAssetPickerShowMore(
+        overlayGrid,
+        captureMode,
+        photoOverlays.length,
+        visibleOverlays.length
+      );
     }
     syncMobileSettingsUi();
+    requestAnimationFrame(() => {
+      container.scrollTop = previousScrollTop;
+    });
     return;
   }
 
   const templateKind = captureMode === "layout" ? "layout" : "strip";
   const templates = filterAssetsForMode(
-    getTemplateList(activeTheme),
+    filterAssetPickerEntries(getTemplateList(activeTheme)),
     templateKind
   );
   const templateGrid = addSection(
@@ -8561,16 +8869,26 @@ function renderOptionsForMode(targetMode = mode) {
     syncMobileSettingsUi();
     return;
   }
-  templates.forEach((template) => {
+  const pendingTemplateSrc = pendingTemplate && pendingTemplate.src;
+  const visibleLimit = getAssetPickerVisibleLimit(
+    captureMode,
+    pendingTemplateSrc,
+    templates
+  );
+  const visibleTemplates = templates.slice(0, visibleLimit);
+  visibleTemplates.forEach((template) => {
     const src = template && template.src ? template.src : "";
     const wrap = document.createElement("div");
     wrap.className = "thumb";
     if (src) wrap.dataset.templateSrc = src;
+    wrap.title = getAssetPickerFilename(src);
     const img = document.createElement("img");
     wrap.appendChild(img);
     img.src = withBust(
       template && template.renderSrc ? template.renderSrc : src
     );
+    appendAssetPickerFavoriteButton(wrap, "template", src);
+    if (pendingTemplateSrc === src) wrap.classList.add("selected");
     img.onerror = () => {
       console.error("Failed to load thumbnail:", src);
       wrap.style.display = "none";
@@ -8583,6 +8901,7 @@ function renderOptionsForMode(targetMode = mode) {
       selectedOverlay = null;
       clearOverlayPreviewSurface();
       pendingTemplate = template || { src, layout: "double_column" };
+      recordAssetPickerRecent("template", src);
       if (pendingTemplate && pendingTemplate.src) {
         openConfirm(pendingTemplate.src);
       }
@@ -8591,7 +8910,16 @@ function renderOptionsForMode(targetMode = mode) {
     };
     templateGrid.appendChild(wrap);
   });
+  appendAssetPickerShowMore(
+    templateGrid,
+    captureMode,
+    templates.length,
+    visibleTemplates.length
+  );
   syncMobileSettingsUi();
+  requestAnimationFrame(() => {
+    container.scrollTop = previousScrollTop;
+  });
 }
 
 function renderOptions() {
@@ -20213,7 +20541,7 @@ function getOverlayList(theme) {
     seen.add(src);
     out.push(item);
   }
-  return out;
+  return sortAssetPickerEntries(out, "overlay", theme);
 }
 
 function getAllThemeOverlayCatalogList(theme) {
@@ -20275,7 +20603,7 @@ function getTemplateList(theme) {
     seen.add(src);
     out.push(item);
   }
-  return out;
+  return sortAssetPickerEntries(out, "template", theme);
 }
 
 // --- PWA Install Button ---

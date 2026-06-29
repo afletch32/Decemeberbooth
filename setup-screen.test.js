@@ -508,6 +508,43 @@ test("asset library is the only setup asset state surface", () => {
   );
 });
 
+test("booth asset picker preserves order and exposes search, favorites, and show more", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("ASSET_PICKER_INITIAL_LIMIT = 24") &&
+      appScript.includes("photoboothAssetPickerFavorites") &&
+      appScript.includes("photoboothAssetPickerRecents"),
+    "asset picker should store favorites/recents and start with a 24-item limit"
+  );
+  assert.ok(
+    appScript.includes("function sortAssetPickerEntries(") &&
+      appScript.includes("return sortAssetPickerEntries(out, \"overlay\", theme);") &&
+      appScript.includes("return sortAssetPickerEntries(out, \"template\", theme);"),
+    "overlay and template lists should use stable picker sorting"
+  );
+  assert.ok(
+    appScript.includes("function renderAssetPickerControls(") &&
+      appScript.includes("data-asset-picker-search") &&
+      appScript.includes("function appendAssetPickerShowMore("),
+    "picker should expose search and show-more controls"
+  );
+  assert.ok(
+    appScript.includes("const previousScrollTop =") &&
+      appScript.includes("container.scrollTop = previousScrollTop") &&
+      appScript.includes("recordAssetPickerRecent(\"overlay\", src);") &&
+      appScript.includes("recordAssetPickerRecent(\"template\", src);"),
+    "selection should record recents without rebuilding the picker and should preserve scroll on rebuilds"
+  );
+  assert.ok(
+    html.includes(".asset-picker-search") &&
+      html.includes(".asset-picker-favorite") &&
+      html.includes(".asset-picker-show-more"),
+    "picker controls should have compact sidebar styling"
+  );
+});
+
 test("asset library supports explicit multi-theme defaults without manifest auto-selection", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");

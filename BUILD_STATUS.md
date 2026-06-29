@@ -1,13 +1,14 @@
 Current goal
-- Restore setup-screen click handlers on the deployed photobooth app.
+- Fix booth asset picker sorting, selection stability, search, and persisted favorites/recent assets.
 
 What is done
-- Fixed the malformed Asset Library block in [`scripts/app.js`](scripts/app.js:14664) so `renderAssetLibrary()` closes before later app functions.
-- Restored [`toggleLibraryAsset()`](scripts/app.js:14860) at top level.
-- Restored the final [`Object.assign(window, { ... })`](scripts/app.js:20335) export block to top level so inline setup buttons can call their handlers.
-- Added [`app-syntax.test.js`](app-syntax.test.js:1) to parse `scripts/app.js` as a browser ES module during `npm test`.
-- Verified locally that setup tabs respond and Overlay Builder opens its direct URL.
-- Deployed and verified `https://decemeberbooth.pages.dev` with setup tabs and Overlay Builder responding without console errors.
+- Added picker search, 24-item initial rendering, and Show More controls for overlay/template options.
+- Added localStorage-backed asset picker favorites and recents.
+- Sorted picker assets by favorites, recents, current theme assets, then filename/category label.
+- Kept folder manifests in the catalog while avoiding manifest-first dominance in the picker.
+- Preserved selection behavior so overlay/template clicks update selected state, preview, and confirm flow without re-rendering or reordering the list.
+- Added static coverage for search, favorites/recents, Show More, scroll preservation wiring, and sorted getter use.
+- Verified locally with `npm test` and targeted Playwright smoke checks for sorting, search, recents, and favorite persistence.
 
 What is in progress
 - None.
