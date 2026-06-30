@@ -2596,29 +2596,6 @@
       justify-items: center;
     }
 
-    #options .asset-picker-toolbar {
-      display: grid;
-      gap: 8px;
-    }
-
-    #options .asset-picker-search {
-      width: 100%;
-      min-height: 40px;
-      border: 1px solid #c8efe7;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.92);
-      color: #22302d;
-      font: inherit;
-      font-size: 0.9rem;
-      padding: 8px 10px;
-      outline: none;
-    }
-
-    #options .asset-picker-search:focus {
-      border-color: #71e1d2;
-      box-shadow: 0 0 0 3px rgba(113, 225, 210, 0.18);
-    }
-
     .photo-orientation-section {
       gap: 8px;
     }
@@ -2746,27 +2723,44 @@
       box-shadow: 0 12px 24px rgba(111, 231, 215, 0.18);
     }
 
-    #options .asset-picker-favorite {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      min-width: 34px;
-      min-height: 28px;
-      border: 1px solid rgba(200, 239, 231, 0.92);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.9);
-      color: #51625f;
-      font-family: var(--font-label);
-      font-size: 0.62rem;
-      font-weight: 800;
-      letter-spacing: 0.04em;
+    #options .filter-thumb {
       cursor: pointer;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      align-items: center;
+      justify-items: center;
+      gap: 8px;
+      padding: 14px 10px;
+      min-height: 92px;
     }
 
-    #options .asset-picker-favorite.active {
-      border-color: #111111;
-      background: #111111;
-      color: #fffaf0;
+    #options .filter-thumb-preview {
+      font-size: 2rem;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      min-height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(239, 248, 241, 0.88));
+      border: 1px solid rgba(200, 239, 231, 0.88);
+    }
+
+    #options .filter-thumb.selected .filter-thumb-preview {
+      border-color: #71e1d2;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(222, 250, 244, 0.96));
+      box-shadow: 0 0 0 3px rgba(111, 231, 215, 0.24);
+    }
+
+    #options .filter-thumb-label {
+      font-family: var(--font-label);
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #5d6c69;
+      text-align: center;
+      min-height: 2.2em;
     }
 
     #options .asset-picker-show-more {
@@ -3050,6 +3044,29 @@
       background-repeat: no-repeat;
     }
 
+    #welcomeScreen::before,
+    #welcomeScreen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.55;
+      background:
+        radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.84) 0 3px, transparent 4px),
+        radial-gradient(circle at 72% 16%, rgba(111, 231, 215, 0.42) 0 4px, transparent 5px),
+        radial-gradient(circle at 84% 68%, rgba(255, 206, 103, 0.38) 0 3px, transparent 4px),
+        radial-gradient(circle at 32% 78%, rgba(255, 163, 206, 0.36) 0 4px, transparent 5px);
+      background-size: 220px 220px;
+      animation: boothAmbientFloat 18s ease-in-out infinite alternate;
+    }
+
+    #welcomeScreen::after {
+      opacity: 0.34;
+      background-size: 310px 310px;
+      animation-duration: 24s;
+      animation-direction: alternate-reverse;
+    }
+
     #welcomeScreen.faded { opacity: 0; pointer-events: none; }
     #welcomeImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
 
@@ -3073,6 +3090,7 @@
       touch-action: manipulation;
       position: relative;
       overflow: hidden;
+      animation: boothPanelDrift 8s ease-in-out infinite alternate;
     }
 
     #welcomeOverlay[data-step="idle"] {
@@ -3091,6 +3109,35 @@
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+    }
+
+    .welcome-event-logo {
+      display: grid;
+      place-items: center;
+      min-width: 82px;
+      min-height: 82px;
+      max-width: 220px;
+      margin-bottom: -4px;
+      animation: boothLogoFloat 9s ease-in-out infinite alternate;
+    }
+
+    .welcome-event-logo img {
+      max-width: min(190px, 42vw);
+      max-height: 88px;
+      object-fit: contain;
+      filter: drop-shadow(0 12px 24px rgba(17, 17, 17, 0.12));
+    }
+
+    .welcome-event-logo.hidden {
+      display: none;
+    }
+
+    .welcome-host-line {
+      margin: -6px 0 0;
+      color: #4d615d;
+      font-size: clamp(1rem, 2.3vw, 1.35rem);
+      line-height: 1.35;
+      text-wrap: balance;
     }
 
     .welcome-flow-section {
@@ -3154,6 +3201,7 @@
       text-transform: none;
       touch-action: manipulation;
       transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+      animation: boothBreathe 2.8s ease-in-out infinite;
     }
 
     .start-button:hover,
@@ -3215,6 +3263,25 @@
       text-align: center;
       font-family: var(--font-body);
       font-weight: 700;
+      transform: translateY(0);
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .welcome-mode-btn:hover,
+    .welcome-mode-btn:focus-visible {
+      transform: translateY(-4px);
+      border-color: rgba(111, 231, 215, 0.86);
+      box-shadow: 0 18px 32px rgba(121, 183, 172, 0.16);
+    }
+
+    .welcome-mode-visual {
+      display: grid;
+      place-items: center;
+      width: 62px;
+      height: 48px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(111, 231, 215, 0.2), rgba(255, 219, 126, 0.26));
+      font-size: 1.8rem;
     }
 
     .welcome-mode-btn span {
@@ -3248,6 +3315,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-direction: column;
+      gap: 14px;
       font-size: var(--countdown-size);
       color: #111111;
       font-family: var(--font-heading);
@@ -3258,7 +3327,30 @@
       z-index: 20;
     }
 
-    #countdownOverlay.show { opacity: 1; transform: scale(1); }
+    #countdownOverlay.show {
+      opacity: 1;
+      transform: scale(1);
+      animation: countdownPop 780ms cubic-bezier(.2, .9, .2, 1);
+    }
+
+    #boothHostPrompt {
+      display: grid;
+      justify-items: center;
+      gap: 4px;
+      min-height: 46px;
+      color: #263a37;
+      text-align: center;
+      font-family: var(--font-heading);
+      font-size: clamp(1.25rem, 2.6vw, 2.1rem);
+      line-height: 1.05;
+      animation: boothPanelDrift 7s ease-in-out infinite alternate;
+    }
+
+    #boothHostPrompt span {
+      font-family: var(--font-body);
+      font-size: 0.62em;
+      color: #5d6c69;
+    }
 
     #recordingOverlay {
       position: absolute;
@@ -3307,10 +3399,116 @@
     #flashOverlay { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 30; pointer-events: none; }
     #flashOverlay.flash { animation: cameraFlash 320ms ease-out; }
 
+    #goodbyeOverlay {
+      position: absolute;
+      inset: 0;
+      z-index: 28;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.94), rgba(240, 255, 250, 0.74) 48%, rgba(255, 255, 255, 0) 72%);
+      transition: opacity 260ms ease;
+    }
+
+    #goodbyeOverlay.show {
+      opacity: 1;
+    }
+
+    .goodbye-card {
+      position: relative;
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      padding: 26px 30px;
+      border-radius: 34px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(190, 245, 226, 0.92);
+      box-shadow: 0 24px 48px rgba(58, 88, 78, 0.16);
+      animation: reviewRise 320ms ease-out both;
+      overflow: hidden;
+    }
+
+    .goodbye-card::before,
+    .goodbye-card::after {
+      content: "";
+      position: absolute;
+      inset: -12px;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 20% 20%, #ff6b9c 0 4px, transparent 5px),
+        radial-gradient(circle at 78% 22%, #ffd166 0 4px, transparent 5px),
+        radial-gradient(circle at 36% 76%, #6fe7d7 0 4px, transparent 5px),
+        radial-gradient(circle at 84% 78%, #5b8cff 0 4px, transparent 5px);
+      animation: boothAmbientFloat 900ms ease-out infinite alternate;
+      opacity: 0.72;
+    }
+
+    .goodbye-card h2 {
+      position: relative;
+      margin: 0;
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      color: #111111;
+    }
+
+    .goodbye-card p {
+      position: relative;
+      margin: 0;
+      color: #52615e;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+    }
+
     @keyframes cameraFlash {
       0% { opacity: 0; }
       10% { opacity: 1; }
       100% { opacity: 0; }
+    }
+
+    @keyframes boothAmbientFloat {
+      from { transform: translate3d(-8px, -6px, 0) scale(1); }
+      to { transform: translate3d(10px, 8px, 0) scale(1.02); }
+    }
+
+    @keyframes boothPanelDrift {
+      from { transform: translateY(-2px); }
+      to { transform: translateY(3px); }
+    }
+
+    @keyframes boothLogoFloat {
+      from { opacity: 0.86; transform: translateY(4px) scale(0.99); }
+      to { opacity: 1; transform: translateY(-4px) scale(1.01); }
+    }
+
+    @keyframes boothBreathe {
+      0%, 100% { transform: translateY(var(--edit-start-button-y, 0px)) scale(var(--edit-start-button-scale, 1)); }
+      50% { transform: translateY(calc(var(--edit-start-button-y, 0px) - 2px)) scale(calc(var(--edit-start-button-scale, 1) * 1.01)); }
+    }
+
+    @keyframes simpleBreathe {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-2px) scale(1.02); }
+    }
+
+    @keyframes countdownPop {
+      0% { transform: scale(0.72); opacity: 0; }
+      45% { transform: scale(1.08); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes reviewRise {
+      from { opacity: 0; transform: translateY(18px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes shareSlideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes qrBreathe {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.01); }
     }
 
     #finalPreview {
@@ -3367,6 +3565,86 @@
       border: 1px solid #c8eee5;
       overflow: auto;
       box-shadow: var(--shadow-strong);
+    }
+
+    #reviewPanel {
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+      width: min(420px, 92vw);
+      padding: clamp(20px, 3vw, 30px);
+      border-radius: 34px;
+      border: 1px solid rgba(190, 245, 226, 0.92);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(239, 255, 249, 0.9)),
+        radial-gradient(circle at 50% 0%, rgba(111, 231, 215, 0.18), rgba(255, 255, 255, 0) 48%);
+      text-align: center;
+      box-shadow: 0 22px 48px rgba(58, 88, 78, 0.16);
+      animation: reviewRise 360ms ease-out both;
+    }
+
+    #reviewPanel.hidden {
+      display: none;
+    }
+
+    .review-heart {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      line-height: 1;
+      animation: simpleBreathe 2.6s ease-in-out infinite;
+    }
+
+    .review-title {
+      margin: 0;
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 0.96;
+      color: #111111;
+      text-wrap: balance;
+    }
+
+    .review-copy {
+      margin: 0;
+      color: #52615e;
+      font-size: 1rem;
+      line-height: 1.35;
+    }
+
+    .review-actions {
+      display: grid;
+      gap: 10px;
+      width: min(100%, 320px);
+    }
+
+    #lovePhotoBtn {
+      min-height: 66px;
+      border-radius: 999px;
+      border: 2px solid #53c982;
+      background: linear-gradient(145deg, #71e89a, #22c55e);
+      color: #063917;
+      font-family: var(--font-heading);
+      font-size: 1.3rem;
+      font-weight: 900;
+      box-shadow: 0 18px 34px rgba(34, 197, 94, 0.24);
+      transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+    }
+
+    #lovePhotoBtn:hover,
+    #lovePhotoBtn:focus-visible,
+    #lovePhotoBtn.celebrate {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 24px 42px rgba(34, 197, 94, 0.3);
+    }
+
+    #reviewRetakeBtn {
+      justify-self: center;
+      min-height: 40px;
+      padding: 8px 14px;
+      border: 1px solid rgba(239, 154, 154, 0.75);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.82);
+      color: #b42323;
+      font-size: 0.9rem;
+      box-shadow: none;
     }
 
     #finalPreviewButtons {
@@ -4043,6 +4321,11 @@
       overflow: visible;
     }
 
+    #qrCodeContainer.experience-reveal,
+    #paidPrintPanel.experience-reveal {
+      animation: shareSlideIn 360ms ease-out both;
+    }
+
     .share-header {
       display: grid;
       justify-items: center;
@@ -4098,6 +4381,7 @@
       border-radius: 24px;
       background: #ffffff;
       box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.06), 0 18px 32px rgba(76, 97, 114, 0.14);
+      animation: qrBreathe 3.2s ease-in-out infinite;
     }
 
     #qrHint {
@@ -5824,10 +6108,6 @@
               Low Light Flash (torch/screen)
             </label>
             <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-              <input type="checkbox" id="greenScreenToggle" checked>
-              Green Screen Removal
-            </label>
-            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
               <input type="checkbox" id="aiBackgroundToggle">
               AI Background Removal (no green screen)
             </label>
@@ -6101,6 +6381,8 @@
                     <option value="newest">Newest</option>
                     <option value="oldest">Oldest</option>
                     <option value="name">Name</option>
+                    <option value="favorites">Favorites first</option>
+                    <option value="recent">Recently used</option>
                   </select>
                 </label>
                 <label>
@@ -6388,6 +6670,10 @@
           <span id="livePhotoStatus" class="capture-status-pill hidden">Live Photo</span>
           <span id="instantCaptureStatus" class="capture-status-pill hidden">Instant Capture</span>
         </div>
+        <div id="boothHostPrompt" aria-live="polite">
+          Get everyone in the frame!
+          <span>Smile when the booth says so.</span>
+        </div>
         <button id="captureBtn" class="primary" onclick="handlePrimaryAction()">Take Photo</button>
         <div id="booth360Panel" class="booth-360-panel hidden">
           <div id="booth360Status" class="booth-360-status">
@@ -6417,15 +6703,31 @@
     </div>
     <div id="countdownOverlay"></div>
     <div id="flashOverlay"></div>
+    <div id="goodbyeOverlay" aria-live="polite">
+      <div class="goodbye-card">
+        <h2>Thank You!</h2>
+        <p>Enjoy your photos!</p>
+      </div>
+    </div>
       <div id="finalPreview">
       <div id="finalPreviewContent">
         <video id="finalLive" class="hidden" autoplay muted loop playsinline></video>
         <img id="finalStrip" />
         <div id="finalPreviewActions">
+          <section id="reviewPanel" aria-live="polite">
+            <div class="review-heart" aria-hidden="true">❤️</div>
+            <h2 class="review-title">Love your photos?</h2>
+            <p class="review-copy">Make sure everyone looks just right.</p>
+            <div class="review-actions">
+              <button id="lovePhotoBtn" type="button">✅ LOVE IT!</button>
+              <button id="reviewRetakeBtn" type="button">↩ Retake</button>
+            </div>
+          </section>
           <div id="qrCodeContainer" class="hidden">
             <div class="share-header">
               <div class="share-header-copy">
-                <h2>Scan to Get Your Photo</h2>
+                <h2>Take them with you.</h2>
+                <p id="qrSaveCopy">Scan to save your photos.</p>
               </div>
               <span id="shareStatus" style="display:none;">Preparing link…</span>
             </div>
@@ -6434,8 +6736,8 @@
             <!-- Guest mode must not expose local device download actions. -->
           </div>
           <section id="paidPrintPanel" aria-live="polite">
-            <h2 id="paidPrintTitle">Printed Photo Upgrade</h2>
-            <p id="paidPrintBody">Take home a 4x6 keepsake print for $3.</p>
+            <h2 id="paidPrintTitle">Love your photos?</h2>
+            <p id="paidPrintBody">Take home your keepsake.</p>
             <p id="paidPrintInstructions">Scan the payment code below to complete your purchase. Your print will be prepared after payment is confirmed.</p>
             <img id="paidPrintPaymentQr" alt="Payment code">
           </section>
@@ -6531,23 +6833,28 @@
           <button id="welcomeDemoBackBtn" type="button" class="button-ghost welcome-back-button" onclick="goBackFromWelcome(event)">Go Back</button>
         </div>
         <div id="welcomeIdleStep" class="welcome-flow-section hidden">
+          <div id="welcomeEventLogo" class="welcome-event-logo hidden" aria-hidden="true"></div>
           <h1 id="welcomeTitle">🎃 Happy Halloween!</h1>
+          <p id="welcomeHostLine" class="welcome-host-line">Ready to make some memories?</p>
           <button id="startButton" type="button" class="start-button" onclick="beginWelcome(event)">Touch to start</button>
           <button id="welcomeIdleBackBtn" type="button" class="button-ghost welcome-back-button" onclick="goBackFromWelcome(event)">Go Back</button>
         </div>
         <div id="welcomeModeStep" class="welcome-flow-section hidden">
-          <h1 class="welcome-flow-title">Choose Your Photo Style</h1>
+          <h1 class="welcome-flow-title">Choose your experience</h1>
           <div class="welcome-mode-grid">
             <button type="button" class="welcome-mode-btn" data-welcome-mode="live-photo" onclick="beginModeSelection('live-photo', event)">
-              <strong>Single Live Photo</strong>
-              <span>Live motion capture</span>
+              <div class="welcome-mode-visual" aria-hidden="true">📷</div>
+              <strong>Photo</strong>
+              <span>Motion keepsake</span>
             </button>
             <button type="button" class="welcome-mode-btn" data-welcome-mode="still-photo" onclick="beginModeSelection('still-photo', event)">
-              <strong>Single Still Photo</strong>
+              <div class="welcome-mode-visual" aria-hidden="true">📸</div>
+              <strong>Photo</strong>
               <span>One classic shot</span>
             </button>
             <button type="button" class="welcome-mode-btn" data-welcome-mode="strip" onclick="beginModeSelection('strip', event)">
-              <strong>Photostrip</strong>
+              <div class="welcome-mode-visual" aria-hidden="true">🎞️</div>
+              <strong>Photo Strip</strong>
               <span>Multi-photo strip</span>
             </button>
           </div>

@@ -4,6 +4,7 @@ import {
   buildDateSessionFolderPath,
   buildEventAssetFolderPath,
   buildEventFolderPath,
+  getCloudinaryDerivedUrl,
 } from "./cloudinary-utils.mjs";
 import { getBuiltinAssetManifest } from "./builtin-asset-manifests.mjs";
 import { clampZoom } from "./camera-utils.mjs";
@@ -45,8 +46,6 @@ const APP_CONFIG = {
     ACTIVE_EVENT: "photoboothActiveEventId",
     GLOBAL_LOGO: "photoboothGlobalLogo",
     ASSET_LIBRARY: "photoboothAssetLibrary",
-    ASSET_PICKER_FAVORITES: "photoboothAssetPickerFavorites",
-    ASSET_PICKER_RECENTS: "photoboothAssetPickerRecents",
   },
 };
 
@@ -634,7 +633,9 @@ const DOM = {
   instantCaptureStatus: document.getElementById("instantCaptureStatus"),
   captureBtn: document.getElementById("captureBtn"),
   countdownOverlay: document.getElementById("countdownOverlay"),
+  boothHostPrompt: document.getElementById("boothHostPrompt"),
   flashOverlay: document.getElementById("flashOverlay"),
+  goodbyeOverlay: document.getElementById("goodbyeOverlay"),
   finalPreview: document.getElementById("finalPreview"),
   finalPreviewContent: document.getElementById("finalPreviewContent"),
   finalPreviewActions: document.getElementById("finalPreviewActions"),
@@ -642,6 +643,10 @@ const DOM = {
   finalLive: document.getElementById("finalLive"),
   qrCodeContainer: document.getElementById("qrCodeContainer"),
   qrCode: document.getElementById("qrCode"),
+  qrSaveCopy: document.getElementById("qrSaveCopy"),
+  reviewPanel: document.getElementById("reviewPanel"),
+  lovePhotoBtn: document.getElementById("lovePhotoBtn"),
+  reviewRetakeBtn: document.getElementById("reviewRetakeBtn"),
   paidPrintPanel: document.getElementById("paidPrintPanel"),
   paidPrintTitle: document.getElementById("paidPrintTitle"),
   paidPrintBody: document.getElementById("paidPrintBody"),
@@ -667,6 +672,8 @@ const DOM = {
   welcomeIdleStep: document.getElementById("welcomeIdleStep"),
   welcomeModeStep: document.getElementById("welcomeModeStep"),
   welcomeImg: document.getElementById("welcomeImg"),
+  welcomeEventLogo: document.getElementById("welcomeEventLogo"),
+  welcomeHostLine: document.getElementById("welcomeHostLine"),
   welcomeTitle: document.getElementById("welcomeTitle"),
   startButton: document.getElementById("startButton"),
   videoInput: document.getElementById("videoInput"),
@@ -1416,6 +1423,7 @@ let stream;
 let torchEnabled = false;
 let selectedOverlay = null;
 let lastPhotoOverlay = null;
+let selectedFilter = "original";
 let photoOverlayOrientation = "portrait";
 let lastPhotoOverlayByOrientation = { portrait: null, landscape: null };
 let photoOverlayOrientationCache = {};
@@ -1439,14 +1447,6 @@ let setupLaunchMode = "single_photo";
 let launchSummaryRevision = 0;
 const ASSET_PICKER_INITIAL_LIMIT = 24;
 const ASSET_PICKER_PAGE_SIZE = 24;
-const ASSET_PICKER_RECENT_LIMIT = 36;
-let assetPickerFavorites = readAssetPickerBuckets(
-  APP_CONFIG.STORAGE_KEYS.ASSET_PICKER_FAVORITES
-);
-let assetPickerRecents = readAssetPickerBuckets(
-  APP_CONFIG.STORAGE_KEYS.ASSET_PICKER_RECENTS
-);
-let assetPickerSearchQuery = "";
 let assetPickerVisibleLimits = {
   photo: ASSET_PICKER_INITIAL_LIMIT,
   strip: ASSET_PICKER_INITIAL_LIMIT,
@@ -1482,86 +1482,16 @@ const ENHANCEMENT_MODE_CONFIG = {
   },
 };
 
-function createEmptyAssetPickerBuckets() {
-  return {
-    overlay: [],
-    template: [],
-  };
-}
-
-function normalizeAssetPickerKind(kind = "") {
-  const normalized = normalizeUploadedAssetCategory(kind);
-  return normalized === "overlay" || normalized === "template" ? normalized : "";
-}
-
-function readAssetPickerBuckets(storageKey) {
-  const fallback = createEmptyAssetPickerBuckets();
-  try {
-    const parsed = JSON.parse(localStorage.getItem(storageKey) || "{}");
-    return {
-      overlay: Array.isArray(parsed.overlay)
-        ? parsed.overlay.map(getAssetEntrySrc).filter(Boolean)
-        : [],
-      template: Array.isArray(parsed.template)
-        ? parsed.template.map(getAssetEntrySrc).filter(Boolean)
-        : [],
-    };
-  } catch (_) {
-    return fallback;
-  }
-}
-
-function saveAssetPickerBuckets(storageKey, buckets) {
-  try {
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify({
-        overlay: Array.isArray(buckets.overlay) ? buckets.overlay : [],
-        template: Array.isArray(buckets.template) ? buckets.template : [],
-      })
-    );
-  } catch (_) {}
-}
-
-function getAssetPickerBucket(buckets, kind) {
-  const normalized = normalizeAssetPickerKind(kind);
-  if (!normalized) return [];
-  if (!Array.isArray(buckets[normalized])) buckets[normalized] = [];
-  return buckets[normalized];
-}
-
-function isAssetPickerFavorite(kind, src) {
-  const cleanSrc = getAssetEntrySrc(src);
-  return !!cleanSrc && getAssetPickerBucket(assetPickerFavorites, kind).includes(cleanSrc);
-}
-
-function toggleAssetPickerFavorite(kind, src) {
-  const cleanSrc = getAssetEntrySrc(src);
-  const bucket = getAssetPickerBucket(assetPickerFavorites, kind);
-  if (!cleanSrc || !bucket) return false;
-  const index = bucket.indexOf(cleanSrc);
-  if (index >= 0) bucket.splice(index, 1);
-  else bucket.unshift(cleanSrc);
-  saveAssetPickerBuckets(
-    APP_CONFIG.STORAGE_KEYS.ASSET_PICKER_FAVORITES,
-    assetPickerFavorites
-  );
-  return index < 0;
-}
-
-function recordAssetPickerRecent(kind, src) {
-  const cleanSrc = getAssetEntrySrc(src);
-  const bucket = getAssetPickerBucket(assetPickerRecents, kind);
-  if (!cleanSrc || !bucket) return;
-  const index = bucket.indexOf(cleanSrc);
-  if (index >= 0) bucket.splice(index, 1);
-  bucket.unshift(cleanSrc);
-  bucket.splice(ASSET_PICKER_RECENT_LIMIT);
-  saveAssetPickerBuckets(
-    APP_CONFIG.STORAGE_KEYS.ASSET_PICKER_RECENTS,
-    assetPickerRecents
-  );
-}
+const FILTER_EFFECTS = [
+  { id: "original", name: "Original", css: "" },
+  { id: "warm-glow", name: "Warm Glow", css: "sepia(0.2) saturate(1.3) hue-rotate(-10deg)" },
+  { id: "cool-breeze", name: "Cool Breeze", css: "saturate(1.1) hue-rotate(10deg) brightness(1.05)" },
+  { id: "vintage", name: "Vintage", css: "sepia(0.4) contrast(0.9) brightness(1.1)" },
+  { id: "noir", name: "Noir", css: "grayscale(1) contrast(1.2)" },
+  { id: "vivid", name: "Vivid", css: "saturate(1.6) contrast(1.1)" },
+  { id: "soft-dream", name: "Soft Dream", css: "brightness(1.15) saturate(1.1) contrast(0.95)" },
+  { id: "dramatic", name: "Dramatic", css: "contrast(1.4) brightness(0.9) saturate(1.2)" },
+];
 
 function getAssetPickerFilename(src = "") {
   const value = String(src || "").split("?")[0].split("#")[0];
@@ -1570,92 +1500,6 @@ function getAssetPickerFilename(src = "") {
   } catch (_) {
     return value.split("/").pop() || value || "";
   }
-}
-
-function getAssetPickerSortLabel(entry) {
-  const src = getAssetEntrySrc(entry);
-  return String(
-    (entry && typeof entry === "object" && (entry.name || entry.category)) ||
-      getAssetPickerFilename(src) ||
-      src
-  ).toLowerCase();
-}
-
-function getAssetPickerSearchText(entry) {
-  const src = getAssetEntrySrc(entry);
-  const tags = Array.isArray(entry && entry.tags) ? entry.tags : [];
-  return [
-    getAssetPickerSortLabel(entry),
-    getAssetPickerFilename(src),
-    src,
-    ...tags,
-  ]
-    .join(" ")
-    .toLowerCase();
-}
-
-function getThemePickerSourceSet(kind, theme) {
-  const normalized = normalizeAssetPickerKind(kind);
-  const list =
-    normalized === "overlay"
-      ? getBaseOverlayList(theme)
-      : normalized === "template"
-      ? getBaseTemplateList(theme)
-      : [];
-  return createAssetSelectionSet(list);
-}
-
-function sortAssetPickerEntries(entries = [], kind = "", theme = activeTheme) {
-  const normalized = normalizeAssetPickerKind(kind);
-  if (!normalized) return Array.isArray(entries) ? entries.slice() : [];
-  const favorites = getAssetPickerBucket(assetPickerFavorites, normalized);
-  const recents = getAssetPickerBucket(assetPickerRecents, normalized);
-  const favoriteIndex = new Map(favorites.map((src, index) => [src, index]));
-  const recentIndex = new Map(recents.map((src, index) => [src, index]));
-  const themeSources = getThemePickerSourceSet(normalized, theme);
-
-  return (Array.isArray(entries) ? entries : [])
-    .map((entry, originalIndex) => {
-      const src = getAssetEntrySrc(entry);
-      const favoriteRank = favoriteIndex.has(src) ? favoriteIndex.get(src) : -1;
-      const recentRank = recentIndex.has(src) ? recentIndex.get(src) : -1;
-      const group =
-        favoriteRank >= 0
-          ? 0
-          : recentRank >= 0
-          ? 1
-          : themeSources.has(src)
-          ? 2
-          : 3;
-      const groupRank =
-        group === 0 ? favoriteRank : group === 1 ? recentRank : originalIndex;
-      return {
-        entry,
-        src,
-        group,
-        groupRank,
-        label: getAssetPickerSortLabel(entry),
-        originalIndex,
-      };
-    })
-    .sort((a, b) => {
-      if (a.group !== b.group) return a.group - b.group;
-      if (a.group <= 1 && a.groupRank !== b.groupRank) {
-        return a.groupRank - b.groupRank;
-      }
-      const labelCompare = a.label.localeCompare(b.label);
-      if (labelCompare) return labelCompare;
-      return a.originalIndex - b.originalIndex;
-    })
-    .map((item) => item.entry);
-}
-
-function filterAssetPickerEntries(entries = []) {
-  const query = assetPickerSearchQuery.trim().toLowerCase();
-  if (!query) return Array.isArray(entries) ? entries.slice() : [];
-  return (Array.isArray(entries) ? entries : []).filter((entry) =>
-    getAssetPickerSearchText(entry).includes(query)
-  );
 }
 
 function getAssetPickerVisibleLimit(modeKey, selectedSrc = "", entries = []) {
@@ -1667,29 +1511,6 @@ function getAssetPickerVisibleLimit(modeKey, selectedSrc = "", entries = []) {
     (entry) => getAssetEntrySrc(entry) === cleanSelected
   );
   return selectedIndex >= 0 ? Math.max(base, selectedIndex + 1) : base;
-}
-
-function renderOptionsPreservingSearchFocus() {
-  const input = DOM.options
-    ? DOM.options.querySelector("[data-asset-picker-search]")
-    : null;
-  const cursorStart = input ? input.selectionStart : null;
-  const cursorEnd = input ? input.selectionEnd : null;
-  renderOptionsForMode(mode, { preserveScroll: false });
-  requestAnimationFrame(() => {
-    const nextInput = DOM.options
-      ? DOM.options.querySelector("[data-asset-picker-search]")
-      : null;
-    if (!nextInput) return;
-    nextInput.focus();
-    if (
-      cursorStart !== null &&
-      cursorEnd !== null &&
-      typeof nextInput.setSelectionRange === "function"
-    ) {
-      nextInput.setSelectionRange(cursorStart, cursorEnd);
-    }
-  });
 }
 const LIVE_PHOTO_DEFAULT = true;
 const LIVE_PHOTO_DURATION_MS = 2000;
@@ -1730,6 +1551,8 @@ let sessionRemovedTemplates = [];
 let activeThemeDefaultsAsset = null;
 let activeThemeDefaultsSetupKey = "";
 let activeSessionTextDetails = {};
+let boothAudioContext = null;
+let boothAudioEnabled = false;
 const ACCENT_PRESET_COLORS = [
   "#ffffff",
   "#0f1222",
@@ -1765,6 +1588,9 @@ function withBust(src) {
 
 const GLOBAL_LOGO_STORAGE_KEY = "photoboothGlobalLogo";
 const THEME_FAVORITES_STORAGE_KEY = "photoboothThemeFavorites";
+const ASSET_LIBRARY_FAVORITES_STORAGE_KEY = "photoboothAssetLibraryFavorites";
+const ASSET_LIBRARY_RECENTS_STORAGE_KEY = "photoboothAssetLibraryRecents";
+const ASSET_LIBRARY_RECENT_LIMIT = 80;
 const LAST_THEME_KEY_STORAGE = "photoboothLastThemeKey";
 const QUICK_START_SESSION_DATE_KEY = "photoboothQuickStartDate";
 const SHOWCASE_DEMO_THEME_CANDIDATES = {
@@ -1882,7 +1708,7 @@ function updateWelcomeFlowUi() {
         ? "Choose your demo"
         : step === "mode"
         ? "Choose your photo style"
-        : "Touch to begin";
+        : "Tap anywhere to start";
   }
 }
 
@@ -6483,11 +6309,30 @@ async function copyStaffPrintQueueUrl() {
 function renderPaidPrintPanel(printEligible = true) {
   const settings = getPrintSettings();
   const enabled = settings.mode === "paid-queue" && printEligible;
-  if (DOM.paidPrintPanel) DOM.paidPrintPanel.classList.toggle("show", enabled);
+  if (DOM.paidPrintPanel) {
+    DOM.paidPrintPanel.dataset.ready = enabled ? "true" : "false";
+    DOM.paidPrintPanel.classList.toggle("show", enabled);
+  }
   if (!enabled) return;
   const noPaymentRequired = settings.noPaymentRequired === true;
-  if (DOM.paidPrintTitle) DOM.paidPrintTitle.textContent = noPaymentRequired ? "Printed Photo Included" : settings.panelTitle;
-  if (DOM.paidPrintBody) DOM.paidPrintBody.textContent = noPaymentRequired ? "Your event includes a 4x6 keepsake print." : settings.panelBody.replace("$3", settings.priceLabel);
+  const usesDefaultTitle =
+    !settings.panelTitle ||
+    settings.panelTitle === DEFAULT_PRINT_SETTINGS.panelTitle;
+  const usesDefaultBody =
+    !settings.panelBody ||
+    settings.panelBody === DEFAULT_PRINT_SETTINGS.panelBody;
+  if (DOM.paidPrintTitle)
+    DOM.paidPrintTitle.textContent = noPaymentRequired
+      ? "Printed Photo Included"
+      : usesDefaultTitle
+        ? "Love your photos?"
+        : settings.panelTitle;
+  if (DOM.paidPrintBody)
+    DOM.paidPrintBody.textContent = noPaymentRequired
+      ? "Your event includes a 4x6 keepsake print."
+      : usesDefaultBody
+        ? getBoothPersonality().print
+        : settings.panelBody.replace("$3", settings.priceLabel);
   if (DOM.paidPrintInstructions) DOM.paidPrintInstructions.textContent = noPaymentRequired ? "Your print will be prepared shortly." : settings.instructions;
   if (!DOM.paidPrintPaymentQr) return;
   if (noPaymentRequired) {
@@ -8607,6 +8452,12 @@ function syncPhotoOverlayOrientationWithAssets() {
   }
 }
 
+function setFilter(filterId) {
+  selectedFilter = filterId;
+  applyFilterToVideo();
+  renderOptionsForMode(mode);
+}
+
 function setPhotoOverlayOrientation(nextOrientation) {
   const next = normalizePhotoOverlayOrientation(nextOrientation);
   if (!next || next === photoOverlayOrientation) return;
@@ -8635,49 +8486,27 @@ function setPhotoOverlayOrientation(nextOrientation) {
   setMobileSettingsOpen(false);
 }
 
-function renderAssetPickerControls(container, modeKey) {
-  const toolbar = document.createElement("div");
-  toolbar.className = "asset-picker-toolbar";
-
-  const search = document.createElement("input");
-  search.type = "search";
-  search.className = "asset-picker-search";
-  search.placeholder = "Search assets";
-  search.value = assetPickerSearchQuery;
-  search.setAttribute("data-asset-picker-search", "true");
-  search.addEventListener("input", () => {
-    assetPickerSearchQuery = search.value;
-    assetPickerVisibleLimits[modeKey] = ASSET_PICKER_INITIAL_LIMIT;
-    renderOptionsPreservingSearchFocus();
-  });
-
-  toolbar.appendChild(search);
-  container.appendChild(toolbar);
+function applyFilterToVideo() {
+  const filterDef = FILTER_EFFECTS.find((f) => f.id === selectedFilter);
+  if (DOM.video) {
+    DOM.video.style.filter = (filterDef && filterDef.css) || "";
+  }
 }
 
-function appendAssetPickerFavoriteButton(tile, kind, src) {
-  if (!src) return;
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "asset-picker-favorite";
-  const sync = () => {
-    const active = isAssetPickerFavorite(kind, src);
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", active ? "true" : "false");
-    button.setAttribute(
-      "aria-label",
-      active ? "Remove favorite asset" : "Favorite asset"
-    );
-    button.title = active ? "Remove favorite" : "Favorite";
-    button.textContent = "Fav";
-  };
-  button.addEventListener("click", (event) => {
-    event.stopPropagation();
-    toggleAssetPickerFavorite(kind, src);
-    renderOptionsForMode(mode);
-  });
-  sync();
-  tile.appendChild(button);
+function applyFilterToCanvas(ctx, width, height) {
+  const filterDef = FILTER_EFFECTS.find((f) => f.id === selectedFilter);
+  if (!filterDef || !filterDef.css || !ctx) return;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = width;
+  tempCanvas.height = height;
+  const tempCtx = tempCanvas.getContext("2d");
+  if (!tempCtx) return;
+  tempCtx.putImageData(imageData, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+  ctx.filter = filterDef.css;
+  ctx.drawImage(tempCanvas, 0, 0);
+  ctx.filter = "none";
 }
 
 function appendAssetPickerShowMore(grid, modeKey, total, visibleCount) {
@@ -8706,7 +8535,6 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
     syncMobileSettingsUi();
     return;
   }
-  renderAssetPickerControls(container, captureMode);
   const addSection = (title) => {
     const section = document.createElement("div");
     section.className = "options-section";
@@ -8749,7 +8577,7 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
     section.appendChild(group);
     container.appendChild(section);
   };
-  const greenGrid = addSection("Green Screen BGs");
+  const greenGrid = addSection("Photo Backgrounds");
   const greenList = getGreenBackgroundList(activeTheme);
   if (!greenList.length) {
     const note = document.createElement("div");
@@ -8807,7 +8635,7 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
     overlayGrid.appendChild(noOverlay);
 
     const photoOverlays = filterPhotoOverlaysByOrientation(
-      filterAssetPickerEntries(getOverlayList(activeTheme)),
+      getOverlayList(activeTheme),
       photoOverlayOrientation
     );
     if (!photoOverlays.length) {
@@ -8834,7 +8662,6 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
         img.src = withBust(
           overlay && overlay.renderSrc ? overlay.renderSrc : src
         );
-        appendAssetPickerFavoriteButton(wrap, "overlay", src);
         if (selectedOverlay === src) wrap.classList.add("selected");
         img.onerror = () => {
           console.error("Failed to load thumbnail:", src);
@@ -8848,7 +8675,6 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
           selectedOverlay = src;
           lastPhotoOverlay = src;
           lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
-          recordAssetPickerRecent("overlay", src);
           syncOverlayPreviewSurface({ mode: "live" });
           applyPreviewOrientation();
           logBoothFrameState("overlay-selected", mode);
@@ -8863,6 +8689,29 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
         visibleOverlays.length
       );
     }
+    // Add filter picker section
+    const filterGrid = addSection("Choose Your Filter");
+    FILTER_EFFECTS.forEach((filter) => {
+      const wrap = document.createElement("div");
+      wrap.className = "thumb filter-thumb";
+      if (selectedFilter === filter.id) wrap.classList.add("selected");
+      const label = document.createElement("div");
+      label.className = "filter-thumb-label";
+      label.textContent = filter.name;
+      const preview = document.createElement("div");
+      preview.className = "filter-thumb-preview";
+      preview.style.filter = filter.css || "none";
+      preview.textContent = "🎨";
+      wrap.appendChild(preview);
+      wrap.appendChild(label);
+      wrap.onclick = () => {
+        filterGrid.querySelectorAll(".thumb").forEach((t) => t.classList.remove("selected"));
+        wrap.classList.add("selected");
+        setFilter(filter.id);
+      };
+      filterGrid.appendChild(wrap);
+    });
+
     syncMobileSettingsUi();
     requestAnimationFrame(() => {
       container.scrollTop = previousScrollTop;
@@ -8872,7 +8721,7 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
 
   const templateKind = captureMode === "layout" ? "layout" : "strip";
   const templates = filterAssetsForMode(
-    filterAssetPickerEntries(getTemplateList(activeTheme)),
+    getTemplateList(activeTheme),
     templateKind
   );
   const templateGrid = addSection(
@@ -8905,7 +8754,6 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
     img.src = withBust(
       template && template.renderSrc ? template.renderSrc : src
     );
-    appendAssetPickerFavoriteButton(wrap, "template", src);
     if (pendingTemplateSrc === src) wrap.classList.add("selected");
     img.onerror = () => {
       console.error("Failed to load thumbnail:", src);
@@ -8919,7 +8767,6 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
       selectedOverlay = null;
       clearOverlayPreviewSurface();
       pendingTemplate = template || { src, layout: "double_column" };
-      recordAssetPickerRecent("template", src);
       if (pendingTemplate && pendingTemplate.src) {
         openConfirm(pendingTemplate.src);
       }
@@ -9122,6 +8969,8 @@ function confirmTemplate() {
 function showWelcome(step = null) {
   if (!activeTheme) return;
   updateShowcaseDemoUi();
+  syncBoothPersonality();
+  syncWelcomeLogo();
   setBoothControlsVisible(false);
   if (DOM.boothScreen) DOM.boothScreen.classList.add("welcome-active");
   if (DOM.confirmModal) DOM.confirmModal.style.display = "none";
@@ -9150,6 +8999,8 @@ function showWelcome(step = null) {
 
 function beginWelcome(event) {
   if (welcomeFlowStep !== "idle") return;
+  unlockBoothAudio();
+  playBoothSound("tap");
   if (event) {
     event.preventDefault();
     event.stopPropagation();
@@ -9158,6 +9009,8 @@ function beginWelcome(event) {
 }
 
 function beginModeSelection(nextMode, event) {
+  unlockBoothAudio();
+  playBoothSound("tap");
   if (event) {
     event.preventDefault();
     event.stopPropagation();
@@ -9212,6 +9065,7 @@ function hideWelcome() {
   const ws = DOM.welcomeScreen;
   if (!ws) return;
   if (ws.classList.contains("faded")) return;
+  playBoothSound("success");
   ws.classList.add("faded");
   if (DOM.boothScreen) DOM.boothScreen.classList.remove("welcome-active");
   if (currentMode !== "360") {
@@ -9511,6 +9365,8 @@ async function captureMessageFlow() {
 }
 
 function handlePrimaryAction() {
+  unlockBoothAudio();
+  playBoothSound("tap");
   if (DOM.boothScreen && DOM.boothScreen.classList.contains("welcome-active"))
     return;
   if (mode === "message") {
@@ -10432,6 +10288,50 @@ function delay(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function unlockBoothAudio() {
+  boothAudioEnabled = true;
+  try {
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) return;
+    if (!boothAudioContext) boothAudioContext = new AudioContextCtor();
+    if (boothAudioContext.state === "suspended") {
+      boothAudioContext.resume().catch(() => {});
+    }
+  } catch (_) {}
+}
+
+function playBoothSound(kind = "tap") {
+  if (!boothAudioEnabled) return;
+  try {
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) return;
+    if (!boothAudioContext) boothAudioContext = new AudioContextCtor();
+    const context = boothAudioContext;
+    if (context.state === "suspended") context.resume().catch(() => {});
+    const config =
+      {
+        tap: { frequency: 520, duration: 0.08, gain: 0.035 },
+        countdown: { frequency: 660, duration: 0.12, gain: 0.04 },
+        smile: { frequency: 880, duration: 0.16, gain: 0.045 },
+        success: { frequency: 740, duration: 0.18, gain: 0.05 },
+        qr: { frequency: 620, duration: 0.14, gain: 0.035 },
+        goodbye: { frequency: 520, duration: 0.22, gain: 0.04 },
+      }[kind] || { frequency: 520, duration: 0.08, gain: 0.035 };
+    const now = context.currentTime;
+    const osc = context.createOscillator();
+    const gain = context.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(config.frequency, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(config.gain, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + config.duration);
+    osc.connect(gain);
+    gain.connect(context.destination);
+    osc.start(now);
+    osc.stop(now + config.duration + 0.02);
+  } catch (_) {}
+}
+
 function getVideoTrack() {
   try {
     if (!stream) return null;
@@ -10459,6 +10359,7 @@ async function showCountdown(text) {
   setMobileSettingsOpen(false);
   const co = DOM.countdownOverlay;
   co.textContent = text;
+  playBoothSound(String(text).toLowerCase().includes("smile") ? "smile" : "countdown");
   updateCountdownFontSize();
   if (DOM.boothScreen && getSelectedCaptureMode() !== "message")
     DOM.boothScreen.classList.add("countdown-mode");
@@ -10477,6 +10378,7 @@ async function countdownAndSnap(options = {}) {
     for (let n = 3; n > 0; n--) {
       await showCountdown(n);
     }
+    await showCountdown("SMILE!");
   } else if (DOM.countdownOverlay) {
     DOM.countdownOverlay.classList.remove("show");
     if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
@@ -10886,6 +10788,8 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
     drawDynamicEventText(ctx, targetW, targetH, active, activeTheme);
   }
 
+  applyFilterToCanvas(ctx, targetW, targetH);
+
   return c.toDataURL("image/png");
 }
 
@@ -11154,8 +11058,85 @@ function resetTransientCaptureOverlays(options = {}) {
   }
 }
 
+function setFinalExperienceStage(stage = "review") {
+  const isReview = stage === "review";
+  if (DOM.reviewPanel) DOM.reviewPanel.classList.toggle("hidden", !isReview);
+  if (DOM.qrCodeContainer) {
+    DOM.qrCodeContainer.classList.toggle("experience-reveal", !isReview);
+    if (isReview) DOM.qrCodeContainer.classList.add("hidden");
+  }
+  if (DOM.paidPrintPanel) {
+    DOM.paidPrintPanel.classList.toggle("experience-reveal", !isReview);
+    if (isReview) DOM.paidPrintPanel.classList.remove("show");
+  }
+  if (DOM.lovePhotoBtn) {
+    DOM.lovePhotoBtn.disabled = false;
+    DOM.lovePhotoBtn.classList.remove("celebrate");
+    DOM.lovePhotoBtn.textContent = "✅ LOVE IT!";
+  }
+}
+
+function revealFinalSaveStage() {
+  if (DOM.reviewPanel) DOM.reviewPanel.classList.add("hidden");
+  if (DOM.qrCodeContainer && DOM.qrCodeContainer.dataset.ready === "true") {
+    DOM.qrCodeContainer.classList.remove("hidden");
+    DOM.qrCodeContainer.classList.add("experience-reveal");
+    playBoothSound("qr");
+  }
+  if (DOM.paidPrintPanel && DOM.paidPrintPanel.dataset.ready === "true") {
+    DOM.paidPrintPanel.classList.add("show", "experience-reveal");
+  }
+}
+
+function handleLovePhoto() {
+  unlockBoothAudio();
+  playBoothSound("success");
+  if (!DOM.lovePhotoBtn) {
+    revealFinalSaveStage();
+    return;
+  }
+  DOM.lovePhotoBtn.disabled = true;
+  DOM.lovePhotoBtn.classList.add("celebrate");
+  DOM.lovePhotoBtn.textContent = "💚 Awesome!";
+  setTimeout(revealFinalSaveStage, 300);
+}
+
+function showGoodbyeMoment() {
+  if (!DOM.goodbyeOverlay) return;
+  const personality = getBoothPersonality();
+  const title = DOM.goodbyeOverlay.querySelector("h2");
+  const body = DOM.goodbyeOverlay.querySelector("p");
+  if (title) title.textContent = "Thank You!";
+  if (body) body.textContent = personality.thanks.replace(/^thank you!?\s*/i, "") || "Enjoy your photos!";
+  DOM.goodbyeOverlay.classList.add("show");
+  playBoothSound("goodbye");
+  setTimeout(() => {
+    if (DOM.goodbyeOverlay) DOM.goodbyeOverlay.classList.remove("show");
+  }, 1400);
+}
+
+function setupFinalExperienceActions() {
+  if (DOM.lovePhotoBtn && !DOM.lovePhotoBtn.dataset.bound) {
+    DOM.lovePhotoBtn.dataset.bound = "true";
+    DOM.lovePhotoBtn.addEventListener("click", handleLovePhoto);
+  }
+  if (DOM.reviewRetakeBtn && !DOM.reviewRetakeBtn.dataset.bound) {
+    DOM.reviewRetakeBtn.dataset.bound = "true";
+    DOM.reviewRetakeBtn.addEventListener("click", () => {
+      unlockBoothAudio();
+      playBoothSound("tap");
+      retakePhoto();
+    });
+  }
+}
+
 function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
+  setupFinalExperienceActions();
+  syncBoothPersonality();
+  if (DOM.goodbyeOverlay) DOM.goodbyeOverlay.classList.remove("show");
+  if (DOM.qrCodeContainer) DOM.qrCodeContainer.dataset.ready = "false";
+  if (DOM.paidPrintPanel) DOM.paidPrintPanel.dataset.ready = "false";
   const img = DOM.finalStrip;
   const previewFit = getSelectedCaptureMode() === "strip" ? "contain" : "cover";
   if (img) img.style.objectFit = previewFit;
@@ -11215,7 +11196,7 @@ function showFinal(url, options = {}) {
       DOM.finalLive.classList.remove("hidden");
     }
     panel.classList.add("show");
-    setFinalPreviewSharePanelVisible(false);
+    setFinalExperienceStage("review");
     if (!skipShare && providedShareUrl) {
       lastShareUrl = providedShareUrl;
       renderQrCode(qrCanvas, lastShareUrl);
@@ -11223,9 +11204,8 @@ function showFinal(url, options = {}) {
         DOM.shareLink.href = lastShareUrl;
         DOM.shareLink.textContent = lastShareUrl;
       }
-      if (qrContainer) qrContainer.classList.remove("hidden");
+      if (qrContainer) qrContainer.dataset.ready = "true";
       if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
-      setFinalPreviewSharePanelVisible(true);
     } else if (!skipShare) {
       lastShareUrl = null;
       if (options.uploadQueued && DOM.qrHint) {
@@ -11243,6 +11223,7 @@ function showFinal(url, options = {}) {
       }
     }
     renderPaidPrintPanel(printEligible);
+    if (DOM.paidPrintPanel) DOM.paidPrintPanel.classList.remove("show");
     enqueueFinalPrintIfNeeded(printImageUrl, printEligible);
     resetIdleTimer();
     hidePreviewTimer = setTimeout(hideFinal, 15000);
@@ -12237,12 +12218,13 @@ async function uploadImageToCloudinary(blob, options = {}) {
     form.append("upload_preset", cfg.preset);
     if (options.folder) form.append("folder", options.folder);
     if (options.tags) form.append("tags", options.tags);
+    if (options.transformation) form.append("transformation", options.transformation);
     const resp = await fetch(
       `https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`,
       { method: "POST", body: form }
     );
     const json = await resp.json();
-    if (json && json.secure_url) return json.secure_url;
+    return getCloudinaryDerivedUrl(json);
   } catch (e) {
     console.warn("Cloudinary upload failed", e);
   }
@@ -12284,12 +12266,13 @@ async function uploadVideoToCloudinary(blob, options = {}) {
     form.append("upload_preset", cfg.preset);
     if (options.folder) form.append("folder", options.folder);
     if (options.tags) form.append("tags", options.tags);
+    if (options.transformation) form.append("transformation", options.transformation);
     const resp = await fetch(
       `https://api.cloudinary.com/v1_1/${cfg.cloud}/video/upload`,
       { method: "POST", body: form }
     );
     const json = await resp.json();
-    if (json && json.secure_url) return json.secure_url;
+    return getCloudinaryDerivedUrl(json);
   } catch (e) {
     console.warn("Cloudinary video upload failed", e);
   }
@@ -12577,6 +12560,7 @@ async function uploadCaptureOnce(options = {}) {
             folder: meta.folder,
             tags: meta.slug,
             force: true,
+            transformation: DOM.effectSelect && DOM.effectSelect.value !== "" ? DOM.effectSelect.value : undefined,
           },
           "image"
         );
@@ -12721,12 +12705,17 @@ async function downloadShareImage() {
 }
 
 function hideFinal() {
+  selectedFilter = "original";
   clearPreviewFreezeFrame();
   DOM.finalPreview.classList.remove("show");
+  showGoodbyeMoment();
   if (DOM.boothScreen)
     DOM.boothScreen.classList.remove("share-mode", "finalizing-mode");
   DOM.qrCodeContainer.classList.add("hidden");
+  if (DOM.qrCodeContainer) DOM.qrCodeContainer.dataset.ready = "false";
   if (DOM.paidPrintPanel) DOM.paidPrintPanel.classList.remove("show");
+  if (DOM.paidPrintPanel) DOM.paidPrintPanel.dataset.ready = "false";
+  if (DOM.reviewPanel) DOM.reviewPanel.classList.add("hidden");
   setFinalPreviewSharePanelVisible(false);
   if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "none";
   if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
@@ -14549,6 +14538,102 @@ function getAllAssetLibraryRows() {
   return getCanonicalAssetCollection();
 }
 
+function getAssetLibraryTrackingKey(asset) {
+  const category = normalizeUploadedAssetCategory(asset && asset.category);
+  const src = getAssetEntrySrc(asset);
+  return category && src ? `${category}:${src}` : "";
+}
+
+function readAssetLibraryKeyList(storageKey) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    return Array.isArray(parsed)
+      ? parsed.filter((item) => typeof item === "string" && item.trim())
+      : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveAssetLibraryKeyList(storageKey, keys) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(keys));
+  } catch (_) {}
+}
+
+function getAssetLibraryFavoriteKeys() {
+  return new Set(readAssetLibraryKeyList(ASSET_LIBRARY_FAVORITES_STORAGE_KEY));
+}
+
+function isAssetLibraryFavorite(asset) {
+  const key = getAssetLibraryTrackingKey(asset);
+  return !!key && getAssetLibraryFavoriteKeys().has(key);
+}
+
+function toggleAssetLibraryFavorite(asset) {
+  const key = getAssetLibraryTrackingKey(asset);
+  if (!key) return false;
+  const keys = getAssetLibraryFavoriteKeys();
+  const nextIsFavorite = !keys.has(key);
+  if (nextIsFavorite) keys.add(key);
+  else keys.delete(key);
+  saveAssetLibraryKeyList(
+    ASSET_LIBRARY_FAVORITES_STORAGE_KEY,
+    Array.from(keys)
+  );
+  return nextIsFavorite;
+}
+
+function getAssetLibraryRecentKeys() {
+  return readAssetLibraryKeyList(ASSET_LIBRARY_RECENTS_STORAGE_KEY);
+}
+
+function recordAssetLibraryRecent(asset) {
+  const key = getAssetLibraryTrackingKey(asset);
+  if (!key) return;
+  const keys = getAssetLibraryRecentKeys().filter((item) => item !== key);
+  keys.unshift(key);
+  saveAssetLibraryKeyList(
+    ASSET_LIBRARY_RECENTS_STORAGE_KEY,
+    keys.slice(0, ASSET_LIBRARY_RECENT_LIMIT)
+  );
+}
+
+function sortAssetLibraryRows(rows, sortMode) {
+  const assets = Array.isArray(rows) ? rows.slice() : [];
+  const favoriteKeys = getAssetLibraryFavoriteKeys();
+  const recentKeys = getAssetLibraryRecentKeys();
+  const recentRank = new Map(recentKeys.map((key, index) => [key, index]));
+  const byName = (a, b) =>
+    getAssetDisplayName(a).localeCompare(getAssetDisplayName(b));
+  const byNewest = (a, b) => {
+    const aTime = Date.parse(a.createdAt || "") || 0;
+    const bTime = Date.parse(b.createdAt || "") || 0;
+    return bTime - aTime || byName(a, b);
+  };
+  assets.sort((a, b) => {
+    if (sortMode === "name") return byName(a, b);
+    if (sortMode === "favorites") {
+      const aFav = favoriteKeys.has(getAssetLibraryTrackingKey(a)) ? 1 : 0;
+      const bFav = favoriteKeys.has(getAssetLibraryTrackingKey(b)) ? 1 : 0;
+      return bFav - aFav || byNewest(a, b);
+    }
+    if (sortMode === "recent") {
+      const aRank = recentRank.has(getAssetLibraryTrackingKey(a))
+        ? recentRank.get(getAssetLibraryTrackingKey(a))
+        : Number.MAX_SAFE_INTEGER;
+      const bRank = recentRank.has(getAssetLibraryTrackingKey(b))
+        ? recentRank.get(getAssetLibraryTrackingKey(b))
+        : Number.MAX_SAFE_INTEGER;
+      return aRank - bRank || byNewest(a, b);
+    }
+    const aTime = Date.parse(a.createdAt || "") || 0;
+    const bTime = Date.parse(b.createdAt || "") || 0;
+    return sortMode === "oldest" ? aTime - bTime || byName(a, b) : byNewest(a, b);
+  });
+  return assets;
+}
+
 function getFilteredAssetLibraryRows() {
   const query = DOM.assetLibrarySearch
     ? DOM.assetLibrarySearch.value.trim().toLowerCase()
@@ -14585,15 +14670,7 @@ function getFilteredAssetLibraryRows() {
       .toLowerCase();
     return haystack.includes(query);
   });
-  rows.sort((a, b) => {
-    if (sortMode === "name") {
-      return getAssetDisplayName(a).localeCompare(getAssetDisplayName(b));
-    }
-    const aTime = Date.parse(a.createdAt || "") || 0;
-    const bTime = Date.parse(b.createdAt || "") || 0;
-    return sortMode === "oldest" ? aTime - bTime : bTime - aTime;
-  });
-  return rows;
+  return sortAssetLibraryRows(rows, sortMode);
 }
 
 function getActiveAssetLibraryFilterLabels() {
@@ -15136,14 +15213,7 @@ function renderAssetLibrary() {
   
   // Sort assets
   const sortMode = DOM.assetLibrarySort ? DOM.assetLibrarySort.value : "newest";
-  assets.sort((a, b) => {
-    if (sortMode === "name") {
-      return getAssetDisplayName(a).localeCompare(getAssetDisplayName(b));
-    }
-    const aTime = Date.parse(a.createdAt || "") || 0;
-    const bTime = Date.parse(b.createdAt || "") || 0;
-    return sortMode === "oldest" ? aTime - bTime : bTime - aTime;
-  });
+  assets = sortAssetLibraryRows(assets, sortMode);
   
   // Render grid
   if (grid) {
@@ -15195,8 +15265,26 @@ function renderAssetLibrary() {
           badge.textContent = label;
           badges.appendChild(badge);
         });
+        if (isAssetLibraryFavorite(asset)) {
+          const favoriteBadge = document.createElement("span");
+          favoriteBadge.className = "asset-library-badge";
+          favoriteBadge.textContent = "Favorite";
+          badges.appendChild(favoriteBadge);
+        }
         const actions = document.createElement("div");
         actions.className = "asset-library-actions";
+        const favoriteBtn = document.createElement("button");
+        favoriteBtn.type = "button";
+        favoriteBtn.className = "asset-library-favorite";
+        favoriteBtn.textContent = isAssetLibraryFavorite(asset)
+          ? "Unfavorite"
+          : "Favorite";
+        favoriteBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const isFavorite = toggleAssetLibraryFavorite(asset);
+          renderAssetLibrary();
+          showToast(isFavorite ? "Asset added to favorites." : "Asset removed from favorites.");
+        });
         const renameBtn = document.createElement("button");
         renameBtn.type = "button";
         renameBtn.textContent = "Rename";
@@ -15239,6 +15327,7 @@ function renderAssetLibrary() {
           await deleteAssetLibraryItem(asset.id, asset);
           showToast("Asset removed from Asset Library.");
         });
+        actions.appendChild(favoriteBtn);
         actions.appendChild(renameBtn);
         actions.appendChild(tagsBtn);
         actions.appendChild(fieldsBtn);
@@ -15298,6 +15387,7 @@ function toggleLibraryAsset(asset) {
   const src = getAssetEntrySrc(asset);
   const category = normalizeUploadedAssetCategory(asset.category);
   if (!src || !category) return;
+  recordAssetLibraryRecent(asset);
   const effectiveAssetSet = getSessionEffectiveAssetSourceSet(category);
   const isSelected = effectiveAssetSet.has(src);
   const themeSources = getThemeAssetSourceSet(
@@ -18035,6 +18125,105 @@ function syncCaptureButtonText() {
   if (DOM.captureBtn) DOM.captureBtn.textContent = resolveCaptureLabel();
 }
 
+function getBoothPersonalitySource() {
+  const active = getActiveEvent();
+  const target = activeTheme || getSelectedThemeTarget() || {};
+  const pieces = [
+    active && active.name,
+    active && active.date,
+    target && target.name,
+    DOM.eventSelect && DOM.eventSelect.value,
+    target && target.bannerText,
+    target && target.welcome && target.welcome.title,
+  ];
+  return pieces.filter(Boolean).join(" ").toLowerCase();
+}
+
+function getBoothPersonality() {
+  const source = getBoothPersonalitySource();
+  if (/christmas|holiday|santa|xmas|winter/.test(source)) {
+    return {
+      welcome: "Capture a little holiday magic.",
+      camera: "Gather close for a little holiday magic.",
+      save: "Take the magic with you.",
+      print: "Take home your holiday keepsake.",
+      thanks: "Thank you! Enjoy your photos!",
+    };
+  }
+  if (/wedding|bride|groom|married|love|ring/.test(source)) {
+    return {
+      welcome: "Celebrate the moment.",
+      camera: "Get everyone you love in the frame.",
+      save: "Take this moment with you.",
+      print: "Take home a keepsake from the celebration.",
+      thanks: "Thank you! Enjoy the celebration!",
+    };
+  }
+  if (/birthday|bday|party|cake/.test(source)) {
+    return {
+      welcome: "Let's make this birthday unforgettable.",
+      camera: "Bring the birthday energy.",
+      save: "Take the party with you.",
+      print: "Take home a birthday keepsake.",
+      thanks: "Thank you! Enjoy your photos!",
+    };
+  }
+  if (/football|hawks|team|school|game|eagles|tigers|wildcats|panthers/.test(source)) {
+    const team = source.includes("hawks") ? "Go Hawks! " : "";
+    return {
+      welcome: `${team}Ready to make some memories?`,
+      camera: "Bring the team energy.",
+      save: "Take the win with you.",
+      print: "Take home your game-day keepsake.",
+      thanks: "Thank you! See you again!",
+    };
+  }
+  return {
+    welcome: "Ready to make some memories?",
+    camera: "Get everyone in the frame!",
+    save: "Take them with you.",
+    print: "Take home your keepsake.",
+    thanks: "Thank you! Enjoy your photos!",
+  };
+}
+
+function syncBoothPersonality() {
+  const personality = getBoothPersonality();
+  if (DOM.welcomeHostLine) DOM.welcomeHostLine.textContent = personality.welcome;
+  if (DOM.boothHostPrompt) {
+    DOM.boothHostPrompt.innerHTML = "";
+    DOM.boothHostPrompt.appendChild(document.createTextNode(personality.camera));
+    const helper = document.createElement("span");
+    helper.textContent = "Smile when the booth says so.";
+    DOM.boothHostPrompt.appendChild(helper);
+  }
+  if (DOM.qrCodeContainer) {
+    const heading = DOM.qrCodeContainer.querySelector("h2");
+    if (heading) heading.textContent = personality.save;
+  }
+  if (DOM.qrSaveCopy) DOM.qrSaveCopy.textContent = "Scan to save your photos.";
+  if (DOM.paidPrintBody) DOM.paidPrintBody.textContent = personality.print;
+}
+
+function syncWelcomeLogo() {
+  if (!DOM.welcomeEventLogo) return;
+  DOM.welcomeEventLogo.innerHTML = "";
+  const logoSrc =
+    (activeTheme && activeTheme.logo) ||
+    (activeTheme && activeTheme.logoUrl) ||
+    "";
+  if (!logoSrc) {
+    DOM.welcomeEventLogo.classList.add("hidden");
+    return;
+  }
+  const img = document.createElement("img");
+  img.src = withBust(logoSrc);
+  img.alt = "";
+  img.onload = () => DOM.welcomeEventLogo.classList.remove("hidden");
+  img.onerror = () => DOM.welcomeEventLogo.classList.add("hidden");
+  DOM.welcomeEventLogo.appendChild(img);
+}
+
 function resolveThemeCaptureLabel() {
   const target = activeTheme || getSelectedThemeTarget();
   if (
@@ -18110,6 +18299,8 @@ function syncWelcomeText() {
   if (DOM.welcomeTitle) DOM.welcomeTitle.textContent = title;
   const prompt = resolveStartButtonText();
   if (DOM.startButton) DOM.startButton.textContent = prompt;
+  syncBoothPersonality();
+  syncWelcomeLogo();
   applyWelcomeTitleSize(activeTheme);
 }
 
@@ -18124,7 +18315,7 @@ function resolveThemeStartButtonText() {
   const target = activeTheme || getSelectedThemeTarget();
   if (target && target.welcome && target.welcome.prompt)
     return target.welcome.prompt;
-  return "Touch to start";
+  return "Tap anywhere to start";
 }
 
 function resolveThemeWelcomeTitleSizeValue() {
@@ -20649,7 +20840,7 @@ function getOverlayList(theme) {
     seen.add(src);
     out.push(item);
   }
-  return sortAssetPickerEntries(out, "overlay", theme);
+  return out;
 }
 
 function getAllThemeOverlayCatalogList(theme) {
@@ -20711,7 +20902,7 @@ function getTemplateList(theme) {
     seen.add(src);
     out.push(item);
   }
-  return sortAssetPickerEntries(out, "template", theme);
+  return out;
 }
 
 // --- PWA Install Button ---
