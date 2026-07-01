@@ -37,3 +37,18 @@ export function buildAssetIndexKey({ hash, folder }) {
   if (!cleanHash) return cleanFolder;
   return `${cleanFolder}::${cleanHash}`;
 }
+
+export function getCloudinaryDerivedUrl(response) {
+  const eager = Array.isArray(response && response.eager) ? response.eager : [];
+  for (const item of eager) {
+    const secureUrl = String(item && item.secure_url ? item.secure_url : "").trim();
+    if (/^https?:\/\//i.test(secureUrl)) return secureUrl;
+    const plainUrl = String(item && item.url ? item.url : "").trim();
+    if (/^https?:\/\//i.test(plainUrl)) return plainUrl;
+  }
+  const secureUrl = String(response && response.secure_url ? response.secure_url : "").trim();
+  if (/^https?:\/\//i.test(secureUrl)) return secureUrl;
+  const plainUrl = String(response && response.url ? response.url : "").trim();
+  if (/^https?:\/\//i.test(plainUrl)) return plainUrl;
+  return "";
+}

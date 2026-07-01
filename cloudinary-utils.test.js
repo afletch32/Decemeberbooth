@@ -9,10 +9,11 @@ async function loadBuildEventFolderPath() {
   const moduleUrl = pathToFileURL(join(process.cwd(), "scripts/cloudinary-utils.mjs"));
   const mod = await import(moduleUrl.href);
   return {
-    buildAssetIndexKey: mod.buildAssetIndexKey,
-    buildDateSessionFolderPath: mod.buildDateSessionFolderPath,
-    buildEventAssetFolderPath: mod.buildEventAssetFolderPath,
-    buildEventFolderPath: mod.buildEventFolderPath
+      buildAssetIndexKey: mod.buildAssetIndexKey,
+      buildDateSessionFolderPath: mod.buildDateSessionFolderPath,
+      buildEventAssetFolderPath: mod.buildEventAssetFolderPath,
+      buildEventFolderPath: mod.buildEventFolderPath,
+      getCloudinaryDerivedUrl: mod.getCloudinaryDerivedUrl
   };
 }
 
@@ -96,4 +97,40 @@ test("buildAssetIndexKey scopes duplicate detection by destination folder", asyn
       folder: "photobooth/events/party-b/backgrounds"
     })
   );
+});
+
+test("getCloudinaryDerivedUrl prefers eager secure_url before base secure_url", async () => {
+  const { getCloudinaryDerivedUrl } = await loadBuildEventFolderPath();
+
+  const result = getCloudinaryDerivedUrl({
+    secure_url: "https://res.cloudinary.com/demo/image/upload/base.png",
+    eager: [
+      {
+        secure_url: "https://res.cloudinary.com/demo/image/upload/derived.png"
+      }
+    ]
+  });
+
+  assert.equal(result, "https://res.cloudinary.com/demo/image/upload/derived.png");
+});
+
+test("getCloudinaryDerivedUrl falls back to response secure_url when eager is absent", async () => {
+  const { getCloudinaryDerivedUrl } = await loadBuildEventFolderPath();
+
+  const result = getCloudinaryDerivedUrl({
+    secure_url: "https://res.cloudinary.com/demo/image/upload/base.png"
+  });
+
+  assert.equal(result, "https://res.cloudinary.com/demo/image/upload/base.png");
+});
+
+test("getCloudinaryDerivedUrl returns empty string when no usable url exists", async () => {
+  const { getCloudinaryDerivedUrl } = await loadBuildEventFolderPath();
+
+  const result = getCloudinaryDerivedUrl({
+    eager: [{ secure_url: "" }],
+    secure_url: ""
+  });
+
+  assert.equal(result, "");
 });

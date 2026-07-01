@@ -508,40 +508,46 @@ test("asset library is the only setup asset state surface", () => {
   );
 });
 
-test("booth asset picker preserves order and exposes search, favorites, and show more", () => {
+test("booth asset picker preserves order and keeps search and favorites admin-only", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    appScript.includes("ASSET_PICKER_INITIAL_LIMIT = 24") &&
-      appScript.includes("photoboothAssetPickerFavorites") &&
-      appScript.includes("photoboothAssetPickerRecents"),
-    "asset picker should store favorites/recents and start with a 24-item limit"
+    appScript.includes("ASSET_PICKER_INITIAL_LIMIT = 24"),
+    "asset picker should still start with a bounded public list"
   );
   assert.ok(
-    appScript.includes("function sortAssetPickerEntries(") &&
-      appScript.includes("return sortAssetPickerEntries(out, \"overlay\", theme);") &&
-      appScript.includes("return sortAssetPickerEntries(out, \"template\", theme);"),
-    "overlay and template lists should use stable picker sorting"
-  );
-  assert.ok(
-    appScript.includes("function renderAssetPickerControls(") &&
-      appScript.includes("data-asset-picker-search") &&
-      appScript.includes("function appendAssetPickerShowMore("),
-    "picker should expose search and show-more controls"
+    appScript.includes("return out;") &&
+      !appScript.includes("function sortAssetPickerEntries(") &&
+      !appScript.includes("photoboothAssetPickerFavorites") &&
+      !appScript.includes("photoboothAssetPickerRecents") &&
+      !appScript.includes("renderAssetPickerControls") &&
+      !appScript.includes("appendAssetPickerFavoriteButton"),
+    "guest overlay and template lists should keep their natural order without public favorites or recents"
   );
   assert.ok(
     appScript.includes("const previousScrollTop =") &&
       appScript.includes("container.scrollTop = previousScrollTop") &&
-      appScript.includes("recordAssetPickerRecent(\"overlay\", src);") &&
-      appScript.includes("recordAssetPickerRecent(\"template\", src);"),
-    "selection should record recents without rebuilding the picker and should preserve scroll on rebuilds"
+      appScript.includes("function appendAssetPickerShowMore("),
+    "guest picker should preserve scroll and keep show-more pagination without adding search or favorites"
   );
   assert.ok(
-    html.includes(".asset-picker-search") &&
-      html.includes(".asset-picker-favorite") &&
+    html.includes('id="assetLibrarySearch"') &&
+      html.includes('id="assetLibrarySort"') &&
+      html.includes('value="favorites"') &&
+      html.includes('value="recent"') &&
+      !html.includes(".asset-picker-search") &&
+      !html.includes(".asset-picker-favorite") &&
       html.includes(".asset-picker-show-more"),
-    "picker controls should have compact sidebar styling"
+    "search and sorting should remain admin Asset Library controls, not public booth picker controls"
+  );
+  assert.ok(
+    appScript.includes("photoboothAssetLibraryFavorites") &&
+      appScript.includes("photoboothAssetLibraryRecents") &&
+      appScript.includes("function toggleAssetLibraryFavorite(") &&
+      appScript.includes("function recordAssetLibraryRecent(") &&
+      appScript.includes('favoriteBtn.className = "asset-library-favorite"'),
+    "favorites and recents should live in the admin Asset Library"
   );
 });
 
@@ -728,5 +734,52 @@ test("booth button labels do not split words when wrapping", () => {
   assert.ok(
     html.includes("      width: 100%;\n      white-space: normal;\n      overflow-wrap: normal;\n      word-break: normal;\n      hyphens: none;\n      text-wrap: balance;"),
     "mode button labels should avoid mid-word wrapping"
+  );
+});
+
+test("guest booth flow uses attraction-style host moments", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes('id="welcomeHostLine"') &&
+      html.includes("Ready to make some memories?") &&
+      html.includes("Choose your experience") &&
+      html.includes('id="boothHostPrompt"') &&
+      html.includes("Get everyone in the frame!"),
+    "welcome, choice, and camera states should have guest-facing host copy"
+  );
+  assert.ok(
+    html.includes('id="reviewPanel"') &&
+      html.includes("Love your photos?") &&
+      html.includes('id="lovePhotoBtn"') &&
+      html.includes("LOVE IT!") &&
+      html.includes('id="reviewRetakeBtn"'),
+    "final preview should open with an emotional review choice"
+  );
+  assert.ok(
+    html.includes("Take them with you.") &&
+      html.includes("Scan to save your photos.") &&
+      html.includes('id="goodbyeOverlay"') &&
+      html.includes("Thank You!") &&
+      html.includes("Enjoy your photos!"),
+    "save and goodbye states should use memory-focused copy"
+  );
+  assert.ok(
+    appScript.includes("function getBoothPersonality()") &&
+      appScript.includes("Capture a little holiday magic.") &&
+      appScript.includes("Celebrate the moment.") &&
+      appScript.includes("Go Hawks!") &&
+      appScript.includes("syncBoothPersonality();"),
+    "guest copy should adapt lightly to the active event/theme"
+  );
+  assert.ok(
+    appScript.includes("function playBoothSound(") &&
+      appScript.includes("countdown: { frequency") &&
+      appScript.includes('await showCountdown("SMILE!");') &&
+      appScript.includes("function handleLovePhoto()") &&
+      appScript.includes("Awesome!") &&
+      appScript.includes("function revealFinalSaveStage()"),
+    "the flow should include tiny sound cues, a SMILE beat, and a rewarding love-it transition"
   );
 });

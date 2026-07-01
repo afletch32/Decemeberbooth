@@ -86,10 +86,7 @@ async function launchStillPhotoBooth(page) {
   await page.waitForFunction(() => !!window.__photoboothTest);
   await page.locator("#startBoothButton").click({ force: true });
   await page.locator("#startButton").click({ force: true });
-  await page
-    .locator(".welcome-mode-btn")
-    .filter({ hasText: "Single Still Photo" })
-    .click({ force: true });
+  await page.locator(".welcome-mode-btn[data-welcome-mode=\"still-photo\"]").click({ force: true });
   await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
   await expect(page.locator("#captureBtn")).toBeVisible();
 }
@@ -239,9 +236,14 @@ test("Asset Library filters the setup catalog by category", async ({
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
   await page.locator("#assetLibraryCategory").selectOption("template");
+  await page.locator("#assetLibrarySort").selectOption("favorites");
+  await page.locator("#assetLibrarySort").selectOption("recent");
   const cards = page.locator("#assetLibraryGrid .asset-library-card");
   expect(await cards.count()).toBeGreaterThan(0);
-  await expect(page.locator("#assetLibraryStatus")).toContainText("shown");
+  await expect(page.locator("#assetLibraryStatus")).toContainText("Showing");
+  const favoriteButtons = page.locator("#assetLibraryGrid .asset-library-favorite");
+  expect(await favoriteButtons.count()).toBeGreaterThan(0);
+  await expect(favoriteButtons.first()).toBeVisible();
   await expect(
     page.locator("#assetLibraryGrid .asset-library-actions button", {
       hasText: "Defaults",
@@ -789,10 +791,7 @@ test("setup screen keeps overlay choice in the booth and can start a plain layou
   await expect(page.locator("#adminScreen")).toHaveClass(/hidden/);
   await expect(page.locator("#boothScreen")).not.toHaveClass(/hidden/);
   await page.locator("#startButton").click({ force: true });
-  await page
-    .locator(".welcome-mode-btn")
-    .filter({ hasText: "Single Live Photo" })
-    .click({ force: true });
+  await page.locator(".welcome-mode-btn[data-welcome-mode=\"live-photo\"]").click({ force: true });
   await expect(page.locator("#video")).not.toHaveClass(/hidden/);
   await expect(page.locator("#modeToggle")).toHaveText("Switch to 360 Mode");
   await page.evaluate(() => {
@@ -883,10 +882,7 @@ test("setup screen shows assigned asset counts and font summary", async ({
   await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
   await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
-  await page
-    .locator(".welcome-mode-btn")
-    .filter({ hasText: "Photostrip" })
-    .click({ force: true });
+  await page.locator(".welcome-mode-btn[data-welcome-mode=\"strip\"]").click({ force: true });
   await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
   await page.evaluate(() => setMode("strip"));
   await expect(page.locator("#controls .mode-btn[data-mode=\"strip\"]")).toHaveClass(/active/);
@@ -933,10 +929,7 @@ test("booth mode buttons switch frame sizing and option sets", async ({
 
   await page.locator("#startBoothButton").click({ force: true });
   await page.locator("#startButton").click({ force: true });
-  await page
-    .locator(".welcome-mode-btn")
-    .filter({ hasText: "Single Live Photo" })
-    .click({ force: true });
+  await page.locator(".welcome-mode-btn[data-welcome-mode=\"live-photo\"]").click({ force: true });
   await expect(page.locator("#captureBtn")).toBeVisible();
   await expect(page.locator("#boothScreen")).toHaveClass(/booth-ready/);
   await expect(page.locator("#boothModeBar")).toBeHidden();
@@ -1022,10 +1015,7 @@ test("theme session text controls update booth labels without a saved event", as
   await expect(page.locator("#startButton")).toHaveText("Begin Booth");
 
   await page.locator("#startButton").click({ force: true });
-  await page
-    .locator(".welcome-mode-btn")
-    .filter({ hasText: "Single Still Photo" })
-    .click({ force: true });
+  await page.locator(".welcome-mode-btn[data-welcome-mode=\"still-photo\"]").click({ force: true });
   await expect(page.locator("#captureBtn")).toHaveText("Snap Now");
 });
 
@@ -1058,10 +1048,7 @@ test("photo overlay format selector filters portrait and landscape overlays", as
 
   await page.locator("#startBoothButton").click({ force: true });
   await page.locator("#startButton").click({ force: true });
-  await page
-    .locator(".welcome-mode-btn")
-    .filter({ hasText: "Single Live Photo" })
-    .click({ force: true });
+  await page.locator(".welcome-mode-btn[data-welcome-mode=\"live-photo\"]").click({ force: true });
   await page.evaluate(() => setMode("live-photo"));
   await page.evaluate(() => window.__photoboothTest.setPhotoOverlayFormat("portrait"));
 
@@ -1138,15 +1125,14 @@ test("frame picker stays hidden until the welcome flow reaches capture", async (
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
   await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
 
-  await page
-    .locator(".welcome-mode-btn")
-    .filter({ hasText: "Single Still Photo" })
-    .click({ force: true });
+  await page.locator(".welcome-mode-btn[data-welcome-mode=\"still-photo\"]").click({ force: true });
   await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
   await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#captureBtn")).toBeVisible();
   await expect(page.locator("#captureBtn")).toContainText("Take Photo");
   await expect(page.locator("#mobileSettingsSheet")).toBeVisible();
+  await expect(page.locator("#options .asset-picker-search")).toHaveCount(0);
+  await expect(page.locator("#options .asset-picker-favorite")).toHaveCount(0);
 });
 
 test("frame picker hides during finalizing on desktop and mobile", async ({
