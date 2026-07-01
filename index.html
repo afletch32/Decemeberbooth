@@ -3336,19 +3336,29 @@
     #boothHostPrompt {
       display: grid;
       justify-items: center;
-      gap: 4px;
-      min-height: 46px;
+      gap: 3px;
+      min-height: 0;
+      max-width: min(92vw, 520px);
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.56);
+      border: 1px solid rgba(255, 255, 255, 0.68);
+      box-shadow: 0 8px 22px rgba(81, 65, 47, 0.08);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       color: #263a37;
       text-align: center;
-      font-family: var(--font-heading);
-      font-size: clamp(1.25rem, 2.6vw, 2.1rem);
-      line-height: 1.05;
-      animation: boothPanelDrift 7s ease-in-out infinite alternate;
+      font-family: var(--font-body);
+      font-size: clamp(0.9rem, 1.5vw, 1.12rem);
+      line-height: 1.18;
     }
 
     #boothHostPrompt span {
-      font-family: var(--font-body);
-      font-size: 0.62em;
+      font-family: var(--font-label);
+      font-size: 0.72em;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
       color: #5d6c69;
     }
 
@@ -6028,9 +6038,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 48px;
-      min-height: 48px;
-      padding: 8px 12px;
+      width: 62px;
+      height: 62px;
+      min-width: 62px;
+      min-height: 62px;
+      padding: 0;
       border-radius: 999px;
       border: 1px solid rgba(255, 255, 255, 0.55);
       background: rgba(255, 255, 255, 0.42);
@@ -6038,8 +6050,9 @@
       -webkit-backdrop-filter: blur(14px);
       box-shadow: 0 8px 22px rgba(17, 17, 17, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.65);
       color: #2d3a38;
-      font-size: 1.15rem;
-      font-weight: 700;
+      font-size: 1.9rem;
+      font-weight: 900;
+      line-height: 1;
       cursor: pointer;
       transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
       user-select: none;
@@ -6064,10 +6077,11 @@
 
     @media (max-width: 900px) {
       .filter-arrow {
-        min-width: 44px;
-        min-height: 44px;
-        padding: 8px 10px;
-        font-size: 1rem;
+        width: 56px;
+        height: 56px;
+        min-width: 56px;
+        min-height: 56px;
+        font-size: 1.65rem;
       }
 
       #filterCarouselName {
@@ -6434,6 +6448,7 @@
                   <select id="assetLibraryCategory">
                     <option value="">All Categories</option>
                     <option value="general">General</option>
+                    <option value="birthday">Birthday</option>
                     <option value="school">School</option>
                     <option value="wedding">Wedding</option>
                     <option value="holidays">Holidays</option>
@@ -6734,14 +6749,14 @@
           <span id="livePhotoStatus" class="capture-status-pill hidden">Live Photo</span>
           <span id="instantCaptureStatus" class="capture-status-pill hidden">Instant Capture</span>
         </div>
-        <div id="boothHostPrompt" aria-live="polite">
-          Get everyone in the frame!
-          <span>Smile when the booth says so.</span>
-        </div>
         <div id="filterCarousel" class="filter-carousel hidden">
           <button id="filterPrevBtn" type="button" class="filter-arrow filter-arrow-prev" aria-label="Previous filter" onclick="prevFilter()">◀</button>
           <span id="filterCarouselName">✨ Natural</span>
           <button id="filterNextBtn" type="button" class="filter-arrow filter-arrow-next" aria-label="Next filter" onclick="nextFilter()">▶</button>
+        </div>
+        <div id="boothHostPrompt" aria-live="polite">
+          Use the arrows to choose a look.
+          <span>Tap Take Photo when you are ready.</span>
         </div>
         <button id="captureBtn" class="primary" onclick="handlePrimaryAction()">Take Photo</button>
         <div id="booth360Panel" class="booth-360-panel hidden">

@@ -742,11 +742,12 @@ test("guest booth flow uses attraction-style host moments", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    html.includes('id="welcomeHostLine"') &&
+      html.includes('id="welcomeHostLine"') &&
       html.includes("Ready to make some memories?") &&
       html.includes("Choose your experience") &&
       html.includes('id="boothHostPrompt"') &&
-      html.includes("Get everyone in the frame!"),
+      html.includes("Use the arrows to choose a look.") &&
+      html.includes("Tap Take Photo when you are ready."),
     "welcome, choice, and camera states should have guest-facing host copy"
   );
   assert.ok(
@@ -781,5 +782,41 @@ test("guest booth flow uses attraction-style host moments", () => {
       appScript.includes("Awesome!") &&
       appScript.includes("function revealFinalSaveStage()"),
     "the flow should include tiny sound cues, a SMILE beat, and a rewarding love-it transition"
+  );
+});
+
+test("booth filter carousel has touch-sized global controls", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes('onclick="prevFilter()"') &&
+      html.includes('onclick="nextFilter()"') &&
+      appScript.includes("nextFilter,") &&
+      appScript.includes("prevFilter,"),
+    "filter carousel arrow buttons should call globally exposed handlers"
+  );
+  assert.ok(
+    html.includes("width: 62px;") &&
+      html.includes("height: 62px;") &&
+      html.includes("font-size: 1.9rem;"),
+    "filter carousel arrows should be large enough for touch use"
+  );
+});
+
+test("final share QR is only marked ready after rendering succeeds", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("async function renderQrCode(canvas, text)") &&
+      appScript.includes("function loadQrCodeLibrary") &&
+      appScript.includes("https://unpkg.com/qrcode@1.5.1/build/qrcode.min.js"),
+    "QR rendering should have an async fallback loader"
+  );
+  assert.ok(
+    appScript.includes('qrContainer.dataset.ready = qrRendered ? "true" : "false"') &&
+      appScript.includes('DOM.qrCodeContainer.dataset.ready = qrRendered ? "true" : "false"') &&
+      appScript.includes('DOM.shareStatus.textContent = qrRendered ? "Link ready" : "QR failed"'),
+    "final QR panels should expose ready state only after the canvas renders"
   );
 });

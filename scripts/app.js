@@ -1448,6 +1448,24 @@ let assetPickerVisibleLimits = {
   strip: ASSET_PICKER_INITIAL_LIMIT,
   layout: ASSET_PICKER_INITIAL_LIMIT,
 };
+
+const BOOTH_TEST_SHARE_URL = "https://example.com/photobooth-test-final.png";
+
+function getUrlParam(name) {
+  try {
+    return new URLSearchParams(window.location.search).get(name) || "";
+  } catch (_) {
+    return "";
+  }
+}
+
+function isBoothTestMode() {
+  return getUrlParam("testMode") === "booth";
+}
+
+function getBoothQaState() {
+  return getUrlParam("qaState");
+}
 const AUTO_ENHANCE_ENABLED = true;
 const AUTO_ENHANCE_FILTER = "brightness(1.05) contrast(1.08) saturate(1.08)";
 const ENHANCEMENT_MODE_DEFAULT = "bridal-glow";
@@ -2089,6 +2107,7 @@ let idleTimer;
 const IDLE_TIMEOUT_MS = 30000; // 30 seconds
 
 function resetIdleTimer() {
+  if (isBoothTestMode()) return;
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
     hideFinal();
@@ -5737,6 +5756,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   );
   resetIdleTimer();
   init();
+  applyBoothTestModeFromUrl();
   if (DOM.headingFontSelect && DOM.bodyFontSelect) {
     setupDualFontPicker({
       headingSelect: DOM.headingFontSelect,
@@ -7154,17 +7174,32 @@ async function process360Video(file) {
     }
 
     lastShareUrl = publicUrl;
-    if (DOM.qrCode) renderQrCode(DOM.qrCode, publicUrl);
+    const qrRendered = DOM.qrCode
+      ? await renderQrCode(DOM.qrCode, publicUrl)
+      : false;
     if (DOM.shareLink) {
       DOM.shareLink.href = publicUrl;
       DOM.shareLink.textContent = publicUrl;
     }
     if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "flex";
-    if (DOM.qrCodeContainer) DOM.qrCodeContainer.classList.remove("hidden");
-    if (DOM.qrHint) DOM.qrHint.style.display = "none";
-    if (DOM.shareStatus) DOM.shareStatus.textContent = "Link ready";
-    set360Status("Ready to share", "QR code is ready for guests to scan.");
-    setVideoImportStatus("Ready");
+    if (DOM.qrCodeContainer) {
+      DOM.qrCodeContainer.dataset.ready = qrRendered ? "true" : "false";
+      DOM.qrCodeContainer.classList.remove("hidden");
+    }
+    if (DOM.qrHint) {
+      DOM.qrHint.textContent = qrRendered
+        ? ""
+        : "Open the link button if the QR does not appear.";
+      DOM.qrHint.style.display = qrRendered ? "none" : "block";
+    }
+    if (DOM.shareStatus) DOM.shareStatus.textContent = qrRendered ? "Link ready" : "QR failed";
+    set360Status(
+      qrRendered ? "Ready to share" : "Link ready",
+      qrRendered
+        ? "QR code is ready for guests to scan."
+        : "The share link is ready, but the QR code did not render."
+    );
+    setVideoImportStatus(qrRendered ? "Ready" : "QR failed");
   } catch (error) {
     console.error("360 video processing failed", error);
     if (DOM.shareStatus) {
@@ -8473,13 +8508,14 @@ function updateFilterCarouselVisibility() {
 
 function nextFilter() {
   const idx = FILTER_EFFECTS.findIndex((f) => f.id === selectedFilter);
-  const nextIdx = (idx + 1) % FILTER_EFFECTS.length;
+  const nextIdx = (Math.max(idx, 0) + 1) % FILTER_EFFECTS.length;
   setFilter(FILTER_EFFECTS[nextIdx].id);
 }
 
 function prevFilter() {
   const idx = FILTER_EFFECTS.findIndex((f) => f.id === selectedFilter);
-  const prevIdx = (idx - 1 + FILTER_EFFECTS.length) % FILTER_EFFECTS.length;
+  const currentIdx = idx >= 0 ? idx : 0;
+  const prevIdx = (currentIdx - 1 + FILTER_EFFECTS.length) % FILTER_EFFECTS.length;
   setFilter(FILTER_EFFECTS[prevIdx].id);
 }
 
@@ -9079,6 +9115,63 @@ function resolveBoothLaunchMode() {
   return getLivePhotoEnabled() ? "live-photo" : "still-photo";
 }
 
+function createBoothTestStream() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1280;
+  canvas.height = 720;
+  const ctx = canvas.getContext("2d");
+  if (!ctx || typeof canvas.captureStream !== "function") return null;
+  let frame = 0;
+  const draw = () => {
+    const width = canvas.width;
+    const height = canvas.height;
+    const shift = Math.sin(frame / 24) * 18;
+    const grad = ctx.createLinearGradient(0, 0, width, height);
+    grad.addColorStop(0, "#f7efe4");
+    grad.addColorStop(0.5, "#d7eadf");
+    grad.addColorStop(1, "#e7d5b7");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    ctx.fillRect(96 + shift, 74, 1088, 572);
+    ctx.fillStyle = "#243b38";
+    ctx.font = "700 56px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Booth Test Camera", width / 2, height / 2 - 22);
+    ctx.font = "32px system-ui, sans-serif";
+    ctx.fillText("Live preview mock", width / 2, height / 2 + 34);
+    ctx.fillStyle = "#c79f5d";
+    ctx.beginPath();
+    ctx.arc(width / 2 + shift * 3, height / 2 + 110, 28, 0, Math.PI * 2);
+    ctx.fill();
+    frame += 1;
+  };
+  draw();
+  const timer = setInterval(draw, 100);
+  const testStream = canvas.captureStream(30);
+  testStream.__boothTestTimer = timer;
+  return testStream;
+}
+
+function setBoothTestCameraStream() {
+  const testStream = createBoothTestStream();
+  if (!testStream) {
+    demoMode = true;
+    return false;
+  }
+  stream = testStream;
+  if (DOM.video) {
+    DOM.video.srcObject = testStream;
+    DOM.video.style.transform = "";
+    DOM.video.classList.remove("hidden");
+    if (typeof DOM.video.play === "function") {
+      DOM.video.play().catch(() => {});
+    }
+  }
+  syncOverlayPreviewSurface({ mode: "live" });
+  return true;
+}
+
 // Camera
 async function startCamera(autoStartBooth = false) {
   if (isStartingCamera) return;
@@ -9087,6 +9180,14 @@ async function startCamera(autoStartBooth = false) {
   try {
     // Load the theme first to ensure all assets and settings are ready.
     loadTheme(DOM.eventSelect.value);
+
+    if (isBoothTestMode()) {
+      setBoothTestCameraStream();
+      showToast("Booth test camera enabled");
+      if (autoStartBooth) startBoothFlow();
+      isStartingCamera = false;
+      return;
+    }
 
     // If running from file://, most browsers block camera. Offer Demo Mode unless forced.
     if (
@@ -9203,6 +9304,161 @@ function startBoothFlow() {
 
 const startCameraFlow = (...args) => startCamera(...args);
 const startBoothFromAdmin = (...args) => startBooth(...args);
+
+function buildBoothTestFinalImage() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1800;
+  canvas.height = 1200;
+  const ctx = canvas.getContext("2d");
+  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  grad.addColorStop(0, "#f8efe3");
+  grad.addColorStop(0.5, "#d9efe7");
+  grad.addColorStop(1, "#f3d7b6");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(120, 110, 1560, 980);
+  ctx.fillStyle = "#263a37";
+  ctx.font = "800 96px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Booth Test Photo", canvas.width / 2, 520);
+  ctx.font = "44px system-ui, sans-serif";
+  ctx.fillText("Final preview and QR QA", canvas.width / 2, 600);
+  ctx.fillStyle = "#c79f5d";
+  ctx.beginPath();
+  ctx.arc(canvas.width / 2, 730, 70, 0, Math.PI * 2);
+  ctx.fill();
+  return canvas.toDataURL("image/png");
+}
+
+function enterBoothQaState(state = "capture") {
+  if (!isBoothTestMode()) return;
+  const target = state || "capture";
+  startBooth({ preserveSession: true });
+  requestAnimationFrame(() => {
+    if (target === "welcome") return;
+    beginModeSelection("still-photo");
+    if (target === "final") {
+      showFinal(buildBoothTestFinalImage(), {
+        shareUrl: BOOTH_TEST_SHARE_URL,
+        printEligible: false,
+      });
+    }
+  });
+}
+
+function applyBoothTestModeFromUrl() {
+  if (!isBoothTestMode()) return;
+  document.documentElement.dataset.boothTestMode = "true";
+  const state = getBoothQaState();
+  if (state) {
+    requestAnimationFrame(() => enterBoothQaState(state));
+  }
+}
+
+function getVisibleElementBox(selector) {
+  const element = document.querySelector(selector);
+  if (!element) return null;
+  const style = window.getComputedStyle(element);
+  const rect = element.getBoundingClientRect();
+  const visible =
+    style.display !== "none" &&
+    style.visibility !== "hidden" &&
+    rect.width > 0 &&
+    rect.height > 0;
+  return {
+    selector,
+    visible,
+    left: Math.round(rect.left),
+    top: Math.round(rect.top),
+    right: Math.round(rect.right),
+    bottom: Math.round(rect.bottom),
+    width: Math.round(rect.width),
+    height: Math.round(rect.height),
+    text: (element.textContent || "").replace(/\s+/g, " ").trim().slice(0, 160),
+  };
+}
+
+function getOverlapArea(a, b) {
+  const width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+  const height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+  return Math.round(width * height);
+}
+
+function auditBoothLayout() {
+  const selectors = [
+    "#boothHeader",
+    "#boothBackBtn",
+    "#adminBtn",
+    "#mobileSettingsToggle",
+    "#mobileSettingsSheet",
+    "#videoContainer",
+    "#filterCarousel",
+    "#boothHostPrompt",
+    "#captureBtn",
+    "#reviewPanel",
+    "#qrCodeContainer",
+    "#paidPrintPanel",
+  ];
+  const boxes = selectors
+    .map(getVisibleElementBox)
+    .filter(Boolean);
+  const visibleBoxes = boxes.filter((box) => box.visible);
+  const overlaps = [];
+  for (let index = 0; index < visibleBoxes.length; index += 1) {
+    for (let nextIndex = index + 1; nextIndex < visibleBoxes.length; nextIndex += 1) {
+      const area = getOverlapArea(visibleBoxes[index], visibleBoxes[nextIndex]);
+      if (area > 20) {
+        overlaps.push({
+          a: visibleBoxes[index].selector,
+          b: visibleBoxes[nextIndex].selector,
+          area,
+        });
+      }
+    }
+  }
+  const tapTargets = Array.from(document.querySelectorAll("button, [role='button'], a"))
+    .map((element) => {
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return {
+        selector:
+          element.id ? `#${element.id}` :
+          element.className ? `.${String(element.className).trim().split(/\s+/)[0]}` :
+          element.tagName.toLowerCase(),
+        visible:
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          rect.width > 0 &&
+          rect.height > 0,
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        text: (element.textContent || element.getAttribute("aria-label") || "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 80),
+      };
+    })
+    .filter((target) => target.visible);
+  return {
+    testMode: isBoothTestMode(),
+    qaState: getBoothQaState(),
+    viewport: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      documentHeight: document.documentElement.scrollHeight,
+      bodyHeight: document.body.scrollHeight,
+    },
+    boxes,
+    overlaps,
+    smallTapTargets: tapTargets.filter(
+      (target) => target.width < 44 || target.height < 44
+    ),
+    stepText: Array.from(document.querySelectorAll("#mobileSettingsSheet, #welcomeOverlay"))
+      .map((element) => (element.textContent || "").replace(/\s+/g, " ").trim())
+      .filter((text) => /step\s+\d/i.test(text)),
+  };
+}
 
 function clearPreviewFreezeFrame() {
   capturePreviewFrozen = false;
@@ -11082,6 +11338,30 @@ function handleLovePhoto() {
   setTimeout(revealFinalSaveStage, 300);
 }
 
+let qrCodeLibraryPromise = null;
+
+function loadQrCodeLibrary() {
+  if (window.QRCode && typeof window.QRCode.toCanvas === "function") {
+    return Promise.resolve(window.QRCode);
+  }
+  if (qrCodeLibraryPromise) return qrCodeLibraryPromise;
+  qrCodeLibraryPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/qrcode@1.5.1/build/qrcode.min.js";
+    script.async = true;
+    script.onload = () => {
+      if (window.QRCode && typeof window.QRCode.toCanvas === "function") {
+        resolve(window.QRCode);
+        return;
+      }
+      reject(new Error("QR library loaded without QRCode.toCanvas"));
+    };
+    script.onerror = () => reject(new Error("QR library failed to load"));
+    document.head.appendChild(script);
+  });
+  return qrCodeLibraryPromise;
+}
+
 function showGoodbyeMoment() {
   if (!DOM.goodbyeOverlay) return;
   const personality = getBoothPersonality();
@@ -11180,13 +11460,30 @@ function showFinal(url, options = {}) {
     setFinalExperienceStage("review");
     if (!skipShare && providedShareUrl) {
       lastShareUrl = providedShareUrl;
-      renderQrCode(qrCanvas, lastShareUrl);
+      if (DOM.shareStatus) {
+        DOM.shareStatus.textContent = "Preparing QR";
+        DOM.shareStatus.style.display = "inline-flex";
+      }
       if (DOM.shareLink) {
         DOM.shareLink.href = lastShareUrl;
         DOM.shareLink.textContent = lastShareUrl;
       }
-      if (qrContainer) qrContainer.dataset.ready = "true";
-      if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
+      renderQrCode(qrCanvas, lastShareUrl).then((qrRendered) => {
+        if (qrContainer) qrContainer.dataset.ready = qrRendered ? "true" : "false";
+        if (DOM.shareStatus) {
+          DOM.shareStatus.textContent = qrRendered ? "Link ready" : "QR failed";
+          DOM.shareStatus.style.display = qrRendered ? "none" : "inline-flex";
+        }
+        if (DOM.qrHint) {
+          DOM.qrHint.textContent = qrRendered
+            ? ""
+            : "Open the link button if the QR does not appear.";
+          DOM.qrHint.style.display = qrRendered ? "none" : "block";
+        }
+        if (qrRendered && DOM.reviewPanel && DOM.reviewPanel.classList.contains("hidden")) {
+          revealFinalSaveStage();
+        }
+      });
     } else if (!skipShare) {
       lastShareUrl = null;
       if (options.uploadQueued && DOM.qrHint) {
@@ -11207,7 +11504,7 @@ function showFinal(url, options = {}) {
     if (DOM.paidPrintPanel) DOM.paidPrintPanel.classList.remove("show");
     enqueueFinalPrintIfNeeded(printImageUrl, printEligible);
     resetIdleTimer();
-    hidePreviewTimer = setTimeout(hideFinal, 15000);
+    if (!isBoothTestMode()) hidePreviewTimer = setTimeout(hideFinal, 15000);
   };
 
   // Reset form from previous use
@@ -11254,13 +11551,23 @@ function showFinal(url, options = {}) {
   // No local-QR fallback: only show QR when a public link is ready (handled above)
 }
 
-function renderQrCode(canvas, text) {
+async function renderQrCode(canvas, text) {
+  if (!canvas || !text) return false;
   try {
-    QRCode.toCanvas(canvas, text, { width: 200, margin: 1 }, function (error) {
-      if (error) console.error(error);
+    const qrCode = await loadQrCodeLibrary();
+    return await new Promise((resolve) => {
+      qrCode.toCanvas(canvas, text, { width: 240, margin: 1 }, function (error) {
+        if (error) {
+          console.error(error);
+          resolve(false);
+          return;
+        }
+        resolve(true);
+      });
     });
   } catch (e) {
     console.error(e);
+    return false;
   }
 }
 
@@ -12482,6 +12789,12 @@ async function uploadCaptureOnce(options = {}) {
     folder: meta.folder,
     resourceType,
   };
+
+  if (isBoothTestMode()) {
+    result.publicUrl = BOOTH_TEST_SHARE_URL;
+    showToast("Booth test upload ready");
+    return result;
+  }
 
   if (!cloudinaryConfigured()) {
     showToast("Cloudinary not configured: capture not uploaded");
@@ -14417,10 +14730,11 @@ function themeKeyToCategory(themeKey) {
   if (!raw) return "general";
   const [root] = raw.split(":");
   if (["background", "overlay", "template"].includes(root)) return root;
-  if (["summer", "birthday"].includes(root)) return "general";
   if (root === "school" || raw.startsWith("school:")) return "school";
   if (root === "wedding" || raw.startsWith("wedding:")) return "wedding";
   if (root === "holidays" || raw.startsWith("holidays:")) return "holidays";
+  if (raw.includes("birthday")) return "birthday";
+  if (raw.includes("summer")) return "general";
   return "general";
 }
 
@@ -20946,6 +21260,11 @@ window.addEventListener("message", (event) => {
 Object.assign(window, {
   addFontByFamily,
   addFontByUrl,
+  __photoboothQA: {
+    auditLayout: auditBoothLayout,
+    enterState: enterBoothQaState,
+    isTestMode: isBoothTestMode,
+  },
   __photoboothTest: {
     composeStrip,
     finalizeToPrint,
@@ -21063,6 +21382,8 @@ Object.assign(window, {
   startBooth: startBoothFromAdmin,
   startCamera: startCameraFlow,
   handlePrimaryAction,
+  nextFilter,
+  prevFilter,
   makeAvailableOffline,
   migrateAllManagedLocalAssets,
   openShareLink,

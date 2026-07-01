@@ -1,5 +1,5 @@
 Current goal
-- Make the guest booth feel like an attraction while keeping the existing capture, asset, share, and print contracts stable.
+- Fix guest booth filter controls and final share QR rendering while keeping capture, upload, and print contracts stable.
 
 What is done
 - Implemented Cloudinary transformation support, including UI selection and integration with upload logic.
@@ -15,15 +15,17 @@ What is done
 - Removed filter grid thumbnails and "Overlay Format" (portrait/landscape) from the guest booth panel.
 - Renamed "Choose Your Overlay" section to "Choose Your Frame".
 - Added keyboard arrow key support for cycling filters on the booth screen.
+- Enlarged guest filter carousel arrow targets, clarified the helper prompt, and exposed filter arrow handlers for inline button clicks.
+- Final share QR rendering now waits for successful canvas rendering, retries the QR library from a fallback CDN if needed, and shows a clear failure state instead of a blank QR panel.
 - Full node suite passed: `npm test` (105 tests).
 - Rendered smoke passed for welcome-to-capture and desktop/mobile finalizing visibility.
 - Targeted Cloudinary parser tests passed: `npm test -- cloudinary-utils.test.js`.
 
 What is in progress
-- None.
+- Verification for the filter and QR fixes.
 
 Next steps
-- None.
+- Run `npm test` and fix any regressions.
 
 Recent asset library improvements
 - Delete now fully removes assets from the library and remote storage (no more hidden/archived ghost records).
