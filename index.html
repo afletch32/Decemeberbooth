@@ -5990,6 +5990,91 @@
       aspect-ratio: var(--live-camera-aspect, 3 / 2);
       max-height: none;
     }
+
+    /* Filter Carousel — Liquid Glass Arrows */
+    #filterCarousel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 8px 0;
+      z-index: 15;
+      position: relative;
+    }
+
+    #filterCarousel.hidden {
+      display: none !important;
+    }
+
+    #filterCarouselName {
+      font-family: var(--font-label);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #2d3a38;
+      background: rgba(255, 255, 255, 0.48);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.62);
+      border-radius: 999px;
+      padding: 8px 16px;
+      box-shadow: 0 8px 22px rgba(17, 17, 17, 0.08);
+      text-align: center;
+      min-width: 112px;
+    }
+
+    .filter-arrow {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      min-height: 48px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.42);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 8px 22px rgba(17, 17, 17, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+      color: #2d3a38;
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .filter-arrow:hover,
+    .filter-arrow:focus-visible {
+      transform: scale(1.05);
+      background: rgba(255, 255, 255, 0.6);
+      border-color: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 12px 28px rgba(17, 17, 17, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+      outline: none;
+    }
+
+    .filter-arrow:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.55);
+      box-shadow: 0 4px 12px rgba(17, 17, 17, 0.08);
+    }
+
+    @media (max-width: 900px) {
+      .filter-arrow {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px 10px;
+        font-size: 1rem;
+      }
+
+      #filterCarouselName {
+        font-size: 0.72rem;
+        padding: 6px 12px;
+      }
+    }
   </style>
   <link rel="stylesheet" href="final-preview-sizing-fix.css">
 </head>
@@ -6348,31 +6433,13 @@
                   Category
                   <select id="assetLibraryCategory">
                     <option value="">All Categories</option>
+                    <option value="general">General</option>
+                    <option value="school">School</option>
+                    <option value="wedding">Wedding</option>
+                    <option value="holidays">Holidays</option>
                     <option value="background">Backgrounds</option>
                     <option value="overlay">Overlays</option>
                     <option value="template">Templates</option>
-                  </select>
-                </label>
-              </div>
-                <label>
-                  Asset type
-                  <select id="assetLibraryReadiness">
-                    <option value="">All Assets</option>
-                    <option value="customizable">Customizable Assets</option>
-                    <option value="ready">Ready-To-Use Assets</option>
-                  </select>
-                </label>
-                <label>
-                  Editable field
-                  <select id="assetLibraryEditableField">
-                    <option value="">Any field</option>
-                    <option value="eventName">Event Name</option>
-                    <option value="date">Date</option>
-                    <option value="schoolName">School Name</option>
-                    <option value="title">Title</option>
-                    <option value="subtitle">Subtitle</option>
-                    <option value="buttonText">Button Text</option>
-                    <option value="bannerText">Banner Text</option>
                   </select>
                 </label>
                 <label>
@@ -6381,13 +6448,10 @@
                     <option value="newest">Newest</option>
                     <option value="oldest">Oldest</option>
                     <option value="name">Name</option>
+                    <option value="category">Category</option>
                     <option value="favorites">Favorites first</option>
                     <option value="recent">Recently used</option>
                   </select>
-                </label>
-                <label>
-                  Tags for new uploads
-                  <input type="text" id="assetUploadTags" placeholder="summer, school, client">
                 </label>
               </div>
               <div id="assetLibraryGrid" class="asset-library-grid"></div>
@@ -6673,6 +6737,11 @@
         <div id="boothHostPrompt" aria-live="polite">
           Get everyone in the frame!
           <span>Smile when the booth says so.</span>
+        </div>
+        <div id="filterCarousel" class="filter-carousel hidden">
+          <button id="filterPrevBtn" type="button" class="filter-arrow filter-arrow-prev" aria-label="Previous filter" onclick="prevFilter()">◀</button>
+          <span id="filterCarouselName">✨ Natural</span>
+          <button id="filterNextBtn" type="button" class="filter-arrow filter-arrow-next" aria-label="Next filter" onclick="nextFilter()">▶</button>
         </div>
         <button id="captureBtn" class="primary" onclick="handlePrimaryAction()">Take Photo</button>
         <div id="booth360Panel" class="booth-360-panel hidden">

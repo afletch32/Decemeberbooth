@@ -11,12 +11,11 @@ What is done
 - Goodbye has a short thank-you celebration with confetti-style motion.
 - Cloudinary share uploads now prefer Media Flow derived URLs from the `eager` response before falling back to the base `secure_url`, so QR/share and print can use the enhanced asset URL automatically.
 - Public booth search/favorite controls remain removed; admin Asset Library still owns search, sorting, favorites, and recents.
-- Added photo filter effects (Original, Warm Glow, Cool Breeze, Vintage, Noir, Vivid, Soft Dream, Dramatic) with live video preview and baked canvas export.
-- Filter picker UI section added to booth options panel with styled thumb previews.
-- Green Screen Removal toggle removed from admin panel (AI Background Removal kept).
-- "Green Screen BGs" section renamed to "Photo Backgrounds" in booth options.
-- Filter resets to Original on retake / hideFinal.
-- Full node suite passed: `npm test` (102 tests).
+- Replaced 8 filter effects with 5 guest-friendly filters (Natural, Soft, Bright, Clean, B&W) selectable via liquid-glass arrows beside the video preview.
+- Removed filter grid thumbnails and "Overlay Format" (portrait/landscape) from the guest booth panel.
+- Renamed "Choose Your Overlay" section to "Choose Your Frame".
+- Added keyboard arrow key support for cycling filters on the booth screen.
+- Full node suite passed: `npm test` (105 tests).
 - Rendered smoke passed for welcome-to-capture and desktop/mobile finalizing visibility.
 - Targeted Cloudinary parser tests passed: `npm test -- cloudinary-utils.test.js`.
 
@@ -25,6 +24,18 @@ What is in progress
 
 Next steps
 - None.
+
+Recent asset library improvements
+- Delete now fully removes assets from the library and remote storage (no more hidden/archived ghost records).
+- Replaced editable-field dropdown filter with a simple "Has editable fields" checkbox.
+- Removed per-card editable-field badges and "Fields" prompt button from the asset library grid.
+- Added "Sort by Category" option to the asset library sort dropdown (groups backgrounds → overlays → templates).
+- Asset library pills (All / Backgrounds / Overlays / Templates) provide quick category filtering with counts.
+- Added theme-based category filtering (General, School, Wedding, Holidays) to the asset library dropdown.
+- Removed "Tags for new uploads" field and "Has editable fields" checkbox from admin UI.
+- Editable fields are now auto-detected from overlay builder metadata, not manually configured in admin.
+- Category filter now matches assets against their theme-derived categories (e.g., school:hawks → School).
+- Delete for theme-backed assets now creates a tombstone record instead of disappearing.
 
 Known bugs/blockers
 - None known.

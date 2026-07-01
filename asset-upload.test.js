@@ -141,11 +141,17 @@ test("uploaded assets register in a persistent shared library", () => {
   assert.ok(
     html.includes('id="assetLibrarySearch"') &&
       html.includes('id="assetLibraryCategory"') &&
-      html.includes('id="assetLibraryReadiness"') &&
-      html.includes('id="assetLibraryEditableField"') &&
+      html.includes('id="assetLibraryPills"') &&
       html.includes('id="assetLibrarySort"') &&
-      html.includes('id="assetUploadTags"'),
-    "asset library should support search, category filters, customizable filters, sorting, and upload tags"
+      html.includes('value="general"') &&
+      html.includes('value="school"') &&
+      html.includes('value="wedding"') &&
+      html.includes('value="holidays"') &&
+      html.includes('value="favorites"') &&
+      html.includes('value="recent"') &&
+      !html.includes('id="assetUploadTags"') &&
+      !html.includes('id="assetLibraryHasEditableField"'),
+    "asset library should support search, category filters, category pills, and favorite/recent sorting without upload-tag or editable-field admin controls"
   );
   assert.ok(
     appScript.includes('fetch("/api/assets"') &&
@@ -165,35 +171,40 @@ test("uploaded assets register in a persistent shared library", () => {
     "library assets should support hiding/archiving and deletion"
   );
   assert.ok(
-    appScript.includes(
-      'const repoBackedAsset = fallbackAsset && fallbackAsset.source === "theme";'
-    ) &&
-      appScript.includes("if (repoBackedAsset || !canSyncRemote()) {\n    return;\n  }"),
-    "repo-backed asset deletes should keep a remote tombstone instead of disappearing"
+    appScript.includes('const repoBackedAsset = fallbackAsset && fallbackAsset.source === "theme";') &&
+      appScript.includes("await updateAssetLibraryItem(") &&
+      appScript.includes("hidden: true,") &&
+      appScript.includes("archived: true,"),
+    "repo-backed asset deletes should keep a local/remote tombstone instead of reappearing from theme manifests"
   );
 });
 
-test("asset library management supports sorting and editable metadata", () => {
+test("asset library management supports sorting and category metadata", () => {
   const appScript = readProjectFile("scripts", "app.js");
   const html = readProjectFile("index.html");
 
   assert.ok(
-    html.includes('<option value="customizable">Customizable Assets</option>') &&
-      html.includes('<option value="ready">Ready-To-Use Assets</option>') &&
-      html.includes('<option value="eventName">Event Name</option>'),
-    "asset library should expose customizable and editable-field filters"
+    html.includes('<option value="general">General</option>') &&
+      html.includes('<option value="school">School</option>') &&
+      html.includes('<option value="wedding">Wedding</option>') &&
+      html.includes('<option value="holidays">Holidays</option>') &&
+      !html.includes('<option value="customizable">Customizable Assets</option>') &&
+      !html.includes('<option value="eventName">Event Name</option>'),
+    "asset library should expose event/theme category filters instead of editable-field filters"
   );
   assert.ok(
     appScript.includes("function getFilteredAssetLibraryRows()") &&
       appScript.includes('sortMode === "name"') &&
-      appScript.includes('sortMode === "oldest"'),
-    "asset library rows should support newest, oldest, and name sorting"
+      appScript.includes('sortMode === "oldest"') &&
+      appScript.includes("function assetMatchesLibraryCategoryFilter") &&
+      appScript.includes("getAssetLibraryFilterCategories(asset)"),
+    "asset library rows should support sorting and category filtering"
   );
   assert.ok(
     appScript.includes("function promptForAssetName(asset)") &&
       appScript.includes("function promptForAssetTags(asset)") &&
-      appScript.includes("function promptForAssetEditableFields(asset)"),
-    "uploaded asset cards should support rename, tag editing, and editable-field metadata"
+      !appScript.includes("function promptForAssetEditableFields(asset)"),
+    "uploaded asset cards should support rename/tag editing without admin editable-field prompts"
   );
   assert.ok(
     appScript.includes("function collectThemeAssetRows(category = \"\")") &&
