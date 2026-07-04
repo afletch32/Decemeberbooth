@@ -1,5 +1,5 @@
 Current goal
-- Fix guest booth filter controls and final share QR rendering while keeping capture, upload, and print contracts stable.
+- Add a stable booth test mode that makes guest-flow QA faster without changing production behavior.
 
 What is done
 - Implemented Cloudinary transformation support, including UI selection and integration with upload logic.
@@ -17,15 +17,18 @@ What is done
 - Added keyboard arrow key support for cycling filters on the booth screen.
 - Enlarged guest filter carousel arrow targets, clarified the helper prompt, and exposed filter arrow handlers for inline button clicks.
 - Final share QR rendering now waits for successful canvas rendering, retries the QR library from a fallback CDN if needed, and shows a clear failure state instead of a blank QR panel.
-- Full node suite passed: `npm test` (105 tests).
+- Added `?testMode=booth` to disable idle timeouts, use deterministic share URLs, mark the test camera state, and expose `window.__photoboothQA.auditLayout()` for overlap/tap-target audits.
+- Restored the booth test-mode implementation after verification caught missing app helpers.
+- Full node suite passed: `npm test` (108 tests).
+- Rendered test-mode load passed at `/index.html?testMode=booth` with `window.__photoboothQA.auditLayout()` available and no relevant browser errors.
 - Rendered smoke passed for welcome-to-capture and desktop/mobile finalizing visibility.
 - Targeted Cloudinary parser tests passed: `npm test -- cloudinary-utils.test.js`.
 
 What is in progress
-- Verification for the filter and QR fixes.
+- None.
 
 Next steps
-- Run `npm test` and fix any regressions.
+- Use `?testMode=booth` for the next booth UI audit pass.
 
 Recent asset library improvements
 - Delete now fully removes assets from the library and remote storage (no more hidden/archived ghost records).
@@ -49,3 +52,4 @@ Important decisions
 - Resolve Cloudinary share URLs by preferring the first valid `eager` URL produced by preset-driven Media Flow, then falling back to the upload response `secure_url`.
 - Generate tiny sound cues with Web Audio after guest interaction; do not add audio files.
 - Photo filter effects use CSS filters for live preview and canvas pixel manipulation for final export.
+- Keep booth test mode URL-gated; it should make uploads/timers deterministic without changing normal guest flow.

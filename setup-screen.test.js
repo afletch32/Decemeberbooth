@@ -820,3 +820,27 @@ test("final share QR is only marked ready after rendering succeeds", () => {
     "final QR panels should expose ready state only after the canvas renders"
   );
 });
+
+test("booth test mode provides deterministic camera, upload, and layout audit helpers", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes('getUrlParam("testMode") === "booth"') &&
+      appScript.includes('DOM.videoContainer.dataset.boothTestCamera = "true"') &&
+      appScript.includes("function applyBoothTestModeFromUrl()"),
+    "booth test mode should be URL-gated and provide a fake camera marker"
+  );
+  assert.ok(
+    appScript.includes("BOOTH_TEST_SHARE_URL") &&
+      appScript.includes("result.publicUrl = BOOTH_TEST_SHARE_URL") &&
+      appScript.includes("if (isBoothTestMode()) return;"),
+    "booth test mode should bypass uploads and idle timers"
+  );
+  assert.ok(
+    appScript.includes("__photoboothQA") &&
+      appScript.includes("auditLayout: auditBoothLayout") &&
+      appScript.includes("smallTapTargets") &&
+      appScript.includes("overlaps"),
+    "booth test mode should expose a compact layout audit helper"
+  );
+});

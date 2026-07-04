@@ -9160,6 +9160,9 @@ function setBoothTestCameraStream() {
     return false;
   }
   stream = testStream;
+  if (DOM.videoContainer) {
+    DOM.videoContainer.dataset.boothTestCamera = "true";
+  }
   if (DOM.video) {
     DOM.video.srcObject = testStream;
     DOM.video.style.transform = "";
@@ -9187,6 +9190,10 @@ async function startCamera(autoStartBooth = false) {
       if (autoStartBooth) startBoothFlow();
       isStartingCamera = false;
       return;
+    }
+
+    if (DOM.videoContainer) {
+      delete DOM.videoContainer.dataset.boothTestCamera;
     }
 
     // If running from file://, most browsers block camera. Offer Demo Mode unless forced.

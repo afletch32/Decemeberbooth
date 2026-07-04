@@ -2831,6 +2831,23 @@
       isolation: isolate;
     }
 
+    #videoContainer[data-booth-test-camera="true"]::after {
+      content: "Booth Test Camera";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      z-index: 3;
+      color: #263a37;
+      font-family: var(--font-label);
+      font-size: clamp(1.1rem, 2.2vw, 2rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      pointer-events: none;
+      text-shadow: 0 2px 18px rgba(255, 255, 255, 0.9);
+    }
+
     .booth-helper-text {
       margin: 0;
       max-width: 28ch;
