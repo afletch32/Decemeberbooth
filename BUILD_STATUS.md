@@ -1,5 +1,5 @@
 Current goal
-- Add a stable booth test mode that makes guest-flow QA faster without changing production behavior.
+- Fix guest QR reveal and photo filter behavior without changing upload or print contracts.
 
 What is done
 - Implemented Cloudinary transformation support, including UI selection and integration with upload logic.
@@ -19,16 +19,18 @@ What is done
 - Final share QR rendering now waits for successful canvas rendering, retries the QR library from a fallback CDN if needed, and shows a clear failure state instead of a blank QR panel.
 - Added `?testMode=booth` to disable idle timeouts, use deterministic share URLs, mark the test camera state, and expose `window.__photoboothQA.auditLayout()` for overlap/tap-target audits.
 - Restored the booth test-mode implementation after verification caught missing app helpers.
-- Full node suite passed: `npm test` (108 tests).
-- Rendered test-mode load passed at `/index.html?testMode=booth` with `window.__photoboothQA.auditLayout()` available and no relevant browser errors.
-- Rendered smoke passed for welcome-to-capture and desktop/mobile finalizing visibility.
+- QR/share panel now appears after LOVE IT while QR rendering is pending or failed instead of staying hidden.
+- Shareable final previews no longer auto-close after 15 seconds before guests can scan.
+- Guest filters now apply to the normal live video, slot-based overlay preview media, frozen preview, and captured photo pixels before final overlay composition.
+- Full node suite passed: `npm test` (110 tests).
 - Targeted Cloudinary parser tests passed: `npm test -- cloudinary-utils.test.js`.
+- Targeted setup-screen regression tests passed: `npm test -- setup-screen.test.js`.
 
 What is in progress
 - None.
 
 Next steps
-- Use `?testMode=booth` for the next booth UI audit pass.
+- Run a live-device booth pass for QR scan timing and filter appearance.
 
 Recent asset library improvements
 - Delete now fully removes assets from the library and remote storage (no more hidden/archived ghost records).
@@ -43,7 +45,7 @@ Recent asset library improvements
 - Delete for theme-backed assets now creates a tombstone record instead of disappearing.
 
 Known bugs/blockers
-- None known.
+- Headless Playwright loaded the normal page, but the booth test-mode QA URL crashed/hung in Chromium during smoke verification; run the final QR/filter pass on a live device.
 
 Important decisions
 - Keep the vanilla HTML/CSS/JS stack and existing Cloudflare Pages deployment path.
@@ -53,3 +55,4 @@ Important decisions
 - Generate tiny sound cues with Web Audio after guest interaction; do not add audio files.
 - Photo filter effects use CSS filters for live preview and canvas pixel manipulation for final export.
 - Keep booth test mode URL-gated; it should make uploads/timers deterministic without changing normal guest flow.
+- Keep final share previews open for scanning; only non-share gallery previews use the short auto-close timer.

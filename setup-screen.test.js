@@ -821,6 +821,40 @@ test("final share QR is only marked ready after rendering succeeds", () => {
   );
 });
 
+test("final share panel appears after review while QR is pending or failed", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes('DOM.qrCodeContainer.dataset.pending === "true"') &&
+      appScript.includes('DOM.qrCodeContainer.dataset.error === "true"') &&
+      appScript.includes('qrContainer.dataset.pending = "true"') &&
+      appScript.includes('qrContainer.dataset.error = qrRendered ? "false" : "true"'),
+    "the post-review share panel should reveal a pending or failed QR state instead of staying hidden"
+  );
+  assert.ok(
+    appScript.includes("if (skipShare && !isBoothTestMode())") &&
+      appScript.includes("hidePreviewTimer = setTimeout(hideFinal, 15000);"),
+    "shareable guest captures should not auto-close before guests can scan the QR"
+  );
+});
+
+test("guest photo filters affect live preview and captured photo pixels", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes('document.querySelectorAll(".photo-slot-media")') &&
+      appScript.includes("DOM.lastShot.style.filter = filterValue") &&
+      appScript.includes("media.style.filter = (filterDef && filterDef.css) || \"\""),
+    "filters should apply to normal video, slot-based live previews, and frozen previews"
+  );
+  assert.ok(
+    appScript.includes("function applySelectedFilterToCanvas(canvas)") &&
+      appScript.includes("applySelectedFilterToCanvas(drawToCanvasFromVideo())") &&
+      !appScript.includes("applyFilterToCanvas(ctx, targetW, targetH);\n\n  return c.toDataURL"),
+    "captured photos should bake the selected filter into the photo before final overlay composition"
+  );
+});
+
 test("booth test mode provides deterministic camera, upload, and layout audit helpers", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
