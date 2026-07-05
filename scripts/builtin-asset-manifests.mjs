@@ -260,6 +260,10 @@ const BUILTIN_ASSET_MANIFESTS = {
   "assets/holidays/winter/valentines/templates/": [
     { src: "valentines-pink.png", layout: "double_column" }
   ],
+  "assets/holidays/summer/4th-of-july/overlays/": [
+    "4thoverlay.png",
+    "4thoverlay1.png"
+  ],
   "assets/holidays/spring/st-patricks-day/backgrounds/": [
     "st-patricks-day-background-1.png"
   ],

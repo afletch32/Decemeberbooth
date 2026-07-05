@@ -59,3 +59,12 @@ test("summer overlays remain available in built-in asset manifests", async () =>
   assert.ok(entries.includes("hello-summer.png"));
   assert.ok(entries.includes("tropical-border-with-frame.png"));
 });
+
+test("fourth of july overlays remain available in built-in asset manifests", async () => {
+  const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
+  const entries = getBuiltinAssetManifest("assets/holidays/summer/4th-of-july/overlays/");
+
+  assert.equal(entries.length, 2);
+  assert.ok(entries.includes("4thoverlay.png"));
+  assert.ok(entries.includes("4thoverlay1.png"));
+});

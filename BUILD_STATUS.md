@@ -1,5 +1,5 @@
 Current goal
-- Fix guest QR reveal and photo filter behavior without changing upload or print contracts.
+- Add the new Fourth of July assets as selectable overlays.
 
 What is done
 - Implemented Cloudinary transformation support, including UI selection and integration with upload logic.
@@ -22,15 +22,18 @@ What is done
 - QR/share panel now appears after LOVE IT while QR rendering is pending or failed instead of staying hidden.
 - Shareable final previews no longer auto-close after 15 seconds before guests can scan.
 - Guest filters now apply to the normal live video, slot-based overlay preview media, frozen preview, and captured photo pixels before final overlay composition.
-- Full node suite passed: `npm test` (110 tests).
+- Added a Fourth of July summer holiday theme that points at `assets/holidays/summer/4th-of-july/overlays/`.
+- Registered the two new Fourth of July PNGs in the overlay manifest and built-in asset manifest.
+- Full node suite passed: `npm test` (112 tests).
 - Targeted Cloudinary parser tests passed: `npm test -- cloudinary-utils.test.js`.
 - Targeted setup-screen regression tests passed: `npm test -- setup-screen.test.js`.
+- Targeted Fourth of July asset/theme tests passed: `npm test -- builtin-asset-manifests.test.js setup-screen.test.js`.
 
 What is in progress
 - None.
 
 Next steps
-- Run a live-device booth pass for QR scan timing and filter appearance.
+- Verify the Fourth of July theme on a live booth device and choose default assignment if needed.
 
 Recent asset library improvements
 - Delete now fully removes assets from the library and remote storage (no more hidden/archived ghost records).

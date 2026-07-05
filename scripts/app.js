@@ -445,6 +445,31 @@ let themes = {
   },
 };
 
+themes.summer = {
+  name: "Summer",
+  holidays: {
+    fourthofjuly: {
+      name: "Fourth of July",
+      eventTypes: ["party", "community", "general"],
+      fontPairingStyle: "party",
+      accent: "#d62828",
+      accent2: "#1d4ed8",
+      font: "'Comic Neue', cursive",
+      background: "",
+      backgroundFolder: "",
+      logo: "",
+      overlaysFolder: "assets/holidays/summer/4th-of-july/overlays/",
+      templatesFolder: "",
+      welcome: {
+        title: "Happy Fourth of July!",
+        portrait: "",
+        landscape: "",
+        prompt: "Touch to start",
+      },
+    },
+  },
+};
+
 themes.spring = {
   name: "Spring",
   holidays: {
@@ -2387,6 +2412,7 @@ const THEME_SETUP_GROUP_ITEM_ORDER = {
     "Spring",
   ],
   Holidays: [
+    "Fourth of July",
     "Halloween",
     "Christmas",
     "Valentine's Day",
@@ -2406,6 +2432,9 @@ const THEME_SETUP_LABEL_OVERRIDES = {
   expo: "Expo",
   "brand studio": "Brand Studio",
   "lead capture": "Lead Capture",
+  "4th of july": "Fourth of July",
+  "fourth of july": "Fourth of July",
+  fourthofjuly: "Fourth of July",
   halloween: "Halloween",
   christmas: "Christmas",
   valentines: "Valentine's Day",
@@ -2470,7 +2499,7 @@ function getThemeSetupDisplayGroup(themeKey, theme) {
     .join(" ");
   if (/(hawks|amanda north|ane)/.test(normalized)) return "Youth";
   if (/(garden vows|timeless romance|wedding)/.test(normalized)) return "Wedding";
-  if (/(halloween|christmas|valentine|st patrick)/.test(normalized)) return "Holidays";
+  if (/(fourth of july|4th of july|halloween|christmas|valentine|st patrick)/.test(normalized)) return "Holidays";
   if (
     /(summer|fall|winter|spring|winter wonderland|santa s workshop|new year)/.test(
       normalized
@@ -6865,6 +6894,9 @@ function renderThemeQuickSelect(selectEl = DOM.eventSelect) {
     { key: "st-patrick", order: 3 },
     { key: "stpatrick", order: 3 },
     { key: "easter", order: 4 },
+    { key: "fourthofjuly", order: 5 },
+    { key: "fourthof", order: 5 },
+    { key: "4thofjuly", order: 5 },
     { key: "halloween", order: 10 },
     { key: "thanksgiving", order: 11 },
     { key: "christmas", order: 12 },

@@ -249,6 +249,18 @@ test("setup theme dropdown groups themes by user-facing category", () => {
   );
 });
 
+test("fourth of july theme uses the summer holiday overlay folder", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("themes.summer =") &&
+      appScript.includes("fourthofjuly") &&
+      appScript.includes('name: "Fourth of July"') &&
+      appScript.includes('overlaysFolder: "assets/holidays/summer/4th-of-july/overlays/"'),
+    "Fourth of July should be selectable as a summer holiday theme with its own overlay folder"
+  );
+});
+
 test("asset library background selection only reflects explicit theme defaults", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
