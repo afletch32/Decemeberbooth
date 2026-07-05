@@ -787,13 +787,27 @@ test("guest booth flow uses attraction-style host moments", () => {
     "guest copy should adapt lightly to the active event/theme"
   );
   assert.ok(
-    appScript.includes("function playBoothSound(") &&
+      appScript.includes("function playBoothSound(") &&
       appScript.includes("countdown: { frequency") &&
-      appScript.includes('await showCountdown("SMILE!");') &&
+      appScript.includes("flash: { frequency") &&
+      appScript.includes("function getCountdownDurationSeconds()") &&
+      appScript.includes("function showFlashBeat()") &&
       appScript.includes("function handleLovePhoto()") &&
       appScript.includes("Awesome!") &&
       appScript.includes("function revealFinalSaveStage()"),
-    "the flow should include tiny sound cues, a SMILE beat, and a rewarding love-it transition"
+    "the flow should include tiny sound cues, a Flash beat, and a rewarding love-it transition"
+  );
+});
+
+test("booth setup includes a five second countdown option", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes('id="countdownFiveToggle"') &&
+      appScript.includes("photoboothCountdownFiveSeconds") &&
+      appScript.includes("setupCountdownFiveToggle()"),
+    "the capture settings should expose a stored five second countdown option"
   );
 });
 

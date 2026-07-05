@@ -620,6 +620,7 @@ const DOM = {
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
+  countdownFiveToggle: document.getElementById("countdownFiveToggle"),
   boothInstantCaptureToggle: document.getElementById(
     "boothInstantCaptureToggle"
   ),
@@ -4582,6 +4583,31 @@ function setupInstantCaptureToggle() {
   });
 }
 
+function getCountdownFiveSecondsEnabled() {
+  try {
+    return localStorage.getItem("photoboothCountdownFiveSeconds") === "true";
+  } catch (_) {
+    return false;
+  }
+}
+
+function setCountdownFiveSecondsEnabled(enabled) {
+  try {
+    localStorage.setItem(
+      "photoboothCountdownFiveSeconds",
+      enabled ? "true" : "false"
+    );
+  } catch (_) {}
+}
+
+function setupCountdownFiveToggle() {
+  if (!DOM.countdownFiveToggle) return;
+  DOM.countdownFiveToggle.checked = getCountdownFiveSecondsEnabled();
+  DOM.countdownFiveToggle.addEventListener("change", () => {
+    setCountdownFiveSecondsEnabled(DOM.countdownFiveToggle.checked);
+  });
+}
+
 function getLowLightEnabled() {
   try {
     return localStorage.getItem("photoboothLowLight") === "true";
@@ -5723,6 +5749,7 @@ function init() {
   setupLivePhotoToggle();
   setupRecordingModeToggle();
   setupInstantCaptureToggle();
+  setupCountdownFiveToggle();
   setupLowLightToggle();
   setupGreenScreenToggle();
   setupAiBackgroundToggle();
@@ -10606,7 +10633,7 @@ function playBoothSound(kind = "tap") {
       {
         tap: { frequency: 520, duration: 0.08, gain: 0.035 },
         countdown: { frequency: 660, duration: 0.12, gain: 0.04 },
-        smile: { frequency: 880, duration: 0.16, gain: 0.045 },
+        flash: { frequency: 880, duration: 0.16, gain: 0.045 },
         success: { frequency: 740, duration: 0.18, gain: 0.05 },
         qr: { frequency: 620, duration: 0.14, gain: 0.035 },
         goodbye: { frequency: 520, duration: 0.22, gain: 0.04 },
@@ -10653,7 +10680,7 @@ async function showCountdown(text) {
   setMobileSettingsOpen(false);
   const co = DOM.countdownOverlay;
   co.textContent = text;
-  playBoothSound(String(text).toLowerCase().includes("smile") ? "smile" : "countdown");
+  playBoothSound(String(text).toLowerCase() === "flash" ? "flash" : "countdown");
   updateCountdownFontSize();
   if (DOM.boothScreen && getSelectedCaptureMode() !== "message")
     DOM.boothScreen.classList.add("countdown-mode");
@@ -10662,6 +10689,26 @@ async function showCountdown(text) {
   co.classList.remove("show");
   await delay(200);
 }
+
+async function showFlashBeat() {
+  setMobileSettingsOpen(false);
+  const co = DOM.countdownOverlay;
+  if (!co) return;
+  co.textContent = "Flash";
+  playBoothSound("flash");
+  updateCountdownFontSize();
+  if (DOM.boothScreen && getSelectedCaptureMode() !== "message")
+    DOM.boothScreen.classList.add("countdown-mode");
+  co.classList.add("show");
+  await delay(160);
+  co.classList.remove("show");
+  await delay(40);
+}
+
+function getCountdownDurationSeconds() {
+  return getCountdownFiveSecondsEnabled() ? 5 : 3;
+}
+
 async function countdownAndSnap(options = {}) {
   const { live = false, instant = false } = options || {};
   const guide = DOM.silhouette;
@@ -10669,15 +10716,16 @@ async function countdownAndSnap(options = {}) {
   const lowLightEnabled = getLowLightEnabled();
   const torchUsed = lowLightEnabled ? await setTorch(true) : false;
   if (!instant) {
-    for (let n = 3; n > 0; n--) {
+    for (let n = getCountdownDurationSeconds(); n > 0; n--) {
       await showCountdown(n);
     }
-    await showCountdown("SMILE!");
+    await showFlashBeat();
   } else if (DOM.countdownOverlay) {
     DOM.countdownOverlay.classList.remove("show");
     if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
   }
   if (!live || (lowLightEnabled && !torchUsed)) triggerFlash();
+  await delay(50);
   if (!live) setRecordingHighlight(false);
   const livePromise = live ? captureLiveClip(LIVE_PHOTO_DURATION_MS) : null;
   const shot = applyAutoEnhanceCanvas(
