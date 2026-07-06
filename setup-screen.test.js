@@ -578,6 +578,8 @@ test("asset library supports explicit multi-theme defaults without manifest auto
   assert.ok(
     appScript.includes("function openAssetThemeDefaultsModal(asset)") &&
       appScript.includes("function populateAssetThemeDefaultsModal(asset)") &&
+      appScript.includes("function getSelectableThemeGroups()") &&
+      appScript.includes("function syncAssetThemeGroupCheckboxes()") &&
       appScript.includes("function replaceThemeDefaultEntries(theme, category, entries)") &&
       appScript.includes("function saveAssetThemeDefaults()") &&
       appScript.includes('defaultsBtn.textContent = "Theme defaults"') &&
@@ -590,6 +592,13 @@ test("asset library supports explicit multi-theme defaults without manifest auto
       appScript.includes("photoSlots: raw.photoSlots") &&
       appScript.includes("foreground: raw.foreground"),
     "shared template defaults should preserve rendering metadata"
+  );
+  assert.ok(
+    html.includes(".theme-defaults-parent-option") &&
+      html.includes(".theme-defaults-child-option") &&
+      appScript.includes("All ${themeGroup.label}") &&
+      appScript.includes("input[data-theme-key]:checked"),
+    "theme defaults should expose parent group selectors while saving leaf theme keys"
   );
   assert.ok(
     !appScript.includes("theme.backgrounds = combined.slice();"),

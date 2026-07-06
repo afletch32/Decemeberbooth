@@ -15248,6 +15248,72 @@ function promptForAssetName(asset) {
   updateAssetLibraryItem(asset.id, { name }, asset);
 }
 
+const THEME_DEFAULTS_GROUP_ORDER = [
+  "General",
+  "Wedding",
+  "Expo",
+  "School",
+  "Spring",
+  "Summer",
+  "Fall",
+  "Winter",
+  "Other",
+];
+
+function slugThemeDefaultsGroup(value) {
+  return (
+    String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "other"
+  );
+}
+
+function getThemeDefaultsGroupRank(label) {
+  const index = THEME_DEFAULTS_GROUP_ORDER.indexOf(label);
+  return index === -1 ? THEME_DEFAULTS_GROUP_ORDER.length : index;
+}
+
+function getThemeDefaultsDisplayGroup(rootKey, leafKey, groupName) {
+  const root = String(rootKey || "").toLowerCase();
+  const leaf = String(leafKey || "").toLowerCase();
+  if (["spring", "summer", "fall", "winter"].includes(root)) return groupName;
+  if (root === "general" && leaf === "summer") return "Summer";
+  return groupName || "Other";
+}
+
+function isLegacyBuiltinSelectableRoot(rootKey, group) {
+  const rawKey = String(rootKey || "").trim();
+  const normalizedKey = rawKey.toLowerCase();
+  if (!rawKey) return false;
+  if (BUILTIN_THEMES[rawKey]) return true;
+  if (
+    Object.keys(BUILTIN_THEMES || {}).some(
+      (key) => key.toLowerCase() === normalizedKey
+    )
+  )
+    return true;
+  if (
+    Object.keys(BUILTIN_THEME_LOCATIONS || {}).some(
+      (key) => key.toLowerCase() === normalizedKey
+    )
+  )
+    return true;
+  const normalizedName = normalizeThemeName(
+    (group && group.name) || rawKey
+  ).toLowerCase();
+  return Object.keys(BUILTIN_THEME_LOCATIONS || {}).some((key) => {
+    const loc = BUILTIN_THEME_LOCATIONS[key];
+    const builtinGroup = loc && BUILTIN_THEMES[loc.root];
+    const bucket = builtinGroup && builtinGroup[loc.bucket];
+    const builtinTheme = bucket && bucket[key];
+    const builtinName = normalizeThemeName(
+      (builtinTheme && builtinTheme.name) || key
+    ).toLowerCase();
+    return builtinName && builtinName === normalizedName;
+  });
+}
+
 function getSelectableThemeEntries() {
   const entries = [];
   const seenKeys = new Set();
@@ -15267,9 +15333,15 @@ function getSelectableThemeEntries() {
       for (const leafKey of Object.keys(children)) {
         const theme = children[leafKey];
         if (!theme || typeof theme !== "object") continue;
+        const displayGroup = getThemeDefaultsDisplayGroup(
+          rootKey,
+          leafKey,
+          groupName
+        );
         addEntry({
           key: `${rootKey}:${leafKey}`,
-          group: groupName,
+          group: displayGroup,
+          groupKey: `group:${slugThemeDefaultsGroup(displayGroup)}`,
           label: String(theme.name || leafKey).trim(),
           theme,
         });
@@ -15280,12 +15352,40 @@ function getSelectableThemeEntries() {
       builtinGroup &&
       (builtinGroup.themes || builtinGroup.holidays)
     );
-    if (!isBuiltinCategory && !group.themes && !group.holidays && group.name) {
+    if (
+      !isBuiltinCategory &&
+      !group.themes &&
+      !group.holidays &&
+      group.name &&
+      !isLegacyBuiltinSelectableRoot(rootKey, group)
+    ) {
       addEntry({ key: rootKey, group: "Other", label: groupName, theme: group });
     }
   }
   return entries.sort((a, b) =>
-    `${a.group} ${a.label}`.localeCompare(`${b.group} ${b.label}`)
+    getThemeDefaultsGroupRank(a.group) - getThemeDefaultsGroupRank(b.group) ||
+    a.group.localeCompare(b.group) ||
+    a.label.localeCompare(b.label)
+  );
+}
+
+function getSelectableThemeGroups() {
+  const groups = new Map();
+  getSelectableThemeEntries().forEach((entry) => {
+    const groupKey = entry.groupKey || `group:${slugThemeDefaultsGroup(entry.group)}`;
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        key: groupKey,
+        label: entry.group || "Other",
+        entries: [],
+      });
+    }
+    groups.get(groupKey).entries.push(entry);
+  });
+  return Array.from(groups.values()).sort(
+    (a, b) =>
+      getThemeDefaultsGroupRank(a.label) - getThemeDefaultsGroupRank(b.label) ||
+      a.label.localeCompare(b.label)
   );
 }
 
@@ -15386,26 +15486,51 @@ function populateAssetThemeDefaultsModal(asset) {
   if (list) {
     list.innerHTML = "";
     const selectedKeys = getThemeDefaultSelectionKeySet(category, src);
-    const groups = new Map();
-    getSelectableThemeEntries().forEach((entry) => {
-      if (!groups.has(entry.group)) groups.set(entry.group, []);
-      groups.get(entry.group).push(entry);
-    });
-    groups.forEach((entries, groupName) => {
+    getSelectableThemeGroups().forEach((themeGroup) => {
       const group = document.createElement("div");
       group.className = "theme-defaults-group";
       const title = document.createElement("div");
       title.className = "theme-defaults-group-title";
-      title.textContent = groupName;
+      title.textContent = themeGroup.label;
       group.appendChild(title);
-      entries.forEach((entry) => {
+      if (themeGroup.entries.length > 1) {
+        const parentLabel = document.createElement("label");
+        parentLabel.className =
+          "theme-defaults-option theme-defaults-parent-option";
+        const parentCheckbox = document.createElement("input");
+        parentCheckbox.type = "checkbox";
+        parentCheckbox.value = themeGroup.key;
+        parentCheckbox.dataset.themeGroupKey = themeGroup.key;
+        const checkedCount = themeGroup.entries.filter((entry) =>
+          selectedKeys.has(entry.key)
+        ).length;
+        parentCheckbox.checked = checkedCount === themeGroup.entries.length;
+        parentCheckbox.indeterminate =
+          checkedCount > 0 && checkedCount < themeGroup.entries.length;
+        parentCheckbox.addEventListener("change", () => {
+          group
+            .querySelectorAll(`input[data-theme-parent="${themeGroup.key}"]`)
+            .forEach((input) => {
+              input.checked = parentCheckbox.checked;
+            });
+          syncAssetThemeGroupCheckboxes();
+        });
+        const parentText = document.createElement("span");
+        parentText.textContent = `All ${themeGroup.label}`;
+        parentLabel.append(parentCheckbox, parentText);
+        group.appendChild(parentLabel);
+      }
+      themeGroup.entries.forEach((entry) => {
         const label = document.createElement("label");
-        label.className = "theme-defaults-option";
+        label.className =
+          "theme-defaults-option theme-defaults-child-option";
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.value = entry.key;
+        checkbox.dataset.themeKey = entry.key;
+        checkbox.dataset.themeParent = themeGroup.key;
         checkbox.checked = selectedKeys.has(entry.key);
-        checkbox.addEventListener("change", updateAssetThemeDefaultsSelectionCount);
+        checkbox.addEventListener("change", syncAssetThemeGroupCheckboxes);
         const text = document.createElement("span");
         text.textContent = entry.label;
         label.append(checkbox, text);
@@ -15414,7 +15539,7 @@ function populateAssetThemeDefaultsModal(asset) {
       list.appendChild(group);
     });
   }
-  updateAssetThemeDefaultsSelectionCount();
+  syncAssetThemeGroupCheckboxes();
   return { category, src };
 }
 
@@ -15427,7 +15552,9 @@ function openAssetThemeDefaultsModal(asset) {
 function updateAssetThemeDefaultsSelectionCount() {
   if (!DOM.assetThemeDefaultsSelectionCount) return;
   const count = DOM.assetThemeDefaultsList
-    ? DOM.assetThemeDefaultsList.querySelectorAll("input[type=checkbox]:checked")
+    ? DOM.assetThemeDefaultsList.querySelectorAll(
+        "input[data-theme-key]:checked"
+      )
         .length
     : 0;
   DOM.assetThemeDefaultsSelectionCount.textContent = `Selected for ${count} theme${
@@ -15435,25 +15562,48 @@ function updateAssetThemeDefaultsSelectionCount() {
   }`;
 }
 
+function syncAssetThemeGroupCheckboxes() {
+  if (!DOM.assetThemeDefaultsList) {
+    updateAssetThemeDefaultsSelectionCount();
+    return;
+  }
+  DOM.assetThemeDefaultsList
+    .querySelectorAll("input[data-theme-group-key]")
+    .forEach((groupInput) => {
+      const groupKey = groupInput.dataset.themeGroupKey;
+      const children = Array.from(
+        DOM.assetThemeDefaultsList.querySelectorAll(
+          `input[data-theme-parent="${groupKey}"]`
+        )
+      );
+      const checkedCount = children.filter((input) => input.checked).length;
+      groupInput.checked =
+        children.length > 0 && checkedCount === children.length;
+      groupInput.indeterminate =
+        checkedCount > 0 && checkedCount < children.length;
+    });
+  updateAssetThemeDefaultsSelectionCount();
+}
+
 function selectCurrentThemeForAssetDefaults() {
   const key = normalizeThemeSelectionKey(getSelectedThemeKey());
   if (!key || !DOM.assetThemeDefaultsList) return;
   const checkbox = Array.from(
-    DOM.assetThemeDefaultsList.querySelectorAll("input[type=checkbox]")
+    DOM.assetThemeDefaultsList.querySelectorAll("input[data-theme-key]")
   ).find((input) => input.value === key);
   if (!checkbox) return;
   checkbox.checked = true;
-  updateAssetThemeDefaultsSelectionCount();
+  syncAssetThemeGroupCheckboxes();
 }
 
 function clearAssetThemeDefaults() {
   if (!DOM.assetThemeDefaultsList) return;
   DOM.assetThemeDefaultsList
-    .querySelectorAll("input[type=checkbox]")
+    .querySelectorAll("input[data-theme-key]")
     .forEach((input) => {
       input.checked = false;
     });
-  updateAssetThemeDefaultsSelectionCount();
+  syncAssetThemeGroupCheckboxes();
 }
 
 function closeAssetThemeDefaultsModal() {
@@ -15473,7 +15623,9 @@ function saveAssetThemeDefaults() {
   const selected = new Set(
     Array.from(
       DOM.assetThemeDefaultsList
-        ? DOM.assetThemeDefaultsList.querySelectorAll("input[type=checkbox]:checked")
+        ? DOM.assetThemeDefaultsList.querySelectorAll(
+            "input[data-theme-key]:checked"
+          )
         : []
     ).map((input) => input.value)
   );

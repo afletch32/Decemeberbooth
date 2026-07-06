@@ -291,9 +291,7 @@ test("asset defaults persist across save, reopen, and reload", async ({
   await defaultsButton.click();
   await expect(page.locator("#assetThemeDefaultsModal")).toHaveClass(/show/);
 
-  const checkboxValues = page.locator(
-    '#assetThemeDefaultsList input[type="checkbox"]'
-  );
+  const checkboxValues = page.locator("#assetThemeDefaultsList input[data-theme-key]");
   const states = await checkboxValues.evaluateAll((inputs) =>
     inputs.map((input, index) => ({
       index,
@@ -341,16 +339,14 @@ test("asset defaults persist across save, reopen, and reload", async ({
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => !!window.__photoboothTest);
 
-  const reloadedCard = page
-    .locator("#assetLibraryGrid .asset-library-card")
-    .filter({ hasText: asset.name })
-    .first();
-  await expect(reloadedCard).toBeVisible();
-  await reloadedCard
-    .locator(".asset-library-actions button", { hasText: "Theme defaults" })
-    .click();
+  await page.evaluate(
+    (selectedAsset) =>
+      window.__photoboothTest.openAssetThemeDefaultsModal(selectedAsset),
+    asset
+  );
+  await expect(page.locator("#assetThemeDefaultsModal")).toHaveClass(/show/);
   const reloadedStates = await page
-    .locator('#assetThemeDefaultsList input[type="checkbox"]')
+    .locator("#assetThemeDefaultsList input[data-theme-key]")
     .evaluateAll((inputs) =>
       inputs.map((input) => ({
         value: input.value,
@@ -362,6 +358,62 @@ test("asset defaults persist across save, reopen, and reload", async ({
       reloadedStates.find((state) => state.value === target.value)?.checked
     ).toBe(true);
   }
+});
+
+test("asset defaults group themes by category and parent selects children", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  await page.evaluate(() => {
+    const themes = window.__photoboothTest.getThemes();
+    themes.basic = { name: "basic" };
+    themes.ANE = { name: "ANE" };
+  });
+
+  const asset = await page.evaluate(
+    () => window.__photoboothTest.getAllAssetLibraryRows()[0]
+  );
+  const card = page
+    .locator("#assetLibraryGrid .asset-library-card")
+    .filter({ hasText: asset.name })
+    .first();
+  await expect(card).toBeVisible();
+  await card
+    .locator(".asset-library-actions button", { hasText: "Theme defaults" })
+    .click();
+
+  const summerGroup = page
+    .locator("#assetThemeDefaultsList .theme-defaults-group")
+    .filter({ has: page.locator(".theme-defaults-group-title", { hasText: "Summer" }) });
+  await expect(summerGroup).toHaveCount(1);
+  await expect(summerGroup.locator(".theme-defaults-parent-option")).toContainText(
+    "All Summer"
+  );
+  await expect(summerGroup).toContainText("Fourth of July");
+
+  const summerChildren = summerGroup.locator("input[data-theme-key]");
+  expect(await summerChildren.count()).toBeGreaterThan(1);
+  await summerGroup.locator("input[data-theme-group-key]").check();
+  expect(
+    await summerChildren.evaluateAll((inputs) =>
+      inputs.every((input) => input.checked)
+    )
+  ).toBe(true);
+
+  const groupOrder = await page
+    .locator("#assetThemeDefaultsList .theme-defaults-group-title")
+    .evaluateAll((nodes) => nodes.map((node) => node.textContent.trim()));
+  expect(groupOrder.indexOf("Summer")).toBeLessThan(groupOrder.indexOf("Fall"));
+  expect(groupOrder.indexOf("School")).toBeLessThan(groupOrder.indexOf("Spring"));
+
+  const otherText = await page
+    .locator("#assetThemeDefaultsList .theme-defaults-group")
+    .filter({ has: page.locator(".theme-defaults-group-title", { hasText: "Other" }) })
+    .evaluateAll((nodes) => nodes.map((node) => node.textContent).join(" "));
+  expect(otherText).not.toContain("basic");
+  expect(otherText).not.toContain("ANE");
 });
 
 test("asset defaults can be assigned to multiple themes without losing template metadata", async ({
@@ -400,7 +452,7 @@ test("asset defaults can be assigned to multiple themes without losing template 
         textFields: [{ key: "title", x: 4, y: 5, w: 80, h: 20 }],
       },
     });
-    document.querySelectorAll("#assetThemeDefaultsList input").forEach((input) => {
+    document.querySelectorAll("#assetThemeDefaultsList input[data-theme-key]").forEach((input) => {
       input.checked = targetKeys.includes(input.value);
     });
     document.querySelector("#assetThemeDefaultsSave").click();
