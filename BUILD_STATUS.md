@@ -1,25 +1,23 @@
 Current goal
-- Fix the asset library theme-category filter so school/holiday assets show up.
+- Persist asset library theme defaults across save, reopen, and reload.
 
 What is done
-- Removed background/overlay/template entries from the asset library category dropdown.
-- Updated the asset-library regression test to match the trimmed dropdown options.
-- Confirmed `node --test server.test.js` still passes on its own.
-- Expanded asset-library category inference to read theme keys, tags, folders, and URLs.
-- Fixed theme-category inference so nested school and holiday assets are filtered correctly.
-- Updated the asset-library regression test to cover the category inference path.
-- Verified with `npm test -- asset-upload.test.js`.
-- Verified with `npm test -- asset-upload.test.js`.
+- Added a shared theme-default writer for asset-library and setup-screen saves.
+- Added modal rehydration from the saved theme object before the defaults editor closes.
+- Exported the asset theme-default count helper to the browser test harness.
+- Added Playwright regressions for asset-library defaults persistence and setup defaults reopen.
+- Tightened the setup-screen test to lock in the shared defaults helper path.
 
 What is in progress
-- None.
+- Running the targeted defaults regressions.
 
 Next steps
-- Run the tests again and verify the asset-library filter stays clean.
+- Run the targeted browser and node regressions, then the full suite if they stay clean.
 
 Known bugs/blockers
 - The aggregate `npm test` run still hits the existing Node test-runner deserialization error in `server.test.js`, but the file passes when run directly.
 
 Important decisions
-- Keep asset types on the pills and theme categories in the dropdown.
+- Keep the asset-library and setup-screen defaults editors on one save path.
+- Rehydrate the modal from saved theme state instead of checkbox memory.
 - Preserve the existing asset storage and filtering contracts.

@@ -270,6 +270,100 @@ test("asset library cards toggle selection from the full card surface", async ({
   await expect(card).toHaveAttribute("aria-selected", initialState);
 });
 
+test("asset defaults persist across save, reopen, and reload", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  const asset = await page.evaluate(
+    () => window.__photoboothTest.getAllAssetLibraryRows()[0]
+  );
+  const card = page
+    .locator("#assetLibraryGrid .asset-library-card")
+    .filter({ hasText: asset.name })
+    .first();
+  await expect(card).toBeVisible();
+
+  const defaultsButton = card.locator(".asset-library-actions button", {
+    hasText: "Theme defaults",
+  });
+  await defaultsButton.click();
+  await expect(page.locator("#assetThemeDefaultsModal")).toHaveClass(/show/);
+
+  const checkboxValues = page.locator(
+    '#assetThemeDefaultsList input[type="checkbox"]'
+  );
+  const states = await checkboxValues.evaluateAll((inputs) =>
+    inputs.map((input, index) => ({
+      index,
+      value: input.value,
+      checked: input.checked,
+    }))
+  );
+  const targets = states.filter((item) => !item.checked).slice(0, 3);
+  expect(targets.length).toBeGreaterThan(0);
+
+  const initialCount = await page.evaluate(
+    (selectedAsset) =>
+      window.__photoboothTest.getAssetThemeDefaultCount(selectedAsset),
+    asset
+  );
+
+  for (const target of targets) {
+    await checkboxValues.nth(target.index).check();
+  }
+
+  await page.locator("#assetThemeDefaultsSave").click();
+  await expect(page.locator("#assetThemeDefaultsModal")).toHaveClass(/hidden/);
+
+  const afterSaveCount = await page.evaluate(
+    (selectedAsset) =>
+      window.__photoboothTest.getAssetThemeDefaultCount(selectedAsset),
+    asset
+  );
+  expect(afterSaveCount).toBe(initialCount + targets.length);
+
+  await defaultsButton.click();
+  const reopenedStates = await checkboxValues.evaluateAll((inputs) =>
+    inputs.map((input) => ({
+      value: input.value,
+      checked: input.checked,
+    }))
+  );
+  for (const target of targets) {
+    expect(
+      reopenedStates.find((state) => state.value === target.value)?.checked
+    ).toBe(true);
+  }
+  await page.locator("#assetThemeDefaultsCancel").click();
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  const reloadedCard = page
+    .locator("#assetLibraryGrid .asset-library-card")
+    .filter({ hasText: asset.name })
+    .first();
+  await expect(reloadedCard).toBeVisible();
+  await reloadedCard
+    .locator(".asset-library-actions button", { hasText: "Theme defaults" })
+    .click();
+  const reloadedStates = await page
+    .locator('#assetThemeDefaultsList input[type="checkbox"]')
+    .evaluateAll((inputs) =>
+      inputs.map((input) => ({
+        value: input.value,
+        checked: input.checked,
+      }))
+    );
+  for (const target of targets) {
+    expect(
+      reloadedStates.find((state) => state.value === target.value)?.checked
+    ).toBe(true);
+  }
+});
+
 test("asset defaults can be assigned to multiple themes without losing template metadata", async ({
   page,
 }) => {
@@ -354,6 +448,49 @@ test("asset defaults can be assigned to multiple themes without losing template 
   expect(backgroundRepair.repaired).toBe(true);
   expect(backgroundRepair.summerBackgrounds).toEqual([]);
   expect(backgroundRepair.summerBase).toEqual([]);
+});
+
+test("theme defaults setup persists checked assets after reopening", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  await page.locator("#setupThemeDefaultsBtn").click();
+  await expect(page.locator("#themeDefaultsSetupModal")).toHaveClass(/show/);
+
+  const checkboxes = page.locator(
+    '#themeDefaultsSetupList input[type="checkbox"]'
+  );
+  const states = await checkboxes.evaluateAll((inputs) =>
+    inputs.map((input, index) => ({
+      index,
+      value: input.value,
+      checked: input.checked,
+    }))
+  );
+  const targets = states.filter((item) => !item.checked).slice(0, 3);
+  expect(targets.length).toBeGreaterThan(0);
+
+  for (const target of targets) {
+    await checkboxes.nth(target.index).check();
+  }
+
+  await page.locator("#themeDefaultsSetupSave").click();
+  await expect(page.locator("#themeDefaultsSetupModal")).toHaveClass(/hidden/);
+
+  await page.locator("#setupThemeDefaultsBtn").click();
+  const reopenedStates = await checkboxes.evaluateAll((inputs) =>
+    inputs.map((input) => ({
+      value: input.value,
+      checked: input.checked,
+    }))
+  );
+  for (const target of targets) {
+    expect(
+      reopenedStates.find((state) => state.value === target.value)?.checked
+    ).toBe(true);
+  }
 });
 
 test("admin can open the layout builder and return to booth setup", async ({

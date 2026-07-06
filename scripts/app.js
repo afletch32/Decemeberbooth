@@ -15305,8 +15305,8 @@ function buildThemeDefaultAssetEntry(asset) {
   if (!src) return null;
   const category = normalizeUploadedAssetCategory(asset.category);
   if (category === "background") return src;
+  if (category === "overlay") return src;
   const raw = asset.raw && typeof asset.raw === "object" ? asset.raw : {};
-  if (category === "overlay") return { ...cloneThemeValue(raw), src };
   if (category === "template") {
     return {
       ...cloneThemeValue(raw),
@@ -15320,6 +15320,27 @@ function buildThemeDefaultAssetEntry(asset) {
     };
   }
   return null;
+}
+
+function replaceThemeDefaultEntries(theme, category, entries) {
+  const arrayName = getThemeDefaultArrayName(category);
+  const removedArrayName = getThemeRemovedArrayName(category);
+  if (!theme || typeof theme !== "object" || !arrayName) return [];
+  const seen = new Set();
+  const nextEntries = [];
+  (Array.isArray(entries) ? entries : []).forEach((entry) => {
+    const src = getAssetEntrySrc(entry);
+    if (!src || seen.has(src)) return;
+    seen.add(src);
+    nextEntries.push(cloneThemeValue(entry));
+  });
+  theme[arrayName] = nextEntries;
+  if (removedArrayName && Array.isArray(theme[removedArrayName])) {
+    theme[removedArrayName] = theme[removedArrayName].filter(
+      (item) => !seen.has(getAssetEntrySrc(item))
+    );
+  }
+  return nextEntries;
 }
 
 function getThemeDefaultArrayName(category) {
@@ -15336,10 +15357,25 @@ function getThemeRemovedArrayName(category) {
   return "";
 }
 
-function openAssetThemeDefaultsModal(asset) {
+function getThemeDefaultSelectionKeySet(category, src) {
+  const selectedKeys = new Set();
+  if (!category || !src) return selectedKeys;
+  getSelectableThemeEntries().forEach(({ key, theme }) => {
+    if (
+      getExplicitThemeAssetEntries(category, theme).some(
+        (item) => getAssetEntrySrc(item) === src
+      )
+    ) {
+      selectedKeys.add(key);
+    }
+  });
+  return selectedKeys;
+}
+
+function populateAssetThemeDefaultsModal(asset) {
   const category = normalizeUploadedAssetCategory(asset && asset.category);
   const src = getAssetEntrySrc(asset);
-  if (!asset || !category || !src || !DOM.assetThemeDefaultsModal) return;
+  if (!asset || !category || !src || !DOM.assetThemeDefaultsModal) return null;
   activeThemeDefaultsAsset = asset;
   if (DOM.assetThemeDefaultsTitle)
     DOM.assetThemeDefaultsTitle.textContent = "Theme Defaults";
@@ -15349,6 +15385,7 @@ function openAssetThemeDefaultsModal(asset) {
   const list = DOM.assetThemeDefaultsList;
   if (list) {
     list.innerHTML = "";
+    const selectedKeys = getThemeDefaultSelectionKeySet(category, src);
     const groups = new Map();
     getSelectableThemeEntries().forEach((entry) => {
       if (!groups.has(entry.group)) groups.set(entry.group, []);
@@ -15367,8 +15404,7 @@ function openAssetThemeDefaultsModal(asset) {
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.value = entry.key;
-        checkbox.checked = getExplicitThemeAssetEntries(category, entry.theme)
-          .some((item) => getAssetEntrySrc(item) === src);
+        checkbox.checked = selectedKeys.has(entry.key);
         checkbox.addEventListener("change", updateAssetThemeDefaultsSelectionCount);
         const text = document.createElement("span");
         text.textContent = entry.label;
@@ -15379,6 +15415,11 @@ function openAssetThemeDefaultsModal(asset) {
     });
   }
   updateAssetThemeDefaultsSelectionCount();
+  return { category, src };
+}
+
+function openAssetThemeDefaultsModal(asset) {
+  if (!populateAssetThemeDefaultsModal(asset)) return;
   DOM.assetThemeDefaultsModal.classList.remove("hidden");
   DOM.assetThemeDefaultsModal.classList.add("show");
 }
@@ -15428,7 +15469,6 @@ function saveAssetThemeDefaults() {
   const category = normalizeUploadedAssetCategory(asset && asset.category);
   const src = getAssetEntrySrc(asset);
   const arrayName = getThemeDefaultArrayName(category);
-  const removedArrayName = getThemeRemovedArrayName(category);
   if (!asset || !category || !src || !arrayName) return;
   const selected = new Set(
     Array.from(
@@ -15442,19 +15482,19 @@ function saveAssetThemeDefaults() {
     const current = getExplicitThemeAssetEntries(category, theme);
     const hasAsset = current.some((item) => getAssetEntrySrc(item) === src);
     if (selected.has(key) && !hasAsset && entryForDefaults) {
-      theme[arrayName] = [...current, cloneThemeValue(entryForDefaults)];
-      if (removedArrayName && Array.isArray(theme[removedArrayName])) {
-        theme[removedArrayName] = theme[removedArrayName].filter(
-          (item) => getAssetEntrySrc(item) !== src
-        );
-      }
+      replaceThemeDefaultEntries(theme, category, [...current, entryForDefaults]);
     } else if (!selected.has(key) && hasAsset) {
-      theme[arrayName] = current.filter((item) => getAssetEntrySrc(item) !== src);
+      replaceThemeDefaultEntries(
+        theme,
+        category,
+        current.filter((item) => getAssetEntrySrc(item) !== src)
+      );
     }
   });
   saveThemesToStorage();
   const selectedThemeKey = DOM.eventSelect && DOM.eventSelect.value;
   if (selectedThemeKey) loadTheme(selectedThemeKey);
+  populateAssetThemeDefaultsModal(asset);
   renderAssetLibrary();
   updateCreatePathAssetSummary();
   updateLaunchSummary();
@@ -15568,18 +15608,12 @@ function saveThemeDefaultsSetup() {
   });
 
   THEME_DEFAULTS_SETUP_CATEGORIES.forEach(({ key: category }) => {
-    const arrayName = getThemeDefaultArrayName(category);
-    const removedArrayName = getThemeRemovedArrayName(category);
     const selectedAssets = selectedByCategory.get(category) || [];
-    const selectedSources = new Set(selectedAssets.map(getAssetEntrySrc).filter(Boolean));
-    theme[arrayName] = selectedAssets
-      .map((asset) => buildThemeDefaultAssetEntry(asset))
-      .filter(Boolean);
-    if (removedArrayName && Array.isArray(theme[removedArrayName])) {
-      theme[removedArrayName] = theme[removedArrayName].filter(
-        (item) => !selectedSources.has(getAssetEntrySrc(item))
-      );
-    }
+    replaceThemeDefaultEntries(
+      theme,
+      category,
+      selectedAssets.map((asset) => buildThemeDefaultAssetEntry(asset)).filter(Boolean)
+    );
   });
 
   saveThemesToStorage();
@@ -21438,6 +21472,8 @@ Object.assign(window, {
     getBaseBackgroundList: (theme = activeTheme) => getBaseBackgroundList(theme),
     getBaseTemplateList: (theme = activeTheme) => getBaseTemplateList(theme),
     getAllThemeBackgroundCatalogList,
+    getAllAssetLibraryRows,
+    getAssetThemeDefaultCount,
     repairCorruptedBackgroundDefaults,
     openAssetThemeDefaultsModal,
     getEffectiveBackgroundList: () => getEffectiveBackgroundList(activeTheme),

@@ -577,6 +577,8 @@ test("asset library supports explicit multi-theme defaults without manifest auto
   );
   assert.ok(
     appScript.includes("function openAssetThemeDefaultsModal(asset)") &&
+      appScript.includes("function populateAssetThemeDefaultsModal(asset)") &&
+      appScript.includes("function replaceThemeDefaultEntries(theme, category, entries)") &&
       appScript.includes("function saveAssetThemeDefaults()") &&
       appScript.includes('defaultsBtn.textContent = "Theme defaults"') &&
       appScript.includes("Choose which themes use this asset by default.") &&
@@ -642,7 +644,7 @@ test("selected themes can configure all default assets in one modal", () => {
   );
   assert.ok(
     appScript.includes("function saveThemeDefaultsSetup()") &&
-      appScript.includes("theme[arrayName] = selectedAssets") &&
+      appScript.includes("replaceThemeDefaultEntries(") &&
       appScript.includes("buildThemeDefaultAssetEntry(asset)"),
     "save should update the selected theme with the existing asset entry shapes"
   );
