@@ -14865,12 +14865,32 @@ function themeKeyToCategory(themeKey) {
   if (!raw) return "general";
   const [root] = raw.split(":");
   if (["background", "overlay", "template"].includes(root)) return root;
-  if (root === "school" || raw.startsWith("school:")) return "school";
-  if (root === "wedding" || raw.startsWith("wedding:")) return "wedding";
-  if (root === "holidays" || raw.startsWith("holidays:")) return "holidays";
+  if (root === "school") return "school";
+  if (root === "wedding") return "wedding";
+  if (root === "holidays") return "holidays";
+  if (["fall", "winter", "spring", "summer"].includes(root)) return "holidays";
+  if (root === "general") {
+    const leaf = raw.split(":")[1] || "";
+    if (leaf === "birthday" || raw.includes("birthday")) return "birthday";
+    if (leaf === "summer" || raw.includes("summer")) return "general";
+    return "general";
+  }
+  if (raw.startsWith("school:")) return "school";
+  if (raw.startsWith("wedding:")) return "wedding";
+  if (raw.startsWith("holidays:")) return "holidays";
   if (raw.includes("birthday")) return "birthday";
-  if (raw.includes("summer")) return "general";
   return "general";
+}
+
+function addAssetCategoryHint(categories, value) {
+  const raw = String(value || "").toLowerCase().trim();
+  if (!raw) return;
+  if (/(^|[\/:_-])school($|[\/:_-])/.test(raw)) categories.add("school");
+  if (/(^|[\/:_-])wedding($|[\/:_-])/.test(raw)) categories.add("wedding");
+  if (/(^|[\/:_-])birthday($|[\/:_-])/.test(raw)) categories.add("birthday");
+  if (/(^|[\/:_-])(holidays?|fall|winter|spring|summer)($|[\/:_-])/.test(raw))
+    categories.add("holidays");
+  if (/(^|[\/:_-])general($|[\/:_-])/.test(raw)) categories.add("general");
 }
 
 function collectThemeAssetRows(category = "") {
@@ -15113,12 +15133,22 @@ function normalizeAssetLibraryCategoryFilter(value = "") {
 }
 
 function getAssetLibraryFilterCategories(asset) {
-  const categories = Array.isArray(asset && asset.categories)
-    ? asset.categories
-    : [];
-  return categories
-    .map((category) => String(category || "").trim().toLowerCase())
-    .filter(Boolean);
+  const categories = new Set();
+  const addCategory = (value) => {
+    const normalized = normalizeAssetLibraryCategoryFilter(value);
+    if (normalized) categories.add(normalized);
+  };
+  (Array.isArray(asset && asset.categories) ? asset.categories : []).forEach(addCategory);
+  (Array.isArray(asset && asset.themeKeys) ? asset.themeKeys : []).forEach((themeKey) =>
+    addCategory(themeKeyToCategory(themeKey))
+  );
+  (Array.isArray(asset && asset.tags) ? asset.tags : []).forEach((tag) =>
+    addAssetCategoryHint(categories, tag)
+  );
+  [asset && asset.folder, asset && asset.url, asset && asset.secure_url, asset && asset.name].forEach(
+    (value) => addAssetCategoryHint(categories, value)
+  );
+  return Array.from(categories);
 }
 
 function assetMatchesLibraryCategoryFilter(asset, value = "") {

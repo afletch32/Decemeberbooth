@@ -149,9 +149,12 @@ test("uploaded assets register in a persistent shared library", () => {
       html.includes('value="holidays"') &&
       html.includes('value="favorites"') &&
       html.includes('value="recent"') &&
+      !html.includes('value="background"') &&
+      !html.includes('value="overlay"') &&
+      !html.includes('value="template"') &&
       !html.includes('id="assetUploadTags"') &&
       !html.includes('id="assetLibraryHasEditableField"'),
-    "asset library should support search, category filters, category pills, and favorite/recent sorting without upload-tag or editable-field admin controls"
+    "asset library should support search, category filters, category pills, and favorite/recent sorting without asset-type dropdown duplicates or upload-tag/editable-field admin controls"
   );
   assert.ok(
     appScript.includes('fetch("/api/assets"') &&
@@ -197,7 +200,11 @@ test("asset library management supports sorting and category metadata", () => {
       appScript.includes('sortMode === "name"') &&
       appScript.includes('sortMode === "oldest"') &&
       appScript.includes("function assetMatchesLibraryCategoryFilter") &&
-      appScript.includes("getAssetLibraryFilterCategories(asset)"),
+      appScript.includes("getAssetLibraryFilterCategories(asset)") &&
+      appScript.includes("themeKeys.map(themeKeyToCategory)") &&
+      appScript.includes('["fall", "winter", "spring", "summer"].includes(root)') &&
+      appScript.includes("function addAssetCategoryHint(") &&
+      appScript.includes('return "holidays";'),
     "asset library rows should support sorting and category filtering"
   );
   assert.ok(

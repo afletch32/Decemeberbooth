@@ -1,21 +1,25 @@
 Current goal
-- Add the countdown length option and switch the pre-capture beat to Flash.
+- Fix the asset library theme-category filter so school/holiday assets show up.
 
 What is done
-- Added a stored 5 second countdown option in Capture Modes.
-- Changed the pre-capture text from SMILE to Flash.
-- Updated the capture flow so the flash trigger happens before the still frame is frozen.
-- Verified with `npm test` (113 tests).
+- Removed background/overlay/template entries from the asset library category dropdown.
+- Updated the asset-library regression test to match the trimmed dropdown options.
+- Confirmed `node --test server.test.js` still passes on its own.
+- Expanded asset-library category inference to read theme keys, tags, folders, and URLs.
+- Fixed theme-category inference so nested school and holiday assets are filtered correctly.
+- Updated the asset-library regression test to cover the category inference path.
+- Verified with `npm test -- asset-upload.test.js`.
+- Verified with `npm test -- asset-upload.test.js`.
 
 What is in progress
 - None.
 
 Next steps
-- Commit and push the countdown update.
+- Run the tests again and verify the asset-library filter stays clean.
 
 Known bugs/blockers
-- None identified yet.
+- The aggregate `npm test` run still hits the existing Node test-runner deserialization error in `server.test.js`, but the file passes when run directly.
 
 Important decisions
-- Keep the change limited to settings, countdown timing, and copy.
-- Preserve the existing capture, overlay, and share contracts.
+- Keep asset types on the pills and theme categories in the dropdown.
+- Preserve the existing asset storage and filtering contracts.
