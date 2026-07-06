@@ -7815,16 +7815,7 @@ function updateStylePreview() {
   syncWelcomeText();
   syncCaptureButtonText();
   if (DOM.eventGalleryLink) {
-    const active = getActiveEvent();
-    if (!active) {
-      DOM.eventGalleryLink.textContent =
-        "Select an event to enable gallery link.";
-    } else {
-      const link = getEventGalleryUrl();
-      DOM.eventGalleryLink.textContent = link
-        ? link
-        : "Set Cloudinary to enable gallery link.";
-    }
+    DOM.eventGalleryLink.textContent = getEventGalleryStatusText();
   }
 }
 
@@ -11891,10 +11882,7 @@ function describeAssetSummaryCounts({
 
 function getEventEditorTheme(theme = null) {
   const active = getActiveEvent();
-  const eventThemeKey =
-    (active && active.themeKey) ||
-    (DOM.eventSelect && DOM.eventSelect.value) ||
-    "";
+  const eventThemeKey = getEventEditorThemeKey();
   return (
     theme ||
     resolveThemeByKey(eventThemeKey) ||
@@ -11902,6 +11890,30 @@ function getEventEditorTheme(theme = null) {
     getSelectedThemeTarget() ||
     null
   );
+}
+
+function getEventEditorThemeKey() {
+  const active = getActiveEvent();
+  return (
+    (active && active.themeKey) ||
+    (DOM.eventSelect && DOM.eventSelect.value) ||
+    ""
+  );
+}
+
+function isWeddingEventTheme(themeObj = null) {
+  const themeKey = getEventEditorThemeKey();
+  const theme = themeObj || resolveThemeByKey(themeKey);
+  return (
+    normalizeEventStyle(inferThemeEventStyle(themeKey, theme)) === "wedding"
+  );
+}
+
+function syncWeddingOnlyEventFields(themeObj = null) {
+  const showWeddingFields = isWeddingEventTheme(themeObj);
+  document.querySelectorAll(".wedding-only-event-field").forEach((node) => {
+    node.classList.toggle("hidden", !showWeddingFields);
+  });
 }
 
 function getEventEditorTextValue(active, key, fallback = "") {
@@ -11915,6 +11927,7 @@ function syncEventSetupEditor(theme = null) {
   const hasActiveEvent = !!active;
   const hasEditableTarget = hasActiveEvent || !!themeObj;
   const textSource = hasActiveEvent ? active : activeSessionTextDetails;
+  syncWeddingOnlyEventFields(themeObj);
   const setDisabled = (node) => {
     if (!node) return;
     node.disabled = !hasEditableTarget;
@@ -12225,6 +12238,10 @@ function getEventDateForUploads() {
 function getQuickStartFolderDate() {
   const active = getActiveEvent();
   if (active) return "";
+  const explicitSessionName =
+    getSavedEventTextValue(activeSessionTextDetails, "name") ||
+    valueFromInput(DOM.eventNameInput);
+  if (explicitSessionName) return "";
   const raw = getQuickStartSessionDate();
   const safe = (raw || "").toString().trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(safe)) return "";
@@ -12337,8 +12354,15 @@ function updateCurrentEventAssetsPanel(theme = null) {
   if (!active) {
     updateEventDependentControls(false);
     const themeObj = theme || activeTheme || getSelectedThemeTarget();
-    DOM.currentEventName.textContent = `Session ${getDateSessionSlug()}`;
-    if (DOM.currentEventDate) DOM.currentEventDate.textContent = "";
+    const sessionName =
+      getSavedEventTextValue(activeSessionTextDetails, "name") ||
+      valueFromInput(DOM.eventNameInput);
+    const sessionDate =
+      getSavedEventTextValue(activeSessionTextDetails, "date") ||
+      valueFromInput(DOM.eventDateInput);
+    DOM.currentEventName.textContent =
+      sessionName || `Session ${getDateSessionSlug()}`;
+    if (DOM.currentEventDate) DOM.currentEventDate.textContent = sessionDate;
     DOM.currentEventTheme.textContent =
       themeObj && themeObj.name ? themeObj.name : "No theme selected";
     DOM.currentEventAssetsSummary.textContent = getSessionAssetSummaryText();
@@ -12358,7 +12382,7 @@ function updateCurrentEventAssetsPanel(theme = null) {
       }
     )}`;
     if (DOM.eventGalleryLink)
-      DOM.eventGalleryLink.textContent = getEventGalleryUrl() || "Set Cloudinary to enable gallery link.";
+      DOM.eventGalleryLink.textContent = getEventGalleryStatusText();
     syncEventSetupEditor();
     return;
   }
@@ -12530,6 +12554,12 @@ function getEventGalleryUrl() {
   return `${
     location.origin
   }/gallery.html?cloud=${cloud}&tag=${encodeURIComponent(tag)}&title=${title}`;
+}
+
+function getEventGalleryStatusText() {
+  const link = getEventGalleryUrl();
+  if (link) return link;
+  return "Set Cloudinary Cloud Name to enable the gallery link.";
 }
 
 function getEventGalleryTitle() {
@@ -15766,6 +15796,9 @@ function saveThemeDefaultsSetup() {
 
   THEME_DEFAULTS_SETUP_CATEGORIES.forEach(({ key: category }) => {
     const selectedAssets = selectedByCategory.get(category) || [];
+    selectedAssets.forEach((asset) => {
+      clearSessionRemovedAsset(category, getAssetEntrySrc(asset));
+    });
     replaceThemeDefaultEntries(
       theme,
       category,
@@ -21727,6 +21760,7 @@ Object.assign(window, {
   closeConfirm,
   confirmTemplate,
   copyEventGalleryLink,
+  createNewEventFromSelection,
   connectMotorRelay,
   copyShareLink,
   copyStaffPrintQueueUrl,

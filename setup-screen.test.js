@@ -659,9 +659,10 @@ test("selected themes can configure all default assets in one modal", () => {
   );
   assert.ok(
     appScript.includes("saveThemesToStorage();") &&
+      appScript.includes("clearSessionRemovedAsset(category, getAssetEntrySrc(asset));") &&
       appScript.includes("renderAssetLibrary();") &&
       appScript.includes("updateLaunchSummary();"),
-    "save should persist and refresh setup state"
+    "save should persist, restore selected defaults in-session, and refresh setup state"
   );
 });
 
