@@ -1,5 +1,5 @@
 Current goal
-- Fix asset-library theme-default modal grouping and parent theme selection.
+- Ensure current-theme asset defaults show immediately after save.
 
 What is done
 - Added a shared theme-default writer for asset-library and setup-screen saves.
@@ -10,18 +10,22 @@ What is done
 - Grouped theme-default modal choices by the intended parent category/season.
 - Added parent group checkboxes that select all child themes while preserving leaf-key saves.
 - Suppressed legacy flat built-in roots from the `Other` group.
+- Cleared current-session removed state when saving an asset default to the active theme.
+- Added a browser regression for current-theme defaults appearing immediately after save.
+- Verified the targeted regressions and full `npm test` suite pass.
 
 What is in progress
-- Running the targeted grouping and persistence regressions.
+- Nothing active.
 
 Next steps
-- Run the targeted browser and node regressions, then the full suite if they stay clean.
+- Have the active-theme asset assignment flow checked in the browser.
 
 Known bugs/blockers
-- The aggregate `npm test` run still hits the existing Node test-runner deserialization error in `server.test.js`, but the file passes when run directly.
+- None currently known for this change.
 
 Important decisions
 - Keep the asset-library and setup-screen defaults editors on one save path.
 - Rehydrate the modal from saved theme state instead of checkbox memory.
 - Keep season/category parent checkboxes as UI-only controls; save only concrete theme keys.
+- Saving a default to the active theme should also restore it in the current session view.
 - Preserve the existing asset storage and filtering contracts.

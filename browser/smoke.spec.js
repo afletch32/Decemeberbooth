@@ -416,6 +416,68 @@ test("asset defaults group themes by category and parent selects children", asyn
   expect(otherText).not.toContain("ANE");
 });
 
+test("asset default saved to current theme appears immediately after session removal", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  const asset = {
+    id: "overlay:data:test/current-theme-default",
+    category: "overlay",
+    url: "data:test/current-theme-default",
+    secure_url: "data:test/current-theme-default",
+    name: "Current Theme Default",
+    raw: "data:test/current-theme-default",
+  };
+
+  await page.evaluate((selectedAsset) => {
+    window.__photoboothTest.openAssetThemeDefaultsModal(selectedAsset);
+    document.querySelector("#assetThemeDefaultsSelectCurrent").click();
+    document.querySelector("#assetThemeDefaultsSave").click();
+  }, asset);
+
+  expect(
+    await page.evaluate(
+      (src) =>
+        window.__photoboothTest
+          .getEffectiveOverlayList()
+          .some((entry) => entry && entry.src === src),
+      asset.url
+    )
+  ).toBe(true);
+
+  await page.evaluate(
+    (src) => window.__photoboothTest.removeSessionAssetBySrc("overlay", src),
+    asset.url
+  );
+  expect(
+    await page.evaluate(
+      (src) =>
+        window.__photoboothTest
+          .getEffectiveOverlayList()
+          .some((entry) => entry && entry.src === src),
+      asset.url
+    )
+  ).toBe(false);
+
+  await page.evaluate((selectedAsset) => {
+    window.__photoboothTest.openAssetThemeDefaultsModal(selectedAsset);
+    document.querySelector("#assetThemeDefaultsSelectCurrent").click();
+    document.querySelector("#assetThemeDefaultsSave").click();
+  }, asset);
+
+  expect(
+    await page.evaluate(
+      (src) =>
+        window.__photoboothTest
+          .getEffectiveOverlayList()
+          .some((entry) => entry && entry.src === src),
+      asset.url
+    )
+  ).toBe(true);
+});
+
 test("asset defaults can be assigned to multiple themes without losing template metadata", async ({
   page,
 }) => {

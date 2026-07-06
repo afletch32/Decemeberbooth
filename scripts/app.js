@@ -15644,7 +15644,12 @@ function saveAssetThemeDefaults() {
     }
   });
   saveThemesToStorage();
-  const selectedThemeKey = DOM.eventSelect && DOM.eventSelect.value;
+  const selectedThemeKey = normalizeThemeSelectionKey(
+    (DOM.eventSelect && DOM.eventSelect.value) || ""
+  );
+  if (selectedThemeKey && selected.has(selectedThemeKey)) {
+    clearSessionRemovedAsset(category, src);
+  }
   if (selectedThemeKey) loadTheme(selectedThemeKey);
   populateAssetThemeDefaultsModal(asset);
   renderAssetLibrary();
@@ -21631,6 +21636,7 @@ Object.assign(window, {
     getEffectiveBackgroundList: () => getEffectiveBackgroundList(activeTheme),
     getEffectiveOverlayList: () => getEffectiveOverlayList(activeTheme),
     getEffectiveTemplateList: () => getEffectiveTemplateList(activeTheme),
+    removeSessionAssetBySrc,
     getOverlayList: () => getOverlayList(activeTheme),
     getActiveTheme: () => activeTheme,
     getPhotoOverlayOrientation: (entry) => getPhotoOverlayOrientation(entry),
