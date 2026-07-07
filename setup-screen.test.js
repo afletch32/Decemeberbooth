@@ -806,7 +806,9 @@ test("guest booth flow uses attraction-style host moments", () => {
       appScript.includes("function showFlashBeat()") &&
       appScript.includes("function handleLovePhoto()") &&
       appScript.includes("Awesome!") &&
-      appScript.includes("function revealFinalSaveStage()"),
+      appScript.includes("function revealFinalSaveStage()") &&
+      appScript.includes("DOM.finalPreviewContent.addEventListener(\"click\", (event) => {") &&
+      appScript.includes("event.stopPropagation();"),
     "the flow should include tiny sound cues, a Flash beat, and a rewarding love-it transition"
   );
 });

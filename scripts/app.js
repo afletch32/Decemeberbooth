@@ -3578,6 +3578,9 @@ function setupVideoListeners() {
 function setupFinalPreviewListeners() {
   if (!DOM.finalPreview || !DOM.finalPreviewContent) return;
   DOM.finalPreview.addEventListener("click", () => exitFinalPreview());
+  DOM.finalPreviewContent.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
 }
 
 function setupThemeEditorControls() {

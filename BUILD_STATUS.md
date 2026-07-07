@@ -1,27 +1,22 @@
 Current goal
-- Fix theme-default asset saves so selected assets appear on the active theme.
+- Fix final thank-you/save flow so the rendered QR code remains visible.
 
 What is done
-- Removed the event-level reset pills for theme text, sizes, and logo.
-- Added a visible saved-event selector and save action in the event setup panel.
-- Clarified that gallery links use the saved event name/date or current session name.
-- Let explicit session event names drive gallery tags before the quick-start date fallback.
-- Hid partner name fields unless the current event theme is a wedding theme.
-- Cleared current-session removed state when saving selected setup assets as theme defaults.
-- Tightened the partner-field visibility check so multi-use general themes do not show wedding fields.
-- Verified the full `npm test` suite passes.
+- Found that the QR canvas rendered, but the Love It click bubbled to the final-preview backdrop and immediately closed/reset the QR panel.
+- Stopped clicks inside the final preview content from closing the preview.
+- Added a regression assertion covering the stopped propagation.
+- Browser-checked the QA final preview: after tapping Love It, the QR panel remains visible and the canvas contains QR pixels.
+- Verified `npm test` passes.
 
 What is in progress
 - Nothing active.
 
 Next steps
-- Browser-check the admin event setup panel on the deployed page after deploy.
+- Deploy when ready.
 
 Known bugs/blockers
-- None currently known for this change.
+- None currently known.
 
 Important decisions
-- Keep the existing event storage and `/api/events` sync path.
-- Keep unnamed quick-start sessions on the date-based gallery fallback.
-- Do not clear stored partner names when hiding non-wedding fields.
-- Saving a selected asset as a theme default should make it visible in the active session immediately.
+- Keep backdrop click-to-close behavior, but only for clicks outside the final preview content.
+- Leave QR upload/share URL handling unchanged.
