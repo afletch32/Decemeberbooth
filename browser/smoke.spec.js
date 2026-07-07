@@ -320,6 +320,9 @@ test("booth test camera displays and captures the processed live preview canvas"
   expect(trace.surfaces.qr).toBe(trace.remoteFinalUrl);
   expect(trace.surfaces.print).toBe(trace.remoteFinalUrl);
   expect(trace.surfaces.download).toBe(trace.remoteFinalUrl);
+
+  await page.locator("#finalStrip").click({ force: true });
+  await expect(page.locator("#finalPreview")).not.toHaveClass(/show/);
 });
 
 test("overlay builder theme assignment dropdown loads saved themes", async ({

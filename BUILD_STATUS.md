@@ -1,5 +1,5 @@
 Current goal
-- Build the unified live imaging pipeline so preview and capture share the same processed frame.
+- Fix the share screen tap-to-exit behavior and lower the Love It review panel.
 
 What is done
 - Kept the prior QR/countdown fix in the worktree.
@@ -40,6 +40,10 @@ What is done
 - Proved preview, upload input, local gallery, QR, print, download, production gallery, and email payload routing consume the same finalized artifact/share URL path.
 - Added regression coverage for output-surface routing and extended the browser smoke to inspect the live capture trace.
 - Verified `node --input-type=module --check < scripts/app.js`, `npm test`, and the focused browser smoke pass.
+- Changed final/share screen clicks so only interactive controls stop propagation; tapping the photo or empty share space exits the screen.
+- Lowered the final review/action column so the Love It panel is not pinned too high.
+- Added browser coverage that clicks the final photo and verifies the share screen closes.
+- Verified `node --input-type=module --check < scripts/app.js`, `npm test`, and `npm run test:browser -- --grep "processed live preview canvas"` pass.
 
 What is in progress
 - Nothing active.

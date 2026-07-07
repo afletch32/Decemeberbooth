@@ -3588,7 +3588,10 @@ function setupFinalPreviewListeners() {
   if (!DOM.finalPreview || !DOM.finalPreviewContent) return;
   DOM.finalPreview.addEventListener("click", () => exitFinalPreview());
   DOM.finalPreviewContent.addEventListener("click", (event) => {
-    event.stopPropagation();
+    const interactiveTarget = event.target.closest(
+      "button, a, input, textarea, select, label, [role=\"button\"]"
+    );
+    if (interactiveTarget) event.stopPropagation();
   });
 }
 
