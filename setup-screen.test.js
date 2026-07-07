@@ -777,10 +777,11 @@ test("guest booth flow uses attraction-style host moments", () => {
   assert.ok(
     html.includes('id="reviewPanel"') &&
       html.includes("Love your photos?") &&
+      !html.includes("Make sure everyone looks just right.") &&
       html.includes('id="lovePhotoBtn"') &&
       html.includes("LOVE IT!") &&
       html.includes('id="reviewRetakeBtn"'),
-    "final preview should open with an emotional review choice"
+    "final preview should open with a simple review choice"
   );
   assert.ok(
     html.includes("Take them with you.") &&
@@ -871,9 +872,10 @@ test("final share panel appears after review while QR is pending or failed", () 
     appScript.includes('DOM.qrCodeContainer.dataset.pending === "true"') &&
       appScript.includes('DOM.qrCodeContainer.dataset.error === "true"') &&
       appScript.includes('qrContainer.dataset.pending = "true"') &&
-      appScript.includes('qrContainer.classList.remove("hidden")') &&
+      appScript.includes('DOM.reviewPanel && DOM.reviewPanel.classList.contains("hidden")') &&
+      appScript.includes("revealFinalSaveStage();") &&
       appScript.includes('qrContainer.dataset.error = qrRendered ? "false" : "true"'),
-    "the post-review share panel should reveal a pending or failed QR state instead of staying hidden"
+    "the QR panel should be staged while review is visible and revealed only after the review step"
   );
   assert.ok(
     appScript.includes("if (skipShare && !isBoothTestMode())") &&
@@ -885,6 +887,23 @@ test("final share panel appears after review while QR is pending or failed", () 
       html.includes("max-width: 100%;") &&
       html.includes("max-height: calc(100svh - clamp(120px, 12vw, 180px));"),
     "final media should shrink inside the share grid so the QR panel remains in the viewport"
+  );
+});
+
+test("skin smoothing preserves detail instead of blurring the full face", () => {
+  const smoothing = readProjectFile("scripts", "beauty", "smoothing.mjs");
+  const masks = readProjectFile("scripts", "beauty", "masks.mjs");
+
+  assert.ok(
+    smoothing.includes("isSkinLikePixel(") &&
+      smoothing.includes("detailProtection") &&
+      smoothing.includes("getMaskWeight(") &&
+      smoothing.includes("ctx.putImageData("),
+    "skin smoothing should blend skin-like pixels selectively and protect high-detail facial features"
+  );
+  assert.ok(
+    masks.includes("return centeredMask(width, height, 0.5, 0.46, 0.56, 0.68);"),
+    "face mask fallback should not smooth the full camera frame when landmarks are unavailable"
   );
 });
 

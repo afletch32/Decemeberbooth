@@ -1,5 +1,5 @@
 Current goal
-- Fix final share layout overflow and double-column strip photo placement.
+- Remove extra guest-facing helper copy from live preview and review screens.
 
 What is done
 - Kept the prior QR/countdown fix in the worktree.
@@ -56,6 +56,15 @@ What is done
 - Changed double-column strip rendering to use saved template slots or detected transparent slots before falling back to standard geometry.
 - Added browser coverage for desktop share-screen bounds and custom double-column strip slot placement.
 - Verified `node --input-type=module --check < scripts/app.js`, `npm test`, and `npm run test:browser -- --grep "processed live preview canvas|double-column strips honor"` pass.
+- Staged QR state while the Love It review card is visible so the QR/share panel reveals only after the review step.
+- Kept the final action column inside the share grid instead of letting it expand the viewport.
+- Reworked skin smoothing to selectively blend skin-like pixels with detail protection instead of blurring the whole face mask.
+- Narrowed the no-landmark face-mask fallback so smoothing does not apply to the entire camera frame.
+- Verified `node --check scripts/beauty/smoothing.mjs`, `node --check scripts/beauty/masks.mjs`, `node --input-type=module --check < scripts/app.js`, `npm test`, and `npm run test:browser -- --grep "processed live preview canvas|skin smoothing preserves"` pass.
+- Removed the live preview host prompt text so the camera screen no longer says to get everyone in frame or smile.
+- Verified `node --input-type=module --check < scripts/app.js` and `node --test setup-screen.test.js` pass after removing the prompt text.
+- Removed the Love It review box helper sentence so the card only asks the guest to love it or retake.
+- Verified `node --test setup-screen.test.js` passes after removing the Love It helper sentence.
 
 What is in progress
 - Nothing active.

@@ -380,6 +380,9 @@ test("booth test camera displays and captures the processed live preview canvas"
         qr.dataset.error === "true")
     );
   });
+  await expect(page.locator("#reviewPanel")).not.toHaveClass(/hidden/);
+  await expect(page.locator("#qrCodeContainer")).toHaveClass(/hidden/);
+
   await page.evaluate(async () => {
     await window.downloadShareImage();
   });
@@ -396,6 +399,10 @@ test("booth test camera displays and captures the processed live preview canvas"
   expect(trace.surfaces.qr).toBe(trace.remoteFinalUrl);
   expect(trace.surfaces.print).toBe(trace.remoteFinalUrl);
   expect(trace.surfaces.download).toBe(trace.remoteFinalUrl);
+
+  await page.locator("#lovePhotoBtn").click({ force: true });
+  await expect(page.locator("#reviewPanel")).toHaveClass(/hidden/);
+  await expect(page.locator("#qrCodeContainer")).not.toHaveClass(/hidden/);
 
   const shareBounds = await page.evaluate(() => {
     const qr = document.querySelector("#qrCodeContainer");
@@ -429,6 +436,33 @@ test("booth test camera displays and captures the processed live preview canvas"
 
   await page.locator("#finalStrip").click({ force: true });
   await expect(page.locator("#finalPreview")).not.toHaveClass(/show/);
+});
+
+test("skin smoothing preserves non-skin facial details", async ({ page }) => {
+  await gotoApp(page, "/index.html?testMode=booth");
+
+  const result = await page.evaluate(async () => {
+    const { applySmoothing } = await import("./scripts/beauty/smoothing.mjs");
+    const canvas = document.createElement("canvas");
+    canvas.width = 80;
+    canvas.height = 60;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "rgb(190, 126, 98)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgb(4, 4, 4)";
+    ctx.fillRect(34, 26, 12, 5);
+    const before = Array.from(ctx.getImageData(40, 28, 1, 1).data);
+    applySmoothing(canvas, { x: 0, y: 0, width: 80, height: 60, feather: 0.2 }, 100);
+    const after = Array.from(ctx.getImageData(40, 28, 1, 1).data);
+    const skinAfter = Array.from(ctx.getImageData(22, 28, 1, 1).data);
+    return { before, after, skinAfter };
+  });
+
+  expect(result.before[0]).toBeLessThan(12);
+  expect(result.after[0]).toBeLessThan(24);
+  expect(result.after[1]).toBeLessThan(24);
+  expect(result.after[2]).toBeLessThan(24);
+  expect(result.skinAfter[0]).toBeGreaterThan(150);
 });
 
 test("overlay builder theme assignment dropdown loads saved themes", async ({

@@ -11983,7 +11983,6 @@ function showFinal(url, options = {}) {
       if (qrContainer) {
         qrContainer.dataset.pending = "true";
         qrContainer.dataset.error = "false";
-        qrContainer.classList.remove("hidden");
       }
       if (DOM.shareStatus) {
         DOM.shareStatus.textContent = "Preparing QR";
@@ -19297,7 +19296,6 @@ function getBoothPersonality() {
   if (/christmas|holiday|santa|xmas|winter/.test(source)) {
     return {
       welcome: "Capture a little holiday magic.",
-      camera: "Gather close for a little holiday magic.",
       save: "Take the magic with you.",
       print: "Take home your holiday keepsake.",
       thanks: "Thank you! Enjoy your photos!",
@@ -19306,7 +19304,6 @@ function getBoothPersonality() {
   if (/wedding|bride|groom|married|love|ring/.test(source)) {
     return {
       welcome: "Celebrate the moment.",
-      camera: "Get everyone you love in the frame.",
       save: "Take this moment with you.",
       print: "Take home a keepsake from the celebration.",
       thanks: "Thank you! Enjoy the celebration!",
@@ -19315,7 +19312,6 @@ function getBoothPersonality() {
   if (/birthday|bday|party|cake/.test(source)) {
     return {
       welcome: "Let's make this birthday unforgettable.",
-      camera: "Bring the birthday energy.",
       save: "Take the party with you.",
       print: "Take home a birthday keepsake.",
       thanks: "Thank you! Enjoy your photos!",
@@ -19325,7 +19321,6 @@ function getBoothPersonality() {
     const team = source.includes("hawks") ? "Go Hawks! " : "";
     return {
       welcome: `${team}Ready to make some memories?`,
-      camera: "Bring the team energy.",
       save: "Take the win with you.",
       print: "Take home your game-day keepsake.",
       thanks: "Thank you! See you again!",
@@ -19333,7 +19328,6 @@ function getBoothPersonality() {
   }
   return {
     welcome: "Ready to make some memories?",
-    camera: "Get everyone in the frame!",
     save: "Take them with you.",
     print: "Take home your keepsake.",
     thanks: "Thank you! Enjoy your photos!",
@@ -19345,10 +19339,6 @@ function syncBoothPersonality() {
   if (DOM.welcomeHostLine) DOM.welcomeHostLine.textContent = personality.welcome;
   if (DOM.boothHostPrompt) {
     DOM.boothHostPrompt.innerHTML = "";
-    DOM.boothHostPrompt.appendChild(document.createTextNode(personality.camera));
-    const helper = document.createElement("span");
-    helper.textContent = "Smile when the booth says so.";
-    DOM.boothHostPrompt.appendChild(helper);
   }
   if (DOM.qrCodeContainer) {
     const heading = DOM.qrCodeContainer.querySelector("h2");

@@ -18,7 +18,7 @@ function getPrimaryLandmarks(faceResult) {
 
 function buildFaceMask(landmarks, width, height) {
   if (!landmarks || !width || !height) {
-    return { x: 0, y: 0, width, height, feather: 0.18 };
+    return centeredMask(width, height, 0.5, 0.46, 0.56, 0.68);
   }
   const bounds = getLandmarkBounds(landmarks, width, height);
   return expandBounds(bounds, width, height, 0.12, 0.16);
