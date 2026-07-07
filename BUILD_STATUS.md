@@ -1,5 +1,5 @@
 Current goal
-- Fix the share screen tap-to-exit behavior and lower the Love It review panel.
+- Improve under-eye beauty correction so shadows lift naturally without a flat rectangular patch.
 
 What is done
 - Kept the prior QR/countdown fix in the worktree.
@@ -44,6 +44,14 @@ What is done
 - Lowered the final review/action column so the Love It panel is not pinned too high.
 - Added browser coverage that clicks the final photo and verifies the share screen closes.
 - Verified `node --input-type=module --check < scripts/app.js`, `npm test`, and `npm run test:browser -- --grep "processed live preview canvas"` pass.
+- Reworked blemish correction to detect red, dark, and saturated local skin spots and blend them toward a local softened sample.
+- Moved blemish correction before skin smoothing so smoothing does not hide the spot contrast needed for detection.
+- Added regression coverage for the blemish healing algorithm and beauty-pass order.
+- Added a browser pixel test proving blemish correction moves a dark red spot closer to the surrounding skin color.
+- Verified `node --check scripts/beauty/*.mjs`, `node --input-type=module --check < scripts/app.js`, `npm test`, and `npm run test:browser -- --grep "blemish correction heals"` pass.
+- Reworked under-eye correction to use a feathered elliptical mask, local softened skin sampling, shadow lift, and blue/purple cast neutralization.
+- Added Node contract coverage and a browser pixel test proving under-eye correction brightens a cool shadow while reducing blue cast.
+- Verified `node --check scripts/beauty/*.mjs`, `node --input-type=module --check < scripts/app.js`, `npm test`, and `npm run test:browser -- --grep "under-eye correction lifts"` pass.
 
 What is in progress
 - Nothing active.

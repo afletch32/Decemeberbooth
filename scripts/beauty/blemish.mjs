@@ -8,18 +8,54 @@ export function applyBlemishCorrection(canvas, mask, amount = 0) {
   const region = normalizeRegion(mask, canvas.width, canvas.height);
   if (!region) return canvas;
 
+  const softened = document.createElement("canvas");
+  softened.width = canvas.width;
+  softened.height = canvas.height;
+  const softenedCtx = softened.getContext("2d");
+  if (!softenedCtx) return canvas;
+
+  softenedCtx.filter = `blur(${2 + strength * 5}px)`;
+  softenedCtx.drawImage(canvas, 0, 0);
+  softenedCtx.filter = "none";
+
   const imageData = ctx.getImageData(region.x, region.y, region.width, region.height);
+  const softenedData = softenedCtx.getImageData(
+    region.x,
+    region.y,
+    region.width,
+    region.height
+  ).data;
   const data = imageData.data;
   for (let index = 0; index < data.length; index += 4) {
     const red = data[index];
     const green = data[index + 1];
     const blue = data[index + 2];
-    const warmSpot = red - Math.max(green, blue);
-    if (warmSpot <= 8) continue;
-    const correction = Math.min(warmSpot, 26) * strength * 0.45;
-    data[index] = clamp(red - correction, 0, 255);
-    data[index + 1] = clamp(green + correction * 0.18, 0, 255);
-    data[index + 2] = clamp(blue + correction * 0.14, 0, 255);
+    const sampleRed = softenedData[index];
+    const sampleGreen = softenedData[index + 1];
+    const sampleBlue = softenedData[index + 2];
+    const luminance = getLuminance(red, green, blue);
+    const sampleLuminance = getLuminance(sampleRed, sampleGreen, sampleBlue);
+    const localDifference =
+      Math.abs(red - sampleRed) +
+      Math.abs(green - sampleGreen) +
+      Math.abs(blue - sampleBlue);
+    const redExcess = red - (green + blue) / 2;
+    const darkSpot = sampleLuminance - luminance;
+    const saturation = getSaturation(red, green, blue);
+    const skinLike = isSkinLikePixel(red, green, blue, luminance, saturation);
+    const spotScore = Math.max(
+      redExcess * 1.2,
+      darkSpot * 1.4,
+      saturation * localDifference * 0.55
+    );
+
+    if (!skinLike || localDifference < 10 || spotScore < 8) continue;
+
+    const blend = clamp((spotScore / 32) * strength * 1.15, 0, 0.72);
+    const redTarget = sampleRed - Math.max(0, redExcess) * 0.18;
+    data[index] = clamp(lerp(red, redTarget, blend), 0, 255);
+    data[index + 1] = clamp(lerp(green, sampleGreen, blend), 0, 255);
+    data[index + 2] = clamp(lerp(blue, sampleBlue, blend), 0, 255);
   }
   ctx.putImageData(imageData, region.x, region.y);
 
@@ -38,4 +74,25 @@ function normalizeRegion(mask, width, height) {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, Number(value) || 0));
+}
+
+function getLuminance(red, green, blue) {
+  return red * 0.299 + green * 0.587 + blue * 0.114;
+}
+
+function getSaturation(red, green, blue) {
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+  return max <= 0 ? 0 : (max - min) / max;
+}
+
+function isSkinLikePixel(red, green, blue, luminance, saturation) {
+  if (luminance < 28 || luminance > 245 || saturation > 0.72) return false;
+  if (red < blue * 0.72) return false;
+  if (green < blue * 0.55) return false;
+  return red >= green * 0.55;
+}
+
+function lerp(start, end, amount) {
+  return start + (end - start) * amount;
 }

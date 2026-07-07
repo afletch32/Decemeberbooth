@@ -41,8 +41,8 @@ export async function applyBeautyFrame({ canvas, video, settings } = {}) {
 
   const masks = buildBeautyMasks(faceResult, canvas.width, canvas.height);
   applyLightingCorrection(canvas, preset.lighting);
-  applySmoothing(canvas, masks.face, preset.beauty.skinSmooth);
   applyBlemishCorrection(canvas, masks.face, preset.beauty.blemish);
+  applySmoothing(canvas, masks.face, preset.beauty.skinSmooth);
   applyUndereyeCorrection(canvas, masks.underEyes, preset.beauty.underEye);
   applyTeethWhitening(canvas, masks, preset.beauty.teeth);
   applyToneCorrection(canvas, masks.face, {

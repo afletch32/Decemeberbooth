@@ -220,6 +220,81 @@ test("overlay builder emits reusable text metadata when autofill fields are sele
   await expect(manifestEntry).toContainText("\"event_date\"");
 });
 
+test("blemish correction heals local skin spots", async ({ page }) => {
+  await gotoApp(page, "/index.html?testMode=booth");
+
+  const result = await page.evaluate(async () => {
+    const { applyBlemishCorrection } = await import("./scripts/beauty/blemish.mjs");
+    const canvas = document.createElement("canvas");
+    canvas.width = 48;
+    canvas.height = 48;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "rgb(178, 124, 98)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgb(130, 42, 38)";
+    ctx.beginPath();
+    ctx.arc(24, 24, 4, 0, Math.PI * 2);
+    ctx.fill();
+    const before = Array.from(ctx.getImageData(24, 24, 1, 1).data);
+    applyBlemishCorrection(canvas, { x: 0, y: 0, width: 48, height: 48 }, 100);
+    const after = Array.from(ctx.getImageData(24, 24, 1, 1).data);
+    const skin = [178, 124, 98];
+    const distance = (pixel) =>
+      Math.abs(pixel[0] - skin[0]) +
+      Math.abs(pixel[1] - skin[1]) +
+      Math.abs(pixel[2] - skin[2]);
+    return {
+      before,
+      after,
+      beforeDistance: distance(before),
+      afterDistance: distance(after),
+    };
+  });
+
+  expect(result.afterDistance).toBeLessThan(result.beforeDistance);
+  expect(result.after[0]).toBeGreaterThan(result.before[0]);
+  expect(result.after[1]).toBeGreaterThan(result.before[1]);
+});
+
+test("under-eye correction lifts and neutralizes cool shadows", async ({ page }) => {
+  await gotoApp(page, "/index.html?testMode=booth");
+
+  const result = await page.evaluate(async () => {
+    const { applyUndereyeCorrection } = await import("./scripts/beauty/undereye.mjs");
+    const canvas = document.createElement("canvas");
+    canvas.width = 80;
+    canvas.height = 48;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "rgb(180, 128, 102)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgb(94, 66, 92)";
+    ctx.beginPath();
+    ctx.ellipse(40, 22, 24, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const before = Array.from(ctx.getImageData(40, 22, 1, 1).data);
+    applyUndereyeCorrection(
+      canvas,
+      { x: 10, y: 8, width: 60, height: 28, feather: 0.32 },
+      100
+    );
+    const after = Array.from(ctx.getImageData(40, 22, 1, 1).data);
+    const luminance = (pixel) => pixel[0] * 0.299 + pixel[1] * 0.587 + pixel[2] * 0.114;
+    const coolCast = (pixel) => pixel[2] - pixel[1];
+    return {
+      before,
+      after,
+      beforeLuminance: luminance(before),
+      afterLuminance: luminance(after),
+      beforeCoolCast: coolCast(before),
+      afterCoolCast: coolCast(after),
+    };
+  });
+
+  expect(result.afterLuminance).toBeGreaterThan(result.beforeLuminance);
+  expect(result.afterCoolCast).toBeLessThan(result.beforeCoolCast);
+  expect(result.after[1]).toBeGreaterThan(result.before[1]);
+});
+
 test("booth test camera displays and captures the processed live preview canvas", async ({
   page,
 }) => {

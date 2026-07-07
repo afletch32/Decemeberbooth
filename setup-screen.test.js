@@ -1013,6 +1013,41 @@ test("beauty presets use the configured preset contract", () => {
   );
 });
 
+test("blemish correction uses local healing before skin smoothing", () => {
+  const blemish = readProjectFile("scripts", "beauty", "blemish.mjs");
+  const engine = readProjectFile("scripts", "beauty", "engine.mjs");
+
+  assert.ok(
+    blemish.includes("const softened = document.createElement(\"canvas\")") &&
+      blemish.includes("softenedCtx.filter = `blur(") &&
+      blemish.includes("const redExcess = red - (green + blue) / 2") &&
+      blemish.includes("const darkSpot = sampleLuminance - luminance") &&
+      blemish.includes("isSkinLikePixel(red, green, blue, luminance, saturation)") &&
+      blemish.includes("lerp(red, redTarget, blend)"),
+    "blemish correction should heal detected skin spots toward a local softened sample"
+  );
+
+  assert.ok(
+    engine.indexOf("applyBlemishCorrection(canvas, masks.face, preset.beauty.blemish)") <
+      engine.indexOf("applySmoothing(canvas, masks.face, preset.beauty.skinSmooth)"),
+    "blemish detection should run before smoothing hides local spot contrast"
+  );
+});
+
+test("under-eye correction uses feathered shadow and cool-cast correction", () => {
+  const undereye = readProjectFile("scripts", "beauty", "undereye.mjs");
+
+  assert.ok(
+    undereye.includes("const softened = document.createElement(\"canvas\")") &&
+      undereye.includes("function getMaskWeight(") &&
+      undereye.includes("const localShadow = clamp(") &&
+      undereye.includes("const bluePurple = clamp(") &&
+      undereye.includes("const neutralize = bluePurple * correction * 20") &&
+      undereye.includes("lerp(blue, sampleBlue, blend) + lift * 0.62 - neutralize"),
+    "under-eye correction should use feathered local shadow lifting and cool-cast neutralization"
+  );
+});
+
 test("booth test mode provides deterministic camera, upload, and layout audit helpers", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
