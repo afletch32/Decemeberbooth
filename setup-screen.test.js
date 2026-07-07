@@ -1007,7 +1007,7 @@ test("beauty presets use the configured preset contract", () => {
       presets.includes('name: "Natural"') &&
       presets.includes("guestVisible: true") &&
       presets.includes("default: true") &&
-      presets.includes("skinSmooth: 15") &&
+      presets.includes("skinSmooth: 0") &&
       presets.includes("underEye: 12") &&
       presets.includes("exposure: 0") &&
       presets.includes("highlights: -10") &&
@@ -1036,6 +1036,26 @@ test("beauty presets use the configured preset contract", () => {
       opencv.includes("export function dispose") &&
       opencv.includes("export async function inpaint"),
     "OpenCV helpers should be modular optional utilities for future imaging work"
+  );
+});
+
+test("auto enhancement and presets avoid full-face blur", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const presets = readProjectFile("scripts", "beauty", "presets.mjs");
+
+  assert.ok(
+    !appScript.includes("smoothingBlend") &&
+      !appScript.includes('CanvasBuffer.get("beauty-pass"') &&
+      !appScript.includes('softenedCtx.filter = "blur(1.8px) brightness(1.02)"'),
+    "auto enhancement should not apply a full-canvas blur composite"
+  );
+  assert.ok(
+    !presets.includes("skinSmooth: 15") &&
+      !presets.includes("skinSmooth: 16") &&
+      !presets.includes("skinSmooth: 20") &&
+      !presets.includes("skinSmooth: 24") &&
+      !presets.includes("skinSmooth: 36"),
+    "guest-visible presets should not enable broad face smoothing by default"
   );
 });
 

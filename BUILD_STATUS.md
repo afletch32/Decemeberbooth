@@ -1,5 +1,5 @@
 Current goal
-- Remove extra guest-facing helper copy from live preview and review screens.
+- Stop beauty and auto-enhance from blurring the full face.
 
 What is done
 - Kept the prior QR/countdown fix in the worktree.
@@ -65,6 +65,9 @@ What is done
 - Verified `node --input-type=module --check < scripts/app.js` and `node --test setup-screen.test.js` pass after removing the prompt text.
 - Removed the Love It review box helper sentence so the card only asks the guest to love it or retake.
 - Verified `node --test setup-screen.test.js` passes after removing the Love It helper sentence.
+- Disabled guest-visible preset skin smoothing by default so blemish, under-eye, tone, teeth, and lighting can run without whole-face blur.
+- Removed the auto-enhance full-canvas blur/screen composite that softened the entire processed frame.
+- Verified `node --input-type=module --check < scripts/app.js`, `node --check scripts/beauty/presets.mjs`, `node --test setup-screen.test.js`, and `npm run test:browser -- --grep "processed live preview canvas|skin smoothing preserves"` pass.
 
 What is in progress
 - Nothing active.

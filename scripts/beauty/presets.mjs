@@ -7,7 +7,7 @@ export const BEAUTY_PRESETS = [
     icon: "✨",
     css: "brightness(1.03)",
     beauty: {
-      skinSmooth: 15,
+      skinSmooth: 0,
       blemish: 20,
       teeth: 10,
       underEye: 12,
@@ -32,7 +32,7 @@ export const BEAUTY_PRESETS = [
     icon: "🌸",
     css: "brightness(1.04) contrast(0.96) saturate(1.02)",
     beauty: {
-      skinSmooth: 36,
+      skinSmooth: 0,
       blemish: 24,
       teeth: 12,
       underEye: 20,
@@ -57,7 +57,7 @@ export const BEAUTY_PRESETS = [
     icon: "☀️",
     css: "brightness(1.2) contrast(1.04) saturate(1.06)",
     beauty: {
-      skinSmooth: 20,
+      skinSmooth: 0,
       blemish: 16,
       teeth: 28,
       underEye: 22,
@@ -82,7 +82,7 @@ export const BEAUTY_PRESETS = [
     icon: "🔳",
     css: "brightness(0.96) contrast(1.08) saturate(1.08)",
     beauty: {
-      skinSmooth: 16,
+      skinSmooth: 0,
       blemish: 18,
       teeth: 8,
       underEye: 12,
@@ -107,7 +107,7 @@ export const BEAUTY_PRESETS = [
     icon: "🖤",
     css: "grayscale(1) contrast(1.06)",
     beauty: {
-      skinSmooth: 24,
+      skinSmooth: 0,
       blemish: 14,
       teeth: 0,
       underEye: 10,

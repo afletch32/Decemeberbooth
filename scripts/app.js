@@ -1517,7 +1517,6 @@ const ENHANCEMENT_MODE_CONFIG = {
     highlightRollOff: 8,
     warmthRedBoost: 2,
     warmthBlueCut: 1,
-    smoothingBlend: 0.12,
   },
   "bridal-glow": {
     baseFilter: "brightness(1.06) contrast(1.08) saturate(1.07)",
@@ -1525,7 +1524,6 @@ const ENHANCEMENT_MODE_CONFIG = {
     highlightRollOff: 14,
     warmthRedBoost: 4,
     warmthBlueCut: 3,
-    smoothingBlend: 0.22,
   },
   "harsh-light-fix": {
     baseFilter: "brightness(1.04) contrast(1.02) saturate(1.03)",
@@ -1533,7 +1531,6 @@ const ENHANCEMENT_MODE_CONFIG = {
     highlightRollOff: 24,
     warmthRedBoost: 2,
     warmthBlueCut: 2,
-    smoothingBlend: 0.18,
   },
 };
 
@@ -10103,7 +10100,6 @@ function applyBeautyLightingPass(ctx, width, height, enhancement) {
       highlightRollOff,
       warmthRedBoost,
       warmthBlueCut,
-      smoothingBlend,
     } = enhancement || ENHANCEMENT_MODE_CONFIG[ENHANCEMENT_MODE_DEFAULT];
 
     for (let index = 0; index < data.length; index += 4) {
@@ -10132,20 +10128,6 @@ function applyBeautyLightingPass(ctx, width, height, enhancement) {
     }
 
     ctx.putImageData(imageData, 0, 0);
-
-    const softened = CanvasBuffer.get("beauty-pass", width, height);
-    const softenedCtx = softened.getContext("2d");
-    if (!softenedCtx) return;
-
-    softenedCtx.filter = "blur(1.8px) brightness(1.02)";
-    softenedCtx.drawImage(ctx.canvas, 0, 0);
-    softenedCtx.filter = "none";
-
-    ctx.save();
-    ctx.globalCompositeOperation = "screen";
-    ctx.globalAlpha = smoothingBlend;
-    ctx.drawImage(softened, 0, 0);
-    ctx.restore();
   } catch (error) {
     console.warn("Auto enhance pass failed", error);
   }
