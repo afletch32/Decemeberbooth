@@ -69,6 +69,13 @@ test("final strip rendering uses manifest photo slots before legacy strip geomet
     "slot debugging should log raw slots, normalized slots, and draw coordinates"
   );
   assert.ok(
+    appJs.includes("normalizeTemplateSlots(template && template.slots, cols)") &&
+      appJs.includes("detectTransparentColumnSlots(overlayImage, rows, cols)") &&
+      appJs.includes("slot.x * scaleX") &&
+      appJs.includes("slot.y * scaleY"),
+    "double-column strip rendering should honor template slot coordinates before falling back to standard geometry"
+  );
+  assert.ok(
     appJs.includes("photoSlots: it.photoSlots") &&
       appJs.includes("background: it.background") &&
       appJs.includes("foreground: it.foreground"),

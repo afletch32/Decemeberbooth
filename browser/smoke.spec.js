@@ -298,6 +298,7 @@ test("under-eye correction lifts and neutralizes cool shadows", async ({ page })
 test("booth test camera displays and captures the processed live preview canvas", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 2048, height: 1280 });
   await gotoApp(page, "/index.html?testMode=booth");
   await page.waitForFunction(() => !!window.__photoboothTest);
   await page.locator("#startBoothButton").click({ force: true });
@@ -395,6 +396,36 @@ test("booth test camera displays and captures the processed live preview canvas"
   expect(trace.surfaces.qr).toBe(trace.remoteFinalUrl);
   expect(trace.surfaces.print).toBe(trace.remoteFinalUrl);
   expect(trace.surfaces.download).toBe(trace.remoteFinalUrl);
+
+  const shareBounds = await page.evaluate(() => {
+    const qr = document.querySelector("#qrCodeContainer");
+    const actions = document.querySelector("#finalPreviewActions");
+    const preview = document.querySelector("#finalPreview");
+    const qrRect = qr.getBoundingClientRect();
+    const actionsRect = actions.getBoundingClientRect();
+    const previewRect = preview.getBoundingClientRect();
+    return {
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+      qrLeft: qrRect.left,
+      qrRight: qrRect.right,
+      actionsLeft: actionsRect.left,
+      actionsRight: actionsRect.right,
+      previewLeft: previewRect.left,
+      previewRight: previewRect.right,
+    };
+  });
+  expect(shareBounds.documentWidth).toBeLessThanOrEqual(
+    shareBounds.viewportWidth
+  );
+  expect(shareBounds.qrLeft).toBeGreaterThanOrEqual(shareBounds.previewLeft);
+  expect(shareBounds.qrRight).toBeLessThanOrEqual(shareBounds.previewRight);
+  expect(shareBounds.actionsLeft).toBeGreaterThanOrEqual(
+    shareBounds.previewLeft
+  );
+  expect(shareBounds.actionsRight).toBeLessThanOrEqual(
+    shareBounds.previewRight
+  );
 
   await page.locator("#finalStrip").click({ force: true });
   await expect(page.locator("#finalPreview")).not.toHaveClass(/show/);
@@ -1556,6 +1587,78 @@ test("single photo exports use true 4x6 print dimensions", async ({ page }) => {
 
   expect(sizes.landscape).toEqual({ width: 1800, height: 1200 });
   expect(sizes.portrait).toEqual({ width: 1200, height: 1800 });
+});
+
+test("double-column strips honor template slot coordinates", async ({ page }) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  const samples = await page.evaluate(async () => {
+    const makePhoto = (color) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 320;
+      canvas.height = 240;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      return canvas;
+    };
+    const templateSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1800">
+        <rect width="1200" height="1800" fill="white"/>
+        <rect x="110" y="300" width="360" height="180" fill="none" stroke="#8a3ffc" stroke-width="8"/>
+        <rect x="110" y="690" width="360" height="180" fill="none" stroke="#8a3ffc" stroke-width="8"/>
+        <rect x="110" y="1080" width="360" height="180" fill="none" stroke="#8a3ffc" stroke-width="8"/>
+        <rect x="730" y="300" width="360" height="180" fill="none" stroke="#8a3ffc" stroke-width="8"/>
+        <rect x="730" y="690" width="360" height="180" fill="none" stroke="#8a3ffc" stroke-width="8"/>
+        <rect x="730" y="1080" width="360" height="180" fill="none" stroke="#8a3ffc" stroke-width="8"/>
+      </svg>
+    `;
+    const template = {
+      src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(templateSvg)}`,
+      layout: "double_column",
+      slots: [
+        { x: 110, y: 300, w: 360, h: 180 },
+        { x: 110, y: 690, w: 360, h: 180 },
+        { x: 110, y: 1080, w: 360, h: 180 },
+        { x: 730, y: 300, w: 360, h: 180 },
+        { x: 730, y: 690, w: 360, h: 180 },
+        { x: 730, y: 1080, w: 360, h: 180 },
+      ],
+    };
+    const url = await window.__photoboothTest.composeStrip(template, [
+      makePhoto("rgb(250, 20, 20)"),
+      makePhoto("rgb(20, 230, 20)"),
+      makePhoto("rgb(20, 20, 245)"),
+    ]);
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = url;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(image, 0, 0);
+    const read = (x, y) => Array.from(ctx.getImageData(x, y, 1, 1).data);
+    return {
+      leftTop: read(290, 390),
+      leftMiddle: read(290, 780),
+      leftBottom: read(290, 1170),
+      rightTop: read(910, 390),
+      rightMiddle: read(910, 780),
+      rightBottom: read(910, 1170),
+    };
+  });
+
+  expect(samples.leftTop[0]).toBeGreaterThan(200);
+  expect(samples.rightTop[0]).toBeGreaterThan(200);
+  expect(samples.leftMiddle[1]).toBeGreaterThan(180);
+  expect(samples.rightMiddle[1]).toBeGreaterThan(180);
+  expect(samples.leftBottom[2]).toBeGreaterThan(180);
+  expect(samples.rightBottom[2]).toBeGreaterThan(180);
 });
 
 test("frame picker stays hidden until the welcome flow reaches capture", async ({

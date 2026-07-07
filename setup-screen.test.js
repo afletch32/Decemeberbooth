@@ -865,6 +865,7 @@ test("final share QR is only marked ready after rendering succeeds", () => {
 
 test("final share panel appears after review while QR is pending or failed", () => {
   const appScript = readProjectFile("scripts", "app.js");
+  const html = readProjectFile("index.html");
 
   assert.ok(
     appScript.includes('DOM.qrCodeContainer.dataset.pending === "true"') &&
@@ -878,6 +879,12 @@ test("final share panel appears after review while QR is pending or failed", () 
     appScript.includes("if (skipShare && !isBoothTestMode())") &&
       appScript.includes("hidePreviewTimer = setTimeout(hideFinal, 15000);"),
     "shareable guest captures should not auto-close before guests can scan the QR"
+  );
+  assert.ok(
+    html.includes("grid-template-columns: minmax(0, 1fr) minmax(300px, clamp(320px, 24vw, 360px));") &&
+      html.includes("max-width: 100%;") &&
+      html.includes("max-height: calc(100svh - clamp(120px, 12vw, 180px));"),
+    "final media should shrink inside the share grid so the QR panel remains in the viewport"
   );
 });
 

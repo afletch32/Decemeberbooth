@@ -11508,6 +11508,33 @@ function renderDoubleColumn(canvas, photos, overlayImage, template, rows = 3) {
   const cols = 2; // duplicate columns
   drawImageContain(ctx, overlayImage, 0, 0, canvas.width, canvas.height);
 
+  const templateSlots =
+    normalizeTemplateSlots(template && template.slots, cols) ||
+    detectTransparentColumnSlots(overlayImage, rows, cols);
+  if (templateSlots && templateSlots.every((group) => group.length >= rows)) {
+    const scaleX =
+      canvas.width / (overlayImage.naturalWidth || overlayImage.width || 1);
+    const scaleY =
+      canvas.height / (overlayImage.naturalHeight || overlayImage.height || 1);
+    for (let row = 0; row < rows; row++) {
+      const photo = photos[row];
+      if (!photo) continue;
+      for (let col = 0; col < cols; col++) {
+        const slot = templateSlots[col] && templateSlots[col][row];
+        if (!slot) continue;
+        drawImageCover(
+          ctx,
+          photo,
+          slot.x * scaleX,
+          slot.y * scaleY,
+          slot.w * scaleX,
+          slot.h * scaleY
+        );
+      }
+    }
+    return;
+  }
+
   const headerPct = Math.max(
     0,
     Math.min(

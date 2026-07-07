@@ -4278,7 +4278,7 @@
     #finalPreviewContent {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 420px);
+      grid-template-columns: minmax(0, 1fr) minmax(300px, clamp(320px, 24vw, 360px));
       align-items: center;
       justify-items: center;
       gap: clamp(18px, 2vw, 30px);
@@ -4313,6 +4313,12 @@
       grid-row: 1 / span 2;
       justify-self: center;
       align-self: center;
+      min-width: 0;
+      max-width: 100%;
+      max-height: calc(100svh - clamp(120px, 12vw, 180px));
+      width: auto;
+      height: auto;
+      box-sizing: border-box;
       border: 10px solid rgba(255, 255, 255, 0.96);
       border-radius: 28px;
       box-shadow: 0 22px 50px rgba(110, 132, 150, 0.2);
@@ -4323,6 +4329,12 @@
       grid-row: 1 / span 2;
       justify-self: center;
       align-self: center;
+      min-width: 0;
+      max-width: 100%;
+      max-height: calc(100svh - clamp(120px, 12vw, 180px));
+      width: auto;
+      height: auto;
+      box-sizing: border-box;
       border: 10px solid rgba(255, 255, 255, 0.96);
       border-radius: 28px;
       box-shadow: 0 22px 50px rgba(110, 132, 150, 0.2);
@@ -4335,14 +4347,14 @@
       grid-template-rows: minmax(0, 1fr) auto;
       grid-column: 2;
       grid-row: 1;
-      width: min(100%, 420px);
+      width: min(100%, 360px);
       min-width: 0;
       min-height: 0;
       max-height: min(86svh, 760px);
       gap: 12px;
       align-self: center;
       justify-self: stretch;
-      transform: translateY(clamp(24px, 5svh, 64px));
+      transform: translate(clamp(-96px, -4vw, -32px), clamp(24px, 5svh, 64px));
       overflow: visible;
     }
 

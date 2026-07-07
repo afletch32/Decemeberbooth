@@ -1,5 +1,5 @@
 Current goal
-- Improve under-eye beauty correction so shadows lift naturally without a flat rectangular patch.
+- Fix final share layout overflow and double-column strip photo placement.
 
 What is done
 - Kept the prior QR/countdown fix in the worktree.
@@ -52,6 +52,10 @@ What is done
 - Reworked under-eye correction to use a feathered elliptical mask, local softened skin sampling, shadow lift, and blue/purple cast neutralization.
 - Added Node contract coverage and a browser pixel test proving under-eye correction brightens a cool shadow while reducing blue cast.
 - Verified `node --check scripts/beauty/*.mjs`, `node --input-type=module --check < scripts/app.js`, `npm test`, and `npm run test:browser -- --grep "under-eye correction lifts"` pass.
+- Constrained final preview media inside its share grid cell so the QR/action panel stays within the viewport.
+- Changed double-column strip rendering to use saved template slots or detected transparent slots before falling back to standard geometry.
+- Added browser coverage for desktop share-screen bounds and custom double-column strip slot placement.
+- Verified `node --input-type=module --check < scripts/app.js`, `npm test`, and `npm run test:browser -- --grep "processed live preview canvas|double-column strips honor"` pass.
 
 What is in progress
 - Nothing active.
