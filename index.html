@@ -2964,6 +2964,7 @@
     }
 
     #video,
+    #livePreviewCanvas,
     #lastShot {
       width: 100%;
       height: 100%;
@@ -2982,6 +2983,14 @@
     }
 
     #video.active { opacity: 1; }
+
+    #livePreviewCanvas {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: transparent;
+    }
 
     #lastShot,
     #liveOverlay {
@@ -6770,6 +6779,7 @@
           <div id="overlayBackground" aria-hidden="true"></div>
           <div id="photoSlotLayer" aria-hidden="true"></div>
           <video id="video" class="hidden" autoplay playsinline muted></video>
+          <canvas id="livePreviewCanvas" aria-hidden="true"></canvas>
           <img id="lastShot" />
           <img id="liveOverlay" />
           <div id="recordingOverlay">

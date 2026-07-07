@@ -26,6 +26,7 @@ import {
 } from "./template-text-utils.mjs";
 import { formatRecordingTime } from "./recording-utils.mjs";
 import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
+import { getGuestVisibleBeautyPresets } from "./beauty/presets.mjs";
 
 function isLocalDevHost() {
   const hostname = window.location.hostname || "";
@@ -48,6 +49,13 @@ const APP_CONFIG = {
     ASSET_LIBRARY: "photoboothAssetLibrary",
   },
 };
+
+const RESERVED_PHOTO_MARKER = {
+  color: "#ff00ff",
+  tolerance: 12,
+  minAreaRatio: 0.001,
+};
+const reservedPhotoMarkerCache = new Map();
 
 // --- USB Relay Automation (Web Serial) ---
 let relayPort = null;
@@ -650,6 +658,7 @@ const DOM = {
   overlayBackground: document.getElementById("overlayBackground"),
   photoSlotLayer: document.getElementById("photoSlotLayer"),
   video: document.getElementById("video"),
+  livePreviewCanvas: document.getElementById("livePreviewCanvas"),
   liveOverlay: document.getElementById("liveOverlay"),
   silhouette: document.getElementById("silhouette"),
   recordingOverlay: document.getElementById("recordingOverlay"),
@@ -1455,10 +1464,16 @@ let hidePreviewTimer = null;
 let allowRetake = true;
 let isStartingCamera = false;
 let capturePreviewFrozen = false;
+let liveImagingLoopStarted = false;
+let liveImagingFramePending = false;
+let livePreviewStream = null;
+let latestProcessedFrameCanvas = null;
+let beautyEngineModulePromise = null;
 let lastCaptureFlow = null; // To store the function for retake
 let removedStack = []; // For undo of removed assets in session
 let toastTimer = null;
 let lastShareUrl = null; // Public Cloudinary share URL; service-worker share cache is offline fallback only.
+let lastOutputSurfaceTrace = null;
 let demoMode = false; // Allows running from file:// without camera
 let showcaseDemoActive = false;
 let showcaseDemoCurrentKey = "";
@@ -1522,13 +1537,7 @@ const ENHANCEMENT_MODE_CONFIG = {
   },
 };
 
-const FILTER_EFFECTS = [
-  { id: "natural", name: "Natural", icon: "✨", css: "brightness(1.03)" },
-  { id: "soft", name: "Soft", icon: "🌸", css: "brightness(1.04) contrast(0.96) saturate(1.02)" },
-  { id: "bright", name: "Bright", icon: "☀️", css: "brightness(1.2) contrast(1.04) saturate(1.06)" },
-  { id: "clean", name: "Clean", icon: "🔳", css: "brightness(0.96) contrast(1.08) saturate(1.08)" },
-  { id: "bw", name: "B&W", icon: "🖤", css: "grayscale(1) contrast(1.06)" },
-];
+const FILTER_EFFECTS = getGuestVisibleBeautyPresets();
 
 function getAssetPickerFilename(src = "") {
   const value = String(src || "").split("?")[0].split("#")[0];
@@ -6503,8 +6512,8 @@ async function enqueueFinalPrintIfNeeded(imageUrl, printEligible = true) {
 // becomes transparent. Useful to design overlays with colored "holes" for photos.
 const SPOT_MASK = {
   enabled: true,
-  color: "#00ff00", // pure green by default
-  tolerance: 12, // 0-255 per channel
+  color: RESERVED_PHOTO_MARKER.color,
+  tolerance: RESERVED_PHOTO_MARKER.tolerance,
 };
 
 function populateThemeSelector(preferredKey, attempt = 0) {
@@ -8325,7 +8334,12 @@ function applyOverlayBackgroundLayer(overlay) {
 
 function applyOverlayForegroundLayer(overlay) {
   if (!DOM.liveOverlay) return;
-  const src = overlay ? resolveOverlayRenderSrc(activeTheme, overlay.src) : "";
+  const src =
+    overlay && overlay.foreground && overlay.foreground.type === "image"
+      ? overlay.foreground.src
+      : overlay
+      ? overlay.renderSrc || resolveOverlayRenderSrc(activeTheme, overlay.src)
+      : "";
   if (!src) {
     if (DOM.liveOverlay.src) DOM.liveOverlay.src = "";
     DOM.liveOverlay.style.display = "none";
@@ -8366,19 +8380,19 @@ function renderOverlayPhotoSlots(overlay, options = {}) {
     media.classList.toggle("is-live", isLive);
     media.style.objectFit = slot.objectFit || "cover";
     media.style.objectPosition = slot.objectPosition || "center";
-    if (isLive) {
+    const processedPreviewStream = isLive ? getLivePreviewStream() : null;
+    if (isLive && !processedPreviewStream) {
       media.style.setProperty("transform", "scaleX(-1)", "important");
       media.style.setProperty("-webkit-transform", "scaleX(-1)", "important");
     }
-    const filterDef = FILTER_EFFECTS.find((f) => f.id === selectedFilter);
-    media.style.filter = (filterDef && filterDef.css) || "";
     if (isLive) {
       media.autoplay = true;
       media.playsInline = true;
       media.muted = true;
-      if (stream) {
+      const previewStream = processedPreviewStream || stream;
+      if (previewStream) {
         try {
-          media.srcObject = stream;
+          media.srcObject = previewStream;
         } catch (_) {}
         if (typeof media.play === "function") {
           media.play().catch(() => {});
@@ -8405,9 +8419,26 @@ function syncOverlayPreviewSurface(options = {}) {
   }
   const overlay = options.overlay || getActivePhotoOverlay();
   const slotsEnabled = overlayUsesPhotoSlots(overlay);
+  if (!slotsEnabled && overlay) {
+    resolveOverlayReservedPhotoMarker(overlay).then((resolvedOverlay) => {
+      if (!resolvedOverlay || resolvedOverlay === overlay) return;
+      const activeOverlay = getActivePhotoOverlay();
+      if (
+        activeOverlay &&
+        overlay &&
+        getAssetEntrySrc(activeOverlay) === getAssetEntrySrc(overlay)
+      ) {
+        syncOverlayPreviewSurface({ ...options, overlay: resolvedOverlay });
+      }
+    });
+  }
   if (DOM.video) {
     DOM.video.classList.toggle("hidden", slotsEnabled);
-    DOM.video.style.display = slotsEnabled ? "none" : "";
+    DOM.video.style.display = "none";
+  }
+  if (DOM.livePreviewCanvas) {
+    DOM.livePreviewCanvas.classList.toggle("hidden", slotsEnabled);
+    DOM.livePreviewCanvas.style.display = slotsEnabled ? "none" : "block";
   }
   if (DOM.lastShot && !options.keepLastShot) {
     DOM.lastShot.style.display = "none";
@@ -8437,7 +8468,11 @@ function clearOverlayPreviewSurface() {
   }
   if (DOM.video) {
     DOM.video.classList.remove("hidden");
-    DOM.video.style.display = "";
+    DOM.video.style.display = "none";
+  }
+  if (DOM.livePreviewCanvas) {
+    DOM.livePreviewCanvas.classList.remove("hidden");
+    DOM.livePreviewCanvas.style.display = "block";
   }
 }
 
@@ -8574,6 +8609,18 @@ function prevFilter() {
   setFilter(FILTER_EFFECTS[prevIdx].id);
 }
 
+function getSelectedFilterDef() {
+  return (
+    FILTER_EFFECTS.find((filterDef) => filterDef.id === selectedFilter) ||
+    FILTER_EFFECTS[0]
+  );
+}
+
+function getSelectedFilterBeautySettings() {
+  const filterDef = getSelectedFilterDef();
+  return filterDef || { beauty: {}, lighting: {} };
+}
+
 function setPhotoOverlayOrientation(nextOrientation) {
   const next = normalizePhotoOverlayOrientation(nextOrientation);
   if (!next || next === photoOverlayOrientation) return;
@@ -8603,19 +8650,17 @@ function setPhotoOverlayOrientation(nextOrientation) {
 }
 
 function applyFilterToVideo() {
-  const filterDef = FILTER_EFFECTS.find((f) => f.id === selectedFilter);
-  const filterValue = (filterDef && filterDef.css) || "";
   if (DOM.video) {
-    DOM.video.style.filter = filterValue;
+    DOM.video.style.filter = "";
   }
-  if (DOM.lastShot) DOM.lastShot.style.filter = filterValue;
+  if (DOM.lastShot) DOM.lastShot.style.filter = "";
   document.querySelectorAll(".photo-slot-media").forEach((media) => {
-    media.style.filter = filterValue;
+    media.style.filter = "";
   });
 }
 
 function applyFilterToCanvas(ctx, width, height) {
-  const filterDef = FILTER_EFFECTS.find((f) => f.id === selectedFilter);
+  const filterDef = getSelectedFilterDef();
   if (!filterDef || !filterDef.css || !ctx) return;
   const imageData = ctx.getImageData(0, 0, width, height);
   const tempCanvas = document.createElement("canvas");
@@ -8639,6 +8684,189 @@ function applySelectedFilterToCanvas(canvas) {
     console.warn("Photo filter failed", error);
   }
   return canvas;
+}
+
+async function applySelectedBeautyToCanvas(canvas) {
+  if (!canvas) return canvas;
+  const settings = getSelectedFilterBeautySettings();
+  if (!settings || !settings.beauty) return canvas;
+  try {
+    if (!beautyEngineModulePromise) {
+      beautyEngineModulePromise = import("./beauty/engine.mjs");
+    }
+    const { applyBeautyFrame } = await beautyEngineModulePromise;
+    return await applyBeautyFrame({
+      canvas,
+      video: DOM.video,
+      settings,
+    });
+  } catch (error) {
+    console.warn("Beauty filter failed", error);
+    return canvas;
+  }
+}
+
+async function processCanvasThroughImagingPipeline(sourceCanvas) {
+  if (!sourceCanvas) return sourceCanvas;
+  let processed = applySelectedFilterToCanvas(sourceCanvas);
+  processed = await applySelectedBeautyToCanvas(processed);
+  processed = applyAutoEnhanceCanvas(processed);
+  if (getAiBackgroundEnabled()) {
+    const mask = await getAiSegmentationMask(processed);
+    if (mask) {
+      processed.__aiMask = mask;
+      processed = applyAiMaskToCanvas(processed, mask);
+      processed.__aiMask = mask;
+    }
+  } else if (getGreenScreenEnabled()) {
+    try {
+      const ctx = processed.getContext("2d");
+      if (ctx) removeGreen(ctx, processed.width, processed.height);
+    } catch (_) {}
+  }
+  return processed;
+}
+
+function drawProcessedFrameToLivePreview(processedCanvas) {
+  if (!processedCanvas || !DOM.livePreviewCanvas) return null;
+  const target = DOM.livePreviewCanvas;
+  if (
+    target.width !== processedCanvas.width ||
+    target.height !== processedCanvas.height
+  ) {
+    target.width = processedCanvas.width;
+    target.height = processedCanvas.height;
+  }
+  const ctx = target.getContext("2d");
+  if (!ctx) return null;
+  ctx.clearRect(0, 0, target.width, target.height);
+  ctx.drawImage(processedCanvas, 0, 0, target.width, target.height);
+  target.dataset.ready = "true";
+  target.__enhancedMode = processedCanvas.__enhancedMode;
+  target.__aiMask = processedCanvas.__aiMask;
+  target.__processedByLiveImagingPipeline = true;
+  latestProcessedFrameCanvas = target;
+  return target;
+}
+
+function cloneCanvas(source, bufferName = "processed-capture") {
+  if (!source || !source.width || !source.height) return null;
+  const canvas = CanvasBuffer.get(bufferName, source.width, source.height);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+  if (source.__aiMask) canvas.__aiMask = source.__aiMask;
+  if (source.__enhancedMode) canvas.__enhancedMode = source.__enhancedMode;
+  if (source.__processedByLiveImagingPipeline) {
+    canvas.__processedByLiveImagingPipeline = true;
+  }
+  return canvas;
+}
+
+async function getCurrentProcessedFrameCanvas() {
+  if (
+    latestProcessedFrameCanvas &&
+    latestProcessedFrameCanvas.dataset.ready === "true"
+  ) {
+    return cloneCanvas(latestProcessedFrameCanvas, "processed-capture");
+  }
+  const raw = drawToCanvasFromVideo();
+  return cloneCanvas(
+    await processCanvasThroughImagingPipeline(raw),
+    "processed-capture"
+  );
+}
+
+function getLivePreviewStream() {
+  if (!DOM.livePreviewCanvas || typeof DOM.livePreviewCanvas.captureStream !== "function") {
+    return null;
+  }
+  if (!livePreviewStream) {
+    try {
+      livePreviewStream = DOM.livePreviewCanvas.captureStream(30);
+    } catch (_) {
+      livePreviewStream = null;
+    }
+  }
+  return livePreviewStream;
+}
+
+function startLiveImagingPipeline() {
+  if (liveImagingLoopStarted) return;
+  liveImagingLoopStarted = true;
+  const renderFrame = async () => {
+    if (!capturePreviewFrozen && !liveImagingFramePending) {
+      liveImagingFramePending = true;
+      try {
+        const raw = drawToCanvasFromVideo();
+        const processed = await processCanvasThroughImagingPipeline(raw);
+        drawProcessedFrameToLivePreview(processed);
+      } catch (error) {
+        console.warn("Live imaging frame failed", error);
+      } finally {
+        liveImagingFramePending = false;
+      }
+    }
+    requestAnimationFrame(renderFrame);
+  };
+  requestAnimationFrame(renderFrame);
+}
+
+function createOutputSurfaceTrace(localFinalUrl = "", options = {}) {
+  return {
+    captureId: options.captureId || "",
+    localFinalUrl,
+    localFinalKind: localFinalUrl && localFinalUrl.startsWith("data:image/")
+      ? "processed-data-url"
+      : localFinalUrl
+        ? "url"
+        : "",
+    remoteFinalUrl: options.remoteFinalUrl || "",
+    surfaces: {
+      preview: localFinalUrl || "",
+      uploadPreview: options.uploadPreviewUrl || "",
+      qr: "",
+      print: "",
+      emailPhoto: "",
+      emailImageData: "",
+      galleryRemote: options.galleryRemoteUrl || "",
+      galleryLocal: "",
+      download: "",
+    },
+  };
+}
+
+function ensureOutputSurfaceTrace(localFinalUrl = "") {
+  if (!lastOutputSurfaceTrace) {
+    lastOutputSurfaceTrace = createOutputSurfaceTrace(localFinalUrl);
+  }
+  if (localFinalUrl && !lastOutputSurfaceTrace.localFinalUrl) {
+    lastOutputSurfaceTrace.localFinalUrl = localFinalUrl;
+  }
+  return lastOutputSurfaceTrace;
+}
+
+function updateOutputSurfaceTrace(updates = {}) {
+  const trace = ensureOutputSurfaceTrace(updates.localFinalUrl || "");
+  if (typeof updates.captureId === "string") trace.captureId = updates.captureId;
+  if (typeof updates.remoteFinalUrl === "string") {
+    trace.remoteFinalUrl = updates.remoteFinalUrl;
+  }
+  if (updates.surfaces && typeof updates.surfaces === "object") {
+    Object.assign(trace.surfaces, updates.surfaces);
+  }
+  return trace;
+}
+
+function getShareOutputUrl() {
+  return lastShareUrl || (DOM.finalStrip && DOM.finalStrip.src) || "";
+}
+
+function getOutputSurfaceTraceSnapshot() {
+  return lastOutputSurfaceTrace
+    ? JSON.parse(JSON.stringify(lastOutputSurfaceTrace))
+    : null;
 }
 
 function appendAssetPickerShowMore(grid, modeKey, total, visibleCount) {
@@ -9166,10 +9394,12 @@ function hideWelcome() {
   if (DOM.video) {
     DOM.video.classList.remove("hidden");
     DOM.video.classList.add("active");
+    DOM.video.style.display = "none";
     if (DOM.video.srcObject && typeof DOM.video.play === "function") {
       DOM.video.play().catch(() => {});
     }
   }
+  startLiveImagingPipeline();
   if (!stream && !demoMode && currentMode !== "360") {
     startCamera(false);
   }
@@ -9238,10 +9468,12 @@ function setBoothTestCameraStream() {
     DOM.video.srcObject = testStream;
     DOM.video.style.transform = "";
     DOM.video.classList.remove("hidden");
+    DOM.video.style.display = "none";
     if (typeof DOM.video.play === "function") {
       DOM.video.play().catch(() => {});
     }
   }
+  startLiveImagingPipeline();
   syncOverlayPreviewSurface({ mode: "live" });
   return true;
 }
@@ -9290,6 +9522,7 @@ async function startCamera(autoStartBooth = false) {
 
     if (stream) {
       // Camera already available; only proceed to booth if requested
+      startLiveImagingPipeline();
       if (autoStartBooth) startBoothFlow();
       showToast("Camera is ready");
       isStartingCamera = false;
@@ -9327,7 +9560,9 @@ async function startCamera(autoStartBooth = false) {
         if (DOM.video) {
           DOM.video.srcObject = s;
           DOM.video.style.transform = "";
+          DOM.video.style.display = "none";
         }
+        startLiveImagingPipeline();
         syncOverlayPreviewSurface({ mode: "live" });
         showToast("Camera permission granted");
         if (autoStartBooth) startBoothFlow();
@@ -9543,6 +9778,11 @@ function clearPreviewFreezeFrame() {
   if (!DOM.lastShot) return;
   DOM.lastShot.style.display = "none";
   DOM.lastShot.removeAttribute("src");
+  if (DOM.livePreviewCanvas) {
+    DOM.livePreviewCanvas.style.display = overlayUsesPhotoSlots(getActivePhotoOverlay())
+      ? "none"
+      : "block";
+  }
   if (overlayUsesPhotoSlots(getActivePhotoOverlay())) {
     syncOverlayPreviewSurface({ mode: "live" });
   }
@@ -9565,6 +9805,10 @@ function showPreviewFreezeFrame(canvasOrUrl) {
   if (DOM.video) {
     DOM.video.classList.add("hidden");
     DOM.video.style.display = "none";
+  }
+  if (DOM.livePreviewCanvas) {
+    DOM.livePreviewCanvas.classList.add("hidden");
+    DOM.livePreviewCanvas.style.display = "none";
   }
   if (!DOM.lastShot || !stillUrl) return;
   try {
@@ -9603,6 +9847,7 @@ async function capturePhotoFlow() {
   let finalPreviewStarted = false;
   try {
     const finalUrl = await finalizeToPrint(photo, selectedOverlay);
+    lastOutputSurfaceTrace = createOutputSurfaceTrace(finalUrl);
     enterFinalizingState(finalUrl);
     const uploadResult = await uploadCaptureOnce({
       previewUrl: finalUrl,
@@ -10292,8 +10537,141 @@ function drawPhotoSlot(ctx, source, slot, outputW, outputH) {
   ctx.restore();
 }
 
+function isReservedPhotoMarkerPixel(data, offset) {
+  return (
+    data[offset] >= 255 - RESERVED_PHOTO_MARKER.tolerance &&
+    data[offset + 1] <= RESERVED_PHOTO_MARKER.tolerance &&
+    data[offset + 2] >= 255 - RESERVED_PHOTO_MARKER.tolerance &&
+    data[offset + 3] >= 180
+  );
+}
+
+function normalizeDetectedMarkerSlot(bounds, width, height, index) {
+  if (!bounds || !width || !height) return null;
+  return normalizePhotoSlotDescriptor(
+    {
+      x: bounds.minX / width,
+      y: bounds.minY / height,
+      width: (bounds.maxX - bounds.minX + 1) / width,
+      height: (bounds.maxY - bounds.minY + 1) / height,
+      borderRadius: 0,
+      objectFit: "cover",
+      objectPosition: "center",
+    },
+    index
+  );
+}
+
+function detectReservedPhotoMarkerComponents(mask, width, height) {
+  const visited = new Uint8Array(mask.length);
+  const stack = [];
+  const minArea = Math.max(
+    64,
+    Math.floor(width * height * RESERVED_PHOTO_MARKER.minAreaRatio)
+  );
+  const components = [];
+  for (let start = 0; start < mask.length; start++) {
+    if (!mask[start] || visited[start]) continue;
+    let area = 0;
+    let minX = width;
+    let minY = height;
+    let maxX = 0;
+    let maxY = 0;
+    visited[start] = 1;
+    stack.push(start);
+    while (stack.length) {
+      const point = stack.pop();
+      const x = point % width;
+      const y = Math.floor(point / width);
+      area++;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+      const pushNeighbor = (next) => {
+        if (mask[next] && !visited[next]) {
+          visited[next] = 1;
+          stack.push(next);
+        }
+      };
+      if (x > 0) pushNeighbor(point - 1);
+      if (x < width - 1) pushNeighbor(point + 1);
+      if (y > 0) pushNeighbor(point - width);
+      if (y < height - 1) pushNeighbor(point + width);
+    }
+    if (area >= minArea) {
+      components.push({ area, minX, minY, maxX, maxY });
+    }
+  }
+  return components.sort((a, b) => a.minY - b.minY || a.minX - b.minX);
+}
+
+async function processReservedPhotoMarkerImage(src) {
+  const key = String(src || "").trim();
+  if (!key) return null;
+  if (reservedPhotoMarkerCache.has(key)) return reservedPhotoMarkerCache.get(key);
+  const promise = (async () => {
+    const image = await loadImage(withBust(key));
+    const width = image.naturalWidth || image.width || 0;
+    const height = image.naturalHeight || image.height || 0;
+    if (!width || !height) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(image, 0, 0, width, height);
+    let imageData;
+    try {
+      imageData = ctx.getImageData(0, 0, width, height);
+    } catch (_) {
+      return null;
+    }
+    const data = imageData.data;
+    const mask = new Uint8Array(width * height);
+    for (let pixel = 0; pixel < mask.length; pixel++) {
+      const offset = pixel * 4;
+      if (isReservedPhotoMarkerPixel(data, offset)) {
+        mask[pixel] = 1;
+        data[offset + 3] = 0;
+      }
+    }
+    const components = detectReservedPhotoMarkerComponents(mask, width, height);
+    if (!components.length) return null;
+    ctx.putImageData(imageData, 0, 0);
+    return {
+      src: canvas.toDataURL("image/png"),
+      photoSlots: components
+        .map((bounds, index) =>
+          normalizeDetectedMarkerSlot(bounds, width, height, index)
+        )
+        .filter(Boolean),
+    };
+  })().catch(() => null);
+  reservedPhotoMarkerCache.set(key, promise);
+  return promise;
+}
+
+async function resolveOverlayReservedPhotoMarker(overlay) {
+  if (!overlay || hasExplicitPhotoSlots(overlay)) return overlay;
+  const foreground = overlay.foreground;
+  const src =
+    foreground && foreground.type === "image" && foreground.src
+      ? foreground.src
+      : overlay.renderSrc || overlay.src || "";
+  const processed = await processReservedPhotoMarkerImage(src);
+  if (!processed || !processed.photoSlots.length) return overlay;
+  return {
+    ...overlay,
+    foreground: { type: "image", src: processed.src },
+    renderSrc: processed.src,
+    photoSlots: processed.photoSlots,
+  };
+}
+
 async function renderOverlayToCanvas(ctx, overlay, sources, outputW, outputH) {
   if (!ctx || !overlay) return;
+  overlay = await resolveOverlayReservedPhotoMarker(overlay);
   const sourcePhoto =
     sources && sources.photo ? sources.photo : sources && sources.image;
   const sourcePhotos = Array.isArray(sources && sources.photos)
@@ -10688,15 +11066,13 @@ async function showFlashBeat() {
   setMobileSettingsOpen(false);
   const co = DOM.countdownOverlay;
   if (!co) return;
-  co.textContent = "Flash";
+  co.textContent = "";
   playBoothSound("flash");
   updateCountdownFontSize();
   if (DOM.boothScreen && getSelectedCaptureMode() !== "message")
     DOM.boothScreen.classList.add("countdown-mode");
-  co.classList.add("show");
-  await delay(160);
   co.classList.remove("show");
-  await delay(40);
+  await delay(200);
 }
 
 function getCountdownDurationSeconds() {
@@ -10722,18 +11098,7 @@ async function countdownAndSnap(options = {}) {
   await delay(50);
   if (!live) setRecordingHighlight(false);
   const livePromise = live ? captureLiveClip(LIVE_PHOTO_DURATION_MS) : null;
-  const shot = applyAutoEnhanceCanvas(
-    applySelectedFilterToCanvas(drawToCanvasFromVideo())
-  );
-  if (getAiBackgroundEnabled()) {
-    const mask = await getAiSegmentationMask(shot);
-    if (mask) shot.__aiMask = mask;
-  } else if (getGreenScreenEnabled()) {
-    try {
-      const ctx = shot.getContext("2d");
-      if (ctx) removeGreen(ctx, shot.width, shot.height);
-    } catch (_) {}
-  }
+  const shot = await getCurrentProcessedFrameCanvas();
   if (torchUsed) await setTorch(false);
   freezeCapturePreview(shot);
   if (livePromise) {
@@ -11053,7 +11418,10 @@ async function composeStrip(template, photos) {
 
 // Compose a single photo into a print-safe 4x6 canvas without cropping
 async function finalizeToPrint(photoCanvas, overlaySrc) {
-  const enhancedPhotoCanvas = ensureEnhancedCanvas(photoCanvas);
+  const enhancedPhotoCanvas =
+    photoCanvas && photoCanvas.__processedByLiveImagingPipeline
+      ? photoCanvas
+      : ensureEnhancedCanvas(photoCanvas);
   const resolvedAspect = getResolvedCaptureAspectRatio();
   const orientation = resolvedAspect < 1 ? "portrait" : "landscape";
   const { canvas: c, ctx, size } = createPrintCanvas(orientation);
@@ -11497,6 +11865,13 @@ function setupFinalExperienceActions() {
 
 function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
+  updateOutputSurfaceTrace({
+    localFinalUrl: url,
+    remoteFinalUrl: options.shareUrl || "",
+    surfaces: {
+      preview: url,
+    },
+  });
   setupFinalExperienceActions();
   syncBoothPersonality();
   if (DOM.goodbyeOverlay) DOM.goodbyeOverlay.classList.remove("show");
@@ -11568,9 +11943,17 @@ function showFinal(url, options = {}) {
     setFinalExperienceStage("review");
     if (!skipShare && providedShareUrl) {
       lastShareUrl = providedShareUrl;
+      updateOutputSurfaceTrace({
+        remoteFinalUrl: providedShareUrl,
+        surfaces: {
+          qr: providedShareUrl,
+          print: printImageUrl,
+        },
+      });
       if (qrContainer) {
         qrContainer.dataset.pending = "true";
         qrContainer.dataset.error = "false";
+        qrContainer.classList.remove("hidden");
       }
       if (DOM.shareStatus) {
         DOM.shareStatus.textContent = "Preparing QR";
@@ -11623,6 +12006,11 @@ function showFinal(url, options = {}) {
     }
     renderPaidPrintPanel(printEligible);
     if (DOM.paidPrintPanel) DOM.paidPrintPanel.classList.remove("show");
+    updateOutputSurfaceTrace({
+      surfaces: {
+        print: printImageUrl,
+      },
+    });
     enqueueFinalPrintIfNeeded(printImageUrl, printEligible);
     resetIdleTimer();
     if (skipShare && !isBoothTestMode()) {
@@ -12951,9 +13339,19 @@ async function uploadCaptureOnce(options = {}) {
     folder: meta.folder,
     resourceType,
   };
+  updateOutputSurfaceTrace({
+    captureId: meta.captureId,
+    localFinalUrl: previewUrl,
+    surfaces: {
+      uploadPreview: previewUrl,
+    },
+  });
 
   if (isBoothTestMode()) {
     result.publicUrl = BOOTH_TEST_SHARE_URL;
+    updateOutputSurfaceTrace({
+      remoteFinalUrl: result.publicUrl,
+    });
     showToast("Booth test upload ready");
     return result;
   }
@@ -13037,6 +13435,9 @@ async function uploadCaptureOnce(options = {}) {
   }
 
   result.publicUrl = publicUrl;
+  updateOutputSurfaceTrace({
+    remoteFinalUrl: publicUrl,
+  });
   removePendingUpload(meta.captureId);
   const galleryOk = await recordGalleryPhoto(meta.slug, publicUrl, {
     captureId: meta.captureId,
@@ -13078,6 +13479,11 @@ async function recordGalleryPhoto(tag, url, options = {}) {
   const cleanTag = String(tag || "").trim();
   if (!cleanTag || !/^https?:\/\//i.test(String(url || ""))) return false;
   const resourceType = options.resourceType === "video" ? "video" : "image";
+  updateOutputSurfaceTrace({
+    surfaces: {
+      galleryRemote: url,
+    },
+  });
   const payload = {
     capture_id: options.captureId || createCaptureUploadId(options.modeName),
     url,
@@ -13106,8 +13512,13 @@ async function recordGalleryPhoto(tag, url, options = {}) {
 }
 
 async function openShareLink() {
-  const url = lastShareUrl || (DOM.finalStrip && DOM.finalStrip.src);
+  const url = getShareOutputUrl();
   if (!url) return;
+  updateOutputSurfaceTrace({
+    surfaces: {
+      download: url,
+    },
+  });
   try {
     // Ensure the asset is retrievable (esp. right after SW publish) and open a stable blob URL
     const resp = await fetch(url, { cache: "reload" });
@@ -13127,7 +13538,7 @@ async function openShareLink() {
   }
 }
 async function copyShareLink() {
-  const url = lastShareUrl || (DOM.finalStrip && DOM.finalStrip.src);
+  const url = getShareOutputUrl();
   try {
     await navigator.clipboard.writeText(url);
     showToast("Link copied");
@@ -13136,8 +13547,13 @@ async function copyShareLink() {
   }
 }
 async function downloadShareImage() {
-  const url = lastShareUrl || (DOM.finalStrip && DOM.finalStrip.src);
+  const url = getShareOutputUrl();
   if (!url) return;
+  updateOutputSurfaceTrace({
+    surfaces: {
+      download: url,
+    },
+  });
   try {
     const resp = await fetch(url, { cache: "reload" });
     if (!resp.ok) throw new Error("Link not ready");
@@ -13200,6 +13616,11 @@ function exitFinalPreview() {
   hideFinal();
 }
 function addToGallery(url) {
+  updateOutputSurfaceTrace({
+    surfaces: {
+      galleryLocal: url,
+    },
+  });
   const img = new Image();
   img.src = url;
   img.addEventListener("click", () =>
@@ -13236,6 +13657,12 @@ function sendEmail(event) {
       alert("Video sharing requires an internet connection.");
       return;
     }
+    updateOutputSurfaceTrace({
+      surfaces: {
+        emailPhoto: imgUrl || "",
+        emailImageData: imgUrl || "",
+      },
+    });
     // Queue locally for later sending
     const ok = queuePendingEmail(email, imgUrl);
     if (ok) {
@@ -13259,6 +13686,12 @@ function sendEmail(event) {
     image_data_url: isVideo ? "" : imgUrl,
     video_url: isVideo ? lastShareUrl || "" : "",
   };
+  updateOutputSurfaceTrace({
+    surfaces: {
+      emailPhoto: templateParams.photo_url,
+      emailImageData: templateParams.image_data_url,
+    },
+  });
 
   emailjs.send(cfg.service, cfg.template, templateParams).then(
     function (response) {
@@ -21682,6 +22115,7 @@ Object.assign(window, {
     getPrintSizeForOrientation: (orientation) =>
       getPrintSizeForOrientation(orientation),
     createPrintCanvas: (orientation) => createPrintCanvas(orientation).canvas,
+    getOutputSurfaceTrace: () => getOutputSurfaceTraceSnapshot(),
     patchActiveTheme: (patch = {}) => {
       if (!activeTheme || !patch || typeof patch !== "object") return null;
       Object.assign(activeTheme, patch);

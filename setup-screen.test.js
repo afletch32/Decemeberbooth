@@ -808,8 +808,9 @@ test("guest booth flow uses attraction-style host moments", () => {
       appScript.includes("Awesome!") &&
       appScript.includes("function revealFinalSaveStage()") &&
       appScript.includes("DOM.finalPreviewContent.addEventListener(\"click\", (event) => {") &&
-      appScript.includes("event.stopPropagation();"),
-    "the flow should include tiny sound cues, a Flash beat, and a rewarding love-it transition"
+      appScript.includes("event.stopPropagation();") &&
+      !appScript.includes('co.textContent = "Flash";'),
+    "the flow should include tiny sound cues, a visual flash beat, and a rewarding love-it transition"
   );
 });
 
@@ -868,6 +869,7 @@ test("final share panel appears after review while QR is pending or failed", () 
     appScript.includes('DOM.qrCodeContainer.dataset.pending === "true"') &&
       appScript.includes('DOM.qrCodeContainer.dataset.error === "true"') &&
       appScript.includes('qrContainer.dataset.pending = "true"') &&
+      appScript.includes('qrContainer.classList.remove("hidden")') &&
       appScript.includes('qrContainer.dataset.error = qrRendered ? "false" : "true"'),
     "the post-review share panel should reveal a pending or failed QR state instead of staying hidden"
   );
@@ -878,20 +880,135 @@ test("final share panel appears after review while QR is pending or failed", () 
   );
 });
 
-test("guest photo filters affect live preview and captured photo pixels", () => {
+test("guest photo filters run through the unified live imaging pipeline", () => {
   const appScript = readProjectFile("scripts", "app.js");
+  const html = readProjectFile("index.html");
 
   assert.ok(
-    appScript.includes('document.querySelectorAll(".photo-slot-media")') &&
-      appScript.includes("DOM.lastShot.style.filter = filterValue") &&
-      appScript.includes("media.style.filter = (filterDef && filterDef.css) || \"\""),
-    "filters should apply to normal video, slot-based live previews, and frozen previews"
+    html.includes('id="livePreviewCanvas"') &&
+      appScript.includes("function startLiveImagingPipeline()") &&
+      appScript.includes("async function processCanvasThroughImagingPipeline(sourceCanvas)") &&
+      appScript.includes("drawProcessedFrameToLivePreview(processed)") &&
+      appScript.includes("getLivePreviewStream()"),
+    "the live preview should render through a processed canvas that can feed slotted overlays"
   );
   assert.ok(
     appScript.includes("function applySelectedFilterToCanvas(canvas)") &&
-      appScript.includes("applySelectedFilterToCanvas(drawToCanvasFromVideo())") &&
+      appScript.includes("processed = applySelectedFilterToCanvas(sourceCanvas)") &&
+      appScript.includes("processed = await applySelectedBeautyToCanvas(processed)") &&
+      appScript.includes("processed = applyAutoEnhanceCanvas(processed)") &&
       !appScript.includes("applyFilterToCanvas(ctx, targetW, targetH);\n\n  return c.toDataURL"),
-    "captured photos should bake the selected filter into the photo before final overlay composition"
+    "selected filters and beauty passes should be baked into the shared imaging pipeline"
+  );
+  assert.ok(
+    appScript.includes("const shot = await getCurrentProcessedFrameCanvas()") &&
+      appScript.includes("__processedByLiveImagingPipeline") &&
+      appScript.includes("? photoCanvas\n      : ensureEnhancedCanvas(photoCanvas)"),
+    "capture and final print output should reuse the currently displayed processed frame"
+  );
+  assert.ok(
+    !appScript.includes("DOM.video.style.filter = filterValue") &&
+      !appScript.includes("media.style.filter = (filterDef && filterDef.css) || \"\""),
+    "live preview should not keep a separate CSS-filter rendering path"
+  );
+});
+
+test("output surfaces consume the finalized processed frame artifact", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("lastOutputSurfaceTrace = createOutputSurfaceTrace(finalUrl)") &&
+      appScript.includes("previewUrl: finalUrl") &&
+      appScript.includes("showFinal(\n      finalUrl") &&
+      appScript.includes("addToGallery(finalUrl)"),
+    "capture should create one finalized image artifact and pass it to upload, final preview, and gallery"
+  );
+  assert.ok(
+    appScript.includes("function getShareOutputUrl()") &&
+      appScript.includes("const url = getShareOutputUrl();") &&
+      appScript.includes("qr: providedShareUrl") &&
+      appScript.includes("print: printImageUrl") &&
+      appScript.includes("download: url"),
+    "QR, print, and download should consume the same resolved share output URL"
+  );
+  assert.ok(
+    appScript.includes("recordGalleryPhoto(meta.slug, publicUrl") &&
+      appScript.includes("galleryRemote: url") &&
+      appScript.includes("remoteFinalUrl: publicUrl"),
+    "production gallery records should use the uploaded URL created from the final artifact"
+  );
+  assert.ok(
+    appScript.includes("photo_url: isVideo ? lastShareUrl || \"\" : lastShareUrl || imgUrl") &&
+      appScript.includes("image_data_url: isVideo ? \"\" : imgUrl") &&
+      appScript.includes("emailPhoto: templateParams.photo_url") &&
+      appScript.includes("emailImageData: templateParams.image_data_url"),
+    "email payloads should route the shared URL plus the exact final image data URL"
+  );
+  assert.ok(
+    appScript.includes("getOutputSurfaceTrace: () => getOutputSurfaceTraceSnapshot()"),
+    "browser verification should be able to inspect output surface routing"
+  );
+});
+
+test("beauty processing is configured by filter choices, not guest controls", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("getGuestVisibleBeautyPresets") &&
+      appScript.includes("function getSelectedFilterBeautySettings()") &&
+      appScript.includes('beautyEngineModulePromise = import("./beauty/engine.mjs")') &&
+      appScript.includes("await applySelectedBeautyToCanvas("),
+    "beauty settings should be attached to existing filters and applied through the beauty engine"
+  );
+
+  assert.ok(
+    !appScript.includes("beautySlider") &&
+      !appScript.includes("beautyControls"),
+    "guests should not get beauty adjustment controls"
+  );
+});
+
+test("beauty presets use the configured preset contract", () => {
+  const presets = readProjectFile("scripts", "beauty", "presets.mjs");
+  const settings = readProjectFile("scripts", "beauty", "settings.mjs");
+  const engine = readProjectFile("scripts", "beauty", "engine.mjs");
+  const index = readProjectFile("scripts", "beauty", "index.mjs");
+  const opencv = readProjectFile("scripts", "beauty", "opencv.mjs");
+
+  assert.ok(
+    presets.includes('id: "natural"') &&
+      presets.includes('name: "Natural"') &&
+      presets.includes("guestVisible: true") &&
+      presets.includes("default: true") &&
+      presets.includes("skinSmooth: 15") &&
+      presets.includes("underEye: 12") &&
+      presets.includes("exposure: 0") &&
+      presets.includes("highlights: -10") &&
+      presets.includes("sharpness: 8"),
+    "natural preset should use the configured beauty and lighting schema"
+  );
+  assert.ok(
+    settings.includes("DEFAULT_BEAUTY_VALUES") &&
+      settings.includes("DEFAULT_LIGHTING_VALUES") &&
+      settings.includes("normalizeBeautyPreset") &&
+      presets.includes("getGuestVisibleBeautyPresets"),
+    "preset normalization should keep beauty and lighting values in one contract"
+  );
+  assert.ok(
+    engine.includes('from "./tracker.mjs"') &&
+      engine.includes('from "./teeth.mjs"') &&
+      engine.includes('from "./tone.mjs"') &&
+      engine.includes('from "./lighting.mjs"') &&
+      index.includes('from "./engine.mjs"') &&
+      index.includes('from "./presets.mjs"'),
+    "beauty modules should route through the renamed modular files"
+  );
+  assert.ok(
+    opencv.includes("export async function initializeOpenCV()") &&
+      opencv.includes("export async function matFromCanvas") &&
+      opencv.includes("export function dispose") &&
+      opencv.includes("export async function inpaint"),
+    "OpenCV helpers should be modular optional utilities for future imaging work"
   );
 });
 

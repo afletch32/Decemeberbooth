@@ -26,6 +26,30 @@ test("overlay preview renders into explicit photo slots", () => {
   assert.ok(appJs.includes("photoSlots: normalizeOverlayPhotoSlots"));
 });
 
+test("reserved magenta marker creates photo slots and transparent foregrounds", () => {
+  const appJs = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appJs.includes("const RESERVED_PHOTO_MARKER =") &&
+      appJs.includes('color: "#ff00ff"') &&
+      appJs.includes("function processReservedPhotoMarkerImage(src)") &&
+      appJs.includes("function resolveOverlayReservedPhotoMarker(overlay)"),
+    "reserved magenta marker support should be centralized in the overlay renderer"
+  );
+  assert.ok(
+    appJs.includes("data[offset + 3] = 0") &&
+      appJs.includes("normalizeDetectedMarkerSlot") &&
+      appJs.includes("overlay = await resolveOverlayReservedPhotoMarker(overlay)") &&
+      appJs.includes("syncOverlayPreviewSurface({ ...options, overlay: resolvedOverlay })"),
+    "marker pixels should become transparent and their bounds should drive runtime photo slots"
+  );
+  assert.ok(
+    appJs.includes("color: RESERVED_PHOTO_MARKER.color") &&
+      appJs.includes("tolerance: RESERVED_PHOTO_MARKER.tolerance"),
+    "legacy spot-mask code should use the same reserved marker color"
+  );
+});
+
 test("final strip rendering uses manifest photo slots before legacy strip geometry", () => {
   const appJs = readProjectFile("scripts/app.js");
 

@@ -31,6 +31,26 @@ const EXTERNAL_SCRIPT_STUBS = [
     contentType: "application/javascript",
     body: "window.SelfieSegmentation = function () { this.setOptions = function () {}; this.onResults = function () {}; };",
   },
+  {
+    pattern: "**/@mediapipe/tasks-vision@0.10.35/+esm",
+    contentType: "application/javascript",
+    body: `
+      export const FilesetResolver = {
+        forVisionTasks: async function () {
+          return {};
+        }
+      };
+      export const FaceLandmarker = {
+        createFromOptions: async function () {
+          return {
+            detectForVideo: function () {
+              return { faceLandmarks: [] };
+            }
+          };
+        }
+      };
+    `,
+  },
 ];
 
 test.beforeEach(async ({ page }) => {
@@ -198,6 +218,108 @@ test("overlay builder emits reusable text metadata when autofill fields are sele
   await expect(manifestEntry).toContainText("\"textFields\"");
   await expect(manifestEntry).toContainText("\"couple_names\"");
   await expect(manifestEntry).toContainText("\"event_date\"");
+});
+
+test("booth test camera displays and captures the processed live preview canvas", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html?testMode=booth");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+  await page.locator("#startBoothButton").click({ force: true });
+  await page.locator("#startButton").click({ force: true });
+  await page.locator(".welcome-mode-btn[data-welcome-mode=\"still-photo\"]").click({ force: true });
+
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector("#livePreviewCanvas");
+    return !!(
+      canvas &&
+      canvas.dataset.ready === "true" &&
+      canvas.width > 0 &&
+      canvas.height > 0
+    );
+  });
+
+  const previewDisplay = await page.evaluate(() => {
+    const canvas = document.querySelector("#livePreviewCanvas");
+    const liveSlot = document.querySelector("#photoSlotLayer .photo-slot-media.is-live");
+    const style = canvas ? getComputedStyle(canvas) : null;
+    return {
+      canvasVisible: !!(
+        canvas &&
+        style &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        !canvas.classList.contains("hidden")
+      ),
+      slotUsesProcessedStream: !!(liveSlot && liveSlot.srcObject),
+    };
+  });
+  expect(
+    previewDisplay.canvasVisible || previewDisplay.slotUsesProcessedStream
+  ).toBe(true);
+  await expect(page.locator("#video")).toBeHidden();
+  await page.locator("#boothInstantCaptureToggle").evaluate((input) => {
+    input.checked = true;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await page.locator("#captureBtn").click({ force: true });
+
+  await expect(page.locator("#finalPreview")).toHaveClass(/show/);
+  await page.waitForFunction(() => {
+    const finalStrip = document.querySelector("#finalStrip");
+    return !!(
+      finalStrip &&
+      /^data:image\/png/.test(finalStrip.getAttribute("src") || "")
+    );
+  });
+
+  const captured = await page.evaluate(() => {
+    const canvas = document.querySelector("#livePreviewCanvas");
+    const finalStrip = document.querySelector("#finalStrip");
+    return {
+      canvasReady: canvas && canvas.dataset.ready,
+      canvasWidth: canvas && canvas.width,
+      canvasHeight: canvas && canvas.height,
+      finalSrc: (finalStrip && finalStrip.getAttribute("src")) || "",
+    };
+  });
+
+  expect(captured.canvasReady).toBe("true");
+  expect(captured.canvasWidth).toBeGreaterThan(0);
+  expect(captured.canvasHeight).toBeGreaterThan(0);
+  expect(captured.finalSrc).toMatch(/^data:image\/png/);
+
+  await page.waitForFunction(() => {
+    const trace =
+      window.__photoboothTest && window.__photoboothTest.getOutputSurfaceTrace();
+    const qr = document.querySelector("#qrCodeContainer");
+    return !!(
+      trace &&
+      trace.remoteFinalUrl === "https://example.com/photobooth-test-final.png" &&
+      trace.surfaces &&
+      trace.surfaces.qr === trace.remoteFinalUrl &&
+      qr &&
+      (qr.dataset.ready === "true" ||
+        qr.dataset.pending === "true" ||
+        qr.dataset.error === "true")
+    );
+  });
+  await page.evaluate(async () => {
+    await window.downloadShareImage();
+  });
+
+  const trace = await page.evaluate(() =>
+    window.__photoboothTest.getOutputSurfaceTrace()
+  );
+  expect(trace.localFinalUrl).toBe(captured.finalSrc);
+  expect(trace.localFinalKind).toBe("processed-data-url");
+  expect(trace.remoteFinalUrl).toBe("https://example.com/photobooth-test-final.png");
+  expect(trace.surfaces.preview).toBe(captured.finalSrc);
+  expect(trace.surfaces.uploadPreview).toBe(captured.finalSrc);
+  expect(trace.surfaces.galleryLocal).toBe(captured.finalSrc);
+  expect(trace.surfaces.qr).toBe(trace.remoteFinalUrl);
+  expect(trace.surfaces.print).toBe(trace.remoteFinalUrl);
+  expect(trace.surfaces.download).toBe(trace.remoteFinalUrl);
 });
 
 test("overlay builder theme assignment dropdown loads saved themes", async ({
