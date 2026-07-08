@@ -495,12 +495,20 @@ test("overlay builder theme assignment dropdown loads saved themes", async ({
   expect(optionTexts.join(" ")).toContain("Wedding");
 });
 
-test("Asset Library filters the setup catalog by category", async ({
+test("Asset Library keeps admin filters and sorting out of the public picker", async ({
   page,
 }) => {
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
-  await page.locator("#assetLibraryCategory").selectOption("template");
+  await page.locator("#assetLibraryCategory").selectOption("wedding");
+  await expect(page.locator("#assetLibraryStatus")).toContainText(
+    "Filters active: Category"
+  );
+  await page.locator("#assetLibraryClearFilters").click();
+  await page.getByRole("button", { name: /^Templates\b/ }).click();
+  await expect(page.locator("#assetLibraryStatus")).toContainText(
+    "Filters active: Asset type"
+  );
   await page.locator("#assetLibrarySort").selectOption("favorites");
   await page.locator("#assetLibrarySort").selectOption("recent");
   const cards = page.locator("#assetLibraryGrid .asset-library-card");
@@ -511,9 +519,11 @@ test("Asset Library filters the setup catalog by category", async ({
   await expect(favoriteButtons.first()).toBeVisible();
   await expect(
     page.locator("#assetLibraryGrid .asset-library-actions button", {
-      hasText: "Defaults",
+      hasText: "Theme defaults",
     })
   ).toHaveCount(await cards.count());
+  await expect(page.locator("#options .asset-picker-search")).toHaveCount(0);
+  await expect(page.locator("#options .asset-picker-favorite")).toHaveCount(0);
 });
 
 test("asset library cards toggle selection from the full card surface", async ({

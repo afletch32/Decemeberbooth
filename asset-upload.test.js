@@ -93,6 +93,22 @@ test("capture modes share one canonical upload pipeline", () => {
   );
 });
 
+test("staff print route links and popup printing handle reliable handoff", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const staffScript = readProjectFile("scripts", "staff-print.js");
+
+  assert.ok(
+    appScript.includes('new URL("staff-print.html", window.location.href)'),
+    "copied staff queue links should target the real static staff-print.html route"
+  );
+  assert.ok(
+    staffScript.includes("if (image.complete)") &&
+      staffScript.includes("image.naturalWidth > 0") &&
+      staffScript.includes("Photo could not load."),
+    "staff print popup should print cached images and surface image load failures"
+  );
+});
+
 test("upload failures are queued with retry and gallery metadata", () => {
   const appScript = readProjectFile("scripts", "app.js");
 

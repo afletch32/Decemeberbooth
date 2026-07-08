@@ -6335,7 +6335,7 @@ function getPrintQueueEventId() {
 }
 
 function getStaffPrintQueueUrl() {
-  const url = new URL("staff-print", window.location.href);
+  const url = new URL("staff-print.html", window.location.href);
   url.searchParams.set("eventId", getPrintQueueEventId());
   return url.toString();
 }

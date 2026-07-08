@@ -103,8 +103,12 @@
     const popup = window.open("", "_blank");
     if (!popup) throw new Error("Allow pop-ups to print this photo.");
     popup.opener = null;
-    const safeUrl = String(imageUrl).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-    popup.document.write(`<!doctype html><html><head><title>Print Photo</title><style>@page { size: 4in 6in; margin: 0; } html,body { width:4in; height:6in; margin:0; background:#fff; } body { display:grid; place-items:center; } img { width:100%; height:100%; object-fit:contain; display:block; }</style></head><body><img src="${safeUrl}" alt="Photo to print"><script>const image=document.querySelector("img"); image.addEventListener("load",()=>{ window.focus(); window.print(); });<\/script></body></html>`);
+    const safeUrl = String(imageUrl)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    popup.document.write(`<!doctype html><html><head><title>Print Photo</title><style>@page { size: 4in 6in; margin: 0; } html,body { width:4in; height:6in; margin:0; background:#fff; } body { display:grid; place-items:center; } img { width:100%; height:100%; object-fit:contain; display:block; } .error { padding:16px; font:14px system-ui, sans-serif; color:#7c2222; }</style></head><body><img src="${safeUrl}" alt="Photo to print"><script>const image=document.querySelector("img"); const printPhoto=()=>{ window.focus(); setTimeout(()=>window.print(), 50); }; const showError=()=>{ document.body.innerHTML='<p class="error">Photo could not load. Close this tab and try Open/Print again.</p>'; }; image.addEventListener("load", printPhoto, { once:true }); image.addEventListener("error", showError, { once:true }); if (image.complete) { if (image.naturalWidth > 0) printPhoto(); else showError(); }<\/script></body></html>`);
     popup.document.close();
   }
 
