@@ -106,6 +106,7 @@ test("staff print route links and popup printing handle reliable handoff", () =>
   );
   assert.ok(
     staffScript.includes("if (image.complete)") &&
+      staffScript.includes("images.length") &&
       staffScript.includes("image.naturalWidth > 0") &&
       staffScript.includes("Photo could not load."),
     "staff print popup should print cached images and surface image load failures"
@@ -117,10 +118,22 @@ test("staff print route links and popup printing handle reliable handoff", () =>
     "staff token setup should stay hidden unless the server requires it"
   );
   assert.ok(
+    html.includes('id="printLayout"') &&
+      html.includes("1 photo on 4x6") &&
+      html.includes("2 photos on 4x6"),
+    "staff print page should expose a layout choice for single-photo and 2-up pages"
+  );
+  assert.ok(
     serverScript.includes("staffAuthRequired: Boolean") &&
       pagesPrintQueueFn.includes("staffAuthRequired: Boolean") &&
       staffScript.includes("tokenButton.hidden = !staffAuthRequired"),
     "staff queue should reveal the token control only when staff auth is configured"
+  );
+  assert.ok(
+    staffScript.includes("photoboothStaffPrintLayout") &&
+      staffScript.includes('layout === "double"') &&
+      staffScript.includes("grid-template-rows: 1fr 1fr"),
+    "staff print popup should support a 2-up 4x6 composition"
   );
 });
 

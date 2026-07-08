@@ -12,8 +12,10 @@
     header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
     h1 { margin: 0; font-size: clamp(1.4rem, 4vw, 2rem); }
     .controls, .queue-item-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .control-group { display: flex; flex-direction: column; gap: 4px; }
     input, button { font: inherit; border-radius: 9px; min-height: 42px; box-sizing: border-box; }
     input { border: 1px solid #b7cbc7; padding: 8px 10px; background: white; }
+    select { font: inherit; border-radius: 9px; min-height: 42px; box-sizing: border-box; border: 1px solid #b7cbc7; padding: 8px 10px; background: white; }
     button { border: 0; padding: 8px 12px; background: #176a61; color: white; cursor: pointer; }
     button.secondary { background: #e2ece9; color: #17443e; }
     button.danger { background: #a63f3f; }
@@ -39,7 +41,17 @@
       <p id="queueStatus">Loading queue…</p>
     </div>
     <div class="controls">
-      <input id="eventId" aria-label="Event ID" placeholder="Event ID">
+      <label class="control-group">
+        Event ID
+        <input id="eventId" aria-label="Event ID" placeholder="Event ID">
+      </label>
+      <label class="control-group">
+        Print layout
+        <select id="printLayout">
+          <option value="single">1 photo on 4x6</option>
+          <option value="double">2 photos on 4x6</option>
+        </select>
+      </label>
       <button type="button" id="setToken" class="secondary" hidden>Unlock Staff Actions</button>
       <button type="button" id="refreshQueue">Refresh</button>
     </div>

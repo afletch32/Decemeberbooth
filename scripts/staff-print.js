@@ -3,6 +3,7 @@
   const REFRESH_MS = 5000;
   const TOKEN_KEY = "photoboothStaffPrintToken";
   const eventInput = document.getElementById("eventId");
+  const layoutInput = document.getElementById("printLayout");
   const list = document.getElementById("queueList");
   const status = document.getElementById("queueStatus");
   const tokenButton = document.getElementById("setToken");
@@ -10,9 +11,22 @@
   let eventId = query.get("eventId") || "default";
   let items = [];
   let staffAuthRequired = false;
+  const LAYOUT_KEY = "photoboothStaffPrintLayout";
 
   function cleanEventId(value) {
     return String(value || "default").trim().replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "default";
+  }
+
+  function getPrintLayout() {
+    const stored = localStorage.getItem(LAYOUT_KEY) || "single";
+    return stored === "double" ? "double" : "single";
+  }
+
+  function setPrintLayout(value) {
+    const next = value === "double" ? "double" : "single";
+    localStorage.setItem(LAYOUT_KEY, next);
+    if (layoutInput) layoutInput.value = next;
+    return next;
   }
 
   function staffHeaders() {
@@ -45,6 +59,7 @@
     const visible = items.filter((item) => item.printStatus !== "void");
     status.textContent = `${visible.length} active ${visible.length === 1 ? "item" : "items"} · refreshes every 5 seconds`;
     if (tokenButton) tokenButton.hidden = !staffAuthRequired;
+    if (layoutInput && !layoutInput.value) layoutInput.value = getPrintLayout();
     if (!visible.length) {
       list.innerHTML = '<div class="empty">No queued photos for this event.</div>';
       return;
@@ -115,7 +130,7 @@
     await loadQueue();
   }
 
-  function openPrintWindowForImage(imageUrl) {
+  function openPrintWindowForImage(imageUrl, layout = getPrintLayout()) {
     const popup = window.open("", "_blank");
     if (!popup) throw new Error("Allow pop-ups to print this photo.");
     popup.opener = null;
@@ -124,7 +139,12 @@
       .replace(/"/g, "&quot;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
-    popup.document.write(`<!doctype html><html><head><title>Print Photo</title><style>@page { size: 4in 6in; margin: 0; } html,body { width:4in; height:6in; margin:0; background:#fff; } body { display:grid; place-items:center; } img { width:100%; height:100%; object-fit:contain; display:block; } .error { padding:16px; font:14px system-ui, sans-serif; color:#7c2222; }</style></head><body><img src="${safeUrl}" alt="Photo to print"><script>const image=document.querySelector("img"); const printPhoto=()=>{ window.focus(); setTimeout(()=>window.print(), 50); }; const showError=()=>{ document.body.innerHTML='<p class="error">Photo could not load. Close this tab and try Open/Print again.</p>'; }; image.addEventListener("load", printPhoto, { once:true }); image.addEventListener("error", showError, { once:true }); if (image.complete) { if (image.naturalWidth > 0) printPhoto(); else showError(); }<\/script></body></html>`);
+    const doubleLayout = layout === "double";
+    const sheetClass = doubleLayout ? "sheet double" : "sheet single";
+    const sheetContent = doubleLayout
+      ? `<img src="${safeUrl}" alt="Photo to print"><img src="${safeUrl}" alt="Photo to print">`
+      : `<img src="${safeUrl}" alt="Photo to print">`;
+    popup.document.write(`<!doctype html><html><head><title>Print Photo</title><style>@page { size: 4in 6in; margin: 0; } html,body { width:4in; height:6in; margin:0; background:#fff; } body { display:grid; place-items:center; } .sheet { width:4in; height:6in; display:grid; background:#fff; } .sheet.single { grid-template-rows: 1fr; } .sheet.double { grid-template-rows: 1fr 1fr; } .sheet img { width:100%; height:100%; object-fit:contain; display:block; background:#fff; } .error { padding:16px; font:14px system-ui, sans-serif; color:#7c2222; }</style></head><body><div class="${sheetClass}">${sheetContent}</div><script>const images=Array.from(document.querySelectorAll("img")); const printPhoto=()=>{ window.focus(); setTimeout(()=>window.print(), 50); }; const showError=()=>{ document.body.innerHTML='<p class="error">Photo could not load. Close this tab and try Open/Print again.</p>'; }; let loaded=0; let failed=false; const onLoad=()=>{ loaded += 1; if (!failed && loaded === images.length) printPhoto(); }; const onError=()=>{ failed = true; showError(); }; images.forEach((image)=>{ image.addEventListener("load", onLoad, { once:true }); image.addEventListener("error", onError, { once:true }); if (image.complete) { if (image.naturalWidth > 0) onLoad(); else onError(); } });<\/script></body></html>`);
     popup.document.close();
   }
 
@@ -158,6 +178,12 @@
     if (value.trim()) sessionStorage.setItem(TOKEN_KEY, value.trim());
     else sessionStorage.removeItem(TOKEN_KEY);
   });
+  if (layoutInput) {
+    layoutInput.value = getPrintLayout();
+    layoutInput.addEventListener("change", () => {
+      setPrintLayout(layoutInput.value);
+    });
+  }
   eventInput.value = eventId;
   eventInput.addEventListener("change", loadQueue);
   window.openPrintWindowForImage = openPrintWindowForImage;

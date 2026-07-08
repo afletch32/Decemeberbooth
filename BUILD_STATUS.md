@@ -1,5 +1,5 @@
 Current goal
-- Simplify staff print controls for the first test print.
+- Add a staff print layout choice for 1-up or 2-up 4x6 pages.
 
 What is done
 - Confirmed the worktree was clean before starting this checkpoint.
@@ -20,12 +20,14 @@ What is done
 - Verified `node --input-type=module --check < scripts/app.js`, `node --check scripts/staff-print.js`, and `node --check server.js` pass.
 - Verified `npm test` passes.
 - Verified the local staff page renders the token control as hidden.
+- Added a staff layout selector for `1 photo on 4x6` and `2 photos on 4x6`.
+- Added a 2-up print composition path that duplicates the queued image on the print page.
 
 What is in progress
 - Nothing active.
 
 Next steps
-- Add the Canon SELPHY CP1500 to macOS before the live test print.
+- Test the SELPHY’s two-photo layout against a real print.
 - Commit the verified checkpoint when ready.
 
 Known bugs/blockers
@@ -38,3 +40,4 @@ Important decisions
 - Public picker behavior should remain simple: natural order, preserved scroll, and show-more pagination.
 - Staff print queue URLs must use direct static routes, not extensionless redirects or fallbacks.
 - Staff auth is optional; do not show token setup during normal local print testing.
+- Keep the staff layout choice local to the print screen unless the queue itself needs to own print layout metadata later.
