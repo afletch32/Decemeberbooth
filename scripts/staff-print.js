@@ -5,9 +5,11 @@
   const eventInput = document.getElementById("eventId");
   const list = document.getElementById("queueList");
   const status = document.getElementById("queueStatus");
+  const tokenButton = document.getElementById("setToken");
   const query = new URLSearchParams(window.location.search);
   let eventId = query.get("eventId") || "default";
   let items = [];
+  let staffAuthRequired = false;
 
   function cleanEventId(value) {
     return String(value || "default").trim().replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "default";
@@ -42,6 +44,7 @@
   function render() {
     const visible = items.filter((item) => item.printStatus !== "void");
     status.textContent = `${visible.length} active ${visible.length === 1 ? "item" : "items"} · refreshes every 5 seconds`;
+    if (tokenButton) tokenButton.hidden = !staffAuthRequired;
     if (!visible.length) {
       list.innerHTML = '<div class="empty">No queued photos for this event.</div>';
       return;
@@ -75,6 +78,7 @@
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Could not load queue.");
       items = Array.isArray(payload.items) ? payload.items : [];
+      staffAuthRequired = payload.staffAuthRequired === true;
       render();
     } catch (error) {
       status.textContent = error.message || "Could not load queue.";
@@ -88,14 +92,26 @@
       body: JSON.stringify({ eventId, ...patch }),
     });
     const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || "Could not update queue item.");
+    if (!response.ok) {
+      if (response.status === 401) {
+        staffAuthRequired = true;
+        if (tokenButton) tokenButton.hidden = false;
+      }
+      throw new Error(payload.error || "Could not update queue item.");
+    }
     await loadQueue();
   }
 
   async function removeItem(id) {
     const response = await fetch(`/api/print-queue/${encodeURIComponent(id)}?eventId=${encodeURIComponent(eventId)}`, { method: "DELETE", headers: staffHeaders() });
     const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || "Could not remove queue item.");
+    if (!response.ok) {
+      if (response.status === 401) {
+        staffAuthRequired = true;
+        if (tokenButton) tokenButton.hidden = false;
+      }
+      throw new Error(payload.error || "Could not remove queue item.");
+    }
     await loadQueue();
   }
 
@@ -136,7 +152,7 @@
   });
 
   document.getElementById("refreshQueue").addEventListener("click", loadQueue);
-  document.getElementById("setToken").addEventListener("click", () => {
+  if (tokenButton) tokenButton.addEventListener("click", () => {
     const value = window.prompt("Staff access token (stored only for this browser session):", sessionStorage.getItem(TOKEN_KEY) || "");
     if (value === null) return;
     if (value.trim()) sessionStorage.setItem(TOKEN_KEY, value.trim());

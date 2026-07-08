@@ -96,6 +96,9 @@ test("capture modes share one canonical upload pipeline", () => {
 test("staff print route links and popup printing handle reliable handoff", () => {
   const appScript = readProjectFile("scripts", "app.js");
   const staffScript = readProjectFile("scripts", "staff-print.js");
+  const html = readProjectFile("staff-print.html");
+  const serverScript = readProjectFile("server.js");
+  const pagesPrintQueueFn = readProjectFile("functions", "api", "print-queue.js");
 
   assert.ok(
     appScript.includes('new URL("staff-print.html", window.location.href)'),
@@ -106,6 +109,18 @@ test("staff print route links and popup printing handle reliable handoff", () =>
       staffScript.includes("image.naturalWidth > 0") &&
       staffScript.includes("Photo could not load."),
     "staff print popup should print cached images and surface image load failures"
+  );
+  assert.ok(
+    html.includes('id="setToken"') &&
+      html.includes("hidden") &&
+      html.includes("Unlock Staff Actions"),
+    "staff token setup should stay hidden unless the server requires it"
+  );
+  assert.ok(
+    serverScript.includes("staffAuthRequired: Boolean") &&
+      pagesPrintQueueFn.includes("staffAuthRequired: Boolean") &&
+      staffScript.includes("tokenButton.hidden = !staffAuthRequired"),
+    "staff queue should reveal the token control only when staff auth is configured"
   );
 });
 

@@ -83,7 +83,12 @@ export async function onRequest(context) {
     const items = (await readQueue(env, eventId))
       .filter((item) => item && item.printStatus !== "void")
       .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-    return response({ ok: true, eventId, items });
+    return response({
+      ok: true,
+      eventId,
+      items,
+      staffAuthRequired: Boolean(String(env.PRINT_QUEUE_STAFF_TOKEN || "").trim()),
+    });
   }
 
   if (request.method !== "POST") return response({ ok: false, error: "Method not allowed." }, 405);

@@ -613,7 +613,12 @@ app.get('/api/print-queue', (req, res) => {
   const items = readPrintQueue(eventId)
     .filter((item) => item && item.printStatus !== "void")
     .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-  res.json({ ok: true, eventId, items });
+  res.json({
+    ok: true,
+    eventId,
+    items,
+    staffAuthRequired: Boolean(String(process.env.PRINT_QUEUE_STAFF_TOKEN || "").trim()),
+  });
 });
 
 app.post('/api/print-queue', (req, res) => {

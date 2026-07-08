@@ -1,5 +1,5 @@
 Current goal
-- Verify the staff print route for the first test print.
+- Simplify staff print controls for the first test print.
 
 What is done
 - Confirmed the worktree was clean before starting this checkpoint.
@@ -15,6 +15,11 @@ What is done
 - Verified `node --input-type=module --check < scripts/app.js` and `node --check scripts/staff-print.js` pass.
 - Verified `npm test` passes.
 - Verified the local staff route returns 200 at `/staff-print.html`.
+- Hid the staff token control by default and renamed it to `Unlock Staff Actions`.
+- Added API metadata so the staff token control appears only when `PRINT_QUEUE_STAFF_TOKEN` is configured.
+- Verified `node --input-type=module --check < scripts/app.js`, `node --check scripts/staff-print.js`, and `node --check server.js` pass.
+- Verified `npm test` passes.
+- Verified the local staff page renders the token control as hidden.
 
 What is in progress
 - Nothing active.
@@ -32,3 +37,4 @@ Important decisions
 - Search, sorting, favorites, and recents stay admin-only and must not appear in the public booth picker.
 - Public picker behavior should remain simple: natural order, preserved scroll, and show-more pagination.
 - Staff print queue URLs must use direct static routes, not extensionless redirects or fallbacks.
+- Staff auth is optional; do not show token setup during normal local print testing.
