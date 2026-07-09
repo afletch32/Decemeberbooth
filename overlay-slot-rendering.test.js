@@ -26,6 +26,31 @@ test("overlay preview renders into explicit photo slots", () => {
   assert.ok(appJs.includes("photoSlots: normalizeOverlayPhotoSlots"));
 });
 
+test("overlay builder exports persistent transparent photo windows", () => {
+  const overlayMaker = readProjectFile("overlay-maker.html");
+  const getManifestSlotsBody =
+    overlayMaker.match(/function getManifestSlots\(guide\) \{[\s\S]*?\n      \}/)?.[0] ||
+    "";
+
+  assert.ok(
+    overlayMaker.includes("function getStoredSlots(guide)") &&
+      overlayMaker.includes("customSlots = slots;") &&
+      overlayMaker.includes("setEditableSlot(getSelectedSlotIndex(), nextSlot, guide);"),
+    "custom photo boxes should persist instead of being lost after preview redraw"
+  );
+  assert.ok(
+    getManifestSlotsBody.includes("return getEditableSlots(guide)") &&
+      !getManifestSlotsBody.includes('guide.type === "strip"'),
+    "single overlays and strip templates should both export photo slot metadata"
+  );
+  assert.ok(
+    overlayMaker.includes('ctx.globalCompositeOperation = "destination-out"') &&
+      overlayMaker.includes("cutPhotoWindows(ctx, guide);") &&
+      overlayMaker.includes("manifest.foreground = {"),
+    "exported overlay/template PNGs should have transparent windows aligned with manifest slots"
+  );
+});
+
 test("reserved magenta marker creates photo slots and transparent foregrounds", () => {
   const appJs = readProjectFile("scripts", "app.js");
 

@@ -74,7 +74,7 @@
           <p class="metadata">Event ${escapeText(item.eventId || eventId)} · ${escapeText(createdAt(item.createdAt))}</p>
           <span class="badge ${escapeText(item.printStatus)}">${escapeText(label(item.printStatus))}</span>
           <span class="badge ${escapeText(item.paymentStatus)}">${escapeText(label(item.paymentStatus))}</span>
-          <div class="queue-item-actions" style="margin-top:12px">
+          <div class="queue-item-actions" style="margin-top:16px">
             <button type="button" data-action="print" data-id="${escapeText(item.id)}">Open/Print</button>
             <button type="button" data-action="printed" data-id="${escapeText(item.id)}">Mark Printed</button>
             <button type="button" data-action="reprint" data-id="${escapeText(item.id)}" ${printed ? "" : "disabled"}>Reprint</button>

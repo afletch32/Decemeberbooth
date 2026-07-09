@@ -117,7 +117,7 @@
       border-radius: 14px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 255, 251, 0.96));
       color: var(--text);
-      padding: 11px 15px;
+      padding: 16px 24px;
       cursor: pointer;
       box-shadow: 0 10px 22px rgba(17, 17, 17, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
       transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease, filter 180ms ease;
@@ -165,7 +165,7 @@
       overflow-y: auto;
       overscroll-behavior: contain;
       display: block;
-      padding: 18px;
+      padding: 32px;
       -webkit-overflow-scrolling: touch;
       background: linear-gradient(180deg, #fcfbf9 0%, #f6f1eb 100%);
     }
@@ -183,7 +183,7 @@
     }
 
     .admin-title {
-      margin: 10px 0 6px;
+      margin: 16px 0 8px;
       font-family: var(--font-heading);
       font-size: clamp(2.2rem, 5vw, 4rem);
       letter-spacing: -0.04em;
@@ -197,7 +197,7 @@
 
     .admin-subtitle {
       max-width: 760px;
-      margin: 0 auto 18px;
+      margin: 0 auto 24px;
       color: var(--text-muted);
       text-align: center;
       font-size: 1.04rem;
@@ -209,7 +209,7 @@
     .admin-container {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 14px;
+      gap: 16px;
       width: min(1220px, 100%);
       margin: 0 auto;
     }
@@ -229,17 +229,17 @@
     .setup-status {
       max-width: 1220px;
       width: min(1220px, 100%);
-      margin: 0 auto 12px;
+      margin: 0 auto 16px;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 10px;
+      gap: 16px;
       position: relative;
       z-index: 1;
     }
 
     .status-pill {
       position: relative;
-      padding: 12px 14px;
+      padding: 16px 24px;
       border: 1px solid var(--border);
       border-radius: 18px;
       background:
@@ -255,24 +255,24 @@
     .setup-session-card {
       max-width: 1220px;
       width: min(1220px, 100%);
-      margin: 0 auto 14px;
+      margin: 0 auto 16px;
       display: grid;
-      gap: 12px;
+      gap: 16px;
     }
 
     .setup-session-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 10px;
+      gap: 16px;
     }
 
     .setup-session-assets {
       display: grid;
-      gap: 10px;
+      gap: 16px;
     }
 
     .setup-session-item {
-      padding: 12px 14px;
+      padding: 16px 24px;
       border: 1px solid var(--border);
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 255, 251, 0.92));
@@ -308,11 +308,11 @@
     .setup-combobox-button,
     .setup-combobox-search {
       width: 100%;
-      margin-top: 6px;
+      margin-top: 8px;
       min-height: 42px;
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 8px 10px;
+      padding: 8px 16px;
       background: rgba(255, 255, 255, 0.92);
       color: #111111;
       font: inherit;
@@ -333,7 +333,7 @@
     .setup-combobox-caret {
       color: var(--text-muted);
       font-size: 0.9em;
-      margin-left: 10px;
+      margin-left: 16px;
     }
 
     .setup-combobox-menu {
@@ -361,19 +361,19 @@
     .setup-combobox-options {
       max-height: 240px;
       overflow-y: auto;
-      padding-top: 6px;
+      padding-top: 8px;
     }
 
     .setup-combobox-group {
       display: grid;
       gap: 8px;
-      padding: 10px 0 12px;
+      padding: 16px 0 16px;
     }
 
     .setup-combobox-group + .setup-combobox-group {
       border-top: 1px solid rgba(148, 163, 184, 0.28);
-      margin-top: 2px;
-      padding-top: 14px;
+      margin-top: 8px;
+      padding-top: 16px;
     }
 
     .setup-combobox-group-title {
@@ -386,7 +386,7 @@
       font-size: 0.74rem;
       font-weight: 900;
       letter-spacing: 0.12em;
-      padding: 8px 10px;
+      padding: 8px 16px;
       text-transform: uppercase;
       user-select: none;
       pointer-events: none;
@@ -394,7 +394,7 @@
 
     .setup-combobox-group-options {
       display: grid;
-      gap: 2px;
+      gap: 8px;
     }
 
     .setup-combobox-option,
@@ -407,7 +407,7 @@
       cursor: pointer;
       display: block;
       font: inherit;
-      padding: 9px 10px;
+      padding: 16px 24px;
       text-align: left;
     }
 
@@ -426,7 +426,7 @@
     .setup-session-item strong,
     .setup-session-mode strong {
       display: block;
-      margin-top: 4px;
+      margin-top: 8px;
       color: #111111;
       font-size: 1rem;
       line-height: 1.25;
@@ -437,7 +437,7 @@
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 255, 251, 0.92));
       box-shadow: 0 14px 28px rgba(17, 17, 17, 0.05);
-      padding: 14px 16px;
+      padding: 16px 24px;
     }
 
     .session-asset-count span {
@@ -450,7 +450,7 @@
 
     .session-asset-count strong {
       display: block;
-      margin-top: 4px;
+      margin-top: 8px;
       font-size: 1rem;
       line-height: 1.25;
       color: #111111;
@@ -465,7 +465,7 @@
     .setup-session-mode {
       min-width: 0;
       flex: 1 1 180px;
-      padding: 12px 14px;
+      padding: 16px 24px;
       border: 1px solid var(--border);
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 255, 251, 0.92));
@@ -499,7 +499,7 @@
     }
 
     .setup-launch-warning {
-      padding: 12px 14px;
+      padding: 16px 24px;
       border: 1px solid #f2c988;
       border-radius: 16px;
       background: #fffaf0;
@@ -522,18 +522,18 @@
       width: min(560px, 94vw);
       max-height: 90svh;
       overflow: auto;
-      padding: 18px;
+      padding: 24px;
       background: #fff;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       display: grid;
-      gap: 12px;
+      gap: 16px;
     }
 
     .launch-confirm-grid {
       display: grid;
-      gap: 10px;
+      gap: 16px;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
 
@@ -562,7 +562,7 @@
 
     .status-pill strong {
       display: block;
-      margin-top: 4px;
+      margin-top: 8px;
       color: #111111;
       font-size: 1rem;
     }
@@ -570,12 +570,12 @@
     .setup-section-switcher {
       max-width: 1220px;
       width: min(1220px, 100%);
-      margin: 0 auto 14px;
+      margin: 0 auto 16px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 10px 14px;
+      gap: 16px 16px;
       position: relative;
       z-index: 1;
     }
@@ -595,7 +595,7 @@
       display: flex;
       flex: 0 1 auto;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 16px;
       position: relative;
       z-index: 1;
     }
@@ -603,7 +603,7 @@
     .setup-tab {
       min-width: 0;
       min-height: 50px;
-      padding: 12px 18px;
+      padding: 16px 24px;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(239, 255, 251, 0.88));
@@ -633,14 +633,14 @@
 
     #installBtn {
       min-width: 0;
-      padding-inline: 22px;
+      padding-inline: 24px;
       white-space: nowrap;
     }
 
     .event-path-switcher {
       justify-content: flex-start;
       gap: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
     }
 
     .event-path-switcher > * {
@@ -656,8 +656,8 @@
 
     .admin-actions {
       justify-content: center;
-      gap: 12px;
-      margin: 0 auto 14px;
+      gap: 16px;
+      margin: 0 auto 16px;
       width: min(1220px, 100%);
       position: relative;
       z-index: 1;
@@ -665,7 +665,7 @@
 
     .start-booth-hero {
       min-width: min(320px, 100%);
-      padding-inline: 28px;
+      padding-inline: 32px;
       border-radius: 999px;
       border-width: 2px;
       font-family: var(--font-heading);
@@ -692,11 +692,11 @@
     }
 
     .panel {
-      padding: 18px;
+      padding: 24px;
     }
 
     details.panel-section {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       overflow: hidden;
       position: relative;
     }
@@ -705,7 +705,7 @@
     details.font-subsection > summary {
       list-style: none;
       cursor: pointer;
-      padding: 16px 18px;
+      padding: 16px 24px;
       font-family: var(--font-heading);
       font-size: 1.1rem;
       letter-spacing: 0.01em;
@@ -721,26 +721,26 @@
 
     details.panel-section > .section-content,
     details.font-subsection > *:not(summary) {
-      padding: 16px 18px 18px;
+      padding: 16px 24px 24px;
     }
 
     .section-content {
       display: grid;
-      gap: 10px;
+      gap: 16px;
     }
 
     .theme-editor-summary {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 10px;
+      gap: 16px;
       align-items: end;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
     }
 
     .builder-block {
       display: grid;
-      gap: 10px;
-      padding: 14px 16px;
+      gap: 16px;
+      padding: 16px 24px;
       border: 1px solid rgba(200, 238, 229, 0.92);
       border-radius: 18px;
       background:
@@ -767,8 +767,8 @@
     .theme-editor-group {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 10px;
+      gap: 16px;
+      margin-bottom: 16px;
     }
 
     .theme-field {
@@ -776,7 +776,7 @@
     }
 
     .builder-section-heading {
-      margin: 12px 0 6px;
+      margin: 16px 0 8px;
       font-family: var(--font-heading);
       color: #111111;
       font-size: 1rem;
@@ -785,8 +785,8 @@
     }
 
     .editor-explainer {
-      margin: 8px 0 14px;
-      padding: 12px 14px;
+      margin: 8px 0 16px;
+      padding: 16px 24px;
       border: 1px solid rgba(200, 238, 229, 0.92);
       border-radius: 16px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(238, 255, 251, 0.9));
@@ -801,7 +801,7 @@
 
     .event-type-picker {
       display: grid;
-      gap: 12px;
+      gap: 16px;
     }
 
     .event-type-picker label {
@@ -811,15 +811,15 @@
     .event-type-tiles {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
+      gap: 16px;
     }
 
     .event-type-tile {
       display: grid;
-      gap: 6px;
+      gap: 8px;
       align-items: start;
       min-height: 110px;
-      padding: 14px;
+      padding: 16px;
       border: 1px solid rgba(200, 238, 229, 0.95);
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 255, 251, 0.94));
@@ -862,9 +862,9 @@
 
     .preview-controls {
       display: grid;
-      gap: 12px;
-      margin: 12px 0 14px;
-      padding: 16px 18px;
+      gap: 16px;
+      margin: 16px 0 16px;
+      padding: 16px 24px;
       border: 1px solid rgba(200, 238, 229, 0.92);
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(238, 255, 251, 0.9));
@@ -872,7 +872,7 @@
 
     .preview-controls-header {
       display: grid;
-      gap: 4px;
+      gap: 8px;
     }
 
     .preview-controls-title {
@@ -894,12 +894,12 @@
     .preview-control-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 16px;
     }
 
     .preview-slider {
       display: grid;
-      gap: 6px;
+      gap: 8px;
     }
 
     .preview-slider label {
@@ -914,7 +914,7 @@
     .preview-slider-row {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 16px;
     }
 
     .preview-slider-row input[type="range"] {
@@ -931,7 +931,7 @@
     .style-preview-wrap {
       width: 100%;
       overflow: hidden;
-      padding: 8px 0 2px;
+      padding: 8px 0 8px;
     }
 
     .style-preview {
@@ -949,8 +949,8 @@
       content: "Live admin preview";
       display: inline-flex;
       align-items: center;
-      margin-bottom: 14px;
-      padding: 6px 10px;
+      margin-bottom: 16px;
+      padding: 8px 16px;
       border-radius: 999px;
       background: rgba(111, 231, 215, 0.14);
       color: #4c5d5a;
@@ -961,7 +961,7 @@
     }
 
     .style-preview-heading {
-      margin: 0 0 6px;
+      margin: 0 0 8px;
       font-family: var(--font-heading);
       font-size: clamp(2rem, 4vw, 3rem);
       line-height: 0.95;
@@ -971,7 +971,7 @@
     }
 
     .style-preview-subheading {
-      margin: 0 0 18px;
+      margin: 0 0 24px;
       color: var(--text-muted);
       font-size: 1.02rem;
     }
@@ -982,8 +982,8 @@
 
     .theme-editor-section {
       display: grid;
-      gap: 12px;
-      margin: 14px 0;
+      gap: 16px;
+      margin: 16px 0;
     }
 
     .video-import-panel {
@@ -1000,15 +1000,15 @@
     .capture-mode-bar {
       max-width: 1220px;
       width: min(1220px, 100%);
-      margin: 0 auto 12px;
+      margin: 0 auto 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
       flex-wrap: wrap;
       position: relative;
       z-index: 1;
-      padding: 16px 18px;
+      padding: 16px 24px;
       border: 1px solid rgba(200, 238, 229, 0.92);
       border-radius: 22px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(238, 255, 251, 0.84));
@@ -1018,7 +1018,7 @@
 
     .capture-mode-copy {
       display: grid;
-      gap: 4px;
+      gap: 8px;
     }
 
     .capture-mode-title {
@@ -1044,7 +1044,7 @@
       width: min(560px, calc(100vw - 32px));
       z-index: 24;
       display: grid;
-      gap: 12px;
+      gap: 16px;
     }
 
     #boothScreen.mode-360 .booth-360-panel {
@@ -1063,7 +1063,7 @@
     }
 
     .booth-360-status {
-      padding: 12px 14px;
+      padding: 16px 24px;
       border: 1px solid rgba(200, 238, 229, 0.95);
       border-radius: 20px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(238, 255, 251, 0.94));
@@ -1075,8 +1075,8 @@
     .booth-360-status-label {
       display: inline-flex;
       width: fit-content;
-      margin-bottom: 6px;
-      padding: 4px 8px;
+      margin-bottom: 8px;
+      padding: 8px 8px;
       border-radius: 999px;
       background: rgba(111, 231, 215, 0.14);
       color: #5c6e6b;
@@ -1095,7 +1095,7 @@
     }
 
     .booth-360-status-note {
-      margin: 6px 0 0;
+      margin: 8px 0 0;
       color: var(--text-muted);
       font-size: 0.92rem;
       line-height: 1.4;
@@ -1104,7 +1104,7 @@
     .booth-360-actions {
       display: grid;
       grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-      gap: 10px;
+      gap: 16px;
     }
 
     .booth-360-action {
@@ -1115,7 +1115,7 @@
 
     .booth-360-action strong {
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 8px;
       font-size: 1rem;
     }
 
@@ -1131,7 +1131,7 @@
       display: grid;
       place-items: center;
       min-height: 92px;
-      padding: 16px 18px;
+      padding: 16px 24px;
       border: 2px dashed #b9cdbf;
       border-radius: 24px;
       background:
@@ -1163,7 +1163,7 @@
 
     .airdrop-zone span {
       display: block;
-      margin-top: 6px;
+      margin-top: 8px;
       color: var(--text-muted);
       font-family: var(--font-body);
       font-size: 0.92rem;
@@ -1208,24 +1208,24 @@
       display: flex;
       align-items: end;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
       flex-wrap: wrap;
     }
 
     .font-setup-panel {
-      margin-top: 12px;
+      margin-top: 16px;
     }
 
     .font-setup-panel > summary {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 16px;
     }
 
     .font-setup-summary-copy {
       display: grid;
-      gap: 4px;
+      gap: 8px;
     }
 
     .font-setup-summary-title {
@@ -1244,7 +1244,7 @@
 
     .font-setup-body {
       display: grid;
-      gap: 12px;
+      gap: 16px;
     }
 
     .font-pairing-intro {
@@ -1256,13 +1256,13 @@
     .builder-inline-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      gap: 16px;
     }
 
     .builder-asset-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      gap: 16px;
     }
 
     .builder-summary-line {
@@ -1273,12 +1273,12 @@
 
     .create-path-panel {
       display: grid;
-      gap: 14px;
+      gap: 16px;
     }
 
     .create-path-header {
       display: grid;
-      gap: 4px;
+      gap: 8px;
     }
 
     .create-path-header h3,
@@ -1295,12 +1295,12 @@
     .create-path-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 16px;
     }
 
     .create-path-field {
       display: grid;
-      gap: 6px;
+      gap: 8px;
       align-content: start;
     }
 
@@ -1316,7 +1316,7 @@
 
     .theme-filter-card {
       min-height: 70px;
-      padding: 10px;
+      padding: 16px;
       border-radius: 14px;
       border: 1px solid rgba(200, 239, 231, 0.95);
       background: rgba(255, 255, 255, 0.94);
@@ -1324,7 +1324,7 @@
       box-shadow: 0 10px 20px rgba(17, 17, 17, 0.06);
       display: grid;
       align-content: center;
-      gap: 3px;
+      gap: 8px;
       text-align: left;
     }
 
@@ -1357,8 +1357,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
-      padding: 12px 14px;
+      gap: 16px;
+      padding: 16px 24px;
       cursor: pointer;
       list-style: none;
     }
@@ -1385,20 +1385,20 @@
 
     .create-optional-body {
       display: grid;
-      gap: 12px;
-      padding: 0 14px 14px;
+      gap: 16px;
+      padding: 0 16px 16px;
     }
 
     .create-asset-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      gap: 16px;
     }
 
     .theme-picker-shell {
       display: grid;
-      gap: 12px;
-      padding: 14px 16px;
+      gap: 16px;
+      padding: 16px 24px;
       border: 1px solid rgba(200, 239, 231, 0.92);
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 255, 251, 0.92));
@@ -1408,13 +1408,13 @@
       display: flex;
       align-items: start;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
       flex-wrap: wrap;
     }
 
     .theme-picker-copy {
       display: grid;
-      gap: 4px;
+      gap: 8px;
     }
 
     .theme-picker-title {
@@ -1436,7 +1436,7 @@
     .font-pairing-layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 10px;
+      gap: 16px;
     }
 
     .font-preview-box {
@@ -1460,14 +1460,14 @@
 
     .event-style-recommendations {
       display: grid;
-      gap: 10px;
+      gap: 16px;
     }
 
     .event-style-header {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      gap: 10px;
+      gap: 16px;
       flex-wrap: wrap;
     }
 
@@ -1517,10 +1517,10 @@
 
     .quick-pick-card {
       text-align: left;
-      padding: 10px 12px;
+      padding: 16px 24px;
       border-radius: 14px;
       display: grid;
-      gap: 5px;
+      gap: 8px;
       align-content: start;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 255, 251, 0.94));
       border: 1px solid rgba(200, 239, 231, 0.95);
@@ -1543,8 +1543,8 @@
       display: inline-flex;
       align-items: center;
       width: fit-content;
-      margin-bottom: 2px;
-      padding: 3px 7px;
+      margin-bottom: 8px;
+      padding: 8px 8px;
       border-radius: 999px;
       background: rgba(113, 225, 210, 0.12);
       color: #4f7d76;
@@ -1576,21 +1576,21 @@
     }
 
     .quick-pick-preview {
-      margin-top: 2px;
+      margin-top: 8px;
       color: #36534e;
       font-size: 0.9rem;
       line-height: 1.18;
     }
 
     .quick-pick-notes {
-      margin-top: 2px;
+      margin-top: 8px;
       color: var(--text-muted);
       font-size: 0.78rem;
       line-height: 1.35;
     }
 
     .quick-pick-empty {
-      padding: 14px 16px;
+      padding: 16px 24px;
       border: 1px dashed var(--border);
       border-radius: 16px;
       background: rgba(255, 255, 255, 0.72);
@@ -1601,15 +1601,15 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      margin-top: 10px;
+      gap: 16px;
+      margin-top: 16px;
     }
 
     .quick-picks-grid,
     .quick-pick-groups {
       display: grid;
-      gap: 12px;
-      margin-top: 10px;
+      gap: 16px;
+      margin-top: 16px;
     }
 
     .quick-picks-grid {
@@ -1625,8 +1625,8 @@
 
     .quick-pick-group {
       display: grid;
-      gap: 10px;
-      padding: 14px;
+      gap: 16px;
+      padding: 16px;
       border: 1px solid rgba(200, 239, 231, 0.92);
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(242, 255, 251, 0.9));
@@ -1650,18 +1650,18 @@
     .quick-pick-group-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 10px;
+      gap: 16px;
     }
 
     .current-assets {
       display: grid;
-      gap: 10px;
+      gap: 16px;
     }
 
     .asset-collapsible {
       display: grid;
-      gap: 10px;
-      padding: 12px;
+      gap: 16px;
+      padding: 16px;
       border: 1px solid rgba(200, 239, 231, 0.92);
       border-radius: 22px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 255, 252, 0.92));
@@ -1672,9 +1672,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
       width: 100%;
-      padding: 10px 12px;
+      padding: 16px 24px;
       border: 1px solid rgba(200, 239, 231, 0.92);
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 255, 251, 0.96));
@@ -1698,7 +1698,7 @@
 
     .asset-collapsible-copy {
       display: grid;
-      gap: 2px;
+      gap: 8px;
       min-width: 0;
     }
 
@@ -1719,7 +1719,7 @@
     .asset-collapsible-meta {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 16px;
       flex-shrink: 0;
       color: #5d6c69;
       font-size: 0.78rem;
@@ -1768,11 +1768,11 @@
       min-height: 0;
       overflow: hidden;
       display: grid;
-      gap: 10px;
+      gap: 16px;
     }
 
     .asset-panel-state {
-      padding: 10px 12px;
+      padding: 16px 24px;
       border: 1px dashed rgba(200, 239, 231, 0.92);
       border-radius: 16px;
       background: rgba(255, 255, 255, 0.8);
@@ -1782,7 +1782,7 @@
 
     .asset-row {
       display: grid;
-      gap: 6px;
+      gap: 8px;
     }
 
     .asset-grid {
@@ -1793,7 +1793,7 @@
 
     .asset-grid.asset-grid-thumbs {
       grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-      gap: 10px;
+      gap: 16px;
     }
 
     .asset-single {
@@ -1852,14 +1852,14 @@
       border: 1px solid #d7e1f2;
       background: #f8fbff;
       border-radius: 10px;
-      padding: 12px;
-      margin: 12px 0;
+      padding: 16px;
+      margin: 16px 0;
     }
 
     .asset-library-panel-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 8px;
     }
 
     .asset-library-toolbar {
@@ -1867,12 +1867,12 @@
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 8px;
       align-items: end;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
     }
 
     .asset-library-toolbar label {
       display: grid;
-      gap: 4px;
+      gap: 8px;
       color: #5c6b93;
       font-size: 0.88em;
     }
@@ -1882,14 +1882,14 @@
       min-height: 40px;
       border: 1px solid #d2ddf0;
       border-radius: 8px;
-      padding: 8px 10px;
+      padding: 8px 16px;
       font: inherit;
     }
 
     .asset-library-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-      gap: 10px;
+      gap: 16px;
     }
 
     .asset-library-card {
@@ -1898,7 +1898,7 @@
       background: #eef2f7;
       padding: 8px;
       display: grid;
-      gap: 6px;
+      gap: 8px;
       min-width: 0;
       position: relative;
       cursor: pointer;
@@ -1933,7 +1933,7 @@
       font-size: 0.7em;
       font-weight: 800;
       letter-spacing: 0.04em;
-      padding: 4px 7px;
+      padding: 8px 8px;
       text-transform: uppercase;
     }
 
@@ -1962,7 +1962,7 @@
     .asset-library-badges {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 8px;
     }
 
     .asset-library-badge {
@@ -1972,20 +1972,20 @@
       color: #355071;
       font-size: 0.66em;
       line-height: 1;
-      padding: 4px 6px;
+      padding: 8px 8px;
     }
 
     .asset-library-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 8px;
       position: relative;
       z-index: 9;
     }
 
     .asset-library-actions button {
       min-height: 30px;
-      padding: 4px 7px;
+      padding: 8px 8px;
       font-size: 0.76em;
     }
 
@@ -1999,12 +1999,12 @@
       gap: 8px;
       max-height: min(48vh, 420px);
       overflow: auto;
-      padding: 4px 2px;
+      padding: 8px 8px;
     }
 
     .theme-defaults-group {
       display: grid;
-      gap: 5px;
+      gap: 8px;
     }
 
     .theme-defaults-group-title {
@@ -2024,7 +2024,7 @@
       border-radius: 8px;
       background: #f8fbff;
       color: #334155;
-      padding: 7px 9px;
+      padding: 8px 16px;
     }
 
     .theme-defaults-parent-option {
@@ -2034,7 +2034,7 @@
     }
 
     .theme-defaults-child-option {
-      margin-left: 14px;
+      margin-left: 16px;
     }
 
     .setup-theme-defaults-btn {
@@ -2053,7 +2053,7 @@
       gap: 16px;
       max-height: min(62svh, 620px);
       overflow: auto;
-      padding: 4px 2px;
+      padding: 8px 8px;
     }
 
     .theme-defaults-setup-section {
@@ -2077,7 +2077,7 @@
       border-radius: 10px;
       background: #f8fbff;
       color: #334155;
-      padding: 7px;
+      padding: 8px;
     }
 
     .theme-defaults-setup-option img {
@@ -2105,12 +2105,12 @@
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .asset-library-pill {
       min-height: 40px;
-      padding: 8px 14px;
+      padding: 8px 16px;
       border: 1px solid #d2ddf0;
       border-radius: 999px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 248, 255, 0.94));
@@ -2144,8 +2144,8 @@
       justify-content: center;
       min-width: 24px;
       height: 24px;
-      margin-left: 6px;
-      padding: 0 6px;
+      margin-left: 8px;
+      padding: 0 8px;
       border-radius: 999px;
       background: rgba(111, 231, 215, 0.18);
       color: #294640;
@@ -2160,14 +2160,14 @@
 
     .asset-library-show-more {
       min-height: 44px;
-      padding: 10px 18px;
+      padding: 16px 24px;
       border-radius: 999px;
       border: 1px solid #d2ddf0;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 248, 255, 0.94));
       color: #334155;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 12px;
+      margin-top: 16px;
       box-shadow: 0 6px 14px rgba(17, 17, 17, 0.06);
       transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
     }
@@ -2204,13 +2204,13 @@
       }
 
       .asset-collapsible {
-        padding: 10px;
+        padding: 16px;
         border-radius: 18px;
       }
 
       .asset-collapsible-header {
         flex-wrap: wrap;
-        padding: 10px;
+        padding: 16px;
       }
 
       .asset-collapsible-meta {
@@ -2226,7 +2226,7 @@
 
     #adminScreen label {
       display: block;
-      margin: 8px 0 6px;
+      margin: 8px 0 8px;
       color: #4e6a66;
       font-weight: 600;
     }
@@ -2238,7 +2238,7 @@
       width: 100%;
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 12px 14px;
+      padding: 16px 24px;
       background: rgba(255, 255, 255, 0.96);
       color: var(--text);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
@@ -2247,7 +2247,7 @@
     #adminScreen .btn-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 16px;
     }
 
     #adminScreen .btn-row > * {
@@ -2257,8 +2257,8 @@
     .admin-launchpad {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px;
-      margin: 12px auto 14px;
+      gap: 16px;
+      margin: 16px auto 16px;
       max-width: 980px;
     }
 
@@ -2291,7 +2291,7 @@
       width: min(760px, 96vw);
       max-height: min(92svh, 920px);
       overflow: auto;
-      padding: 20px;
+      padding: 24px;
       background: #ffffff;
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -2303,7 +2303,7 @@
       gap: 8px;
       flex-wrap: wrap;
       justify-content: flex-end;
-      margin-top: 12px;
+      margin-top: 16px;
     }
 
     .admin-modal-target {
@@ -2327,7 +2327,7 @@
       bottom: 14px;
       z-index: 10003;
       width: min(340px, 94vw);
-      padding: 14px;
+      padding: 16px;
       display: none;
       background: rgba(255, 255, 255, 0.9);
       border: 1px solid var(--border);
@@ -2372,7 +2372,7 @@
       align-items: center;
       justify-content: center;
       min-height: 42px;
-      padding: 10px 14px;
+      padding: 16px 24px;
       border-radius: 999px;
       border: 1px solid #c8efe7;
       background: rgba(255, 255, 255, 0.92);
@@ -2395,7 +2395,7 @@
       display: flex;
       align-items: start;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
     }
 
     #mobileSettingsSheet {
@@ -2404,10 +2404,10 @@
       right: 12px;
       z-index: 30;
       display: grid;
-      gap: 12px;
+      gap: 16px;
       width: min(430px, calc(100vw - 24px));
       max-height: min(78svh, 760px);
-      padding: 14px;
+      padding: 16px;
       border: 1px solid rgba(200, 238, 229, 0.96);
       border-radius: 26px;
       background:
@@ -2439,7 +2439,7 @@
     #mobileSettingsSheet #controls {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
+      gap: 16px;
       padding: 0;
       border: none;
       background: transparent;
@@ -2449,18 +2449,18 @@
     }
 
     #mobileSettingsSheet #options {
-      padding: 12px;
+      padding: 16px;
       border-radius: 20px;
       max-height: min(42svh, 360px);
     }
 
     #mobileSettingsSheet #options .options-section {
       display: grid;
-      gap: 10px;
+      gap: 16px;
     }
 
     #mobileSettingsSheet #options .options-section + .options-section {
-      margin-top: 12px;
+      margin-top: 16px;
     }
 
     body:not(.viewport-phone) #mobileSettingsToggle,
@@ -2477,7 +2477,7 @@
       z-index: 14;
       width: clamp(208px, 18vw, 248px);
       max-height: min(68svh, 620px);
-      padding: 12px;
+      padding: 16px;
       transform: none;
       opacity: 1;
       pointer-events: auto;
@@ -2495,8 +2495,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      padding: 10px 20px;
+      gap: 16px;
+      padding: 16px 24px;
       border: 1px solid rgba(214, 188, 149, 0.48);
       border-radius: var(--radius-lg);
       background:
@@ -2544,8 +2544,8 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 10px;
-      padding: clamp(90px, 10vh, 124px) clamp(16px, 2.5vw, 24px) clamp(28px, 4.5vh, 40px);
+      gap: 16px;
+      padding: clamp(64px, 10vh, 64px) clamp(16px, 2.5vw, 24px) clamp(32px, 4.5vh, 40px);
       position: relative;
     }
 
@@ -2573,7 +2573,7 @@
         radial-gradient(circle at top, rgba(135, 236, 225, 0.12), rgba(255, 255, 255, 0) 52%);
       backdrop-filter: blur(14px);
       box-shadow: 0 18px 38px rgba(132, 176, 170, 0.14);
-      padding: 12px;
+      padding: 16px;
     }
 
     #options {
@@ -2582,7 +2582,7 @@
       width: clamp(152px, 16vw, 210px);
       display: grid;
       align-content: start;
-      gap: 12px;
+      gap: 16px;
     }
 
     #options .options-section {
@@ -2614,7 +2614,7 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
-      padding: 4px;
+      padding: 8px;
       border: 1px solid rgba(202, 186, 160, 0.72);
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.72);
@@ -2644,7 +2644,7 @@
       right: 10px;
       display: flex;
       flex-direction: column;
-      gap: calc(8px + (var(--edit-mode-button-scale, 1) - 1) * 18px);
+      gap: calc(8px + (var(--edit-mode-button-scale, 1) - 1) * 24px);
       transform: translateY(calc(-50% + var(--edit-mode-buttons-y)));
     }
 
@@ -2663,8 +2663,8 @@
       overflow-x: auto;
       justify-content: center;
       align-items: stretch;
-      gap: 10px;
-      padding: 10px 12px;
+      gap: 16px;
+      padding: 16px 24px;
       border: 1px solid rgba(214, 188, 149, 0.44);
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.78);
@@ -2686,7 +2686,7 @@
       min-width: clamp(112px, 12vw, 154px);
       min-height: 72px;
       flex: 0 1 auto;
-      padding: 8px 10px !important;
+      padding: 8px 16px !important;
       border: 1px solid rgba(214, 188, 149, 0.62);
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 243, 233, 0.98));
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
@@ -2707,15 +2707,15 @@
     #boothModeBar .controls-toggle label {
       width: auto;
       min-width: 0;
-      padding-inline: 14px;
+      padding-inline: 16px;
     }
 
     #options .thumb {
       position: relative;
       width: 100%;
       max-width: 140px;
-      margin: 6px auto;
-      padding: 4px;
+      margin: 8px auto;
+      padding: 8px;
       border: 2px solid #c8efe7;
       border-radius: 16px;
       background: linear-gradient(180deg, #ffffff, #f1fffb);
@@ -2740,7 +2740,7 @@
       align-items: center;
       justify-items: center;
       gap: 8px;
-      padding: 14px 10px;
+      padding: 16px 24px;
       min-height: 92px;
     }
 
@@ -2819,7 +2819,7 @@
       justify-content: center;
       position: relative;
       z-index: 1;
-      gap: 12px;
+      gap: 16px;
       padding-bottom: 24px;
     }
 
@@ -3047,7 +3047,7 @@
       word-break: normal;
       hyphens: none;
       text-wrap: balance;
-      padding: 12px 14px;
+      padding: 16px 24px;
     }
 
     #captureBtn.primary.message-mode {
@@ -3058,7 +3058,7 @@
       font-size: clamp(0.94rem, 1.35vw, 1.08rem);
       line-height: 0.96;
       letter-spacing: 0.02em;
-      padding: 16px 18px;
+      padding: 16px 24px;
     }
 
     #captureBtn.recording-stop {
@@ -3109,12 +3109,12 @@
     #welcomeOverlay {
       display: grid;
       justify-items: center;
-      gap: 18px;
+      gap: 24px;
       width: fit-content;
       max-width: min(92vw, 920px);
       min-width: min(440px, 72vw);
       text-align: center;
-      padding: 22px 28px;
+      padding: 24px 32px;
       border-radius: 26px;
       border: 1px solid var(--border);
       background:
@@ -3137,7 +3137,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 6px 12px;
+      padding: 8px 16px;
       border-radius: 999px;
       background: rgba(111, 231, 215, 0.14);
       color: #4c5d5a;
@@ -3153,7 +3153,7 @@
       min-width: 82px;
       min-height: 82px;
       max-width: 220px;
-      margin-bottom: -4px;
+      margin-bottom: -8px;
       animation: boothLogoFloat 9s ease-in-out infinite alternate;
     }
 
@@ -3169,7 +3169,7 @@
     }
 
     .welcome-host-line {
-      margin: -6px 0 0;
+      margin: -8px 0 0;
       color: #4d615d;
       font-size: clamp(1rem, 2.3vw, 1.35rem);
       line-height: 1.35;
@@ -3179,7 +3179,7 @@
     .welcome-flow-section {
       display: grid;
       justify-items: center;
-      gap: 18px;
+      gap: 24px;
       width: 100%;
     }
 
@@ -3222,7 +3222,7 @@
     .start-button {
       width: auto;
       min-width: clamp(180px, 24vw, 280px);
-      padding: 15px 24px;
+      padding: 16px 24px;
       position: relative;
       z-index: 2;
       border-radius: 999px;
@@ -3249,7 +3249,7 @@
     .demo-theme-bar {
       display: none;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+      gap: 16px;
       width: min(100%, 560px);
       position: relative;
       z-index: 2;
@@ -3261,7 +3261,7 @@
 
     .demo-theme-chip {
       min-height: 52px;
-      padding: 10px 12px;
+      padding: 16px 24px;
       border-radius: 18px;
       border: 1px solid rgba(255, 255, 255, 0.38);
       background: rgba(17, 17, 17, 0.34);
@@ -3280,13 +3280,13 @@
     .welcome-mode-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      gap: 16px;
       width: min(100%, 680px);
     }
 
     .welcome-mode-btn {
       min-height: 104px;
-      padding: 14px 16px;
+      padding: 16px 24px;
       border-radius: 24px;
       border: 1px solid rgba(214, 188, 149, 0.62);
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 243, 233, 0.98));
@@ -3352,7 +3352,7 @@
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
       font-size: var(--countdown-size);
       color: #111111;
       font-family: var(--font-heading);
@@ -3372,10 +3372,10 @@
     #boothHostPrompt {
       display: grid;
       justify-items: center;
-      gap: 3px;
+      gap: 8px;
       min-height: 0;
       max-width: min(92vw, 520px);
-      padding: 8px 14px;
+      padding: 8px 16px;
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.56);
       border: 1px solid rgba(255, 255, 255, 0.68);
@@ -3405,7 +3405,7 @@
       display: none;
       gap: 8px;
       align-items: center;
-      padding: 8px 12px;
+      padding: 8px 16px;
       border-radius: 999px;
       border: 1px solid #f1cad4;
       background: #fff2f5;
@@ -3420,7 +3420,7 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 10px;
+      gap: 16px;
       min-height: 22px;
     }
 
@@ -3429,7 +3429,7 @@
       align-items: center;
       justify-content: center;
       min-height: 34px;
-      padding: 8px 14px;
+      padding: 8px 16px;
       border-radius: 999px;
       border: 1px solid #bfeee6;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(239, 255, 251, 0.92));
@@ -3466,7 +3466,7 @@
       display: grid;
       justify-items: center;
       gap: 8px;
-      padding: 26px 30px;
+      padding: 32px 32px;
       border-radius: 34px;
       background: rgba(255, 255, 255, 0.9);
       border: 1px solid rgba(190, 245, 226, 0.92);
@@ -3580,7 +3580,7 @@
       place-items: center;
       width: min(96vw, 1100px);
       height: min(92svh, 900px);
-      padding: 20px;
+      padding: 24px;
     }
 
     #finalStrip,
@@ -3599,12 +3599,12 @@
       width: min(392px, 92vw);
       min-height: 420px;
       max-height: calc(92svh - 20px);
-      padding: 18px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 16px;
       z-index: 2;
       border-radius: 24px;
       background: rgba(255, 255, 255, 0.82);
@@ -3616,9 +3616,9 @@
     #reviewPanel {
       display: grid;
       justify-items: center;
-      gap: 14px;
+      gap: 16px;
       width: min(420px, 92vw);
-      padding: clamp(20px, 3vw, 30px);
+      padding: clamp(24px, 3vw, 32px);
       border-radius: 34px;
       border: 1px solid rgba(190, 245, 226, 0.92);
       background:
@@ -3657,7 +3657,7 @@
 
     .review-actions {
       display: grid;
-      gap: 10px;
+      gap: 16px;
       width: min(100%, 320px);
     }
 
@@ -3684,7 +3684,7 @@
     #reviewRetakeBtn {
       justify-self: center;
       min-height: 40px;
-      padding: 8px 14px;
+      padding: 8px 16px;
       border: 1px solid rgba(239, 154, 154, 0.75);
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.82);
@@ -3699,7 +3699,7 @@
       bottom: max(16px, env(safe-area-inset-bottom, 0px));
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 16px;
       z-index: 3;
     }
 
@@ -3743,7 +3743,7 @@
 
     .share-mock-qr {
       aspect-ratio: 1 / 1;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
     }
 
     .share-mock-label {
@@ -3772,7 +3772,7 @@
       width: min(100%, 240px);
       max-width: 240px;
       height: auto;
-      padding: 10px;
+      padding: 16px;
       border: 6px solid #fff;
       border-radius: 16px;
       background: #fff;
@@ -3780,7 +3780,7 @@
     #paidPrintPanel {
       display: none;
       width: min(100%, 360px);
-      padding: 18px;
+      padding: 24px;
       border: 1px solid rgba(23, 73, 68, 0.18);
       border-radius: 18px;
       background: #fff;
@@ -3790,19 +3790,19 @@
     }
     #paidPrintPanel.show { display: block; }
     #paidPrintPanel h2 { margin: 0 0 8px; font-size: 1.15rem; }
-    #paidPrintPanel p { margin: 7px 0; line-height: 1.4; }
+    #paidPrintPanel p { margin: 8px 0; line-height: 1.4; }
     #paidPrintPaymentQr {
       display: none;
       width: 176px;
       height: 176px;
       object-fit: contain;
-      margin: 14px auto 0;
+      margin: 16px auto 0;
       background: #fff;
     }
     #paidPrintPaymentQr.show { display: block; }
 
     #emailForm input {
-      padding: 8px 10px;
+      padding: 8px 16px;
       width: min(240px, 76vw);
       border: 1px solid #c8d8f4;
       border-radius: 12px;
@@ -3811,7 +3811,7 @@
     }
 
     .shortcut-btn {
-      padding: 4px 8px;
+      padding: 8px 8px;
       border-radius: 12px;
       border: 1px solid #ccd9f3;
       background: #eff5ff;
@@ -3822,7 +3822,7 @@
       position: absolute;
       right: 12px;
       bottom: 12px;
-      padding: 10px 14px;
+      padding: 16px 24px;
       border-radius: 14px;
       border: 1px solid #d4e1f9;
       background: rgba(255, 255, 255, 0.92);
@@ -3852,13 +3852,13 @@
       width: min(520px, 94vw);
       max-height: 90svh;
       overflow: auto;
-      padding: 14px;
+      padding: 16px;
       background: #fff;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       display: grid;
-      gap: 10px;
+      gap: 16px;
     }
 
     #confirmPreview {
@@ -3943,7 +3943,7 @@
         transform: none;
         width: 100%;
         max-width: 560px;
-        margin-top: 12px;
+        margin-top: 16px;
       }
       #videoContainer { width: min(92vw, var(--live-camera-width, 860px)); max-width: none; }
       .share-mock {
@@ -3970,7 +3970,7 @@
     }
 
     @media (max-width: 760px) {
-      #adminScreen { padding: 10px; }
+      #adminScreen { padding: 16px; }
       .status-pill { white-space: normal; border-radius: 16px; }
       .theme-editor-group { grid-template-columns: 1fr; }
       .font-pairing-layout { grid-template-columns: 1fr; }
@@ -4007,7 +4007,7 @@
 
     @media (max-height: 760px) and (min-width: 1101px) {
       #boothMain {
-        padding-bottom: 150px;
+        padding-bottom: 64px;
       }
 
       #options,
@@ -4022,14 +4022,14 @@
     @media (max-height: 820px) {
       #boothMain {
         align-items: flex-start;
-        padding-top: clamp(112px, 14vh, 152px);
+        padding-top: clamp(64px, 14vh, 64px);
       }
       #captureBtn.primary {
         width: clamp(88px, 12vw, 118px);
         height: clamp(88px, 12vw, 118px);
       }
       .mode-btn {
-        padding: 6px 8px;
+        padding: 8px 8px;
         font-size: 0.85em;
       }
 
@@ -4039,8 +4039,8 @@
       }
 
       #qrCodeContainer {
-        padding: 18px;
-        gap: 10px;
+        padding: 24px;
+        gap: 16px;
       }
 
       #qrCode {
@@ -4051,20 +4051,20 @@
 
     /* shown in photo mode only */
     #captureBtn.primary {
-      margin-bottom: clamp(8px, 3vh, 20px);
+      margin-bottom: clamp(8px, 3vh, 24px);
     }
 
     #gallery {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      padding: 10px;
+      padding: 16px;
       background: rgba(0, 0, 0, 0.6);
     }
 
     #gallery img {
       max-width: 120px;
-      margin: 5px;
+      margin: 8px;
       border-radius: 6px;
       border: 2px solid #fff;
     }
@@ -4108,7 +4108,7 @@
       color: white;
       text-shadow: 2px 2px 8px black;
       background: transparent;
-      padding: 22px 28px;
+      padding: 24px 32px;
       border-radius: 14px;
     }
 
@@ -4122,7 +4122,7 @@
 
     #welcomeOverlay p {
       font-size: clamp(1rem, 3.2vw, 1.5rem);
-      margin-top: 10px;
+      margin-top: 16px;
       animation: pulse 1.5s infinite;
     }
 
@@ -4132,7 +4132,7 @@
       justify-content: center;
       min-width: clamp(220px, 30vw, 340px);
       min-height: clamp(72px, 10vw, 96px);
-      padding: 18px 34px;
+      padding: 24px 40px;
       border-radius: 999px;
       border: 1px solid rgba(215, 196, 168, 0.95);
       outline: 0;
@@ -4251,8 +4251,8 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
-      gap: 10px;
-      margin-top: 10px;
+      gap: 16px;
+      margin-top: 16px;
     }
 
     /* Final Preview */
@@ -4262,7 +4262,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: clamp(18px, 3vw, 36px);
+      padding: clamp(24px, 3vw, 40px);
       background:
         radial-gradient(circle at 10% 10%, rgba(228, 242, 121, 0.46), rgba(228, 242, 121, 0) 16%),
         radial-gradient(circle at 30% 4%, rgba(255, 144, 169, 0.28), rgba(255, 144, 169, 0) 10%),
@@ -4281,10 +4281,10 @@
       grid-template-columns: minmax(0, 1fr) minmax(300px, clamp(320px, 24vw, 360px));
       align-items: center;
       justify-items: center;
-      gap: clamp(18px, 2vw, 30px);
+      gap: clamp(24px, 2vw, 32px);
       width: min(100%, 1720px);
       min-height: calc(100svh - clamp(44px, 6vw, 88px));
-      padding: clamp(18px, 1.8vw, 28px);
+      padding: clamp(24px, 1.8vw, 32px);
       box-sizing: border-box;
       isolation: isolate;
     }
@@ -4351,7 +4351,7 @@
       min-width: 0;
       min-height: 0;
       max-height: min(86svh, 760px);
-      gap: 12px;
+      gap: 16px;
       align-self: center;
       justify-self: stretch;
       transform: none;
@@ -4362,7 +4362,7 @@
     #qrCodeContainer {
       color: #111111;
       font-family: var(--font-body);
-      padding: clamp(20px, 2vw, 28px);
+      padding: clamp(24px, 2vw, 32px);
       border-radius: 34px;
       border: 1px solid rgba(173, 244, 234, 0.9);
       background:
@@ -4375,7 +4375,7 @@
       display: grid;
       justify-items: center;
       align-content: start;
-      gap: 12px;
+      gap: 16px;
       min-height: 0;
       overflow: visible;
     }
@@ -4416,7 +4416,7 @@
       align-items: center;
       justify-content: center;
       min-height: 34px;
-      padding: 6px 14px;
+      padding: 8px 16px;
       border-radius: 999px;
       background: #ffbfd2;
       color: #111111;
@@ -4435,7 +4435,7 @@
       height: auto;
       max-width: 280px;
       margin: 0 auto;
-      padding: 12px;
+      padding: 16px;
       border: 0;
       border-radius: 24px;
       background: #ffffff;
@@ -4456,7 +4456,7 @@
       #finalPreviewContent {
         grid-template-columns: 1fr;
         justify-items: center;
-        gap: 18px;
+        gap: 24px;
         min-height: auto;
         padding: 16px;
       }
@@ -4484,8 +4484,8 @@
 
     .shortcut-btn {
       font-size: 0.8em;
-      padding: 4px 8px;
-      margin: 2px;
+      padding: 8px 8px;
+      margin: 8px;
       background: #333;
     }
 
@@ -4495,12 +4495,12 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 15px 10px !important;
+      padding: 16px 16px !important;
     }
 
     .mode-btn-icon {
       display: flex;
-      gap: 4px;
+      gap: 8px;
       align-items: center;
     }
 
@@ -4519,19 +4519,19 @@
 
     .mode-btn-icon.strip {
       flex-direction: column;
-      gap: 3px;
+      gap: 8px;
     }
 
     .font-picker {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
     }
 
     .font-row {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
       align-items: flex-start;
     }
 
@@ -4542,7 +4542,7 @@
 
     .font-row select {
       width: 100%;
-      padding: 8px 10px;
+      padding: 8px 16px;
       border-radius: 10px;
       border: 1px solid #c8efe7;
       background: linear-gradient(180deg, #ffffff, #f2fffb);
@@ -4551,7 +4551,7 @@
 
     .font-preview {
       width: 100%;
-      padding: 10px 12px;
+      padding: 16px 24px;
       border-radius: 12px;
       border: 1px solid #c8efe7;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 255, 251, 0.92));
@@ -4571,7 +4571,7 @@
       display: block;
       font-size: 0.75em;
       opacity: 0.7;
-      margin-bottom: 4px;
+      margin-bottom: 8px;
       letter-spacing: 0.3px;
       text-transform: uppercase;
       font-family: var(--font-label);
@@ -4586,7 +4586,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 16px;
       font-weight: 600;
       color: var(--accent2);
     }
@@ -4606,7 +4606,7 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .theme-card-section h3 {
@@ -4622,7 +4622,7 @@
     .theme-card-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
+      gap: 16px;
     }
 
     .theme-card {
@@ -4630,7 +4630,7 @@
       border: 1px solid #c8efe7;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 255, 251, 0.92));
       color: #26423d;
-      padding: 12px 10px;
+      padding: 16px 24px;
       text-align: center;
       display: flex;
       align-items: center;
@@ -4662,14 +4662,14 @@
       font-size: 0.75em;
       font-weight: 500;
       opacity: 0.7;
-      margin-top: 6px;
+      margin-top: 8px;
       text-transform: none;
     }
 
     .quick-picks {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 10px;
+      gap: 16px;
       max-height: 220px;
       overflow: hidden;
       transition: max-height 0.3s ease;
@@ -4685,11 +4685,11 @@
       border: 1px solid rgba(200, 239, 231, 0.95);
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 255, 251, 0.94));
       color: #111111;
-      padding: 12px;
+      padding: 16px;
       text-align: left;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
       cursor: pointer;
       transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
@@ -4730,18 +4730,18 @@
     .font-divider {
       border: none;
       border-top: 1px solid #c8efe7;
-      margin: 10px 0 4px;
+      margin: 16px 0 8px;
     }
 
     .style-preview {
-      margin: 12px 0;
+      margin: 16px 0;
       padding: 16px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 255, 251, 0.92));
       border: 1px solid #c8efe7;
       border-radius: 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 16px;
     }
 
     .style-preview-heading {
@@ -4837,7 +4837,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 16px;
     }
 
     details.font-panel > summary {
@@ -4845,12 +4845,12 @@
     }
 
     details.font-panel[open] > summary {
-      margin-bottom: 10px;
+      margin-bottom: 16px;
     }
 
     details.font-subsection {
-      margin-top: 10px;
-      padding: 10px 12px;
+      margin-top: 16px;
+      padding: 16px 24px;
       border: 1px solid #1c1f29;
       border-radius: 10px;
       background: #0b0d12;
@@ -4876,14 +4876,14 @@
       grid-template-columns: minmax(190px, 240px) minmax(0, 1fr) minmax(132px, 190px);
       align-items: center;
       justify-items: center;
-      gap: clamp(14px, 2vw, 28px);
-      padding: clamp(74px, 8vh, 104px) clamp(16px, 2.5vw, 28px) clamp(104px, 13vh, 144px);
+      gap: clamp(16px, 2vw, 32px);
+      padding: clamp(64px, 8vh, 64px) clamp(16px, 2.5vw, 32px) clamp(64px, 13vh, 64px);
     }
 
     #boothScreen.booth-ready #boothHeader {
       top: 10px;
       max-width: min(62vw, 720px);
-      padding: 8px 18px;
+      padding: 8px 24px;
       border-radius: 22px;
     }
 
@@ -4906,7 +4906,7 @@
       align-self: center;
       width: 100%;
       max-height: min(64svh, 610px);
-      padding: 12px;
+      padding: 16px;
       border-radius: 24px;
       transform: none;
       opacity: 1;
@@ -4916,7 +4916,7 @@
 
     #boothScreen.booth-ready .mobile-settings-sheet-header {
       display: flex !important;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
     }
 
     #boothScreen.booth-ready #mobileSettingsClose {
@@ -4945,14 +4945,14 @@
     #boothScreen.booth-ready #options .thumb {
       max-width: 112px;
       border-radius: 14px;
-      margin: 2px auto;
+      margin: 8px auto;
     }
 
     #boothScreen.booth-ready #videoWrap {
       grid-column: 2;
       width: 100%;
       max-width: min(100%, 980px);
-      gap: 10px;
+      gap: 16px;
       padding: 0;
     }
 
@@ -4979,7 +4979,7 @@
 
     #boothScreen.booth-ready #boothBackBtn {
       min-height: 44px;
-      padding: 10px 16px;
+      padding: 16px 24px;
       border-radius: 999px;
     }
 
@@ -4991,7 +4991,7 @@
     @media (max-width: 860px) {
       #boothScreen.booth-ready #boothMain {
         display: flex;
-        padding: clamp(70px, 9vh, 96px) 12px clamp(104px, 13vh, 132px);
+        padding: clamp(64px, 9vh, 64px) 16px clamp(64px, 13vh, 64px);
       }
 
       #boothScreen.booth-ready #mobileSettingsSheet {
@@ -5024,21 +5024,21 @@
     body.viewport-short #boothMain {
       justify-content: flex-start;
       gap: 8px;
-      padding-top: clamp(56px, 5.8vh, 72px);
-      padding-left: clamp(136px, 13vw, 176px);
-      padding-right: clamp(136px, 13vw, 176px);
-      padding-bottom: clamp(108px, 13vh, 138px);
+      padding-top: clamp(56px, 5.8vh, 64px);
+      padding-left: clamp(64px, 13vw, 64px);
+      padding-right: clamp(64px, 13vw, 64px);
+      padding-bottom: clamp(64px, 13vh, 64px);
     }
 
     body.viewport-short #boothModeBar {
       width: min(100%, calc(100vw - 24px));
-      margin-bottom: 2px;
+      margin-bottom: 8px;
     }
 
     body.viewport-short #boothModeBar #controls {
       width: 100%;
       max-height: none;
-      padding: 8px 10px;
+      padding: 8px 16px;
       flex-wrap: nowrap;
       overflow-x: auto;
       justify-content: center;
@@ -5055,12 +5055,12 @@
     }
 
     body.viewport-short #videoWrap {
-      gap: 6px;
+      gap: 8px;
       position: relative;
       max-width: min(100%, calc(var(--capture-landscape-width) + 160px));
       margin-inline: auto;
-      padding-left: 66px;
-      padding-right: 66px;
+      padding-left: 64px;
+      padding-right: 64px;
     }
 
     body.viewport-short #videoContainer {
@@ -5088,13 +5088,13 @@
       border-radius: 26px;
       font-size: clamp(0.82rem, 0.95vw, 0.94rem);
       line-height: 0.94;
-      padding: 12px 14px;
+      padding: 16px 24px;
     }
 
     body.viewport-short #boothHeader {
       top: 8px;
       max-width: min(90vw, 620px);
-      padding: 10px 18px;
+      padding: 16px 24px;
       border-radius: 22px;
     }
 
@@ -5111,7 +5111,7 @@
 
     body.viewport-short #options,
     body.viewport-short #controls {
-      padding: 10px;
+      padding: 16px;
       border-radius: 18px;
       max-height: 68vh;
     }
@@ -5127,8 +5127,8 @@
 
     body.viewport-short #options .thumb {
       max-width: 104px;
-      margin: 4px auto;
-      padding: 3px;
+      margin: 8px auto;
+      padding: 8px;
     }
 
     body.viewport-short #controls {
@@ -5137,13 +5137,13 @@
       bottom: auto;
       transform: translateY(-50%);
       width: clamp(64px, 5vw, 78px);
-      gap: calc(6px + (var(--edit-mode-button-scale, 1) - 1) * 24px);
+      gap: calc(8px + (var(--edit-mode-button-scale, 1) - 1) * 24px);
       max-height: none;
     }
 
     body.viewport-short .mode-btn {
       min-height: 54px;
-      padding: 7px 4px !important;
+      padding: 8px 8px !important;
     }
 
     body.viewport-short .mode-btn-label {
@@ -5175,7 +5175,7 @@
 
     button {
       min-height: var(--button-min-height);
-      padding: 11px var(--button-padding-inline);
+      padding: 16px var(--button-padding-inline);
       border: var(--button-border);
       border-radius: var(--button-radius);
       background: var(--button-bg);
@@ -5216,7 +5216,7 @@
     .btn-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 16px;
       align-items: stretch;
     }
 
@@ -5270,7 +5270,7 @@
     .asset-actions {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px;
+      gap: 16px;
     }
 
     #eventGalleryActions,
@@ -5284,7 +5284,7 @@
     #emailForm {
       width: 100%;
       display: grid;
-      gap: 10px;
+      gap: 16px;
     }
 
     #emailForm input,
@@ -5299,7 +5299,7 @@
 
     .shortcut-btn {
       min-height: 40px;
-      padding: 8px 12px;
+      padding: 8px 16px;
       border-radius: 14px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(238, 255, 251, 0.94));
       border: 1px solid #c8eee5;
@@ -5379,9 +5379,9 @@
     }
 
     #boothMain {
-      padding-left: clamp(180px, 17vw, 236px);
-      padding-right: clamp(104px, 11vw, 144px);
-      padding-bottom: clamp(36px, 7vh, 64px);
+      padding-left: clamp(64px, 17vw, 64px);
+      padding-right: clamp(64px, 11vw, 64px);
+      padding-bottom: clamp(40px, 7vh, 64px);
       align-items: center;
     }
 
@@ -5402,13 +5402,13 @@
     .mode-btn {
       width: 100%;
       min-height: 82px;
-      padding: 10px 6px !important;
+      padding: 16px 8px !important;
       border-radius: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
       overflow: hidden;
     }
 
@@ -5464,9 +5464,9 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 16px;
       min-height: 46px;
-      padding: 10px 12px;
+      padding: 16px 24px;
       border: 1px solid #c8efe7;
       border-radius: 16px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 255, 251, 0.95));
@@ -5522,7 +5522,7 @@
     }
 
     #finalPreviewActions {
-      gap: 12px;
+      gap: 16px;
     }
 
     #finalPreviewActions.share-panel-empty #qrCodeContainer {
@@ -5574,27 +5574,27 @@
 
     @media (max-width: 900px) {
       #boothMain {
-        gap: 14px;
-        padding: clamp(96px, 12vh, 132px) 12px max(16px, env(safe-area-inset-bottom, 0px) + 16px);
+        gap: 16px;
+        padding: clamp(64px, 12vh, 64px) 16px max(16px, env(safe-area-inset-bottom, 0px) + 16px);
       }
 
       #videoWrap {
         max-width: 100%;
-        gap: 12px;
+        gap: 16px;
       }
 
       #options,
       #controls {
         width: 100%;
         max-width: 100%;
-        padding: 10px;
+        padding: 16px;
         border-radius: 18px;
       }
 
       #controls {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
+        gap: 16px;
       }
 
       .controls-toggle {
@@ -5603,14 +5603,14 @@
 
       .mode-btn {
         min-height: 88px;
-        padding: 10px 8px !important;
+        padding: 16px 8px !important;
       }
 
       #welcomeOverlay {
         min-width: min(420px, 88vw);
         width: min(94vw, 760px);
-        gap: 14px;
-        padding: 24px 22px;
+        gap: 16px;
+        padding: 24px 24px;
       }
 
       .welcome-mode-grid {
@@ -5625,7 +5625,7 @@
       .start-button {
         min-height: 58px;
         min-width: min(100%, 280px);
-        padding: 14px 22px;
+        padding: 16px 24px;
       }
 
       #finalPreviewContent::before {
@@ -5647,7 +5647,7 @@
       .create-optional-panel > summary {
         align-items: flex-start;
         flex-direction: column;
-        gap: 4px;
+        gap: 8px;
       }
 
       .create-optional-note {
@@ -5671,8 +5671,8 @@
 
       .capture-mode-bar {
         align-items: stretch;
-        padding: 14px;
-        gap: 10px;
+        padding: 16px;
+        gap: 16px;
       }
 
       .capture-mode-bar > button,
@@ -5687,7 +5687,7 @@
       #boothHeader {
         top: max(8px, env(safe-area-inset-top, 0px) + 8px);
         max-width: min(94vw, 560px);
-        padding: 10px 16px;
+        padding: 16px 24px;
       }
 
       #eventTitle {
@@ -5708,9 +5708,9 @@
         right: 0;
         z-index: 30;
         display: grid;
-        gap: 12px;
+        gap: 16px;
         max-height: min(78svh, 760px);
-        padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 14px;
+        padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 16px;
         border-bottom: 1px solid rgba(200, 238, 229, 0.96);
         border-bottom-left-radius: 26px;
         border-bottom-right-radius: 26px;
@@ -5743,7 +5743,7 @@
     #mobileSettingsSheet #controls {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
+      gap: 16px;
       padding: 0;
       border: none;
       background: transparent;
@@ -5753,23 +5753,23 @@
     }
 
     #mobileSettingsSheet #options {
-      padding: 12px;
+      padding: 16px;
       border-radius: 20px;
       max-height: min(48svh, 420px);
     }
 
     #mobileSettingsSheet #options .options-section {
       display: grid;
-      gap: 10px;
+      gap: 16px;
     }
 
     #mobileSettingsSheet #options .options-section + .options-section {
-      margin-top: 12px;
+      margin-top: 16px;
     }
 
       .mobile-settings-sheet-copy {
         display: grid;
-        gap: 4px;
+        gap: 8px;
         min-width: 0;
       }
 
@@ -5813,10 +5813,10 @@
       }
 
       #boothMain {
-        padding-top: clamp(88px, 11vh, 116px);
-        padding-left: 10px;
-        padding-right: 10px;
-        gap: 12px;
+        padding-top: clamp(64px, 11vh, 64px);
+        padding-left: 16px;
+        padding-right: 16px;
+        gap: 16px;
       }
 
       #videoContainer {
@@ -5839,7 +5839,7 @@
         border-radius: 28px;
         font-size: clamp(0.84rem, 2.2vw, 0.98rem);
         line-height: 0.94;
-        padding: 14px 16px;
+        padding: 16px 24px;
       }
 
       #mobileSettingsSheet #options,
@@ -5861,11 +5861,11 @@
       }
 
       #welcomeOverlay {
-        padding: 22px 18px;
+        padding: 24px 24px;
       }
 
       #finalPreviewContent {
-        padding: 12px;
+        padding: 16px;
       }
 
       #finalPreviewButtons {
@@ -5914,13 +5914,13 @@
 
       .setup-tab {
         flex: 1 1 92px;
-        padding: 11px 10px;
+        padding: 16px 24px;
         font-size: 0.8rem;
       }
 
       #boothMain {
-        padding-top: max(82px, env(safe-area-inset-top, 0px) + 70px);
-        padding-bottom: max(12px, env(safe-area-inset-bottom, 0px) + 12px);
+        padding-top: max(64px, env(safe-area-inset-top, 0px) + 64px);
+        padding-bottom: max(16px, env(safe-area-inset-bottom, 0px) + 16px);
       }
 
       #options,
@@ -5931,7 +5931,7 @@
 
       .mode-btn {
         min-height: 64px;
-        padding: 10px 6px !important;
+        padding: 16px 8px !important;
       }
 
       .mode-btn-label {
@@ -5941,8 +5941,8 @@
       #welcomeOverlay {
         width: min(95vw, 420px);
         min-width: 0;
-        gap: 12px;
-        padding: 18px 14px;
+        gap: 16px;
+        padding: 24px 16px;
         border-radius: 22px;
       }
 
@@ -5955,7 +5955,7 @@
         min-height: 54px;
         width: 100%;
         max-width: 260px;
-        padding: 13px 18px;
+        padding: 16px 24px;
       }
 
       .demo-theme-bar {
@@ -5977,7 +5977,7 @@
         min-height: 90px;
         height: auto;
         border-radius: 26px;
-        padding: 14px 16px;
+        padding: 16px 24px;
       }
 
       #finalPreviewButtons {
@@ -6056,7 +6056,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 14px;
+      gap: 16px;
       padding: 8px 0;
       z-index: 15;
       position: relative;
@@ -6136,7 +6136,7 @@
 
       #filterCarouselName {
         font-size: 0.72rem;
-        padding: 6px 12px;
+        padding: 8px 16px;
       }
     }
   </style>
@@ -6166,8 +6166,8 @@
         <button type="button" id="setupTabShare" class="setup-tab" data-setup-tab="share" aria-pressed="false">Share</button>
       </div>
     </div>
-    <div class="setup-session-card glass-panel rounded-2xl p-4">
-      <div class="flex items-center gap-2 mb-1">
+    <div class="setup-session-card glass-panel rounded-2xl p-6">
+      <div class="flex items-center gap-2 mb-2">
         <i
           data-lucide="clipboard-check"
           style="width: 14px; height: 14px; color: #74bf9d"
@@ -6271,7 +6271,7 @@
               <option value="harsh-light-fix">Harsh Light Fix</option>
             </select>
             <label for="cameraZoomInput">Camera Zoom</label>
-            <div style="display:flex; align-items:center; gap:10px;">
+            <div style="display:flex; align-items:center; gap:16px;">
               <input type="range" id="cameraZoomInput" min="1" max="2.5" step="0.05">
               <span id="cameraZoomValue" style="color:#5d6c69; min-width:48px; text-align:right;"></span>
             </div>
@@ -6283,7 +6283,7 @@
             <div id="analytics" class="hidden">
               <h2>Analytics</h2>
               <pre id="analyticsData"
-                style="background:#f6f9ff; padding:10px; border-radius:8px; white-space:pre-wrap; word-wrap:break-word;"></pre>
+                style="background:#f6f9ff; padding:16px; border-radius:8px; white-space:pre-wrap; word-wrap:break-word;"></pre>
               <div class="btn-row"><button onclick="clearAnalytics()">Clear Analytics</button></div>
             </div>
           </div>
@@ -6308,7 +6308,7 @@
               <option value="off">Off</option>
               <option value="paid-queue">Paid queue</option>
             </select>
-            <label style="display:inline-flex; align-items:center; gap:8px; margin:12px 0 0;">
+            <label style="display:inline-flex; align-items:center; gap:8px; margin:16px 0 0;">
               <input type="checkbox" id="printNoPaymentRequiredInput"> No payment required for prints
             </label>
             <small style="display:block; color:#5d6c69;">Use this when prints are included with the event or sponsor-covered.</small>
@@ -6350,7 +6350,7 @@
         <details class="panel-section" id="offlineSection" data-setup-section="share">
           <summary>Offline / Device Tools</summary>
           <div class="section-content">
-            <div class="admin-field" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0;">
+            <div class="admin-field" style="display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin:0;">
               <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
                 <input type="checkbox" id="offlineModeToggle"> Offline Mode (no QR; queue emails)
               </label>
@@ -6365,8 +6365,8 @@
         <details class="panel-section" id="currentAssetsSection" data-setup-section="event">
           <summary>Visual Assets</summary>
           <div id="currentAssetsContent" class="section-content hidden">
-            <div class="panel" style="margin-bottom:12px;">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div class="panel" style="margin-bottom:16px;">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
                 <div>
                   <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Event</div>
                   <div id="currentEventName" style="font-weight:700; font-size:1.1em;">No event selected</div>
@@ -6377,22 +6377,22 @@
                   <div id="currentEventTheme" style="font-weight:600;"></div>
                 </div>
               </div>
-	              <div style="margin-top:10px;">
+	              <div style="margin-top:16px;">
 	                <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Event Gallery Link</div>
-	                <div id="eventGalleryActions" class="hidden" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+	                <div id="eventGalleryActions" class="hidden" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
 	                  <button type="button" onclick="copyEventGalleryLink()">Copy Link</button>
 	                  <button type="button" onclick="openEventGalleryLink()">Open Link</button>
 	                </div>
-	                <div id="eventGalleryLink" style="margin-top:6px; font-size:0.9em; color:#bbb; word-break:break-all;"></div>
-	                <div style="margin-top:4px; font-size:0.85em; color:#9aa;">Gallery link uses the saved event name/date, or the current session name if no saved event is selected.</div>
+	                <div id="eventGalleryLink" style="margin-top:8px; font-size:0.9em; color:#bbb; word-break:break-all;"></div>
+	                <div style="margin-top:8px; font-size:0.85em; color:#9aa;">Gallery link uses the saved event name/date, or the current session name if no saved event is selected.</div>
 	              </div>
-	              <div style="margin-top:10px;">
+	              <div style="margin-top:16px;">
 	                <div id="currentEventAssetsSummary" class="hidden" style="color:#9aa;"></div>
-	                <div id="currentThemeAssetsSummary" style="color:#9aa; margin-top:4px;"></div>
+	                <div id="currentThemeAssetsSummary" style="color:#9aa; margin-top:8px;"></div>
 	              </div>
             </div>
-            <div class="panel" style="margin-bottom:12px;">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
+            <div class="panel" style="margin-bottom:16px;">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
                 <div>
                   <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Advanced Theme Controls</div>
                   <div style="font-weight:700; font-size:1.02em;">Edit this event without changing the base theme</div>
@@ -6401,7 +6401,7 @@
                   Theme edits stay in Theme Library. This panel is the normal place to change this event’s text, logo, overlays, templates, and other event-level visuals.
                 </div>
               </div>
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:16px;">
                 <div class="theme-field">
                   <label for="eventNameInput">Event Name</label>
                   <input type="text" id="eventNameInput" placeholder="Event name" autocomplete="off" autocapitalize="words" spellcheck="false">
@@ -6435,7 +6435,7 @@
                   <input type="text" id="eventExpoCompanyInput" placeholder="Name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
               </div>
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:16px;">
                 <div class="theme-field">
                   <label for="eventBannerTextInput">Banner Text</label>
                   <input type="text" id="eventBannerTextInput" placeholder="Top booth banner" autocomplete="off" spellcheck="false">
@@ -6453,27 +6453,27 @@
                   <input type="text" id="eventCaptureLabelInput" placeholder="Take Photo" autocomplete="off" spellcheck="false">
                 </div>
               </div>
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:16px;">
                 <div class="theme-field">
                   <label for="eventBannerSizeInput">Banner Size</label>
-                  <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="display:flex; align-items:center; gap:16px;">
                     <input type="range" id="eventBannerSizeInput" min="24" max="120" step="2">
                     <span id="eventBannerSizeValue" style="color:#9aa; min-width:48px; text-align:right;"></span>
                   </div>
                 </div>
                 <div class="theme-field">
                   <label for="eventWelcomeTitleSizeInput">Welcome Title Size</label>
-                  <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="display:flex; align-items:center; gap:16px;">
                     <input type="range" id="eventWelcomeTitleSizeInput" min="24" max="120" step="2">
                     <span id="eventWelcomeTitleSizeValue" style="color:#9aa; min-width:48px; text-align:right;"></span>
                   </div>
                 </div>
               </div>
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
                 <div>
                   <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Base Theme</div>
                   <div id="eventBaseThemeName" style="font-weight:600;"></div>
-                  <div id="eventBaseThemeAssetsSummary" style="color:#9aa; margin-top:4px; font-size:0.92em;"></div>
+                  <div id="eventBaseThemeAssetsSummary" style="color:#9aa; margin-top:8px; font-size:0.92em;"></div>
                 </div>
                 <div>
                   <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Theme Reference</div>
@@ -6488,14 +6488,14 @@
               <button type="button" id="eventToSubThemeBtn" class="hidden">Save Theme Preset</button>
             </div>
             <div class="asset-library-panel" id="uploadedAssetLibraryPanel">
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:8px;">
                 <span style="font-weight:600; color:#334155;">Asset Library</span>
                 <div class="asset-library-panel-actions">
                   <button type="button" id="assetLibraryClearFilters" class="hidden">Clear filters</button>
                   <button type="button" id="refreshAssetLibraryBtn">Refresh</button>
                 </div>
               </div>
-              <div id="assetLibraryPills" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;"></div>
+              <div id="assetLibraryPills" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;"></div>
               <div class="asset-library-toolbar">
                 <label style="flex:1 1 100%;">
                   Search
@@ -6537,13 +6537,13 @@
             </div>
             <div id="bulkAssetModal" class="hidden" style="position:fixed; inset:0; background:rgba(28,40,72,0.35); z-index:10010; display:flex; align-items:center; justify-content:center; padding:16px;">
               <div style="width:min(520px, 96vw); background:#fff; border:1px solid #cedcf4; border-radius:16px; box-shadow:0 12px 30px rgba(99, 123, 175, 0.18); padding:16px;">
-                <h3 style="margin:0 0 10px;">Add Assets</h3>
-                <p id="bulkAssetSummary" style="margin:0 0 12px; color:#5c6b93;">0 files selected</p>
-                <label style="display:flex; align-items:center; gap:8px; margin:6px 0;"><input type="checkbox" id="bulkToBackgrounds" checked> Backgrounds</label>
-                <label style="display:flex; align-items:center; gap:8px; margin:6px 0;"><input type="checkbox" id="bulkToGreenBackgrounds"> Green Screen Backgrounds</label>
-                <label style="display:flex; align-items:center; gap:8px; margin:6px 0;"><input type="checkbox" id="bulkToOverlays" checked> Overlays</label>
-                <label style="display:flex; align-items:center; gap:8px; margin:6px 0;"><input type="checkbox" id="bulkToTemplates"> Templates</label>
-                <div class="btn-row" style="margin-top:14px;">
+                <h3 style="margin:0 0 16px;">Add Assets</h3>
+                <p id="bulkAssetSummary" style="margin:0 0 16px; color:#5c6b93;">0 files selected</p>
+                <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToBackgrounds" checked> Backgrounds</label>
+                <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToGreenBackgrounds"> Green Screen Backgrounds</label>
+                <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToOverlays" checked> Overlays</label>
+                <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToTemplates"> Templates</label>
+                <div class="btn-row" style="margin-top:16px;">
                   <button type="button" id="bulkAssetCancel">Cancel</button>
                   <button type="button" id="bulkAssetApply" class="primary">Upload</button>
                 </div>
@@ -6551,7 +6551,7 @@
             </div>
             <div id="currentAssets" class="current-assets">
               <div
-                style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+                style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px;">
                 <span style="font-weight:600; color:var(--accent2);">Selections</span>
                 <span id="undoBar" style="display:inline-flex; align-items:center; gap:8px; font-size:.9em;">
                   <button id="undoBtn" onclick="undoLastRemoval()" disabled>Undo last remove</button>
@@ -6573,7 +6573,7 @@
       <div id="toast" role="status" aria-live="polite"></div>
       <div class="admin-right panel hidden" id="themeEditorPanel" data-setup-section="event" hidden aria-hidden="true" style="display:none;">
         <div id="themeEditor">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
             <h2 style="margin:0;">Live Preview</h2>
             <button type="button" id="themeEditorCloseBtn">Done</button>
           </div>
@@ -6706,7 +6706,7 @@
               <button type="button" id="btnSaveTheme" class="hidden" onclick="saveTheme()">Save New Theme</button>
             </div>
           </div>
-          <details class="panel-section" style="margin-top:14px;">
+          <details class="panel-section" style="margin-top:16px;">
             <summary>Selected Theme Summary</summary>
             <div class="section-content">
               <div class="theme-editor-group">
@@ -6871,7 +6871,7 @@
               <span id="shareStatus" style="display:none;">Preparing link…</span>
             </div>
             <canvas id="qrCode"></canvas>
-            <div id="qrHint" style="display:none; font-size:0.9em; color:#ccc; margin-top:6px;"></div>
+            <div id="qrHint" style="display:none; font-size:0.9em; color:#ccc; margin-top:8px;"></div>
             <!-- Guest mode must not expose local device download actions. -->
           </div>
           <section id="paidPrintPanel" aria-live="polite">
@@ -6894,7 +6894,7 @@
     </div>
     <div id="launchConfirmModal">
       <div id="launchConfirmCard">
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
           <div>
             <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Confirm Launch</div>
             <div style="font-weight:700; font-size:1.05em;">Review the session summary before the booth opens</div>
@@ -6945,12 +6945,12 @@
         <button type="button" data-edit-view="share">Share</button>
       </div>
       <label for="editScaleInput">Size</label>
-      <div style="display:flex; align-items:center; gap:10px;">
+      <div style="display:flex; align-items:center; gap:16px;">
         <input type="range" id="editScaleInput" min="0.6" max="1.6" step="0.02">
         <span id="editScaleValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
       </div>
       <label for="editPositionInput" id="editPositionLabel">Vertical Position</label>
-      <div id="editPositionRow" style="display:flex; align-items:center; gap:10px;">
+      <div id="editPositionRow" style="display:flex; align-items:center; gap:16px;">
         <input type="range" id="editPositionInput" min="-200" max="200" step="2">
         <span id="editPositionValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
       </div>
@@ -7011,8 +7011,8 @@
       <div class="modal-card">
         <h3 id="assetThemeDefaultsTitle">Theme Defaults</h3>
         <p id="assetThemeDefaultsSummary" style="margin:0 0 8px; color:#5c6b93;"></p>
-        <p id="assetThemeDefaultsSelectionCount" style="margin:0 0 12px; font-weight:600; color:#334155;"></p>
-        <div class="btn-row" style="justify-content:flex-start; margin:0 0 12px;">
+        <p id="assetThemeDefaultsSelectionCount" style="margin:0 0 16px; font-weight:600; color:#334155;"></p>
+        <div class="btn-row" style="justify-content:flex-start; margin:0 0 16px;">
           <button type="button" id="assetThemeDefaultsSelectCurrent">Select current theme</button>
           <button type="button" id="assetThemeDefaultsClearAll">Clear all</button>
         </div>
@@ -7026,7 +7026,7 @@
     <div id="themeDefaultsSetupModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="themeDefaultsSetupTitle">
       <div class="modal-card theme-defaults-setup-card">
         <h3 id="themeDefaultsSetupTitle">Set Up Defaults</h3>
-        <p id="themeDefaultsSetupSummary" style="margin:0 0 12px; color:#5c6b93;">Choose the default assets for this theme.</p>
+        <p id="themeDefaultsSetupSummary" style="margin:0 0 16px; color:#5c6b93;">Choose the default assets for this theme.</p>
         <div id="themeDefaultsSetupList" class="theme-defaults-setup-list"></div>
         <div class="modal-footer">
           <button type="button" id="themeDefaultsSetupCancel">Cancel</button>
@@ -7139,22 +7139,22 @@
         <label for="createEventWelcomeText">Welcome Screen Text</label>
         <input type="text" id="createEventWelcomeText" placeholder="Welcome!">
         <label for="createEventWelcomeSize">Welcome Title Size</label>
-        <div style="display:flex; align-items:center; gap:10px;">
+        <div style="display:flex; align-items:center; gap:16px;">
           <input type="range" id="createEventWelcomeSize" min="24" max="120" step="2">
           <span id="createEventWelcomeSizeValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
         </div>
         <label>Character Position</label>
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
           <label for="createEventCharacterX" style="min-width:64px;">Left</label>
           <input type="range" id="createEventCharacterX" min="0" max="60" step="1">
           <span id="createEventCharacterXValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
         </div>
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:8px;">
           <label for="createEventCharacterBottom" style="min-width:64px;">Bottom</label>
           <input type="range" id="createEventCharacterBottom" min="-10" max="20" step="1">
           <span id="createEventCharacterBottomValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
         </div>
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:8px;">
           <label for="createEventCharacterHeight" style="min-width:64px;">Height</label>
           <input type="range" id="createEventCharacterHeight" min="20" max="110" step="1">
           <span id="createEventCharacterHeightValue" style="color:#bbb; min-width:48px; text-align:right;"></span>
@@ -7163,7 +7163,7 @@
         <input type="text" id="createEventStartText" placeholder="Touch to start">
         <label for="createEventCaptureText">Take Photo Button Text</label>
         <input type="text" id="createEventCaptureText" placeholder="Take Photo">
-        <div class="panel" style="margin-top:10px;">
+        <div class="panel" style="margin-top:16px;">
           <h4 style="margin:0 0 8px;">Event-only Assets</h4>
           <label for="createEventBackgrounds">Backgrounds</label>
           <input type="file" id="createEventBackgrounds" accept="image/*" multiple>
@@ -7173,7 +7173,7 @@
           <input type="file" id="createEventOverlays" accept="image/*" multiple>
           <label for="createEventTemplates">Templates</label>
           <input type="file" id="createEventTemplates" accept="image/*" multiple>
-          <div id="createEventSummary" style="margin-top:6px; color:#bbb; font-size:0.9em;"></div>
+          <div id="createEventSummary" style="margin-top:8px; color:#bbb; font-size:0.9em;"></div>
         </div>
         <div class="modal-footer">
           <button type="button" id="createEventCancel">Cancel</button>
@@ -7184,7 +7184,7 @@
     <div id="quickStartModal" class="modal-backdrop">
       <div class="modal-card">
         <h3>Quick Start</h3>
-        <p style="margin:0 0 10px; color:#5d6c69;">Choose a theme to start immediately.</p>
+        <p style="margin:0 0 16px; color:#5d6c69;">Choose a theme to start immediately.</p>
         <label for="quickStartThemeSelect">Theme</label>
         <select id="quickStartThemeSelect"></select>
         <div class="modal-footer">

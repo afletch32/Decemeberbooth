@@ -60,8 +60,9 @@ test("overlay builder uses clear layout-first terminology for exports", () => {
     "builder should expose the three canonical layout classes"
   );
   assert.ok(
-    overlayMaker.includes("return assetSrc || filename;"),
-    "single-layout exports should keep the filename-only manifest fallback"
+    overlayMaker.includes("const slots = getManifestSlots(guide);") &&
+      overlayMaker.includes("manifest.foreground = {"),
+    "single-layout exports should use manifest metadata so photos render into the exported window"
   );
   assert.ok(
     overlayMaker.includes("manifest.layout = guide.layout;"),

@@ -19,7 +19,7 @@
       color: #fff;
     }
     header {
-      padding: 20px;
+      padding: 32px;
       text-align: center;
       background: #0f1220;
       border-bottom: 1px solid #1f2433;
@@ -36,9 +36,9 @@
       font-size: 0.95rem;
     }
     .grid {
-      padding: 18px;
+      padding: 24px;
       display: grid;
-      gap: 12px;
+      gap: 16px;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
     .card {
@@ -60,6 +60,14 @@
       padding: 16px;
       color: #b7bdd3;
       text-align: center;
+    }
+    @media (max-width: 900px) {
+      header,
+      .grid { padding: 24px; }
+    }
+    @media (max-width: 560px) {
+      header,
+      .grid { padding: 16px; }
     }
     a {
       color: var(--accent);
