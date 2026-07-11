@@ -1,5 +1,5 @@
 Current goal
-- Keep after-capture output sharp and readable without excessive blur.
+- Keep after-capture review/share controls fully visible without shrinking the photo.
 
 What is done
 - Confirmed the worktree was clean before starting this checkpoint.
@@ -18,6 +18,8 @@ What is done
 - Reduced after-capture glass blur so the review/share screen is less hazy.
 - Reduced guest photo blur by lowering blur-backed blemish and under-eye correction strengths and blur radii.
 - Updated beauty preset tests to keep guest-visible blur-backed corrections subtle.
+- Kept the final photo preview size intact while moving the review/share action card inside the right edge of the viewport.
+- Expanded browser smoke coverage to assert after-capture controls stay inside the viewport vertically and horizontally.
 - Verified focused browser coverage with `npm run test:browser -- --grep "booth test camera displays and captures"`.
 - Verified `node --input-type=module --check < scripts/app.js` passes.
 - Verified `node --test setup-screen.test.js` passes.

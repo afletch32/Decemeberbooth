@@ -395,10 +395,16 @@ test("booth test camera displays and captures the processed live preview canvas"
       viewportWidth: window.innerWidth,
       reviewLeft: reviewRect.left,
       reviewRight: reviewRect.right,
+      reviewTop: reviewRect.top,
+      reviewBottom: reviewRect.bottom,
       actionsLeft: actionsRect.left,
       actionsRight: actionsRect.right,
+      actionsTop: actionsRect.top,
+      actionsBottom: actionsRect.bottom,
       previewLeft: previewRect.left,
       previewRight: previewRect.right,
+      previewTop: previewRect.top,
+      previewBottom: previewRect.bottom,
     };
   });
   expect(reviewBounds.documentWidth).toBeLessThanOrEqual(
@@ -410,11 +416,23 @@ test("booth test camera displays and captures the processed live preview canvas"
   expect(reviewBounds.reviewRight).toBeLessThanOrEqual(
     reviewBounds.previewRight
   );
+  expect(reviewBounds.reviewTop).toBeGreaterThanOrEqual(
+    reviewBounds.previewTop
+  );
+  expect(reviewBounds.reviewBottom).toBeLessThanOrEqual(
+    reviewBounds.previewBottom
+  );
   expect(reviewBounds.actionsLeft).toBeGreaterThanOrEqual(
     reviewBounds.previewLeft
   );
   expect(reviewBounds.actionsRight).toBeLessThanOrEqual(
     reviewBounds.previewRight
+  );
+  expect(reviewBounds.actionsTop).toBeGreaterThanOrEqual(
+    reviewBounds.previewTop
+  );
+  expect(reviewBounds.actionsBottom).toBeLessThanOrEqual(
+    reviewBounds.previewBottom
   );
 
   await page.evaluate(async () => {
@@ -450,10 +468,16 @@ test("booth test camera displays and captures the processed live preview canvas"
       viewportWidth: window.innerWidth,
       qrLeft: qrRect.left,
       qrRight: qrRect.right,
+      qrTop: qrRect.top,
+      qrBottom: qrRect.bottom,
       actionsLeft: actionsRect.left,
       actionsRight: actionsRect.right,
+      actionsTop: actionsRect.top,
+      actionsBottom: actionsRect.bottom,
       previewLeft: previewRect.left,
       previewRight: previewRect.right,
+      previewTop: previewRect.top,
+      previewBottom: previewRect.bottom,
     };
   });
   expect(shareBounds.documentWidth).toBeLessThanOrEqual(
@@ -461,11 +485,19 @@ test("booth test camera displays and captures the processed live preview canvas"
   );
   expect(shareBounds.qrLeft).toBeGreaterThanOrEqual(shareBounds.previewLeft);
   expect(shareBounds.qrRight).toBeLessThanOrEqual(shareBounds.previewRight);
+  expect(shareBounds.qrTop).toBeGreaterThanOrEqual(shareBounds.previewTop);
+  expect(shareBounds.qrBottom).toBeLessThanOrEqual(shareBounds.previewBottom);
   expect(shareBounds.actionsLeft).toBeGreaterThanOrEqual(
     shareBounds.previewLeft
   );
   expect(shareBounds.actionsRight).toBeLessThanOrEqual(
     shareBounds.previewRight
+  );
+  expect(shareBounds.actionsTop).toBeGreaterThanOrEqual(
+    shareBounds.previewTop
+  );
+  expect(shareBounds.actionsBottom).toBeLessThanOrEqual(
+    shareBounds.previewBottom
   );
 
   await page.locator("#finalStrip").click({ force: true });
