@@ -2,6 +2,7 @@ Current goal
 - Make the live capture preview the dominant booth-ready surface across supported kiosk viewports.
 
 What is done
+- Replaced the full-width captured-photo band with a compact floating thumbnail tray that hides when empty or outside booth-ready state.
 - Replaced the booth-ready three-column layout with one centered, shrinkable camera column for standard photo modes.
 - Moved frame selection behind the existing `Choose Frame` sheet instead of permanently reserving a desktop column.
 - Reduced decorative camera chrome and removed the ready-state host prompt from layout space.
@@ -80,6 +81,7 @@ Known bugs/blockers
 - The requested dirty worktree was not present at start; `git status --short` was clean.
 
 Important decisions
+- Keep captured-photo history available as a compact tray without letting it consume capture-layout height.
 - Keep the capture refactor CSS-only and preserve all camera, countdown, orientation, overlay, hardware, and 360 behavior.
 - Keep secondary frame controls collapsed until the guest requests them.
 - Keep QR generation and all share/upload/print/image-processing logic unchanged; this fix is CSS and layout-test only.

@@ -502,6 +502,13 @@ test("booth test camera displays and captures the processed live preview canvas"
 
   await page.locator("#finalStrip").click({ force: true });
   await expect(page.locator("#finalPreview")).not.toHaveClass(/show/);
+  await expect(page.locator("#gallery")).toBeVisible();
+  const galleryBounds = await page.locator("#gallery").boundingBox();
+  expect(galleryBounds).not.toBeNull();
+  expect(galleryBounds.height).toBeLessThanOrEqual(64);
+  expect(galleryBounds.width).toBeLessThanOrEqual(360);
+  expect(galleryBounds.x + galleryBounds.width).toBeLessThanOrEqual(2048);
+  expect(galleryBounds.y + galleryBounds.height).toBeLessThanOrEqual(1280);
 });
 
 test("final share photo and QR stay inside supported kiosk viewports", async ({ page }) => {
