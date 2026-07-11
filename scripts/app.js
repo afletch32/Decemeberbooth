@@ -606,8 +606,14 @@ const DOM = {
   launchFontStatus: document.getElementById("launchFontStatus"),
   launchCameraStatus: document.getElementById("launchCameraStatus"),
   launchOutputStatus: document.getElementById("launchOutputStatus"),
+  launchBackgroundThumb: document.getElementById("launchBackgroundThumb"),
+  launchBackgroundSummary: document.getElementById("launchBackgroundSummary"),
   launchOverlayCount: document.getElementById("launchOverlayCount"),
+  launchOverlayThumb: document.getElementById("launchOverlayThumb"),
+  launchOverlaySummary: document.getElementById("launchOverlaySummary"),
   launchStripStatus: document.getElementById("launchStripStatus"),
+  launchTemplateThumb: document.getElementById("launchTemplateThumb"),
+  launchTemplateSummary: document.getElementById("launchTemplateSummary"),
   launchWarning: document.getElementById("launchWarning"),
   launchModeSingleBtn: document.getElementById("launchModeSingleBtn"),
   launchModeStripBtn: document.getElementById("launchModeStripBtn"),
@@ -5123,6 +5129,49 @@ function setLaunchSummaryText(targetIds, value) {
   });
 }
 
+const EMPTY_LAUNCH_THUMBNAIL_SRC =
+  "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+
+function setLaunchSummaryThumbnail(nodeId, src, label) {
+  const node = document.getElementById(nodeId);
+  if (!node) return;
+  const thumbSrc = src ? withBust(src) : EMPTY_LAUNCH_THUMBNAIL_SRC;
+  node.src = thumbSrc;
+  node.alt = src ? `${label} selected` : `No ${label.toLowerCase()} selected`;
+  node.title = src ? `${label} selected` : `No ${label.toLowerCase()} selected`;
+}
+
+function getLaunchSummaryThumbnailSrc(kind) {
+  if (kind === "background") {
+    const list = Array.isArray(activeSessionAssets.backgrounds)
+      ? activeSessionAssets.backgrounds.filter(Boolean)
+      : [];
+    if (!list.length) return "";
+    const index = Math.min(
+      Math.max(activeSessionAssets.backgroundIndex || 0, 0),
+      list.length - 1
+    );
+    return getAssetEntrySrc(list[index]);
+  }
+  if (kind === "overlay") {
+    return getAssetEntrySrc(
+      Array.isArray(activeSessionAssets.overlays) &&
+        activeSessionAssets.overlays.length
+        ? activeSessionAssets.overlays[0]
+        : ""
+    );
+  }
+  if (kind === "template") {
+    return getAssetEntrySrc(
+      Array.isArray(activeSessionAssets.templates) &&
+        activeSessionAssets.templates.length
+        ? activeSessionAssets.templates[0]
+        : ""
+    );
+  }
+  return "";
+}
+
 async function refreshLaunchCameraStatus() {
   if (demoMode) return "Demo mode";
   if (hasLiveVideoStream()) return "Ready";
@@ -5173,12 +5222,33 @@ async function updateLaunchSummary() {
   );
   setLaunchSummaryText(["launchBackgroundCount"], backgroundCountLabel);
   setLaunchSummaryText(
+    ["launchBackgroundSummary"],
+    backgroundCountLabel
+  );
+  setLaunchSummaryThumbnail(
+    "launchBackgroundThumb",
+    getLaunchSummaryThumbnailSrc("background"),
+    "Background"
+  );
+  setLaunchSummaryText(
     ["launchOverlayCount", "launchConfirmOverlayCount"],
     overlayCountLabel
+  );
+  setLaunchSummaryText(["launchOverlaySummary"], overlayCountLabel);
+  setLaunchSummaryThumbnail(
+    "launchOverlayThumb",
+    getLaunchSummaryThumbnailSrc("overlay"),
+    "Overlay"
   );
   setLaunchSummaryText(
     ["launchStripStatus", "launchConfirmStripStatus"],
     templateCountLabel
+  );
+  setLaunchSummaryText(["launchTemplateSummary"], templateCountLabel);
+  setLaunchSummaryThumbnail(
+    "launchTemplateThumb",
+    getLaunchSummaryThumbnailSrc("template"),
+    "Template"
   );
   setLaunchSummaryText(
     ["launchOutputStatus", "launchConfirmOutputStatus"],

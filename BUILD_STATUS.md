@@ -1,7 +1,10 @@
 Current goal
-- Keep after-capture review/share controls fully visible without shrinking the photo.
+- Show the selected background, overlay, and template in a collapsible setup summary.
 
 What is done
+- Added a collapsible selected-assets toggle to the setup screen.
+- Wired the toggle summary to the existing background, overlay, and template count labels.
+- Added a setup-screen regression test for the new collapsible summary.
 - Confirmed the worktree was clean before starting this checkpoint.
 - Verified the current implementation keeps search, sort, favorites, and recents in the admin Asset Library.
 - Verified the public booth picker still uses natural asset order, bounded show-more pagination, and no public search/favorite controls.
@@ -45,13 +48,11 @@ What is done
 - Verified focused browser coverage with `npm run test:browser -- --grep "Asset Library keeps admin filters|frame picker stays hidden"`.
 
 What is in progress
-- Nothing active.
+- Verifying the setup-screen change with tests.
 
 Next steps
-- Review the spacing pass in the browser on the target iPad before the next live event.
-- Test the after-capture review and QR steps on the target iPad viewport.
-- Test a newly generated overlay/template in the booth flow with a real captured photo.
-- Test the SELPHY’s two-photo layout against a real print.
+- Run the test suite for the setup-screen change.
+- Check the collapsible summary in the browser if test coverage is not enough.
 
 Known bugs/blockers
 - The requested dirty worktree was not present at start; `git status --short` was clean.

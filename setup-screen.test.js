@@ -666,6 +666,44 @@ test("selected themes can configure all default assets in one modal", () => {
   );
 });
 
+test("setup exposes selected assets in a collapsible summary", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts/app.js");
+
+  assert.ok(
+    html.includes('id="setupSessionAssetsToggle"') &&
+      html.includes('id="launchBackgroundThumb"') &&
+      html.includes('id="launchBackgroundSummary"') &&
+      html.includes('id="launchOverlayThumb"') &&
+      html.includes('id="launchOverlaySummary"') &&
+      html.includes('id="launchTemplateThumb"') &&
+      html.includes('id="launchTemplateSummary"'),
+    "setup should show selected backgrounds, overlays, and templates in a collapsible toggle"
+  );
+  assert.ok(
+    appScript.includes(
+      'launchBackgroundSummary: document.getElementById("launchBackgroundSummary")'
+    ) &&
+      appScript.includes(
+        'launchBackgroundThumb: document.getElementById("launchBackgroundThumb")'
+      ) &&
+      appScript.includes(
+        'launchOverlaySummary: document.getElementById("launchOverlaySummary")'
+      ) &&
+      appScript.includes(
+        'launchOverlayThumb: document.getElementById("launchOverlayThumb")'
+      ) &&
+      appScript.includes(
+        'launchTemplateSummary: document.getElementById("launchTemplateSummary")'
+      ) &&
+      appScript.includes(
+        'launchTemplateThumb: document.getElementById("launchTemplateThumb")'
+      ) &&
+      appScript.includes("setLaunchSummaryThumbnail("),
+    "setup summary should stay synced with the existing launch count labels and thumbnails"
+  );
+});
+
 test("theme default setup normalizes corrupted built-in category selections", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
