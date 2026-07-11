@@ -1,0 +1,978 @@
+{
+  "general/basic/backgrounds/basic-background-1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788380/photobooth/events/assets/basic-background-1_pzpqmv.png",
+    "publicId": "photobooth/events/assets/basic-background-1_pzpqmv",
+    "cloudinaryFileName": "basic-background-1.png",
+    "theme": "basic",
+    "category": "background"
+  },
+  "general/basic/backgrounds/sparkles.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788381/photobooth/events/assets/basic-background-sparkles_hanvy5.png",
+    "publicId": "photobooth/events/assets/basic-background-sparkles_hanvy5",
+    "cloudinaryFileName": "basic-background-sparkles.png",
+    "theme": "basic",
+    "category": "background"
+  },
+  "general/basic/overlays/blue-smoke-frame.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788382/photobooth/events/assets/basic-overlay-blue-smoke-frame_j11vpo.png",
+    "publicId": "photobooth/events/assets/basic-overlay-blue-smoke-frame_j11vpo",
+    "cloudinaryFileName": "basic-overlay-blue-smoke-frame.png",
+    "theme": "basic",
+    "category": "overlay"
+  },
+  "general/basic/overlays/flowers-frame.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788383/photobooth/events/assets/basic-overlay-flowers-frame_aqcurj.png",
+    "publicId": "photobooth/events/assets/basic-overlay-flowers-frame_aqcurj",
+    "cloudinaryFileName": "basic-overlay-flowers-frame.png",
+    "theme": "basic",
+    "category": "overlay"
+  },
+  "general/basic/overlays/general-frame-black.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788385/photobooth/events/assets/basic-overlay-general-frame-black_cnp5qj.png",
+    "publicId": "photobooth/events/assets/basic-overlay-general-frame-black_cnp5qj",
+    "cloudinaryFileName": "basic-overlay-general-frame-black.png",
+    "theme": "basic",
+    "category": "overlay"
+  },
+  "general/basic/overlays/general-frame-blue-flowers.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788388/photobooth/events/assets/basic-overlay-general-frame-blue-flowers_bkt18l.png",
+    "publicId": "photobooth/events/assets/basic-overlay-general-frame-blue-flowers_bkt18l",
+    "cloudinaryFileName": "basic-overlay-general-frame-blue-flowers.png",
+    "theme": "basic",
+    "category": "overlay"
+  },
+  "general/basic/overlays/shes-a-good-man-overlay.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788391/photobooth/events/assets/basic-overlay-shes-a-good-man-overlay_pzn5td.png",
+    "publicId": "photobooth/events/assets/basic-overlay-shes-a-good-man-overlay_pzn5td",
+    "cloudinaryFileName": "basic-overlay-shes-a-good-man-overlay.png",
+    "theme": "basic",
+    "category": "overlay"
+  },
+  "general/basic/templates/guide-single-photo-landscape.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788392/photobooth/events/assets/basic-template-guide-single-photo-landscape_zjmllk.svg",
+    "publicId": "photobooth/events/assets/basic-template-guide-single-photo-landscape_zjmllk",
+    "cloudinaryFileName": "basic-template-guide-single-photo-landscape.svg",
+    "theme": "basic",
+    "category": "template"
+  },
+  "general/basic/templates/guide-single-photo-portrait.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788394/photobooth/events/assets/basic-template-guide-single-photo-portrait_jzgbkc.svg",
+    "publicId": "photobooth/events/assets/basic-template-guide-single-photo-portrait_jzgbkc",
+    "cloudinaryFileName": "basic-template-guide-single-photo-portrait.svg",
+    "theme": "basic",
+    "category": "template"
+  },
+  "general/basic/templates/guide-strip-double-column.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788395/photobooth/events/assets/basic-template-guide-strip-double-column_iouo3d.svg",
+    "publicId": "photobooth/events/assets/basic-template-guide-strip-double-column_iouo3d",
+    "cloudinaryFileName": "basic-template-guide-strip-double-column.svg",
+    "theme": "basic",
+    "category": "template"
+  },
+  "general/birthday/backgrounds/birthday-background-1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788398/photobooth/events/assets/birthday-background-1_wbydtd.png",
+    "publicId": "photobooth/events/assets/birthday-background-1_wbydtd",
+    "cloudinaryFileName": "birthday-background-1.png",
+    "theme": "birthday",
+    "category": "background"
+  },
+  "general/birthday/overlays/birthday-confetti-frame.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788398/photobooth/events/assets/birthday-overlay-birthday-confetti-frame_ypmvkq.png",
+    "publicId": "photobooth/events/assets/birthday-overlay-birthday-confetti-frame_ypmvkq",
+    "cloudinaryFileName": "birthday-overlay-birthday-confetti-frame.png",
+    "theme": "birthday",
+    "category": "overlay"
+  },
+  "general/birthday/overlays/birthday:overlay:balloons.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788399/photobooth/events/assets/birthday-overlay-balloons_s4ethj.png",
+    "publicId": "photobooth/events/assets/birthday-overlay-balloons_s4ethj",
+    "cloudinaryFileName": "birthday-overlay-balloons.png",
+    "theme": "birthday",
+    "category": "overlay"
+  },
+  "general/birthday/overlays/birthday:overlay:banner.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788400/photobooth/events/assets/birthday-overlay-banner_uitu7v.png",
+    "publicId": "photobooth/events/assets/birthday-overlay-banner_uitu7v",
+    "cloudinaryFileName": "birthday-overlay-banner.png",
+    "theme": "birthday",
+    "category": "overlay"
+  },
+  "general/birthday/overlays/birthday:overlay:goldsparkles.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788401/photobooth/events/assets/birthday-overlay-goldsparkles_hl8sia.png",
+    "publicId": "photobooth/events/assets/birthday-overlay-goldsparkles_hl8sia",
+    "cloudinaryFileName": "birthday-overlay-goldsparkles.png",
+    "theme": "birthday",
+    "category": "overlay"
+  },
+  "general/birthday/overlays/birthday:overlay:sparkles.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788402/photobooth/events/assets/birthday-overlay-sparkles_t1l3j1.png",
+    "publicId": "photobooth/events/assets/birthday-overlay-sparkles_t1l3j1",
+    "cloudinaryFileName": "birthday-overlay-sparkles.png",
+    "theme": "birthday",
+    "category": "overlay"
+  },
+  "general/birthday/overlays/general:overlay:colorblobs.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788403/photobooth/events/assets/birthday-overlay-general-overlay-colorblobs_rh3pea.png",
+    "publicId": "photobooth/events/assets/birthday-overlay-general-overlay-colorblobs_rh3pea",
+    "cloudinaryFileName": "birthday-overlay-general-overlay-colorblobs.png",
+    "theme": "birthday",
+    "category": "overlay"
+  },
+  "general/birthday/templates/birthday-banner.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788403/photobooth/events/assets/birthday-template-birthday-banner_dyaq0j.png",
+    "publicId": "photobooth/events/assets/birthday-template-birthday-banner_dyaq0j",
+    "cloudinaryFileName": "birthday-template-birthday-banner.png",
+    "theme": "birthday",
+    "category": "template"
+  },
+  "general/birthday/templates/birthday.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788404/photobooth/events/assets/birthday-template-birthday_smtn3a.png",
+    "publicId": "photobooth/events/assets/birthday-template-birthday_smtn3a",
+    "cloudinaryFileName": "birthday-template-birthday.png",
+    "theme": "birthday",
+    "category": "template"
+  },
+  "general/summer/overlays/13.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788404/photobooth/events/assets/summer-overlay-13_lamyfw.png",
+    "publicId": "photobooth/events/assets/summer-overlay-13_lamyfw",
+    "cloudinaryFileName": "summer-overlay-13.png",
+    "theme": "summer",
+    "category": "overlay"
+  },
+  "general/summer/overlays/4th-of-july.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788405/photobooth/events/assets/summer-overlay-4th-of-july_l8lauv.png",
+    "publicId": "photobooth/events/assets/summer-overlay-4th-of-july_l8lauv",
+    "cloudinaryFileName": "summer-overlay-4th-of-july.png",
+    "theme": "summer",
+    "category": "overlay"
+  },
+  "general/summer/overlays/border-with-frame.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788406/photobooth/events/assets/summer-overlay-border-with-frame_kbditt.png",
+    "publicId": "photobooth/events/assets/summer-overlay-border-with-frame_kbditt",
+    "cloudinaryFileName": "summer-overlay-border-with-frame.png",
+    "theme": "summer",
+    "category": "overlay"
+  },
+  "general/summer/overlays/border.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788406/photobooth/events/assets/summer-overlay-border_y1twxc.png",
+    "publicId": "photobooth/events/assets/summer-overlay-border_y1twxc",
+    "cloudinaryFileName": "summer-overlay-border.png",
+    "theme": "summer",
+    "category": "overlay"
+  },
+  "general/summer/overlays/fantasy.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788408/photobooth/events/assets/summer-overlay-fantasy_ymadoa.png",
+    "publicId": "photobooth/events/assets/summer-overlay-fantasy_ymadoa",
+    "cloudinaryFileName": "summer-overlay-fantasy.png",
+    "theme": "summer",
+    "category": "overlay"
+  },
+  "general/summer/overlays/hello-summer.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788409/photobooth/events/assets/summer-overlay-hello-summer_fetbgw.png",
+    "publicId": "photobooth/events/assets/summer-overlay-hello-summer_fetbgw",
+    "cloudinaryFileName": "summer-overlay-hello-summer.png",
+    "theme": "summer",
+    "category": "overlay"
+  },
+  "general/summer/overlays/pool-with-frame-2.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788411/photobooth/events/assets/summer-overlay-pool-with-frame-2_b4vum3.png",
+    "publicId": "photobooth/events/assets/summer-overlay-pool-with-frame-2_b4vum3",
+    "cloudinaryFileName": "summer-overlay-pool-with-frame-2.png",
+    "theme": "summer",
+    "category": "overlay"
+  },
+  "general/summer/overlays/pool-with-frame.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788413/photobooth/events/assets/summer-overlay-pool-with-frame_rfqjyc.png",
+    "publicId": "photobooth/events/assets/summer-overlay-pool-with-frame_rfqjyc",
+    "cloudinaryFileName": "summer-overlay-pool-with-frame.png",
+    "theme": "summer",
+    "category": "overlay"
+  },
+  "general/summer/overlays/tropical-border-2.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788416/photobooth/events/assets/summer-overlay-tropical-border-2_esslmg.png",
+    "publicId": "photobooth/events/assets/summer-overlay-tropical-border-2_esslmg",
+    "cloudinaryFileName": "summer-overlay-tropical-border-2.png",
+    "theme": "summer",
+    "category": "overlay"
+  },
+  "general/summer/overlays/tropical-border-with-frame.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788420/photobooth/events/assets/summer-overlay-tropical-border-with-frame_lne3ia.png",
+    "publicId": "photobooth/events/assets/summer-overlay-tropical-border-with-frame_lne3ia",
+    "cloudinaryFileName": "summer-overlay-tropical-border-with-frame.png",
+    "theme": "summer",
+    "category": "overlay"
+  },
+  "general/summer/overlays/tropical-border.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788423/photobooth/events/assets/summer-overlay-tropical-border_twuynr.png",
+    "publicId": "photobooth/events/assets/summer-overlay-tropical-border_twuynr",
+    "cloudinaryFileName": "summer-overlay-tropical-border.png",
+    "theme": "summer",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/backgrounds/halloween-background-grey-1.jpg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788425/photobooth/events/assets/fall-halloween-background-halloween-background-grey-1_bfrn8g.jpg",
+    "publicId": "photobooth/events/assets/fall-halloween-background-halloween-background-grey-1_bfrn8g",
+    "cloudinaryFileName": "fall-halloween-background-halloween-background-grey-1.jpg",
+    "theme": "fall-halloween",
+    "category": "background"
+  },
+  "holidays/fall/halloween/backgrounds/halloween-background-pink.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788425/photobooth/events/assets/fall-halloween-background-halloween-background-pink_dcgv0o.png",
+    "publicId": "photobooth/events/assets/fall-halloween-background-halloween-background-pink_dcgv0o",
+    "cloudinaryFileName": "fall-halloween-background-halloween-background-pink.png",
+    "theme": "fall-halloween",
+    "category": "background"
+  },
+  "holidays/fall/halloween/logo/app-icon.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788426/photobooth/events/assets/fall-halloween-logo-app-icon_btlmrc.png",
+    "publicId": "photobooth/events/assets/fall-halloween-logo-app-icon_btlmrc",
+    "cloudinaryFileName": "fall-halloween-logo-app-icon.png",
+    "theme": "fall-halloween",
+    "category": "logo"
+  },
+  "holidays/fall/halloween/overlays/1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788426/photobooth/events/assets/fall-halloween-overlay-1_o52jc3.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-1_o52jc3",
+    "cloudinaryFileName": "fall-halloween-overlay-1.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/11.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788427/photobooth/events/assets/fall-halloween-overlay-11_hrnih0.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-11_hrnih0",
+    "cloudinaryFileName": "fall-halloween-overlay-11.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/12.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788428/photobooth/events/assets/fall-halloween-overlay-12_awh07v.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-12_awh07v",
+    "cloudinaryFileName": "fall-halloween-overlay-12.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/13.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788429/photobooth/events/assets/fall-halloween-overlay-13_x2m6fk.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-13_x2m6fk",
+    "cloudinaryFileName": "fall-halloween-overlay-13.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/2.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788431/photobooth/events/assets/fall-halloween-overlay-2_tsiq9i.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-2_tsiq9i",
+    "cloudinaryFileName": "fall-halloween-overlay-2.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/3.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788432/photobooth/events/assets/fall-halloween-overlay-3_jjw6jy.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-3_jjw6jy",
+    "cloudinaryFileName": "fall-halloween-overlay-3.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/4.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788433/photobooth/events/assets/fall-halloween-overlay-4_ckrgab.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-4_ckrgab",
+    "cloudinaryFileName": "fall-halloween-overlay-4.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/5.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788434/photobooth/events/assets/fall-halloween-overlay-5_tcmqpc.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-5_tcmqpc",
+    "cloudinaryFileName": "fall-halloween-overlay-5.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/6.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788437/photobooth/events/assets/fall-halloween-overlay-6_bxgvts.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-6_bxgvts",
+    "cloudinaryFileName": "fall-halloween-overlay-6.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/fall-leaves-frame.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788438/photobooth/events/assets/fall-halloween-overlay-fall-leaves-frame_t9nior.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-fall-leaves-frame_t9nior",
+    "cloudinaryFileName": "fall-halloween-overlay-fall-leaves-frame.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/graveyard-transparent-frame.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788440/photobooth/events/assets/fall-halloween-overlay-graveyard-transparent-frame_dlx0jh.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-graveyard-transparent-frame_dlx0jh",
+    "cloudinaryFileName": "fall-halloween-overlay-graveyard-transparent-frame.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-boo.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788441/photobooth/events/assets/fall-halloween-overlay-halloween-frame-boo_qgmzt4.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-boo_qgmzt4",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-boo.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-fog.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788443/photobooth/events/assets/fall-halloween-overlay-halloween-frame-fog_sgsrd0.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-fog_sgsrd0",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-fog.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-groovy-ghosties.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788444/photobooth/events/assets/fall-halloween-overlay-halloween-frame-groovy-ghosties_pjzxai.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-groovy-ghosties_pjzxai",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-groovy-ghosties.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-groovy.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788445/photobooth/events/assets/fall-halloween-overlay-halloween-frame-groovy_djftw2.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-groovy_djftw2",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-groovy.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-haunted-house.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788445/photobooth/events/assets/fall-halloween-overlay-halloween-frame-haunted-house_cowlp9.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-haunted-house_cowlp9",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-haunted-house.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-landscape-10.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788455/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-10_akzyqr.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-10_akzyqr",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-landscape-10.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-landscape-3.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788457/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-3_m3qy5z.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-3_m3qy5z",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-landscape-3.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-landscape-5.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788459/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-5_kutf13.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-5_kutf13",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-landscape-5.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-landscape-6.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788460/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-6_u3ie2u.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-6_u3ie2u",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-landscape-6.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-landscape-7.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788460/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-7_axskxp.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-7_axskxp",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-landscape-7.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-landscape-9.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788461/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-9_vzpql3.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-9_vzpql3",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-landscape-9.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-frame-skeletons.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788462/photobooth/events/assets/fall-halloween-overlay-halloween-frame-skeletons_zbfq6v.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-frame-skeletons_zbfq6v",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-frame-skeletons.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/halloween-overlay-ghosts.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788463/photobooth/events/assets/fall-halloween-overlay-halloween-overlay-ghosts_oenchv.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-halloween-overlay-ghosts_oenchv",
+    "cloudinaryFileName": "fall-halloween-overlay-halloween-overlay-ghosts.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/overlays/smoke-corner-frame.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788464/photobooth/events/assets/fall-halloween-overlay-smoke-corner-frame_txmhij.png",
+    "publicId": "photobooth/events/assets/fall-halloween-overlay-smoke-corner-frame_txmhij",
+    "cloudinaryFileName": "fall-halloween-overlay-smoke-corner-frame.png",
+    "theme": "fall-halloween",
+    "category": "overlay"
+  },
+  "holidays/fall/halloween/templates/halloween-template-2.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788465/photobooth/events/assets/fall-halloween-template-halloween-template-2_kww0ma.png",
+    "publicId": "photobooth/events/assets/fall-halloween-template-halloween-template-2_kww0ma",
+    "cloudinaryFileName": "fall-halloween-template-halloween-template-2.png",
+    "theme": "fall-halloween",
+    "category": "template"
+  },
+  "holidays/fall/halloween/templates/halloween-template-3.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788465/photobooth/events/assets/fall-halloween-template-halloween-template-3_ndtob9.png",
+    "publicId": "photobooth/events/assets/fall-halloween-template-halloween-template-3_ndtob9",
+    "cloudinaryFileName": "fall-halloween-template-halloween-template-3.png",
+    "theme": "fall-halloween",
+    "category": "template"
+  },
+  "holidays/fall/halloween/templates/halloween-template-4.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788466/photobooth/events/assets/fall-halloween-template-halloween-template-4_os0gxj.png",
+    "publicId": "photobooth/events/assets/fall-halloween-template-halloween-template-4_os0gxj",
+    "cloudinaryFileName": "fall-halloween-template-halloween-template-4.png",
+    "theme": "fall-halloween",
+    "category": "template"
+  },
+  "holidays/fall/halloween/templates/halloween-template-maddies.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788467/photobooth/events/assets/fall-halloween-template-halloween-template-maddies_c9rx4y.png",
+    "publicId": "photobooth/events/assets/fall-halloween-template-halloween-template-maddies_c9rx4y",
+    "cloudinaryFileName": "fall-halloween-template-halloween-template-maddies.png",
+    "theme": "fall-halloween",
+    "category": "template"
+  },
+  "holidays/fall/halloween/welcome/welcome-landscape.jpg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788467/photobooth/events/assets/fall-halloween-welcome-landscape_yl4f3j.jpg",
+    "publicId": "photobooth/events/assets/fall-halloween-welcome-landscape_yl4f3j",
+    "cloudinaryFileName": "fall-halloween-welcome-landscape.jpg",
+    "theme": "fall-halloween",
+    "category": "welcome"
+  },
+  "holidays/fall/halloween/welcome/welcome-portrait.jpg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788468/photobooth/events/assets/fall-halloween-welcome-portrait_tp0ldp.jpg",
+    "publicId": "photobooth/events/assets/fall-halloween-welcome-portrait_tp0ldp",
+    "cloudinaryFileName": "fall-halloween-welcome-portrait.jpg",
+    "theme": "fall-halloween",
+    "category": "welcome"
+  },
+  "holidays/spring/st-patricks-day/backgrounds/st-patricks-day-background-1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788469/photobooth/events/assets/spring-st-patricks-day-background-st-patricks-day-background-1_cl1xyx.png",
+    "publicId": "photobooth/events/assets/spring-st-patricks-day-background-st-patricks-day-background-1_cl1xyx",
+    "cloudinaryFileName": "spring-st-patricks-day-background-st-patricks-day-background-1.png",
+    "theme": "spring-st-patricks-day",
+    "category": "background"
+  },
+  "holidays/spring/st-patricks-day/templates/st-patricks-day-template-1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788470/photobooth/events/assets/spring-st-patricks-day-template-st-patricks-day-template-1_z3lcap.png",
+    "publicId": "photobooth/events/assets/spring-st-patricks-day-template-st-patricks-day-template-1_z3lcap",
+    "cloudinaryFileName": "spring-st-patricks-day-template-st-patricks-day-template-1.png",
+    "theme": "spring-st-patricks-day",
+    "category": "template"
+  },
+  "holidays/spring/st-patricks-day/templates/st-patricks-day.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788471/photobooth/events/assets/spring-st-patricks-day-template-st-patricks-day_baggtg.png",
+    "publicId": "photobooth/events/assets/spring-st-patricks-day-template-st-patricks-day_baggtg",
+    "cloudinaryFileName": "spring-st-patricks-day-template-st-patricks-day.png",
+    "theme": "spring-st-patricks-day",
+    "category": "template"
+  },
+  "holidays/summer/4th-of-july/overlays/4thoverlay.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788473/photobooth/events/assets/summer-4th-of-july-overlay-4thoverlay_zcvowb.png",
+    "publicId": "photobooth/events/assets/summer-4th-of-july-overlay-4thoverlay_zcvowb",
+    "cloudinaryFileName": "summer-4th-of-july-overlay-4thoverlay.png",
+    "theme": "summer-4th-of-july",
+    "category": "overlay"
+  },
+  "holidays/summer/4th-of-july/overlays/4thoverlay1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788476/photobooth/events/assets/summer-4th-of-july-overlay-4thoverlay1_wolx9b.png",
+    "publicId": "photobooth/events/assets/summer-4th-of-july-overlay-4thoverlay1_wolx9b",
+    "cloudinaryFileName": "summer-4th-of-july-overlay-4thoverlay1.png",
+    "theme": "summer-4th-of-july",
+    "category": "overlay"
+  },
+  "holidays/winter/christmas/backgrounds/christmas-background-1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788477/photobooth/events/assets/winter-christmas-background-christmas-background-1_rgvubw.png",
+    "publicId": "photobooth/events/assets/winter-christmas-background-christmas-background-1_rgvubw",
+    "cloudinaryFileName": "winter-christmas-background-christmas-background-1.png",
+    "theme": "winter-christmas",
+    "category": "background"
+  },
+  "holidays/winter/christmas/backgrounds/christmas-background-2.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788478/photobooth/events/assets/winter-christmas-background-christmas-background-2_eahwkm.png",
+    "publicId": "photobooth/events/assets/winter-christmas-background-christmas-background-2_eahwkm",
+    "cloudinaryFileName": "winter-christmas-background-christmas-background-2.png",
+    "theme": "winter-christmas",
+    "category": "background"
+  },
+  "holidays/winter/christmas/backgrounds/christmas-background-3.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788479/photobooth/events/assets/winter-christmas-background-christmas-background-3_huffgo.png",
+    "publicId": "photobooth/events/assets/winter-christmas-background-christmas-background-3_huffgo",
+    "cloudinaryFileName": "winter-christmas-background-christmas-background-3.png",
+    "theme": "winter-christmas",
+    "category": "background"
+  },
+  "holidays/winter/christmas/backgrounds/christmas-background-4.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788481/photobooth/events/assets/winter-christmas-background-christmas-background-4_ubpjoy.png",
+    "publicId": "photobooth/events/assets/winter-christmas-background-christmas-background-4_ubpjoy",
+    "cloudinaryFileName": "winter-christmas-background-christmas-background-4.png",
+    "theme": "winter-christmas",
+    "category": "background"
+  },
+  "holidays/winter/christmas/backgrounds/christmas-background-5.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788483/photobooth/events/assets/winter-christmas-background-christmas-background-5_rkzpcb.png",
+    "publicId": "photobooth/events/assets/winter-christmas-background-christmas-background-5_rkzpcb",
+    "cloudinaryFileName": "winter-christmas-background-christmas-background-5.png",
+    "theme": "winter-christmas",
+    "category": "background"
+  },
+  "holidays/winter/christmas/backgrounds/christmas.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788485/photobooth/events/assets/winter-christmas-background-christmas_dn0mcm.png",
+    "publicId": "photobooth/events/assets/winter-christmas-background-christmas_dn0mcm",
+    "cloudinaryFileName": "winter-christmas-background-christmas.png",
+    "theme": "winter-christmas",
+    "category": "background"
+  },
+  "holidays/winter/christmas/backgrounds/winter.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788486/photobooth/events/assets/winter-christmas-background-winter_xents8.png",
+    "publicId": "photobooth/events/assets/winter-christmas-background-winter_xents8",
+    "cloudinaryFileName": "winter-christmas-background-winter.png",
+    "theme": "winter-christmas",
+    "category": "background"
+  },
+  "holidays/winter/christmas/templates/christmas-template-1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788486/photobooth/events/assets/winter-christmas-template-christmas-template-1_nru96z.png",
+    "publicId": "photobooth/events/assets/winter-christmas-template-christmas-template-1_nru96z",
+    "cloudinaryFileName": "winter-christmas-template-christmas-template-1.png",
+    "theme": "winter-christmas",
+    "category": "template"
+  },
+  "holidays/winter/christmas/templates/merry-christmas.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788487/photobooth/events/assets/winter-christmas-template-merry-christmas_c15dyi.png",
+    "publicId": "photobooth/events/assets/winter-christmas-template-merry-christmas_c15dyi",
+    "cloudinaryFileName": "winter-christmas-template-merry-christmas.png",
+    "theme": "winter-christmas",
+    "category": "template"
+  },
+  "holidays/winter/valentines/backgrounds/valentines-background-1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788488/photobooth/events/assets/winter-valentines-background-valentines-background-1_cpm0t5.png",
+    "publicId": "photobooth/events/assets/winter-valentines-background-valentines-background-1_cpm0t5",
+    "cloudinaryFileName": "winter-valentines-background-valentines-background-1.png",
+    "theme": "winter-valentines",
+    "category": "background"
+  },
+  "holidays/winter/valentines/backgrounds/valentines-background-2.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788489/photobooth/events/assets/winter-valentines-background-valentines-background-2_hsfkek.png",
+    "publicId": "photobooth/events/assets/winter-valentines-background-valentines-background-2_hsfkek",
+    "cloudinaryFileName": "winter-valentines-background-valentines-background-2.png",
+    "theme": "winter-valentines",
+    "category": "background"
+  },
+  "holidays/winter/valentines/templates/valentines-pink.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788490/photobooth/events/assets/winter-valentines-template-valentines-pink_gi5wxf.png",
+    "publicId": "photobooth/events/assets/winter-valentines-template-valentines-pink_gi5wxf",
+    "cloudinaryFileName": "winter-valentines-template-valentines-pink.png",
+    "theme": "winter-valentines",
+    "category": "template"
+  },
+  "school/ane/overlays/ane-frame-stream-night-landscape-2.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788490/photobooth/events/assets/ane-overlay-ane-frame-stream-night-landscape-2_tbkq3g.png",
+    "publicId": "photobooth/events/assets/ane-overlay-ane-frame-stream-night-landscape-2_tbkq3g",
+    "cloudinaryFileName": "ane-overlay-ane-frame-stream-night-landscape-2.png",
+    "theme": "ane",
+    "category": "overlay"
+  },
+  "school/ane/overlays/school-frame-landscape-1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788491/photobooth/events/assets/ane-overlay-school-frame-landscape-1_nddhkg.png",
+    "publicId": "photobooth/events/assets/ane-overlay-school-frame-landscape-1_nddhkg",
+    "cloudinaryFileName": "ane-overlay-school-frame-landscape-1.png",
+    "theme": "ane",
+    "category": "overlay"
+  },
+  "school/hawks/backgrounds/16.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788493/photobooth/events/assets/hawks-background-16_mzbqiq.png",
+    "publicId": "photobooth/events/assets/hawks-background-16_mzbqiq",
+    "cloudinaryFileName": "hawks-background-16.png",
+    "theme": "hawks",
+    "category": "background"
+  },
+  "school/hawks/backgrounds/blue-green-background.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788494/photobooth/events/assets/hawks-background-blue-green-background_rdyfln.png",
+    "publicId": "photobooth/events/assets/hawks-background-blue-green-background_rdyfln",
+    "cloudinaryFileName": "hawks-background-blue-green-background.png",
+    "theme": "hawks",
+    "category": "background"
+  },
+  "school/hawks/backgrounds/hawks-background-1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788495/photobooth/events/assets/hawks-background-1_kl48cl.png",
+    "publicId": "photobooth/events/assets/hawks-background-1_kl48cl",
+    "cloudinaryFileName": "hawks-background-1.png",
+    "theme": "hawks",
+    "category": "background"
+  },
+  "school/hawks/backgrounds/hawks-background-football.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788496/photobooth/events/assets/hawks-background-football_bclba6.png",
+    "publicId": "photobooth/events/assets/hawks-background-football_bclba6",
+    "cloudinaryFileName": "hawks-background-football.png",
+    "theme": "hawks",
+    "category": "background"
+  },
+  "school/hawks/backgrounds/hawks-background-gradient.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788497/photobooth/events/assets/hawks-background-gradient_relljc.png",
+    "publicId": "photobooth/events/assets/hawks-background-gradient_relljc",
+    "cloudinaryFileName": "hawks-background-gradient.png",
+    "theme": "hawks",
+    "category": "background"
+  },
+  "school/hawks/backgrounds/hawks-background-green-fog.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788498/photobooth/events/assets/hawks-background-green-fog_jrxhfq.png",
+    "publicId": "photobooth/events/assets/hawks-background-green-fog_jrxhfq",
+    "cloudinaryFileName": "hawks-background-green-fog.png",
+    "theme": "hawks",
+    "category": "background"
+  },
+  "school/hawks/overlays/1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788500/photobooth/events/assets/hawks-overlay-1_scvljp.png",
+    "publicId": "photobooth/events/assets/hawks-overlay-1_scvljp",
+    "cloudinaryFileName": "hawks-overlay-1.png",
+    "theme": "hawks",
+    "category": "overlay"
+  },
+  "school/hawks/overlays/2.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788501/photobooth/events/assets/hawks-overlay-2_tqwxej.png",
+    "publicId": "photobooth/events/assets/hawks-overlay-2_tqwxej",
+    "cloudinaryFileName": "hawks-overlay-2.png",
+    "theme": "hawks",
+    "category": "overlay"
+  },
+  "school/hawks/overlays/3.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788502/photobooth/events/assets/hawks-overlay-3_m10caq.png",
+    "publicId": "photobooth/events/assets/hawks-overlay-3_m10caq",
+    "cloudinaryFileName": "hawks-overlay-3.png",
+    "theme": "hawks",
+    "category": "overlay"
+  },
+  "school/hawks/overlays/hawks-frame-cheerleader.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788502/photobooth/events/assets/hawks-overlay-hawks-frame-cheerleader_y050rk.png",
+    "publicId": "photobooth/events/assets/hawks-overlay-hawks-frame-cheerleader_y050rk",
+    "cloudinaryFileName": "hawks-overlay-hawks-frame-cheerleader.png",
+    "theme": "hawks",
+    "category": "overlay"
+  },
+  "school/hawks/overlays/hawks-frame-fan.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788504/photobooth/events/assets/hawks-overlay-hawks-frame-fan_r0a1xo.png",
+    "publicId": "photobooth/events/assets/hawks-overlay-hawks-frame-fan_r0a1xo",
+    "cloudinaryFileName": "hawks-overlay-hawks-frame-fan.png",
+    "theme": "hawks",
+    "category": "overlay"
+  },
+  "school/hawks/overlays/hawks-frame-go-hawks.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788505/photobooth/events/assets/hawks-overlay-hawks-frame-go-hawks_b7hl8z.png",
+    "publicId": "photobooth/events/assets/hawks-overlay-hawks-frame-go-hawks_b7hl8z",
+    "cloudinaryFileName": "hawks-overlay-hawks-frame-go-hawks.png",
+    "theme": "hawks",
+    "category": "overlay"
+  },
+  "school/hawks/overlays/hawks-frame-grass.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788506/photobooth/events/assets/hawks-overlay-hawks-frame-grass_ggw2wk.png",
+    "publicId": "photobooth/events/assets/hawks-overlay-hawks-frame-grass_ggw2wk",
+    "cloudinaryFileName": "hawks-overlay-hawks-frame-grass.png",
+    "theme": "hawks",
+    "category": "overlay"
+  },
+  "school/hawks/overlays/hawks-frame-helmets.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788507/photobooth/events/assets/hawks-overlay-hawks-frame-helmets_gdhcav.png",
+    "publicId": "photobooth/events/assets/hawks-overlay-hawks-frame-helmets_gdhcav",
+    "cloudinaryFileName": "hawks-overlay-hawks-frame-helmets.png",
+    "theme": "hawks",
+    "category": "overlay"
+  },
+  "school/hawks/overlays/hawks-frame-players.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788507/photobooth/events/assets/hawks-overlay-hawks-frame-players_xpdnfs.png",
+    "publicId": "photobooth/events/assets/hawks-overlay-hawks-frame-players_xpdnfs",
+    "cloudinaryFileName": "hawks-overlay-hawks-frame-players.png",
+    "theme": "hawks",
+    "category": "overlay"
+  },
+  "school/hawks/templates/go-hawks.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788508/photobooth/events/assets/hawks-template-go-hawks_avfpzg.png",
+    "publicId": "photobooth/events/assets/hawks-template-go-hawks_avfpzg",
+    "cloudinaryFileName": "hawks-template-go-hawks.png",
+    "theme": "hawks",
+    "category": "template"
+  },
+  "school/hawks/welcome/1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788511/photobooth/events/assets/hawks-welcome-1_j1beit.png",
+    "publicId": "photobooth/events/assets/hawks-welcome-1_j1beit",
+    "cloudinaryFileName": "hawks-welcome-1.png",
+    "theme": "hawks",
+    "category": "welcome"
+  },
+  "school/hawks/welcome/2.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788512/photobooth/events/assets/hawks-welcome-2_marpv1.png",
+    "publicId": "photobooth/events/assets/hawks-welcome-2_marpv1",
+    "cloudinaryFileName": "hawks-welcome-2.png",
+    "theme": "hawks",
+    "category": "welcome"
+  },
+  "school/hawks/welcome/3.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788514/photobooth/events/assets/hawks-welcome-3_x9fevo.png",
+    "publicId": "photobooth/events/assets/hawks-welcome-3_x9fevo",
+    "cloudinaryFileName": "hawks-welcome-3.png",
+    "theme": "hawks",
+    "category": "welcome"
+  },
+  "school/hawks/welcome/4.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788515/photobooth/events/assets/hawks-welcome-4_akqhoz.png",
+    "publicId": "photobooth/events/assets/hawks-welcome-4_akqhoz",
+    "cloudinaryFileName": "hawks-welcome-4.png",
+    "theme": "hawks",
+    "category": "welcome"
+  },
+  "school/hawks/welcome/5.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788516/photobooth/events/assets/hawks-welcome-5_aidtwi.png",
+    "publicId": "photobooth/events/assets/hawks-welcome-5_aidtwi",
+    "cloudinaryFileName": "hawks-welcome-5.png",
+    "theme": "hawks",
+    "category": "welcome"
+  },
+  "wedding/garden-vows/backgrounds/background.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788516/photobooth/events/assets/garden-vows-background-background_avnelo.svg",
+    "publicId": "photobooth/events/assets/garden-vows-background-background_avnelo",
+    "cloudinaryFileName": "garden-vows-background-background.svg",
+    "theme": "garden-vows",
+    "category": "background"
+  },
+  "wedding/garden-vows/backgrounds/garden-vows-bg-1.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788518/photobooth/events/assets/garden-vows-background-garden-vows-bg-1_i8bl4r.png",
+    "publicId": "photobooth/events/assets/garden-vows-background-garden-vows-bg-1_i8bl4r",
+    "cloudinaryFileName": "garden-vows-background-garden-vows-bg-1.png",
+    "theme": "garden-vows",
+    "category": "background"
+  },
+  "wedding/garden-vows/backgrounds/garden-vows-bg-2.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788519/photobooth/events/assets/garden-vows-background-garden-vows-bg-2_de6ex9.png",
+    "publicId": "photobooth/events/assets/garden-vows-background-garden-vows-bg-2_de6ex9",
+    "cloudinaryFileName": "garden-vows-background-garden-vows-bg-2.png",
+    "theme": "garden-vows",
+    "category": "background"
+  },
+  "wedding/garden-vows/backgrounds/garden-vows-bg-3.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788523/photobooth/events/assets/garden-vows-background-garden-vows-bg-3_vxgwzc.png",
+    "publicId": "photobooth/events/assets/garden-vows-background-garden-vows-bg-3_vxgwzc",
+    "cloudinaryFileName": "garden-vows-background-garden-vows-bg-3.png",
+    "theme": "garden-vows",
+    "category": "background"
+  },
+  "wedding/garden-vows/backgrounds/garden-vows-bg-7.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788540/photobooth/events/assets/garden-vows-background-garden-vows-bg-7_cib79o.png",
+    "publicId": "photobooth/events/assets/garden-vows-background-garden-vows-bg-7_cib79o",
+    "cloudinaryFileName": "garden-vows-background-garden-vows-bg-7.png",
+    "theme": "garden-vows",
+    "category": "background"
+  },
+  "wedding/garden-vows/overlays/garden-vows-single-overlay.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788540/photobooth/events/assets/garden-vows-overlay-garden-vows-single-overlay_priznl.svg",
+    "publicId": "photobooth/events/assets/garden-vows-overlay-garden-vows-single-overlay_priznl",
+    "cloudinaryFileName": "garden-vows-overlay-garden-vows-single-overlay.svg",
+    "theme": "garden-vows",
+    "category": "overlay"
+  },
+  "wedding/garden-vows/overlays/garden-vows-strip-overlay.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788542/photobooth/events/assets/garden-vows-overlay-garden-vows-strip-overlay_jeuhvh.svg",
+    "publicId": "photobooth/events/assets/garden-vows-overlay-garden-vows-strip-overlay_jeuhvh",
+    "cloudinaryFileName": "garden-vows-overlay-garden-vows-strip-overlay.svg",
+    "theme": "garden-vows",
+    "category": "overlay"
+  },
+  "wedding/garden-vows/templates/garden-vows-single-template.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788544/photobooth/events/assets/garden-vows-template-garden-vows-single-template_lxysxx.svg",
+    "publicId": "photobooth/events/assets/garden-vows-template-garden-vows-single-template_lxysxx",
+    "cloudinaryFileName": "garden-vows-template-garden-vows-single-template.svg",
+    "theme": "garden-vows",
+    "category": "template"
+  },
+  "wedding/garden-vows/templates/garden-vows-strip-template.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788546/photobooth/events/assets/garden-vows-template-garden-vows-strip-template_iozpue.svg",
+    "publicId": "photobooth/events/assets/garden-vows-template-garden-vows-strip-template_iozpue",
+    "cloudinaryFileName": "garden-vows-template-garden-vows-strip-template.svg",
+    "theme": "garden-vows",
+    "category": "template"
+  },
+  "wedding/timeless-romance/backgrounds/background.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788547/photobooth/events/assets/timeless-romance-background-background_tu1nzg.svg",
+    "publicId": "photobooth/events/assets/timeless-romance-background-background_tu1nzg",
+    "cloudinaryFileName": "timeless-romance-background-background.svg",
+    "theme": "timeless-romance",
+    "category": "background"
+  },
+  "wedding/timeless-romance/backgrounds/timeless-romance-bg-4.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788553/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-4_gw2edi.png",
+    "publicId": "photobooth/events/assets/timeless-romance-background-timeless-romance-bg-4_gw2edi",
+    "cloudinaryFileName": "timeless-romance-background-timeless-romance-bg-4.png",
+    "theme": "timeless-romance",
+    "category": "background"
+  },
+  "wedding/timeless-romance/backgrounds/timeless-romance-bg-5.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788562/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-5_bpyzlq.png",
+    "publicId": "photobooth/events/assets/timeless-romance-background-timeless-romance-bg-5_bpyzlq",
+    "cloudinaryFileName": "timeless-romance-background-timeless-romance-bg-5.png",
+    "theme": "timeless-romance",
+    "category": "background"
+  },
+  "wedding/timeless-romance/backgrounds/timeless-romance-bg-6.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788565/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-6_mjo2fm.png",
+    "publicId": "photobooth/events/assets/timeless-romance-background-timeless-romance-bg-6_mjo2fm",
+    "cloudinaryFileName": "timeless-romance-background-timeless-romance-bg-6.png",
+    "theme": "timeless-romance",
+    "category": "background"
+  },
+  "wedding/timeless-romance/backgrounds/timeless-romance-bg-8.png": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788566/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-8_ykyj6y.png",
+    "publicId": "photobooth/events/assets/timeless-romance-background-timeless-romance-bg-8_ykyj6y",
+    "cloudinaryFileName": "timeless-romance-background-timeless-romance-bg-8.png",
+    "theme": "timeless-romance",
+    "category": "background"
+  },
+  "wedding/timeless-romance/overlays/timeless-romance-single-overlay.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788567/photobooth/events/assets/timeless-romance-overlay-timeless-romance-single-overlay_nvjk2b.svg",
+    "publicId": "photobooth/events/assets/timeless-romance-overlay-timeless-romance-single-overlay_nvjk2b",
+    "cloudinaryFileName": "timeless-romance-overlay-timeless-romance-single-overlay.svg",
+    "theme": "timeless-romance",
+    "category": "overlay"
+  },
+  "wedding/timeless-romance/overlays/timeless-romance-strip-overlay.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788569/photobooth/events/assets/timeless-romance-overlay-timeless-romance-strip-overlay_datpdy.svg",
+    "publicId": "photobooth/events/assets/timeless-romance-overlay-timeless-romance-strip-overlay_datpdy",
+    "cloudinaryFileName": "timeless-romance-overlay-timeless-romance-strip-overlay.svg",
+    "theme": "timeless-romance",
+    "category": "overlay"
+  },
+  "wedding/timeless-romance/templates/timeless-romance-single-template.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788571/photobooth/events/assets/timeless-romance-template-timeless-romance-single-template_mpuao5.svg",
+    "publicId": "photobooth/events/assets/timeless-romance-template-timeless-romance-single-template_mpuao5",
+    "cloudinaryFileName": "timeless-romance-template-timeless-romance-single-template.svg",
+    "theme": "timeless-romance",
+    "category": "template"
+  },
+  "wedding/timeless-romance/templates/timeless-romance-strip-template.svg": {
+    "status": "uploaded",
+    "url": "https://res.cloudinary.com/afletch32/image/upload/v1783788572/photobooth/events/assets/timeless-romance-template-timeless-romance-strip-template_dqymgy.svg",
+    "publicId": "photobooth/events/assets/timeless-romance-template-timeless-romance-strip-template_dqymgy",
+    "cloudinaryFileName": "timeless-romance-template-timeless-romance-strip-template.svg",
+    "theme": "timeless-romance",
+    "category": "template"
+  }
+}

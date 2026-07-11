@@ -153,11 +153,23 @@ let themes = {
         accent: "#3f51b5",
         accent2: "#ffffff",
         font: "'Comic Neue', cursive",
-        background: "assets/general/basic/backgrounds/",
-        backgroundFolder: "assets/general/basic/backgrounds/",
         logo: "",
-        overlaysFolder: "assets/general/basic/overlays/",
-        templatesFolder: "assets/general/basic/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788380/photobooth/events/assets/basic-background-1_pzpqmv.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788381/photobooth/events/assets/basic-background-sparkles_hanvy5.png",
+        ],
+        overlays: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788382/photobooth/events/assets/basic-overlay-blue-smoke-frame_j11vpo.png", name: "basic-overlay-blue-smoke-frame" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788383/photobooth/events/assets/basic-overlay-flowers-frame_aqcurj.png", name: "basic-overlay-flowers-frame" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788385/photobooth/events/assets/basic-overlay-general-frame-black_cnp5qj.png", name: "basic-overlay-general-frame-black" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788388/photobooth/events/assets/basic-overlay-general-frame-blue-flowers_bkt18l.png", name: "basic-overlay-general-frame-blue-flowers" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788391/photobooth/events/assets/basic-overlay-shes-a-good-man-overlay_pzn5td.png", name: "basic-overlay-shes-a-good-man-overlay" },
+        ],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788392/photobooth/events/assets/basic-template-guide-single-photo-landscape_zjmllk.svg", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788394/photobooth/events/assets/basic-template-guide-single-photo-portrait_jzgbkc.svg", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788395/photobooth/events/assets/basic-template-guide-strip-double-column_iouo3d.svg", layout: "double_column" },
+        ],
         welcome: {
           title: "Welcome!",
           portrait: "",
@@ -172,11 +184,22 @@ let themes = {
         accent: "pink",
         accent2: "white",
         font: "'Comic Neue', cursive",
-        background: "assets/general/birthday/backgrounds/",
-        backgroundFolder: "assets/general/birthday/backgrounds/",
         logo: "",
-        overlaysFolder: "assets/general/birthday/overlays/",
-        templatesFolder: "assets/general/birthday/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788398/photobooth/events/assets/birthday-background-1_wbydtd.png",
+        ],
+        overlays: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788398/photobooth/events/assets/birthday-overlay-birthday-confetti-frame_ypmvkq.png", name: "birthday-overlay-birthday-confetti-frame" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788399/photobooth/events/assets/birthday-overlay-balloons_s4ethj.png", name: "birthday-overlay-balloons" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788400/photobooth/events/assets/birthday-overlay-banner_uitu7v.png", name: "birthday-overlay-banner" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788401/photobooth/events/assets/birthday-overlay-goldsparkles_hl8sia.png", name: "birthday-overlay-goldsparkles" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788402/photobooth/events/assets/birthday-overlay-sparkles_t1l3j1.png", name: "birthday-overlay-sparkles" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788403/photobooth/events/assets/birthday-overlay-general-overlay-colorblobs_rh3pea.png", name: "birthday-overlay-colorblobs" },
+        ],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788403/photobooth/events/assets/birthday-template-birthday-banner_dyaq0j.png", layout: "double_column" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788404/photobooth/events/assets/birthday-template-birthday_smtn3a.png", layout: "double_column" },
+        ],
         welcome: {
           title: "Happy Birthday!",
           portrait: "",
@@ -191,11 +214,20 @@ let themes = {
         accent: "#00a6c8",
         accent2: "#fff8dc",
         font: "'Comic Neue', cursive",
-        background: "",
-        backgroundFolder: "",
         logo: "",
-        overlaysFolder: "assets/general/summer/overlays/",
-        templatesFolder: "",
+        overlays: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788404/photobooth/events/assets/summer-overlay-13_lamyfw.png", name: "summer-overlay-13" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788405/photobooth/events/assets/summer-overlay-4th-of-july_l8lauv.png", name: "summer-overlay-4th-of-july" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788406/photobooth/events/assets/summer-overlay-border-with-frame_kbditt.png", name: "summer-overlay-border-with-frame" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788406/photobooth/events/assets/summer-overlay-border_y1twxc.png", name: "summer-overlay-border" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788408/photobooth/events/assets/summer-overlay-fantasy_ymadoa.png", name: "summer-overlay-fantasy" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788409/photobooth/events/assets/summer-overlay-hello-summer_fetbgw.png", name: "summer-overlay-hello-summer" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788411/photobooth/events/assets/summer-overlay-pool-with-frame-2_b4vum3.png", name: "summer-overlay-pool-with-frame-2" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788413/photobooth/events/assets/summer-overlay-pool-with-frame_rfqjyc.png", name: "summer-overlay-pool-with-frame" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788416/photobooth/events/assets/summer-overlay-tropical-border-2_esslmg.png", name: "summer-overlay-tropical-border-2" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788420/photobooth/events/assets/summer-overlay-tropical-border-with-frame_lne3ia.png", name: "summer-overlay-tropical-border-with-frame" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788423/photobooth/events/assets/summer-overlay-tropical-border_twuynr.png", name: "summer-overlay-tropical-border" },
+        ],
         welcome: {
           title: "Hello Summer!",
           portrait: "",
@@ -216,11 +248,22 @@ let themes = {
         accent2: "#fffaf4",
         fontHeading: "'Playfair Display', serif",
         fontBody: "'Source Sans 3', sans-serif",
-        background: "assets/wedding/timeless-romance/backgrounds/",
-        backgroundFolder: "assets/wedding/timeless-romance/backgrounds/",
         logo: "",
-        overlaysFolder: "assets/wedding/timeless-romance/overlays/",
-        templatesFolder: "assets/wedding/timeless-romance/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788547/photobooth/events/assets/timeless-romance-background-background_tu1nzg.svg",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788553/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-4_gw2edi.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788562/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-5_bpyzlq.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788565/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-6_mjo2fm.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788566/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-8_ykyj6y.png",
+        ],
+        overlays: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788567/photobooth/events/assets/timeless-romance-overlay-timeless-romance-single-overlay_nvjk2b.svg", name: "timeless-romance-overlay-single" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788569/photobooth/events/assets/timeless-romance-overlay-timeless-romance-strip-overlay_datpdy.svg", name: "timeless-romance-overlay-strip" },
+        ],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788571/photobooth/events/assets/timeless-romance-template-timeless-romance-single-template_mpuao5.svg", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788572/photobooth/events/assets/timeless-romance-template-timeless-romance-strip-template_dqymgy.svg", layout: "double_column" },
+        ],
         welcome: {
           title: "Celebrate the Moment",
           portrait: "",
@@ -237,11 +280,22 @@ let themes = {
         accent2: "#fffdf8",
         fontHeading: "'Great Vibes', cursive",
         fontBody: "'Lora', serif",
-        background: "assets/wedding/garden-vows/backgrounds/",
-        backgroundFolder: "assets/wedding/garden-vows/backgrounds/",
         logo: "",
-        overlaysFolder: "assets/wedding/garden-vows/overlays/",
-        templatesFolder: "assets/wedding/garden-vows/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788516/photobooth/events/assets/garden-vows-background-background_avnelo.svg",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788518/photobooth/events/assets/garden-vows-background-garden-vows-bg-1_i8bl4r.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788519/photobooth/events/assets/garden-vows-background-garden-vows-bg-2_de6ex9.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788523/photobooth/events/assets/garden-vows-background-garden-vows-bg-3_vxgwzc.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788540/photobooth/events/assets/garden-vows-background-garden-vows-bg-7_cib79o.png",
+        ],
+        overlays: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788540/photobooth/events/assets/garden-vows-overlay-garden-vows-single-overlay_priznl.svg", name: "garden-vows-overlay-single" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788542/photobooth/events/assets/garden-vows-overlay-garden-vows-strip-overlay_jeuhvh.svg", name: "garden-vows-overlay-strip" },
+        ],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788544/photobooth/events/assets/garden-vows-template-garden-vows-single-template_lxysxx.svg", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788546/photobooth/events/assets/garden-vows-template-garden-vows-strip-template_iozpue.svg", layout: "double_column" },
+        ],
         welcome: {
           title: "Love Looks Good Here",
           portrait: "",
@@ -263,11 +317,23 @@ let themes = {
         accent2: "#f4f7ff",
         fontHeading: "'Montserrat', sans-serif",
         fontBody: "'Inter', sans-serif",
-        background: "assets/general/basic/backgrounds/",
-        backgroundFolder: "assets/general/basic/backgrounds/",
         logo: "",
-        overlaysFolder: "assets/general/basic/overlays/",
-        templatesFolder: "assets/general/basic/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788380/photobooth/events/assets/basic-background-1_pzpqmv.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788381/photobooth/events/assets/basic-background-sparkles_hanvy5.png",
+        ],
+        overlays: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788382/photobooth/events/assets/basic-overlay-blue-smoke-frame_j11vpo.png", name: "basic-overlay-blue-smoke-frame" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788383/photobooth/events/assets/basic-overlay-flowers-frame_aqcurj.png", name: "basic-overlay-flowers-frame" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788385/photobooth/events/assets/basic-overlay-general-frame-black_cnp5qj.png", name: "basic-overlay-general-frame-black" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788388/photobooth/events/assets/basic-overlay-general-frame-blue-flowers_bkt18l.png", name: "basic-overlay-general-frame-blue-flowers" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788391/photobooth/events/assets/basic-overlay-shes-a-good-man-overlay_pzn5td.png", name: "basic-overlay-shes-a-good-man-overlay" },
+        ],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788392/photobooth/events/assets/basic-template-guide-single-photo-landscape_zjmllk.svg", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788394/photobooth/events/assets/basic-template-guide-single-photo-portrait_jzgbkc.svg", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788395/photobooth/events/assets/basic-template-guide-strip-double-column_iouo3d.svg", layout: "double_column" },
+        ],
         welcome: {
           title: "Step In + Share",
           portrait: "",
@@ -284,11 +350,23 @@ let themes = {
         accent2: "#f5fffd",
         fontHeading: "'Raleway', sans-serif",
         fontBody: "'Open Sans', sans-serif",
-        background: "assets/general/basic/backgrounds/",
-        backgroundFolder: "assets/general/basic/backgrounds/",
         logo: "",
-        overlaysFolder: "assets/general/basic/overlays/",
-        templatesFolder: "assets/general/basic/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788380/photobooth/events/assets/basic-background-1_pzpqmv.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788381/photobooth/events/assets/basic-background-sparkles_hanvy5.png",
+        ],
+        overlays: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788382/photobooth/events/assets/basic-overlay-blue-smoke-frame_j11vpo.png", name: "basic-overlay-blue-smoke-frame" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788383/photobooth/events/assets/basic-overlay-flowers-frame_aqcurj.png", name: "basic-overlay-flowers-frame" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788385/photobooth/events/assets/basic-overlay-general-frame-black_cnp5qj.png", name: "basic-overlay-general-frame-black" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788388/photobooth/events/assets/basic-overlay-general-frame-blue-flowers_bkt18l.png", name: "basic-overlay-general-frame-blue-flowers" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788391/photobooth/events/assets/basic-overlay-shes-a-good-man-overlay_pzn5td.png", name: "basic-overlay-shes-a-good-man-overlay" },
+        ],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788392/photobooth/events/assets/basic-template-guide-single-photo-landscape_zjmllk.svg", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788394/photobooth/events/assets/basic-template-guide-single-photo-portrait_jzgbkc.svg", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788395/photobooth/events/assets/basic-template-guide-strip-double-column_iouo3d.svg", layout: "double_column" },
+        ],
         welcome: {
           title: "Fast Photos, Fast Follow-Up",
           portrait: "",
@@ -311,8 +389,28 @@ let themes = {
         font: "'Comic Neue', cursive",
         background: "",
         logo: "",
-        overlaysFolder: "assets/school/hawks/overlays/",
-        templatesFolder: "assets/school/hawks/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788493/photobooth/events/assets/hawks-background-16_mzbqiq.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788494/photobooth/events/assets/hawks-background-blue-green-background_rdyfln.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788495/photobooth/events/assets/hawks-background-1_kl48cl.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788496/photobooth/events/assets/hawks-background-football_bclba6.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788497/photobooth/events/assets/hawks-background-gradient_relljc.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788498/photobooth/events/assets/hawks-background-green-fog_jrxhfq.png",
+        ],
+        overlays: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788500/photobooth/events/assets/hawks-overlay-1_scvljp.png", name: "hawks-overlay-1" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788501/photobooth/events/assets/hawks-overlay-2_tqwxej.png", name: "hawks-overlay-2" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788502/photobooth/events/assets/hawks-overlay-3_m10caq.png", name: "hawks-overlay-3" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788502/photobooth/events/assets/hawks-overlay-hawks-frame-cheerleader_y050rk.png", name: "hawks-overlay-cheerleader" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788504/photobooth/events/assets/hawks-overlay-hawks-frame-fan_r0a1xo.png", name: "hawks-overlay-fan" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788505/photobooth/events/assets/hawks-overlay-hawks-frame-go-hawks_b7hl8z.png", name: "hawks-overlay-go-hawks" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788506/photobooth/events/assets/hawks-overlay-hawks-frame-grass_ggw2wk.png", name: "hawks-overlay-grass" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788507/photobooth/events/assets/hawks-overlay-hawks-frame-helmets_gdhcav.png", name: "hawks-overlay-helmets" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788507/photobooth/events/assets/hawks-overlay-hawks-frame-players_xpdnfs.png", name: "hawks-overlay-players" },
+        ],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788508/photobooth/events/assets/hawks-template-go-hawks_avfpzg.png", layout: "single_photo" },
+        ],
         welcome: {
           title: "Go Hawks!",
           portrait: "",
@@ -329,8 +427,12 @@ let themes = {
         font: "'Comic Neue', cursive",
         backgroundFolder: "",
         logo: "",
-        overlaysFolder: "assets/school/ane/overlays/",
-        templatesFolder: "",
+        backgrounds: [],
+        overlays: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788490/photobooth/events/assets/ane-overlay-ane-frame-stream-night-landscape-2_tbkq3g.png", name: "ane-overlay-frame-night-landscape" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788491/photobooth/events/assets/ane-overlay-school-frame-landscape-1_nddhkg.png", name: "ane-overlay-school-frame-landscape" },
+        ],
+        templates: [],
         welcome: {
           title: "ANE",
           portrait: "",
@@ -348,11 +450,44 @@ let themes = {
         accent: "orange",
         accent2: "white",
         font: "'Creepster', cursive",
-        // Use folder-based background auto-detect (any background.* in this folder)
-        backgroundFolder: "assets/holidays/fall/halloween/backgrounds/",
-        overlaysFolder: "assets/holidays/fall/halloween/overlays/",
         logo: "",
-        templatesFolder: "assets/holidays/fall/halloween/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788425/photobooth/events/assets/fall-halloween-background-halloween-background-grey-1_bfrn8g.jpg",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788425/photobooth/events/assets/fall-halloween-background-halloween-background-pink_dcgv0o.png",
+        ],
+        overlays: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788426/photobooth/events/assets/fall-halloween-overlay-1_o52jc3.png", name: "fall-halloween-overlay-1" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788427/photobooth/events/assets/fall-halloween-overlay-11_hrnih0.png", name: "fall-halloween-overlay-11" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788428/photobooth/events/assets/fall-halloween-overlay-12_awh07v.png", name: "fall-halloween-overlay-12" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788429/photobooth/events/assets/fall-halloween-overlay-13_x2m6fk.png", name: "fall-halloween-overlay-13" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788431/photobooth/events/assets/fall-halloween-overlay-2_tsiq9i.png", name: "fall-halloween-overlay-2" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788432/photobooth/events/assets/fall-halloween-overlay-3_jjw6jy.png", name: "fall-halloween-overlay-3" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788433/photobooth/events/assets/fall-halloween-overlay-4_ckrgab.png", name: "fall-halloween-overlay-4" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788434/photobooth/events/assets/fall-halloween-overlay-5_tcmqpc.png", name: "fall-halloween-overlay-5" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788437/photobooth/events/assets/fall-halloween-overlay-6_bxgvts.png", name: "fall-halloween-overlay-6" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788438/photobooth/events/assets/fall-halloween-overlay-fall-leaves-frame_t9nior.png", name: "fall-halloween-overlay-leaves-frame" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788440/photobooth/events/assets/fall-halloween-overlay-graveyard-transparent-frame_dlx0jh.png", name: "fall-halloween-overlay-graveyard" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788441/photobooth/events/assets/fall-halloween-overlay-halloween-frame-boo_qgmzt4.png", name: "fall-halloween-overlay-boo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788443/photobooth/events/assets/fall-halloween-overlay-halloween-frame-fog_sgsrd0.png", name: "fall-halloween-overlay-fog" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788444/photobooth/events/assets/fall-halloween-overlay-halloween-frame-groovy-ghosties_pjzxai.png", name: "fall-halloween-overlay-groovy-ghosties" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788445/photobooth/events/assets/fall-halloween-overlay-halloween-frame-groovy_djftw2.png", name: "fall-halloween-overlay-groovy" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788445/photobooth/events/assets/fall-halloween-overlay-halloween-frame-haunted-house_cowlp9.png", name: "fall-halloween-overlay-haunted-house" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788455/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-10_akzyqr.png", name: "fall-halloween-overlay-landscape-10" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788457/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-3_m3qy5z.png", name: "fall-halloween-overlay-landscape-3" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788459/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-5_kutf13.png", name: "fall-halloween-overlay-landscape-5" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788460/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-6_u3ie2u.png", name: "fall-halloween-overlay-landscape-6" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788460/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-7_axskxp.png", name: "fall-halloween-overlay-landscape-7" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788461/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-9_vzpql3.png", name: "fall-halloween-overlay-landscape-9" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788462/photobooth/events/assets/fall-halloween-overlay-halloween-frame-skeletons_zbfq6v.png", name: "fall-halloween-overlay-skeletons" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788463/photobooth/events/assets/fall-halloween-overlay-halloween-overlay-ghosts_oenchv.png", name: "fall-halloween-overlay-ghosts" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788464/photobooth/events/assets/fall-halloween-overlay-smoke-corner-frame_txmhij.png", name: "fall-halloween-overlay-smoke-corner" },
+        ],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788465/photobooth/events/assets/fall-halloween-template-halloween-template-2_kww0ma.png", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788465/photobooth/events/assets/fall-halloween-template-halloween-template-3_ndtob9.png", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788466/photobooth/events/assets/fall-halloween-template-halloween-template-4_os0gxj.png", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788467/photobooth/events/assets/fall-halloween-template-halloween-template-maddies_c9rx4y.png", layout: "single_photo" },
+        ],
         welcome: {
           title: "Happy Halloween!",
           portrait: "",
@@ -370,10 +505,21 @@ let themes = {
         accent: "#c41e3a",
         accent2: "white",
         font: "'Comic Neue', cursive",
-        background: "assets/holidays/winter/christmas/backgrounds/",
         logo: "",
-        overlaysFolder: "assets/holidays/winter/christmas/overlays/",
-        templatesFolder: "assets/holidays/winter/christmas/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788477/photobooth/events/assets/winter-christmas-background-christmas-background-1_rgvubw.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788478/photobooth/events/assets/winter-christmas-background-christmas-background-2_eahwkm.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788479/photobooth/events/assets/winter-christmas-background-christmas-background-3_huffgo.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788481/photobooth/events/assets/winter-christmas-background-christmas-background-4_ubpjoy.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788483/photobooth/events/assets/winter-christmas-background-christmas-background-5_rkzpcb.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788485/photobooth/events/assets/winter-christmas-background-christmas_dn0mcm.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788486/photobooth/events/assets/winter-christmas-background-winter_xents8.png",
+        ],
+        overlays: [],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788486/photobooth/events/assets/winter-christmas-template-christmas-template-1_nru96z.png", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788487/photobooth/events/assets/winter-christmas-template-merry-christmas_c15dyi.png", layout: "double_column" },
+        ],
         welcome: {
           title: "Merry Christmas!",
           portrait: "",
@@ -387,10 +533,21 @@ let themes = {
         accent2: "#ffffff",
         fontHeading: "'Playfair Display', serif",
         fontBody: "'Montserrat', sans-serif",
-        background: "assets/holidays/winter/christmas/backgrounds/",
         logo: "",
-        overlaysFolder: "assets/holidays/winter/christmas/overlays/",
-        templatesFolder: "assets/holidays/winter/christmas/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788477/photobooth/events/assets/winter-christmas-background-christmas-background-1_rgvubw.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788478/photobooth/events/assets/winter-christmas-background-christmas-background-2_eahwkm.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788479/photobooth/events/assets/winter-christmas-background-christmas-background-3_huffgo.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788481/photobooth/events/assets/winter-christmas-background-christmas-background-4_ubpjoy.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788483/photobooth/events/assets/winter-christmas-background-christmas-background-5_rkzpcb.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788485/photobooth/events/assets/winter-christmas-background-christmas_dn0mcm.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788486/photobooth/events/assets/winter-christmas-background-winter_xents8.png",
+        ],
+        overlays: [],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788486/photobooth/events/assets/winter-christmas-template-christmas-template-1_nru96z.png", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788487/photobooth/events/assets/winter-christmas-template-merry-christmas_c15dyi.png", layout: "double_column" },
+        ],
         welcome: {
           title: "Winter Wonderland",
           portrait: "",
@@ -406,10 +563,21 @@ let themes = {
         accent2: "#ffffff",
         fontHeading: "'Mountains of Christmas', cursive",
         fontBody: "'Poppins', sans-serif",
-        background: "assets/holidays/winter/christmas/backgrounds/",
         logo: "",
-        overlaysFolder: "assets/holidays/winter/christmas/overlays/",
-        templatesFolder: "assets/holidays/winter/christmas/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788477/photobooth/events/assets/winter-christmas-background-christmas-background-1_rgvubw.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788478/photobooth/events/assets/winter-christmas-background-christmas-background-2_eahwkm.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788479/photobooth/events/assets/winter-christmas-background-christmas-background-3_huffgo.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788481/photobooth/events/assets/winter-christmas-background-christmas-background-4_ubpjoy.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788483/photobooth/events/assets/winter-christmas-background-christmas-background-5_rkzpcb.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788485/photobooth/events/assets/winter-christmas-background-christmas_dn0mcm.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788486/photobooth/events/assets/winter-christmas-background-winter_xents8.png",
+        ],
+        overlays: [],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788486/photobooth/events/assets/winter-christmas-template-christmas-template-1_nru96z.png", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788487/photobooth/events/assets/winter-christmas-template-merry-christmas_c15dyi.png", layout: "double_column" },
+        ],
         welcome: {
           title: "Santa's Workshop",
           portrait: "",
@@ -424,10 +592,21 @@ let themes = {
         accent: "#FFD700",
         accent2: "white",
         font: "'Comic Neue', cursive",
-        background: "assets/holidays/winter/christmas/backgrounds/",
         logo: "",
-        overlaysFolder: "assets/holidays/winter/christmas/overlays/",
-        templatesFolder: "assets/holidays/winter/christmas/templates/",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788477/photobooth/events/assets/winter-christmas-background-christmas-background-1_rgvubw.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788478/photobooth/events/assets/winter-christmas-background-christmas-background-2_eahwkm.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788479/photobooth/events/assets/winter-christmas-background-christmas-background-3_huffgo.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788481/photobooth/events/assets/winter-christmas-background-christmas-background-4_ubpjoy.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788483/photobooth/events/assets/winter-christmas-background-christmas-background-5_rkzpcb.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788485/photobooth/events/assets/winter-christmas-background-christmas_dn0mcm.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788486/photobooth/events/assets/winter-christmas-background-winter_xents8.png",
+        ],
+        overlays: [],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788486/photobooth/events/assets/winter-christmas-template-christmas-template-1_nru96z.png", layout: "single_photo" },
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788487/photobooth/events/assets/winter-christmas-template-merry-christmas_c15dyi.png", layout: "double_column" },
+        ],
         welcome: {
           title: "Happy New Year!",
           portrait: "",
@@ -440,8 +619,15 @@ let themes = {
         accent: "#ff5e91",
         accent2: "white",
         font: "'Comic Neue', cursive",
-        backgroundFolder: "assets/holidays/winter/valentines/backgrounds/",
-        templatesFolder: "assets/holidays/winter/valentines/templates/",
+        logo: "",
+        backgrounds: [
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788488/photobooth/events/assets/winter-valentines-background-valentines-background-1_cpm0t5.png",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788489/photobooth/events/assets/winter-valentines-background-valentines-background-2_hsfkek.png",
+        ],
+        overlays: [],
+        templates: [
+          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788490/photobooth/events/assets/winter-valentines-template-valentines-pink_gi5wxf.png", layout: "single_photo" },
+        ],
         welcome: {
           title: "Happy Valentine's Day!",
           portrait: "",
@@ -464,10 +650,13 @@ themes.summer = {
       accent2: "#1d4ed8",
       font: "'Comic Neue', cursive",
       background: "",
-      backgroundFolder: "",
       logo: "",
-      overlaysFolder: "assets/holidays/summer/4th-of-july/overlays/",
-      templatesFolder: "",
+      backgrounds: [],
+      overlays: [
+        { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788473/photobooth/events/assets/summer-4th-of-july-overlay-4thoverlay_zcvowb.png", name: "summer-4th-of-july-overlay-4thoverlay" },
+        { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788476/photobooth/events/assets/summer-4th-of-july-overlay-4thoverlay1_wolx9b.png", name: "summer-4th-of-july-overlay-4thoverlay1" },
+      ],
+      templates: [],
       welcome: {
         title: "Happy Fourth of July!",
         portrait: "",
@@ -486,9 +675,15 @@ themes.spring = {
       accent: "#0f6d2f",
       accent2: "white",
       font: "'Comic Neue', cursive",
-      backgroundFolder: "assets/holidays/spring/st-patricks-day/backgrounds/",
-      overlaysFolder: "",
-      templatesFolder: "assets/holidays/spring/st-patricks-day/templates/",
+      logo: "",
+      backgrounds: [
+        "https://res.cloudinary.com/afletch32/image/upload/v1783788469/photobooth/events/assets/spring-st-patricks-day-background-st-patricks-day-background-1_cl1xyx.png",
+      ],
+      overlays: [],
+      templates: [
+        { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788470/photobooth/events/assets/spring-st-patricks-day-template-st-patricks-day-template-1_z3lcap.png", layout: "single_photo" },
+        { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788471/photobooth/events/assets/spring-st-patricks-day-template-st-patricks-day_baggtg.png", layout: "double_column" },
+      ],
       welcome: {
         title: "Happy St. Patrick's Day!",
         portrait: "",
@@ -5931,7 +6126,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadEventsFromStorage();
   loadFontsFromStorage();
   loadAssetLibraryLocal();
-  populateAllThemeAssetTmp();
   if (repairCorruptedBackgroundDefaults()) saveThemesToStorage();
   loadAssetLibraryRemote().catch(() => renderAssetLibrary());
   try {
@@ -6050,7 +6244,6 @@ async function loadThemesRemote() {
       normalizeAllThemes();
     } catch (_e) {}
     const removedLegacyThemes = removeLegacyFlatBuiltinThemes();
-    populateAllThemeAssetTmp();
     const repairedBackgroundDefaults = repairCorruptedBackgroundDefaults();
     const globalLogo = getGlobalLogo();
     if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
@@ -7708,80 +7901,6 @@ function refreshFontSelectForTheme(theme) {
     .catch(() => {});
 }
 
-function refreshBackgroundFromFolder(theme) {
-  resolveBackgroundFromFolder(theme)
-    .then((autoBg) => {
-      if (!autoBg) return;
-      DOM.boothScreen.style.backgroundImage = `url(${autoBg})`;
-      if (DOM.welcomeScreen)
-        DOM.welcomeScreen.style.backgroundImage =
-          DOM.boothScreen.style.backgroundImage;
-    })
-    .catch(() => {
-      /* ignore */
-    });
-}
-
-function refreshBackgroundList(theme) {
-  resolveBackgroundListFromFolder(theme)
-    .then((list) => {
-      if (!Array.isArray(list) || !list.length) return;
-      theme.backgroundsTmp = list;
-      const combined = getBaseBackgroundList(theme);
-      if (combined.length > 0) {
-        if (
-          typeof theme.backgroundIndex !== "number" ||
-          theme.backgroundIndex >= combined.length
-        ) {
-          theme.backgroundIndex = 0;
-        }
-        const currentBg = getActiveBackground(theme);
-        if (currentBg) {
-          DOM.boothScreen.style.backgroundImage = `url(${currentBg})`;
-          if (DOM.welcomeScreen)
-            DOM.welcomeScreen.style.backgroundImage =
-              DOM.boothScreen.style.backgroundImage;
-        }
-      }
-      renderCurrentAssets(theme);
-    })
-    .catch(() => {
-      /* ignore */
-    });
-}
-
-function refreshOverlaysFromFolder(theme) {
-  resolveOverlaysFromFolder(theme)
-    .then((list) => {
-      if (Array.isArray(list) && list.length) {
-        theme.overlaysTmp = list;
-        renderCurrentAssets(theme);
-        renderOptions();
-      } else {
-        theme.overlaysTmp = undefined;
-      }
-    })
-    .catch(() => {
-      theme.overlaysTmp = undefined;
-    });
-}
-
-function refreshTemplatesFromFolder(theme) {
-  resolveTemplatesFromFolder(theme)
-    .then((list) => {
-      if (Array.isArray(list) && list.length) {
-        theme.templatesTmp = list;
-        renderCurrentAssets(theme);
-        renderOptions();
-      } else {
-        theme.templatesTmp = undefined;
-      }
-    })
-    .catch(() => {
-      theme.templatesTmp = undefined;
-    });
-}
-
 function syncAdminUiWithTheme(themeKey, theme) {
   const currentKey =
     themeKey || (DOM.eventSelect && DOM.eventSelect.value) || "";
@@ -7836,10 +7955,6 @@ function loadTheme(themeKey) {
   if (globalLogo !== null) applyGlobalLogoToTheme(activeTheme, globalLogo);
 
   applyThemeBasics(theme);
-  refreshBackgroundFromFolder(theme);
-  refreshBackgroundList(theme);
-  refreshOverlaysFromFolder(theme);
-  refreshTemplatesFromFolder(theme);
   logEffectiveAssetState(theme, "loadTheme");
   syncAdminUiWithTheme(themeKey, theme);
   renderAssetLibrary();
@@ -7976,10 +8091,6 @@ function applyThemeEditorBasics(theme) {
   if (DOM.themeWelcomePrompt)
     DOM.themeWelcomePrompt.value =
       (theme.welcome && theme.welcome.prompt) || "";
-  if (DOM.themeOverlaysFolder)
-    DOM.themeOverlaysFolder.value = theme.overlaysFolder || "";
-  if (DOM.themeTemplatesFolder)
-    DOM.themeTemplatesFolder.value = theme.templatesFolder || "";
 }
 
 function applyThemeEditorColors(theme) {
@@ -14352,15 +14463,8 @@ function saveTheme() {
   const logoFile = DOM.themeLogo.files[0];
   const overlayFiles = DOM.themeOverlays.files;
   const templateFiles = DOM.themeTemplates.files;
-  const templatesFolder =
-    DOM.themeTemplatesFolder && DOM.themeTemplatesFolder.value
-      ? DOM.themeTemplatesFolder.value.trim()
-      : "";
-  const overlaysFolder =
-    DOM.themeOverlaysFolder && DOM.themeOverlaysFolder.value
-      ? DOM.themeOverlaysFolder.value.trim()
-      : "";
-
+  const templatesFolder = "";
+  const overlaysFolder = "";
   const filePromises = [];
 
   if (backgroundFile) {
@@ -14384,11 +14488,6 @@ function saveTheme() {
       })
     );
   }
-  if (overlaysFolder) {
-    newTheme.overlaysFolder = overlaysFolder.endsWith("/")
-      ? overlaysFolder
-      : overlaysFolder + "/";
-  }
   for (const file of templateFiles) {
     filePromises.push(
       uploadAsset(file, "templates").then((url) => {
@@ -14396,12 +14495,6 @@ function saveTheme() {
       })
     );
   }
-  if (templatesFolder) {
-    newTheme.templatesFolder = templatesFolder.endsWith("/")
-      ? templatesFolder
-      : templatesFolder + "/";
-  }
-
   Promise.all(filePromises).then(() => {
     // Try to load/record the chosen fonts so they're available immediately
     ensureFontLoadedForFontString(newTheme.fontHeading);
@@ -19768,8 +19861,6 @@ async function confirmCreateTheme() {
   newTheme.overlays = [];
   newTheme.templates = [];
   newTheme.logo = "";
-  newTheme.overlaysFolder = "";
-  newTheme.templatesFolder = "";
   newTheme.welcome = mergePlainObject(
     baseTheme.welcome || {},
     newTheme.welcome || {}
@@ -20831,7 +20922,7 @@ function getSelectedBackgroundSourceList(theme) {
 }
 
 function isCompleteBackgroundCatalogSelection(sources, catalog) {
-  const selected = new Set(Array.isArray(sources) ? sources : []);
+ const selected = new Set(Array.isArray(sources) ? sources : []);
   const catalogSet = catalog instanceof Set ? catalog : new Set(catalog || []);
   return (
     selected.size > 0 &&
@@ -21261,17 +21352,6 @@ function getBuiltinTemplateEntries(folder) {
       return null;
     })
     .filter(Boolean);
-}
-
-function populateAllThemeAssetTmp() {
-  forEachThemeEntry((theme) => {
-    const bgFolder = theme.backgroundFolder || theme.background || "";
-    if (bgFolder) theme.backgroundsTmp = getBuiltinFolderStrings(bgFolder);
-    const ovFolder = theme.overlaysFolder || "";
-    if (ovFolder) theme.overlaysTmp = getBuiltinOverlayEntries(ovFolder);
-    const tpFolder = theme.templatesFolder || "";
-    if (tpFolder) theme.templatesTmp = getBuiltinTemplateEntries(tpFolder);
-  });
 }
 
 function normalizeAssetSlots(slots) {

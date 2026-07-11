@@ -249,15 +249,16 @@ test("setup theme dropdown groups themes by user-facing category", () => {
   );
 });
 
-test("fourth of july theme uses the summer holiday overlay folder", () => {
+test("fourth of july theme includes Cloudinary overlay entries", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
     appScript.includes("themes.summer =") &&
       appScript.includes("fourthofjuly") &&
       appScript.includes('name: "Fourth of July"') &&
-      appScript.includes('overlaysFolder: "assets/holidays/summer/4th-of-july/overlays/"'),
-    "Fourth of July should be selectable as a summer holiday theme with its own overlay folder"
+      appScript.includes("res.cloudinary.com/afletch32") &&
+      appScript.includes("summer-4th-of-july-overlay-4thoverlay_zcvowb"),
+    "Fourth of July should be a summer holiday theme with Cloudinary overlay entries"
   );
 });
 
