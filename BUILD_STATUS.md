@@ -1,7 +1,25 @@
 Current goal
-- Gate birthday and wedding text fields to their matching theme types.
+- Make the live capture preview the dominant booth-ready surface across supported kiosk viewports.
 
 What is done
+- Replaced the booth-ready three-column layout with one centered, shrinkable camera column for standard photo modes.
+- Moved frame selection behind the existing `Choose Frame` sheet instead of permanently reserving a desktop column.
+- Reduced decorative camera chrome and removed the ready-state host prompt from layout space.
+- Kept the shutter button in flow as a prominent, touch-safe action below the camera.
+- Enlarged and centered the existing countdown presentation over the camera without changing countdown logic.
+- Scoped the new capture grid away from 360 mode.
+- Added real-flow browser coverage for camera prominence, collisions, frame-sheet bounds, portrait orientation, and countdown placement.
+- Verified focused capture browser coverage passes across eight kiosk and tablet viewports.
+- Reworked the effective final-preview stylesheet around available width and height instead of viewport-derived minimum sizing and an absolutely positioned action panel.
+- Kept compact landscape and 4:3 displays in a shrinkable two-column layout; portrait uses a bounded stacked layout.
+- Constrained the displayed QR canvas as a square inside a shrinkable grid track so both panel width and height limit it.
+- Added focused browser coverage for final-preview, photo, actions, QR panel, and QR bounds across supported landscape and tablet portrait sizes.
+- Verified the focused final-share browser regression passes with the paid-print panel visible.
+- Verified `npm test` passes with 127 tests.
+- Replaced the link panel content with only `Share Link` and `Open Link` buttons.
+- Removed event-name and event-date wording from the setup screen labels.
+- Relabeled the event date field as session date.
+- Kept the event name field relabeled as session name.
 - Added birthday-only and wedding-only theme gating for advanced event fields.
 - Relabeled the existing event name field as session name.
 - Kept the session date default tied to the current local date.
@@ -53,16 +71,19 @@ What is done
 - Verified focused browser coverage with `npm run test:browser -- --grep "Asset Library keeps admin filters|frame picker stays hidden"`.
 
 What is in progress
-- Verifying the theme-gated field visibility with tests.
+- None.
 
 Next steps
-- Run the test suite for the field-visibility change.
-- Check the birthday and wedding field visibility in the browser if test coverage is not enough.
+- Review the revised capture hierarchy on physical kiosk hardware when available.
 
 Known bugs/blockers
 - The requested dirty worktree was not present at start; `git status --short` was clean.
 
 Important decisions
+- Keep the capture refactor CSS-only and preserve all camera, countdown, orientation, overlay, hardware, and 360 behavior.
+- Keep secondary frame controls collapsed until the guest requests them.
+- Keep QR generation and all share/upload/print/image-processing logic unchanged; this fix is CSS and layout-test only.
+- Use orientation and available height for share-screen layout decisions instead of switching to one column based on width alone.
 - Asset Library category dropdown is for event/theme categories.
 - Asset Library pills are for asset type filtering.
 - Search, sorting, favorites, and recents stay admin-only and must not appear in the public booth picker.

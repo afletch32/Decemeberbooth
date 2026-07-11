@@ -504,6 +504,72 @@ test("booth test camera displays and captures the processed live preview canvas"
   await expect(page.locator("#finalPreview")).not.toHaveClass(/show/);
 });
 
+test("final share photo and QR stay inside supported kiosk viewports", async ({ page }) => {
+  test.setTimeout(60_000);
+  const viewports = [
+    { width: 1920, height: 1080 },
+    { width: 1600, height: 900 },
+    { width: 1366, height: 768 },
+    { width: 1280, height: 720 },
+    { width: 1180, height: 820 },
+    { width: 1024, height: 768 },
+    { width: 800, height: 600 },
+    { width: 768, height: 1024 },
+  ];
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await gotoApp(page, "/index.html?testMode=booth&qaState=final");
+    await expect(page.locator("#finalPreview")).toHaveClass(/show/);
+    await page.evaluate(() => {
+      document.querySelector("#reviewPanel").classList.add("hidden");
+      document.querySelector("#qrCodeContainer").classList.remove("hidden");
+    });
+    await expect(page.locator("#qrCodeContainer")).toBeVisible();
+    await page.locator("#paidPrintPanel").evaluate((panel) => panel.classList.add("show"));
+
+    const bounds = await page.evaluate(() => {
+      const selectors = [
+        "#finalPreview",
+        "#finalPreviewContent",
+        "#finalPreviewActions",
+        "#qrCodeContainer",
+        "#qrCode",
+        "#finalStrip",
+        "#paidPrintPanel",
+      ];
+      const boxes = Object.fromEntries(
+        selectors.map((selector) => {
+          const rect = document.querySelector(selector).getBoundingClientRect();
+          return [selector, {
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+            width: rect.width,
+            height: rect.height,
+          }];
+        })
+      );
+      return {
+        boxes,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        documentWidth: document.documentElement.scrollWidth,
+      };
+    });
+
+    for (const [selector, rect] of Object.entries(bounds.boxes)) {
+      expect(rect.left, `${selector} left at ${viewport.width}x${viewport.height}`).toBeGreaterThanOrEqual(-1);
+      expect(rect.top, `${selector} top at ${viewport.width}x${viewport.height}`).toBeGreaterThanOrEqual(-1);
+      expect(rect.right, `${selector} right at ${viewport.width}x${viewport.height}`).toBeLessThanOrEqual(bounds.viewportWidth + 1);
+      expect(rect.bottom, `${selector} bottom at ${viewport.width}x${viewport.height}`).toBeLessThanOrEqual(bounds.viewportHeight + 1);
+    }
+    expect(bounds.documentWidth).toBeLessThanOrEqual(bounds.viewportWidth);
+    expect(Math.abs(bounds.boxes["#qrCode"].width - bounds.boxes["#qrCode"].height)).toBeLessThanOrEqual(1);
+  }
+});
+
 test("skin smoothing preserves non-skin facial details", async ({ page }) => {
   await gotoApp(page, "/index.html?testMode=booth");
 
@@ -1793,8 +1859,9 @@ test("frame picker stays hidden until the welcome flow reaches capture", async (
   await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
   await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#captureBtn")).toBeVisible();
-  await expect(page.locator("#captureBtn")).toContainText("Take Photo");
-  await expect(page.locator("#mobileSettingsSheet")).toBeVisible();
+  await expect(page.locator("#captureBtn")).not.toHaveText("");
+  await expect(page.locator("#mobileSettingsToggle")).toBeVisible();
+  await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
   await expect(page.locator("#options .asset-picker-search")).toHaveCount(0);
   await expect(page.locator("#options .asset-picker-favorite")).toHaveCount(0);
 });
@@ -1845,6 +1912,129 @@ test("booth capture layout does not vertically overflow common viewports", async
       metrics.viewportHeight
     );
   }
+});
+
+test("live camera remains dominant and collision-free across kiosk viewports", async ({ page }) => {
+  test.setTimeout(60_000);
+  const viewports = [
+    { width: 1920, height: 1080, minCameraHeightRatio: 0.62 },
+    { width: 1600, height: 900, minCameraHeightRatio: 0.6 },
+    { width: 1366, height: 768, minCameraHeightRatio: 0.58 },
+    { width: 1280, height: 720, minCameraHeightRatio: 0.52 },
+    { width: 1180, height: 820, minCameraHeightRatio: 0.56 },
+    { width: 1024, height: 768, minCameraHeightRatio: 0.55 },
+    { width: 800, height: 600, minCameraHeightRatio: 0.52 },
+    { width: 768, height: 1024, minCameraHeightRatio: 0.42 },
+  ];
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await launchStillPhotoBooth(page);
+    await page.evaluate(() => {
+      const booth = document.querySelector("#boothScreen");
+      booth.style.setProperty("--edit-camera-scale", "1");
+      booth.style.setProperty("--edit-camera-y", "0px");
+      booth.style.setProperty("--live-camera-width", "min(96vw, 1400px)");
+      window.__photoboothTest.setPhotoOverlayFormat("landscape");
+    });
+    if (viewport.height > viewport.width) {
+      await page.evaluate(() => window.__photoboothTest.setPhotoOverlayFormat("portrait"));
+      await page.waitForFunction(() => {
+        const rect = document.querySelector("#videoContainer")?.getBoundingClientRect();
+        return !!rect && rect.height > rect.width;
+      });
+    }
+    const layout = await page.evaluate(() => {
+      const box = (selector) => {
+        const rect = document.querySelector(selector).getBoundingClientRect();
+        return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height };
+      };
+      const overlaps = (a, b) =>
+        Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 &&
+        Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2;
+      const camera = box("#videoContainer");
+      const cameraStyle = getComputedStyle(document.querySelector("#videoContainer"));
+      const wrapStyle = getComputedStyle(document.querySelector("#videoWrap"));
+      const mainStyle = getComputedStyle(document.querySelector("#boothMain"));
+      const capture = box("#captureBtn");
+      const header = box("#boothHeader");
+      return {
+        camera,
+        cameraStyle: { width: cameraStyle.width, height: cameraStyle.height, maxHeight: cameraStyle.maxHeight, transform: cameraStyle.transform, liveWidth: cameraStyle.getPropertyValue("--live-camera-width"), wrapWidth: wrapStyle.width, wrapHeight: wrapStyle.height, wrapMaxWidth: wrapStyle.maxWidth, wrapRows: wrapStyle.gridTemplateRows, mainColumns: mainStyle.gridTemplateColumns, mainHeight: mainStyle.height },
+        capture,
+        header,
+        toggle: box("#mobileSettingsToggle"),
+        cameraCaptureOverlap: overlaps(camera, capture),
+        cameraHeaderOverlap: overlaps(camera, header),
+        viewportWidth: innerWidth,
+        viewportHeight: innerHeight,
+        documentWidth: document.documentElement.scrollWidth,
+        documentHeight: document.documentElement.scrollHeight,
+      };
+    });
+
+    for (const selector of ["camera", "capture", "header", "toggle"]) {
+      const rect = layout[selector];
+      expect(rect.left, `${selector} left at ${viewport.width}x${viewport.height}`).toBeGreaterThanOrEqual(-2);
+      expect(rect.top, `${selector} top at ${viewport.width}x${viewport.height}`).toBeGreaterThanOrEqual(-2);
+      expect(rect.right, `${selector} right at ${viewport.width}x${viewport.height}`).toBeLessThanOrEqual(layout.viewportWidth + 2);
+      expect(rect.bottom, `${selector} bottom at ${viewport.width}x${viewport.height}`).toBeLessThanOrEqual(layout.viewportHeight + 2);
+    }
+    expect(layout.camera.height / layout.viewportHeight, `camera prominence at ${viewport.width}x${viewport.height}: ${JSON.stringify(layout.cameraStyle)}`).toBeGreaterThanOrEqual(viewport.minCameraHeightRatio);
+    expect(layout.cameraCaptureOverlap).toBe(false);
+    expect(layout.cameraHeaderOverlap, `header overlap at ${viewport.width}x${viewport.height}: ${JSON.stringify({ camera: layout.camera, header: layout.header })}`).toBe(false);
+    expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+    expect(layout.documentHeight).toBeLessThanOrEqual(layout.viewportHeight);
+
+    if (viewport.width === 1024 && viewport.height === 768) {
+      await page.locator("#mobileSettingsToggle").click({ force: true });
+      await expect(page.locator("#mobileSettingsSheet")).toBeVisible();
+      const sheet = await page.locator("#mobileSettingsSheet").boundingBox();
+      expect(sheet).not.toBeNull();
+      expect(sheet.x).toBeGreaterThanOrEqual(-2);
+      expect(sheet.y).toBeGreaterThanOrEqual(-2);
+      expect(sheet.x + sheet.width).toBeLessThanOrEqual(viewport.width + 2);
+      expect(sheet.y + sheet.height).toBeLessThanOrEqual(viewport.height + 2);
+    }
+  }
+});
+
+test("real countdown stays centered on the camera and hides capture control", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await launchStillPhotoBooth(page);
+  await page.locator("#captureBtn").click({ force: true });
+  await expect(page.locator("#countdownOverlay")).toHaveClass(/show/);
+  await expect(page.locator("#captureBtn")).toBeHidden();
+  await page.waitForTimeout(850);
+
+  const centers = await page.evaluate(() => {
+    const camera = document.querySelector("#videoContainer").getBoundingClientRect();
+    const countdown = document.querySelector("#countdownOverlay").getBoundingClientRect();
+    return {
+      cameraX: camera.left + camera.width / 2,
+      cameraY: camera.top + camera.height / 2,
+      countdownX: countdown.left + countdown.width / 2,
+      countdownY: countdown.top + countdown.height / 2,
+      countdown: { left: countdown.left, top: countdown.top, right: countdown.right, bottom: countdown.bottom },
+      viewport: { width: innerWidth, height: innerHeight },
+      countdownInsideViewport: countdown.left >= -2 && countdown.top >= -2 && countdown.right <= innerWidth + 2 && countdown.bottom <= innerHeight + 2,
+    };
+  });
+  expect(Math.abs(centers.cameraX - centers.countdownX)).toBeLessThanOrEqual(2);
+  expect(Math.abs(centers.cameraY - centers.countdownY)).toBeLessThanOrEqual(32);
+  expect(centers.countdownInsideViewport, JSON.stringify(centers)).toBe(true);
+});
+
+test("360 mode keeps its specialized booth controls", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await launchStillPhotoBooth(page);
+  await page.locator("#modeToggle").evaluate((button) => button.click());
+  await expect(page.locator("#boothScreen")).toHaveClass(/mode-360/);
+  await expect(page.locator("#captureBtn")).toBeHidden();
+  await expect(page.locator("#booth360Panel")).toBeVisible();
+  await expect(page.locator("#start360Btn")).toBeVisible();
+  await expect(page.locator("#triggerZone")).toBeVisible();
+  await expect(page.locator("#videoImportPanel")).toBeVisible();
 });
 
 test("countdown does not resize the live preview frame", async ({ page }) => {

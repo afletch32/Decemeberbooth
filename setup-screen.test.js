@@ -468,7 +468,7 @@ test("booth capture layout is constrained to the visible viewport", () => {
     "booth screen should be fixed to the visible viewport"
   );
   assert.ok(
-    sizingCss.includes("#boothScreen.booth-ready #boothMain") &&
+    sizingCss.includes("#boothScreen.booth-ready:not(.mode-360) #boothMain") &&
       sizingCss.includes("min-height: 0;") &&
       sizingCss.includes("var(--booth-preview-max-height)") &&
       sizingCss.includes("position: static !important"),
@@ -709,9 +709,9 @@ test("event name and date drive the session upload folder", () => {
   const appScript = readProjectFile("scripts/app.js");
 
   assert.ok(
-    html.includes('for="eventNameInput"') &&
-      html.includes('for="eventDateInput"'),
-    "setup should reuse the existing event name and event date fields for session naming"
+    html.includes('<label for="eventNameInput">Session Name</label>') &&
+      html.includes('<label for="eventDateInput">Session Date</label>'),
+    "setup should present one session name and one session date field"
   );
   assert.ok(
     !html.includes('id="sessionNameInput"') &&
@@ -829,6 +829,27 @@ test("birthday and wedding event fields stay theme-gated", () => {
       appScript.includes('document.querySelectorAll(".birthday-only-event-field")') &&
       appScript.includes('normalizeEventStyle(inferThemeEventStyle(themeKey, theme)) === "birthday"'),
     "theme gating should explicitly handle wedding and birthday field visibility"
+  );
+});
+
+test("gallery link panel stays button only", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts/app.js");
+
+  assert.ok(
+    html.includes('id="eventGalleryActions"') &&
+      html.includes("Share Link") &&
+      html.includes("Open Link") &&
+      !html.includes("Copy Link") &&
+      !html.includes('id="currentEventName"') &&
+      !html.includes('id="currentEventDate"'),
+    "gallery link panel should only expose the two link buttons"
+  );
+  assert.ok(
+    appScript.includes('DOM.eventGalleryActions.classList.toggle("hidden", !hasTheme);') &&
+      appScript.includes('if (DOM.eventGalleryLink)') &&
+      appScript.includes('getEventGalleryStatusText()'),
+    "gallery link behavior should still drive the link target without extra panel copy"
   );
 });
 

@@ -12887,8 +12887,8 @@ function updateEventDependentControls(hasActiveEvent = !!getActiveEvent()) {
     DOM.currentAssetsContent.classList.toggle("hidden", !hasTheme);
   if (DOM.eventGalleryActions)
     DOM.eventGalleryActions.classList.toggle("hidden", !hasTheme);
-  if (DOM.currentEventAssetsSummary)
-    DOM.currentEventAssetsSummary.classList.toggle("hidden", !hasTheme);
+  if (DOM.currentEventAssetsSummary) DOM.currentEventAssetsSummary.hidden = true;
+  if (DOM.currentThemeAssetsSummary) DOM.currentThemeAssetsSummary.hidden = true;
   if (DOM.clearEventOverridesBtn)
     DOM.clearEventOverridesBtn.classList.toggle("hidden", !hasActiveEvent);
   if (DOM.eventToSubThemeBtn)
@@ -12907,78 +12907,15 @@ function updateCurrentEventAssetsPanel(theme = null) {
   if (!active) {
     updateEventDependentControls(false);
     const themeObj = theme || activeTheme || getSelectedThemeTarget();
-    const sessionName =
-      getSavedEventTextValue(activeSessionTextDetails, "name") ||
-      valueFromInput(DOM.eventNameInput);
-    const sessionDate =
-      getSavedEventTextValue(activeSessionTextDetails, "date") ||
-      valueFromInput(DOM.eventDateInput);
-    DOM.currentEventName.textContent =
-      sessionName || `Session ${getDateSessionSlug()}`;
-    if (DOM.currentEventDate) DOM.currentEventDate.textContent = sessionDate;
-    DOM.currentEventTheme.textContent =
-      themeObj && themeObj.name ? themeObj.name : "No theme selected";
-    DOM.currentEventAssetsSummary.textContent = getSessionAssetSummaryText();
-    const baseBackgrounds = themeObj ? getEffectiveBackgroundList(themeObj) : [];
-    const baseGreen = Array.isArray(themeObj && themeObj.greenBackgrounds)
-      ? themeObj.greenBackgrounds.filter(Boolean)
-      : [];
-    const baseOverlays = themeObj ? getEffectiveOverlayList(themeObj).length : 0;
-    const baseTemplates = themeObj ? getEffectiveTemplateList(themeObj).length : 0;
-    DOM.currentThemeAssetsSummary.textContent = `Theme assets: ${describeAssetSummaryCounts(
-      {
-        backgrounds: baseBackgrounds.length,
-        greenBackgrounds: baseGreen.length,
-        overlays: baseOverlays,
-        templates: baseTemplates,
-        hasLogo: !!(themeObj && themeObj.logo),
-      }
-    )}`;
     if (DOM.eventGalleryLink)
       DOM.eventGalleryLink.textContent = getEventGalleryStatusText();
     syncEventSetupEditor();
     return;
   }
   updateEventDependentControls(true);
-  DOM.currentEventName.textContent = active.name || "Untitled event";
-  if (DOM.currentEventDate)
-    DOM.currentEventDate.textContent = active.date || "";
-  const eventThemeKey =
-    active.themeKey || (DOM.eventSelect && DOM.eventSelect.value) || "";
-  const themeObj =
-    theme ||
-    getThemeByKey(eventThemeKey) ||
-    activeTheme ||
-    getSelectedThemeTarget();
-  DOM.currentEventTheme.textContent =
-    themeObj && themeObj.name ? themeObj.name : eventThemeKey || "None";
-
-  const overrides = getActiveEventOverrides();
-  const eventSummary = describeAssetSummaryCounts({
-    backgrounds: overrides.backgrounds.length,
-    greenBackgrounds: overrides.greenBackgrounds.length,
-    overlays: overrides.overlays.length,
-    templates: overrides.templates.length,
-    hasLogo: !!active.logo,
-  });
-  DOM.currentEventAssetsSummary.textContent = `Event-only assets: ${eventSummary}`;
-
-  const baseBackgrounds = themeObj ? getBaseBackgroundList(themeObj) : [];
-  const baseGreen = Array.isArray(themeObj && themeObj.greenBackgrounds)
-    ? themeObj.greenBackgrounds.filter(Boolean)
-    : [];
-  const baseOverlays = themeObj ? getBaseOverlayList(themeObj) : [];
-  const baseTemplates = themeObj ? getBaseTemplateList(themeObj) : [];
-  const themeSummary = describeAssetSummaryCounts({
-    backgrounds: baseBackgrounds.length,
-    greenBackgrounds: baseGreen.length,
-    overlays: baseOverlays.length,
-    templates: baseTemplates.length,
-    hasLogo: !!(themeObj && themeObj.logo),
-    hasCharacter: !!(themeObj && themeObj.character),
-  });
-  DOM.currentThemeAssetsSummary.textContent = `Theme assets: ${themeSummary}`;
-  syncEventSetupEditor(themeObj);
+  if (DOM.eventGalleryLink)
+    DOM.eventGalleryLink.textContent = getEventGalleryStatusText();
+  syncEventSetupEditor(theme || getEventEditorTheme());
 }
 
 async function handleEventOnlyAssetInput(kind, fileList) {

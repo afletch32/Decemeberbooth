@@ -6489,33 +6489,13 @@
           </div>
         </details>
         <details class="panel-section" id="currentAssetsSection" data-setup-section="event">
-          <summary>Visual Assets</summary>
+          <summary>Gallery Link</summary>
           <div id="currentAssetsContent" class="section-content hidden">
-            <div class="panel" style="margin-bottom:16px;">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-                <div>
-                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Session</div>
-                  <div id="currentEventName" style="font-weight:700; font-size:1.1em;">No session selected</div>
-                  <div id="currentEventDate" style="color:#9aa; font-size:0.9em;"></div>
-                </div>
-                <div>
-                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Theme</div>
-                  <div id="currentEventTheme" style="font-weight:600;"></div>
-                </div>
+            <div class="panel" style="margin-bottom:12px; padding:20px;">
+              <div id="eventGalleryActions" class="hidden" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" onclick="copyEventGalleryLink()">Share Link</button>
+                <button type="button" onclick="openEventGalleryLink()">Open Link</button>
               </div>
-	              <div style="margin-top:16px;">
-	                <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Event Gallery Link</div>
-	                <div id="eventGalleryActions" class="hidden" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
-	                  <button type="button" onclick="copyEventGalleryLink()">Copy Link</button>
-	                  <button type="button" onclick="openEventGalleryLink()">Open Link</button>
-	                </div>
-	                <div id="eventGalleryLink" style="margin-top:8px; font-size:0.9em; color:#bbb; word-break:break-all;"></div>
-	                <div style="margin-top:8px; font-size:0.85em; color:#9aa;">Gallery link uses the saved event name/date, or the current session name if no saved event is selected.</div>
-	              </div>
-	              <div style="margin-top:16px;">
-	                <div id="currentEventAssetsSummary" class="hidden" style="color:#9aa;"></div>
-	                <div id="currentThemeAssetsSummary" style="color:#9aa; margin-top:8px;"></div>
-	              </div>
             </div>
             <div class="panel" style="margin-bottom:16px;">
               <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
@@ -6533,7 +6513,7 @@
                   <input type="text" id="eventNameInput" placeholder="Session name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
                 <div class="theme-field">
-                  <label for="eventDateInput">Event Date</label>
+                  <label for="eventDateInput">Session Date</label>
                   <input type="text" id="eventDateInput" placeholder="e.g., April 2026" autocomplete="off" spellcheck="false">
                 </div>
                 <div class="theme-field">
