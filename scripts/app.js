@@ -17830,6 +17830,7 @@ function renderSessionFontOptions(filter = "") {
     item.type = "button";
     item.className = "setup-combobox-option";
     item.textContent = font.name;
+    item.style.fontFamily = composeFontString(font.name);
     item.dataset.fontName = font.name;
     item.setAttribute("role", "option");
     item.setAttribute("aria-selected", font.name === selected ? "true" : "false");
