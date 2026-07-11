@@ -2,6 +2,8 @@ Current goal
 - Support Canva-designed Cloudinary idle screens with orientation-aware artwork and aligned Start hotspots.
 
 What is done
+- Fixed the global button outage caused by idle-screen editor state calling a later-initialized constant during module startup.
+- Added regression coverage that prevents idle-screen state from invoking late-defined helpers during application boot.
 - Added Idle Screens as a canonical Asset Library type using the existing Cloudinary upload and persistence flow.
 - Added theme, event, and session idle-screen assignments with orientation and legacy-welcome fallback resolution.
 - Added full-screen cover rendering that hides legacy welcome chrome only while custom artwork is active.
@@ -94,7 +96,7 @@ Next steps
 - Review the revised capture hierarchy on physical kiosk hardware when available.
 
 Known bugs/blockers
-- The requested dirty worktree was not present at start; `git status --short` was clean.
+- Two existing browser smoke paths currently time out on state-specific hidden/select controls; both reach the rendered admin UI without startup exceptions.
 
 Important decisions
 - Theme assets come from direct `backgrounds`, `overlays`, and `templates` entries; local folder manifests are not a runtime fallback.

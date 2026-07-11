@@ -36,6 +36,17 @@ test("idle screens share canonical records and theme defaults", () => {
   assert.ok(app.includes("buttonZones:"));
 });
 
+test("idle screen editor state does not call late-defined helpers during app startup", () => {
+  const stateIndex = app.indexOf("let idleScreenEditorZone =");
+  const defaultsIndex = app.indexOf("const DEFAULT_IDLE_START_ZONE");
+  assert.ok(stateIndex >= 0 && defaultsIndex > stateIndex);
+  assert.ok(
+    app.includes(
+      "let idleScreenEditorZone = { x: 50, y: 73, width: 28, height: 20 };"
+    )
+  );
+});
+
 test("idle screen selection uses event orientation before theme and general fallbacks", () => {
   const resolver = extractFunction(app, "selectIdleScreenEntry");
   assert.ok(resolver.indexOf("find(eventEntries, orientation)") < resolver.indexOf("find(themeEntries, orientation)"));
