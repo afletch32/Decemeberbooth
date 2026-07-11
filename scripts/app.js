@@ -558,8 +558,6 @@ const DOM = {
   sessionFontMenu: document.getElementById("sessionFontMenu"),
   sessionFontSearch: document.getElementById("sessionFontSearch"),
   sessionFontOptions: document.getElementById("sessionFontOptions"),
-  sessionNameInput: document.getElementById("sessionNameInput"),
-  sessionDateInput: document.getElementById("sessionDateInput"),
   createPathFontPairingSelect: document.getElementById(
     "createPathFontPairingSelect"
   ),
@@ -1706,10 +1704,8 @@ function getSessionUploadName() {
   if (active && active.name) return active.name;
   const sessionName =
     getSavedEventTextValue(activeSessionTextDetails, "name") ||
-    valueFromInput(DOM.sessionNameInput);
+    valueFromInput(DOM.eventNameInput);
   if (sessionName) return sessionName;
-  const eventName = valueFromInput(DOM.eventNameInput);
-  if (eventName) return eventName;
   return getDateSessionSlug();
 }
 
@@ -1718,10 +1714,8 @@ function getSessionUploadDate() {
   if (active && active.date) return active.date;
   const sessionDate =
     getSavedEventTextValue(activeSessionTextDetails, "date") ||
-    valueFromInput(DOM.sessionDateInput);
+    valueFromInput(DOM.eventDateInput);
   if (sessionDate) return sessionDate;
-  const eventDate = valueFromInput(DOM.eventDateInput);
-  if (eventDate) return eventDate;
   return getDateSessionSlug();
 }
 
@@ -5161,10 +5155,18 @@ const EMPTY_LAUNCH_THUMBNAIL_SRC =
 function setLaunchSummaryThumbnail(nodeId, src, label) {
   const node = document.getElementById(nodeId);
   if (!node) return;
-  const thumbSrc = src ? withBust(src) : EMPTY_LAUNCH_THUMBNAIL_SRC;
-  node.src = thumbSrc;
-  node.alt = src ? `${label} selected` : `No ${label.toLowerCase()} selected`;
-  node.title = src ? `${label} selected` : `No ${label.toLowerCase()} selected`;
+  node.innerHTML = "";
+  if (!src) {
+    const empty = document.createElement("div");
+    empty.className = "setup-session-preview-tile";
+    empty.style.minHeight = "120px";
+    empty.style.alignItems = "center";
+    empty.style.justifyContent = "center";
+    empty.textContent = `No ${label.toLowerCase()} selected`;
+    node.appendChild(empty);
+    return;
+  }
+  node.appendChild(createAssetTile(src));
 }
 
 function getLaunchSummaryThumbnailSrc(kind) {
@@ -5194,6 +5196,39 @@ function getLaunchSummaryThumbnailSrc(kind) {
         ? activeSessionAssets.templates[0]
         : ""
     );
+  }
+  return "";
+}
+
+function getLaunchSummaryThumbnailLabel(kind) {
+  if (kind === "background") {
+    const list = Array.isArray(activeSessionAssets.backgrounds)
+      ? activeSessionAssets.backgrounds.filter(Boolean)
+      : [];
+    if (!list.length) return "";
+    const index = Math.min(
+      Math.max(activeSessionAssets.backgroundIndex || 0, 0),
+      list.length - 1
+    );
+    return getAssetDisplayName({ url: getAssetEntrySrc(list[index]) });
+  }
+  if (kind === "overlay") {
+    const src = getAssetEntrySrc(
+      Array.isArray(activeSessionAssets.overlays) &&
+        activeSessionAssets.overlays.length
+        ? activeSessionAssets.overlays[0]
+        : ""
+    );
+    return src ? getAssetDisplayName({ url: src }) : "";
+  }
+  if (kind === "template") {
+    const src = getAssetEntrySrc(
+      Array.isArray(activeSessionAssets.templates) &&
+        activeSessionAssets.templates.length
+        ? activeSessionAssets.templates[0]
+        : ""
+    );
+    return src ? getAssetDisplayName({ url: src }) : "";
   }
   return "";
 }
@@ -5254,7 +5289,7 @@ async function updateLaunchSummary() {
   setLaunchSummaryThumbnail(
     "launchBackgroundThumb",
     getLaunchSummaryThumbnailSrc("background"),
-    "Background"
+    getLaunchSummaryThumbnailLabel("background") || "Background"
   );
   setLaunchSummaryText(
     ["launchOverlayCount", "launchConfirmOverlayCount"],
@@ -5264,7 +5299,7 @@ async function updateLaunchSummary() {
   setLaunchSummaryThumbnail(
     "launchOverlayThumb",
     getLaunchSummaryThumbnailSrc("overlay"),
-    "Overlay"
+    getLaunchSummaryThumbnailLabel("overlay") || "Overlay"
   );
   setLaunchSummaryText(
     ["launchStripStatus", "launchConfirmStripStatus"],
@@ -5274,7 +5309,7 @@ async function updateLaunchSummary() {
   setLaunchSummaryThumbnail(
     "launchTemplateThumb",
     getLaunchSummaryThumbnailSrc("template"),
-    "Template"
+    getLaunchSummaryThumbnailLabel("template") || "Template"
   );
   setLaunchSummaryText(
     ["launchOutputStatus", "launchConfirmOutputStatus"],
@@ -5840,38 +5875,6 @@ function setupEventDateInput() {
   });
 }
 
-function setupSessionNameInput() {
-  if (DOM.sessionNameInput) {
-    if (!DOM.sessionNameInput.value) {
-      DOM.sessionNameInput.value = getDateSessionSlug();
-    }
-    DOM.sessionNameInput.addEventListener("input", () => {
-      const name = DOM.sessionNameInput.value.trim();
-      const active = getActiveEvent();
-      if (active) {
-        updateActiveEventDetails({ name });
-      } else {
-        updateActiveSessionTextDetails({ name });
-      }
-    });
-  }
-  if (DOM.sessionDateInput) {
-    if (!DOM.sessionDateInput.value) {
-      DOM.sessionDateInput.value = getDateSessionSlug();
-    }
-    DOM.sessionDateInput.addEventListener("input", () => {
-      const dateValue = DOM.sessionDateInput.value.trim();
-      const active = getActiveEvent();
-      if (active) {
-        updateActiveEventDetails({ date: dateValue });
-      } else {
-        updateActiveSessionTextDetails({ date: dateValue });
-      }
-      updateStylePreview();
-    });
-  }
-}
-
 function init() {
   setupLaunchMode = loadSetupLaunchMode();
   syncSetupLaunchModeUi();
@@ -5900,7 +5903,6 @@ function init() {
   setupEventNameInput();
   setupEventVisualEditorControls();
   setupEventDateInput();
-  setupSessionNameInput();
   setupEventProfileControls();
   setupAssetPanelControls();
   setupAdminModalNavigation();
@@ -7807,9 +7809,7 @@ function syncAdminUiWithTheme(themeKey, theme) {
   if (DOM.options) renderOptions();
   syncThemeEditorWithActiveTheme();
   if (DOM.eventNameInput) DOM.eventNameInput.value = storedName || "";
-  if (DOM.eventDateInput) DOM.eventDateInput.value = storedDate || "";
-  if (DOM.sessionNameInput) DOM.sessionNameInput.value = sessionName || "";
-  if (DOM.sessionDateInput) DOM.sessionDateInput.value = sessionDate || "";
+  if (DOM.eventDateInput) DOM.eventDateInput.value = storedDate || sessionDate || "";
   updateStylePreview();
 }
 
@@ -12444,10 +12444,25 @@ function isWeddingEventTheme(themeObj = null) {
   );
 }
 
+function isBirthdayEventTheme(themeObj = null) {
+  const themeKey = getEventEditorThemeKey();
+  const theme = themeObj || resolveThemeByKey(themeKey);
+  return (
+    normalizeEventStyle(inferThemeEventStyle(themeKey, theme)) === "birthday"
+  );
+}
+
 function syncWeddingOnlyEventFields(themeObj = null) {
   const showWeddingFields = isWeddingEventTheme(themeObj);
   document.querySelectorAll(".wedding-only-event-field").forEach((node) => {
     node.classList.toggle("hidden", !showWeddingFields);
+  });
+}
+
+function syncBirthdayOnlyEventFields(themeObj = null) {
+  const showBirthdayFields = isBirthdayEventTheme(themeObj);
+  document.querySelectorAll(".birthday-only-event-field").forEach((node) => {
+    node.classList.toggle("hidden", !showBirthdayFields);
   });
 }
 
@@ -12463,6 +12478,7 @@ function syncEventSetupEditor(theme = null) {
   const hasEditableTarget = hasActiveEvent || !!themeObj;
   const textSource = hasActiveEvent ? active : activeSessionTextDetails;
   syncWeddingOnlyEventFields(themeObj);
+  syncBirthdayOnlyEventFields(themeObj);
   const setDisabled = (node) => {
     if (!node) return;
     node.disabled = !hasEditableTarget;

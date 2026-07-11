@@ -704,29 +704,29 @@ test("setup exposes selected assets in a collapsible summary", () => {
   );
 });
 
-test("session name and date default the upload folder", () => {
+test("event name and date drive the session upload folder", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts/app.js");
 
   assert.ok(
-    html.includes('id="sessionNameInput"') &&
-      html.includes('id="sessionDateInput"'),
-    "setup should expose explicit session name and session date fields"
+    html.includes('for="eventNameInput"') &&
+      html.includes('for="eventDateInput"'),
+    "setup should reuse the existing event name and event date fields for session naming"
   );
   assert.ok(
-    appScript.includes(
-      'sessionNameInput: document.getElementById("sessionNameInput")'
-    ) &&
-      appScript.includes(
-        'sessionDateInput: document.getElementById("sessionDateInput")'
-      ) &&
-      appScript.includes("function getSessionUploadName()") &&
+    !html.includes('id="sessionNameInput"') &&
+      !html.includes('id="sessionDateInput"'),
+    "setup should not add separate session fields"
+  );
+  assert.ok(
+    appScript.includes("function getSessionUploadName()") &&
       appScript.includes("function getSessionUploadDate()") &&
+      appScript.includes("valueFromInput(DOM.eventNameInput)") &&
+      appScript.includes("valueFromInput(DOM.eventDateInput)") &&
       appScript.includes("getDateSessionSlug()") &&
       appScript.includes("slugifyEventText(getSessionUploadName())") &&
-      appScript.includes("slugifyEventText(getSessionUploadDate())") &&
-      appScript.includes("setupSessionNameInput();"),
-    "session upload paths should derive from the dedicated session fields and current-date default"
+      appScript.includes("slugifyEventText(getSessionUploadDate())"),
+    "session upload paths should derive from the existing name/date fields and current-date default"
   );
 });
 
@@ -805,6 +805,30 @@ test("advanced theme controls keep defaults as editable placeholders", () => {
   assert.ok(
     appScript.includes('getSavedEventTextValue(textSource, "partner1")'),
     "all advanced text fields should load from the active event or session text source"
+  );
+});
+
+test("birthday and wedding event fields stay theme-gated", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts/app.js");
+
+  assert.ok(
+    html.includes('class="theme-field wedding-only-event-field"') &&
+      html.includes('class="theme-field birthday-only-event-field hidden"') &&
+      html.includes('id="eventPartner1Input"') &&
+      html.includes('id="eventPartner2Input"') &&
+      html.includes('id="eventBirthdayNameInput"'),
+    "wedding fields should stay visible only through the wedding wrapper and birthday name should start hidden"
+  );
+  assert.ok(
+    appScript.includes("function isWeddingEventTheme(themeObj = null)") &&
+      appScript.includes("function isBirthdayEventTheme(themeObj = null)") &&
+      appScript.includes("function syncWeddingOnlyEventFields(themeObj = null)") &&
+      appScript.includes("function syncBirthdayOnlyEventFields(themeObj = null)") &&
+      appScript.includes('document.querySelectorAll(".wedding-only-event-field")') &&
+      appScript.includes('document.querySelectorAll(".birthday-only-event-field")') &&
+      appScript.includes('normalizeEventStyle(inferThemeEventStyle(themeKey, theme)) === "birthday"'),
+    "theme gating should explicitly handle wedding and birthday field visibility"
   );
 });
 

@@ -271,6 +271,36 @@
       gap: 16px;
     }
 
+    .setup-session-preview-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+    }
+
+    .setup-session-preview-tile {
+      border: 1px solid rgba(127, 219, 207, 0.45);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      padding: 10px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+      display: grid;
+      gap: 8px;
+    }
+
+    .setup-session-preview-tile .asset-item {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .setup-session-preview-label {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
     .setup-session-assets-toggle {
       border: 1px solid var(--border);
       border-radius: 18px;
@@ -6273,34 +6303,37 @@
             <div id="sessionFontOptions" class="setup-combobox-options" role="listbox" aria-label="Font options"></div>
           </div>
         </div>
-        <div class="setup-session-item">
-          <label for="sessionNameInput">Session Name</label>
-          <input type="text" id="sessionNameInput" placeholder="Session name" autocomplete="off" autocapitalize="words" spellcheck="false">
-        </div>
-        <div class="setup-session-item">
-          <label for="sessionDateInput">Session Date</label>
-          <input type="text" id="sessionDateInput" placeholder="YYYY-MM-DD" autocomplete="off" spellcheck="false">
-        </div>
       </div>
       <details class="setup-session-assets-toggle" id="setupSessionAssetsToggle">
         <summary aria-label="Selected backgrounds, overlays, and templates">
           <div class="setup-session-assets-summary-label">Selected assets</div>
           <div class="setup-session-assets-summary-row">
             <span class="setup-session-assets-summary-chip">
-              <img id="launchBackgroundThumb" class="setup-session-assets-thumb" alt="" loading="lazy">
               <strong id="launchBackgroundSummary">0 selected</strong>
             </span>
             <span class="setup-session-assets-summary-chip">
-              <img id="launchOverlayThumb" class="setup-session-assets-thumb" alt="" loading="lazy">
               <strong id="launchOverlaySummary">0 selected</strong>
             </span>
             <span class="setup-session-assets-summary-chip">
-              <img id="launchTemplateThumb" class="setup-session-assets-thumb" alt="" loading="lazy">
               <strong id="launchTemplateSummary">0 selected</strong>
             </span>
           </div>
         </summary>
         <div class="setup-session-assets" aria-label="Selected asset counts">
+          <div class="setup-session-preview-strip" aria-label="Selected asset thumbnails">
+            <div class="setup-session-preview-tile">
+              <div class="setup-session-preview-label">Background</div>
+              <div id="launchBackgroundThumb"></div>
+            </div>
+            <div class="setup-session-preview-tile">
+              <div class="setup-session-preview-label">Overlay</div>
+              <div id="launchOverlayThumb"></div>
+            </div>
+            <div class="setup-session-preview-tile">
+              <div class="setup-session-preview-label">Template</div>
+              <div id="launchTemplateThumb"></div>
+            </div>
+          </div>
           <div class="session-asset-count">
             <span>Backgrounds</span>
             <strong id="launchBackgroundCount">0 selected</strong>
@@ -6461,8 +6494,8 @@
             <div class="panel" style="margin-bottom:16px;">
               <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
                 <div>
-                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Event</div>
-                  <div id="currentEventName" style="font-weight:700; font-size:1.1em;">No event selected</div>
+                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Session</div>
+                  <div id="currentEventName" style="font-weight:700; font-size:1.1em;">No session selected</div>
                   <div id="currentEventDate" style="color:#9aa; font-size:0.9em;"></div>
                 </div>
                 <div>
@@ -6496,8 +6529,8 @@
               </div>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:16px;">
                 <div class="theme-field">
-                  <label for="eventNameInput">Event Name</label>
-                  <input type="text" id="eventNameInput" placeholder="Event name" autocomplete="off" autocapitalize="words" spellcheck="false">
+                  <label for="eventNameInput">Session Name</label>
+                  <input type="text" id="eventNameInput" placeholder="Session name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
                 <div class="theme-field">
                   <label for="eventDateInput">Event Date</label>
@@ -6519,7 +6552,7 @@
                   <label for="eventPartner2Input">Partner 2</label>
                   <input type="text" id="eventPartner2Input" placeholder="Name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
-                <div class="theme-field">
+                <div class="theme-field birthday-only-event-field hidden">
                   <label for="eventBirthdayNameInput">Birthday Name</label>
                   <input type="text" id="eventBirthdayNameInput" placeholder="Name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
