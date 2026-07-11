@@ -20,15 +20,6 @@ function extractFunction(source, name) {
   throw new Error(`${name} function body should close`);
 }
 
-function loadResolveAssetPath(appScript) {
-  const ensureFolderPath = extractFunction(appScript, "ensureFolderPath");
-  const resolveAssetPath = extractFunction(appScript, "resolveAssetPath");
-  return Function(
-    "location",
-    `${ensureFolderPath}\n${resolveAssetPath}\nreturn resolveAssetPath;`
-  )({ origin: "https://example.com" });
-}
-
 test("setup screen uses a compact toolbar for section controls", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts/app.js");
@@ -79,45 +70,6 @@ test("setup screen uses a compact toolbar for section controls", () => {
       html.includes('data-setup-section="capture"') &&
       html.includes('data-setup-section="share"'),
     "setup sections should remain addressable by section state"
-  );
-});
-
-test("theme folder asset manifests resolve shared library paths", () => {
-  const appScript = readProjectFile("scripts", "app.js");
-  const resolveAssetPath = loadResolveAssetPath(appScript);
-
-  assert.equal(
-    resolveAssetPath("assets/events/test/overlays/", "frame1.png"),
-    "/assets/events/test/overlays/frame1.png"
-  );
-  assert.equal(
-    resolveAssetPath(
-      "assets/events/test/overlays/",
-      "../../library/overlays/gold-stars.png"
-    ),
-    "/assets/events/library/overlays/gold-stars.png"
-  );
-  assert.equal(
-    resolveAssetPath(
-      "assets/events/test/overlays/",
-      "/assets/library/overlays/gold-stars.png"
-    ),
-    "/assets/library/overlays/gold-stars.png"
-  );
-  assert.equal(
-    resolveAssetPath(
-      "assets/events/test/overlays/",
-      "https://cdn.example.com/gold-stars.png"
-    ),
-    "https://cdn.example.com/gold-stars.png"
-  );
-  assert.equal(
-    resolveAssetPath("assets/events/test/overlays/", "data:image/png;base64,abc"),
-    "data:image/png;base64,abc"
-  );
-  assert.equal(
-    resolveAssetPath("assets/events/test/overlays/", "blob:https://example.com/id"),
-    "blob:https://example.com/id"
   );
 });
 
@@ -288,9 +240,9 @@ test("asset library background selection only reflects explicit theme defaults",
     "background defaults should still come from explicit theme state"
   );
   assert.ok(
-    appScript.includes("const folderArr = Array.isArray(theme.overlaysTmp)") &&
-      appScript.includes("const folderArr = Array.isArray(theme.templatesTmp)"),
-    "overlay and template folder manifests should remain theme defaults"
+    appScript.includes("const localArr = Array.isArray(theme.overlays)") &&
+      appScript.includes("const localArr = Array.isArray(theme.templates)"),
+    "overlay and template defaults should come from explicit theme arrays"
   );
 });
 
@@ -839,8 +791,8 @@ test("gallery link panel stays button only", () => {
 
   assert.ok(
     html.includes('id="eventGalleryActions"') &&
-      html.includes("Share Link") &&
-      html.includes("Open Link") &&
+      html.includes("Share Gallery Link") &&
+      html.includes("Open Gallery") &&
       !html.includes("Copy Link") &&
       !html.includes('id="currentEventName"') &&
       !html.includes('id="currentEventDate"'),

@@ -3202,6 +3202,30 @@
     #welcomeScreen.faded { opacity: 0; pointer-events: none; }
     #welcomeImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
 
+    #welcomeScreen.custom-idle-screen { overflow: hidden; background: #000 !important; }
+    #welcomeScreen.custom-idle-screen::before,
+    #welcomeScreen.custom-idle-screen::after { display: none; }
+    #welcomeScreen.custom-idle-screen #welcomeImg { display: block !important; z-index: 0; }
+    #welcomeScreen.custom-idle-screen #welcomeOverlay { position: absolute; inset: 0; width: 100%; max-width: none; min-width: 0; max-height: none; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; animation: none; transform: none; overflow: visible; }
+    #welcomeScreen.custom-idle-screen #welcomeEyebrow,
+    #welcomeScreen.custom-idle-screen #welcomeDemoStep,
+    #welcomeScreen.custom-idle-screen #welcomeModeStep,
+    #welcomeScreen.custom-idle-screen #welcomeEventLogo,
+    #welcomeScreen.custom-idle-screen #welcomeTitle,
+    #welcomeScreen.custom-idle-screen #welcomeHostLine { display: none !important; }
+    #welcomeScreen.custom-idle-screen #welcomeIdleStep { display: block !important; position: absolute; inset: 0; }
+    #welcomeScreen.custom-idle-screen #startButton { position: absolute; margin: 0; min-width: 0; padding: 0; border: 0; outline: 0; border-radius: 0; background: transparent; box-shadow: none; color: transparent; font-size: 0; animation: none; transform: none; cursor: pointer; touch-action: manipulation; }
+    #welcomeScreen.custom-idle-screen #startButton:focus-visible { outline: 4px solid #fff; outline-offset: -4px; box-shadow: 0 0 0 7px #155eef; }
+
+    .idle-screen-editor-modal { position: fixed; inset: 0; z-index: 12000; display: grid; place-items: center; padding: 16px; background: rgba(15, 23, 42, 0.72); }
+    .idle-screen-editor-modal.hidden { display: none; }
+    .idle-screen-editor-panel { width: min(920px, 96vw); max-height: 96vh; overflow: auto; padding: 24px; border-radius: 16px; background: #fff; color: #0f172a; }
+    .idle-screen-editor-canvas { position: relative; width: 100%; height: min(62vh, 620px); margin: 16px 0; overflow: hidden; background: #111827; touch-action: none; }
+    .idle-screen-editor-canvas img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .idle-screen-editor-zone { position: absolute; border: 3px dashed #f97316; background: rgba(249, 115, 22, 0.18); cursor: move; transform: translate(-50%, -50%); }
+    .idle-screen-editor-zone span { position: absolute; left: 0; bottom: 100%; padding: 4px 8px; background: #f97316; color: #fff; font-size: 12px; white-space: nowrap; }
+    .idle-screen-editor-zone i { position: absolute; right: -8px; bottom: -8px; width: 20px; height: 20px; border-radius: 50%; background: #f97316; cursor: nwse-resize; }
+
     #welcomeOverlay {
       display: grid;
       justify-items: center;
@@ -5369,6 +5393,14 @@
       gap: 16px;
     }
 
+    .admin-gallery-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .admin-gallery-actions button { min-width: 0; }
+
     #eventGalleryActions,
     #emailShortcuts {
       display: flex;
@@ -6489,14 +6521,8 @@
           </div>
         </details>
         <details class="panel-section" id="currentAssetsSection" data-setup-section="event">
-          <summary>Gallery Link</summary>
+          <summary>Event Details</summary>
           <div id="currentAssetsContent" class="section-content">
-            <div class="panel" style="margin-bottom:12px; padding:20px;">
-              <div id="eventGalleryActions" class="hidden" style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button type="button" onclick="copyEventGalleryLink()">Share Link</button>
-                <button type="button" onclick="openEventGalleryLink()">Open Link</button>
-              </div>
-            </div>
             <div class="panel" style="margin-bottom:16px;">
               <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
                 <div>
@@ -6590,6 +6616,11 @@
             <div class="asset-actions">
               <button type="button" id="addLogoBtn">Add Logo</button>
               <button type="button" id="addAssetsBtn">Add Assets</button>
+              <button type="button" id="addIdleScreensBtn">Add Idle Screens</button>
+              <div id="eventGalleryActions" class="hidden admin-gallery-actions">
+                <button type="button" onclick="copyEventGalleryLink()">Share Gallery Link</button>
+                <button type="button" onclick="openEventGalleryLink()">Open Gallery</button>
+              </div>
               <button type="button" onclick="openLayoutBuilder()">Open Layout Builder</button>
               <button type="button" id="eventToSubThemeBtn" class="hidden">Save Theme Preset</button>
             </div>
@@ -6640,6 +6671,7 @@
               <input type="file" id="themeOverlays" accept="image/*" multiple>
               <input type="file" id="themeTemplates" accept="image/*" multiple>
               <input type="file" id="bulkAssetsInput" accept="image/*" multiple>
+              <input type="file" id="idleScreensInput" accept="image/*" multiple>
             </div>
             <div id="bulkAssetModal" class="hidden" style="position:fixed; inset:0; background:rgba(28,40,72,0.35); z-index:10010; display:flex; align-items:center; justify-content:center; padding:16px;">
               <div style="width:min(520px, 96vw); background:#fff; border:1px solid #cedcf4; border-radius:16px; box-shadow:0 12px 30px rgba(99, 123, 175, 0.18); padding:16px;">
@@ -6649,6 +6681,7 @@
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToGreenBackgrounds"> Green Screen Backgrounds</label>
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToOverlays" checked> Overlays</label>
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToTemplates"> Templates</label>
+                <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToIdleScreens"> Idle Screens</label>
                 <div class="btn-row" style="margin-top:16px;">
                   <button type="button" id="bulkAssetCancel">Cancel</button>
                   <button type="button" id="bulkAssetApply" class="primary">Upload</button>
@@ -7065,7 +7098,7 @@
       </div>
     </div>
     <div id="welcomeScreen">
-      <img id="welcomeImg" />
+      <img id="welcomeImg" alt="" />
       <div id="welcomeOverlay">
         <div id="welcomeEyebrow" class="welcome-eyebrow">Choose your demo</div>
         <div id="welcomeDemoStep" class="welcome-flow-section">
@@ -7103,6 +7136,24 @@
             </button>
           </div>
           <button id="welcomeModeBackBtn" type="button" class="button-ghost welcome-back-button" onclick="goBackFromWelcome(event)">Go Back</button>
+        </div>
+      </div>
+    </div>
+    <div id="idleScreenEditorModal" class="hidden idle-screen-editor-modal" role="dialog" aria-modal="true" aria-labelledby="idleScreenEditorTitle">
+      <div class="idle-screen-editor-panel">
+        <h2 id="idleScreenEditorTitle">Position Start Hotspot</h2>
+        <p>The dashed hotspot is visible only here. Guests see the Canva artwork with an invisible working Start button.</p>
+        <label>Orientation
+          <select id="idleScreenOrientation"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select>
+        </label>
+        <div id="idleScreenEditorCanvas" class="idle-screen-editor-canvas">
+          <img id="idleScreenEditorImage" alt="Idle screen preview">
+          <div id="idleScreenEditorZone" class="idle-screen-editor-zone" tabindex="0"><span>Start hotspot</span><i aria-hidden="true"></i></div>
+        </div>
+        <div class="btn-row">
+          <button type="button" id="idleScreenResetZone">Reset button position</button>
+          <button type="button" id="idleScreenEditorCancel">Cancel</button>
+          <button type="button" id="idleScreenEditorSave" class="primary">Save</button>
         </div>
       </div>
     </div>

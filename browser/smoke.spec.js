@@ -1429,7 +1429,6 @@ test("setup screen keeps overlay choice in the booth and can start a plain layou
   await page.evaluate(() => {
     const normalize = window.__photoboothTest.normalizeOverlayDefinition;
     window.__photoboothTest.patchActiveTheme({
-      overlaysTmp: [],
       overlaysRemoved: [],
       overlays: [
         normalize({
@@ -1561,7 +1560,6 @@ test("booth mode buttons switch frame sizing and option sets", async ({
   await page.evaluate(() => {
     const normalize = window.__photoboothTest.normalizeOverlayDefinition;
     window.__photoboothTest.patchActiveTheme({
-      overlaysTmp: [],
       overlaysRemoved: [],
       overlays: [
         normalize({
@@ -1692,7 +1690,6 @@ test("photo overlay format selector filters portrait and landscape overlays", as
   await page.evaluate(() => {
     const normalize = window.__photoboothTest.normalizeOverlayDefinition;
     window.__photoboothTest.patchActiveTheme({
-      overlaysTmp: [],
       overlaysRemoved: [],
       overlays: [
         normalize({

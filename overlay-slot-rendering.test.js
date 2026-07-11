@@ -101,10 +101,10 @@ test("final strip rendering uses manifest photo slots before legacy strip geomet
     "double-column strip rendering should honor template slot coordinates before falling back to standard geometry"
   );
   assert.ok(
-    appJs.includes("photoSlots: it.photoSlots") &&
-      appJs.includes("background: it.background") &&
-      appJs.includes("foreground: it.foreground"),
-    "folder template manifests should preserve Overlay Builder render metadata"
+    appJs.includes("photoSlots: t.photoSlots") &&
+      appJs.includes("background: t.background") &&
+      appJs.includes("foreground: t.foreground"),
+    "explicit theme templates should preserve Overlay Builder render metadata"
   );
 });
 

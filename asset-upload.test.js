@@ -270,14 +270,14 @@ test("asset library management supports sorting and category metadata", () => {
   );
 });
 
-test("canonical asset collection includes folder manifests and deduplicates category URLs", () => {
+test("canonical asset collection includes explicit theme arrays and deduplicates category URLs", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    appScript.includes("getBuiltinFolderStrings(backgroundFolder)") &&
-      appScript.includes("getBuiltinOverlayEntries(overlaysFolder)") &&
-      appScript.includes("getBuiltinTemplateEntries(templatesFolder)"),
-    "folder-manifest backgrounds, overlays, and templates should feed the canonical collection"
+    appScript.includes("theme.backgrounds.forEach") &&
+      appScript.includes("theme.overlays.forEach") &&
+      appScript.includes("theme.templates.forEach"),
+    "explicit theme backgrounds, overlays, and templates should feed the canonical collection"
   );
   assert.ok(
     appScript.includes("function getAssetLibraryUrlKey(url)") &&

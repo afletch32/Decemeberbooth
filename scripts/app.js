@@ -6,7 +6,6 @@ import {
   buildEventFolderPath,
   getCloudinaryDerivedUrl,
 } from "./cloudinary-utils.mjs";
-import { getBuiltinAssetManifest } from "./builtin-asset-manifests.mjs";
 import { clampZoom } from "./camera-utils.mjs";
 import {
   applyThemeText,
@@ -425,7 +424,6 @@ let themes = {
         accent: "#041E42",
         accent2: "#FFB81C",
         font: "'Comic Neue', cursive",
-        backgroundFolder: "",
         logo: "",
         backgrounds: [],
         overlays: [
@@ -1055,13 +1053,16 @@ const DOM = {
   themeQuickSelect: document.getElementById("themeQuickSelect"),
   themeCharacter: document.getElementById("themeCharacter"),
   addAssetsBtn: document.getElementById("addAssetsBtn"),
+  addIdleScreensBtn: document.getElementById("addIdleScreensBtn"),
   bulkAssetsInput: document.getElementById("bulkAssetsInput"),
+  idleScreensInput: document.getElementById("idleScreensInput"),
   bulkAssetModal: document.getElementById("bulkAssetModal"),
   bulkAssetSummary: document.getElementById("bulkAssetSummary"),
   bulkToBackgrounds: document.getElementById("bulkToBackgrounds"),
   bulkToGreenBackgrounds: document.getElementById("bulkToGreenBackgrounds"),
   bulkToOverlays: document.getElementById("bulkToOverlays"),
   bulkToTemplates: document.getElementById("bulkToTemplates"),
+  bulkToIdleScreens: document.getElementById("bulkToIdleScreens"),
   bulkAssetCancel: document.getElementById("bulkAssetCancel"),
   bulkAssetApply: document.getElementById("bulkAssetApply"),
   assetLibrarySearch: document.getElementById("assetLibrarySearch"),
@@ -1072,6 +1073,14 @@ const DOM = {
   refreshAssetLibraryBtn: document.getElementById("refreshAssetLibraryBtn"),
   assetLibraryGrid: document.getElementById("assetLibraryGrid"),
   assetLibraryStatus: document.getElementById("assetLibraryStatus"),
+  idleScreenEditorModal: document.getElementById("idleScreenEditorModal"),
+  idleScreenEditorCanvas: document.getElementById("idleScreenEditorCanvas"),
+  idleScreenEditorImage: document.getElementById("idleScreenEditorImage"),
+  idleScreenEditorZone: document.getElementById("idleScreenEditorZone"),
+  idleScreenOrientation: document.getElementById("idleScreenOrientation"),
+  idleScreenResetZone: document.getElementById("idleScreenResetZone"),
+  idleScreenEditorCancel: document.getElementById("idleScreenEditorCancel"),
+  idleScreenEditorSave: document.getElementById("idleScreenEditorSave"),
   assetThemeDefaultsModal: document.getElementById("assetThemeDefaultsModal"),
   assetThemeDefaultsTitle: document.getElementById("assetThemeDefaultsTitle"),
   assetThemeDefaultsSummary: document.getElementById("assetThemeDefaultsSummary"),
@@ -1593,6 +1602,14 @@ function syncBoothModeButtons() {
   });
 }
 
+function syncWelcomeModeButtons() {
+  document.querySelectorAll(".welcome-mode-btn[data-welcome-mode]").forEach((button) => {
+    const buttonMode = button.dataset.welcomeMode || "";
+    const hidden = buttonMode === "live-photo" && !getLivePhotoEnabled();
+    button.classList.toggle("hidden", hidden);
+  });
+}
+
 function syncCaptureStatusIndicators() {
   const showPhotoIndicators = getSelectedCaptureMode() === "photo";
   const showLivePhotoIndicator = showPhotoIndicators && mode === "live-photo";
@@ -1782,6 +1799,7 @@ function createEmptySessionAssets() {
     greenBackgrounds: [],
     overlays: [],
     templates: [],
+    idleScreens: [],
     backgroundIndex: 0,
     greenBackgroundIndex: 0,
     logo: "",
@@ -1794,6 +1812,8 @@ let sessionRemovedOverlays = [];
 let sessionRemovedTemplates = [];
 let activeThemeDefaultsAsset = null;
 let activeThemeDefaultsSetupKey = "";
+let activeIdleScreenEditorAsset = null;
+let idleScreenEditorZone = normalizeIdleButtonZone();
 let activeSessionTextDetails = {};
 let boothAudioContext = null;
 let boothAudioEnabled = false;
@@ -2271,6 +2291,21 @@ function getSessionEffectiveAssetSourceSet(category = "") {
         .map((o) => (o && o.src ? o.src : null))
         .filter(Boolean)
     );
+  }
+  if (normalized === "idle-screen") {
+    const active = getActiveEvent();
+    const overrides = active ? ensureEventOverrides(active) : {};
+    const sessionEntries = Array.isArray(activeSessionAssets.idleScreens)
+      ? activeSessionAssets.idleScreens
+      : [];
+    const entries = sessionEntries.length
+      ? sessionEntries
+      : Array.isArray(overrides.idleScreens) && overrides.idleScreens.length
+      ? overrides.idleScreens
+      : Array.isArray(theme && theme.idleScreens)
+      ? theme.idleScreens
+      : [];
+    return new Set(entries.map(getAssetEntrySrc).filter(Boolean));
   }
   if (normalized === "template") {
     return new Set(
@@ -3918,6 +3953,10 @@ function setupThemeEditorControls() {
     DOM.addAssetsBtn.addEventListener("click", () =>
       DOM.bulkAssetsInput.click()
     );
+  if (DOM.addIdleScreensBtn && DOM.idleScreensInput)
+    DOM.addIdleScreensBtn.addEventListener("click", () =>
+      DOM.idleScreensInput.click()
+    );
   if (DOM.addBackgroundsBtn && DOM.themeBackground)
     DOM.addBackgroundsBtn.addEventListener("click", () =>
       DOM.themeBackground.click()
@@ -3939,6 +3978,15 @@ function setupThemeEditorControls() {
     DOM.bulkAssetsInput.addEventListener("change", () =>
       openBulkAssetModal(DOM.bulkAssetsInput.files)
     );
+  if (DOM.idleScreensInput)
+    DOM.idleScreensInput.addEventListener("change", () => {
+      if (DOM.bulkToBackgrounds) DOM.bulkToBackgrounds.checked = false;
+      if (DOM.bulkToGreenBackgrounds) DOM.bulkToGreenBackgrounds.checked = false;
+      if (DOM.bulkToOverlays) DOM.bulkToOverlays.checked = false;
+      if (DOM.bulkToTemplates) DOM.bulkToTemplates.checked = false;
+      if (DOM.bulkToIdleScreens) DOM.bulkToIdleScreens.checked = true;
+      openBulkAssetModal(DOM.idleScreensInput.files);
+    });
   if (DOM.bulkAssetCancel)
     DOM.bulkAssetCancel.addEventListener("click", closeBulkAssetModal);
   if (DOM.bulkAssetApply)
@@ -3996,6 +4044,15 @@ function setupThemeEditorControls() {
       "click",
       clearAssetLibraryFilters
     );
+  if (DOM.idleScreenResetZone)
+    DOM.idleScreenResetZone.addEventListener("click", () => {
+      idleScreenEditorZone = normalizeIdleButtonZone();
+      renderIdleScreenEditorZone();
+    });
+  if (DOM.idleScreenEditorCancel)
+    DOM.idleScreenEditorCancel.addEventListener("click", closeIdleScreenEditor);
+  if (DOM.idleScreenEditorSave)
+    DOM.idleScreenEditorSave.addEventListener("click", saveIdleScreenEditor);
   if (DOM.refreshAssetLibraryBtn)
     DOM.refreshAssetLibraryBtn.addEventListener("click", () => {
       loadAssetLibraryRemote().catch((err) => {
@@ -4132,6 +4189,7 @@ function openBulkAssetModal(fileList) {
 function closeBulkAssetModal() {
   pendingBulkAssetFiles = [];
   if (DOM.bulkAssetsInput) DOM.bulkAssetsInput.value = "";
+  if (DOM.idleScreensInput) DOM.idleScreensInput.value = "";
   if (DOM.bulkAssetModal) DOM.bulkAssetModal.classList.add("hidden");
 }
 
@@ -4144,6 +4202,8 @@ function getBulkAssetKinds() {
   if (DOM.bulkToOverlays && DOM.bulkToOverlays.checked) kinds.push("overlays");
   if (DOM.bulkToTemplates && DOM.bulkToTemplates.checked)
     kinds.push("templates");
+  if (DOM.bulkToIdleScreens && DOM.bulkToIdleScreens.checked)
+    kinds.push("idle-screens");
   return kinds;
 }
 
@@ -4208,6 +4268,10 @@ async function applyBulkAssetUpload() {
             if (kind === "overlays") overrides.overlays.push(url);
             if (kind === "templates")
               overrides.templates.push({ src: url, layout: "double_column" });
+            if (kind === "idle-screens") {
+              if (!Array.isArray(overrides.idleScreens)) overrides.idleScreens = [];
+              overrides.idleScreens.push(buildIdleScreenEntryFromUrl(url, file));
+            }
             uploadedCount += 1;
           })
         );
@@ -4240,7 +4304,13 @@ async function applyBulkAssetUpload() {
       tasks.push(
         uploadAsset(file, kind, getSessionAssetUploadOptions(kind)).then((url) => {
           if (!url) return;
-          addSessionAssetUrl(kind, url);
+          if (kind === "idle-screens") {
+            const target = getSelectedThemeTarget();
+            if (target) target.idleScreens = [buildIdleScreenEntryFromUrl(url, file)];
+            saveThemesToStorage();
+          } else {
+            addSessionAssetUrl(kind, url);
+          }
           uploaded += 1;
         })
       );
@@ -4762,6 +4832,7 @@ function setupLivePhotoToggle() {
       return;
     }
     syncBoothModeButtons();
+    syncWelcomeModeButtons();
     syncCaptureStatusIndicators();
   });
 }
@@ -5390,6 +5461,13 @@ function getLaunchSummaryThumbnailSrc(kind) {
         activeSessionAssets.templates.length
         ? activeSessionAssets.templates[0]
         : ""
+    );
+  }
+  if (kind === "idle-screen") {
+    return new Set(
+      (Array.isArray(target && target.idleScreens) ? target.idleScreens : [])
+        .map(getAssetEntrySrc)
+        .filter(Boolean)
     );
   }
   return "";
@@ -6174,6 +6252,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     syncMobileSettingsUi();
     fitBannerTextToViewport();
     fitWelcomeTitleToViewport();
+    if (DOM.welcomeScreen && DOM.welcomeScreen.classList.contains("custom-idle-screen")) {
+      const idleEntry = selectIdleScreenEntry();
+      if (idleEntry) positionIdleStartHotspot(idleEntry);
+    }
     requestAnimationFrame(syncFrameSizeVars);
     requestAnimationFrame(() => logBoothViewportOverflow());
   });
@@ -6184,6 +6266,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       syncMobileSettingsUi();
       fitBannerTextToViewport();
       fitWelcomeTitleToViewport();
+      if (DOM.welcomeScreen && DOM.welcomeScreen.classList.contains("custom-idle-screen")) {
+        const idleEntry = selectIdleScreenEntry();
+        if (idleEntry) applyCustomIdleScreen(idleEntry);
+      }
       syncFrameSizeVars();
       logBoothViewportOverflow();
     });
@@ -8112,9 +8198,7 @@ function updateThemeEditorSummaries(theme) {
   if (DOM.summaryBackground) {
     const hasExplicit =
       Array.isArray(theme.backgrounds) && theme.backgrounds.length > 0;
-    const hasTemp =
-      Array.isArray(theme.backgroundsTmp) && theme.backgroundsTmp.length > 0;
-    const hasAny = !!theme.background || hasExplicit || hasTemp;
+    const hasAny = !!theme.background || hasExplicit;
     DOM.summaryBackground.textContent = hasAny
       ? "Current background: set"
       : "Current background: none";
@@ -8229,9 +8313,6 @@ function renderCurrentAssets(theme) {
       ? theme.backgroundsRemoved
       : []
   );
-  const baseFolderList = Array.isArray(theme && theme.backgroundsTmp)
-    ? theme.backgroundsTmp.filter((src) => src && !removedBackgrounds.has(src))
-    : [];
   const baseBgList = getBaseBackgroundList(theme);
   const bgList = getBackgroundList(theme);
   const baseGreenList = Array.isArray(theme && theme.greenBackgrounds)
@@ -9525,6 +9606,102 @@ function confirmTemplate() {
 }
 
 // Welcome control
+function getIdleScreenViewportOrientation() {
+  return window.innerHeight > window.innerWidth ? "portrait" : "landscape";
+}
+
+function getIdleScreenAssignmentEntries() {
+  const themeEntries = Array.isArray(activeTheme && activeTheme.idleScreens)
+    ? activeTheme.idleScreens
+    : [];
+  const active = getActiveEvent();
+  const overrides = active ? ensureEventOverrides(active) : {};
+  const eventEntries = Array.isArray(overrides.idleScreens) ? overrides.idleScreens : [];
+  const sessionEntries = Array.isArray(activeSessionAssets.idleScreens)
+    ? activeSessionAssets.idleScreens
+    : [];
+  return { eventEntries: sessionEntries.length ? sessionEntries : eventEntries, themeEntries };
+}
+
+function hydrateIdleScreenEntry(entry) {
+  const src = getAssetEntrySrc(entry);
+  const stored = (assetLibrary.assets || []).find(
+    (asset) => asset.category === "idle-screen" && getAssetEntrySrc(asset) === src
+  );
+  return stored ? { ...cloneThemeValue(entry), ...cloneThemeValue(stored), src } : entry;
+}
+
+function selectIdleScreenEntry() {
+  const orientation = getIdleScreenViewportOrientation();
+  const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
+  const find = (entries, target) =>
+    entries.find((entry) => normalizeIdleScreenOrientation(entry.orientation) === target);
+  return hydrateIdleScreenEntry(
+    find(eventEntries, orientation) ||
+      find(themeEntries, orientation) ||
+      find(eventEntries, "general") ||
+      find(themeEntries, "general") ||
+      null
+  );
+}
+
+function getCoverImageRect(img, container) {
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  const naturalWidth = img.naturalWidth || width;
+  const naturalHeight = img.naturalHeight || height;
+  const scale = Math.max(width / naturalWidth, height / naturalHeight);
+  const renderedWidth = naturalWidth * scale;
+  const renderedHeight = naturalHeight * scale;
+  return {
+    left: (width - renderedWidth) / 2,
+    top: (height - renderedHeight) / 2,
+    width: renderedWidth,
+    height: renderedHeight,
+  };
+}
+
+function positionIdleStartHotspot(entry) {
+  if (!DOM.welcomeImg || !DOM.welcomeScreen || !DOM.startButton) return;
+  const zone = normalizeIdleButtonZone(entry && entry.buttonZones && entry.buttonZones.start);
+  const rect = getCoverImageRect(DOM.welcomeImg, DOM.welcomeScreen);
+  Object.assign(DOM.startButton.style, {
+    left: `${rect.left + (zone.x / 100) * rect.width}px`,
+    top: `${rect.top + (zone.y / 100) * rect.height}px`,
+    width: `${(zone.width / 100) * rect.width}px`,
+    height: `${(zone.height / 100) * rect.height}px`,
+    transform: "translate(-50%, -50%)",
+  });
+  DOM.startButton.setAttribute("aria-label", "Start photo booth");
+}
+
+function clearCustomIdleScreen() {
+  if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("custom-idle-screen");
+  if (DOM.welcomeImg) {
+    DOM.welcomeImg.onload = null;
+    DOM.welcomeImg.onerror = null;
+    DOM.welcomeImg.src = "";
+    DOM.welcomeImg.classList.add("hidden");
+  }
+  if (DOM.startButton) DOM.startButton.removeAttribute("style");
+}
+
+function applyCustomIdleScreen(entry) {
+  const src = getAssetEntrySrc(entry);
+  if (!src || !DOM.welcomeImg || !DOM.welcomeScreen) {
+    clearCustomIdleScreen();
+    return false;
+  }
+  DOM.welcomeImg.onload = () => {
+    DOM.welcomeScreen.classList.add("custom-idle-screen");
+    DOM.welcomeImg.classList.remove("hidden");
+    positionIdleStartHotspot(entry);
+  };
+  DOM.welcomeImg.onerror = clearCustomIdleScreen;
+  DOM.welcomeImg.src = src;
+  return true;
+}
+
 function showWelcome(step = null) {
   if (!activeTheme) return;
   updateShowcaseDemoUi();
@@ -9544,15 +9721,16 @@ function showWelcome(step = null) {
   //  the booth background on the welcome screen and hide standalone images
   const boothBg = DOM.boothScreen ? DOM.boothScreen.style.backgroundImage : "";
   if (DOM.welcomeScreen) DOM.welcomeScreen.style.backgroundImage = boothBg;
-  if (DOM.welcomeImg) {
-    DOM.welcomeImg.src = "";
-    DOM.welcomeImg.classList.add("hidden");
-  }
+  const requestedStep = step || resolveInitialWelcomeStep();
+  const idleEntry = requestedStep === "idle" ? selectIdleScreenEntry() : null;
+  if (idleEntry) applyCustomIdleScreen(idleEntry);
+  else clearCustomIdleScreen();
 
   const ws = DOM.welcomeScreen;
   if (!ws) return;
   ws.classList.remove("faded");
-  setWelcomeFlowStep(step || resolveInitialWelcomeStep());
+  syncWelcomeModeButtons();
+  setWelcomeFlowStep(requestedStep);
   setupWelcomeInteractions();
 }
 
@@ -14335,9 +14513,7 @@ async function makeAvailableOffline() {
     const theme = activeTheme || getSelectedThemeTarget();
     if (theme) {
       // Backgrounds
-      const bgList = Array.isArray(theme.backgroundsTmp)
-        ? theme.backgroundsTmp
-        : Array.isArray(theme.backgrounds)
+      const bgList = Array.isArray(theme.backgrounds)
         ? theme.backgrounds
         : theme.background
         ? [theme.background]
@@ -14463,8 +14639,6 @@ function saveTheme() {
   const logoFile = DOM.themeLogo.files[0];
   const overlayFiles = DOM.themeOverlays.files;
   const templateFiles = DOM.themeTemplates.files;
-  const templatesFolder = "";
-  const overlaysFolder = "";
   const filePromises = [];
 
   if (backgroundFile) {
@@ -14975,9 +15149,40 @@ function normalizeUploadedAssetCategory(value) {
   if (raw === "backgrounds" || raw === "greenbackgrounds") return "background";
   if (raw === "overlays") return "overlay";
   if (raw === "templates") return "template";
-  if (raw === "background" || raw === "overlay" || raw === "template")
+  if (raw === "idle-screens" || raw === "idlescreens") return "idle-screen";
+  if (raw === "background" || raw === "overlay" || raw === "template" || raw === "idle-screen")
     return raw;
   return "";
+}
+
+const DEFAULT_IDLE_START_ZONE = { x: 50, y: 73, width: 28, height: 20 };
+
+function normalizeIdleScreenOrientation(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "portrait" ? "portrait" : normalized === "landscape" ? "landscape" : "general";
+}
+
+function normalizeIdleButtonZone(zone) {
+  const source = zone && typeof zone === "object" ? zone : {};
+  const clamp = (value, fallback, min, max) =>
+    Math.min(max, Math.max(min, Number.isFinite(Number(value)) ? Number(value) : fallback));
+  const width = clamp(source.width, DEFAULT_IDLE_START_ZONE.width, 8, 100);
+  const height = clamp(source.height, DEFAULT_IDLE_START_ZONE.height, 8, 100);
+  return {
+    x: clamp(source.x, DEFAULT_IDLE_START_ZONE.x, width / 2, 100 - width / 2),
+    y: clamp(source.y, DEFAULT_IDLE_START_ZONE.y, height / 2, 100 - height / 2),
+    width,
+    height,
+  };
+}
+
+function buildIdleScreenEntryFromUrl(url, file = null) {
+  return {
+    src: url,
+    orientation: "general",
+    name: (file && file.name) || "Idle Screen",
+    buttonZones: { start: normalizeIdleButtonZone() },
+  };
 }
 
 function getAssetLibraryUrlKey(url) {
@@ -15170,6 +15375,14 @@ function normalizeAssetLibraryPayload(payload) {
       editableFields: mergedFields,
       archived: item.archived === true,
       hidden: item.hidden === true || item.archived === true,
+      orientation:
+        category === "idle-screen"
+          ? normalizeIdleScreenOrientation(item.orientation)
+          : undefined,
+      buttonZones:
+        category === "idle-screen"
+          ? { start: normalizeIdleButtonZone(item.buttonZones && item.buttonZones.start) }
+          : undefined,
     };
     const mergeKey = getAssetLibraryId(category, url) || id;
     const existing = byId.get(mergeKey);
@@ -15568,14 +15781,6 @@ function collectThemeAssetRows(category = "") {
   };
   forEachThemeEntry((theme, themeKey) => {
     const themeName = theme && theme.name ? theme.name : themeKey;
-    const backgroundFolder = ensureFolderPath(
-      (theme && theme.backgroundFolder) ||
-        (theme && typeof theme.background === "string" && theme.background.endsWith("/")
-          ? theme.background
-          : "")
-    );
-    const overlaysFolder = ensureFolderPath(theme && theme.overlaysFolder);
-    const templatesFolder = ensureFolderPath(theme && theme.templatesFolder);
     if (
       theme &&
       typeof theme.background === "string" &&
@@ -15587,35 +15792,11 @@ function collectThemeAssetRows(category = "") {
     if (Array.isArray(theme && theme.backgrounds)) {
       theme.backgrounds.forEach((src) => add(src, "background", themeName, themeKey));
     }
-    if (Array.isArray(theme && theme.backgroundsTmp)) {
-      theme.backgroundsTmp.forEach((src) => add(src, "background", themeName, themeKey));
-    }
     if (Array.isArray(theme && theme.overlays)) {
       theme.overlays.forEach((entry) => add(entry, "overlay", themeName, themeKey));
     }
-    if (Array.isArray(theme && theme.overlaysTmp)) {
-      theme.overlaysTmp.forEach((entry) => add(entry, "overlay", themeName, themeKey));
-    }
     if (Array.isArray(theme && theme.templates)) {
       theme.templates.forEach((entry) => add(entry, "template", themeName, themeKey));
-    }
-    if (Array.isArray(theme && theme.templatesTmp)) {
-      theme.templatesTmp.forEach((entry) => add(entry, "template", themeName, themeKey));
-    }
-    if (backgroundFolder) {
-      getBuiltinFolderStrings(backgroundFolder).forEach((src) =>
-        add(src, "background", themeName, themeKey)
-      );
-    }
-    if (overlaysFolder) {
-      getBuiltinOverlayEntries(overlaysFolder).forEach((entry) =>
-        add(entry, "overlay", themeName, themeKey)
-      );
-    }
-    if (templatesFolder) {
-      getBuiltinTemplateEntries(templatesFolder).forEach((entry) =>
-        add(entry, "template", themeName, themeKey)
-      );
     }
   });
   return Array.from(byKey.values()).map((row) => ({
@@ -15755,7 +15936,7 @@ function sortAssetLibraryRows(rows, sortMode) {
     const bTime = Date.parse(b.createdAt || "") || 0;
     return bTime - aTime || byName(a, b);
   };
-  const categoryOrder = { background: 0, overlay: 1, template: 2 };
+  const categoryOrder = { background: 0, overlay: 1, template: 2, "idle-screen": 3 };
   const byCategory = (a, b) => {
     const ac = categoryOrder[normalizeUploadedAssetCategory(a.category)] ?? 99;
     const bc = categoryOrder[normalizeUploadedAssetCategory(b.category)] ?? 99;
@@ -15813,7 +15994,7 @@ function assetMatchesLibraryCategoryFilter(asset, value = "") {
   const filter = normalizeAssetLibraryCategoryFilter(value);
   if (!filter || filter === "all") return true;
   const assetCategory = normalizeUploadedAssetCategory(asset && asset.category);
-  if (["background", "overlay", "template"].includes(filter)) {
+  if (["background", "overlay", "template", "idle-screen"].includes(filter)) {
     return assetCategory === filter;
   }
   return getAssetLibraryFilterCategories(asset).includes(filter);
@@ -15904,6 +16085,90 @@ function promptForAssetName(asset) {
   const name = value.trim();
   if (!name) return;
   updateAssetLibraryItem(asset.id, { name }, asset);
+}
+
+function getContainedImageRect(img, container) {
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  const naturalWidth = img.naturalWidth || width;
+  const naturalHeight = img.naturalHeight || height;
+  const scale = Math.min(width / naturalWidth, height / naturalHeight);
+  const renderedWidth = naturalWidth * scale;
+  const renderedHeight = naturalHeight * scale;
+  return { left: (width - renderedWidth) / 2, top: (height - renderedHeight) / 2, width: renderedWidth, height: renderedHeight };
+}
+
+function renderIdleScreenEditorZone() {
+  if (!DOM.idleScreenEditorZone || !DOM.idleScreenEditorImage || !DOM.idleScreenEditorCanvas) return;
+  const rect = getContainedImageRect(DOM.idleScreenEditorImage, DOM.idleScreenEditorCanvas);
+  const zone = normalizeIdleButtonZone(idleScreenEditorZone);
+  Object.assign(DOM.idleScreenEditorZone.style, {
+    left: `${rect.left + (zone.x / 100) * rect.width}px`,
+    top: `${rect.top + (zone.y / 100) * rect.height}px`,
+    width: `${(zone.width / 100) * rect.width}px`,
+    height: `${(zone.height / 100) * rect.height}px`,
+  });
+}
+
+function bindIdleScreenEditorPointer() {
+  const zoneElement = DOM.idleScreenEditorZone;
+  if (!zoneElement || zoneElement.dataset.bound === "true") return;
+  zoneElement.dataset.bound = "true";
+  zoneElement.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    const resize = event.target.tagName === "I";
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const original = { ...idleScreenEditorZone };
+    zoneElement.setPointerCapture(event.pointerId);
+    const move = (nextEvent) => {
+      const rect = getContainedImageRect(DOM.idleScreenEditorImage, DOM.idleScreenEditorCanvas);
+      const dx = ((nextEvent.clientX - startX) / rect.width) * 100;
+      const dy = ((nextEvent.clientY - startY) / rect.height) * 100;
+      idleScreenEditorZone = resize
+        ? normalizeIdleButtonZone({ ...original, width: original.width + dx * 2, height: original.height + dy * 2 })
+        : normalizeIdleButtonZone({ ...original, x: original.x + dx, y: original.y + dy });
+      renderIdleScreenEditorZone();
+    };
+    const stop = () => {
+      zoneElement.removeEventListener("pointermove", move);
+      zoneElement.removeEventListener("pointerup", stop);
+      zoneElement.removeEventListener("pointercancel", stop);
+    };
+    zoneElement.addEventListener("pointermove", move);
+    zoneElement.addEventListener("pointerup", stop);
+    zoneElement.addEventListener("pointercancel", stop);
+  });
+}
+
+function closeIdleScreenEditor() {
+  activeIdleScreenEditorAsset = null;
+  if (DOM.idleScreenEditorModal) DOM.idleScreenEditorModal.classList.add("hidden");
+}
+
+function openIdleScreenEditor(asset) {
+  if (!asset || !DOM.idleScreenEditorModal) return;
+  activeIdleScreenEditorAsset = asset;
+  idleScreenEditorZone = normalizeIdleButtonZone(asset.buttonZones && asset.buttonZones.start);
+  DOM.idleScreenOrientation.value = normalizeIdleScreenOrientation(asset.orientation) === "portrait" ? "portrait" : "landscape";
+  DOM.idleScreenEditorImage.onload = renderIdleScreenEditorZone;
+  DOM.idleScreenEditorImage.src = getAssetEntrySrc(asset);
+  DOM.idleScreenEditorModal.classList.remove("hidden");
+  bindIdleScreenEditorPointer();
+}
+
+function saveIdleScreenEditor() {
+  if (!activeIdleScreenEditorAsset) return;
+  updateAssetLibraryItem(
+    activeIdleScreenEditorAsset.id,
+    {
+      orientation: DOM.idleScreenOrientation.value,
+      buttonZones: { start: normalizeIdleButtonZone(idleScreenEditorZone) },
+    },
+    activeIdleScreenEditorAsset
+  );
+  closeIdleScreenEditor();
+  showToast("Idle screen hotspot saved.");
 }
 
 const THEME_DEFAULTS_GROUP_ORDER = [
@@ -16055,6 +16320,8 @@ function getExplicitThemeAssetEntries(category, theme) {
     return Array.isArray(theme.overlays) ? theme.overlays : [];
   if (category === "template")
     return Array.isArray(theme.templates) ? theme.templates : [];
+  if (category === "idle-screen")
+    return Array.isArray(theme.idleScreens) ? theme.idleScreens : [];
   return [];
 }
 
@@ -16075,6 +16342,17 @@ function buildThemeDefaultAssetEntry(asset) {
       background: raw.background,
       foreground: raw.foreground,
       textFields: normalizeTemplateTextFields(raw.textFields || asset.textFields),
+    };
+  }
+  if (category === "idle-screen") {
+    return {
+      ...cloneThemeValue(raw),
+      src,
+      name: asset.name,
+      orientation: normalizeIdleScreenOrientation(asset.orientation),
+      buttonZones: {
+        start: normalizeIdleButtonZone(asset.buttonZones && asset.buttonZones.start),
+      },
     };
   }
   return null;
@@ -16105,6 +16383,7 @@ function getThemeDefaultArrayName(category) {
   if (category === "background") return "backgrounds";
   if (category === "overlay") return "overlays";
   if (category === "template") return "templates";
+  if (category === "idle-screen") return "idleScreens";
   return "";
 }
 
@@ -16321,6 +16600,7 @@ const THEME_DEFAULTS_SETUP_CATEGORIES = [
   { key: "background", label: "Backgrounds" },
   { key: "overlay", label: "Overlays" },
   { key: "template", label: "Templates" },
+  { key: "idle-screen", label: "Idle Screens" },
 ];
 
 function openThemeDefaultsSetupModal() {
@@ -16463,6 +16743,14 @@ function registerUploadedAsset(url, kind, details = {}) {
     editableFields: normalizeEditableFields(details.editableFields),
     hidden: false,
     archived: false,
+    orientation:
+      category === "idle-screen"
+        ? normalizeIdleScreenOrientation(details.orientation)
+        : undefined,
+    buttonZones:
+      category === "idle-screen"
+        ? { start: normalizeIdleButtonZone(details.buttonZones && details.buttonZones.start) }
+        : undefined,
   };
   if (mergeLibraryAsset(asset)) {
     syncAssetLibraryRemoteAsset(asset).catch(() => {});
@@ -16490,6 +16778,7 @@ function renderAssetLibraryPills() {
     background: 0,
     overlay: 0,
     template: 0,
+    "idle-screen": 0,
   };
   
   allAssets.forEach((asset) => {
@@ -16504,6 +16793,7 @@ function renderAssetLibraryPills() {
     { key: "background", label: "Backgrounds" },
     { key: "overlay", label: "Overlays" },
     { key: "template", label: "Templates" },
+    { key: "idle-screen", label: "Idle Screens" },
   ];
   
   pillsContainer.innerHTML = "";
@@ -16625,6 +16915,14 @@ function renderAssetLibrary() {
           event.stopPropagation();
           openAssetThemeDefaultsModal(asset);
         });
+        const hotspotBtn = document.createElement("button");
+        hotspotBtn.type = "button";
+        hotspotBtn.textContent = "Position Start";
+        hotspotBtn.classList.toggle("hidden", asset.category !== "idle-screen");
+        hotspotBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openIdleScreenEditor(asset);
+        });
         const deleteBtn = document.createElement("button");
         deleteBtn.type = "button";
         deleteBtn.textContent = "Delete";
@@ -16642,6 +16940,7 @@ function renderAssetLibrary() {
         actions.appendChild(favoriteBtn);
         actions.appendChild(renameBtn);
         actions.appendChild(tagsBtn);
+        actions.appendChild(hotspotBtn);
         actions.appendChild(defaultsBtn);
         actions.appendChild(deleteBtn);
         card.appendChild(img);
@@ -16719,6 +17018,16 @@ function toggleLibraryAsset(asset) {
     addSessionAssetUrl("overlays", src);
   } else if (category === "template") {
     addSessionAssetUrl("templates", src);
+  } else if (category === "idle-screen") {
+    const entry = buildThemeDefaultAssetEntry(asset);
+    const active = getActiveEvent();
+    if (active) {
+      const overrides = ensureEventOverrides(active);
+      overrides.idleScreens = isSelected ? [] : [entry];
+      updateActiveEventDetails({ overrides });
+    } else {
+      activeSessionAssets.idleScreens = isSelected ? [] : [entry];
+    }
   }
   const key = DOM.eventSelect && DOM.eventSelect.value;
   if (key) loadTheme(key);
@@ -17021,11 +17330,7 @@ function applyBackgroundFallback(baseLeaf, merged, storedLeaf) {
 }
 
 function applyTemplatesFallback(baseLeaf, merged, storedLeaf) {
-  const storedFolder = stringOrEmpty(storedLeaf && storedLeaf.templatesFolder);
   const storedArrayExists = Array.isArray(storedLeaf && storedLeaf.templates);
-  if (baseLeaf.templatesFolder && !merged.templatesFolder && !storedFolder) {
-    merged.templatesFolder = baseLeaf.templatesFolder;
-  }
   const baseTemplates = Array.isArray(baseLeaf.templates)
     ? baseLeaf.templates
     : null;
@@ -17043,11 +17348,7 @@ function applyTemplatesFallback(baseLeaf, merged, storedLeaf) {
 }
 
 function applyOverlaysFallback(baseLeaf, merged, storedLeaf) {
-  const storedFolder = stringOrEmpty(storedLeaf && storedLeaf.overlaysFolder);
   const storedArrayExists = Array.isArray(storedLeaf && storedLeaf.overlays);
-  if (baseLeaf.overlaysFolder && !merged.overlaysFolder && !storedFolder) {
-    merged.overlaysFolder = baseLeaf.overlaysFolder;
-  }
   const baseOverlays = Array.isArray(baseLeaf.overlays)
     ? baseLeaf.overlays
     : null;
@@ -18969,7 +19270,6 @@ async function updateSelectedTheme(reason = "") {
   newTheme.welcome = newTheme.welcome || {};
   newTheme.welcome.title = newTheme.welcome.title || name;
 
-  const folders = readThemeFolderInputs();
   let assetChanges = null;
   try {
     assetChanges = await uploadThemeAssetsFromEditor(newTheme);
@@ -18986,8 +19286,6 @@ async function updateSelectedTheme(reason = "") {
     if (currentGlobalLogo !== null)
       applyGlobalLogoToTheme(newTheme, currentGlobalLogo);
   }
-  applyThemeFolderSettings(newTheme, folders);
-
   try {
     normalizeThemeObject(newTheme);
   } catch (_e) {}
@@ -19016,7 +19314,6 @@ async function updateCurrentThemeAssets(reason = "") {
     return;
   }
 
-  const folders = readThemeFolderInputs();
   let assetChanges = null;
   setAssetPanelMessage("overlay", "loading", "Loading overlays…");
   setAssetPanelMessage("template", "loading", "Loading templates…");
@@ -19037,8 +19334,6 @@ async function updateCurrentThemeAssets(reason = "") {
     if (currentGlobalLogo !== null)
       applyGlobalLogoToTheme(target, currentGlobalLogo);
   }
-  applyThemeFolderSettings(target, folders);
-
   try {
     normalizeThemeObject(target);
   } catch (_e) {}
@@ -20036,34 +20331,6 @@ function applyCharacterPosition(theme) {
     DOM.characterHeightValue.textContent = `${pos.height}%`;
 }
 
-function normalizeFolderInput(raw) {
-  const trimmed = (raw || "").trim();
-  if (!trimmed) return "";
-  return trimmed.endsWith("/") ? trimmed : trimmed + "/";
-}
-
-function readThemeFolderInputs() {
-  return {
-    overlays: DOM.themeOverlaysFolder
-      ? normalizeFolderInput(valueFromInput(DOM.themeOverlaysFolder))
-      : null,
-    templates: DOM.themeTemplatesFolder
-      ? normalizeFolderInput(valueFromInput(DOM.themeTemplatesFolder))
-      : null,
-  };
-}
-
-function applyThemeFolderSettings(target, folders) {
-  if (typeof folders.overlays !== "undefined" && folders.overlays !== null) {
-    if (folders.overlays) target.overlaysFolder = folders.overlays;
-    else delete target.overlaysFolder;
-  }
-  if (typeof folders.templates !== "undefined" && folders.templates !== null) {
-    if (folders.templates) target.templatesFolder = folders.templates;
-    else delete target.templatesFolder;
-  }
-}
-
 function ensureArray(target, prop) {
   if (!Array.isArray(target[prop])) target[prop] = [];
 }
@@ -20962,18 +21229,13 @@ function getThemeBackgroundCatalogList(theme) {
   const explicit = Array.isArray(theme.backgrounds)
     ? theme.backgrounds.filter(Boolean)
     : [];
-  const tmp = Array.isArray(theme.backgroundsTmp)
-    ? theme.backgroundsTmp.filter(Boolean)
-    : [];
-  const folder = resolveBackgroundFolderPath(theme);
-  const builtin = folder ? getBuiltinFolderStrings(folder) : [];
   const single =
     typeof theme.background === "string" &&
     theme.background.trim() &&
     !theme.background.trim().endsWith("/")
       ? [theme.background.trim()]
       : [];
-  return mergeUniqueUrls([...tmp, ...builtin, ...explicit, ...single], [])
+  return mergeUniqueUrls([...explicit, ...single], [])
     .filter((src) => src && !src.endsWith("/") && !removed.has(src));
 }
 
@@ -21207,151 +21469,6 @@ function getActiveGreenBackground(theme) {
       ? Math.min(Math.max(theme.greenBackgroundIndex, 0), list.length - 1)
       : 0;
   return list[idx];
-}
-
-function ensureFolderPath(path) {
-  if (!path) return "";
-  const trimmed = path.trim();
-  if (!trimmed) return "";
-  return trimmed.endsWith("/") ? trimmed : trimmed + "/";
-}
-
-function resolveBackgroundFolderPath(theme) {
-  if (!theme || typeof theme !== "object") return "";
-  const current = getActiveBackground(theme) || "";
-  if (current && current.endsWith("/")) return ensureFolderPath(current);
-  if (current) {
-    const idx = current.lastIndexOf("/");
-    if (idx >= 0) return ensureFolderPath(current.slice(0, idx + 1));
-  }
-  const backgroundProp =
-    typeof theme.background === "string" ? theme.background.trim() : "";
-  if (backgroundProp) {
-    if (backgroundProp.endsWith("/")) return ensureFolderPath(backgroundProp);
-    const idx = backgroundProp.lastIndexOf("/");
-    if (idx >= 0) return ensureFolderPath(backgroundProp.slice(0, idx + 1));
-  }
-  const folderProp =
-    typeof theme.backgroundFolder === "string"
-      ? theme.backgroundFolder.trim()
-      : "";
-  if (folderProp) return ensureFolderPath(folderProp);
-  return "";
-}
-
-// If a theme points its background at a folder (ends with '/'),
-// pick the first existing image named one of: background.(png|jpg|jpeg|webp) or bg.(...)
-async function resolveBackgroundFromFolder(theme) {
-  try {
-    const path = resolveBackgroundFolderPath(theme);
-    if (!path || !path.endsWith("/")) return "";
-    const cached = Array.isArray(theme && theme.backgroundsTmp)
-      ? theme.backgroundsTmp.filter(Boolean)
-      : [];
-    if (cached.length) return cached[0];
-    const manifestList = await resolveBackgroundListFromFolder(theme);
-    if (Array.isArray(manifestList) && manifestList.length) {
-      if (theme && typeof theme === "object")
-        theme.backgroundsTmp = manifestList.slice();
-      return manifestList[0];
-    }
-    const names = ["background", "bg", "backdrop", "wallpaper"];
-    const exts = ["png", "jpg", "jpeg", "webp"];
-    const isFileProto = String(location.protocol).startsWith("file");
-    for (const n of names) {
-      for (const e of exts) {
-        const url = path + n + "." + e;
-        try {
-          if (isFileProto) {
-            // Probe with Image() under file:// since fetch may be blocked
-            await probeImage(url);
-            return url;
-          } else {
-            const resp = await fetch(url, { cache: "reload" });
-            if (resp && resp.ok) return url;
-          }
-        } catch (_) {
-          /* try next */
-        }
-      }
-    }
-    return "";
-  } catch (_) {
-    return "";
-  }
-}
-
-// Try to load a list of backgrounds from a folder via backgrounds.json.
-// backgrounds.json format: ["file1.jpg", "file2.png", ...] or [{"src":"file1.jpg"}, ...]
-function getBuiltinFolderStrings(folder) {
-  return getBuiltinAssetManifest(folder)
-    .filter((it) => typeof it === "string")
-    .map((it) => folder + it);
-}
-
-function resolveAssetPath(baseFolder, src) {
-  const value = String(src || "").trim();
-  if (!value) return value;
-  if (/^(https?:|data:|blob:)/i.test(value)) return value;
-  if (value.startsWith("/")) return value;
-  try {
-    const folder = ensureFolderPath(String(baseFolder || "").trim());
-    return new URL(value, location.origin + "/" + folder).pathname;
-  } catch (_) {
-    return ensureFolderPath(String(baseFolder || "")) + value;
-  }
-}
-
-function qualifyAssetPath(path, folder) {
-  return resolveAssetPath(folder, path);
-}
-
-function qualifyOverlayEntry(entry, folder) {
-  if (typeof entry === "string") return resolveAssetPath(folder, entry);
-  if (!entry || typeof entry !== "object" || typeof entry.src !== "string") {
-    return null;
-  }
-  const next = {
-    ...entry,
-    src: qualifyAssetPath(entry.src, folder),
-  };
-  if (entry.foreground && typeof entry.foreground === "object") {
-    next.foreground = {
-      ...entry.foreground,
-      src: qualifyAssetPath(entry.foreground.src, folder),
-    };
-  }
-  return next;
-}
-
-function getBuiltinOverlayEntries(folder) {
-  return getBuiltinAssetManifest(folder)
-    .map((it) => qualifyOverlayEntry(it, folder))
-    .filter(Boolean);
-}
-
-function getBuiltinTemplateEntries(folder) {
-  return getBuiltinAssetManifest(folder)
-    .map((it) => {
-      if (typeof it === "string")
-        return {
-          src: resolveAssetPath(folder, it),
-          layout: "double_column",
-        };
-      if (it && typeof it === "object" && typeof it.src === "string") {
-        const entry = { ...it, src: qualifyAssetPath(it.src, folder) };
-        entry.layout = normalizeTemplateLayout(entry.layout);
-        if (it.foreground && typeof it.foreground === "object") {
-          entry.foreground = {
-            ...it.foreground,
-            src: qualifyAssetPath(it.foreground.src, folder),
-          };
-        }
-        return entry;
-      }
-      return null;
-    })
-    .filter(Boolean);
 }
 
 function normalizeAssetSlots(slots) {
@@ -21606,52 +21723,6 @@ function resolveOverlaySlots(theme, src) {
   return Array.isArray(entry.photoSlots) ? entry.photoSlots : [];
 }
 
-async function resolveBackgroundListFromFolder(theme) {
-  try {
-    const path = resolveBackgroundFolderPath(theme);
-    if (!path || !path.endsWith("/")) return [];
-    const cached = Array.isArray(theme && theme.backgroundsTmp)
-      ? theme.backgroundsTmp.filter(Boolean)
-      : [];
-    if (cached.length) return cached.slice();
-    const builtin = getBuiltinFolderStrings(path);
-    // Only try fetching manifest under http(s). Browsers restrict file:// fetch.
-    if (!String(location.protocol).startsWith("http")) {
-      if (theme && typeof theme === "object")
-        theme.backgroundsTmp = builtin.slice();
-      return builtin;
-    }
-    const manifestUrl = path + "backgrounds.json";
-    const resp = await fetch(manifestUrl, { cache: "reload" });
-    if (!resp.ok) return builtin;
-    const json = await resp.json();
-    const out = [];
-    if (Array.isArray(json)) {
-      for (const it of json) {
-        if (typeof it === "string") out.push(path + it);
-        else if (it && typeof it === "object" && typeof it.src === "string")
-          out.push(path + it.src);
-      }
-    }
-    const resolved = out.length ? out : builtin;
-    if (theme && typeof theme === "object")
-      theme.backgroundsTmp = resolved.slice();
-    return resolved;
-  } catch (_) {
-    const path = resolveBackgroundFolderPath(theme);
-    return getBuiltinFolderStrings(path);
-  }
-}
-
-function probeImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => reject(new Error("not-found"));
-    img.src = url + (url.includes("?") ? "&" : "?") + "v=" + Date.now();
-  });
-}
-
 const overlaySvgFixCache = new Map();
 
 function readSvgTagAttr(tag, attrName) {
@@ -21804,92 +21875,6 @@ async function fixOverlayEntries(entries) {
   return fixed;
 }
 
-// Load overlays from a folder using overlays.json manifest (HTTP/HTTPS only)
-async function resolveOverlaysFromFolder(theme) {
-  try {
-    const folder =
-      theme && typeof theme.overlaysFolder === "string"
-        ? theme.overlaysFolder
-        : "";
-    if (!folder || !folder.endsWith("/")) return [];
-    const builtin = getBuiltinOverlayEntries(folder);
-    if (!String(location.protocol).startsWith("http")) {
-      return fixOverlayEntries(builtin);
-    }
-    const url = folder + "overlays.json";
-    const resp = await fetch(url, { cache: "reload" });
-    if (!resp.ok) return fixOverlayEntries(builtin);
-    const json = await resp.json();
-    const out = [];
-    if (Array.isArray(json)) {
-      for (const it of json) {
-        const entry = qualifyOverlayEntry(it, folder);
-        if (entry) out.push(entry);
-      }
-    }
-    return fixOverlayEntries(out.length ? out : builtin);
-  } catch (_) {
-    const folder =
-      theme && typeof theme.overlaysFolder === "string"
-        ? theme.overlaysFolder
-        : "";
-    return fixOverlayEntries(getBuiltinOverlayEntries(folder));
-  }
-}
-
-// Load templates from a folder using templates.json manifest (HTTP/HTTPS only)
-async function resolveTemplatesFromFolder(theme) {
-  try {
-    const folder =
-      theme && typeof theme.templatesFolder === "string"
-        ? theme.templatesFolder
-        : "";
-    if (!folder || !folder.endsWith("/")) return [];
-    const builtin = getBuiltinTemplateEntries(folder);
-    if (!String(location.protocol).startsWith("http")) return builtin;
-    const url = folder + "templates.json";
-    const resp = await fetch(url, { cache: "reload" });
-    if (!resp.ok) return builtin;
-    const json = await resp.json();
-    const out = [];
-    if (Array.isArray(json)) {
-      for (const it of json) {
-        if (typeof it === "string")
-          out.push({
-            src: resolveAssetPath(folder, it),
-            layout: "double_column",
-          });
-        else if (it && typeof it === "object" && typeof it.src === "string") {
-          const entry = {
-            ...it,
-            src: qualifyAssetPath(it.src, folder),
-            layout: normalizeTemplateLayout(it.layout),
-            slots: it.slots,
-            photoSlots: it.photoSlots,
-            background: it.background,
-            foreground: it.foreground,
-            textFields: normalizeTemplateTextFields(it.textFields),
-          };
-          if (entry.foreground && typeof entry.foreground === "object") {
-            entry.foreground = {
-              ...entry.foreground,
-              src: qualifyAssetPath(entry.foreground.src, folder),
-            };
-          }
-          out.push(entry);
-        }
-      }
-    }
-    return out.length ? out : builtin;
-  } catch (_) {
-    const folder =
-      theme && typeof theme.templatesFolder === "string"
-        ? theme.templatesFolder
-        : "";
-    return getBuiltinTemplateEntries(folder);
-  }
-}
-
 function copyText(s) {
   try {
     navigator.clipboard.writeText(s);
@@ -21899,7 +21884,7 @@ function copyText(s) {
   }
 }
 
-// Helpers to derive overlay/template lists from theme + folder manifests
+// Helpers to derive overlay/template lists from explicit theme assets.
 function getBaseOverlayList(theme) {
   if (!theme || typeof theme !== "object") return [];
   const removed = new Set(
@@ -21910,14 +21895,9 @@ function getBaseOverlayList(theme) {
         .map((item) => normalizeOverlayDefinition(item))
         .filter((item) => item && !removed.has(item.src))
     : [];
-  const folderArr = Array.isArray(theme.overlaysTmp)
-    ? theme.overlaysTmp
-        .map((item) => normalizeOverlayDefinition(item))
-        .filter((item) => item && !removed.has(item.src))
-    : [];
   const seen = new Set();
   const out = [];
-  for (const o of [...localArr, ...folderArr]) {
+  for (const o of localArr) {
     const k = (o && o.src ? o.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
@@ -21945,23 +21925,9 @@ function getBaseTemplateList(theme) {
           textFields: normalizeTemplateTextFields(t.textFields),
         }))
     : [];
-  const folderArr = Array.isArray(theme.templatesTmp)
-    ? theme.templatesTmp
-        .filter((t) => t && t.src && !removed.has(t.src))
-        .map((t) => ({
-          ...cloneThemeValue(t),
-          src: t.src,
-          layout: normalizeTemplateLayout(t.layout),
-          slots: t.slots,
-          photoSlots: t.photoSlots,
-          background: t.background,
-          foreground: t.foreground,
-          textFields: normalizeTemplateTextFields(t.textFields),
-        }))
-    : [];
   const seen = new Set();
   const out = [];
-  for (const t of [...localArr, ...folderArr]) {
+  for (const t of localArr) {
     const k = (t && t.src ? t.src : "").toString().trim();
     if (!k || seen.has(k)) continue;
     seen.add(k);
@@ -22306,7 +22272,6 @@ Object.assign(window, {
             .map((item) => normalizeOverlayDefinition(item))
             .filter(Boolean)
         : [];
-      activeTheme.overlaysTmp = [];
       const overlayList = getOverlayList(activeTheme);
       selectedOverlay = overlayList[0] ? overlayList[0].src : null;
       lastPhotoOverlay = selectedOverlay;
