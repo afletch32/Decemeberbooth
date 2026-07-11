@@ -8326,7 +8326,6 @@ function renderCurrentAssets(theme) {
   const hasSessionGreenBackgrounds =
     Array.isArray(activeSessionAssets.greenBackgrounds) &&
     activeSessionAssets.greenBackgrounds.length > 0;
-  const baseFolderSet = new Set(baseFolderList);
   const hasEventBackgrounds =
     Array.isArray(eventOverrides.backgrounds) &&
     eventOverrides.backgrounds.length > 0;
@@ -18157,7 +18156,7 @@ function applyFontsToActiveTheme(headingName, bodyName, options = {}) {
   }
   saveThemesToStorage();
   if (!options.quiet) showToast("Fonts updated");
-  syncThemeEditorSummary();
+  updateThemeEditorSummary();
 }
 
 function applyFontSelection(heading, body, options = {}) {

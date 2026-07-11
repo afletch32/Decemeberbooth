@@ -4,6 +4,8 @@ Current goal
 What is done
 - Fixed the global button outage caused by idle-screen editor state calling a later-initialized constant during module startup.
 - Added regression coverage that prevents idle-screen state from invoking late-defined helpers during application boot.
+- Fixed Theme and Font dropdown initialization by removing an orphaned folder-fallback variable and correcting a stale theme-summary function name.
+- Verified both dropdowns open and select values in Chromium without page errors.
 - Added Idle Screens as a canonical Asset Library type using the existing Cloudinary upload and persistence flow.
 - Added theme, event, and session idle-screen assignments with orientation and legacy-welcome fallback resolution.
 - Added full-screen cover rendering that hides legacy welcome chrome only while custom artwork is active.

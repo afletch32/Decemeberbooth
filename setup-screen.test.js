@@ -137,6 +137,12 @@ test("setup flow uses direct theme and font activation", () => {
     "theme and font should be dropdown comboboxes with optional search"
   );
   assert.ok(
+    !appScript.includes("baseFolderList") &&
+      !appScript.includes("baseFolderSet") &&
+      !appScript.includes("syncThemeEditorSummary"),
+    "removed folder fallback state should not interrupt setup dropdown initialization"
+  );
+  assert.ok(
     appScript.includes("function activateThemeFromSetupSearch()") &&
       appScript.includes("loadTheme(key);") &&
       appScript.includes("function activateFontFromSetupSearch()") &&
