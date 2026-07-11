@@ -1777,7 +1777,7 @@ function updateWelcomeFlowUi() {
         ? "Choose your demo"
         : step === "mode"
         ? "Choose your photo style"
-        : "Tap anywhere to start";
+        : "";
   }
 }
 
@@ -19528,7 +19528,7 @@ function resolveThemeStartButtonText() {
   const target = activeTheme || getSelectedThemeTarget();
   if (target && target.welcome && target.welcome.prompt)
     return target.welcome.prompt;
-  return "Tap anywhere to start";
+  return "Tap here to start";
 }
 
 function resolveThemeWelcomeTitleSizeValue() {
