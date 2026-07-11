@@ -11,7 +11,12 @@ function buildJsonResponse(body, status = 200) {
   });
 }
 
-const VALID_CATEGORIES = new Set(["background", "overlay", "template"]);
+const VALID_CATEGORIES = new Set([
+  "background",
+  "overlay",
+  "template",
+  "idle-screen",
+]);
 
 function normalizeCategory(value) {
   const raw = String(value || "").trim().toLowerCase();

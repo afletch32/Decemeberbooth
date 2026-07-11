@@ -6728,7 +6728,12 @@ const DEFAULT_PRINT_SETTINGS = {
 function getPrintSettings() {
   try {
     const stored = JSON.parse(localStorage.getItem(PRINT_SETTINGS_STORAGE_KEY) || "{}");
-    return { ...DEFAULT_PRINT_SETTINGS, ...(stored && typeof stored === "object" ? stored : {}) };
+    const settings = { ...DEFAULT_PRINT_SETTINGS, ...(stored && typeof stored === "object" ? stored : {}) };
+    if (settings.mode === "paid-queue") {
+      settings.mode = settings.noPaymentRequired === true ? "free" : "paid";
+    }
+    if (!["off", "free", "paid"].includes(settings.mode)) settings.mode = "off";
+    return settings;
   } catch (_) {
     return { ...DEFAULT_PRINT_SETTINGS };
   }
@@ -6756,7 +6761,7 @@ function updateStaffPrintQueueUrl() {
 
 function loadPrintSettings() {
   const settings = getPrintSettings();
-  if (DOM.printModeInput) DOM.printModeInput.value = settings.mode === "paid-queue" ? "paid-queue" : "off";
+  if (DOM.printModeInput) DOM.printModeInput.value = settings.mode;
   if (DOM.printNoPaymentRequiredInput) DOM.printNoPaymentRequiredInput.checked = settings.noPaymentRequired === true;
   if (DOM.printPriceLabelInput) DOM.printPriceLabelInput.value = settings.priceLabel;
   if (DOM.printPanelTitleInput) DOM.printPanelTitleInput.value = settings.panelTitle;
@@ -6769,8 +6774,8 @@ function loadPrintSettings() {
 
 function savePrintSettings() {
   const settings = {
-    mode: DOM.printModeInput && DOM.printModeInput.value === "paid-queue" ? "paid-queue" : "off",
-    noPaymentRequired: !!(DOM.printNoPaymentRequiredInput && DOM.printNoPaymentRequiredInput.checked),
+    mode: DOM.printModeInput && ["free", "paid"].includes(DOM.printModeInput.value) ? DOM.printModeInput.value : "off",
+    noPaymentRequired: DOM.printModeInput && DOM.printModeInput.value === "free",
     priceLabel: (DOM.printPriceLabelInput && DOM.printPriceLabelInput.value.trim()) || DEFAULT_PRINT_SETTINGS.priceLabel,
     panelTitle: (DOM.printPanelTitleInput && DOM.printPanelTitleInput.value.trim()) || DEFAULT_PRINT_SETTINGS.panelTitle,
     panelBody: (DOM.printPanelBodyInput && DOM.printPanelBodyInput.value.trim()) || DEFAULT_PRINT_SETTINGS.panelBody,
@@ -6795,13 +6800,13 @@ async function copyStaffPrintQueueUrl() {
 
 function renderPaidPrintPanel(printEligible = true) {
   const settings = getPrintSettings();
-  const enabled = settings.mode === "paid-queue" && printEligible;
+  const enabled = settings.mode !== "off" && printEligible;
   if (DOM.paidPrintPanel) {
     DOM.paidPrintPanel.dataset.ready = enabled ? "true" : "false";
     DOM.paidPrintPanel.classList.toggle("show", enabled);
   }
   if (!enabled) return;
-  const noPaymentRequired = settings.noPaymentRequired === true;
+  const noPaymentRequired = settings.mode === "free";
   const usesDefaultTitle =
     !settings.panelTitle ||
     settings.panelTitle === DEFAULT_PRINT_SETTINGS.panelTitle;
@@ -6879,7 +6884,7 @@ function renderPaidPrintPanel(printEligible = true) {
 
 async function enqueueFinalPrintIfNeeded(imageUrl, printEligible = true) {
   const settings = getPrintSettings();
-  if (settings.mode !== "paid-queue" || !printEligible) return;
+  if (settings.mode === "off" || !printEligible) return;
   if (!/^https?:\/\//i.test(String(imageUrl || ""))) {
     if (DOM.shareStatus) {
       DOM.shareStatus.textContent = "Print queue waiting for shared upload";
@@ -6897,7 +6902,7 @@ async function enqueueFinalPrintIfNeeded(imageUrl, printEligible = true) {
         imageUrl,
         thumbnailUrl: imageUrl,
         quantity: 1,
-        paymentRequired: settings.noPaymentRequired !== true,
+        paymentRequired: settings.mode === "paid",
       }),
     });
     if (!response.ok) {

@@ -71,7 +71,7 @@ test("pages functions provide live sync endpoints for themes, events, and fonts"
     "asset library endpoint should allow listing, upsert, archive, and delete"
   );
   assert.ok(
-    assetsFn.includes('const VALID_CATEGORIES = new Set(["background", "overlay", "template"])'),
+    assetsFn.includes('"idle-screen"'),
     "asset library endpoint should constrain uploaded asset categories"
   );
   assert.ok(

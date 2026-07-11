@@ -67,6 +67,7 @@
     list.innerHTML = visible.map((item) => {
       const quantity = Math.max(1, Number.parseInt(item.quantity, 10) || 1);
       const printed = item.printStatus === "printed" || item.printStatus === "reprint";
+      const paymentCleared = item.paymentStatus === "paid" || item.paymentStatus === "comped";
       return `<article class="queue-item">
         <img src="${escapeText(item.thumbnailUrl || item.imageUrl)}" alt="Queued photo created ${escapeText(createdAt(item.createdAt))}">
         <div>
@@ -75,9 +76,10 @@
           <span class="badge ${escapeText(item.printStatus)}">${escapeText(label(item.printStatus))}</span>
           <span class="badge ${escapeText(item.paymentStatus)}">${escapeText(label(item.paymentStatus))}</span>
           <div class="queue-item-actions" style="margin-top:16px">
-            <button type="button" data-action="print" data-id="${escapeText(item.id)}">Open/Print</button>
-            <button type="button" data-action="printed" data-id="${escapeText(item.id)}">Mark Printed</button>
-            <button type="button" data-action="reprint" data-id="${escapeText(item.id)}" ${printed ? "" : "disabled"}>Reprint</button>
+            ${item.paymentStatus === "unpaid" ? `<button type="button" data-action="paid" data-id="${escapeText(item.id)}">Mark Paid</button>` : ""}
+            <button type="button" data-action="print" data-id="${escapeText(item.id)}" ${paymentCleared ? "" : "disabled"}>Open/Print</button>
+            <button type="button" data-action="printed" data-id="${escapeText(item.id)}" ${paymentCleared ? "" : "disabled"}>Mark Printed</button>
+            <button type="button" data-action="reprint" data-id="${escapeText(item.id)}" ${printed && paymentCleared ? "" : "disabled"}>Reprint</button>
             <button type="button" data-action="void" data-id="${escapeText(item.id)}" class="danger">Void</button>
           </div>
         </div>
@@ -160,6 +162,7 @@
     if (!item) return;
     try {
       if (button.dataset.action === "print") printQueueItem(item);
+      if (button.dataset.action === "paid") await updateItem(item.id, { paymentStatus: "paid" });
       if (button.dataset.action === "printed") await updateItem(item.id, { printStatus: "printed" });
       if (button.dataset.action === "reprint") {
         await updateItem(item.id, { printStatus: "reprint" });
