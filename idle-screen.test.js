@@ -101,6 +101,10 @@ test("admin editor supports bounded drag resize reset and save", () => {
   assert.ok(app.includes("setPointerCapture"));
   assert.ok(app.includes("normalizeIdleButtonZone"));
   assert.ok(app.includes('showToast("Idle screen hotspot saved.")'));
+  assert.ok(
+    html.includes('</div>\n\n  <div id="idleScreenEditorModal"'),
+    "idle-screen editor should be mounted after the hidden booth screen"
+  );
 });
 
 test("idle screen delivery does not introduce local asset paths", () => {

@@ -20,6 +20,8 @@ What is done
 - Added a visible `Add Idle Screens` Asset Library action that presets the existing bulk uploader to the idle-screen destination.
 - Moved the gallery Share/Open actions into the main admin action row so they are no longer buried in a collapsible event-details panel.
 - Added focused idle-screen regression coverage for assignment, fallback, start behavior, crop math, resizing, failure handling, and local-path exclusion.
+- Moved the idle-screen hotspot editor outside the hidden booth container so `Position Start` opens correctly from Admin.
+- Verified the editor opens in Chromium with the booth hidden and no page errors.
 - Verified `npm test` passes with 136 tests.
 - Verified JavaScript module syntax and `git diff --check` pass.
 - Removed the remaining background, overlay, and template folder fallback collection and merge behavior.
