@@ -383,6 +383,40 @@ test("booth test camera displays and captures the processed live preview canvas"
   await expect(page.locator("#reviewPanel")).not.toHaveClass(/hidden/);
   await expect(page.locator("#qrCodeContainer")).toHaveClass(/hidden/);
 
+  const reviewBounds = await page.evaluate(() => {
+    const review = document.querySelector("#reviewPanel");
+    const actions = document.querySelector("#finalPreviewActions");
+    const preview = document.querySelector("#finalPreview");
+    const reviewRect = review.getBoundingClientRect();
+    const actionsRect = actions.getBoundingClientRect();
+    const previewRect = preview.getBoundingClientRect();
+    return {
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+      reviewLeft: reviewRect.left,
+      reviewRight: reviewRect.right,
+      actionsLeft: actionsRect.left,
+      actionsRight: actionsRect.right,
+      previewLeft: previewRect.left,
+      previewRight: previewRect.right,
+    };
+  });
+  expect(reviewBounds.documentWidth).toBeLessThanOrEqual(
+    reviewBounds.viewportWidth
+  );
+  expect(reviewBounds.reviewLeft).toBeGreaterThanOrEqual(
+    reviewBounds.previewLeft
+  );
+  expect(reviewBounds.reviewRight).toBeLessThanOrEqual(
+    reviewBounds.previewRight
+  );
+  expect(reviewBounds.actionsLeft).toBeGreaterThanOrEqual(
+    reviewBounds.previewLeft
+  );
+  expect(reviewBounds.actionsRight).toBeLessThanOrEqual(
+    reviewBounds.previewRight
+  );
+
   await page.evaluate(async () => {
     await window.downloadShareImage();
   });

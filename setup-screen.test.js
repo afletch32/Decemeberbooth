@@ -1008,10 +1008,10 @@ test("beauty presets use the configured preset contract", () => {
       presets.includes("guestVisible: true") &&
       presets.includes("default: true") &&
       presets.includes("skinSmooth: 0") &&
-      presets.includes("underEye: 12") &&
+      presets.includes("underEye: 4") &&
       presets.includes("exposure: 0") &&
       presets.includes("highlights: -10") &&
-      presets.includes("sharpness: 8"),
+      presets.includes("sharpness: 12"),
     "natural preset should use the configured beauty and lighting schema"
   );
   assert.ok(
@@ -1057,6 +1057,18 @@ test("auto enhancement and presets avoid full-face blur", () => {
       !presets.includes("skinSmooth: 36"),
     "guest-visible presets should not enable broad face smoothing by default"
   );
+  assert.ok(
+    !presets.includes("blemish: 14") &&
+      !presets.includes("blemish: 16") &&
+      !presets.includes("blemish: 18") &&
+      !presets.includes("blemish: 20") &&
+      !presets.includes("blemish: 24") &&
+      !presets.includes("underEye: 10") &&
+      !presets.includes("underEye: 12") &&
+      !presets.includes("underEye: 20") &&
+      !presets.includes("underEye: 22"),
+    "guest-visible presets should keep blur-backed corrections subtle"
+  );
 });
 
 test("blemish correction uses local healing before skin smoothing", () => {
@@ -1065,7 +1077,8 @@ test("blemish correction uses local healing before skin smoothing", () => {
 
   assert.ok(
     blemish.includes("const softened = document.createElement(\"canvas\")") &&
-      blemish.includes("softenedCtx.filter = `blur(") &&
+      blemish.includes("softenedCtx.filter = `blur(${1.2 + strength * 3}px)`") &&
+      blemish.includes("* strength * 0.82") &&
       blemish.includes("const redExcess = red - (green + blue) / 2") &&
       blemish.includes("const darkSpot = sampleLuminance - luminance") &&
       blemish.includes("isSkinLikePixel(red, green, blue, luminance, saturation)") &&
@@ -1085,10 +1098,11 @@ test("under-eye correction uses feathered shadow and cool-cast correction", () =
 
   assert.ok(
     undereye.includes("const softened = document.createElement(\"canvas\")") &&
+      undereye.includes("softenedCtx.filter = `blur(${1.5 + strength * 3}px)`") &&
       undereye.includes("function getMaskWeight(") &&
       undereye.includes("const localShadow = clamp(") &&
       undereye.includes("const bluePurple = clamp(") &&
-      undereye.includes("const neutralize = bluePurple * correction * 20") &&
+      undereye.includes("const neutralize = bluePurple * correction * 14") &&
       undereye.includes("lerp(blue, sampleBlue, blend) + lift * 0.62 - neutralize"),
     "under-eye correction should use feathered local shadow lifting and cool-cast neutralization"
   );

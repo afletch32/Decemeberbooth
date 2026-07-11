@@ -8,11 +8,11 @@ export const BEAUTY_PRESETS = [
     css: "brightness(1.03)",
     beauty: {
       skinSmooth: 0,
-      blemish: 20,
+      blemish: 6,
       teeth: 10,
-      underEye: 12,
-      shine: 10,
-      tone: 8,
+      underEye: 4,
+      shine: 6,
+      tone: 6,
     },
     lighting: {
       exposure: 0,
@@ -21,7 +21,7 @@ export const BEAUTY_PRESETS = [
       vibrance: 8,
       highlights: -10,
       shadows: 8,
-      sharpness: 8,
+      sharpness: 12,
     },
   },
   {
@@ -33,11 +33,11 @@ export const BEAUTY_PRESETS = [
     css: "brightness(1.04) contrast(0.96) saturate(1.02)",
     beauty: {
       skinSmooth: 0,
-      blemish: 24,
+      blemish: 10,
       teeth: 12,
-      underEye: 20,
-      shine: 12,
-      tone: 10,
+      underEye: 8,
+      shine: 8,
+      tone: 8,
     },
     lighting: {
       exposure: 2,
@@ -46,7 +46,7 @@ export const BEAUTY_PRESETS = [
       vibrance: 6,
       highlights: -12,
       shadows: 10,
-      sharpness: 4,
+      sharpness: 8,
     },
   },
   {
@@ -58,11 +58,11 @@ export const BEAUTY_PRESETS = [
     css: "brightness(1.2) contrast(1.04) saturate(1.06)",
     beauty: {
       skinSmooth: 0,
-      blemish: 16,
+      blemish: 8,
       teeth: 28,
-      underEye: 22,
-      shine: 8,
-      tone: 8,
+      underEye: 8,
+      shine: 6,
+      tone: 6,
     },
     lighting: {
       exposure: 10,
@@ -83,10 +83,10 @@ export const BEAUTY_PRESETS = [
     css: "brightness(0.96) contrast(1.08) saturate(1.08)",
     beauty: {
       skinSmooth: 0,
-      blemish: 18,
+      blemish: 8,
       teeth: 8,
-      underEye: 12,
-      shine: 14,
+      underEye: 4,
+      shine: 8,
       tone: 6,
     },
     lighting: {
@@ -108,10 +108,10 @@ export const BEAUTY_PRESETS = [
     css: "grayscale(1) contrast(1.06)",
     beauty: {
       skinSmooth: 0,
-      blemish: 14,
+      blemish: 6,
       teeth: 0,
-      underEye: 10,
-      shine: 8,
+      underEye: 4,
+      shine: 6,
       tone: 0,
     },
     lighting: {

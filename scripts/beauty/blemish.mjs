@@ -14,7 +14,7 @@ export function applyBlemishCorrection(canvas, mask, amount = 0) {
   const softenedCtx = softened.getContext("2d");
   if (!softenedCtx) return canvas;
 
-  softenedCtx.filter = `blur(${2 + strength * 5}px)`;
+  softenedCtx.filter = `blur(${1.2 + strength * 3}px)`;
   softenedCtx.drawImage(canvas, 0, 0);
   softenedCtx.filter = "none";
 
@@ -51,7 +51,7 @@ export function applyBlemishCorrection(canvas, mask, amount = 0) {
 
     if (!skinLike || localDifference < 10 || spotScore < 8) continue;
 
-    const blend = clamp((spotScore / 32) * strength * 1.15, 0, 0.72);
+    const blend = clamp((spotScore / 32) * strength * 0.82, 0, 0.48);
     const redTarget = sampleRed - Math.max(0, redExcess) * 0.18;
     data[index] = clamp(lerp(red, redTarget, blend), 0, 255);
     data[index + 1] = clamp(lerp(green, sampleGreen, blend), 0, 255);

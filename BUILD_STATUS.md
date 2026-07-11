@@ -1,5 +1,5 @@
 Current goal
-- Ensure Overlay Builder exports overlays/templates whose photo windows match runtime photo placement.
+- Keep after-capture output sharp and readable without excessive blur.
 
 What is done
 - Confirmed the worktree was clean before starting this checkpoint.
@@ -13,6 +13,16 @@ What is done
 - Updated Overlay Builder manifest output so single-photo overlays and photo-strip templates both export normalized `photoSlots`.
 - Verified exported builder assets still cut transparent photo windows aligned with the emitted slots.
 - Verified focused overlay/template coverage with `node --test overlay-maker.test.js overlay-slot-rendering.test.js template-rendering.test.js`.
+- Fixed after-capture final preview sizing so the review and QR/share panels stay inside the booth viewport instead of creating horizontal overflow.
+- Added browser smoke coverage for both the review panel and QR/share panel viewport bounds after capture.
+- Reduced after-capture glass blur so the review/share screen is less hazy.
+- Reduced guest photo blur by lowering blur-backed blemish and under-eye correction strengths and blur radii.
+- Updated beauty preset tests to keep guest-visible blur-backed corrections subtle.
+- Verified focused browser coverage with `npm run test:browser -- --grep "booth test camera displays and captures"`.
+- Verified `node --input-type=module --check < scripts/app.js` passes.
+- Verified `node --test setup-screen.test.js` passes.
+- Verified `npm test` passes.
+- Verified `git diff --check` passes.
 - Verified `/staff-print` returns 404 while `/staff-print.html` returns 200 on the local server.
 - Fixed copied staff queue links to target `staff-print.html` directly.
 - Hardened the staff print popup so cached images still trigger print and failed image loads show a clear message.
@@ -37,6 +47,7 @@ What is in progress
 
 Next steps
 - Review the spacing pass in the browser on the target iPad before the next live event.
+- Test the after-capture review and QR steps on the target iPad viewport.
 - Test a newly generated overlay/template in the booth flow with a real captured photo.
 - Test the SELPHY’s two-photo layout against a real print.
 

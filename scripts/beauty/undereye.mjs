@@ -14,7 +14,7 @@ export function applyUndereyeCorrection(canvas, mask, amount = 0) {
   const softenedCtx = softened.getContext("2d");
   if (!softenedCtx) return canvas;
 
-  softenedCtx.filter = `blur(${3 + strength * 5}px)`;
+  softenedCtx.filter = `blur(${1.5 + strength * 3}px)`;
   softenedCtx.drawImage(canvas, 0, 0);
   softenedCtx.filter = "none";
 
@@ -47,13 +47,13 @@ export function applyUndereyeCorrection(canvas, mask, amount = 0) {
     const correction = clamp(
       Math.max(shadow * 0.86, localShadow, bluePurple * 0.9) * strength * feather,
       0,
-      0.82
+      0.5
     );
     if (correction <= 0) continue;
 
-    const blend = correction * 0.38;
-    const lift = correction * 30;
-    const neutralize = bluePurple * correction * 20;
+    const blend = correction * 0.26;
+    const lift = correction * 22;
+    const neutralize = bluePurple * correction * 14;
     data[index] = clamp(lerp(red, sampleRed, blend) + lift * 0.72, 0, 255);
     data[index + 1] = clamp(lerp(green, sampleGreen, blend) + lift, 0, 255);
     data[index + 2] = clamp(
