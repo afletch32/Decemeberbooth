@@ -704,6 +704,32 @@ test("setup exposes selected assets in a collapsible summary", () => {
   );
 });
 
+test("session name and date default the upload folder", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts/app.js");
+
+  assert.ok(
+    html.includes('id="sessionNameInput"') &&
+      html.includes('id="sessionDateInput"'),
+    "setup should expose explicit session name and session date fields"
+  );
+  assert.ok(
+    appScript.includes(
+      'sessionNameInput: document.getElementById("sessionNameInput")'
+    ) &&
+      appScript.includes(
+        'sessionDateInput: document.getElementById("sessionDateInput")'
+      ) &&
+      appScript.includes("function getSessionUploadName()") &&
+      appScript.includes("function getSessionUploadDate()") &&
+      appScript.includes("getDateSessionSlug()") &&
+      appScript.includes("slugifyEventText(getSessionUploadName())") &&
+      appScript.includes("slugifyEventText(getSessionUploadDate())") &&
+      appScript.includes("setupSessionNameInput();"),
+    "session upload paths should derive from the dedicated session fields and current-date default"
+  );
+});
+
 test("theme default setup normalizes corrupted built-in category selections", () => {
   const appScript = readProjectFile("scripts", "app.js");
 

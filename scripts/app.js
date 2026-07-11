@@ -558,6 +558,8 @@ const DOM = {
   sessionFontMenu: document.getElementById("sessionFontMenu"),
   sessionFontSearch: document.getElementById("sessionFontSearch"),
   sessionFontOptions: document.getElementById("sessionFontOptions"),
+  sessionNameInput: document.getElementById("sessionNameInput"),
+  sessionDateInput: document.getElementById("sessionDateInput"),
   createPathFontPairingSelect: document.getElementById(
     "createPathFontPairingSelect"
   ),
@@ -1697,6 +1699,30 @@ function getDateSessionSlug() {
   const raw = getQuickStartSessionDate() || getLocalIsoDate();
   const safe = (raw || "").toString().trim();
   return /^\d{4}-\d{2}-\d{2}$/.test(safe) ? safe : getLocalIsoDate();
+}
+
+function getSessionUploadName() {
+  const active = getActiveEvent();
+  if (active && active.name) return active.name;
+  const sessionName =
+    getSavedEventTextValue(activeSessionTextDetails, "name") ||
+    valueFromInput(DOM.sessionNameInput);
+  if (sessionName) return sessionName;
+  const eventName = valueFromInput(DOM.eventNameInput);
+  if (eventName) return eventName;
+  return getDateSessionSlug();
+}
+
+function getSessionUploadDate() {
+  const active = getActiveEvent();
+  if (active && active.date) return active.date;
+  const sessionDate =
+    getSavedEventTextValue(activeSessionTextDetails, "date") ||
+    valueFromInput(DOM.sessionDateInput);
+  if (sessionDate) return sessionDate;
+  const eventDate = valueFromInput(DOM.eventDateInput);
+  if (eventDate) return eventDate;
+  return getDateSessionSlug();
 }
 
 function getShowcaseDemoThemeKey(kind) {
@@ -5814,6 +5840,38 @@ function setupEventDateInput() {
   });
 }
 
+function setupSessionNameInput() {
+  if (DOM.sessionNameInput) {
+    if (!DOM.sessionNameInput.value) {
+      DOM.sessionNameInput.value = getDateSessionSlug();
+    }
+    DOM.sessionNameInput.addEventListener("input", () => {
+      const name = DOM.sessionNameInput.value.trim();
+      const active = getActiveEvent();
+      if (active) {
+        updateActiveEventDetails({ name });
+      } else {
+        updateActiveSessionTextDetails({ name });
+      }
+    });
+  }
+  if (DOM.sessionDateInput) {
+    if (!DOM.sessionDateInput.value) {
+      DOM.sessionDateInput.value = getDateSessionSlug();
+    }
+    DOM.sessionDateInput.addEventListener("input", () => {
+      const dateValue = DOM.sessionDateInput.value.trim();
+      const active = getActiveEvent();
+      if (active) {
+        updateActiveEventDetails({ date: dateValue });
+      } else {
+        updateActiveSessionTextDetails({ date: dateValue });
+      }
+      updateStylePreview();
+    });
+  }
+}
+
 function init() {
   setupLaunchMode = loadSetupLaunchMode();
   syncSetupLaunchModeUi();
@@ -5842,6 +5900,7 @@ function init() {
   setupEventNameInput();
   setupEventVisualEditorControls();
   setupEventDateInput();
+  setupSessionNameInput();
   setupEventProfileControls();
   setupAssetPanelControls();
   setupAdminModalNavigation();
@@ -7727,6 +7786,8 @@ function syncAdminUiWithTheme(themeKey, theme) {
   const active = getActiveEvent();
   const storedName = active ? active.name : getStoredEventName(currentKey);
   const storedDate = active ? active.date : getStoredEventDate(currentKey);
+  const sessionDate = getDateSessionSlug();
+  const sessionName = getSessionUploadName();
   syncBannerText();
   renderThemeQuickSelect(DOM.eventSelect);
   if (DOM.logo) {
@@ -7747,6 +7808,8 @@ function syncAdminUiWithTheme(themeKey, theme) {
   syncThemeEditorWithActiveTheme();
   if (DOM.eventNameInput) DOM.eventNameInput.value = storedName || "";
   if (DOM.eventDateInput) DOM.eventDateInput.value = storedDate || "";
+  if (DOM.sessionNameInput) DOM.sessionNameInput.value = sessionName || "";
+  if (DOM.sessionDateInput) DOM.sessionDateInput.value = sessionDate || "";
   updateStylePreview();
 }
 
@@ -12726,6 +12789,8 @@ function getQuickStartFolderLabel() {
 }
 
 function getEventUploadSlug() {
+  const sessionName = slugifyEventText(getSessionUploadName());
+  if (sessionName) return sessionName;
   const quickStartDate = getQuickStartFolderDate();
   if (quickStartDate) return quickStartDate;
   const name = slugifyEventText(getEventNameForUploads());
@@ -12986,8 +13051,8 @@ function getEventUploadFolderPath() {
   const quickStartDate = getQuickStartFolderDate();
   if (quickStartDate)
     return buildDateSessionFolderPath({ base, date: quickStartDate });
-  const name = slugifyEventText(getEventNameForUploads());
-  const date = slugifyEventText(getEventDateForUploads());
+  const name = slugifyEventText(getSessionUploadName());
+  const date = slugifyEventText(getSessionUploadDate());
   const fallback = getCurrentEventSlug() || "event";
   return buildEventFolderPath({ base, name, date, fallback });
 }

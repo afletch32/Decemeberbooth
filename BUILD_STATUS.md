@@ -1,7 +1,11 @@
 Current goal
-- Show the selected background, overlay, and template in a collapsible setup summary.
+- Add a session name/date setup that defaults to today and saves uploads into its own folder.
 
 What is done
+- Added session name and session date fields to the setup screen.
+- Defaulted the session date/name to the current local date when a session is new.
+- Routed upload folder selection through the dedicated session name/date fields.
+- Added regression coverage for the session fields and folder resolver.
 - Added a collapsible selected-assets toggle to the setup screen.
 - Wired the toggle summary to the existing background, overlay, and template count labels.
 - Added a setup-screen regression test for the new collapsible summary.
@@ -48,11 +52,11 @@ What is done
 - Verified focused browser coverage with `npm run test:browser -- --grep "Asset Library keeps admin filters|frame picker stays hidden"`.
 
 What is in progress
-- Verifying the setup-screen change with tests.
+- Verifying the session-folder change with tests.
 
 Next steps
-- Run the test suite for the setup-screen change.
-- Check the collapsible summary in the browser if test coverage is not enough.
+- Run the test suite for the session-folder change.
+- Check the session fields in the browser if test coverage is not enough.
 
 Known bugs/blockers
 - The requested dirty worktree was not present at start; `git status --short` was clean.
