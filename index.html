@@ -4584,6 +4584,18 @@
       animation: qrBreathe 3.2s ease-in-out infinite;
     }
 
+    #qrCodeContainer .qr-retake-button {
+      min-height: 42px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(23, 73, 68, 0.18);
+      background: rgba(255, 255, 255, 0.9);
+      color: #34524d;
+      font-size: 0.86rem;
+      font-weight: 800;
+      box-shadow: 0 8px 18px rgba(58, 88, 78, 0.1);
+    }
+
     #qrHint {
       margin-top: 0;
       color: #5c6f6b;
@@ -7095,7 +7107,6 @@
             <h2 class="review-title">Love your photos?</h2>
             <div class="review-actions">
               <button id="lovePhotoBtn" type="button">✅ LOVE IT!</button>
-              <button id="reviewRetakeBtn" type="button">↩ Retake</button>
             </div>
           </section>
           <div id="qrCodeContainer" class="hidden">
@@ -7107,6 +7118,7 @@
               <span id="shareStatus" style="display:none;">Preparing link…</span>
             </div>
             <canvas id="qrCode"></canvas>
+            <button id="reviewRetakeBtn" class="qr-retake-button" type="button">↩ Retake</button>
             <div id="qrHint" style="display:none; font-size:0.9em; color:#ccc; margin-top:8px;"></div>
             <!-- Guest mode must not expose local device download actions. -->
           </div>

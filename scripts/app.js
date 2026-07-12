@@ -12617,6 +12617,7 @@ function showFinal(url, options = {}) {
         qrContainer.classList.remove("hidden");
         qrContainer.classList.add("experience-reveal");
       }
+      if (DOM.reviewPanel) DOM.reviewPanel.classList.add("hidden");
       if (DOM.shareStatus) {
         DOM.shareStatus.textContent = "Preparing QR";
         DOM.shareStatus.style.display = "inline-flex";

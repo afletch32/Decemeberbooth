@@ -90,6 +90,13 @@ Key test coverage:
 - Enter the custom idle or photo-choice state before remote artwork finishes loading so slow connections do not flash the legacy UI.
 - Verified 65/65 focused tests and 153/153 full-suite tests pass.
 
+### QR Retake Layout
+
+- Move Retake into the QR panel as a compact button directly below the code.
+- Hide the review card once a public share URL is ready, preventing QR/review overlap.
+- Preserve the existing retake handler and capture reset behavior.
+- Verified the focused setup suite passes 49/49 and the full suite passes 154/154.
+
 ### Frame Transition Flash Fix
 
 - Eliminated white flash between frame changes by smoothing live preview transitions.

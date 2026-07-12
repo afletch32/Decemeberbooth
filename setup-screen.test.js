@@ -1030,6 +1030,19 @@ test("final share panel appears immediately while QR is pending or failed", () =
   );
 });
 
+test("share-ready QR uses a compact retake action without overlapping review controls", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const html = readProjectFile("index.html");
+  const qrStart = html.indexOf('id="qrCodeContainer"');
+  const qrEnd = html.indexOf('</div>\n          <section id="paidPrintPanel"', qrStart);
+  const qrMarkup = html.slice(qrStart, qrEnd);
+
+  assert.equal((html.match(/id="reviewRetakeBtn"/g) || []).length, 1);
+  assert.ok(qrMarkup.includes('id="reviewRetakeBtn" class="qr-retake-button"'));
+  assert.ok(html.includes("#qrCodeContainer .qr-retake-button {"));
+  assert.ok(appScript.includes('if (DOM.reviewPanel) DOM.reviewPanel.classList.add("hidden");'));
+});
+
 test("skin smoothing preserves detail instead of blurring the full face", () => {
   const smoothing = readProjectFile("scripts", "beauty", "smoothing.mjs");
   const masks = readProjectFile("scripts", "beauty", "masks.mjs");
