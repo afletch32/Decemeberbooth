@@ -2,6 +2,7 @@ Current goal
 - Support Canva-designed Cloudinary idle screens with orientation-aware artwork and aligned Start hotspots.
 
 What is done
+- Removed all filter and backdrop-filter effects from the invisible custom idle-screen Start hotspot while preserving its focus indicator and hit area.
 - Fixed the custom idle-screen welcome flow by clearing the idle artwork before mode selection and exposing the existing `beginModeSelection()` handler to its inline mode buttons; added focused regression coverage.
 - Added `IDLE_SCREEN_START_FIX.md`, a one-card-per-session troubleshooting runbook with strict no-base64 and no-speculative-CSS guardrails, evidence-based routing, copy/paste prompts, and a persistent handoff table for less capable models.
 - Replaced the ambiguous paid-queue checkbox combination with explicit Off, Free Printing, and Paid Printing modes.

@@ -64,6 +64,7 @@ test("custom artwork hides legacy chrome only in custom idle mode", () => {
   assert.ok(html.includes("#welcomeScreen.custom-idle-screen #welcomeTitle"));
   assert.ok(html.includes("#welcomeScreen.custom-idle-screen #startButton"));
   assert.ok(html.includes("#welcomeScreen.custom-idle-screen #startButton:focus-visible"));
+  assert.ok(html.includes("filter: none; backdrop-filter: none; -webkit-backdrop-filter: none;"));
 });
 
 test("the existing start handler remains the only guest start path", () => {
