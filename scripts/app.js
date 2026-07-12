@@ -728,6 +728,11 @@ const DOM = {
   mobileSettingsClose: document.getElementById("mobileSettingsClose"),
   mobileSettingsBackdrop: document.getElementById("mobileSettingsBackdrop"),
   mobileSettingsSheet: document.getElementById("mobileSettingsSheet"),
+  frameCarousel: document.getElementById("frameCarousel"),
+  frameCarouselChoice: document.getElementById("frameCarouselChoice"),
+  frameCarouselName: document.getElementById("frameCarouselName"),
+  framePrevBtn: document.getElementById("framePrevBtn"),
+  frameNextBtn: document.getElementById("frameNextBtn"),
   eventSelect: document.getElementById("eventSelect"),
   allowRetakes: document.getElementById("allowRetakes"),
   analyticsData: document.getElementById("analyticsData"),
@@ -1077,6 +1082,8 @@ const DOM = {
   idleScreenEditorCanvas: document.getElementById("idleScreenEditorCanvas"),
   idleScreenEditorImage: document.getElementById("idleScreenEditorImage"),
   idleScreenEditorZone: document.getElementById("idleScreenEditorZone"),
+  photoChoiceSingleZone: document.getElementById("photoChoiceSingleZone"),
+  photoChoiceStripZone: document.getElementById("photoChoiceStripZone"),
   idleScreenOrientation: document.getElementById("idleScreenOrientation"),
   idleScreenResetZone: document.getElementById("idleScreenResetZone"),
   idleScreenEditorCancel: document.getElementById("idleScreenEditorCancel"),
@@ -1815,6 +1822,10 @@ let activeThemeDefaultsAsset = null;
 let activeThemeDefaultsSetupKey = "";
 let activeIdleScreenEditorAsset = null;
 let idleScreenEditorZone = { x: 50, y: 73, width: 28, height: 20 };
+let photoChoiceEditorZones = {
+  singlePhoto: { x: 34, y: 59, width: 27, height: 50 },
+  photoStrip: { x: 66, y: 59, width: 27, height: 50 },
+};
 let activeSessionTextDetails = {};
 let boothAudioContext = null;
 let boothAudioEnabled = false;
@@ -3820,6 +3831,17 @@ function setupMobileSettingsControls() {
   if (DOM.mobileSettingsBackdrop) {
     DOM.mobileSettingsBackdrop.addEventListener("click", () =>
       setMobileSettingsOpen(false)
+    );
+  }
+  if (DOM.framePrevBtn) {
+    DOM.framePrevBtn.addEventListener("click", () => moveBoothFrame(-1));
+  }
+  if (DOM.frameNextBtn) {
+    DOM.frameNextBtn.addEventListener("click", () => moveBoothFrame(1));
+  }
+  if (DOM.frameCarouselChoice) {
+    DOM.frameCarouselChoice.addEventListener("click", () =>
+      setMobileSettingsOpen(true)
     );
   }
   document.addEventListener("keydown", (event) => {
@@ -8880,6 +8902,53 @@ function syncPhotoOverlayOrientationWithAssets() {
   }
 }
 
+function getFrameCarouselEntries() {
+  return [
+    null,
+    ...filterPhotoOverlaysByOrientation(
+      getOverlayList(activeTheme),
+      photoOverlayOrientation
+    ),
+  ];
+}
+
+function syncFrameCarouselUi() {
+  if (!DOM.frameCarousel) return;
+  const show = canShowFrameSettings() && getSelectedCaptureMode() === "photo";
+  DOM.frameCarousel.classList.toggle("hidden", !show);
+  const selected = getPhotoOverlayBySrc(selectedOverlay);
+  if (DOM.frameCarouselName) {
+    DOM.frameCarouselName.textContent = selected
+      ? normalizeAssetDisplayName(selected, "Selected Frame")
+      : "No Frame";
+  }
+}
+
+function selectBoothFrame(entry) {
+  const src = entry && entry.src ? entry.src : null;
+  selectedOverlay = src;
+  lastPhotoOverlay = src;
+  lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
+  if (src) syncOverlayPreviewSurface({ mode: "live" });
+  else clearOverlayPreviewSurface();
+  applyPreviewOrientation();
+  renderOptionsForMode(mode);
+  syncFrameCarouselUi();
+  logBoothFrameState("overlay-selected", mode);
+}
+
+function moveBoothFrame(direction) {
+  const entries = getFrameCarouselEntries();
+  if (!entries.length) return;
+  const currentIndex = entries.findIndex(
+    (entry) => (entry && entry.src ? entry.src : null) === selectedOverlay
+  );
+  const nextIndex =
+    ((currentIndex < 0 ? 0 : currentIndex) + direction + entries.length) %
+    entries.length;
+  selectBoothFrame(entries[nextIndex]);
+}
+
 function setFilter(filterId) {
   selectedFilter = filterId;
   applyFilterToVideo();
@@ -8948,19 +9017,13 @@ function setPhotoOverlayOrientation(nextOrientation) {
   if (photoOverlayMatchesOrientation(remembered, next)) {
     selectedOverlay = remembered;
     lastPhotoOverlay = remembered;
-  } else {
-    const first = getFirstPhotoOverlayForOrientation(next);
-    if (first && first.src) {
-      selectedOverlay = first.src;
-      lastPhotoOverlay = first.src;
-      lastPhotoOverlayByOrientation[next] = first.src;
-    }
   }
   renderOptionsForMode(mode);
   syncOverlayPreviewSurface({ mode: "live" });
   applyPreviewOrientation();
   logBoothFrameState("overlay-orientation-change", mode);
   setMobileSettingsOpen(false);
+  syncFrameCarouselUi();
 }
 
 function applyFilterToVideo() {
@@ -9281,6 +9344,7 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
       lastPhotoOverlayByOrientation[photoOverlayOrientation] = null;
       clearOverlayPreviewSurface();
       applyPreviewOrientation();
+      syncFrameCarouselUi();
       setMobileSettingsOpen(false);
     };
     if (!selectedOverlay) noOverlay.classList.add("selected");
@@ -9330,6 +9394,7 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
           syncOverlayPreviewSurface({ mode: "live" });
           applyPreviewOrientation();
           logBoothFrameState("overlay-selected", mode);
+          syncFrameCarouselUi();
           setMobileSettingsOpen(false);
         };
         overlayGrid.appendChild(wrap);
@@ -9624,7 +9689,21 @@ function selectIdleScreenEntry() {
   const orientation = getIdleScreenViewportOrientation();
   const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
   const find = (entries, target) =>
-    entries.find((entry) => normalizeIdleScreenOrientation(entry.orientation) === target);
+    entries.find((entry) => entry.role !== "photo-choice" && normalizeIdleScreenOrientation(entry.orientation) === target);
+  return hydrateIdleScreenEntry(
+    find(eventEntries, orientation) ||
+      find(themeEntries, orientation) ||
+      find(eventEntries, "general") ||
+      find(themeEntries, "general") ||
+      null
+  );
+}
+
+function selectPhotoChoiceScreenEntry() {
+  const orientation = getIdleScreenViewportOrientation();
+  const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
+  const find = (entries, target) =>
+    entries.find((entry) => entry.role === "photo-choice" && normalizeIdleScreenOrientation(entry.orientation) === target);
   return hydrateIdleScreenEntry(
     find(eventEntries, orientation) ||
       find(themeEntries, orientation) ||
@@ -9689,7 +9768,7 @@ function positionIdleStartHotspot(entry) {
 }
 
 function clearCustomIdleScreen() {
-  if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("custom-idle-screen");
+  if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("custom-idle-screen", "custom-photo-choice-screen");
   if (DOM.welcomeImg) {
     DOM.welcomeImg.onload = null;
     DOM.welcomeImg.onerror = null;
@@ -9697,6 +9776,39 @@ function clearCustomIdleScreen() {
     DOM.welcomeImg.classList.add("hidden");
   }
   if (DOM.startButton) DOM.startButton.removeAttribute("style");
+}
+
+function positionPhotoChoiceHotspots(entry) {
+  if (!DOM.welcomeImg || !DOM.welcomeScreen) return;
+  const rect = getCoverImageRect(DOM.welcomeImg, DOM.welcomeScreen);
+  const zones = entry && entry.buttonZones ? entry.buttonZones : {};
+  const place = (modeName, zoneValue) => {
+    const button = document.querySelector(`.welcome-mode-btn[data-welcome-mode="${modeName}"]`);
+    if (!button) return;
+    const zone = normalizeIdleButtonZone(zoneValue);
+    Object.assign(button.style, {
+      left: `${rect.left + (zone.x / 100) * rect.width}px`,
+      top: `${rect.top + (zone.y / 100) * rect.height}px`,
+      width: `${(zone.width / 100) * rect.width}px`,
+      height: `${(zone.height / 100) * rect.height}px`,
+    });
+  };
+  place("still-photo", zones.singlePhoto || photoChoiceEditorZones.singlePhoto);
+  place("strip", zones.photoStrip || photoChoiceEditorZones.photoStrip);
+}
+
+function applyCustomPhotoChoiceScreen(entry) {
+  const src = getAssetEntrySrc(entry);
+  if (!src || !DOM.welcomeImg || !DOM.welcomeScreen) return false;
+  DOM.welcomeImg.onload = () => {
+    DOM.welcomeScreen.classList.remove("custom-idle-screen");
+    DOM.welcomeScreen.classList.add("custom-photo-choice-screen");
+    DOM.welcomeImg.classList.remove("hidden");
+    positionPhotoChoiceHotspots(entry);
+  };
+  DOM.welcomeImg.onerror = clearCustomIdleScreen;
+  DOM.welcomeImg.src = src;
+  return true;
 }
 
 function applyCustomIdleScreen(entry) {
@@ -9736,7 +9848,9 @@ function showWelcome(step = null) {
   if (DOM.welcomeScreen) DOM.welcomeScreen.style.backgroundImage = boothBg;
   const requestedStep = step || resolveInitialWelcomeStep();
   const idleEntry = requestedStep === "idle" ? selectIdleScreenEntry() : null;
+  const photoChoiceEntry = requestedStep === "mode" ? selectPhotoChoiceScreenEntry() : null;
   if (idleEntry) applyCustomIdleScreen(idleEntry);
+  else if (photoChoiceEntry) applyCustomPhotoChoiceScreen(photoChoiceEntry);
   else clearCustomIdleScreen();
 
   const ws = DOM.welcomeScreen;
@@ -9757,6 +9871,8 @@ function beginWelcome(event) {
   }
   clearCustomIdleScreen();
   setWelcomeFlowStep("mode");
+  const photoChoiceEntry = selectPhotoChoiceScreenEntry();
+  if (photoChoiceEntry) applyCustomPhotoChoiceScreen(photoChoiceEntry);
 }
 
 function beginModeSelection(nextMode, event) {
@@ -9767,6 +9883,7 @@ function beginModeSelection(nextMode, event) {
     event.stopPropagation();
   }
   setMode(nextMode);
+  clearCustomIdleScreen();
   hideWelcome();
 }
 
@@ -9776,6 +9893,7 @@ function goBackFromWelcome(event) {
     event.stopPropagation();
   }
   if (welcomeFlowStep === "mode") {
+    clearCustomIdleScreen();
     setWelcomeFlowStep("idle");
     const idleEntry = selectIdleScreenEntry();
     if (idleEntry) applyCustomIdleScreen(idleEntry);
@@ -9801,20 +9919,6 @@ function goBackFromBooth(event) {
   showWelcome("mode");
 }
 
-function selectFirstPhotoOverlayAfterWelcome() {
-  if (getSelectedCaptureMode() !== "photo" || selectedOverlay) return;
-  const firstOverlay = filterPhotoOverlaysByOrientation(
-    getOverlayList(activeTheme || {}),
-    photoOverlayOrientation
-  )[0];
-  if (!firstOverlay || !firstOverlay.src) return;
-  const thumbs = DOM.options ? DOM.options.querySelectorAll(".thumb") : [];
-  const firstOverlayThumb = thumbs[1];
-  if (firstOverlayThumb && typeof firstOverlayThumb.click === "function") {
-    firstOverlayThumb.click();
-  }
-}
-
 function hideWelcome() {
   const ws = DOM.welcomeScreen;
   if (!ws) return;
@@ -9824,7 +9928,6 @@ function hideWelcome() {
   if (DOM.boothScreen) DOM.boothScreen.classList.remove("welcome-active");
   if (currentMode !== "360") {
     setMode(resolveBoothLaunchMode());
-    selectFirstPhotoOverlayAfterWelcome();
   }
   updateFilterCarouselVisibility();
   updateCaptureModeUi();
@@ -12467,7 +12570,7 @@ function showFinal(url, options = {}) {
     enqueueFinalPrintIfNeeded(printImageUrl, printEligible);
     resetIdleTimer();
     if (skipShare && !isBoothTestMode()) {
-      hidePreviewTimer = setTimeout(hideFinal, 15000);
+      hidePreviewTimer = setTimeout(finishBoothFlow, 15000);
     }
   };
 
@@ -14014,6 +14117,21 @@ function hideFinal() {
   resetIdleTimer();
 }
 
+function finishBoothFlow() {
+  hideFinal();
+  clearTimeout(idleTimer);
+  selectedOverlay = null;
+  lastPhotoOverlay = null;
+  lastPhotoOverlayByOrientation = { portrait: null, landscape: null };
+  renderOptionsForMode(mode, { preserveScroll: false });
+  syncFrameCarouselUi();
+  setTimeout(() => {
+    if (DOM.goodbyeOverlay) DOM.goodbyeOverlay.classList.remove("show");
+    cycleShowcaseDemoTheme();
+    showWelcome("idle");
+  }, 1400);
+}
+
 function retakePhoto() {
   hideFinal();
   if (typeof lastCaptureFlow === "function") {
@@ -14021,7 +14139,7 @@ function retakePhoto() {
   }
 }
 function exitFinalPreview() {
-  hideFinal();
+  finishBoothFlow();
 }
 function addToGallery(url) {
   updateOutputSurfaceTrace({
@@ -14046,7 +14164,7 @@ function startHideTimerIfIdle() {
   // If email input is empty, restart the hide timer
   if (!DOM.emailInput || DOM.emailInput.value.trim() === "") {
     cancelHideTimer();
-    hidePreviewTimer = setTimeout(hideFinal, 4000);
+    hidePreviewTimer = setTimeout(finishBoothFlow, 4000);
   }
 }
 
@@ -14076,7 +14194,7 @@ function sendEmail(event) {
     if (ok) {
       sendBtn.textContent = "Queued";
       updatePendingUI();
-      hidePreviewTimer = setTimeout(hideFinal, 1200);
+      hidePreviewTimer = setTimeout(finishBoothFlow, 1200);
     } else {
       alert("Could not queue email. Check storage space.");
     }
@@ -14105,7 +14223,7 @@ function sendEmail(event) {
     function (response) {
       console.log("SUCCESS!", response.status, response.text);
       sendBtn.textContent = "Sent!";
-      hidePreviewTimer = setTimeout(hideFinal, 3000);
+      hidePreviewTimer = setTimeout(finishBoothFlow, 3000);
     },
     function (error) {
       const errMsg = formatEmailError(error);
@@ -15197,11 +15315,20 @@ function normalizeIdleButtonZone(zone) {
 }
 
 function buildIdleScreenEntryFromUrl(url, file = null) {
+  const name = (file && file.name) || "Idle Screen";
+  const role = /photo[\s_-]*choice/i.test(name) ? "photo-choice" : "idle";
   return {
     src: url,
     orientation: "general",
-    name: (file && file.name) || "Idle Screen",
-    buttonZones: { start: normalizeIdleButtonZone() },
+    name,
+    role,
+    buttonZones:
+      role === "photo-choice"
+        ? {
+            singlePhoto: normalizeIdleButtonZone(photoChoiceEditorZones.singlePhoto),
+            photoStrip: normalizeIdleButtonZone(photoChoiceEditorZones.photoStrip),
+          }
+        : { start: normalizeIdleButtonZone() },
   };
 }
 
@@ -15399,9 +15526,20 @@ function normalizeAssetLibraryPayload(payload) {
         category === "idle-screen"
           ? normalizeIdleScreenOrientation(item.orientation)
           : undefined,
+      role:
+        category === "idle-screen"
+          ? item.role === "photo-choice" || /photo[\s_-]*choice/i.test(item.name || "")
+            ? "photo-choice"
+            : "idle"
+          : undefined,
       buttonZones:
         category === "idle-screen"
-          ? { start: normalizeIdleButtonZone(item.buttonZones && item.buttonZones.start) }
+          ? item.role === "photo-choice" || /photo[\s_-]*choice/i.test(item.name || "")
+            ? {
+                singlePhoto: normalizeIdleButtonZone(item.buttonZones && item.buttonZones.singlePhoto || photoChoiceEditorZones.singlePhoto),
+                photoStrip: normalizeIdleButtonZone(item.buttonZones && item.buttonZones.photoStrip || photoChoiceEditorZones.photoStrip),
+              }
+            : { start: normalizeIdleButtonZone(item.buttonZones && item.buttonZones.start) }
           : undefined,
     };
     const mergeKey = getAssetLibraryId(category, url) || id;
@@ -16119,19 +16257,25 @@ function getContainedImageRect(img, container) {
 }
 
 function renderIdleScreenEditorZone() {
-  if (!DOM.idleScreenEditorZone || !DOM.idleScreenEditorImage || !DOM.idleScreenEditorCanvas) return;
+  if (!DOM.idleScreenEditorImage || !DOM.idleScreenEditorCanvas) return;
   const rect = getContainedImageRect(DOM.idleScreenEditorImage, DOM.idleScreenEditorCanvas);
-  const zone = normalizeIdleButtonZone(idleScreenEditorZone);
-  Object.assign(DOM.idleScreenEditorZone.style, {
-    left: `${rect.left + (zone.x / 100) * rect.width}px`,
-    top: `${rect.top + (zone.y / 100) * rect.height}px`,
-    width: `${(zone.width / 100) * rect.width}px`,
-    height: `${(zone.height / 100) * rect.height}px`,
-  });
+  const render = (element, zoneValue) => {
+    if (!element) return;
+    const zone = normalizeIdleButtonZone(zoneValue);
+    Object.assign(element.style, {
+      left: `${rect.left + (zone.x / 100) * rect.width}px`,
+      top: `${rect.top + (zone.y / 100) * rect.height}px`,
+      width: `${(zone.width / 100) * rect.width}px`,
+      height: `${(zone.height / 100) * rect.height}px`,
+    });
+  };
+  render(DOM.idleScreenEditorZone, idleScreenEditorZone);
+  render(DOM.photoChoiceSingleZone, photoChoiceEditorZones.singlePhoto);
+  render(DOM.photoChoiceStripZone, photoChoiceEditorZones.photoStrip);
 }
 
 function bindIdleScreenEditorPointer() {
-  const zoneElement = DOM.idleScreenEditorZone;
+  const bind = (zoneElement, getZone, setZone) => {
   if (!zoneElement || zoneElement.dataset.bound === "true") return;
   zoneElement.dataset.bound = "true";
   zoneElement.addEventListener("pointerdown", (event) => {
@@ -16139,15 +16283,16 @@ function bindIdleScreenEditorPointer() {
     const resize = event.target.tagName === "I";
     const startX = event.clientX;
     const startY = event.clientY;
-    const original = { ...idleScreenEditorZone };
+    const original = { ...getZone() };
     zoneElement.setPointerCapture(event.pointerId);
     const move = (nextEvent) => {
       const rect = getContainedImageRect(DOM.idleScreenEditorImage, DOM.idleScreenEditorCanvas);
       const dx = ((nextEvent.clientX - startX) / rect.width) * 100;
       const dy = ((nextEvent.clientY - startY) / rect.height) * 100;
-      idleScreenEditorZone = resize
+      const nextZone = resize
         ? normalizeIdleButtonZone({ ...original, width: original.width + dx * 2, height: original.height + dy * 2 })
         : normalizeIdleButtonZone({ ...original, x: original.x + dx, y: original.y + dy });
+      setZone(nextZone);
       renderIdleScreenEditorZone();
     };
     const stop = () => {
@@ -16159,6 +16304,10 @@ function bindIdleScreenEditorPointer() {
     zoneElement.addEventListener("pointerup", stop);
     zoneElement.addEventListener("pointercancel", stop);
   });
+  };
+  bind(DOM.idleScreenEditorZone, () => idleScreenEditorZone, (zone) => { idleScreenEditorZone = zone; });
+  bind(DOM.photoChoiceSingleZone, () => photoChoiceEditorZones.singlePhoto, (zone) => { photoChoiceEditorZones.singlePhoto = zone; });
+  bind(DOM.photoChoiceStripZone, () => photoChoiceEditorZones.photoStrip, (zone) => { photoChoiceEditorZones.photoStrip = zone; });
 }
 
 function closeIdleScreenEditor() {
@@ -16169,7 +16318,15 @@ function closeIdleScreenEditor() {
 function openIdleScreenEditor(asset) {
   if (!asset || !DOM.idleScreenEditorModal) return;
   activeIdleScreenEditorAsset = asset;
+  const isPhotoChoice = asset.role === "photo-choice" || /photo[\s_-]*choice/i.test(asset.name || "");
   idleScreenEditorZone = normalizeIdleButtonZone(asset.buttonZones && asset.buttonZones.start);
+  photoChoiceEditorZones = {
+    singlePhoto: normalizeIdleButtonZone(asset.buttonZones && asset.buttonZones.singlePhoto || photoChoiceEditorZones.singlePhoto),
+    photoStrip: normalizeIdleButtonZone(asset.buttonZones && asset.buttonZones.photoStrip || photoChoiceEditorZones.photoStrip),
+  };
+  DOM.idleScreenEditorZone.classList.toggle("hidden", isPhotoChoice);
+  DOM.photoChoiceSingleZone.classList.toggle("hidden", !isPhotoChoice);
+  DOM.photoChoiceStripZone.classList.toggle("hidden", !isPhotoChoice);
   DOM.idleScreenOrientation.value = normalizeIdleScreenOrientation(asset.orientation) === "portrait" ? "portrait" : "landscape";
   DOM.idleScreenEditorImage.onload = renderIdleScreenEditorZone;
   DOM.idleScreenEditorImage.src = getAssetEntrySrc(asset);
@@ -16179,16 +16336,24 @@ function openIdleScreenEditor(asset) {
 
 function saveIdleScreenEditor() {
   if (!activeIdleScreenEditorAsset) return;
+  const isPhotoChoice = activeIdleScreenEditorAsset.role === "photo-choice";
   updateAssetLibraryItem(
     activeIdleScreenEditorAsset.id,
     {
       orientation: DOM.idleScreenOrientation.value,
-      buttonZones: { start: normalizeIdleButtonZone(idleScreenEditorZone) },
+      role: activeIdleScreenEditorAsset.role === "photo-choice" ? "photo-choice" : "idle",
+      buttonZones:
+        activeIdleScreenEditorAsset.role === "photo-choice"
+          ? {
+              singlePhoto: normalizeIdleButtonZone(photoChoiceEditorZones.singlePhoto),
+              photoStrip: normalizeIdleButtonZone(photoChoiceEditorZones.photoStrip),
+            }
+          : { start: normalizeIdleButtonZone(idleScreenEditorZone) },
     },
     activeIdleScreenEditorAsset
   );
   closeIdleScreenEditor();
-  showToast("Idle screen hotspot saved.");
+  showToast(isPhotoChoice ? "Photo choice hotspots saved." : "Idle screen hotspot saved.");
 }
 
 const THEME_DEFAULTS_GROUP_ORDER = [
@@ -16365,14 +16530,20 @@ function buildThemeDefaultAssetEntry(asset) {
     };
   }
   if (category === "idle-screen") {
+    const role = asset.role === "photo-choice" ? "photo-choice" : "idle";
     return {
       ...cloneThemeValue(raw),
       src,
       name: asset.name,
       orientation: normalizeIdleScreenOrientation(asset.orientation),
-      buttonZones: {
-        start: normalizeIdleButtonZone(asset.buttonZones && asset.buttonZones.start),
-      },
+      role,
+      buttonZones:
+        role === "photo-choice"
+          ? {
+              singlePhoto: normalizeIdleButtonZone(asset.buttonZones && asset.buttonZones.singlePhoto || photoChoiceEditorZones.singlePhoto),
+              photoStrip: normalizeIdleButtonZone(asset.buttonZones && asset.buttonZones.photoStrip || photoChoiceEditorZones.photoStrip),
+            }
+          : { start: normalizeIdleButtonZone(asset.buttonZones && asset.buttonZones.start) },
     };
   }
   return null;
@@ -16937,7 +17108,7 @@ function renderAssetLibrary() {
         });
         const hotspotBtn = document.createElement("button");
         hotspotBtn.type = "button";
-        hotspotBtn.textContent = "Position Start";
+        hotspotBtn.textContent = asset.role === "photo-choice" ? "Position Choices" : "Position Start";
         hotspotBtn.classList.toggle("hidden", asset.category !== "idle-screen");
         hotspotBtn.addEventListener("click", (event) => {
           event.stopPropagation();

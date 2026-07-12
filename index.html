@@ -3216,6 +3216,20 @@
     #welcomeScreen.custom-idle-screen #welcomeIdleStep { display: block !important; position: absolute; inset: 0; }
     #welcomeScreen.custom-idle-screen #startButton { position: absolute; margin: 0; min-width: 0; padding: 0; border: 0; outline: 0; border-radius: 0; background: transparent; box-shadow: none; color: transparent; font-size: 0; opacity: 1; filter: none; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; transform: none; cursor: pointer; touch-action: manipulation; }
     #welcomeScreen.custom-idle-screen #startButton:focus-visible { outline: 4px solid #fff; outline-offset: -4px; box-shadow: 0 0 0 7px #155eef; }
+    #welcomeScreen.custom-photo-choice-screen { overflow: hidden; background: #000 !important; }
+    #welcomeScreen.custom-photo-choice-screen::before,
+    #welcomeScreen.custom-photo-choice-screen::after { display: none; }
+    #welcomeScreen.custom-photo-choice-screen #welcomeImg { display: block !important; z-index: 0; }
+    #welcomeScreen.custom-photo-choice-screen #welcomeOverlay { position: absolute; inset: 0; width: 100%; max-width: none; min-width: 0; max-height: none; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; animation: none; transform: none; overflow: visible; }
+    #welcomeScreen.custom-photo-choice-screen #welcomeEyebrow,
+    #welcomeScreen.custom-photo-choice-screen #welcomeDemoStep,
+    #welcomeScreen.custom-photo-choice-screen #welcomeIdleStep,
+    #welcomeScreen.custom-photo-choice-screen #welcomeModeBackBtn { display: none !important; }
+    #welcomeScreen.custom-photo-choice-screen #welcomeModeStep { display: block !important; position: absolute; inset: 0; }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-grid { display: block; position: absolute; inset: 0; width: 100%; }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn { position: absolute; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; outline: 0; background: transparent; box-shadow: none; color: transparent; font-size: 0; opacity: 1; filter: none; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; transform: translate(-50%, -50%); cursor: pointer; touch-action: manipulation; }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn[data-welcome-mode="live-photo"] { display: none !important; }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn:focus-visible { outline: 4px solid #fff; outline-offset: -4px; box-shadow: 0 0 0 7px #155eef; }
 
     .idle-screen-editor-modal { position: fixed; inset: 0; z-index: 12000; display: grid; place-items: center; padding: 16px; background: rgba(15, 23, 42, 0.72); }
     .idle-screen-editor-modal.hidden { display: none; }
@@ -5087,6 +5101,64 @@
       display: none;
     }
 
+    .frame-carousel {
+      display: grid;
+      grid-template-columns: 52px minmax(160px, 240px) 52px;
+      align-items: stretch;
+      gap: 8px;
+      margin: 0 auto;
+    }
+
+    .frame-carousel.hidden {
+      display: none;
+    }
+
+    #boothScreen.countdown-mode .frame-carousel,
+    #boothScreen.finalizing-mode .frame-carousel,
+    #boothScreen.share-mode .frame-carousel,
+    #boothScreen.welcome-active .frame-carousel {
+      display: none;
+    }
+
+    .frame-carousel button {
+      min-height: 52px;
+      border: 2px solid rgba(255, 255, 255, 0.78);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #2f2922;
+      box-shadow: 0 8px 24px rgba(39, 33, 25, 0.16);
+      cursor: pointer;
+    }
+
+    #frameCarouselChoice {
+      display: grid;
+      place-content: center;
+      gap: 2px;
+      padding: 8px 20px;
+      font-family: var(--font-label);
+    }
+
+    .frame-carousel-label {
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6d5f4f;
+    }
+
+    #frameCarouselName {
+      max-width: 210px;
+      overflow: hidden;
+      font-size: 0.9rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .frame-arrow {
+      font-size: 1rem;
+      font-weight: 900;
+    }
+
     #boothScreen.booth-ready #captureBtn.primary {
       width: clamp(128px, 13vw, 166px);
       height: clamp(86px, 9vw, 112px);
@@ -6945,6 +7017,14 @@
           <span id="livePhotoStatus" class="capture-status-pill hidden">Live Photo</span>
           <span id="instantCaptureStatus" class="capture-status-pill hidden">Instant Capture</span>
         </div>
+        <div id="frameCarousel" class="frame-carousel hidden" aria-label="Choose a frame">
+          <button id="framePrevBtn" type="button" class="frame-arrow" aria-label="Previous frame">◀</button>
+          <button id="frameCarouselChoice" type="button" aria-haspopup="dialog">
+            <span class="frame-carousel-label">Frame</span>
+            <strong id="frameCarouselName">No Frame</strong>
+          </button>
+          <button id="frameNextBtn" type="button" class="frame-arrow" aria-label="Next frame">▶</button>
+        </div>
         <div id="filterCarousel" class="filter-carousel hidden">
           <button id="filterPrevBtn" type="button" class="filter-arrow filter-arrow-prev" aria-label="Previous filter" onclick="prevFilter()">◀</button>
           <span id="filterCarouselName">✨ Natural</span>
@@ -7152,6 +7232,8 @@
       <div id="idleScreenEditorCanvas" class="idle-screen-editor-canvas">
         <img id="idleScreenEditorImage" alt="Idle screen preview">
         <div id="idleScreenEditorZone" class="idle-screen-editor-zone" tabindex="0"><span>Start hotspot</span><i aria-hidden="true"></i></div>
+        <div id="photoChoiceSingleZone" class="idle-screen-editor-zone hidden" tabindex="0"><span>Single Photo hotspot</span><i aria-hidden="true"></i></div>
+        <div id="photoChoiceStripZone" class="idle-screen-editor-zone hidden" tabindex="0"><span>Photo Strip hotspot</span><i aria-hidden="true"></i></div>
       </div>
       <div class="btn-row">
         <button type="button" id="idleScreenResetZone">Reset button position</button>

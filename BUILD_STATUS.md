@@ -1,6 +1,8 @@
 Current goal
 - Support Canva-designed Cloudinary idle screens with orientation-aware artwork and aligned Start hotspots.
 - Keep staff print rotation contained within each selected 4x6 layout slot, including 2-up prints.
+- Make guest frame choice visible beside capture controls and begin photo sessions with No Frame selected.
+- Return completed guest capture/share flows directly to the idle screen while preserving Retake behavior.
 
 What is done
 - Restored the selected custom idle artwork and hotspot when guests go Back from photo-mode selection to the idle step.
@@ -15,6 +17,8 @@ What is done
 - Added Cloudflare asset API support for canonical idle-screen records.
 - Added focused print-mode and staff payment-gating tests; verified 141 tests pass.
 - Fixed 90° and 270° staff print rotation sizing so photos fit their individual print slots without clipping.
+- Added a prominent frame carousel above Take Photo with previous/next controls, a No Frame state, and access to the full frame picker.
+- Added a canonical completed-flow reset that shows the thank-you moment, clears guest frame/filter state, and returns to idle after closing or successfully sharing.
 - Fixed the global button outage caused by idle-screen editor state calling a later-initialized constant during module startup.
 - Added regression coverage that prevents idle-screen state from invoking late-defined helpers during application boot.
 - Fixed Theme and Font dropdown initialization by removing an orphaned folder-fallback variable and correcting a stale theme-summary function name.

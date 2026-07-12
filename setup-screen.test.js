@@ -73,26 +73,19 @@ test("setup screen uses a compact toolbar for section controls", () => {
   );
 });
 
-test("welcome launch uses overlay helpers and skips the No Overlay tile", () => {
+test("welcome launch preserves the explicit No Frame default", () => {
   const appScript = readProjectFile("scripts", "app.js");
   const hideWelcome = extractFunction(appScript, "hideWelcome");
-  const selectFirstPhotoOverlayAfterWelcome = extractFunction(
-    appScript,
-    "selectFirstPhotoOverlayAfterWelcome"
-  );
 
   assert.ok(
     !hideWelcome.includes("activeTheme.overlays.length"),
     "hideWelcome should not read activeTheme.overlays.length directly"
   );
   assert.ok(
-    selectFirstPhotoOverlayAfterWelcome.includes("getOverlayList(activeTheme || {})"),
-    "welcome auto-selection should use the overlay list helper"
+    !hideWelcome.includes("selectFirstPhotoOverlayAfterWelcome"),
+    "welcome should not silently select the first frame"
   );
-  assert.ok(
-    selectFirstPhotoOverlayAfterWelcome.includes("const firstOverlayThumb = thumbs[1];"),
-    "welcome auto-selection should skip the first No Overlay thumb"
-  );
+  assert.ok(!appScript.includes("selectFirstPhotoOverlayAfterWelcome"));
 });
 
 test("setup section state updates button and panel accessibility attributes", () => {
@@ -946,6 +939,26 @@ test("booth filter carousel has touch-sized global controls", () => {
   );
 });
 
+test("booth frame selection starts plain and stays beside capture controls", () => {
+  const html = readProjectFile("index.html");
+  const app = readProjectFile("scripts/app.js");
+  assert.ok(html.includes('id="frameCarousel"'));
+  assert.ok(html.includes('id="frameCarouselName">No Frame'));
+  assert.ok(app.includes("function moveBoothFrame(direction)"));
+  assert.ok(app.includes("const entries = getFrameCarouselEntries();"));
+  assert.ok(!app.includes("const first = getFirstPhotoOverlayForOrientation(next);"));
+  assert.ok(!app.includes("selectFirstPhotoOverlayAfterWelcome"));
+});
+
+test("completed guest flows return directly to the idle screen", () => {
+  const app = readProjectFile("scripts/app.js");
+  assert.ok(app.includes("function finishBoothFlow()"));
+  assert.ok(app.includes('showWelcome("idle");'));
+  assert.ok(app.includes("function exitFinalPreview() {\n  finishBoothFlow();"));
+  assert.ok(app.includes("hidePreviewTimer = setTimeout(finishBoothFlow, 3000);"));
+  assert.ok(app.includes("function retakePhoto() {\n  hideFinal();"));
+});
+
 test("final share QR is only marked ready after rendering succeeds", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
@@ -978,8 +991,8 @@ test("final share panel appears after review while QR is pending or failed", () 
   );
   assert.ok(
     appScript.includes("if (skipShare && !isBoothTestMode())") &&
-      appScript.includes("hidePreviewTimer = setTimeout(hideFinal, 15000);"),
-    "shareable guest captures should not auto-close before guests can scan the QR"
+      appScript.includes("hidePreviewTimer = setTimeout(finishBoothFlow, 15000);"),
+    "non-share gallery previews should finish through the idle-return path"
   );
   assert.ok(
     html.includes("grid-template-columns: minmax(0, 1fr) minmax(300px, clamp(320px, 24vw, 360px));") &&
