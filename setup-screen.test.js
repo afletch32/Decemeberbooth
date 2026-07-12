@@ -134,8 +134,9 @@ test("setup section state updates button and panel accessibility attributes", ()
     "theme option clicks should activate immediately"
   );
   assert.ok(
-    appScript.includes("activateFontFromSetupFamily(font.name)"),
-    "font option clicks should activate immediately"
+    appScript.includes("activateFontPairingFromSetup(pairing)") &&
+      !appScript.includes("activateFontFromSetupFamily(font.name)"),
+    "the setup dropdown should expose preset pairings without individual fonts"
   );
   assert.ok(
     appScript.includes("setSetupSection(activeSetupSection);"),
@@ -166,11 +167,23 @@ test("setup flow uses direct theme and font activation", () => {
     appScript.includes("function activateThemeFromSetupSearch()") &&
       appScript.includes("loadTheme(key);") &&
       appScript.includes("function activateFontFromSetupSearch()") &&
-      appScript.includes("applyFontSelection(family, family") &&
+      appScript.includes("function getSessionPairingOptions(") &&
+      appScript.includes("(fontCatalog.pairings || []).slice(0, 8)") &&
+      appScript.includes('appendSessionFontGroupLabel("Popular pairings")') &&
+      appScript.includes("applyFontSelection(pairing.heading, pairing.body") &&
       appScript.includes("function openSetupCombobox(kind)") &&
       appScript.includes("renderSessionThemeOptions(DOM.sessionThemeSearch.value)") &&
       appScript.includes("renderSessionFontOptions(DOM.sessionFontSearch.value)"),
-    "theme and font selection should activate immediately"
+    "theme and curated preset-pairing selection should activate immediately"
+  );
+  assert.ok(
+    !html.includes('id="fontPickerModal"') &&
+      !html.includes('id="headingFontSelect"') &&
+      !html.includes('id="bodyFontSelect"') &&
+      !appScript.includes("setupDualFontPicker") &&
+      !appScript.includes("CUSTOM_PAIRINGS_STORAGE_KEY") &&
+      !appScript.includes("setupCustomPairingControls"),
+    "legacy dual-font and editable-pairing systems should stay removed"
   );
   assert.ok(
     html.includes('id="captureSection"') &&
@@ -1057,7 +1070,7 @@ test("share-ready QR is large and only shows retake and print when printing is e
   const appScript = readProjectFile("scripts", "app.js");
   const html = readProjectFile("index.html");
   const qrStart = html.indexOf('id="qrCodeContainer"');
-  const qrEnd = html.indexOf('</div>\n          <section id="paidPrintPanel"', qrStart);
+  const qrEnd = html.indexOf('id="confirmModal"', qrStart);
   const qrMarkup = html.slice(qrStart, qrEnd);
 
   assert.equal((html.match(/id="reviewRetakeBtn"/g) || []).length, 1);
@@ -1067,6 +1080,8 @@ test("share-ready QR is large and only shows retake and print when printing is e
   assert.ok(appScript.includes('{ width: 360, margin: 1 }'));
   assert.ok(appScript.includes('DOM.finalPrintActions.classList.toggle("hidden", !printEnabled)'));
   assert.ok(appScript.includes("await enqueueFinalPrintIfNeeded(pendingFinalPrintImageUrl, true);"));
+  assert.ok(!html.includes("Love your photos?"));
+  assert.ok(!html.includes('id="paidPrintPanel"'));
 });
 
 test("skin smoothing preserves detail instead of blurring the full face", () => {

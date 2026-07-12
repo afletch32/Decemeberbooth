@@ -6452,14 +6452,14 @@
           <button type="button" id="setupThemeDefaultsBtn" class="setup-theme-defaults-btn">Set Up Theme Defaults</button>
         </div>
         <div class="setup-session-item setup-combobox" data-setup-combobox="font">
-          <label for="sessionFontSearch">Font</label>
+          <label for="sessionFontSearch">Font pairing</label>
           <button type="button" id="sessionFontToggle" class="setup-combobox-button" aria-expanded="false" aria-controls="sessionFontMenu">
-            <span id="sessionFontValue">Choose font</span>
+            <span id="sessionFontValue">Choose pairing</span>
             <span class="setup-combobox-caret" aria-hidden="true">▼</span>
           </button>
           <div id="sessionFontMenu" class="setup-combobox-menu hidden">
-            <input type="search" id="sessionFontSearch" class="setup-combobox-search" placeholder="Search fonts" autocomplete="off">
-            <div id="sessionFontOptions" class="setup-combobox-options" role="listbox" aria-label="Font options"></div>
+            <input type="search" id="sessionFontSearch" class="setup-combobox-search" placeholder="Search pairings" autocomplete="off">
+            <div id="sessionFontOptions" class="setup-combobox-options" role="listbox" aria-label="Font pairing options"></div>
           </div>
         </div>
       </div>
@@ -6887,39 +6887,6 @@
               <div id="stylePreviewButton" class="style-preview-button start-button preview-start-button" role="presentation">Touch to start</div>
             </div>
           </div>
-          <div class="theme-editor-section">
-            <div class="hidden" aria-hidden="true">
-              <details class="panel-section font-setup-panel">
-                <summary>
-                  <div class="font-setup-summary-copy">
-                    <div class="font-setup-summary-title">Optional Fonts</div>
-                    <div class="font-setup-summary-note">Use one of the suggested pairings if this event needs a different look than the base theme.</div>
-                  </div>
-                </summary>
-                <div class="font-setup-body">
-                  <div class="font-pairing-layout">
-                    <div class="theme-field">
-                      <label for="editorHeadingFontSelect">Heading Font</label>
-                      <select id="editorHeadingFontSelect"></select>
-                      <div id="editorHeadingFontPreview" class="font-preview-box"><span class="font-preview-text">Heading preview</span></div>
-                    </div>
-                    <div class="theme-field">
-                      <label for="editorBodyFontSelect">Body Font</label>
-                      <select id="editorBodyFontSelect"></select>
-                      <div id="editorBodyFontPreview" class="font-preview-box"><span class="font-preview-text">Body preview</span></div>
-                    </div>
-                  </div>
-                  <div class="event-style-recommendations">
-                    <div class="event-style-header">
-                      <div class="event-style-title" id="fontPairingContextLabel">Recommended Fonts</div>
-                      <div class="event-style-note" id="fontPairingContextNote">These suggestions only affect typography, not theme assets.</div>
-                    </div>
-                    <div id="eventStylePairings" class="event-style-cards"></div>
-                  </div>
-                </div>
-              </details>
-            </div>
-          </div>
           <div class="preview-controls">
             <div class="preview-controls-header">
               <p class="preview-controls-title">Preview Controls</p>
@@ -7148,12 +7115,6 @@
             <div id="qrHint" style="display:none; font-size:0.9em; color:#ccc; margin-top:8px;"></div>
             <!-- Guest mode must not expose local device download actions. -->
           </div>
-          <section id="paidPrintPanel" aria-live="polite">
-            <h2 id="paidPrintTitle">Love your photos?</h2>
-            <p id="paidPrintBody">Take home your keepsake.</p>
-            <p id="paidPrintInstructions">Scan the payment code below to complete your purchase. Your print will be prepared after payment is confirmed.</p>
-            <img id="paidPrintPaymentQr" alt="Payment code">
-          </section>
         </div>
       </div>
     </div>
@@ -7328,50 +7289,6 @@
         </div>
       </div>
     </div>
-    <div id="fontPickerModal" class="modal-backdrop">
-      <div class="modal-card font-picker-modal">
-        <h3>Choose Fonts</h3>
-        <div class="font-picker">
-          <div class="font-row">
-            <label for="headingFontSelect">Heading Font</label>
-            <select id="headingFontSelect"></select>
-          </div>
-          <div class="font-row">
-            <label for="bodyFontSelect">Body Font</label>
-            <select id="bodyFontSelect"></select>
-          </div>
-          <div class="font-row">
-            <label for="fontPairingSelect">Pairing Suggestions</label>
-            <select id="fontPairingSelect"></select>
-          </div>
-          <div class="dual-font-grid">
-            <div class="dual-font-column">
-              <label>Heading Preview</label>
-              <div id="headingFontPreview" class="font-preview-box"><span class="font-preview-text">Heading preview</span></div>
-            </div>
-            <div class="dual-font-column">
-              <label>Body Preview</label>
-              <div id="bodyFontPreview" class="font-preview-box"><span class="font-preview-text">Body preview</span></div>
-            </div>
-          </div>
-        </div>
-        <details class="font-subsection" open>
-          <summary>Add Custom Fonts</summary>
-          <label for="addFontFamily">Google Font Family:</label>
-          <input type="text" id="addFontFamily" placeholder="e.g., Pacifico"><button onclick="addFontByFamily()">Add</button><br />
-          <small>Tip: enter a Google Fonts family name (weights default).</small><br />
-          <label for="addFontUrl">Google Fonts URL:</label>
-          <input type="text" id="addFontUrl" placeholder="https://fonts.googleapis.com/css2?family=...&display=swap"
-            style="width:60%"><button onclick="addFontByUrl()">Add URL</button>
-          <div id="currentFonts" style="margin-top:8px; font-size:0.95em; color:#bbb;">Loading fonts list…</div>
-        </details>
-        <div class="modal-footer">
-          <button type="button" id="closeFontPicker">Close</button>
-        </div>
-        <datalist id="fontSuggestions"></datalist>
-      </div>
-    </div>
-
     <div id="themeTypeModal" class="modal-backdrop">
       <div class="modal-card">
         <h3>Create Theme</h3>

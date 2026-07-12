@@ -6,9 +6,12 @@
 
 ## Current progress
 
+- Added eight read-only popular font pairs to the existing setup dropdown, with no individual-font choices.
+- Removed the legacy dual-font modal, hidden heading/body controls, editable custom-pairing storage/UI, quick-pick grids, and duplicate dual-font initializer.
 - Removed the Love It review stage.
 - Increased QR render and display size.
 - Print-enabled sessions show Retake and Print below the QR; Print explicitly submits to the existing queue.
+- Removed the separate printed-photo card and its remaining Love your photos heading from final-screen markup.
 
 ## Photo Choice Screen Feature
 
