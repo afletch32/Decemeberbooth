@@ -88,6 +88,16 @@ test("returning from mode selection restores custom idle artwork", () => {
   assert.ok(goBackFromWelcome.includes("if (idleEntry) applyCustomIdleScreen(idleEntry);"));
 });
 
+test("photo choice artwork uses two saved invisible hotspots", () => {
+  assert.ok(html.includes('id="photoChoiceSingleZone"'));
+  assert.ok(html.includes('id="photoChoiceStripZone"'));
+  assert.ok(html.includes('custom-photo-choice-screen'));
+  assert.ok(app.includes('role === "photo-choice"'));
+  assert.ok(app.includes('place("still-photo", zones.singlePhoto'));
+  assert.ok(app.includes('place("strip", zones.photoStrip'));
+  assert.ok(app.includes("selectPhotoChoiceScreenEntry()"));
+});
+
 test("welcome mode inline handlers can resolve their exported function", () => {
   assert.ok(html.includes("onclick=\"beginModeSelection('still-photo', event)\""));
   assert.ok(app.includes("  beginModeSelection,\n  beginWelcome,"));
@@ -122,7 +132,7 @@ test("admin editor supports bounded drag resize reset and save", () => {
   assert.ok(html.includes("Reset button position"));
   assert.ok(app.includes("setPointerCapture"));
   assert.ok(app.includes("normalizeIdleButtonZone"));
-  assert.ok(app.includes('showToast("Idle screen hotspot saved.")'));
+  assert.ok(app.includes('"Idle screen hotspot saved."'));
   assert.ok(
     html.includes('</div>\n\n  <div id="idleScreenEditorModal"'),
     "idle-screen editor should be mounted after the hidden booth screen"

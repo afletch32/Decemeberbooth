@@ -948,6 +948,11 @@ test("booth frame selection starts plain and stays beside capture controls", () 
   assert.ok(app.includes("const entries = getFrameCarouselEntries();"));
   assert.ok(!app.includes("const first = getFirstPhotoOverlayForOrientation(next);"));
   assert.ok(!app.includes("selectFirstPhotoOverlayAfterWelcome"));
+  assert.ok(
+    app.includes("requestAnimationFrame(() => {\n    syncFrameCarouselUi();") &&
+      html.includes("#boothScreen.booth-ready #mobileSettingsToggle {\n        display: none !important;"),
+    "ready state should reveal the central frame carousel and retire the corner trigger"
+  );
 });
 
 test("completed guest flows return directly to the idle screen", () => {

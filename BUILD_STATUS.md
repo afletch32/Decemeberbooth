@@ -5,6 +5,7 @@ Current goal
 - Return completed guest capture/share flows directly to the idle screen while preserving Retake behavior.
 
 What is done
+- Added custom photo-choice artwork support through the existing Cloudinary idle-screen asset pipeline, with separate Single Photo and Photo Strip hotspots and legacy choice buttons as fallback.
 - Restored the selected custom idle artwork and hotspot when guests go Back from photo-mode selection to the idle step.
 - Matched the initial photo preview orientation to the booth viewport, bounded countdown sizing by both camera dimensions, and restored setup thumbnails from effective selected asset lists.
 - Removed all filter and backdrop-filter effects from the invisible custom idle-screen Start hotspot while preserving its focus indicator and hit area.
@@ -18,6 +19,7 @@ What is done
 - Added focused print-mode and staff payment-gating tests; verified 141 tests pass.
 - Fixed 90° and 270° staff print rotation sizing so photos fit their individual print slots without clipping.
 - Added a prominent frame carousel above Take Photo with previous/next controls, a No Frame state, and access to the full frame picker.
+- Fixed ready-state frame controls so the central carousel appears after welcome and the legacy corner trigger stays hidden.
 - Added a canonical completed-flow reset that shows the thank-you moment, clears guest frame/filter state, and returns to idle after closing or successfully sharing.
 - Fixed the global button outage caused by idle-screen editor state calling a later-initialized constant during module startup.
 - Added regression coverage that prevents idle-screen state from invoking late-defined helpers during application boot.
