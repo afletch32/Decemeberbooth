@@ -105,7 +105,7 @@
       background: linear-gradient(160deg, #fcfbf9 0%, #f7f3ee 100%);
     }
 
-    .hidden { display: none !important; }
+    .hidden { opacity: 0; pointer-events: none; transition: opacity 300ms ease; }
 
     button,
     input,
@@ -446,7 +446,8 @@
     }
 
     .setup-combobox-menu.hidden {
-      display: none;
+      opacity: 0;
+      pointer-events: none;
     }
 
     .setup-combobox-search {
@@ -3768,7 +3769,8 @@
     }
 
     #reviewPanel.hidden {
-      display: none;
+      opacity: 0;
+      pointer-events: none;
     }
 
     .review-heart {
@@ -4224,7 +4226,8 @@
     }
 
     #adminScreen:not(.hidden)~#boothScreen #welcomeScreen {
-      display: none;
+      opacity: 0;
+      pointer-events: none;
     }
 
     #welcomeScreen.faded {
@@ -5114,7 +5117,8 @@
     }
 
     .frame-carousel.hidden {
-      display: none;
+      opacity: 0;
+      pointer-events: none;
     }
 
     #boothScreen.countdown-mode .frame-carousel,
@@ -6271,7 +6275,8 @@
     }
 
     #filterCarousel.hidden {
-      display: none !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
 
     #filterCarouselName {

@@ -89,3 +89,11 @@ Key test coverage:
 - Hide filter arrows and the filter name during countdown, finalizing, share, and welcome states.
 - Enter the custom idle or photo-choice state before remote artwork finishes loading so slow connections do not flash the legacy UI.
 - Verified 65/65 focused tests and 153/153 full-suite tests pass.
+
+### Frame Transition Flash Fix
+
+- Eliminated white flash between frame changes by smoothing live preview transitions.
+- Added CSS opacity transition to `#photoSlotLayer` for cross-fade effect.
+- Modified freeze/unfreeze logic to fade out/in live preview instead of instant hide/show.
+- Preserved all existing capture and processing logic; only visual transition behavior changed.
+- Verified focused overlay-slot tests pass (34/34) and full suite passes (153/153).

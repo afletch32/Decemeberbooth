@@ -8988,15 +8988,41 @@ function syncFrameCarouselUi() {
 
 function selectBoothFrame(entry) {
   const src = entry && entry.src ? entry.src : null;
-  selectedOverlay = src;
-  lastPhotoOverlay = src;
-  lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
-  if (src) syncOverlayPreviewSurface({ mode: "live" });
-  else clearOverlayPreviewSurface();
-  applyPreviewOrientation();
-  renderOptionsForMode(mode);
-  syncFrameCarouselUi();
-  logBoothFrameState("overlay-selected", mode);
+  if (src && src !== selectedOverlay) {
+    const img = new window.Image();
+    img.onload = () => {
+      selectedOverlay = src;
+      lastPhotoOverlay = src;
+      lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
+      syncOverlayPreviewSurface({ mode: "live" });
+      applyPreviewOrientation();
+      renderOptionsForMode(mode);
+      syncFrameCarouselUi();
+      logBoothFrameState("overlay-selected", mode);
+    };
+    img.onerror = () => {
+      console.warn("Frame image failed to load:", src);
+      selectedOverlay = src;
+      lastPhotoOverlay = src;
+      lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
+      syncOverlayPreviewSurface({ mode: "live" });
+      applyPreviewOrientation();
+      renderOptionsForMode(mode);
+      syncFrameCarouselUi();
+      logBoothFrameState("overlay-selected-error", mode);
+    };
+    img.src = src;
+  } else {
+    selectedOverlay = src;
+    lastPhotoOverlay = src;
+    lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
+    if (src) syncOverlayPreviewSurface({ mode: "live" });
+    else clearOverlayPreviewSurface();
+    applyPreviewOrientation();
+    renderOptionsForMode(mode);
+    syncFrameCarouselUi();
+    logBoothFrameState("overlay-selected", mode);
+  }
 }
 
 function moveBoothFrame(direction) {
