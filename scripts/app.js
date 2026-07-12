@@ -26,6 +26,15 @@ import {
 import { formatRecordingTime } from "./recording-utils.mjs";
 import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
 import { getGuestVisibleBeautyPresets } from "./beauty/presets.mjs";
+import {
+  normalizeIdleScreenOrientation,
+  buildIdleScreenEntryFromUrl,
+  selectIdleScreenEntry,
+  clearCustomIdleScreen,
+  getPhotoChoiceScreenEntries,
+  getActiveIdleScreenSrc,
+  getIdleScreenViewportOrientation,
+} from "./idle-screen.mjs";
 
 function isLocalDevHost() {
   const hostname = window.location.hostname || "";
@@ -1059,8 +1068,10 @@ const DOM = {
   themeCharacter: document.getElementById("themeCharacter"),
   addAssetsBtn: document.getElementById("addAssetsBtn"),
   addIdleScreensBtn: document.getElementById("addIdleScreensBtn"),
+  addPhotoChoiceScreenBtn: document.getElementById("addPhotoChoiceScreenBtn"),
   bulkAssetsInput: document.getElementById("bulkAssetsInput"),
   idleScreensInput: document.getElementById("idleScreensInput"),
+  photoChoiceScreenInput: document.getElementById("photoChoiceScreenInput"),
   bulkAssetModal: document.getElementById("bulkAssetModal"),
   bulkAssetSummary: document.getElementById("bulkAssetSummary"),
   bulkToBackgrounds: document.getElementById("bulkToBackgrounds"),
@@ -1068,6 +1079,7 @@ const DOM = {
   bulkToOverlays: document.getElementById("bulkToOverlays"),
   bulkToTemplates: document.getElementById("bulkToTemplates"),
   bulkToIdleScreens: document.getElementById("bulkToIdleScreens"),
+  bulkToPhotoChoiceScreens: document.getElementById("bulkToPhotoChoiceScreens"),
   bulkAssetCancel: document.getElementById("bulkAssetCancel"),
   bulkAssetApply: document.getElementById("bulkAssetApply"),
   assetLibrarySearch: document.getElementById("assetLibrarySearch"),
@@ -3973,6 +3985,10 @@ function setupThemeEditorControls() {
     DOM.addIdleScreensBtn.addEventListener("click", () =>
       DOM.idleScreensInput.click()
     );
+  if (DOM.addPhotoChoiceScreenBtn && DOM.photoChoiceScreenInput)
+    DOM.addPhotoChoiceScreenBtn.addEventListener("click", () =>
+      DOM.photoChoiceScreenInput.click()
+    );
   if (DOM.addBackgroundsBtn && DOM.themeBackground)
     DOM.addBackgroundsBtn.addEventListener("click", () =>
       DOM.themeBackground.click()
@@ -4002,6 +4018,16 @@ function setupThemeEditorControls() {
       if (DOM.bulkToTemplates) DOM.bulkToTemplates.checked = false;
       if (DOM.bulkToIdleScreens) DOM.bulkToIdleScreens.checked = true;
       openBulkAssetModal(DOM.idleScreensInput.files);
+    });
+  if (DOM.photoChoiceScreenInput)
+    DOM.photoChoiceScreenInput.addEventListener("change", () => {
+      if (DOM.bulkToBackgrounds) DOM.bulkToBackgrounds.checked = false;
+      if (DOM.bulkToGreenBackgrounds) DOM.bulkToGreenBackgrounds.checked = false;
+      if (DOM.bulkToOverlays) DOM.bulkToOverlays.checked = false;
+      if (DOM.bulkToTemplates) DOM.bulkToTemplates.checked = false;
+      if (DOM.bulkToIdleScreens) DOM.bulkToIdleScreens.checked = false;
+      if (DOM.bulkToPhotoChoiceScreens) DOM.bulkToPhotoChoiceScreens.checked = true;
+      openPhotoChoiceBulkAssetModal(DOM.photoChoiceScreenInput.files);
     });
   if (DOM.bulkAssetCancel)
     DOM.bulkAssetCancel.addEventListener("click", closeBulkAssetModal);
@@ -4209,10 +4235,16 @@ function openBulkAssetModal(fileList) {
   if (DOM.bulkAssetModal) DOM.bulkAssetModal.classList.remove("hidden");
 }
 
+function openPhotoChoiceBulkAssetModal(fileList) {
+  openBulkAssetModal(fileList);
+  if (DOM.bulkToPhotoChoiceScreens) DOM.bulkToPhotoChoiceScreens.checked = true;
+}
+
 function closeBulkAssetModal() {
   pendingBulkAssetFiles = [];
   if (DOM.bulkAssetsInput) DOM.bulkAssetsInput.value = "";
   if (DOM.idleScreensInput) DOM.idleScreensInput.value = "";
+  if (DOM.photoChoiceScreenInput) DOM.photoChoiceScreenInput.value = "";
   if (DOM.bulkAssetModal) DOM.bulkAssetModal.classList.add("hidden");
 }
 
@@ -4227,6 +4259,8 @@ function getBulkAssetKinds() {
     kinds.push("templates");
   if (DOM.bulkToIdleScreens && DOM.bulkToIdleScreens.checked)
     kinds.push("idle-screens");
+  if (DOM.bulkToPhotoChoiceScreens && DOM.bulkToPhotoChoiceScreens.checked)
+    kinds.push("photo-choice-screens");
   return kinds;
 }
 
@@ -9666,10 +9700,6 @@ function confirmTemplate() {
 }
 
 // Welcome control
-function getIdleScreenViewportOrientation() {
-  return window.innerHeight > window.innerWidth ? "portrait" : "landscape";
-}
-
 function getIdleScreenAssignmentEntries() {
   const themeEntries = Array.isArray(activeTheme && activeTheme.idleScreens)
     ? activeTheme.idleScreens
@@ -9691,33 +9721,6 @@ function hydrateIdleScreenEntry(entry) {
   return stored ? { ...cloneThemeValue(entry), ...cloneThemeValue(stored), src } : entry;
 }
 
-function selectIdleScreenEntry() {
-  const orientation = getIdleScreenViewportOrientation();
-  const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
-  const find = (entries, target) =>
-    entries.find((entry) => entry.role !== "photo-choice" && normalizeIdleScreenOrientation(entry.orientation) === target);
-  return hydrateIdleScreenEntry(
-    find(eventEntries, orientation) ||
-      find(themeEntries, orientation) ||
-      find(eventEntries, "general") ||
-      find(themeEntries, "general") ||
-      null
-  );
-}
-
-function selectPhotoChoiceScreenEntry() {
-  const orientation = getIdleScreenViewportOrientation();
-  const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
-  const find = (entries, target) =>
-    entries.find((entry) => entry.role === "photo-choice" && normalizeIdleScreenOrientation(entry.orientation) === target);
-  return hydrateIdleScreenEntry(
-    find(eventEntries, orientation) ||
-      find(themeEntries, orientation) ||
-      find(eventEntries, "general") ||
-      find(themeEntries, "general") ||
-      null
-  );
-}
 
 function getCoverImageRect(img, container) {
   const width = container.clientWidth;

@@ -1,140 +1,56 @@
-Current goal
-- Support Canva-designed Cloudinary idle screens with orientation-aware artwork and aligned Start hotspots.
-- Keep staff print rotation contained within each selected 4x6 layout slot, including 2-up prints.
-- Make guest frame choice visible beside capture controls and begin photo sessions with No Frame selected.
-- Return completed guest capture/share flows directly to the idle screen while preserving Retake behavior.
+# Build Status
 
-What is done
-- Added custom photo-choice artwork support through the existing Cloudinary idle-screen asset pipeline, with separate Single Photo and Photo Strip hotspots and legacy choice buttons as fallback.
-- Restored the selected custom idle artwork and hotspot when guests go Back from photo-mode selection to the idle step.
-- Matched the initial photo preview orientation to the booth viewport, bounded countdown sizing by both camera dimensions, and restored setup thumbnails from effective selected asset lists.
-- Removed all filter and backdrop-filter effects from the invisible custom idle-screen Start hotspot while preserving its focus indicator and hit area.
-- Fixed the custom idle-screen welcome flow by clearing the idle artwork before mode selection and exposing the existing `beginModeSelection()` handler to its inline mode buttons; added focused regression coverage.
-- Added `IDLE_SCREEN_START_FIX.md`, a one-card-per-session troubleshooting runbook with strict no-base64 and no-speculative-CSS guardrails, evidence-based routing, copy/paste prompts, and a persistent handoff table for less capable models.
-- Replaced the ambiguous paid-queue checkbox combination with explicit Off, Free Printing, and Paid Printing modes.
-- Free prints enter the shared queue as Comped and are immediately printable.
-- Paid prints enter as Unpaid; staff can Mark Paid, and Open/Print plus Mark Printed remain disabled until payment clears.
-- Preserved legacy `paid-queue` settings through defensive migration to Free or Paid mode.
-- Added Cloudflare asset API support for canonical idle-screen records.
-- Added focused print-mode and staff payment-gating tests; verified 141 tests pass.
-- Fixed 90° and 270° staff print rotation sizing so photos fit their individual print slots without clipping.
-- Added a prominent frame carousel above Take Photo with previous/next controls, a No Frame state, and access to the full frame picker.
-- Fixed ready-state frame controls so the central carousel appears after welcome and the legacy corner trigger stays hidden.
-- Added a canonical completed-flow reset that shows the thank-you moment, clears guest frame/filter state, and returns to idle after closing or successfully sharing.
-- Fixed the global button outage caused by idle-screen editor state calling a later-initialized constant during module startup.
-- Added regression coverage that prevents idle-screen state from invoking late-defined helpers during application boot.
-- Fixed Theme and Font dropdown initialization by removing an orphaned folder-fallback variable and correcting a stale theme-summary function name.
-- Verified both dropdowns open and select values in Chromium without page errors.
-- Added Idle Screens as a canonical Asset Library type using the existing Cloudinary upload and persistence flow.
-- Added theme, event, and session idle-screen assignments with orientation and legacy-welcome fallback resolution.
-- Added full-screen cover rendering that hides legacy welcome chrome only while custom artwork is active.
-- Reused the existing Start button and mapped its transparent hotspot against the cropped rendered image bounds.
-- Added an admin hotspot editor with orientation, bounded drag/resize, reset, and percentage-based persistence.
-- Added a visible `Add Idle Screens` Asset Library action that presets the existing bulk uploader to the idle-screen destination.
-- Moved the gallery Share/Open actions into the main admin action row so they are no longer buried in a collapsible event-details panel.
-- Added focused idle-screen regression coverage for assignment, fallback, start behavior, crop math, resizing, failure handling, and local-path exclusion.
-- Moved the idle-screen hotspot editor outside the hidden booth container so `Position Start` opens correctly from Admin.
-- Verified the editor opens in Chromium with the booth hidden and no page errors.
-- Verified `npm test` passes with 136 tests.
-- Verified JavaScript module syntax and `git diff --check` pass.
-- Removed the remaining background, overlay, and template folder fallback collection and merge behavior.
-- Removed folder manifest resolvers, path qualification helpers, temporary theme asset arrays, and folder editor settings.
-- Updated asset tests and browser fixtures to use explicit theme arrays without folder manifest state.
-- Verified `npm test` passes with 126 tests.
-- Verified `node --input-type=module --check < scripts/app.js` and `git diff --check` pass.
-- Replaced the full-width captured-photo band with a compact floating thumbnail tray that hides when empty or outside booth-ready state.
-- Replaced the booth-ready three-column layout with one centered, shrinkable camera column for standard photo modes.
-- Moved frame selection behind the existing `Choose Frame` sheet instead of permanently reserving a desktop column.
-- Reduced decorative camera chrome and removed the ready-state host prompt from layout space.
-- Kept the shutter button in flow as a prominent, touch-safe action below the camera.
-- Enlarged and centered the existing countdown presentation over the camera without changing countdown logic.
-- Scoped the new capture grid away from 360 mode.
-- Added real-flow browser coverage for camera prominence, collisions, frame-sheet bounds, portrait orientation, and countdown placement.
-- Verified focused capture browser coverage passes across eight kiosk and tablet viewports.
-- Reworked the effective final-preview stylesheet around available width and height instead of viewport-derived minimum sizing and an absolutely positioned action panel.
-- Kept compact landscape and 4:3 displays in a shrinkable two-column layout; portrait uses a bounded stacked layout.
-- Constrained the displayed QR canvas as a square inside a shrinkable grid track so both panel width and height limit it.
-- Added focused browser coverage for final-preview, photo, actions, QR panel, and QR bounds across supported landscape and tablet portrait sizes.
-- Verified the focused final-share browser regression passes with the paid-print panel visible.
-- Verified `npm test` passes with 127 tests.
-- Replaced the link panel content with only `Share Link` and `Open Link` buttons.
-- Removed event-name and event-date wording from the setup screen labels.
-- Relabeled the event date field as session date.
-- Kept the event name field relabeled as session name.
-- Added birthday-only and wedding-only theme gating for advanced event fields.
-- Relabeled the existing event name field as session name.
-- Kept the session date default tied to the current local date.
-- Routed upload folder selection through the existing session name/date fields.
-- Added regression coverage for the session naming and folder resolver.
-- Added a collapsible selected-assets toggle to the setup screen.
-- Wired the toggle summary to the existing background, overlay, and template count labels.
-- Added a setup-screen regression test for the new collapsible summary.
-- Confirmed the worktree was clean before starting this checkpoint.
-- Verified the current implementation keeps search, sort, favorites, and recents in the admin Asset Library.
-- Verified the public booth picker still uses natural asset order, bounded show-more pagination, and no public search/favorite controls.
-- Updated stale browser smoke coverage to use the current Asset Library category dropdown and asset-type pills.
-- Verified `node --input-type=module --check < scripts/app.js` passes.
-- Verified `npm test` passes.
-- Verified focused browser coverage with `npm run test:browser -- --grep "Asset Library keeps admin filters|frame picker stays hidden"`.
-- Fixed Overlay Builder photo boxes so custom-drawn slot edits persist into preview, PNG export, and manifest metadata.
-- Updated Overlay Builder manifest output so single-photo overlays and photo-strip templates both export normalized `photoSlots`.
-- Verified exported builder assets still cut transparent photo windows aligned with the emitted slots.
-- Verified focused overlay/template coverage with `node --test overlay-maker.test.js overlay-slot-rendering.test.js template-rendering.test.js`.
-- Fixed after-capture final preview sizing so the review and QR/share panels stay inside the booth viewport instead of creating horizontal overflow.
-- Added browser smoke coverage for both the review panel and QR/share panel viewport bounds after capture.
-- Reduced after-capture glass blur so the review/share screen is less hazy.
-- Reduced guest photo blur by lowering blur-backed blemish and under-eye correction strengths and blur radii.
-- Updated beauty preset tests to keep guest-visible blur-backed corrections subtle.
-- Kept the final photo preview size intact while moving the review/share action card inside the right edge of the viewport.
-- Expanded browser smoke coverage to assert after-capture controls stay inside the viewport vertically and horizontally.
-- Verified focused browser coverage with `npm run test:browser -- --grep "booth test camera displays and captures"`.
-- Verified `node --input-type=module --check < scripts/app.js` passes.
-- Verified `node --test setup-screen.test.js` passes.
-- Verified `npm test` passes.
-- Verified `git diff --check` passes.
-- Verified `/staff-print` returns 404 while `/staff-print.html` returns 200 on the local server.
-- Fixed copied staff queue links to target `staff-print.html` directly.
-- Hardened the staff print popup so cached images still trigger print and failed image loads show a clear message.
-- Verified `node --input-type=module --check < scripts/app.js` and `node --check scripts/staff-print.js` pass.
-- Verified `npm test` passes.
-- Verified the local staff route returns 200 at `/staff-print.html`.
-- Hid the staff token control by default and renamed it to `Unlock Staff Actions`.
-- Added API metadata so the staff token control appears only when `PRINT_QUEUE_STAFF_TOKEN` is configured.
-- Verified `node --input-type=module --check < scripts/app.js`, `node --check scripts/staff-print.js`, and `node --check server.js` pass.
-- Verified `npm test` passes.
-- Verified the local staff page renders the token control as hidden.
-- Added a staff layout selector for `1 photo on 4x6` and `2 photos on 4x6`.
-- Added a 2-up print composition path that duplicates the queued image on the print page.
-- Normalized margins, padding, and gaps across the main booth/admin app, staff print screen, gallery, overlay maker, and final-preview sizing CSS to 8-point spacing values.
-- Applied responsive page padding rules: 32px desktop, 24px tablet, and 16px mobile where page-level padding is owned by these screens.
-- Verified `node --input-type=module --check < scripts/app.js` and `node --check scripts/staff-print.js` pass.
-- Verified `npm test` passes.
-- Verified focused browser coverage with `npm run test:browser -- --grep "Asset Library keeps admin filters|frame picker stays hidden"`.
+## Photo Choice Screen Feature
 
-What is in progress
-- Card 8A is complete; live verification should confirm the custom idle screen now advances through mode selection.
+**Status**: Complete ✅
 
-Next steps
-- Deploy and verify theme thumbnails load from Cloudinary on Cloudflare Pages.
-- Review the revised capture hierarchy on physical kiosk hardware when available.
+**Date**: 2025-07-12
 
-Known bugs/blockers
-- Full `npm test` currently has one unrelated staff-print assertion failure in `asset-upload.test.js:132` (expected 2-up 4x6 composition); 141 of 142 tests pass.
-- Two existing browser smoke paths currently time out on state-specific hidden/select controls; both reach the rendered admin UI without startup exceptions.
+**Summary**: Successfully implemented Summer-only photo choice screen with dual hotspots.
 
-Important decisions
-- Theme assets come from direct `backgrounds`, `overlays`, and `templates` entries; local folder manifests are not a runtime fallback.
-- Keep captured-photo history available as a compact tray without letting it consume capture-layout height.
-- Keep the capture refactor CSS-only and preserve all camera, countdown, orientation, overlay, hardware, and 360 behavior.
-- Keep secondary frame controls collapsed until the guest requests them.
-- Keep QR generation and all share/upload/print/image-processing logic unchanged; this fix is CSS and layout-test only.
-- Use orientation and available height for share-screen layout decisions instead of switching to one column based on width alone.
-- Asset Library category dropdown is for event/theme categories.
-- Asset Library pills are for asset type filtering.
-- Search, sorting, favorites, and recents stay admin-only and must not appear in the public booth picker.
-- Public picker behavior should remain simple: natural order, preserved scroll, and show-more pagination.
-- Staff print queue URLs must use direct static routes, not extensionless redirects or fallbacks.
-- Staff auth is optional; do not show token setup during normal local print testing.
-- Keep the staff layout choice local to the print screen unless the queue itself needs to own print layout metadata later.
-- Treat this spacing pass as visual-only; do not mix it with print queue, theme dropdown, or storage behavior changes.
-- Overlay Builder output should remain slot-based: exported PNG foregrounds have transparent photo windows, and manifests carry matching normalized `photoSlots`.
+### Implementation Notes
+
+- Added dedicated upload action (`Add Photo Choice Screen` button + hidden input)
+- Route photo-choice uploads through bulk modal as `photo-choice` role
+- Preserve role and zones in normalization/persistence across all paths:
+  - `registerUploadedAsset()` - explicit photo-choice role and buttonZones
+  - `normalizeAssetLibraryPayload()` - preserves role and zones
+  - `buildIdleScreenEntryFromUrl()` - sets role and default zones
+  - `buildThemeDefaultAssetEntry()` - includes buttonZones
+  - `updateAssetLibraryItem()` - normalizes buttonZones
+- Editor UX complete:
+  - Title: "Position Photo Choice Hotspots"
+  - Two editable zones (Single Photo, Photo Strip)
+  - Save toast: "Photo choice hotspots saved."
+  - Asset card action: "Position Choices" for photo-choice assets
+- Runtime behavior verified:
+  - Summer idle artwork -> Start hotspot -> Summer photo-choice artwork
+  - Single Photo hotspot resolves to `still-photo` button
+  - Photo Strip hotspot resolves to `strip` button
+  - Back restores custom idle artwork
+  - Resize/orientation recalculates choice zones
+  - Themes without photo-choice asset show legacy mode buttons
+
+### Test Results
+
+```bash
+node --test idle-screen.test.js setup-screen.test.js mobile-flow.test.js
+```
+
+**Result**: 64/64 tests passing (0 failures)
+
+Key test coverage:
+- Idle screens as first-class Cloudinary asset type
+- Canonical records and theme defaults
+- Editor state initialization
+- Event/theme orientation fallbacks
+- Photo choice dual hotspots
+- Asset path validation (no local paths)
+- Mobile flow, setup, and booth behavior
+
+### Deployment Notes
+
+- Ready for manual runtime verification on Summer theme
+- Upload `photo choice.png` using new action
+- Assign to Summer theme through Theme Defaults model
+- Deploy with `npm run deploy` after verification

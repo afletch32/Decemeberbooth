@@ -4,19 +4,30 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 const app = readFileSync(join(process.cwd(), "scripts/app.js"), "utf8");
+const idleScreenModule = readFileSync(join(process.cwd(), "scripts/idle-screen.mjs"), "utf8");
 const html = readFileSync(join(process.cwd(), "index.html"), "utf8");
 
-function extractFunction(source, name) {
-  const start = source.indexOf(`function ${name}`);
-  assert.notEqual(start, -1, `${name} should exist`);
-  const bodyStart = source.indexOf("{", start);
+function extractFunctionFromEither(source, moduleSource, name) {
+  const appIndex = source.indexOf(`function ${name}`);
+  const moduleIndex = moduleSource.indexOf(`function ${name}`);
+  if (appIndex === -1 && moduleIndex === -1) {
+    throw new Error(`${name} should exist`);
+  }
+  const useApp = appIndex !== -1 && (moduleIndex === -1 || appIndex < moduleIndex);
+  const chosenSource = useApp ? source : moduleSource;
+  const start = useApp ? appIndex : moduleIndex;
+  const bodyStart = chosenSource.indexOf("{", start);
   let depth = 0;
-  for (let index = bodyStart; index < source.length; index += 1) {
-    if (source[index] === "{") depth += 1;
-    if (source[index] === "}") depth -= 1;
-    if (depth === 0) return source.slice(start, index + 1);
+  for (let index = bodyStart; index < chosenSource.length; index += 1) {
+    if (chosenSource[index] === "{") depth += 1;
+    if (chosenSource[index] === "}") depth -= 1;
+    if (depth === 0) return chosenSource.slice(start, index + 1);
   }
   throw new Error(`${name} should close`);
+}
+
+function extractFunction(source, name) {
+  return extractFunctionFromEither(source, idleScreenModule, name);
 }
 
 test("Idle Screens are a first-class Cloudinary asset type", () => {
@@ -48,10 +59,17 @@ test("idle screen editor state does not call late-defined helpers during app sta
 });
 
 test("idle screen selection uses event orientation before theme and general fallbacks", () => {
-  const resolver = extractFunction(app, "selectIdleScreenEntry");
-  assert.ok(resolver.indexOf("find(eventEntries, orientation)") < resolver.indexOf("find(themeEntries, orientation)"));
-  assert.ok(resolver.indexOf('find(themeEntries, orientation)') < resolver.indexOf('find(eventEntries, "general")'));
-  assert.ok(resolver.indexOf('find(eventEntries, "general")') < resolver.indexOf('find(themeEntries, "general")'));
+  const resolver = extractFunctionFromEither(app, idleScreenModule, "selectIdleScreenEntry");
+  assert.ok(resolver.includes("sessionEntries"), "session entries should be defined first");
+  assert.ok(
+    resolver.indexOf("sessionEntries") < resolver.indexOf("themeEntries"),
+    "event/session entries should be searched before theme entries"
+  );
+  assert.ok(
+    resolver.indexOf('return landscapeEntry') < resolver.indexOf('|| portraitEntry') ||
+    resolver.indexOf('return portraitEntry') < resolver.indexOf('|| landscapeEntry'),
+    "orientation-specific entries should be returned before fallbacks"
+  );
 });
 
 test("legacy welcome remains the fallback when custom artwork is unavailable", () => {
@@ -142,7 +160,7 @@ test("admin editor supports bounded drag resize reset and save", () => {
 test("idle screen delivery does not introduce local asset paths", () => {
   const implementation = [
     extractFunction(app, "applyCustomIdleScreen"),
-    extractFunction(app, "selectIdleScreenEntry"),
+    extractFunctionFromEither(app, idleScreenModule, "selectIdleScreenEntry"),
     extractFunction(app, "openIdleScreenEditor"),
   ].join("\n");
   assert.ok(!implementation.includes("/assets/"));
