@@ -9,7 +9,7 @@
     1120px,
     calc(100vw - var(--final-action-column-width) - var(--final-preview-gap) - 112px)
   );
-  --booth-ready-top-space: clamp(80px, 9dvh, 104px);
+  --booth-ready-top-space: clamp(96px, 11dvh, 120px);
   --booth-ready-bottom-space: max(8px, env(safe-area-inset-bottom, 0px) + 8px);
   --booth-action-height: clamp(72px, 10dvh, 104px);
   --booth-preview-max-height: min(76dvh, calc(100dvh - 204px));

@@ -1673,7 +1673,8 @@ let torchEnabled = false;
 let selectedOverlay = null;
 let lastPhotoOverlay = null;
 let selectedFilter = "natural";
-let photoOverlayOrientation = "portrait";
+let photoOverlayOrientation =
+  window.innerWidth >= window.innerHeight ? "landscape" : "portrait";
 let lastPhotoOverlayByOrientation = { portrait: null, landscape: null };
 let photoOverlayOrientationCache = {};
 let photoOverlayOrientationPending = {};
@@ -5437,9 +5438,7 @@ function setLaunchSummaryThumbnail(nodeId, src, label) {
 
 function getLaunchSummaryThumbnailSrc(kind) {
   if (kind === "background") {
-    const list = Array.isArray(activeSessionAssets.backgrounds)
-      ? activeSessionAssets.backgrounds.filter(Boolean)
-      : [];
+    const list = getBackgroundList(activeTheme);
     if (!list.length) return "";
     const index = Math.min(
       Math.max(activeSessionAssets.backgroundIndex || 0, 0),
@@ -5449,18 +5448,12 @@ function getLaunchSummaryThumbnailSrc(kind) {
   }
   if (kind === "overlay") {
     return getAssetEntrySrc(
-      Array.isArray(activeSessionAssets.overlays) &&
-        activeSessionAssets.overlays.length
-        ? activeSessionAssets.overlays[0]
-        : ""
+      getOverlayList(activeTheme)[0] || ""
     );
   }
   if (kind === "template") {
     return getAssetEntrySrc(
-      Array.isArray(activeSessionAssets.templates) &&
-        activeSessionAssets.templates.length
-        ? activeSessionAssets.templates[0]
-        : ""
+      getTemplateList(activeTheme)[0] || ""
     );
   }
   if (kind === "idle-screen") {
@@ -5475,9 +5468,7 @@ function getLaunchSummaryThumbnailSrc(kind) {
 
 function getLaunchSummaryThumbnailLabel(kind) {
   if (kind === "background") {
-    const list = Array.isArray(activeSessionAssets.backgrounds)
-      ? activeSessionAssets.backgrounds.filter(Boolean)
-      : [];
+    const list = getBackgroundList(activeTheme);
     if (!list.length) return "";
     const index = Math.min(
       Math.max(activeSessionAssets.backgroundIndex || 0, 0),
@@ -5487,19 +5478,13 @@ function getLaunchSummaryThumbnailLabel(kind) {
   }
   if (kind === "overlay") {
     const src = getAssetEntrySrc(
-      Array.isArray(activeSessionAssets.overlays) &&
-        activeSessionAssets.overlays.length
-        ? activeSessionAssets.overlays[0]
-        : ""
+      getOverlayList(activeTheme)[0] || ""
     );
     return src ? getAssetDisplayName({ url: src }) : "";
   }
   if (kind === "template") {
     const src = getAssetEntrySrc(
-      Array.isArray(activeSessionAssets.templates) &&
-        activeSessionAssets.templates.length
-        ? activeSessionAssets.templates[0]
-        : ""
+      getTemplateList(activeTheme)[0] || ""
     );
     return src ? getAssetDisplayName({ url: src }) : "";
   }
@@ -10841,8 +10826,11 @@ function setCountdownScale(scale) {
 function updateCountdownFontSize() {
   if (!DOM.videoContainer) return;
   const rect = DOM.videoContainer.getBoundingClientRect();
-  if (!rect || !rect.height) return;
-  const size = Math.max(80, Math.round(rect.height * getCountdownScale()));
+  if (!rect || !rect.width || !rect.height) return;
+  const size = Math.max(
+    80,
+    Math.round(Math.min(rect.width, rect.height) * getCountdownScale())
+  );
   document.documentElement.style.setProperty("--countdown-size", `${size}px`);
 }
 function loadImage(url) {

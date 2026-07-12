@@ -661,6 +661,37 @@ test("setup exposes selected assets in a collapsible summary", () => {
       appScript.includes("setLaunchSummaryThumbnail("),
     "setup summary should stay synced with the existing launch count labels and thumbnails"
   );
+  assert.ok(
+    appScript.includes("const list = getBackgroundList(activeTheme);") &&
+      appScript.includes('getOverlayList(activeTheme)[0] || ""') &&
+      appScript.includes('getTemplateList(activeTheme)[0] || ""'),
+    "selected asset thumbnails should use the same effective theme and session lists as the counts"
+  );
+});
+
+test("landscape booths default photo previews to landscape", () => {
+  const appScript = readProjectFile("scripts/app.js");
+  const layoutCss = readProjectFile("final-preview-sizing-fix.css");
+  assert.ok(
+    appScript.includes(
+      'window.innerWidth >= window.innerHeight ? "landscape" : "portrait"'
+    ),
+    "photo preview orientation should start from the booth viewport"
+  );
+  assert.ok(
+    layoutCss.includes("--booth-ready-top-space: clamp(96px, 11dvh, 120px);"),
+    "the wider landscape camera should remain below the booth header"
+  );
+});
+
+test("countdown sizing stays inside both camera dimensions", () => {
+  const appScript = readProjectFile("scripts/app.js");
+  assert.ok(
+    appScript.includes(
+      "Math.round(Math.min(rect.width, rect.height) * getCountdownScale())"
+    ),
+    "countdown numerals should be bounded by the smaller camera dimension"
+  );
 });
 
 test("event name and date drive the session upload folder", () => {
