@@ -138,11 +138,6 @@ function getStoredEvents() {
   }
 }
 
-export function clearCustomIdleScreen() {
-  if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("custom-idle-screen", "custom-photo-choice-screen");
-  if (DOM.welcomeImg) DOM.welcomeImg.classList.add("hidden");
-}
-
 export function getActiveIdleScreenSrc() {
   const entry = selectIdleScreenEntry();
   return entry && entry.src ? entry.src : "";

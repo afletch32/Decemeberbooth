@@ -26,15 +26,6 @@ import {
 import { formatRecordingTime } from "./recording-utils.mjs";
 import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
 import { getGuestVisibleBeautyPresets } from "./beauty/presets.mjs";
-import {
-  normalizeIdleScreenOrientation,
-  buildIdleScreenEntryFromUrl,
-  selectIdleScreenEntry,
-  clearCustomIdleScreen,
-  getPhotoChoiceScreenEntries,
-  getActiveIdleScreenSrc,
-  getIdleScreenViewportOrientation,
-} from "./idle-screen.mjs";
 
 function isLocalDevHost() {
   const hostname = window.location.hostname || "";
@@ -9700,6 +9691,10 @@ function confirmTemplate() {
 }
 
 // Welcome control
+function getIdleScreenViewportOrientation() {
+  return window.innerHeight > window.innerWidth ? "portrait" : "landscape";
+}
+
 function getIdleScreenAssignmentEntries() {
   const themeEntries = Array.isArray(activeTheme && activeTheme.idleScreens)
     ? activeTheme.idleScreens
@@ -9719,6 +9714,42 @@ function hydrateIdleScreenEntry(entry) {
     (asset) => asset.category === "idle-screen" && getAssetEntrySrc(asset) === src
   );
   return stored ? { ...cloneThemeValue(entry), ...cloneThemeValue(stored), src } : entry;
+}
+
+function selectIdleScreenEntry() {
+  const orientation = getIdleScreenViewportOrientation();
+  const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
+  const find = (entries, target) =>
+    entries.find(
+      (entry) =>
+        entry.role !== "photo-choice" &&
+        normalizeIdleScreenOrientation(entry.orientation) === target
+    );
+  return hydrateIdleScreenEntry(
+    find(eventEntries, orientation) ||
+      find(themeEntries, orientation) ||
+      find(eventEntries, "general") ||
+      find(themeEntries, "general") ||
+      null
+  );
+}
+
+function selectPhotoChoiceScreenEntry() {
+  const orientation = getIdleScreenViewportOrientation();
+  const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
+  const find = (entries, target) =>
+    entries.find(
+      (entry) =>
+        entry.role === "photo-choice" &&
+        normalizeIdleScreenOrientation(entry.orientation) === target
+    );
+  return hydrateIdleScreenEntry(
+    find(eventEntries, orientation) ||
+      find(themeEntries, orientation) ||
+      find(eventEntries, "general") ||
+      find(themeEntries, "general") ||
+      null
+  );
 }
 
 

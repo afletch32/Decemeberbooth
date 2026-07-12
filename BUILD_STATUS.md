@@ -54,3 +54,11 @@ Key test coverage:
 - Upload `photo choice.png` using new action
 - Assign to Summer theme through Theme Defaults model
 - Deploy with `npm run deploy` after verification
+
+### Parser Regression Fix
+
+- Removed the broken idle-screen imports that collided with existing app functions.
+- Restored the app-local idle and photo-choice selectors used by the welcome flow.
+- Removed the duplicate `clearCustomIdleScreen` export from `scripts/idle-screen.mjs`.
+- Verified both browser modules parse and all 149 automated tests pass.
+- Next step: deploy, then verify the admin and booth flows in the browser.
