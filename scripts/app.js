@@ -4284,6 +4284,20 @@ function addAssetUrlToTheme(target, kind, url) {
   }
 }
 
+function isPhotoChoiceAssetKind(kind) {
+  return kind === "photo-choice-screens";
+}
+
+function replaceIdleScreenRoleEntry(entries, entry) {
+  const role = entry && entry.role === "photo-choice" ? "photo-choice" : "idle";
+  return [
+    ...(Array.isArray(entries) ? entries : []).filter(
+      (item) => (item && item.role === "photo-choice" ? "photo-choice" : "idle") !== role
+    ),
+    entry,
+  ];
+}
+
 async function applyBulkAssetUpload() {
   const files = pendingBulkAssetFiles.slice();
   if (!files.length) {
@@ -4316,9 +4330,16 @@ async function applyBulkAssetUpload() {
             if (kind === "overlays") overrides.overlays.push(url);
             if (kind === "templates")
               overrides.templates.push({ src: url, layout: "double_column" });
-            if (kind === "idle-screens") {
-              if (!Array.isArray(overrides.idleScreens)) overrides.idleScreens = [];
-              overrides.idleScreens.push(buildIdleScreenEntryFromUrl(url, file));
+            if (kind === "idle-screens" || isPhotoChoiceAssetKind(kind)) {
+              const entry = buildIdleScreenEntryFromUrl(
+                url,
+                file,
+                isPhotoChoiceAssetKind(kind) ? "photo-choice" : "idle"
+              );
+              overrides.idleScreens = replaceIdleScreenRoleEntry(
+                overrides.idleScreens,
+                entry
+              );
             }
             uploadedCount += 1;
           })
@@ -4352,9 +4373,19 @@ async function applyBulkAssetUpload() {
       tasks.push(
         uploadAsset(file, kind, getSessionAssetUploadOptions(kind)).then((url) => {
           if (!url) return;
-          if (kind === "idle-screens") {
+          if (kind === "idle-screens" || isPhotoChoiceAssetKind(kind)) {
             const target = getSelectedThemeTarget();
-            if (target) target.idleScreens = [buildIdleScreenEntryFromUrl(url, file)];
+            if (target) {
+              const entry = buildIdleScreenEntryFromUrl(
+                url,
+                file,
+                isPhotoChoiceAssetKind(kind) ? "photo-choice" : "idle"
+              );
+              target.idleScreens = replaceIdleScreenRoleEntry(
+                target.idleScreens,
+                entry
+              );
+            }
             saveThemesToStorage();
           } else {
             addSessionAssetUrl(kind, url);
@@ -12554,6 +12585,8 @@ function showFinal(url, options = {}) {
       if (qrContainer) {
         qrContainer.dataset.pending = "true";
         qrContainer.dataset.error = "false";
+        qrContainer.classList.remove("hidden");
+        qrContainer.classList.add("experience-reveal");
       }
       if (DOM.shareStatus) {
         DOM.shareStatus.textContent = "Preparing QR";
@@ -15332,6 +15365,8 @@ function normalizeUploadedAssetCategory(value) {
   if (raw === "overlays") return "overlay";
   if (raw === "templates") return "template";
   if (raw === "idle-screens" || raw === "idlescreens") return "idle-screen";
+  if (raw === "photo-choice-screens" || raw === "photochoicescreens")
+    return "idle-screen";
   if (raw === "background" || raw === "overlay" || raw === "template" || raw === "idle-screen")
     return raw;
   return "";
@@ -15358,9 +15393,12 @@ function normalizeIdleButtonZone(zone) {
   };
 }
 
-function buildIdleScreenEntryFromUrl(url, file = null) {
+function buildIdleScreenEntryFromUrl(url, file = null, explicitRole = "") {
   const name = (file && file.name) || "Idle Screen";
-  const role = /photo[\s_-]*choice/i.test(name) ? "photo-choice" : "idle";
+  const role =
+    explicitRole === "photo-choice" || /photo[\s_-]*choice/i.test(name)
+      ? "photo-choice"
+      : "idle";
   return {
     src: url,
     orientation: "general",
@@ -16967,7 +17005,11 @@ function registerUploadedAsset(url, kind, details = {}) {
   const category = normalizeUploadedAssetCategory(kind);
   if (!url || !category) return;
   const uploadedName = details.name || details.originalName || url.split("/").pop() || category;
-  const isPhotoChoice = category === "idle-screen" && /photo[\s_-]*choice/i.test(uploadedName);
+  const isPhotoChoice =
+    category === "idle-screen" &&
+    (details.role === "photo-choice" ||
+      isPhotoChoiceAssetKind(kind) ||
+      /photo[\s_-]*choice/i.test(uploadedName));
   const asset = {
     id: `${category}:${url}`,
     category,
@@ -17302,6 +17344,7 @@ async function uploadAsset(file, kind, options = {}) {
     if (index[indexKey]) {
       registerUploadedAsset(index[indexKey], kind, {
         name: file && file.name,
+        role: isPhotoChoiceAssetKind(kind) ? "photo-choice" : undefined,
         hash,
         folder,
         contentType: file && file.type,
@@ -17331,6 +17374,7 @@ async function uploadAsset(file, kind, options = {}) {
       saveThemesToStorage();
       registerUploadedAsset(json.secure_url, kind, {
         name: file && file.name,
+        role: isPhotoChoiceAssetKind(kind) ? "photo-choice" : undefined,
         hash,
         folder,
         contentType: file && file.type,

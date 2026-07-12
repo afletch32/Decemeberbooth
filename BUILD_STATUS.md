@@ -62,3 +62,17 @@ Key test coverage:
 - Removed the duplicate `clearCustomIdleScreen` export from `scripts/idle-screen.mjs`.
 - Verified both browser modules parse and all 149 automated tests pass.
 - Next step: deploy, then verify the admin and booth flows in the browser.
+
+### Photo Choice Persistence Fix
+
+- Fixed the dedicated photo-choice upload route so it saves as an idle-screen asset with `role: "photo-choice"`.
+- Preserve the normal idle screen when adding or replacing photo-choice artwork.
+- Added regression coverage for upload classification and persistence.
+- Verified the browser module parses, the focused idle-screen suite passes 16/16, and the full suite passes 150/150.
+
+### Final Share QR Visibility Fix
+
+- Reveal the QR panel immediately when a public share URL enters QR rendering.
+- Keep the existing pending, success, failure, and review-stage behavior unchanged.
+- Added regression coverage for immediate QR visibility.
+- Verified the focused setup suite passes 46/46 and the full suite passes 150/150.

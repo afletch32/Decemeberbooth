@@ -116,6 +116,21 @@ test("photo choice artwork uses two saved invisible hotspots", () => {
   assert.ok(app.includes("selectPhotoChoiceScreenEntry()"));
 });
 
+test("dedicated photo choice uploads persist as photo-choice idle screens", () => {
+  assert.ok(app.includes('kinds.push("photo-choice-screens")'));
+  assert.ok(
+    app.includes('raw === "photo-choice-screens"') &&
+      app.includes('return "idle-screen"')
+  );
+  assert.ok(
+    app.includes('isPhotoChoiceAssetKind(kind) ? "photo-choice" : "idle"')
+  );
+  assert.ok(app.includes("replaceIdleScreenRoleEntry("));
+  assert.ok(
+    app.includes('isPhotoChoiceAssetKind(kind) ? "photo-choice" : undefined')
+  );
+});
+
 test("welcome mode inline handlers can resolve their exported function", () => {
   assert.ok(html.includes("onclick=\"beginModeSelection('still-photo', event)\""));
   assert.ok(app.includes("  beginModeSelection,\n  beginWelcome,"));

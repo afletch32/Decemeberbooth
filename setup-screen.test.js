@@ -981,7 +981,7 @@ test("final share QR is only marked ready after rendering succeeds", () => {
   );
 });
 
-test("final share panel appears after review while QR is pending or failed", () => {
+test("final share panel appears immediately while QR is pending or failed", () => {
   const appScript = readProjectFile("scripts", "app.js");
   const html = readProjectFile("index.html");
 
@@ -989,10 +989,12 @@ test("final share panel appears after review while QR is pending or failed", () 
     appScript.includes('DOM.qrCodeContainer.dataset.pending === "true"') &&
       appScript.includes('DOM.qrCodeContainer.dataset.error === "true"') &&
       appScript.includes('qrContainer.dataset.pending = "true"') &&
+      appScript.includes('qrContainer.classList.remove("hidden")') &&
+      appScript.includes('qrContainer.classList.add("experience-reveal")') &&
       appScript.includes('DOM.reviewPanel && DOM.reviewPanel.classList.contains("hidden")') &&
       appScript.includes("revealFinalSaveStage();") &&
       appScript.includes('qrContainer.dataset.error = qrRendered ? "false" : "true"'),
-    "the QR panel should be staged while review is visible and revealed only after the review step"
+    "the QR panel should be visible as soon as rendering starts and remain available after review"
   );
   assert.ok(
     appScript.includes("if (skipShare && !isBoothTestMode())") &&
