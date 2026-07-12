@@ -883,9 +883,9 @@ const DOM = {
   qrCodeContainer: document.getElementById("qrCodeContainer"),
   qrCode: document.getElementById("qrCode"),
   qrSaveCopy: document.getElementById("qrSaveCopy"),
-  reviewPanel: document.getElementById("reviewPanel"),
-  lovePhotoBtn: document.getElementById("lovePhotoBtn"),
   reviewRetakeBtn: document.getElementById("reviewRetakeBtn"),
+  finalPrintActions: document.getElementById("finalPrintActions"),
+  requestPrintBtn: document.getElementById("requestPrintBtn"),
   paidPrintPanel: document.getElementById("paidPrintPanel"),
   paidPrintTitle: document.getElementById("paidPrintTitle"),
   paidPrintBody: document.getElementById("paidPrintBody"),
@@ -6872,7 +6872,7 @@ function renderPaidPrintPanel(printEligible = true) {
   const enabled = settings.mode !== "off" && printEligible;
   if (DOM.paidPrintPanel) {
     DOM.paidPrintPanel.dataset.ready = enabled ? "true" : "false";
-    DOM.paidPrintPanel.classList.toggle("show", enabled);
+    DOM.paidPrintPanel.classList.remove("show");
   }
   if (!enabled) return;
   const noPaymentRequired = settings.mode === "free";
@@ -12454,26 +12454,7 @@ function resetTransientCaptureOverlays(options = {}) {
   }
 }
 
-function setFinalExperienceStage(stage = "review") {
-  const isReview = stage === "review";
-  if (DOM.reviewPanel) DOM.reviewPanel.classList.toggle("hidden", !isReview);
-  if (DOM.qrCodeContainer) {
-    DOM.qrCodeContainer.classList.toggle("experience-reveal", !isReview);
-    if (isReview) DOM.qrCodeContainer.classList.add("hidden");
-  }
-  if (DOM.paidPrintPanel) {
-    DOM.paidPrintPanel.classList.toggle("experience-reveal", !isReview);
-    if (isReview) DOM.paidPrintPanel.classList.remove("show");
-  }
-  if (DOM.lovePhotoBtn) {
-    DOM.lovePhotoBtn.disabled = false;
-    DOM.lovePhotoBtn.classList.remove("celebrate");
-    DOM.lovePhotoBtn.textContent = "✅ LOVE IT!";
-  }
-}
-
 function revealFinalSaveStage() {
-  if (DOM.reviewPanel) DOM.reviewPanel.classList.add("hidden");
   if (
     DOM.qrCodeContainer &&
     (DOM.qrCodeContainer.dataset.ready === "true" ||
@@ -12484,22 +12465,6 @@ function revealFinalSaveStage() {
     DOM.qrCodeContainer.classList.add("experience-reveal");
     if (DOM.qrCodeContainer.dataset.ready === "true") playBoothSound("qr");
   }
-  if (DOM.paidPrintPanel && DOM.paidPrintPanel.dataset.ready === "true") {
-    DOM.paidPrintPanel.classList.add("show", "experience-reveal");
-  }
-}
-
-function handleLovePhoto() {
-  unlockBoothAudio();
-  playBoothSound("success");
-  if (!DOM.lovePhotoBtn) {
-    revealFinalSaveStage();
-    return;
-  }
-  DOM.lovePhotoBtn.disabled = true;
-  DOM.lovePhotoBtn.classList.add("celebrate");
-  DOM.lovePhotoBtn.textContent = "💚 Awesome!";
-  setTimeout(revealFinalSaveStage, 300);
 }
 
 let qrCodeLibraryPromise = null;
@@ -12541,10 +12506,6 @@ function showGoodbyeMoment() {
 }
 
 function setupFinalExperienceActions() {
-  if (DOM.lovePhotoBtn && !DOM.lovePhotoBtn.dataset.bound) {
-    DOM.lovePhotoBtn.dataset.bound = "true";
-    DOM.lovePhotoBtn.addEventListener("click", handleLovePhoto);
-  }
   if (DOM.reviewRetakeBtn && !DOM.reviewRetakeBtn.dataset.bound) {
     DOM.reviewRetakeBtn.dataset.bound = "true";
     DOM.reviewRetakeBtn.addEventListener("click", () => {
@@ -12553,7 +12514,19 @@ function setupFinalExperienceActions() {
       retakePhoto();
     });
   }
+  if (DOM.requestPrintBtn && !DOM.requestPrintBtn.dataset.bound) {
+    DOM.requestPrintBtn.dataset.bound = "true";
+    DOM.requestPrintBtn.addEventListener("click", async () => {
+      if (!pendingFinalPrintImageUrl) return;
+      DOM.requestPrintBtn.disabled = true;
+      DOM.requestPrintBtn.textContent = "Requesting…";
+      await enqueueFinalPrintIfNeeded(pendingFinalPrintImageUrl, true);
+      DOM.requestPrintBtn.textContent = "Print Requested";
+    });
+  }
 }
+
+let pendingFinalPrintImageUrl = "";
 
 function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
@@ -12632,7 +12605,7 @@ function showFinal(url, options = {}) {
       DOM.finalLive.classList.remove("hidden");
     }
     panel.classList.add("show");
-    setFinalExperienceStage("review");
+    revealFinalSaveStage();
     if (!skipShare && providedShareUrl) {
       lastShareUrl = providedShareUrl;
       updateOutputSurfaceTrace({
@@ -12648,7 +12621,6 @@ function showFinal(url, options = {}) {
         qrContainer.classList.remove("hidden");
         qrContainer.classList.add("experience-reveal");
       }
-      if (DOM.reviewPanel) DOM.reviewPanel.classList.add("hidden");
       if (DOM.shareStatus) {
         DOM.shareStatus.textContent = "Preparing QR";
         DOM.shareStatus.style.display = "inline-flex";
@@ -12673,9 +12645,7 @@ function showFinal(url, options = {}) {
             : "Open the link button if the QR does not appear.";
           DOM.qrHint.style.display = qrRendered ? "none" : "block";
         }
-        if (qrRendered && DOM.reviewPanel && DOM.reviewPanel.classList.contains("hidden")) {
-          revealFinalSaveStage();
-        }
+        if (qrRendered) revealFinalSaveStage();
       });
     } else if (!skipShare) {
       lastShareUrl = null;
@@ -12699,13 +12669,19 @@ function showFinal(url, options = {}) {
       }
     }
     renderPaidPrintPanel(printEligible);
-    if (DOM.paidPrintPanel) DOM.paidPrintPanel.classList.remove("show");
+    const printEnabled = getPrintSettings().mode !== "off" && printEligible;
+    pendingFinalPrintImageUrl = printEnabled ? printImageUrl : "";
+    if (DOM.finalPrintActions)
+      DOM.finalPrintActions.classList.toggle("hidden", !printEnabled);
+    if (DOM.requestPrintBtn) {
+      DOM.requestPrintBtn.disabled = false;
+      DOM.requestPrintBtn.textContent = "Print";
+    }
     updateOutputSurfaceTrace({
       surfaces: {
         print: printImageUrl,
       },
     });
-    enqueueFinalPrintIfNeeded(printImageUrl, printEligible);
     resetIdleTimer();
     if (skipShare && !isBoothTestMode()) {
       hidePreviewTimer = setTimeout(finishBoothFlow, 15000);
@@ -12761,7 +12737,7 @@ async function renderQrCode(canvas, text) {
   try {
     const qrCode = await loadQrCodeLibrary();
     return await new Promise((resolve) => {
-      qrCode.toCanvas(canvas, text, { width: 240, margin: 1 }, function (error) {
+      qrCode.toCanvas(canvas, text, { width: 360, margin: 1 }, function (error) {
         if (error) {
           console.error(error);
           resolve(false);
@@ -14242,7 +14218,8 @@ function hideFinal() {
   }
   if (DOM.paidPrintPanel) DOM.paidPrintPanel.classList.remove("show");
   if (DOM.paidPrintPanel) DOM.paidPrintPanel.dataset.ready = "false";
-  if (DOM.reviewPanel) DOM.reviewPanel.classList.add("hidden");
+  if (DOM.finalPrintActions) DOM.finalPrintActions.classList.add("hidden");
+  pendingFinalPrintImageUrl = "";
   setFinalPreviewSharePanelVisible(false);
   if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "none";
   if (DOM.shareStatus) DOM.shareStatus.style.display = "none";

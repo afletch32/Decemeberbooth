@@ -1,5 +1,15 @@
 # Build Status
 
+## Current goal
+
+- Simplify final guest actions to a large QR, with Retake and Print shown only when printing is enabled.
+
+## Current progress
+
+- Removed the Love It review stage.
+- Increased QR render and display size.
+- Print-enabled sessions show Retake and Print below the QR; Print explicitly submits to the existing queue.
+
 ## Photo Choice Screen Feature
 
 **Status**: Complete ✅

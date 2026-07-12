@@ -71,7 +71,7 @@ test("capture modes share one canonical upload pipeline", () => {
     "final screens should receive the uploaded URL instead of uploading again"
   );
   assert.ok(
-    appScript.includes("enqueueFinalPrintIfNeeded(printImageUrl, printEligible)") &&
+    appScript.includes("enqueueFinalPrintIfNeeded(pendingFinalPrintImageUrl, true)") &&
       appScript.includes('shareType === "image"') &&
       appScript.includes("service-worker share cache is offline fallback only") &&
       appScript.includes("Print queue waiting for shared upload") &&

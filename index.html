@@ -4586,9 +4586,9 @@
 
     #qrCode {
       display: block;
-      width: min(100%, 280px);
+      width: min(100%, 340px);
       height: auto;
-      max-width: 280px;
+      max-width: 340px;
       margin: 0 auto;
       padding: 16px;
       border: 0;
@@ -4598,16 +4598,32 @@
       animation: qrBreathe 3.2s ease-in-out infinite;
     }
 
-    #qrCodeContainer .qr-retake-button {
-      min-height: 42px;
-      padding: 10px 20px;
+    .final-print-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(120px, 1fr));
+      gap: 16px;
+      width: min(100%, 340px);
+    }
+
+    .final-print-actions.hidden {
+      display: none;
+    }
+
+    .final-print-actions button {
+      min-height: 52px;
+      padding: 12px 20px;
       border-radius: 999px;
       border: 1px solid rgba(23, 73, 68, 0.18);
       background: rgba(255, 255, 255, 0.9);
       color: #34524d;
-      font-size: 0.86rem;
+      font-size: 1rem;
       font-weight: 800;
       box-shadow: 0 8px 18px rgba(58, 88, 78, 0.1);
+    }
+
+    #requestPrintBtn {
+      background: #173f3b;
+      color: #ffffff;
     }
 
     #qrHint {
@@ -7116,13 +7132,6 @@
         <video id="finalLive" class="hidden" autoplay muted loop playsinline></video>
         <img id="finalStrip" />
         <div id="finalPreviewActions">
-          <section id="reviewPanel" aria-live="polite">
-            <div class="review-heart" aria-hidden="true">❤️</div>
-            <h2 class="review-title">Love your photos?</h2>
-            <div class="review-actions">
-              <button id="lovePhotoBtn" type="button">✅ LOVE IT!</button>
-            </div>
-          </section>
           <div id="qrCodeContainer" class="hidden">
             <div class="share-header">
               <div class="share-header-copy">
@@ -7132,7 +7141,10 @@
               <span id="shareStatus" style="display:none;">Preparing link…</span>
             </div>
             <canvas id="qrCode"></canvas>
-            <button id="reviewRetakeBtn" class="qr-retake-button" type="button">↩ Retake</button>
+            <div id="finalPrintActions" class="final-print-actions hidden">
+              <button id="reviewRetakeBtn" type="button">↩ Retake</button>
+              <button id="requestPrintBtn" type="button">Print</button>
+            </div>
             <div id="qrHint" style="display:none; font-size:0.9em; color:#ccc; margin-top:8px;"></div>
             <!-- Guest mode must not expose local device download actions. -->
           </div>

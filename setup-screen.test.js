@@ -894,13 +894,12 @@ test("guest booth flow uses attraction-style host moments", () => {
     "welcome, choice, and camera states should have guest-facing host copy"
   );
   assert.ok(
-    html.includes('id="reviewPanel"') &&
-      html.includes("Love your photos?") &&
-      !html.includes("Make sure everyone looks just right.") &&
-      html.includes('id="lovePhotoBtn"') &&
-      html.includes("LOVE IT!") &&
-      html.includes('id="reviewRetakeBtn"'),
-    "final preview should open with a simple review choice"
+    !html.includes('id="reviewPanel"') &&
+      !html.includes('id="lovePhotoBtn"') &&
+      html.includes('id="finalPrintActions"') &&
+      html.includes('id="reviewRetakeBtn"') &&
+      html.includes('id="requestPrintBtn"'),
+    "final preview should show QR directly and reserve retake and print for print mode"
   );
   assert.ok(
     html.includes("Take them with you.") &&
@@ -924,14 +923,12 @@ test("guest booth flow uses attraction-style host moments", () => {
       appScript.includes("flash: { frequency") &&
       appScript.includes("function getCountdownDurationSeconds()") &&
       appScript.includes("function showFlashBeat()") &&
-      appScript.includes("function handleLovePhoto()") &&
-      appScript.includes("Awesome!") &&
       appScript.includes("function revealFinalSaveStage()") &&
       appScript.includes("DOM.finalPreviewContent.addEventListener(\"click\", (event) => {") &&
       appScript.includes("const interactiveTarget = event.target.closest(") &&
       appScript.includes("if (interactiveTarget) event.stopPropagation();") &&
       !appScript.includes('co.textContent = "Flash";'),
-    "the flow should include tiny sound cues, a visual flash beat, tap-to-exit share space, and a rewarding love-it transition"
+    "the flow should include sound cues, a visual flash beat, and tap-to-exit share space"
   );
 });
 
@@ -1039,7 +1036,6 @@ test("final share panel appears immediately while QR is pending or failed", () =
       appScript.includes('qrContainer.dataset.pending = "true"') &&
       appScript.includes('qrContainer.classList.remove("hidden")') &&
       appScript.includes('qrContainer.classList.add("experience-reveal")') &&
-      appScript.includes('DOM.reviewPanel && DOM.reviewPanel.classList.contains("hidden")') &&
       appScript.includes("revealFinalSaveStage();") &&
       appScript.includes('qrContainer.dataset.error = qrRendered ? "false" : "true"'),
     "the QR panel should be visible as soon as rendering starts and remain available after review"
@@ -1057,7 +1053,7 @@ test("final share panel appears immediately while QR is pending or failed", () =
   );
 });
 
-test("share-ready QR uses a compact retake action without overlapping review controls", () => {
+test("share-ready QR is large and only shows retake and print when printing is enabled", () => {
   const appScript = readProjectFile("scripts", "app.js");
   const html = readProjectFile("index.html");
   const qrStart = html.indexOf('id="qrCodeContainer"');
@@ -1065,9 +1061,12 @@ test("share-ready QR uses a compact retake action without overlapping review con
   const qrMarkup = html.slice(qrStart, qrEnd);
 
   assert.equal((html.match(/id="reviewRetakeBtn"/g) || []).length, 1);
-  assert.ok(qrMarkup.includes('id="reviewRetakeBtn" class="qr-retake-button"'));
-  assert.ok(html.includes("#qrCodeContainer .qr-retake-button {"));
-  assert.ok(appScript.includes('if (DOM.reviewPanel) DOM.reviewPanel.classList.add("hidden");'));
+  assert.ok(qrMarkup.includes('id="finalPrintActions" class="final-print-actions hidden"'));
+  assert.ok(qrMarkup.includes('id="requestPrintBtn"'));
+  assert.ok(html.includes("width: min(100%, 340px);"));
+  assert.ok(appScript.includes('{ width: 360, margin: 1 }'));
+  assert.ok(appScript.includes('DOM.finalPrintActions.classList.toggle("hidden", !printEnabled)'));
+  assert.ok(appScript.includes("await enqueueFinalPrintIfNeeded(pendingFinalPrintImageUrl, true);"));
 });
 
 test("skin smoothing preserves detail instead of blurring the full face", () => {
