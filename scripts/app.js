@@ -9770,6 +9770,7 @@ function beginWelcome(event) {
     event.preventDefault();
     event.stopPropagation();
   }
+  clearCustomIdleScreen();
   setWelcomeFlowStep("mode");
 }
 

@@ -57,7 +57,7 @@ Update exactly one row after each card. Keep evidence brief and never paste an i
 | | 5 — Hotspot data | NOT STARTED |  |  | 5 |
 | | 6 — Geometry | NOT STARTED |  |  | 6 |
 | | 7 — Hit testing | NOT STARTED |  |  | 7 |
-| | 8A — Flow/data fix | PASS | Exported the existing beginModeSelection function so the welcome mode buttons' inline handlers resolve instead of throwing ReferenceError. Focused idle-screen tests pass. | scripts/app.js, idle-screen.test.js | 9 |
+| | 8A — Flow/data fix | PASS | Cleared the custom idle presentation before entering mode selection and exported the existing beginModeSelection handler, preventing the artwork from masking the next step and avoiding the inline-handler ReferenceError. Focused tests pass. | scripts/app.js, idle-screen.test.js | 9 |
 | | 8B — Geometry fix | CONDITIONAL |  |  | 8B |
 | | 8C — CSS/stacking fix | CONDITIONAL |  |  | 8C |
 | | 9 — Regression test | NOT STARTED |  |  | 9 |

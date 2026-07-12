@@ -71,6 +71,15 @@ test("the existing start handler remains the only guest start path", () => {
   assert.equal((html.match(/onclick="beginWelcome\(event\)"/g) || []).length, 1);
 });
 
+test("starting from custom artwork reveals the mode selection step", () => {
+  const beginWelcome = extractFunction(app, "beginWelcome");
+  assert.ok(beginWelcome.includes("clearCustomIdleScreen();"));
+  assert.ok(
+    beginWelcome.indexOf("clearCustomIdleScreen();") <
+      beginWelcome.indexOf('setWelcomeFlowStep("mode");')
+  );
+});
+
 test("welcome mode inline handlers can resolve their exported function", () => {
   assert.ok(html.includes("onclick=\"beginModeSelection('still-photo', event)\""));
   assert.ok(app.includes("  beginModeSelection,\n  beginWelcome,"));
