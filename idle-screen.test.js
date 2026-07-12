@@ -71,6 +71,11 @@ test("the existing start handler remains the only guest start path", () => {
   assert.equal((html.match(/onclick="beginWelcome\(event\)"/g) || []).length, 1);
 });
 
+test("welcome mode inline handlers can resolve their exported function", () => {
+  assert.ok(html.includes("onclick=\"beginModeSelection('still-photo', event)\""));
+  assert.ok(app.includes("  beginModeSelection,\n  beginWelcome,"));
+});
+
 test("cover bounds account for horizontal and vertical cropping", () => {
   const source = extractFunction(app, "getCoverImageRect");
   const getCoverImageRect = Function(`${source}; return getCoverImageRect;`)();

@@ -22371,6 +22371,7 @@ Object.assign(window, {
   goAdmin,
   goBackFromBooth,
   goBackFromWelcome,
+  beginModeSelection,
   beginWelcome,
   hideWelcome,
   startBooth: startBoothFromAdmin,
