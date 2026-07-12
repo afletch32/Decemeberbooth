@@ -132,8 +132,15 @@ test("staff print route links and popup printing handle reliable handoff", () =>
   assert.ok(
     staffScript.includes("photoboothStaffPrintLayout") &&
       staffScript.includes('layout === "double"') &&
-      staffScript.includes("grid-template-rows: 1fr 1fr"),
+      staffScript.includes('grid-template-"+(landscape?"columns":"rows")+":1fr 1fr'),
     "staff print popup should support a 2-up 4x6 composition"
+  );
+  assert.ok(
+    html.includes('id="printRotation"') &&
+      staffScript.includes("photoboothStaffPrintRotation") &&
+      staffScript.includes("image.style.width=(swaps?slot.clientHeight:slot.clientWidth)") &&
+      staffScript.includes("image.style.height=(swaps?slot.clientWidth:slot.clientHeight)"),
+    "staff print popup should rotate each photo within its own print slot"
   );
 });
 
