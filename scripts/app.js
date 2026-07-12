@@ -16918,12 +16918,14 @@ function saveThemeDefaultsSetup() {
 function registerUploadedAsset(url, kind, details = {}) {
   const category = normalizeUploadedAssetCategory(kind);
   if (!url || !category) return;
+  const uploadedName = details.name || details.originalName || url.split("/").pop() || category;
+  const isPhotoChoice = category === "idle-screen" && /photo[\s_-]*choice/i.test(uploadedName);
   const asset = {
     id: `${category}:${url}`,
     category,
     url,
     secure_url: url,
-    name: details.name || details.originalName || url.split("/").pop() || category,
+    name: uploadedName,
     tags: details.tags || [],
     folder: details.folder || "",
     hash: details.hash || "",
@@ -16938,9 +16940,20 @@ function registerUploadedAsset(url, kind, details = {}) {
       category === "idle-screen"
         ? normalizeIdleScreenOrientation(details.orientation)
         : undefined,
+    role:
+      category === "idle-screen"
+        ? isPhotoChoice
+          ? "photo-choice"
+          : "idle"
+        : undefined,
     buttonZones:
       category === "idle-screen"
-        ? { start: normalizeIdleButtonZone(details.buttonZones && details.buttonZones.start) }
+        ? isPhotoChoice
+          ? {
+              singlePhoto: normalizeIdleButtonZone(photoChoiceEditorZones.singlePhoto),
+              photoStrip: normalizeIdleButtonZone(photoChoiceEditorZones.photoStrip),
+            }
+          : { start: normalizeIdleButtonZone(details.buttonZones && details.buttonZones.start) }
         : undefined,
   };
   if (mergeLibraryAsset(asset)) {
