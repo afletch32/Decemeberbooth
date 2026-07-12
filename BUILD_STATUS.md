@@ -97,6 +97,13 @@ Key test coverage:
 - Preserve the existing retake handler and capture reset behavior.
 - Verified the focused setup suite passes 49/49 and the full suite passes 154/154.
 
+### Blank Booth Launch Fix
+
+- Prevent booth launch from hiding Setup unless a valid theme resolves.
+- Show a dedicated loading surface while custom idle or photo-choice artwork loads.
+- Fall back to the standard welcome screen after eight seconds if remote artwork stalls.
+- Verified 67/67 focused tests and 155/155 full-suite tests pass.
+
 ### Frame Transition Flash Fix
 
 - Eliminated white flash between frame changes by smoothing live preview transitions.

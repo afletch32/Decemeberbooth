@@ -126,13 +126,16 @@ test("custom welcome artwork hides legacy UI before its image finishes loading",
   const idle = extractFunction(app, "applyCustomIdleScreen");
 
   assert.ok(
-    photoChoice.indexOf('classList.add("custom-photo-choice-screen")') <
+    photoChoice.indexOf('classList.add("custom-photo-choice-screen",') <
       photoChoice.indexOf("DOM.welcomeImg.onload")
   );
   assert.ok(
-    idle.indexOf('classList.add("custom-idle-screen")') <
+    idle.indexOf('classList.add("custom-idle-screen",') <
       idle.indexOf("DOM.welcomeImg.onload")
   );
+  assert.ok(html.includes("#welcomeScreen.custom-artwork-loading::after"));
+  assert.ok(app.includes("startCustomArtworkLoadFallback();"));
+  assert.ok(app.includes("}, 8000);"));
 });
 
 test("dedicated photo choice uploads persist as photo-choice idle screens", () => {

@@ -88,6 +88,22 @@ test("welcome launch preserves the explicit No Frame default", () => {
   assert.ok(!appScript.includes("selectFirstPhotoOverlayAfterWelcome"));
 });
 
+test("booth launch cannot hide setup without a resolved theme", () => {
+  const app = readProjectFile("scripts/app.js");
+  const start = app.indexOf("async function startBooth(");
+  const end = app.indexOf("\nfunction startBoothFlow", start);
+  const startBooth = app.slice(start, end);
+
+  assert.ok(start >= 0 && end > start);
+  assert.ok(startBooth.includes("if (!activeTheme)"));
+  assert.ok(startBooth.includes("resolvePreferredThemeKey(DEFAULT_THEME_KEY)"));
+  assert.ok(startBooth.includes('showToast("Choose a theme before starting the booth.")'));
+  assert.ok(
+    startBooth.indexOf('showToast("Choose a theme before starting the booth.")') <
+      startBooth.indexOf("startBoothFlow();")
+  );
+});
+
 test("setup section state updates button and panel accessibility attributes", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");

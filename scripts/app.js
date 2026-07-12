@@ -9864,8 +9864,25 @@ function positionIdleStartHotspot(entry) {
   });
 }
 
+let customArtworkLoadTimer = null;
+
+function clearCustomArtworkLoadTimer() {
+  clearTimeout(customArtworkLoadTimer);
+  customArtworkLoadTimer = null;
+}
+
+function startCustomArtworkLoadFallback() {
+  clearCustomArtworkLoadTimer();
+  customArtworkLoadTimer = setTimeout(() => {
+    clearCustomIdleScreen();
+    showToast("Custom booth artwork could not load. Showing the standard screen.");
+  }, 8000);
+}
+
 function clearCustomIdleScreen() {
+  clearCustomArtworkLoadTimer();
   if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("custom-idle-screen", "custom-photo-choice-screen");
+  if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("custom-artwork-loading");
   if (DOM.welcomeImg) {
     DOM.welcomeImg.onload = null;
     DOM.welcomeImg.onerror = null;
@@ -9898,9 +9915,12 @@ function applyCustomPhotoChoiceScreen(entry) {
   const src = getAssetEntrySrc(entry);
   if (!src || !DOM.welcomeImg || !DOM.welcomeScreen) return false;
   DOM.welcomeScreen.classList.remove("custom-idle-screen");
-  DOM.welcomeScreen.classList.add("custom-photo-choice-screen");
+  DOM.welcomeScreen.classList.add("custom-photo-choice-screen", "custom-artwork-loading");
   DOM.welcomeImg.classList.add("hidden");
+  startCustomArtworkLoadFallback();
   DOM.welcomeImg.onload = () => {
+    clearCustomArtworkLoadTimer();
+    DOM.welcomeScreen.classList.remove("custom-artwork-loading");
     DOM.welcomeImg.classList.remove("hidden");
     positionPhotoChoiceHotspots(entry);
   };
@@ -9916,9 +9936,12 @@ function applyCustomIdleScreen(entry) {
     return false;
   }
   DOM.welcomeScreen.classList.remove("custom-photo-choice-screen");
-  DOM.welcomeScreen.classList.add("custom-idle-screen");
+  DOM.welcomeScreen.classList.add("custom-idle-screen", "custom-artwork-loading");
   DOM.welcomeImg.classList.add("hidden");
+  startCustomArtworkLoadFallback();
   DOM.welcomeImg.onload = () => {
+    clearCustomArtworkLoadTimer();
+    DOM.welcomeScreen.classList.remove("custom-artwork-loading");
     DOM.welcomeImg.classList.remove("hidden");
     positionIdleStartHotspot(entry);
   };
@@ -10234,6 +10257,14 @@ async function startBooth(options = {}) {
   }
   if (DOM.eventSelect && DOM.eventSelect.value) {
     loadTheme(DOM.eventSelect.value);
+  }
+  if (!activeTheme) {
+    const fallbackKey = resolvePreferredThemeKey(DEFAULT_THEME_KEY);
+    if (fallbackKey) loadTheme(fallbackKey);
+  }
+  if (!activeTheme) {
+    showToast("Choose a theme before starting the booth.");
+    return;
   }
   startBoothFlow();
   // Start camera after the booth view is already visible so setup cannot stall.

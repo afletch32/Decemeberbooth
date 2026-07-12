@@ -3235,6 +3235,18 @@
     #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn > * { visibility: hidden !important; }
     #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn[data-welcome-mode="live-photo"] { display: none !important; }
     #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn:focus-visible { outline: 4px solid #fff; outline-offset: -4px; box-shadow: 0 0 0 7px #155eef; }
+    #welcomeScreen.custom-artwork-loading::after {
+      content: "Loading booth…";
+      display: grid !important;
+      place-items: center;
+      z-index: 5;
+      opacity: 1;
+      background: linear-gradient(160deg, #102d36, #07191f);
+      color: #ffffff;
+      font-family: var(--font-heading);
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      letter-spacing: 0.04em;
+    }
 
     .idle-screen-editor-modal { position: fixed; inset: 0; z-index: 12000; display: grid; place-items: center; padding: 16px; background: rgba(15, 23, 42, 0.72); }
     .idle-screen-editor-modal.hidden { display: none; }
