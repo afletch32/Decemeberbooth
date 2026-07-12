@@ -104,6 +104,13 @@ Key test coverage:
 - Fall back to the standard welcome screen after eight seconds if remote artwork stalls.
 - Verified 67/67 focused tests and 155/155 full-suite tests pass.
 
+### Off-Screen Booth Root Fix
+
+- Runtime diagnostics proved the loaded welcome image and screen were positioned one viewport below the visible page.
+- Anchor `#boothScreen` to the viewport with fixed positioning and full inset dimensions.
+- Keep the existing hidden-state behavior for returning to Setup.
+- Verified 50/50 focused setup tests and 156/156 full-suite tests pass.
+
 ### Frame Transition Flash Fix
 
 - Eliminated white flash between frame changes by smoothing live preview transitions.

@@ -104,6 +104,17 @@ test("booth launch cannot hide setup without a resolved theme", () => {
   );
 });
 
+test("the booth shell is anchored to the viewport after leaving setup", () => {
+  const html = readProjectFile("index.html");
+  const boothRuleStart = html.indexOf("#boothScreen {");
+  const boothRuleEnd = html.indexOf("#boothScreen::before", boothRuleStart);
+  const boothRule = html.slice(boothRuleStart, boothRuleEnd);
+
+  assert.ok(boothRule.includes("position: fixed;"));
+  assert.ok(boothRule.includes("inset: 0;"));
+  assert.ok(boothRule.includes("width: 100%;"));
+});
+
 test("setup section state updates button and panel accessibility attributes", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");
