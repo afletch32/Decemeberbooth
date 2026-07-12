@@ -2,6 +2,7 @@ Current goal
 - Support Canva-designed Cloudinary idle screens with orientation-aware artwork and aligned Start hotspots.
 
 What is done
+- Added `IDLE_SCREEN_START_FIX.md`, a one-card-per-session troubleshooting runbook with strict no-base64 and no-speculative-CSS guardrails, evidence-based routing, copy/paste prompts, and a persistent handoff table for less capable models.
 - Replaced the ambiguous paid-queue checkbox combination with explicit Off, Free Printing, and Paid Printing modes.
 - Free prints enter the shared queue as Comped and are immediately printable.
 - Paid prints enter as Unpaid; staff can Mark Paid, and Open/Print plus Mark Printed remain disabled until payment clears.
@@ -99,7 +100,7 @@ What is done
 - Verified focused browser coverage with `npm run test:browser -- --grep "Asset Library keeps admin filters|frame picker stays hidden"`.
 
 What is in progress
-- None.
+- Idle-screen Start hotspot diagnosis is staged in `IDLE_SCREEN_START_FIX.md`; Card 1 (base64 source audit) is the next bounded task after runbook approval.
 
 Next steps
 - Deploy and verify theme thumbnails load from Cloudinary on Cloudflare Pages.

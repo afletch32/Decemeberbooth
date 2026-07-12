@@ -1,0 +1,541 @@
+# Idle Screen Start Hotspot — Small-Model Runbook
+
+## Objective
+
+Fix the custom idle-screen Start hotspot so that:
+
+1. the idle artwork remains clear and unblurred;
+2. the Start hotspot is visually transparent;
+3. tapping the hotspot advances the guest flow;
+4. its position comes from **Position Start** in the admin screen; and
+5. idle-screen images are stored as hosted or local URLs, never base64 data URLs.
+
+This runbook is intentionally split into small cards. Complete **one card per model/session** unless a card explicitly says otherwise.
+
+---
+
+## Non-negotiable rules
+
+1. **Do not change CSS until Card 7 proves that hit testing or computed CSS is the failure.**
+2. **Do not add or persist base64 images.** A source beginning with `data:image/` is a failure.
+3. Do not print a complete data URL, image payload, or secret URL to the console or this file.
+4. Make only the changes allowed by the active card.
+5. Use double quotes in JavaScript.
+6. Keep the existing vanilla HTML/CSS/JS stack.
+7. Do not change overlay rendering or overlay-maker layout geometry.
+8. Do not mark a card complete without its required evidence.
+9. If expected evidence is unavailable, write `BLOCKED` in the handoff table and stop. Do not guess.
+10. Any final code change requires a focused test and an update to `BUILD_STATUS.md`.
+
+---
+
+## Known code locations
+
+- Idle-screen CSS and DOM: `index.html`
+- Runtime behavior: `scripts/app.js`
+- Existing idle-screen tests: `idle-screen.test.js`
+- Start hotspot positioning function: `positionIdleStartHotspot(entry)`
+- Custom idle image loader: `applyCustomIdleScreen(entry)`
+- Welcome entry point: `showWelcome(step)`
+- Start action: `beginWelcome(event)`
+- Admin hotspot editor: `openIdleScreenEditor(asset)` / `saveIdleScreenEditor()`
+
+Do not rely on old line numbers. Search for the function or ID by name.
+
+---
+
+## Status and handoff table
+
+Update exactly one row after each card. Keep evidence brief and never paste an image payload.
+
+| Card | Status | Evidence / result | Files changed | Next card |
+|---|---|---|---|---|
+| | 1 — Base64 audit | PASS | No idle-screen path persists a base64 data URL. Upload results flow into `idleScreens[].src`, theme override `src`, and asset library `url`/`secure_url`; the lone `readFileAsDataURL` helper is unused for idle uploads. Sources are hosted/local URLs. |  | 2 |
+| | 2 — Safe diagnostic | PASS | Added temporary [idle-start-diagnostic] log in positionIdleStartHotspot(entry) with welcomeFlowStep, custom-idle-screen flag, start button existence, raw zone existence, normalized zone, rectangle, pointerEvents, zIndex, and safe source classification. Focused idle-screen tests pass. | scripts/app.js | 3 |
+| | 3 — Function execution | BLOCKED | No custom idle-screen configuration found in local data; diagnostic not observed. This card requires a live booth session with a custom idle screen and Position Start configured. |  | 3 |
+| | 4 — Flow and DOM state | BLOCKED | Same blocker as Card 3: no custom idle-screen configuration in local data, so `positionIdleStartHotspot()` never fires and the diagnostic is not observed. The three required booleans (`welcomeFlowStep === "idle"`, `customIdleScreen === true`, `startButtonExists === true`) cannot be verified without a live booth session. |  | 4 |
+| | 5 — Hotspot data | NOT STARTED |  |  | 5 |
+| | 6 — Geometry | NOT STARTED |  |  | 6 |
+| | 7 — Hit testing | NOT STARTED |  |  | 7 |
+| | 8A — Flow/data fix | CONDITIONAL |  |  | 8A |
+| | 8B — Geometry fix | CONDITIONAL |  |  | 8B |
+| | 8C — CSS/stacking fix | CONDITIONAL |  |  | 8C |
+| | 9 — Regression test | NOT STARTED |  |  | 9 |
+| | 10 — Cleanup/validation | NOT STARTED |  |  | 10 |
+
+Allowed status values: `NOT STARTED`, `IN PROGRESS`, `PASS`, `FAIL`, `BLOCKED`, `NOT NEEDED`.
+
+---
+
+## Card 1 — Audit idle-screen image sources for base64
+
+### Goal
+
+Determine whether an idle-screen image can be stored or loaded as a base64 data URL.
+
+### Files allowed
+
+- Read any repository file.
+- Edit only this runbook's handoff table.
+- Do **not** change application code in this card.
+
+### Steps
+
+1. Search the repository for `data:image`, `readAsDataURL`, `FileReader`, `idleScreens`, and `idle-screen`.
+2. Trace the idle-screen upload path through the bulk asset upload code.
+3. Trace how the resulting source is saved into theme, event, session, and asset-library records.
+4. Record whether idle-screen entries use:
+   - an `https://` URL;
+   - a local path such as `assets/...`; or
+   - a prohibited `data:image/...` URL.
+5. Do not print or paste a full data URL. Report only `isDataUrl: true/false` and the source type.
+
+### Suggested commands
+
+```bash
+grep -RIn --exclude-dir=.git --exclude='package-lock.json' 'data:image\|readAsDataURL\|FileReader' .
+grep -n 'idleScreens\|idle-screen' scripts/app.js
+```
+
+### Pass condition
+
+All persisted idle-screen sources follow the normal upload result and are hosted/local URLs. No idle-screen-specific path stores a base64 data URL.
+
+### Fail routing
+
+If base64 persistence is found, set Card 1 to `FAIL`, describe only the function and field involved, and stop. A new base64-removal card must be written before runtime diagnosis continues.
+
+### Copy/paste prompt
+
+> Open `IDLE_SCREEN_START_FIX.md` and perform Card 1 only. Do not edit application code. Do not output any complete image payload or data URL. Update the Card 1 row with concise evidence.
+
+---
+
+## Card 2 — Add one safe runtime diagnostic
+
+### Goal
+
+Add a temporary diagnostic at the end of `positionIdleStartHotspot(entry)` without changing behavior or CSS.
+
+### Files allowed
+
+- `scripts/app.js`
+- This runbook's handoff table
+
+### Required diagnostic fields
+
+Log one object under the label `[idle-start-diagnostic]` containing:
+
+- `welcomeFlowStep`
+- whether `#welcomeScreen` has `custom-idle-screen`
+- whether `DOM.startButton` exists
+- whether raw `entry.buttonZones.start` exists
+- the normalized zone values
+- `positionIdleStartHotspotExecuted: true`
+- `rect` from `DOM.startButton.getBoundingClientRect()`
+- `pointerEvents`
+- `zIndex`
+- a safe source classification: `data-url`, `hosted-url`, `local-path`, or `missing`
+
+Call `getComputedStyle(DOM.startButton)` once and reuse it. Never log `entry`, `src`, a complete URL, or image data.
+
+### Do not do
+
+- Do not change CSS.
+- Do not change event handlers.
+- Do not change hotspot calculations.
+- Do not add `z-index` or `pointer-events` declarations.
+
+### Verification command
+
+```bash
+npm test -- --test-name-pattern='idle screen'
+```
+
+If the test runner does not support this filter, run:
+
+```bash
+node --test idle-screen.test.js
+```
+
+### Pass condition
+
+The project parses, the existing idle-screen test passes, and the only application change is temporary logging.
+
+### Copy/paste prompt
+
+> Open `IDLE_SCREEN_START_FIX.md` and perform Card 2 only. Add the safe diagnostic exactly as specified. Do not change CSS or behavior. Run the focused test and update the Card 2 row.
+
+---
+
+## Card 3 — Confirm hotspot positioning executes
+
+### Goal
+
+Confirm the diagnostic appears after a custom idle screen finishes loading.
+
+### Files allowed
+
+- No application edits.
+- Update only this runbook's handoff table.
+
+### Steps
+
+1. Start the local app.
+2. In admin, select the relevant idle-screen image and use **Position Start** if needed.
+3. Launch the booth and wait for the custom idle image to load.
+4. Find `[idle-start-diagnostic]` in the browser console.
+5. Record whether `positionIdleStartHotspotExecuted` is `true`.
+
+### Pass condition
+
+One diagnostic appears after image load with `positionIdleStartHotspotExecuted: true`.
+
+### Fail routing
+
+If no diagnostic appears, stop. Record whether the image loaded and route to Card 8A. Do not inspect CSS yet.
+
+### Copy/paste prompt
+
+> Open `IDLE_SCREEN_START_FIX.md` and perform Card 3 only. Do not change code. Load the custom idle screen, record whether the diagnostic executes, update the Card 3 row, and stop.
+
+---
+
+## Card 4 — Verify flow state and required DOM state
+
+### Goal
+
+Check three booleans only.
+
+### Files allowed
+
+- No application edits.
+- Update only this runbook's handoff table.
+
+### Required checks
+
+- `welcomeFlowStep === "idle"`
+- `customIdleScreenClass === true`
+- `startButtonExists === true`
+
+### Pass condition
+
+All three checks are true in the post-load diagnostic.
+
+### Fail routing
+
+Any false value routes to Card 8A. Record the failed field and stop.
+
+### Copy/paste promp
+
+---
+
+## Card 5 — Verify saved hotspot data
+
+### Goal
+
+Confirm the Position Start result reaches runtime.
+
+### Files allowed
+
+- No application edits.
+- Update only this runbook's handoff table.
+
+### Required checks
+
+1. `rawButtonZoneExists === true`.
+2. Normalized `x`, `y`, `width`, and `height` are finite numbers.
+3. `width > 0` and `height > 0`.
+4. Values correspond to the area saved in the admin editor.
+
+### Important distinction
+
+`normalizeIdleButtonZone()` can supply defaults when raw data is missing. Therefore, a valid normalized zone does **not** prove that Position Start was saved. Check the raw field separately.
+
+### Pass condition
+
+Raw saved data exists and produces a valid normalized rectangle matching the editor selection.
+
+### Fail routing
+
+Missing or incorrect raw data routes to Card 8A. Stop before geometry or CSS work.
+
+### Copy/paste prompt
+
+> Open `IDLE_SCREEN_START_FIX.md` and perform Card 5 only. Verify the raw saved zone separately from the normalized zone. Do not change code. Update the row and stop.
+
+---
+
+## Card 6 — Verify rendered button geometry
+
+### Goal
+
+Confirm the transparent button has a real box over the intended artwork area.
+
+### Files allowed
+
+- No application edits.
+- Update only this runbook's handoff table.
+
+### Required checks
+
+From `getBoundingClientRect()`:
+
+- `width > 0`
+- `height > 0`
+- all coordinates are finite
+- the center point is inside the viewport
+- the rectangle visually corresponds to the Start artwork selected in Position Start
+
+### Pass condition
+
+The rectangle is non-zero and correctly positioned.
+
+### Fail routing
+
+- Zero/invalid rectangle: Card 8B.
+- Non-zero but misplaced rectangle: Card 8B.
+- Correct rectangle: continue to Card 7.
+
+### Copy/paste prompt
+
+> Open `IDLE_SCREEN_START_FIX.md` and perform Card 6 only. Use the existing rectangle diagnostic and compare it to the Start artwork. Do not change code or CSS. Update the row and stop.
+
+---
+
+## Card 7 — Verify hit testing and computed CSS
+
+### Goal
+
+Determine whether CSS or another element prevents the hotspot from receiving the tap.
+
+### Files allowed
+
+- `scripts/app.js` only if one temporary `elementFromPoint()` diagnostic must be added.
+- This runbook's handoff table.
+
+### Required checks
+
+1. `pointerEvents` is not `"none"`.
+2. Record computed `zIndex` without assuming `"auto"` is a failure.
+3. Compute the hotspot rectangle center.
+4. Call `document.elementFromPoint(centerX, centerY)` after layout.
+5. Confirm the returned element is `#startButton` or a descendant that resolves to it with `closest("#startButton")`.
+6. Tap the hotspot and confirm whether `beginWelcome()` changes the flow from `"idle"` to `"mode"`.
+
+### Pass condition
+
+The center hit test resolves to the start button and a tap advances the flow.
+
+### Fail routing
+
+- Hit test returns another element or pointer events are disabled: Card 8C.
+- Hit test returns the button but the flow does not advance: Card 8A.
+
+### Copy/paste prompt
+
+> Open `IDLE_SCREEN_START_FIX.md` and perform Card 7 only. Verify computed pointer events, z-index, center-point hit testing, and the idle-to-mode transition. Do not make a permanent fix. Update the row and stop.
+
+---
+
+## Card 8A — Conditional flow/data fix
+
+### Use this card only when
+
+Cards 3, 4, 5, or the event portion of Card 7 failed.
+
+### Goal
+
+Fix the smallest proven issue in image loading, welcome state, saved `buttonZones`, or click handling.
+
+### Files allowed
+
+- `scripts/app.js`
+- `idle-screen.test.js`
+- This runbook's handoff table
+
+### Guardrails
+
+- Do not change CSS.
+- Do not refactor unrelated welcome flow code.
+- Do not add a second permanent click path if an existing handler can be corrected.
+- Do not replace a missing saved zone with silent defaults unless the product behavior explicitly requires that fallback.
+
+### Pass condition
+
+The previously failed check now passes and the focused test passes.
+
+### Copy/paste prompt
+
+> Open `IDLE_SCREEN_START_FIX.md`. Perform Card 8A only because the handoff evidence identifies a flow/data failure. Make the smallest JS fix, add focused coverage, run the focused test, update the row, and stop.
+
+---
+
+## Card 8B — Conditional geometry fix
+
+### Use this card only when
+
+Card 6 failed.
+
+### Goal
+
+Correct hotspot geometry using the same image-fit model used by the displayed idle artwork.
+
+### Files allowed
+
+- `scripts/app.js`
+- `idle-screen.test.js`
+- This runbook's handoff table
+
+### Required investigation
+
+Compare the displayed `#welcomeImg` `object-fit` value with the calculation in `getCoverImageRect()`. The calculation must match the actual rendered image (`cover` versus `contain`) at runtime.
+
+### Guardrails
+
+- Do not hardcode coordinates for one image or viewport.
+- Keep Position Start values percentage-based.
+- Do not change CSS merely to make an incorrect geometry calculation appear correct.
+
+### Pass condition
+
+The button rectangle is non-zero and aligns with the saved Position Start region across the relevant viewport orientation.
+
+### Copy/paste prompt
+
+> Open `IDLE_SCREEN_START_FIX.md`. Perform Card 8B only because Card 6 proves a geometry failure. Match the geometry calculation to the rendered image fit, add focused coverage, run the focused test, update the row, and stop.
+
+---
+
+## Card 8C — Conditional CSS/stacking fix
+
+### Use this card only when
+
+Card 7 proves pointer events or stacking blocks the hotspot.
+
+### Goal
+
+Make the existing transparent button the top hit target without making it visible.
+
+### Files allowed
+
+- `index.html`
+- `idle-screen.test.js`
+- This runbook's handoff table
+
+### Guardrails
+
+- Change only the custom-idle-screen hotspot selectors.
+- Keep the button transparent: no background, border, shadow, text, blur, or visible animation.
+- Preserve a keyboard-only `:focus-visible` indicator for accessibility.
+- Do not modify normal non-custom welcome button styling.
+
+### Pass condition
+
+The hotspot remains visually transparent, `elementFromPoint()` resolves to it, and tapping advances the flow.
+
+### Copy/paste prompt
+
+> Open `IDLE_SCREEN_START_FIX.md` and perform Card 8C only because Card 7 proves a hit-testing/CSS failure. Make the smallest custom-idle selector change, add focused coverage, run the focused test, update the row, and stop.
+
+---
+
+## Card 9 — Add focused regression coverage
+
+### Goal
+
+Ensure the confirmed bug cannot return.
+
+### Files allowed
+
+- `idle-screen.test.js`
+- Application file already changed by Card 8, only if a testability export/hook is essential
+- This runbook's handoff table
+
+### Minimum assertions
+
+Add assertions for the exact proven root cause. Where practical, also retain coverage that:
+
+- idle sources are URL references rather than base64 data URLs;
+- Position Start data is preserved;
+- hotspot geometry is non-zero; and
+- clicking starts the next welcome step.
+
+Avoid brittle assertions tied only to line numbers or formatting.
+
+### Verification command
+
+```bash
+node --test idle-screen.test.js
+```
+
+### Pass condition
+
+The new test fails without the fix, passes with the fix, and existing idle-screen tests remain green.
+
+### Copy/paste prompt
+
+> Open `IDLE_SCREEN_START_FIX.md` and perform Card 9 only. Add regression coverage for the proven root cause, run `node --test idle-screen.test.js`, update the row, and stop.
+
+---
+
+## Card 10 — Remove diagnostics and validate
+
+### Goal
+
+Leave clean production code and document the completed fix.
+
+### Files allowed
+
+- `scripts/app.js` to remove temporary diagnostics
+- `BUILD_STATUS.md`
+- This runbook's handoff table
+
+### Steps
+
+1. Remove `[idle-start-diagnostic]` and any temporary hit-test logging.
+2. Keep the actual fix and focused tests.
+3. Update `BUILD_STATUS.md` with a concise description of the root cause and fix.
+4. Run the focused test.
+5. Run the complete test suite.
+6. Manually verify:
+   - the custom idle image is clear;
+   - its source is not a base64 data URL;
+   - the hotspot is invisible;
+   - the hotspot matches Position Start;
+   - tapping it advances the flow.
+
+### Commands
+
+```bash
+node --test idle-screen.test.js
+npm test
+```
+
+### Pass condition
+
+No temporary diagnostics remain, both commands pass, manual verification passes, and `BUILD_STATUS.md` is updated.
+
+### Copy/paste prompt
+
+> Open `IDLE_SCREEN_START_FIX.md` and perform Card 10 only. Remove temporary diagnostics, update `BUILD_STATUS.md`, run the focused and full tests, record concise results in the handoff table, and stop.
+
+---
+
+## Final completion checklist
+
+- [ ] No idle-screen image source begins with `data:image/`.
+- [ ] `positionIdleStartHotspot()` runs after the custom image loads.
+- [ ] `welcomeFlowStep` is `"idle"` when the hotspot is active.
+- [ ] `#welcomeScreen` has `custom-idle-screen`.
+- [ ] `#startButton` exists.
+- [ ] Raw `buttonZones.start` exists from Position Start.
+- [ ] The hotspot rectangle has non-zero dimensions.
+- [ ] The rectangle aligns with the saved Start area.
+- [ ] The hotspot is visually transparent.
+- [ ] Center-point hit testing resolves to the hotspot.
+- [ ] Tapping advances from idle to mode selection.
+- [ ] Temporary diagnostics are removed.
+- [ ] `BUILD_STATUS.md` is updated.
+- [ ] `node --test idle-screen.test.js` passes.
+- [ ] `npm test` passes.

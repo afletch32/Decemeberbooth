@@ -4,6 +4,8 @@
   const TOKEN_KEY = "photoboothStaffPrintToken";
   const eventInput = document.getElementById("eventId");
   const layoutInput = document.getElementById("printLayout");
+  const orientationInput = document.getElementById("printOrientation");
+  const rotationInput = document.getElementById("printRotation");
   const list = document.getElementById("queueList");
   const status = document.getElementById("queueStatus");
   const tokenButton = document.getElementById("setToken");
@@ -12,6 +14,8 @@
   let items = [];
   let staffAuthRequired = false;
   const LAYOUT_KEY = "photoboothStaffPrintLayout";
+  const ORIENTATION_KEY = "photoboothStaffPrintOrientation";
+  const ROTATION_KEY = "photoboothStaffPrintRotation";
 
   function cleanEventId(value) {
     return String(value || "default").trim().replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "default";
@@ -26,6 +30,30 @@
     const next = value === "double" ? "double" : "single";
     localStorage.setItem(LAYOUT_KEY, next);
     if (layoutInput) layoutInput.value = next;
+    return next;
+  }
+
+  function getPrintOrientation() {
+    const stored = localStorage.getItem(ORIENTATION_KEY) || "auto";
+    return ["auto", "landscape", "portrait"].includes(stored) ? stored : "auto";
+  }
+
+  function setPrintOrientation(value) {
+    const next = ["landscape", "portrait"].includes(value) ? value : "auto";
+    localStorage.setItem(ORIENTATION_KEY, next);
+    if (orientationInput) orientationInput.value = next;
+    return next;
+  }
+
+  function getPrintRotation() {
+    const stored = localStorage.getItem(ROTATION_KEY) || "0";
+    return ["0", "90", "180", "270"].includes(stored) ? stored : "0";
+  }
+
+  function setPrintRotation(value) {
+    const next = ["90", "180", "270"].includes(value) ? value : "0";
+    localStorage.setItem(ROTATION_KEY, next);
+    if (rotationInput) rotationInput.value = next;
     return next;
   }
 
@@ -60,6 +88,10 @@
     status.textContent = `${visible.length} active ${visible.length === 1 ? "item" : "items"} · refreshes every 5 seconds`;
     if (tokenButton) tokenButton.hidden = !staffAuthRequired;
     if (layoutInput && !layoutInput.value) layoutInput.value = getPrintLayout();
+    if (orientationInput && !orientationInput.value)
+      orientationInput.value = getPrintOrientation();
+    if (rotationInput && !rotationInput.value)
+      rotationInput.value = getPrintRotation();
     if (!visible.length) {
       list.innerHTML = '<div class="empty">No queued photos for this event.</div>';
       return;
@@ -132,7 +164,12 @@
     await loadQueue();
   }
 
-  function openPrintWindowForImage(imageUrl, layout = getPrintLayout()) {
+  function openPrintWindowForImage(
+    imageUrl,
+    layout = getPrintLayout(),
+    orientation = getPrintOrientation(),
+    rotation = getPrintRotation()
+  ) {
     const popup = window.open("", "_blank");
     if (!popup) throw new Error("Allow pop-ups to print this photo.");
     popup.opener = null;
@@ -146,7 +183,7 @@
     const sheetContent = doubleLayout
       ? `<img src="${safeUrl}" alt="Photo to print"><img src="${safeUrl}" alt="Photo to print">`
       : `<img src="${safeUrl}" alt="Photo to print">`;
-    popup.document.write(`<!doctype html><html><head><title>Print Photo</title><style>@page { size: 4in 6in; margin: 0; } html,body { width:4in; height:6in; margin:0; background:#fff; } body { display:grid; place-items:center; } .sheet { width:4in; height:6in; display:grid; background:#fff; } .sheet.single { grid-template-rows: 1fr; } .sheet.double { grid-template-rows: 1fr 1fr; } .sheet img { width:100%; height:100%; object-fit:contain; display:block; background:#fff; } .error { padding:16px; font:14px system-ui, sans-serif; color:#7c2222; }</style></head><body><div class="${sheetClass}">${sheetContent}</div><script>const images=Array.from(document.querySelectorAll("img")); const printPhoto=()=>{ window.focus(); setTimeout(()=>window.print(), 50); }; const showError=()=>{ document.body.innerHTML='<p class="error">Photo could not load. Close this tab and try Open/Print again.</p>'; }; let loaded=0; let failed=false; const onLoad=()=>{ loaded += 1; if (!failed && loaded === images.length) printPhoto(); }; const onError=()=>{ failed = true; showError(); }; images.forEach((image)=>{ image.addEventListener("load", onLoad, { once:true }); image.addEventListener("error", onError, { once:true }); if (image.complete) { if (image.naturalWidth > 0) onLoad(); else onError(); } });<\/script></body></html>`);
+    popup.document.write(`<!doctype html><html><head><title>Print Photo</title><style id="pageStyle"></style><style>html,body { margin:0; background:#fff; } body { display:grid; place-items:center; } .sheet { display:grid; background:#fff; overflow:hidden; } .sheet img { width:100%; height:100%; object-fit:contain; display:block; background:#fff; } .sheet.rotate-90 img,.sheet.rotate-270 img { width:var(--photo-height); height:var(--photo-width); } .sheet.rotate-90 img { transform:rotate(90deg); } .sheet.rotate-180 img { transform:rotate(180deg); } .sheet.rotate-270 img { transform:rotate(270deg); } .error { padding:16px; font:14px system-ui, sans-serif; color:#7c2222; }</style></head><body><div class="${sheetClass}">${sheetContent}</div><script>const requestedOrientation=${JSON.stringify(orientation)}; const rotation=${JSON.stringify(rotation)}; const images=Array.from(document.querySelectorAll("img")); const sheet=document.querySelector(".sheet"); const printPhoto=()=>{ const first=images[0]; const swaps=rotation==="90"||rotation==="270"; const effectiveLandscape=swaps ? first.naturalHeight>=first.naturalWidth : first.naturalWidth>=first.naturalHeight; const pageOrientation=requestedOrientation==="auto" ? (effectiveLandscape?"landscape":"portrait") : requestedOrientation; const landscape=pageOrientation==="landscape"; const width=landscape?"6in":"4in"; const height=landscape?"4in":"6in"; document.getElementById("pageStyle").textContent="@page { size: "+width+" "+height+"; margin:0; } html,body,.sheet { width:"+width+"; height:"+height+"; } .sheet.double { grid-template-"+(landscape?"columns":"rows")+":1fr 1fr; } .sheet { --photo-width:"+width+"; --photo-height:"+height+"; }"; sheet.classList.add("rotate-"+rotation); window.focus(); setTimeout(()=>window.print(), 80); }; const showError=()=>{ document.body.innerHTML='<p class="error">Photo could not load. Close this tab and try Open/Print again.</p>'; }; let loaded=0; let failed=false; const onLoad=()=>{ loaded += 1; if (!failed && loaded === images.length) printPhoto(); }; const onError=()=>{ failed = true; showError(); }; images.forEach((image)=>{ image.addEventListener("load", onLoad, { once:true }); image.addEventListener("error", onError, { once:true }); if (image.complete) { if (image.naturalWidth > 0) onLoad(); else onError(); } });<\/script></body></html>`);
     popup.document.close();
   }
 
@@ -185,6 +222,18 @@
     layoutInput.value = getPrintLayout();
     layoutInput.addEventListener("change", () => {
       setPrintLayout(layoutInput.value);
+    });
+  }
+  if (orientationInput) {
+    orientationInput.value = getPrintOrientation();
+    orientationInput.addEventListener("change", () => {
+      setPrintOrientation(orientationInput.value);
+    });
+  }
+  if (rotationInput) {
+    rotationInput.value = getPrintRotation();
+    rotationInput.addEventListener("change", () => {
+      setPrintRotation(rotationInput.value);
     });
   }
   eventInput.value = eventId;

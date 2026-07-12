@@ -9677,6 +9677,30 @@ function positionIdleStartHotspot(entry) {
     transform: "translate(-50%, -50%)",
   });
   DOM.startButton.setAttribute("aria-label", "Start photo booth");
+  const computed = getComputedStyle(DOM.startButton);
+  const rawSource = entry && entry.src ? entry.src : "";
+  let sourceClassification = "missing";
+  if (rawSource) {
+    if (rawSource.startsWith("data:image/")) {
+      sourceClassification = "data-url";
+    } else if (rawSource.startsWith("https://") || rawSource.startsWith("http://")) {
+      sourceClassification = "hosted-url";
+    } else {
+      sourceClassification = "local-path";
+    }
+  }
+  console.log("[idle-start-diagnostic]", {
+    welcomeFlowStep: welcomeFlowStep,
+    customIdleScreen: DOM.welcomeScreen.classList.contains("custom-idle-screen"),
+    startButtonExists: !!DOM.startButton,
+    rawButtonZoneExists: !!(entry && entry.buttonZones && entry.buttonZones.start),
+    normalizedZone: { x: zone.x, y: zone.y, width: zone.width, height: zone.height },
+    positionIdleStartHotspotExecuted: true,
+    rect: DOM.startButton.getBoundingClientRect(),
+    pointerEvents: computed.pointerEvents,
+    zIndex: computed.zIndex,
+    sourceClassification,
+  });
 }
 
 function clearCustomIdleScreen() {
