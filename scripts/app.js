@@ -9777,6 +9777,9 @@ function goBackFromWelcome(event) {
   }
   if (welcomeFlowStep === "mode") {
     setWelcomeFlowStep("idle");
+    const idleEntry = selectIdleScreenEntry();
+    if (idleEntry) applyCustomIdleScreen(idleEntry);
+    else clearCustomIdleScreen();
     return;
   }
   if (

@@ -81,6 +81,13 @@ test("starting from custom artwork reveals the mode selection step", () => {
   );
 });
 
+test("returning from mode selection restores custom idle artwork", () => {
+  const goBackFromWelcome = extractFunction(app, "goBackFromWelcome");
+  assert.ok(goBackFromWelcome.includes('setWelcomeFlowStep("idle");'));
+  assert.ok(goBackFromWelcome.includes("const idleEntry = selectIdleScreenEntry();"));
+  assert.ok(goBackFromWelcome.includes("if (idleEntry) applyCustomIdleScreen(idleEntry);"));
+});
+
 test("welcome mode inline handlers can resolve their exported function", () => {
   assert.ok(html.includes("onclick=\"beginModeSelection('still-photo', event)\""));
   assert.ok(app.includes("  beginModeSelection,\n  beginWelcome,"));

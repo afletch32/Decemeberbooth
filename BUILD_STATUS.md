@@ -2,6 +2,7 @@ Current goal
 - Support Canva-designed Cloudinary idle screens with orientation-aware artwork and aligned Start hotspots.
 
 What is done
+- Restored the selected custom idle artwork and hotspot when guests go Back from photo-mode selection to the idle step.
 - Matched the initial photo preview orientation to the booth viewport, bounded countdown sizing by both camera dimensions, and restored setup thumbnails from effective selected asset lists.
 - Removed all filter and backdrop-filter effects from the invisible custom idle-screen Start hotspot while preserving its focus indicator and hit area.
 - Fixed the custom idle-screen welcome flow by clearing the idle artwork before mode selection and exposing the existing `beginModeSelection()` handler to its inline mode buttons; added focused regression coverage.
