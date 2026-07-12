@@ -955,6 +955,27 @@ test("booth frame selection starts plain and stays beside capture controls", () 
   );
 });
 
+test("the no-frame live preview remains mirrored without changing capture output", () => {
+  const html = readProjectFile("index.html");
+  const app = readProjectFile("scripts/app.js");
+  const livePreviewRule = html.slice(
+    html.indexOf("#livePreviewCanvas {"),
+    html.indexOf("#lastShot,", html.indexOf("#livePreviewCanvas {"))
+  );
+
+  assert.ok(livePreviewRule.includes("transform: scaleX(-1);"));
+  assert.ok(app.includes("ctx.drawImage(processedCanvas, 0, 0, target.width, target.height);"));
+});
+
+test("filter controls are hidden during countdown and non-interactive booth states", () => {
+  const html = readProjectFile("index.html");
+
+  assert.ok(html.includes("#boothScreen.countdown-mode .filter-carousel,"));
+  assert.ok(html.includes("#boothScreen.finalizing-mode .filter-carousel,"));
+  assert.ok(html.includes("#boothScreen.share-mode .filter-carousel,"));
+  assert.ok(html.includes("#boothScreen.welcome-active .filter-carousel {"));
+});
+
 test("completed guest flows return directly to the idle screen", () => {
   const app = readProjectFile("scripts/app.js");
   assert.ok(app.includes("function finishBoothFlow()"));

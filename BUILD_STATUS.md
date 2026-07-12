@@ -76,3 +76,16 @@ Key test coverage:
 - Keep the existing pending, success, failure, and review-stage behavior unchanged.
 - Added regression coverage for immediate QR visibility.
 - Verified the focused setup suite passes 46/46 and the full suite passes 150/150.
+
+### No-Frame Preview Mirroring Fix
+
+- Mirror `#livePreviewCanvas` when the booth uses the No Frame preview path.
+- Leave processed capture and final output pixels unchanged.
+- Added regression coverage for the preview-only transform.
+
+### Booth State Visibility Fixes
+
+- Hide legacy headings, icons, and labels over custom photo-choice artwork while preserving hotspot buttons.
+- Hide filter arrows and the filter name during countdown, finalizing, share, and welcome states.
+- Enter the custom idle or photo-choice state before remote artwork finishes loading so slow connections do not flash the legacy UI.
+- Verified 65/65 focused tests and 153/153 full-suite tests pass.

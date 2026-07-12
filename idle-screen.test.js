@@ -114,6 +114,25 @@ test("photo choice artwork uses two saved invisible hotspots", () => {
   assert.ok(app.includes('place("still-photo", zones.singlePhoto'));
   assert.ok(app.includes('place("strip", zones.photoStrip'));
   assert.ok(app.includes("selectPhotoChoiceScreenEntry()"));
+  assert.ok(
+    html.includes(
+      "#welcomeScreen.custom-photo-choice-screen .welcome-mode-btn > * { visibility: hidden !important; }"
+    )
+  );
+});
+
+test("custom welcome artwork hides legacy UI before its image finishes loading", () => {
+  const photoChoice = extractFunction(app, "applyCustomPhotoChoiceScreen");
+  const idle = extractFunction(app, "applyCustomIdleScreen");
+
+  assert.ok(
+    photoChoice.indexOf('classList.add("custom-photo-choice-screen")') <
+      photoChoice.indexOf("DOM.welcomeImg.onload")
+  );
+  assert.ok(
+    idle.indexOf('classList.add("custom-idle-screen")') <
+      idle.indexOf("DOM.welcomeImg.onload")
+  );
 });
 
 test("dedicated photo choice uploads persist as photo-choice idle screens", () => {

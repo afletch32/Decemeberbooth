@@ -9871,9 +9871,10 @@ function positionPhotoChoiceHotspots(entry) {
 function applyCustomPhotoChoiceScreen(entry) {
   const src = getAssetEntrySrc(entry);
   if (!src || !DOM.welcomeImg || !DOM.welcomeScreen) return false;
+  DOM.welcomeScreen.classList.remove("custom-idle-screen");
+  DOM.welcomeScreen.classList.add("custom-photo-choice-screen");
+  DOM.welcomeImg.classList.add("hidden");
   DOM.welcomeImg.onload = () => {
-    DOM.welcomeScreen.classList.remove("custom-idle-screen");
-    DOM.welcomeScreen.classList.add("custom-photo-choice-screen");
     DOM.welcomeImg.classList.remove("hidden");
     positionPhotoChoiceHotspots(entry);
   };
@@ -9888,8 +9889,10 @@ function applyCustomIdleScreen(entry) {
     clearCustomIdleScreen();
     return false;
   }
+  DOM.welcomeScreen.classList.remove("custom-photo-choice-screen");
+  DOM.welcomeScreen.classList.add("custom-idle-screen");
+  DOM.welcomeImg.classList.add("hidden");
   DOM.welcomeImg.onload = () => {
-    DOM.welcomeScreen.classList.add("custom-idle-screen");
     DOM.welcomeImg.classList.remove("hidden");
     positionIdleStartHotspot(entry);
   };
