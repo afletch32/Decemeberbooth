@@ -721,6 +721,19 @@ test("asset library follows the selected theme and includes theme idle screens",
   );
 });
 
+test("asset library card refresh stays on the theme that rendered the library", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const toggleLibraryAsset = extractFunction(appScript, "toggleLibraryAsset");
+
+  assert.ok(
+    toggleLibraryAsset.includes(
+      "const key = getActiveAssetLibraryThemeContext().key;"
+    ) &&
+      !toggleLibraryAsset.includes("DOM.eventSelect && DOM.eventSelect.value"),
+    "session asset toggles should not reload a different hidden event theme and discard the selected card state"
+  );
+});
+
 test("asset library explains saved, filtered, and removal actions", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");

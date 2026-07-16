@@ -16221,7 +16221,7 @@ function toggleLibraryAsset(asset) {
       activeSessionAssets.idleScreens = isSelected ? [] : [entry];
     }
   }
-  const key = DOM.eventSelect && DOM.eventSelect.value;
+  const key = getActiveAssetLibraryThemeContext().key;
   if (key) loadTheme(key);
   renderCurrentAssets(activeTheme || getSelectedThemeTarget());
   renderAssetLibrary();

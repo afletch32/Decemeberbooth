@@ -35,6 +35,7 @@
 - Restored Asset Library and Current Selections as open-by-default event panels.
 - Relabeled Device Tools as Advanced Device Tools to distinguish operator fallbacks from normal setup.
 - Scoped the Asset Library and its type counts to the selected theme, including associated idle and photo-choice screens.
+- Kept Asset Library card refreshes on the active library theme so saved-event background additions retain their green selected outline.
 
 ## Photo Choice Screen Feature
 
