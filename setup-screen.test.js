@@ -166,7 +166,6 @@ test("setup flow uses direct theme and font activation", () => {
   assert.ok(
     appScript.includes("function activateThemeFromSetupSearch()") &&
       appScript.includes("loadTheme(key);") &&
-      appScript.includes("function activateFontFromSetupSearch()") &&
       appScript.includes("function getSessionPairingOptions(") &&
       appScript.includes("(fontCatalog.pairings || []).slice(0, 8)") &&
       appScript.includes('appendSessionFontGroupLabel("Popular pairings")') &&
@@ -382,10 +381,6 @@ test("event setup owns the day-to-day event editing controls", () => {
   assert.ok(
     !html.includes('id="stylePreviewHeading" class="style-preview-heading" contenteditable="true"'),
     "style preview should no longer act as an editable text surface"
-  );
-  assert.ok(
-    appScript.includes('buildEventFromThemeDefaults(theme, {'),
-    "new events should be initialized from theme defaults"
   );
   assert.ok(
     appScript.includes('alert("Create or select an event first.");'),
@@ -1018,7 +1013,7 @@ test("completed guest flows return directly to the idle screen", () => {
   assert.ok(app.includes("function finishBoothFlow()"));
   assert.ok(app.includes('showWelcome("idle");'));
   assert.ok(app.includes("function exitFinalPreview() {\n  finishBoothFlow();"));
-  assert.ok(app.includes("hidePreviewTimer = setTimeout(finishBoothFlow, 3000);"));
+  assert.ok(app.includes("hidePreviewTimer = setTimeout(finishBoothFlow, 15000);"));
   assert.ok(app.includes("function retakePhoto() {\n  hideFinal();"));
 });
 
@@ -1157,13 +1152,6 @@ test("output surfaces consume the finalized processed frame artifact", () => {
       appScript.includes("galleryRemote: url") &&
       appScript.includes("remoteFinalUrl: publicUrl"),
     "production gallery records should use the uploaded URL created from the final artifact"
-  );
-  assert.ok(
-    appScript.includes("photo_url: isVideo ? lastShareUrl || \"\" : lastShareUrl || imgUrl") &&
-      appScript.includes("image_data_url: isVideo ? \"\" : imgUrl") &&
-      appScript.includes("emailPhoto: templateParams.photo_url") &&
-      appScript.includes("emailImageData: templateParams.image_data_url"),
-    "email payloads should route the shared URL plus the exact final image data URL"
   );
   assert.ok(
     appScript.includes("getOutputSurfaceTrace: () => getOutputSurfaceTraceSnapshot()"),

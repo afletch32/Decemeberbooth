@@ -138,8 +138,8 @@ test("photo capture freezes the completed print while upload is prepared", () =>
   );
   assert.ok(
     html.includes("#boothScreen.finalizing-mode #finalPreview {") &&
-      html.includes("#boothScreen.finalizing-mode #finalPreviewActions,") &&
-      html.includes("#boothScreen.finalizing-mode #finalPreviewButtons"),
+      html.includes("#boothScreen.finalizing-mode #finalPreviewActions {") &&
+      !html.includes("#boothScreen.finalizing-mode #finalPreviewButtons"),
     "the finalizing state should show the finished image without share controls"
   );
 });

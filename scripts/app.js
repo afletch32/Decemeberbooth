@@ -9,19 +9,16 @@ import {
 import { clampZoom } from "./camera-utils.mjs";
 import {
   applyThemeText,
-  buildEventFromThemeDefaults,
   getEventTextOverrides,
   hasEventTextOverrides,
   inferThemeEventStyle,
   mergeUniqueUrls,
   normalizeEventStyle,
-  pairingSupportsEventStyle,
 } from "./event-utils.mjs";
 import {
   normalizeTemplateTextFields,
   resolveTemplateTextRect,
   resolveTemplateTextValue,
-  validateCreatePathEventDetails,
 } from "./template-text-utils.mjs";
 import { formatRecordingTime } from "./recording-utils.mjs";
 import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
@@ -739,12 +736,6 @@ const DOM = {
   logo: document.getElementById("logo"),
   eventTitle: document.getElementById("eventTitle"),
   eventProfileSelect: document.getElementById("eventProfileSelect"),
-  createPathEventName: document.getElementById("createPathEventName"),
-  createPathEventType: document.getElementById("createPathEventType"),
-  createPathEventTypeCards: document.getElementById(
-    "createPathEventTypeCards"
-  ),
-  createPathThemeType: document.getElementById("createPathThemeType"),
   createPathThemeSelect: document.getElementById("createPathThemeSelect"),
   sessionThemeToggle: document.getElementById("sessionThemeToggle"),
   sessionThemeValue: document.getElementById("sessionThemeValue"),
@@ -756,41 +747,6 @@ const DOM = {
   sessionFontMenu: document.getElementById("sessionFontMenu"),
   sessionFontSearch: document.getElementById("sessionFontSearch"),
   sessionFontOptions: document.getElementById("sessionFontOptions"),
-  createPathFontPairingSelect: document.getElementById(
-    "createPathFontPairingSelect"
-  ),
-  createPathFontNote: document.getElementById("createPathFontNote"),
-  createPathFontPreviewCards: document.getElementById(
-    "createPathFontPreviewCards"
-  ),
-  createPathValidationMessage: document.getElementById(
-    "createPathValidationMessage"
-  ),
-  createPathAssetSummary: document.getElementById("createPathAssetSummary"),
-  createPathBackgrounds: document.getElementById("createPathBackgrounds"),
-  createPathGreenBackgrounds: document.getElementById(
-    "createPathGreenBackgrounds"
-  ),
-  createPathOverlays: document.getElementById("createPathOverlays"),
-  createPathTemplates: document.getElementById("createPathTemplates"),
-  createPathLogo: document.getElementById("createPathLogo"),
-  createPathWeddingFields: document.getElementById("createPathWeddingFields"),
-  createPathPartner1: document.getElementById("createPathPartner1"),
-  createPathPartner2: document.getElementById("createPathPartner2"),
-  createPathDateFields: document.getElementById("createPathDateFields"),
-  createPathEventDate: document.getElementById("createPathEventDate"),
-  createPathBirthdayFields: document.getElementById("createPathBirthdayFields"),
-  createPathBirthdayName: document.getElementById("createPathBirthdayName"),
-  createPathExpoFields: document.getElementById("createPathExpoFields"),
-  createPathExpoCompany: document.getElementById("createPathExpoCompany"),
-  toggleThemeFavoriteBtn: document.getElementById("toggleThemeFavoriteBtn"),
-  eventPathCreateBtn: document.getElementById("eventPathCreateBtn"),
-  eventPathSelectBtn: document.getElementById("eventPathSelectBtn"),
-  eventPathCreatePanel: document.getElementById("eventPathCreatePanel"),
-  eventPathSelectPanel: document.getElementById("eventPathSelectPanel"),
-  chooseEventBtn: document.getElementById("chooseEventBtn"),
-  createEventBtn: document.getElementById("createEventBtn"),
-  quickStartBtn: document.getElementById("quickStartBtn"),
   modeToggle: document.getElementById("modeToggle"),
   quickStartModal: document.getElementById("quickStartModal"),
   quickStartThemeSelect: document.getElementById("quickStartThemeSelect"),
@@ -798,12 +754,6 @@ const DOM = {
   quickStartConfirm: document.getElementById("quickStartConfirm"),
   demoThemeBar: document.getElementById("demoThemeBar"),
   boothBackBtn: document.getElementById("boothBackBtn"),
-  launchEventName: document.getElementById("launchEventName"),
-  launchLayoutMode: document.getElementById("launchLayoutMode"),
-  launchOverlayName: document.getElementById("launchOverlayName"),
-  launchFontStatus: document.getElementById("launchFontStatus"),
-  launchCameraStatus: document.getElementById("launchCameraStatus"),
-  launchOutputStatus: document.getElementById("launchOutputStatus"),
   launchBackgroundThumb: document.getElementById("launchBackgroundThumb"),
   launchBackgroundSummary: document.getElementById("launchBackgroundSummary"),
   launchOverlayCount: document.getElementById("launchOverlayCount"),
@@ -813,15 +763,10 @@ const DOM = {
   launchTemplateThumb: document.getElementById("launchTemplateThumb"),
   launchTemplateSummary: document.getElementById("launchTemplateSummary"),
   launchWarning: document.getElementById("launchWarning"),
-  launchModeSingleBtn: document.getElementById("launchModeSingleBtn"),
-  launchModeStripBtn: document.getElementById("launchModeStripBtn"),
   launchConfirmModal: document.getElementById("launchConfirmModal"),
   launchConfirmEventName: document.getElementById("launchConfirmEventName"),
-  launchConfirmLayoutMode: document.getElementById("launchConfirmLayoutMode"),
   launchConfirmOverlayName: document.getElementById("launchConfirmOverlayName"),
   launchConfirmFontStatus: document.getElementById("launchConfirmFontStatus"),
-  launchConfirmCameraStatus: document.getElementById("launchConfirmCameraStatus"),
-  launchConfirmOutputStatus: document.getElementById("launchConfirmOutputStatus"),
   launchConfirmOverlayCount: document.getElementById(
     "launchConfirmOverlayCount"
   ),
@@ -837,7 +782,6 @@ const DOM = {
     "boothInstantCaptureToggle"
   ),
   lowLightToggle: document.getElementById("lowLightToggle"),
-  greenScreenToggle: document.getElementById("greenScreenToggle"),
   aiBackgroundToggle: document.getElementById("aiBackgroundToggle"),
   enhancementModeSelect: document.getElementById("enhancementModeSelect"),
   cameraZoomInput: document.getElementById("cameraZoomInput"),
@@ -864,7 +808,6 @@ const DOM = {
   video: document.getElementById("video"),
   livePreviewCanvas: document.getElementById("livePreviewCanvas"),
   liveOverlay: document.getElementById("liveOverlay"),
-  silhouette: document.getElementById("silhouette"),
   recordingOverlay: document.getElementById("recordingOverlay"),
   recordingTimer: document.getElementById("recordingTimer"),
   captureStatusBar: document.getElementById("captureStatusBar"),
@@ -889,12 +832,6 @@ const DOM = {
   lastShot: document.getElementById("lastShot"),
   qrHint: document.getElementById("qrHint"),
   shareStatus: document.getElementById("shareStatus"),
-  shareLinkRow: document.getElementById("shareLinkRow"),
-  shareLink: document.getElementById("shareLink"),
-  emailInput: document.getElementById("emailInput"),
-  sendBtn: document.getElementById("sendBtn"),
-  retakeBtn: document.getElementById("retakeBtn"),
-  closePreviewBtn: document.getElementById("closePreviewBtn"),
   confirmModal: document.getElementById("confirmModal"),
   confirmPreview: document.getElementById("confirmPreview"),
   gallery: document.getElementById("gallery"),
@@ -932,19 +869,13 @@ const DOM = {
   stylePreviewBody: document.getElementById("stylePreviewBody"),
   stylePreviewButton: document.getElementById("stylePreviewButton"),
   eventGalleryActions: document.getElementById("eventGalleryActions"),
-  eventGalleryLink: document.getElementById("eventGalleryLink"),
   themeVibesSection: document.getElementById("themeVibesSection"),
   themeSeasonalSection: document.getElementById("themeSeasonalSection"),
   themeSeasonalContent: document.getElementById("themeSeasonalContent"),
-  eventOnlyBackgrounds: document.getElementById("eventOnlyBackgrounds"),
   eventPartner1Input: document.getElementById("eventPartner1Input"),
   eventPartner2Input: document.getElementById("eventPartner2Input"),
   eventBirthdayNameInput: document.getElementById("eventBirthdayNameInput"),
   eventExpoCompanyInput: document.getElementById("eventExpoCompanyInput"),
-  eventOnlyOverlays: document.getElementById("eventOnlyOverlays"),
-  eventOnlyTemplates: document.getElementById("eventOnlyTemplates"),
-  eventOverridesSummary: document.getElementById("eventOverridesSummary"),
-  clearEventOverridesBtn: document.getElementById("clearEventOverridesBtn"),
   eventBannerTextInput: document.getElementById("eventBannerTextInput"),
   eventWelcomeTitleInput: document.getElementById("eventWelcomeTitleInput"),
   eventStartButtonTextInput: document.getElementById(
@@ -964,21 +895,13 @@ const DOM = {
     "eventBaseThemeAssetsSummary"
   ),
   eventThemeReferenceText: document.getElementById("eventThemeReferenceText"),
-  resetEventTextToThemeBtn: document.getElementById("resetEventTextToThemeBtn"),
-  resetEventSizesToThemeBtn: document.getElementById(
-    "resetEventSizesToThemeBtn"
-  ),
-  resetEventLogoToThemeBtn: document.getElementById("resetEventLogoToThemeBtn"),
   bannerSizeInput: document.getElementById("bannerSizeInput"),
   bannerSizeValue: document.getElementById("bannerSizeValue"),
   welcomeTitleSizeInput: document.getElementById("welcomeTitleSizeInput"),
   welcomeTitleSizeValue: document.getElementById("welcomeTitleSizeValue"),
   fontEventStyleSelect: document.getElementById("fontEventStyleSelect"),
-  themeStepLabel: document.getElementById("themeStepLabel"),
-  themeStepNote: document.getElementById("themeStepNote"),
   createEventModal: document.getElementById("createEventModal"),
   createEventName: document.getElementById("createEventName"),
-  createEventDate: document.getElementById("createEventDate"),
   createEventUseThemeDefaults: document.getElementById(
     "createEventUseThemeDefaults"
   ),
@@ -1025,7 +948,6 @@ const DOM = {
   cacheAssetsBtn: document.getElementById("cacheAssetsBtn"),
   forceCameraFileToggle: document.getElementById("forceCameraFileToggle"),
   themeQuickSelect: document.getElementById("themeQuickSelect"),
-  themeCharacter: document.getElementById("themeCharacter"),
   addAssetsBtn: document.getElementById("addAssetsBtn"),
   addIdleScreensBtn: document.getElementById("addIdleScreensBtn"),
   addPhotoChoiceScreenBtn: document.getElementById("addPhotoChoiceScreenBtn"),
@@ -1083,91 +1005,38 @@ const DOM = {
   themeDefaultsSetupCancel: document.getElementById("themeDefaultsSetupCancel"),
   themeDefaultsSetupSave: document.getElementById("themeDefaultsSetupSave"),
   themeGreenBackgrounds: document.getElementById("themeGreenBackgrounds"),
-  addGreenBackgroundsBtn: document.getElementById("addGreenBackgroundsBtn"),
   currentGreenBackgrounds: document.getElementById("currentGreenBackgrounds"),
   themeFontSelect: document.getElementById("themeFontSelect"),
   themeEditorModeSelect: document.getElementById("themeEditorModeSelect"),
-  themeCloneSection: document.getElementById("themeCloneSection"),
-  themeCloneName: document.getElementById("themeCloneName"),
-  cloneThemeBtn: document.getElementById("cloneThemeBtn"),
   addLogoBtn: document.getElementById("addLogoBtn"),
-  addBackgroundsBtn: document.getElementById("addBackgroundsBtn"),
-  addOverlaysBtn: document.getElementById("addOverlaysBtn"),
-  addTemplatesBtn: document.getElementById("addTemplatesBtn"),
   eventToSubThemeBtn: document.getElementById("eventToSubThemeBtn"),
-  addFontFamily: document.getElementById("addFontFamily"),
-  addFontUrl: document.getElementById("addFontUrl"),
-  currentFonts: document.getElementById("currentFonts"),
   themeAccent: document.getElementById("themeAccent"),
   themeAccent2: document.getElementById("themeAccent2"),
   themeBackground: document.getElementById("themeBackground"),
   themeLogo: document.getElementById("themeLogo"),
   themeOverlays: document.getElementById("themeOverlays"),
-  themeOverlaysFolder: document.getElementById("themeOverlaysFolder"),
   themeTemplates: document.getElementById("themeTemplates"),
-  themeTemplatesFolder: document.getElementById("themeTemplatesFolder"),
   themeWelcomeTitle: document.getElementById("themeWelcomeTitle"),
   themeWelcomePrompt: document.getElementById("themeWelcomePrompt"),
   summaryBackground: document.getElementById("summaryBackground"),
   summaryLogo: document.getElementById("summaryLogo"),
   summaryOverlays: document.getElementById("summaryOverlays"),
   summaryTemplates: document.getElementById("summaryTemplates"),
-  currentBackgrounds: document.getElementById("currentBackgrounds"),
   currentLogo: document.getElementById("currentLogo"),
   currentFont: document.getElementById("currentFont"),
-  currentAccents: document.getElementById("currentAccents"),
-  backgroundThumbnailsPanel: document.getElementById("backgroundThumbnailsPanel"),
-  backgroundThumbnailsHeader: document.getElementById(
-    "backgroundThumbnailsHeader"
-  ),
   backgroundThumbnailsSelected: document.getElementById(
     "launchBackgroundCount"
   ),
   backgroundThumbnailsCount: document.getElementById("launchBackgroundCount"),
   backgroundThumbnailsAction: null,
-  backgroundThumbnailsBody: document.getElementById("backgroundThumbnailsBody"),
-  backgroundThumbnailsLoading: document.getElementById(
-    "backgroundThumbnailsLoading"
-  ),
-  backgroundThumbnailsError: document.getElementById(
-    "backgroundThumbnailsError"
-  ),
-  sessionBackgrounds: document.getElementById("sessionBackgrounds"),
-  currentOverlays: document.getElementById("currentOverlays"),
-  currentTemplates: document.getElementById("currentTemplates"),
-  overlayThumbnailsPanel: document.getElementById("overlayThumbnailsPanel"),
-  overlayThumbnailsHeader: document.getElementById("overlayThumbnailsHeader"),
   overlayThumbnailsSelected: document.getElementById("launchOverlayCount"),
   overlayThumbnailsCount: document.getElementById("launchOverlayCount"),
   overlayThumbnailsAction: null,
-  overlayThumbnailsBody: document.getElementById("overlayThumbnailsBody"),
-  overlayThumbnailsLoading: document.getElementById(
-    "overlayThumbnailsLoading"
-  ),
-  overlayThumbnailsError: document.getElementById("overlayThumbnailsError"),
-  templateThumbnailsPanel: document.getElementById("templateThumbnailsPanel"),
-  templateThumbnailsHeader: document.getElementById(
-    "templateThumbnailsHeader"
-  ),
   templateThumbnailsSelected: document.getElementById("launchStripStatus"),
   templateThumbnailsCount: document.getElementById("launchStripStatus"),
   templateThumbnailsAction: null,
-  templateThumbnailsBody: document.getElementById("templateThumbnailsBody"),
-  templateThumbnailsLoading: document.getElementById(
-    "templateThumbnailsLoading"
-  ),
-  templateThumbnailsError: document.getElementById("templateThumbnailsError"),
-  currentEventName: document.getElementById("currentEventName"),
-  currentEventDate: document.getElementById("currentEventDate"),
-  currentEventTheme: document.getElementById("currentEventTheme"),
   currentAssetsSection: document.getElementById("currentAssetsSection"),
   currentAssetsContent: document.getElementById("currentAssetsContent"),
-  currentEventAssetsSummary: document.getElementById(
-    "currentEventAssetsSummary"
-  ),
-  currentThemeAssetsSummary: document.getElementById(
-    "currentThemeAssetsSummary"
-  ),
   createThemeModal: document.getElementById("createThemeModal"),
   createThemeDropZone: document.getElementById("createThemeDropZone"),
   createThemeName: document.getElementById("createThemeName"),
@@ -1178,11 +1047,8 @@ const DOM = {
   createThemeFolderInput: document.getElementById("createThemeFolderInput"),
   btnUpdateTheme: document.getElementById("btnUpdateTheme"),
   btnSaveTheme: document.getElementById("btnSaveTheme"),
-  installBtn: document.getElementById("installBtn"),
   themeEditorCloseBtn: document.getElementById("themeEditorCloseBtn"),
 };
-
-let createPathEventTypeFilter = "all";
 
 function setBoothControlsVisible(show) {
   const hidden = !show;
@@ -2389,225 +2255,32 @@ function setupEventSelector() {
   DOM.eventSelect.addEventListener("change", handleEventSelectChange);
 }
 
-function updateCreatePathFavoriteButton() {
-  if (!DOM.toggleThemeFavoriteBtn || !DOM.createPathThemeSelect) return;
-  const key = DOM.createPathThemeSelect.value || "";
-  if (!key) {
-    DOM.toggleThemeFavoriteBtn.textContent = "Add to Favorites";
-    DOM.toggleThemeFavoriteBtn.disabled = true;
-    return;
-  }
-  const favorites = getThemeFavorites();
-  const isFavorite = favorites.has(key);
-  DOM.toggleThemeFavoriteBtn.textContent = isFavorite
-    ? "Remove from Favorites"
-    : "Add to Favorites";
-  DOM.toggleThemeFavoriteBtn.disabled = false;
-}
-
-function getSuggestedPairingsForEventType(selectedType, limit = 0) {
-  const pairings = Array.isArray(fontCatalog.pairings)
-    ? fontCatalog.pairings.slice()
-    : [];
-  const filtered = pairings.filter((pairing) =>
-    pairingSupportsEventStyle(pairing, selectedType)
-  );
-  return limit > 0 ? filtered.slice(0, limit) : filtered;
-}
-
-function getThemeFontPairingLabel(themeKey = "") {
-  const theme =
-    resolveThemeByKey(themeKey) ||
-    activeTheme ||
-    getSelectedThemeTarget() ||
-    {};
-  const heading =
-    primaryFontFamily(theme.fontHeading || theme.font || "") || "Theme heading";
-  const body = primaryFontFamily(theme.fontBody || theme.font || "") || heading;
-  return `${heading} + ${body}`;
-}
-
-function renderCreatePathFontPreviewCards(pairings, themeKey = "") {
-  if (!DOM.createPathFontPreviewCards) return;
-  DOM.createPathFontPreviewCards.innerHTML = "";
-  const selectedValue = DOM.createPathFontPairingSelect
-    ? DOM.createPathFontPairingSelect.value
-    : "";
-
-  const theme =
-    resolveThemeByKey(themeKey) ||
-    activeTheme ||
-    getSelectedThemeTarget() ||
-    {};
-  const themeHeading =
-    primaryFontFamily(theme.fontHeading || theme.font || "") || "Theme heading";
-  const themeBody =
-    primaryFontFamily(theme.fontBody || theme.font || "") || themeHeading;
-  const makeCard = ({
-    label,
-    title,
-    notes = "",
-    preview,
-    heading,
-    value = "",
-  }) => {
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = "quick-pick-card event-style-card";
-    const isSelected = value === selectedValue;
-    card.classList.toggle("active", isSelected);
-    card.setAttribute("aria-pressed", isSelected ? "true" : "false");
-    card.innerHTML = `
-      <div class="quick-pick-label">${label}</div>
-      <div class="quick-pick-title">${title}</div>
-      ${notes ? `<div class="quick-pick-notes">${notes}</div>` : ""}
-      <div class="quick-pick-preview" style="font-family: ${composeFontString(
-        heading
-      )};">${preview}</div>
-    `;
-    card.addEventListener("click", () => {
-      if (DOM.createPathFontPairingSelect) {
-        DOM.createPathFontPairingSelect.value = value;
-      }
-      renderCreatePathFontPreviewCards(pairings, themeKey);
-    });
-    return card;
-  };
-
-  DOM.createPathFontPreviewCards.appendChild(
-    makeCard({
-      label: "Theme Default",
-      title: `${themeHeading} + ${themeBody}`,
-      notes: "Use the selected theme's built-in fonts.",
-      preview: resolveThemeBannerText(),
-      heading: themeHeading,
-      value: "",
-    })
-  );
-
-  pairings.forEach((pairing) => {
-    DOM.createPathFontPreviewCards.appendChild(
-      makeCard({
-        label: "Suggested",
-        title: `${pairing.heading} + ${pairing.body}`,
-        notes: pairing.notes || "",
-        preview: findPairingPreview(pairing),
-        heading: pairing.heading,
-        value: `${pairing.heading}|${pairing.body}`,
-      })
-    );
-  });
-}
-
-function populateCreatePathFontPairingSelect(preferredValue = "") {
-  if (!DOM.createPathFontPairingSelect) return;
-  const themeKey = DOM.createPathThemeSelect
-    ? DOM.createPathThemeSelect.value
-    : "";
-  const theme = resolveThemeByKey(themeKey);
-  const selectedType = inferThemeEventStyle(themeKey, theme);
-  const pairings = getSuggestedPairingsForEventType(selectedType, 5);
-  const select = DOM.createPathFontPairingSelect;
-  select.innerHTML = "";
-
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = `Use theme fonts (${getThemeFontPairingLabel(
-    DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : ""
-  )})`;
-  select.appendChild(placeholder);
-
-  pairings.forEach((pairing) => {
-    const option = document.createElement("option");
-    option.value = `${pairing.heading}|${pairing.body}`;
-    option.textContent = pairing.notes
-      ? `${pairing.heading} + ${pairing.body} - ${pairing.notes}`
-      : `${pairing.heading} + ${pairing.body}`;
-    select.appendChild(option);
-  });
-
-  if (
-    preferredValue &&
-    Array.from(select.options).some((option) => option.value === preferredValue)
-  ) {
-    select.value = preferredValue;
-  } else {
-    select.value = "";
-  }
-
-  if (DOM.createPathFontNote) {
-    const typeLabel = getEventTypeCopy(selectedType).label;
-    DOM.createPathFontNote.textContent = pairings.length
-      ? `${
-          pairings.length
-        } suggested pairings ready for this ${typeLabel.toLowerCase()} theme.`
-      : `No suggested pairings are set up for this theme yet.`;
-  }
-  renderCreatePathFontPreviewCards(pairings, themeKey);
-}
-
-function updateCreatePathAssetSummary() {
-  if (!DOM.createPathAssetSummary) return;
-  DOM.createPathAssetSummary.textContent = getSessionAssetSummaryText();
-}
-
 function populateCreatePathThemeSelect(preferredThemeKey) {
   if (!DOM.createPathThemeSelect) return;
-  const filter = DOM.createPathThemeType
-    ? DOM.createPathThemeType.value
-    : "";
   const options = Array.from(
     (DOM.eventSelect && DOM.eventSelect.options) || []
   ).filter((opt) => opt && opt.value);
-  const favorites = getThemeFavorites();
-  const selectedTypeRaw =
-    (DOM.createPathEventType && DOM.createPathEventType.value) ||
-    createPathEventTypeFilter ||
-    "all";
-  const selectedType = normalizeEventStyle(selectedTypeRaw);
   const selectedBefore =
     preferredThemeKey || DOM.createPathThemeSelect.value || "";
-  const filtered = options.filter((opt) => {
-    const key = opt.value;
-    const item = {
-      value: key,
-      theme: resolveThemeByKey(key),
-    };
-    if (filter && getThemeTypeForKey(key, favorites) !== filter) return false;
-    if (selectedTypeRaw === "all") return true;
-    return shouldIncludeCreatePathTheme(key, item.theme, selectedType);
-  });
   DOM.createPathThemeSelect.innerHTML = "";
-  if (!filtered.length) {
+  if (!options.length) {
     const empty = document.createElement("option");
     empty.value = "";
-    empty.textContent =
-      filter === "favorite"
-        ? "No favorite themes yet"
-        : `No ${filter} themes found`;
+    empty.textContent = "No themes found";
     DOM.createPathThemeSelect.appendChild(empty);
     DOM.createPathThemeSelect.value = "";
-    updateCreatePathFavoriteButton();
-    populateCreatePathFontPairingSelect();
-    updateCreatePathDetailFields("");
     return;
   }
-  filtered.forEach((opt) => {
+  options.forEach((opt) => {
     const next = document.createElement("option");
     next.value = opt.value;
     next.textContent = opt.textContent || opt.value;
     DOM.createPathThemeSelect.appendChild(next);
   });
-  const hasPreferred = filtered.some((opt) => opt.value === selectedBefore);
+  const hasPreferred = options.some((opt) => opt.value === selectedBefore);
   DOM.createPathThemeSelect.value = hasPreferred
     ? selectedBefore
-    : filtered[0].value;
-  updateCreatePathFavoriteButton();
-  populateCreatePathFontPairingSelect();
-  const selectedTheme = resolveThemeByKey(DOM.createPathThemeSelect.value || "");
-  updateCreatePathDetailFields(
-    inferThemeEventStyle(DOM.createPathThemeSelect.value || "", selectedTheme)
-  );
+    : options[0].value;
   const selectedKey = DOM.createPathThemeSelect.value || "";
   if (selectedKey && DOM.eventSelect && DOM.eventSelect.value !== selectedKey) {
     setActiveEventId("");
@@ -2902,7 +2575,6 @@ function activateThemeFromSetupKey(key) {
   setEventSelection(key);
   if (DOM.createPathThemeSelect) DOM.createPathThemeSelect.value = key;
   loadTheme(key);
-  populateCreatePathFontPairingSelect();
   updateLaunchSummary();
   closeSetupCombobox("theme");
 }
@@ -2964,44 +2636,6 @@ function selectFirstVisibleComboboxOption(kind) {
   if (option) option.click();
 }
 
-function syncCreatePathFilterCards() {
-  const selected =
-    (DOM.createPathEventType && DOM.createPathEventType.value) ||
-    createPathEventTypeFilter ||
-    "all";
-  document.querySelectorAll("[data-theme-filter-card]").forEach((button) => {
-    const active = button.dataset.themeFilterCard === selected;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", active ? "true" : "false");
-  });
-}
-
-function setCreatePathThemeFilter(value = "all") {
-  const next = value || "all";
-  createPathEventTypeFilter = next;
-  if (DOM.createPathEventType) DOM.createPathEventType.value = next;
-  syncCreatePathFilterCards();
-  populateCreatePathThemeSelect();
-  populateCreatePathFontPairingSelect();
-}
-
-function getCreatePathAssetInputs() {
-  return [
-    DOM.createPathBackgrounds,
-    DOM.createPathGreenBackgrounds,
-    DOM.createPathOverlays,
-    DOM.createPathTemplates,
-    DOM.createPathLogo,
-  ].filter(Boolean);
-}
-
-function resetCreatePathAssetInputs() {
-  getCreatePathAssetInputs().forEach((input) => {
-    input.value = "";
-  });
-  updateCreatePathAssetSummary();
-}
-
 function resetActiveSessionAssets() {
   activeSessionAssets = createEmptySessionAssets();
   activeSessionThemeKey = "";
@@ -3059,7 +2693,6 @@ function selectSessionBackground(src) {
   activeSessionAssets.backgroundIndex = 0;
   applyThemeBackground(activeTheme);
   renderCurrentAssets(activeTheme);
-  updateCreatePathAssetSummary();
   updateLaunchSummary();
   showToast("Session background selected");
 }
@@ -3082,28 +2715,13 @@ function selectSessionOverlay(entry) {
   renderOptions();
   syncOverlayPreviewSurface({ mode: "live" });
   renderCurrentAssets(activeTheme);
-  updateCreatePathAssetSummary();
   updateLaunchSummary();
   showToast("Session overlay selected");
 }
 
-function getSessionAssetSummaryText() {
-  const summary = describeAssetSummaryCounts({
-    backgrounds: activeSessionAssets.backgrounds.length,
-    greenBackgrounds: activeSessionAssets.greenBackgrounds.length,
-    overlays: activeSessionAssets.overlays.length,
-    templates: activeSessionAssets.templates.length,
-    hasLogo: !!activeSessionAssets.logo,
-  });
-  return summary === "none" ? "No session assets selected yet." : `Session assets: ${summary}`;
-}
-
 async function uploadCreatePathSessionAssets(kind, fileList) {
   const files = Array.from(fileList || []).filter(Boolean);
-  if (!files.length) {
-    updateCreatePathAssetSummary();
-    return;
-  }
+  if (!files.length) return;
   const tasks = files.map(async (file) => {
     const url = await uploadAsset(file, kind, getSessionAssetUploadOptions(kind));
     return addSessionAssetUrl(kind, url);
@@ -3117,7 +2735,6 @@ async function uploadCreatePathSessionAssets(kind, fileList) {
     updateLaunchSummary();
     showToast(`Added ${uploaded} session asset${uploaded === 1 ? "" : "s"}.`);
   }
-  updateCreatePathAssetSummary();
 }
 
 function prepareThemeSessionFromSetup() {
@@ -3137,240 +2754,6 @@ function prepareThemeSessionFromSetup() {
   updateEventOverridesSummary();
   updateStylePreview();
   updateLaunchSummary();
-  return true;
-}
-
-const CREATE_PATH_VALIDATION_FIELDS = {
-  name: () => DOM.createPathEventName,
-  themeKey: () => DOM.createPathThemeSelect,
-  partner1: () => DOM.createPathPartner1,
-  partner2: () => DOM.createPathPartner2,
-  birthdayName: () => DOM.createPathBirthdayName,
-  date: () => DOM.createPathEventDate,
-  expoCompany: () => DOM.createPathExpoCompany,
-};
-
-function setCreatePathFieldInvalid(field, invalid) {
-  if (!field) return;
-  if (invalid) {
-    field.setAttribute("aria-invalid", "true");
-    field.style.borderColor = "#d74b6a";
-    field.style.boxShadow = "0 0 0 3px rgba(215, 75, 106, 0.15)";
-    return;
-  }
-  field.removeAttribute("aria-invalid");
-  field.style.borderColor = "";
-  field.style.boxShadow = "";
-}
-
-function clearCreatePathValidation() {
-  Object.values(CREATE_PATH_VALIDATION_FIELDS).forEach((getField) => {
-    setCreatePathFieldInvalid(getField(), false);
-  });
-  if (DOM.createPathValidationMessage) {
-    DOM.createPathValidationMessage.textContent = "";
-    DOM.createPathValidationMessage.classList.add("hidden");
-  }
-}
-
-function showCreatePathValidation(message, fieldKeys = []) {
-  clearCreatePathValidation();
-  if (DOM.createPathValidationMessage) {
-    DOM.createPathValidationMessage.textContent = message;
-    DOM.createPathValidationMessage.classList.remove("hidden");
-  }
-  const invalidFields = fieldKeys
-    .map((key) =>
-      Object.prototype.hasOwnProperty.call(CREATE_PATH_VALIDATION_FIELDS, key)
-        ? CREATE_PATH_VALIDATION_FIELDS[key]()
-        : null
-    )
-    .filter(Boolean);
-  invalidFields.forEach((field) => {
-    setCreatePathFieldInvalid(field, true);
-  });
-  if (invalidFields[0]) invalidFields[0].focus();
-}
-
-function readCreatePathEventDetails() {
-  return {
-    name: valueFromInput(DOM.createPathEventName),
-    themeKey: DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "",
-    date: valueFromInput(DOM.createPathEventDate),
-    partner1: valueFromInput(DOM.createPathPartner1),
-    partner2: valueFromInput(DOM.createPathPartner2),
-    birthdayName: valueFromInput(DOM.createPathBirthdayName),
-    expoCompany: valueFromInput(DOM.createPathExpoCompany),
-    pairingValue: DOM.createPathFontPairingSelect
-      ? DOM.createPathFontPairingSelect.value
-      : "",
-  };
-}
-
-function resetCreatePathForm() {
-  clearCreatePathValidation();
-  [
-    DOM.createPathEventName,
-    DOM.createPathPartner1,
-    DOM.createPathPartner2,
-    DOM.createPathBirthdayName,
-    DOM.createPathEventDate,
-    DOM.createPathExpoCompany,
-    DOM.createPathFontPairingSelect,
-  ]
-    .filter(Boolean)
-    .forEach((input) => {
-      input.value = "";
-    });
-  resetCreatePathAssetInputs();
-}
-
-function updateCreatePathDetailFields(style = "") {
-  const selectedFilter = normalizeEventStyle(
-    (DOM.createPathEventType && DOM.createPathEventType.value) ||
-      createPathEventTypeFilter ||
-      ""
-  );
-  const inferredStyle = normalizeEventStyle(style);
-  const normalized =
-    [inferredStyle, selectedFilter].find(
-      (value) => value && value !== "general"
-    ) || inferredStyle || selectedFilter || "general";
-  if (DOM.createPathWeddingFields) {
-    DOM.createPathWeddingFields.classList.add("hidden");
-    DOM.createPathWeddingFields.setAttribute("aria-hidden", "true");
-  }
-  if (DOM.createPathBirthdayFields) {
-    DOM.createPathBirthdayFields.classList.add("hidden");
-    DOM.createPathBirthdayFields.setAttribute("aria-hidden", "true");
-  }
-  if (DOM.createPathExpoFields) {
-    DOM.createPathExpoFields.classList.add("hidden");
-    DOM.createPathExpoFields.setAttribute("aria-hidden", "true");
-  }
-  if (DOM.createPathDateFields) {
-    DOM.createPathDateFields.classList.add("hidden");
-    DOM.createPathDateFields.setAttribute("aria-hidden", "true");
-  }
-}
-
-async function addCreatePathAssetsToEvent(event) {
-  if (!event) return;
-  const overrides = ensureEventOverrides(event);
-  const tasks = [];
-  const queueUploads = (files, kind, onComplete) => {
-    Array.from(files || [])
-      .filter(Boolean)
-      .forEach((file) => {
-        tasks.push(
-          uploadAsset(file, kind, getEventAssetUploadOptions(event, kind)).then(
-            (url) => {
-              if (!url) return;
-              onComplete(url);
-            }
-          )
-        );
-      });
-  };
-
-  queueUploads(
-    DOM.createPathBackgrounds && DOM.createPathBackgrounds.files,
-    "backgrounds",
-    (url) => {
-      overrides.backgrounds.push(url);
-    }
-  );
-  queueUploads(
-    DOM.createPathGreenBackgrounds && DOM.createPathGreenBackgrounds.files,
-    "greenBackgrounds",
-    (url) => {
-      overrides.greenBackgrounds.push(url);
-    }
-  );
-  queueUploads(
-    DOM.createPathOverlays && DOM.createPathOverlays.files,
-    "overlays",
-    (url) => {
-      overrides.overlays.push(url);
-    }
-  );
-  queueUploads(
-    DOM.createPathTemplates && DOM.createPathTemplates.files,
-    "templates",
-    (url) => {
-      overrides.templates.push({ src: url, layout: "double_column" });
-    }
-  );
-  queueUploads(
-    DOM.createPathLogo && DOM.createPathLogo.files,
-    "logo",
-    (url) => {
-      event.logo = url;
-    }
-  );
-
-  if (tasks.length) await Promise.all(tasks);
-}
-
-function buildCreatePathEvent(theme, details, eventType) {
-  const [fontHeading = "", fontBody = ""] = details.pairingValue
-    ? details.pairingValue.split("|")
-    : ["", ""];
-  const slug = slugifyEventText(details.name);
-  const id = `${slug || "event"}-${Date.now().toString(36)}`;
-
-  return buildEventFromThemeDefaults(theme, {
-    id,
-    name: details.name,
-    date: details.date,
-    eventType,
-    themeKey: details.themeKey,
-    fontHeading,
-    fontBody,
-    partner1: details.partner1,
-    partner2: details.partner2,
-    birthdayName: details.birthdayName,
-    expoCompany: details.expoCompany,
-    createdAt: new Date().toISOString(),
-  });
-}
-
-async function createEventFromPathInputs() {
-  clearCreatePathValidation();
-  const details = readCreatePathEventDetails();
-  if (!details.name) {
-    showCreatePathValidation("Enter an event name.", ["name"]);
-    return false;
-  }
-  if (!details.themeKey) {
-    showCreatePathValidation("Choose a theme.", ["themeKey"]);
-    return false;
-  }
-  const theme = resolveThemeByKey(details.themeKey);
-  if (!theme) {
-    showCreatePathValidation("Theme not found.", ["themeKey"]);
-    return false;
-  }
-  const eventType = inferThemeEventStyle(details.themeKey, theme);
-  const detailValidation = validateCreatePathEventDetails(eventType, details);
-  if (!detailValidation.ok) {
-    showCreatePathValidation(detailValidation.message, detailValidation.fields);
-    return false;
-  }
-  const newEvent = buildCreatePathEvent(theme, details, eventType);
-  await addCreatePathAssetsToEvent(newEvent);
-  const events = getStoredEvents();
-  events.push(newEvent);
-  setStoredEvents(events);
-  setActiveEventId(newEvent.id);
-  populateEventProfileSelect(newEvent.id);
-  if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = newEvent.id;
-  setEventSelection(details.themeKey);
-  loadTheme(details.themeKey);
-  syncEventInputsFromActive();
-  updateStylePreview();
-  resetCreatePathForm();
-  showToast(`Event "${details.name}" created`);
   return true;
 }
 
@@ -3434,93 +2817,6 @@ function confirmQuickStartFromModal() {
 }
 
 function setupEventProfileControls() {
-  const focusCurrentEventSetup = () => {
-    if (DOM.currentAssetsSection) DOM.currentAssetsSection.open = true;
-    if (
-      DOM.currentAssetsSection &&
-      typeof DOM.currentAssetsSection.scrollIntoView === "function"
-    ) {
-      DOM.currentAssetsSection.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  };
-  const setEventSetupPath = (path) => {
-    const showCreate = path === "create";
-    const showSelect = path === "select";
-    if (DOM.eventPathCreatePanel)
-      DOM.eventPathCreatePanel.classList.toggle("hidden", !showCreate);
-    if (DOM.eventPathSelectPanel)
-      DOM.eventPathSelectPanel.classList.toggle("hidden", !showSelect);
-    if (DOM.eventPathCreateBtn) {
-      DOM.eventPathCreateBtn.classList.toggle("primary", showCreate);
-      DOM.eventPathCreateBtn.setAttribute(
-        "aria-pressed",
-        showCreate ? "true" : "false"
-      );
-    }
-    if (DOM.eventPathSelectBtn) {
-      DOM.eventPathSelectBtn.classList.toggle("primary", showSelect);
-      DOM.eventPathSelectBtn.setAttribute(
-        "aria-pressed",
-        showSelect ? "true" : "false"
-      );
-    }
-  };
-  setEventSetupPath("create");
-  if (DOM.eventPathCreateBtn) {
-    DOM.eventPathCreateBtn.addEventListener("click", () => {
-      disableShowcaseDemo();
-      setEventSetupPath("create");
-      populateCreatePathThemeSelect(
-        (DOM.eventSelect && DOM.eventSelect.value) || ""
-      );
-    });
-  }
-  if (DOM.eventPathSelectBtn) {
-    DOM.eventPathSelectBtn.addEventListener("click", () => {
-      disableShowcaseDemo();
-      setEventSetupPath("select");
-    });
-  }
-  if (DOM.chooseEventBtn) {
-    DOM.chooseEventBtn.addEventListener("click", () => {
-      const active = getActiveEvent();
-      if (!active) {
-        alert("Choose an event first.");
-        return;
-      }
-      focusCurrentEventSetup();
-    });
-  }
-  if (DOM.createEventBtn) {
-    DOM.createEventBtn.addEventListener("click", () => {
-      setEventSetupPath("create");
-      if (prepareThemeSessionFromSetup()) {
-        showToast("Theme session ready.");
-      }
-    });
-  }
-  [
-    DOM.createPathEventName,
-    DOM.createPathThemeSelect,
-    DOM.createPathPartner1,
-    DOM.createPathPartner2,
-    DOM.createPathBirthdayName,
-    DOM.createPathEventDate,
-    DOM.createPathExpoCompany,
-  ]
-    .filter(Boolean)
-    .forEach((input) => {
-      input.addEventListener("input", clearCreatePathValidation);
-      input.addEventListener("change", clearCreatePathValidation);
-    });
-  if (DOM.quickStartBtn) {
-    DOM.quickStartBtn.addEventListener("click", () => {
-      startShowcaseDemo();
-    });
-  }
   if (DOM.quickStartCancel)
     DOM.quickStartCancel.addEventListener("click", hideQuickStartModal);
   if (DOM.quickStartConfirm) {
@@ -3536,36 +2832,10 @@ function setupEventProfileControls() {
       confirmQuickStartFromModal();
     });
   }
-  if (DOM.createPathThemeType) {
-    const initialType = DOM.createPathThemeType.value || "favorite";
-    DOM.createPathThemeType.value = initialType;
-    DOM.createPathThemeType.addEventListener("change", () => {
-      populateCreatePathThemeSelect();
-    });
-  }
-  if (DOM.createPathEventType) {
-    DOM.createPathEventType.value = "all";
-    DOM.createPathEventType.addEventListener("change", () => {
-      setCreatePathThemeFilter(
-        DOM.createPathEventType.value || createPathEventTypeFilter || "all"
-      );
-    });
-  }
-  document.querySelectorAll("[data-theme-filter-card]").forEach((button) => {
-    button.addEventListener("click", () => {
-      setCreatePathThemeFilter(button.dataset.themeFilterCard || "all");
-    });
-  });
-  syncCreatePathFilterCards();
   if (DOM.createPathThemeSelect) {
     DOM.createPathThemeSelect.addEventListener("change", () => {
       disableShowcaseDemo();
-      updateCreatePathFavoriteButton();
       const key = DOM.createPathThemeSelect.value || "";
-      const theme = resolveThemeByKey(key);
-      const style = inferThemeEventStyle(key, theme);
-      updateCreatePathDetailFields(style);
-      populateCreatePathFontPairingSelect();
       if (!key) return;
       setActiveEventId("");
       setQuickStartSessionDate(getLocalIsoDate());
@@ -3620,22 +2890,6 @@ function setupEventProfileControls() {
       closeSetupCombobox("font");
     }
   });
-  const sessionAssetInputs = [
-    [DOM.createPathBackgrounds, "backgrounds"],
-    [DOM.createPathGreenBackgrounds, "greenBackgrounds"],
-    [DOM.createPathOverlays, "overlays"],
-    [DOM.createPathTemplates, "templates"],
-    [DOM.createPathLogo, "logo"],
-  ];
-  sessionAssetInputs.forEach(([input, kind]) => {
-    if (!input) return;
-    input.addEventListener("change", () => {
-      uploadCreatePathSessionAssets(kind, input.files).catch((err) => {
-        console.error("Session asset upload failed", err);
-        updateCreatePathAssetSummary();
-      });
-    });
-  });
   document.querySelectorAll("[data-demo-theme]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.preventDefault();
@@ -3651,50 +2905,14 @@ function setupEventProfileControls() {
       beginModeSelection(button.dataset.welcomeMode, event);
     });
   });
-  if (DOM.createPathFontPairingSelect) {
-    DOM.createPathFontPairingSelect.addEventListener("change", () => {
-      renderCreatePathFontPreviewCards(
-        getSuggestedPairingsForEventType(
-          inferThemeEventStyle(
-            DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : "",
-            resolveThemeByKey(
-              DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : ""
-            )
-          ),
-          5
-        ),
-        DOM.createPathThemeSelect ? DOM.createPathThemeSelect.value : ""
-      );
-    });
-  }
-  if (DOM.toggleThemeFavoriteBtn) {
-    DOM.toggleThemeFavoriteBtn.addEventListener("click", () => {
-      if (!DOM.createPathThemeSelect) return;
-      const key = DOM.createPathThemeSelect.value || "";
-      if (!key) return;
-      const favorites = getThemeFavorites();
-      if (favorites.has(key)) favorites.delete(key);
-      else favorites.add(key);
-      setThemeFavorites(favorites);
-      const currentFilter = DOM.createPathThemeType
-        ? DOM.createPathThemeType.value
-        : "favorite";
-      const preferred = currentFilter === "favorite" ? "" : key;
-      populateCreatePathThemeSelect(preferred);
-      updateCreatePathFavoriteButton();
-    });
-  }
   populateCreatePathThemeSelect(
     (DOM.eventSelect && DOM.eventSelect.value) || ""
   );
-  populateCreatePathFontPairingSelect();
   syncSessionThemeSearch();
   syncSessionFontSearch();
-  updateCreatePathAssetSummary();
   if (DOM.eventProfileSelect) {
     DOM.eventProfileSelect.addEventListener("change", (event) => {
       disableShowcaseDemo();
-      setEventSetupPath("select");
       const id = event.target.value || "";
       setActiveEventId(id);
       syncEventInputsFromActive();
@@ -3852,7 +3070,6 @@ function setupThemeEditorControls() {
     DOM.fontEventStyleSelect.addEventListener("change", () => {
       syncEventTypeTiles();
       populateThemeSelector((DOM.eventSelect && DOM.eventSelect.value) || "");
-      updateEventTypeSetupUI();
     });
   }
   if (DOM.themeName)
@@ -4312,7 +3529,6 @@ async function applyBulkAssetUpload() {
   }
   const key = DOM.eventSelect && DOM.eventSelect.value;
   if (key) loadTheme(key);
-  updateCreatePathAssetSummary();
   closeBulkAssetModal();
   showToast(`Added ${uploaded} session asset item${uploaded === 1 ? "" : "s"}.`);
 }
@@ -6887,12 +6103,6 @@ function syncEventTypeTiles() {
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
-  if (DOM.createPathEventType) {
-    DOM.createPathEventType.value = selectedType;
-    if (!createPathEventTypeFilter || createPathEventTypeFilter === "all") {
-      createPathEventTypeFilter = selectedType;
-    }
-  }
 }
 
 function setSelectedEventType(nextType) {
@@ -6902,7 +6112,6 @@ function setSelectedEventType(nextType) {
   }
   syncEventTypeTiles();
   populateThemeSelector((DOM.eventSelect && DOM.eventSelect.value) || "");
-  updateEventTypeSetupUI();
 }
 
 function getThemeEventTypePriority(item, selectedType) {
@@ -7030,99 +6239,6 @@ function getEventTypeCopy(selectedType) {
     },
   };
   return copy[normalized] || copy.general;
-}
-
-function updateEventTypeSetupUI() {
-  const selectedType = getSelectedEventType();
-  const pairings = Array.isArray(fontCatalog.pairings)
-    ? fontCatalog.pairings.slice()
-    : [];
-  const filteredPairings = pairings.filter((pairing) =>
-    pairingSupportsEventStyle(pairing, selectedType)
-  );
-  const themeCopy = getEventTypeCopy(selectedType);
-
-  if (DOM.fontPairingContextLabel) {
-    DOM.fontPairingContextLabel.textContent = `${themeCopy.label} Font Suggestions`;
-  }
-  if (DOM.fontPairingContextNote) {
-    DOM.fontPairingContextNote.textContent = themeCopy.note;
-  }
-  if (DOM.themeStepLabel) {
-    DOM.themeStepLabel.textContent = `${themeCopy.label} Theme`;
-  }
-  if (DOM.themeStepNote) {
-    DOM.themeStepNote.textContent = themeCopy.themeNote;
-  }
-
-  if (DOM.editorFontPairingSelect) {
-    const select = DOM.editorFontPairingSelect;
-    const previous = select.value;
-    select.innerHTML = "";
-    const placeholder = document.createElement("option");
-    placeholder.value = "";
-    placeholder.textContent = filteredPairings.length
-      ? "-- Choose suggested fonts --"
-      : "-- No suggested fonts yet --";
-    select.appendChild(placeholder);
-    filteredPairings.forEach((pairing) => {
-      const option = document.createElement("option");
-      option.value = `${pairing.heading}|${pairing.body}`;
-      option.textContent = pairing.notes
-        ? `${pairing.heading} + ${pairing.body} - ${pairing.notes}`
-        : `${pairing.heading} + ${pairing.body}`;
-      select.appendChild(option);
-    });
-    if (
-      previous &&
-      Array.from(select.options).some((option) => option.value === previous)
-    ) {
-      select.value = previous;
-    }
-  }
-
-  if (DOM.eventStylePairings) {
-    DOM.eventStylePairings.innerHTML = "";
-    if (!filteredPairings.length) {
-      const empty = document.createElement("div");
-      empty.className = "quick-pick-empty";
-      empty.textContent =
-        "No font suggestions are set up for this event type yet.";
-      DOM.eventStylePairings.appendChild(empty);
-    } else {
-      filteredPairings.slice(0, 4).forEach((pairing) => {
-        const card = document.createElement("button");
-        card.type = "button";
-        card.className = "quick-pick-card event-style-card";
-        const previewText = findPairingPreview(pairing);
-        card.innerHTML = `
-          <div class="quick-pick-label">Suggested</div>
-          <div class="quick-pick-title">${pairing.heading} + ${
-          pairing.body
-        }</div>
-          ${
-            pairing.notes
-              ? `<div class="quick-pick-notes">${pairing.notes}</div>`
-              : ""
-          }
-          <div class="quick-pick-preview" style="font-family: ${composeFontString(
-            pairing.heading
-          )};">${previewText}</div>
-        `;
-        card.addEventListener("click", () => {
-          applyFontSelection(pairing.heading, pairing.body, {
-            keepPairing: true,
-            headingPreviewText: previewText,
-            bodyPreviewText: getFontPreviewText(pairing.body),
-          });
-          if (DOM.editorFontPairingSelect) {
-            DOM.editorFontPairingSelect.value = `${pairing.heading}|${pairing.body}`;
-          }
-        });
-        DOM.eventStylePairings.appendChild(card);
-      });
-    }
-  }
 }
 
 function buildThemeCard(item, options = {}) {
@@ -7541,11 +6657,6 @@ async function process360Video(file) {
     const qrRendered = DOM.qrCode
       ? await renderQrCode(DOM.qrCode, publicUrl)
       : false;
-    if (DOM.shareLink) {
-      DOM.shareLink.href = publicUrl;
-      DOM.shareLink.textContent = publicUrl;
-    }
-    if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "flex";
     if (DOM.qrCodeContainer) {
       DOM.qrCodeContainer.dataset.ready = qrRendered ? "true" : "false";
       DOM.qrCodeContainer.classList.remove("hidden");
@@ -7923,7 +7034,6 @@ function loadTheme(themeKey) {
   logEffectiveAssetState(theme, "loadTheme");
   syncAdminUiWithTheme(themeKey, theme);
   renderAssetLibrary();
-  updateCreatePathAssetSummary();
   updateLaunchSummary();
   syncSessionThemeSearch();
   syncSessionFontSearch();
@@ -10177,7 +9287,6 @@ function auditBoothLayout() {
     "#filterCarousel",
     "#boothHostPrompt",
     "#captureBtn",
-    "#reviewPanel",
     "#qrCodeContainer",
   ];
   const boxes = selectors
@@ -12414,10 +11523,6 @@ function showFinal(url, options = {}) {
         DOM.shareStatus.textContent = "Preparing QR";
         DOM.shareStatus.style.display = "inline-flex";
       }
-      if (DOM.shareLink) {
-        DOM.shareLink.href = lastShareUrl;
-        DOM.shareLink.textContent = lastShareUrl;
-      }
       renderQrCode(qrCanvas, lastShareUrl).then((qrRendered) => {
         if (qrContainer) {
           qrContainer.dataset.ready = qrRendered ? "true" : "false";
@@ -12475,19 +11580,6 @@ function showFinal(url, options = {}) {
       hidePreviewTimer = setTimeout(finishBoothFlow, 15000);
     }
   };
-
-  // Reset form from previous use
-  if (DOM.emailInput) DOM.emailInput.value = "";
-  if (DOM.sendBtn) {
-    DOM.sendBtn.textContent = "Send";
-    DOM.sendBtn.disabled = false;
-  }
-
-  if (DOM.retakeBtn) {
-    DOM.retakeBtn.style.display = "none";
-    DOM.retakeBtn.disabled = true;
-  }
-  if (DOM.closePreviewBtn) DOM.closePreviewBtn.style.display = "block";
 
   if (img) {
     img.onload = () => {
@@ -14007,10 +13099,7 @@ function hideFinal() {
   if (DOM.finalPrintActions) DOM.finalPrintActions.classList.add("hidden");
   pendingFinalPrintImageUrl = "";
   setFinalPreviewSharePanelVisible(false);
-  if (DOM.shareLinkRow) DOM.shareLinkRow.style.display = "none";
   if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
-  if (DOM.retakeBtn) DOM.retakeBtn.style.display = "none";
-  if (DOM.closePreviewBtn) DOM.closePreviewBtn.style.display = "none";
   clearLiveClip();
   lastCaptureFlow = null; // Clear the stored flow
   clearTimeout(hidePreviewTimer);
@@ -14059,106 +13148,6 @@ function addToGallery(url) {
 function cancelHideTimer() {
   clearTimeout(hidePreviewTimer);
   resetIdleTimer(); // Still reset the main idle timer
-}
-
-function startHideTimerIfIdle() {
-  // If email input is empty, restart the hide timer
-  if (!DOM.emailInput || DOM.emailInput.value.trim() === "") {
-    cancelHideTimer();
-    hidePreviewTimer = setTimeout(finishBoothFlow, 4000);
-  }
-}
-
-function sendEmail(event) {
-  event.preventDefault();
-  if (!DOM.emailInput || !DOM.sendBtn) return;
-  cancelHideTimer();
-  const email = DOM.emailInput.value;
-  const sendBtn = DOM.sendBtn;
-  const imgUrl = DOM.finalStrip && DOM.finalStrip.src;
-  const offline = offlineModeActive();
-  const isVideo = lastShareType === "video";
-
-  if (offline) {
-    if (isVideo) {
-      alert("Video sharing requires an internet connection.");
-      return;
-    }
-    updateOutputSurfaceTrace({
-      surfaces: {
-        emailPhoto: imgUrl || "",
-        emailImageData: imgUrl || "",
-      },
-    });
-    // Queue locally for later sending
-    const ok = queuePendingEmail(email, imgUrl);
-    if (ok) {
-      sendBtn.textContent = "Queued";
-      updatePendingUI();
-      hidePreviewTimer = setTimeout(finishBoothFlow, 1200);
-    } else {
-      alert("Could not queue email. Check storage space.");
-    }
-    return;
-  }
-
-  sendBtn.textContent = "Sending...";
-  sendBtn.disabled = true;
-
-  const cfg = getEmailJsConfig();
-  const templateParams = {
-    to_email: email,
-    photo_url: isVideo ? lastShareUrl || "" : lastShareUrl || imgUrl,
-    link_url: lastShareUrl || "",
-    image_data_url: isVideo ? "" : imgUrl,
-    video_url: isVideo ? lastShareUrl || "" : "",
-  };
-  updateOutputSurfaceTrace({
-    surfaces: {
-      emailPhoto: templateParams.photo_url,
-      emailImageData: templateParams.image_data_url,
-    },
-  });
-
-  emailjs.send(cfg.service, cfg.template, templateParams).then(
-    function (response) {
-      console.log("SUCCESS!", response.status, response.text);
-      sendBtn.textContent = "Sent!";
-      hidePreviewTimer = setTimeout(finishBoothFlow, 3000);
-    },
-    function (error) {
-      const errMsg = formatEmailError(error);
-      console.error("Email send failed:", error);
-      sendBtn.textContent = "Failed!";
-      sendBtn.disabled = false;
-      alert("Email failed: " + errMsg);
-    }
-  );
-
-  recordAnalytics("email", email);
-}
-
-function formatEmailError(err) {
-  if (!err) return "unknown error";
-  if (typeof err === "string") return err;
-  if (err.text) return err.text;
-  if (err.message) return err.message;
-  if (typeof err.status !== "undefined") {
-    const statusText = err.statusText || err.text || "";
-    return `${err.status} ${statusText}`.trim();
-  }
-  try {
-    return JSON.stringify(err);
-  } catch (_) {
-    return String(err);
-  }
-}
-
-function appendEmailText(text) {
-  const emailInput = DOM.emailInput;
-  if (!emailInput) return;
-  emailInput.value += text;
-  emailInput.focus(); // Keep the input focused for a smooth flow
 }
 
 // --- Analytics ---
@@ -16691,7 +15680,6 @@ function saveAssetThemeDefaults() {
   if (selectedThemeKey) loadTheme(selectedThemeKey);
   populateAssetThemeDefaultsModal(asset);
   renderAssetLibrary();
-  updateCreatePathAssetSummary();
   updateLaunchSummary();
   closeAssetThemeDefaultsModal();
   showToast("Default theme choices saved.");
@@ -16819,7 +15807,6 @@ function saveThemeDefaultsSetup() {
   loadTheme(key);
   renderAssetLibrary();
   renderCurrentAssets(activeTheme || theme);
-  updateCreatePathAssetSummary();
   updateLaunchSummary();
   closeThemeDefaultsSetupModal();
   showToast(`Theme defaults saved for ${getThemeSetupDisplayLabel(key, theme)}.`);
@@ -17151,7 +16138,6 @@ function toggleLibraryAsset(asset) {
   if (key) loadTheme(key);
   renderCurrentAssets(activeTheme || getSelectedThemeTarget());
   renderAssetLibrary();
-  updateCreatePathAssetSummary();
   updateLaunchSummary();
   showToast(isSelected ? "Asset removed from this session" : "Asset added to this session");
 }
@@ -17790,100 +16776,8 @@ function ensureFontLoaded(family, storeIfNew = false) {
     ) {
       fonts.push({ type: "family", value: fam });
       saveStoredFonts(fonts);
-      updateFontSuggestions();
-      renderCurrentFonts();
     }
   }
-}
-
-function addFontByFamily() {
-  const fam = ((DOM.addFontFamily && DOM.addFontFamily.value) || "")
-    .replace(/^['"]|['"]$/g, "")
-    .trim();
-  if (!fam) {
-    alert("Enter a font family name.");
-    return;
-  }
-  ensureFontLoaded(fam, true);
-  alert(`Added Google Font: ${fam}`);
-}
-
-function addFontByUrl() {
-  const url = ((DOM.addFontUrl && DOM.addFontUrl.value) || "").trim();
-  if (!url) {
-    alert("Paste a Google Fonts CSS URL.");
-    return;
-  }
-  try {
-    new URL(url);
-  } catch (e) {
-    alert("Invalid URL.");
-    return;
-  }
-  const id = "gf-url-" + btoa(url).replace(/=/g, "");
-  if (!document.getElementById(id)) {
-    const link = document.createElement("link");
-    link.id = id;
-    link.rel = "stylesheet";
-    link.href = url;
-    document.head.appendChild(link);
-  }
-  const fonts = getStoredFonts();
-  if (!fonts.find((f) => f.type === "url" && f.value === url)) {
-    let famLabel = "";
-    try {
-      const u = new URL(url);
-      const fam = u.searchParams.get("family");
-      famLabel = fam ? fam.split(":")[0].replace(/\+/g, " ") : "";
-    } catch (_e) {}
-    fonts.push({ type: "url", value: url, label: famLabel });
-    saveStoredFonts(fonts);
-  }
-  updateFontSuggestions();
-  renderCurrentFonts();
-  alert("Font URL added.");
-}
-
-function updateFontSuggestions() {
-  const dl = document.getElementById("fontSuggestions");
-  if (!dl) return;
-  dl.innerHTML = "";
-  const suggestions = new Set([
-    "Comic Neue",
-    "Creepster",
-    "Inter",
-    "Montserrat",
-  ]);
-  const fonts = getStoredFonts();
-  fonts.forEach((f) => {
-    const fam = f.type === "family" ? f.value : (f.label || "").trim();
-    if (fam) suggestions.add(fam);
-  });
-  if (Array.isArray(fontCatalog.available)) {
-    fontCatalog.available.forEach((font) => {
-      if (font && font.name) suggestions.add(font.name);
-    });
-  }
-  Array.from(suggestions)
-    .sort((a, b) => a.localeCompare(b))
-    .forEach((name) => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      dl.appendChild(opt);
-    });
-}
-
-function renderCurrentFonts() {
-  if (!DOM.currentFonts) return;
-  const fonts = getStoredFonts();
-  if (fonts.length === 0) {
-    DOM.currentFonts.textContent = "No added fonts yet.";
-    return;
-  }
-  const parts = fonts.map((f) =>
-    f.type === "family" ? f.value : f.label || "Custom URL"
-  );
-  DOM.currentFonts.textContent = `Available fonts: ${parts.join(", ")}`;
 }
 
 function loadFontsFromStorage() {
@@ -17901,8 +16795,6 @@ function loadFontsFromStorage() {
       }
     }
   });
-  updateFontSuggestions();
-  renderCurrentFonts();
   if (fontPickerInitialized) {
     queueFontPickerRefresh({ preserveSelection: true });
   }
@@ -17929,10 +16821,6 @@ function getFontPreviewText(name) {
   return (match && match.preview) || DEFAULT_FONT_PREVIEW;
 }
 
-function getFontPreviewFamily(name) {
-  return getFontPreviewText(name);
-}
-
 function findPairingPreview(pairing, fonts = fontCatalog.available) {
   if (!pairing) return DEFAULT_FONT_PREVIEW;
   if (pairing.preview) return pairing.preview;
@@ -17946,35 +16834,6 @@ function findPairingPreview(pairing, fonts = fontCatalog.available) {
     if (match && match.preview) return match.preview;
   }
   return getFontPreviewText(heading);
-}
-
-function populateFontPickerOptions(fonts) {
-  const list = Array.isArray(fonts) ? fonts : [];
-  renderSessionFontOptions();
-  const selects = [
-    DOM.headingFontSelect,
-    DOM.bodyFontSelect,
-    DOM.editorHeadingFontSelect,
-    DOM.editorBodyFontSelect,
-  ];
-  selects.forEach((sel) => {
-    if (!sel) return;
-    const current = sel.value;
-    sel.innerHTML = "";
-    list.forEach((font) => {
-      if (!font || !font.name) return;
-      const opt = document.createElement("option");
-      opt.value = font.name;
-      opt.textContent = font.name;
-      opt.style.fontFamily = composeFontString(font.name);
-      sel.appendChild(opt);
-    });
-    if (current) {
-      ensureOptionExists(sel, current);
-      sel.value = current;
-    }
-  });
-  syncSessionFontSearch();
 }
 
 function ensureOptionExists(select, family) {
@@ -17999,38 +16858,6 @@ function getFontPickerSelection() {
     heading,
     body,
   };
-}
-
-function updateFontPreviewElements(heading, body, options = {}) {
-  const welcomeText = resolveWelcomeTitle();
-  const startText = resolveStartButtonText();
-  const bannerText = resolveBannerText();
-  const headingText =
-    options.headingPreviewText ||
-    welcomeText ||
-    bannerText ||
-    getFontPreviewText(heading);
-  const bodyText =
-    options.bodyPreviewText ||
-    startText ||
-    bannerText ||
-    getFontPreviewText(body);
-  const applyPreview = (node, family, text) => {
-    if (!node) return;
-    node.style.fontFamily = composeFontString(family || "");
-    const textNode = node.querySelector(".font-preview-text");
-    if (textNode) {
-      textNode.textContent = text;
-    } else {
-      node.textContent = text;
-    }
-  };
-  [DOM.headingFontPreview, DOM.editorHeadingFontPreview].forEach((node) =>
-    applyPreview(node, heading, headingText)
-  );
-  [DOM.bodyFontPreview, DOM.editorBodyFontPreview].forEach((node) =>
-    applyPreview(node, body, bodyText)
-  );
 }
 
 function setFontPickerSelection(heading, body, options = {}) {
@@ -18067,29 +16894,6 @@ function applyFontSelection(heading, body, options = {}) {
   applyFontsToActiveTheme(heading, body, options);
 }
 
-function refreshFontPickerUI(theme, options = {}) {
-  const defaults = fontCatalog.defaults || {};
-  const fallback =
-    fontCatalog.available && fontCatalog.available.length
-      ? fontCatalog.available[0].name
-      : "";
-  const heading =
-    options.heading ||
-    primaryFontFamily((theme && (theme.fontHeading || theme.font)) || "") ||
-    defaults.heading ||
-    fallback ||
-    "";
-  const body =
-    options.body ||
-    primaryFontFamily((theme && (theme.fontBody || theme.font)) || "") ||
-    defaults.body ||
-    heading ||
-    fallback ||
-    "";
-  setFontPickerSelection(heading, body, { keepPairing: true });
-  syncSessionFontSearch();
-}
-
 function syncSessionFontSearch() {
   const theme = activeTheme || getSelectedThemeTarget() || {};
   const heading = primaryFontFamily(theme.fontHeading || theme.font || "");
@@ -18103,15 +16907,6 @@ function syncSessionFontSearch() {
   if (DOM.sessionFontValue) DOM.sessionFontValue.textContent = label || "Choose font";
   if (DOM.sessionFontSearch) DOM.sessionFontSearch.value = "";
   renderSessionFontOptions();
-}
-
-function getSessionFontOptions(filter = "") {
-  const needle = String(filter || "").trim().toLowerCase();
-  return (fontCatalog.available || []).filter((font) => {
-    if (!font || !font.name) return false;
-    if (!needle) return true;
-    return String(font.name || "").toLowerCase().includes(needle);
-  });
 }
 
 function getSessionPairingOptions(filter = "") {
@@ -18182,31 +16977,6 @@ function activateFontPairingFromSetup(pairing) {
   closeSetupCombobox("font");
 }
 
-function activateFontFromSetupFamily(family) {
-  if (!family) return;
-  applyFontSelection(family, family, { keepPairing: true });
-  updateLaunchSummary();
-  syncSessionFontSearch();
-  closeSetupCombobox("font");
-}
-
-function activateFontFromSetupSearch() {
-  if (!DOM.sessionFontSearch) return;
-  const value = DOM.sessionFontSearch.value.trim();
-  if (!value) return;
-  const normalized = value.toLowerCase();
-  const pairing = (fontCatalog.pairings || []).find((candidate) =>
-    candidate &&
-    `${candidate.notes || ""} ${candidate.heading} + ${candidate.body}`
-      .toLowerCase()
-      .includes(normalized)
-  );
-  if (pairing) {
-    activateFontPairingFromSetup(pairing);
-    return;
-  }
-}
-
 async function reloadFontPickerOptions(options = {}) {
   let base = { available: [], defaults: {}, pairings: [] };
   const manifestCandidates = ["fonts.json", "./fonts.json", "/fonts.json"];
@@ -18258,7 +17028,6 @@ async function reloadFontPickerOptions(options = {}) {
   if (href) injectStylesheetOnce(href);
   renderSessionFontOptions();
   syncSessionFontSearch();
-  updateEventTypeSetupUI();
 }
 
 async function setupFontPicker() {
@@ -19828,7 +18597,6 @@ function removeBackground() {
     applyThemeBackground(t);
     renderCurrentAssets(t);
     renderAssetLibrary();
-    updateCreatePathAssetSummary();
     updateLaunchSummary();
     scheduleLocalAssetCleanup(selected);
     showToast("Session background removed");
@@ -19855,7 +18623,6 @@ function removeBackgroundAt(index) {
     removeSessionAssetBySrc("background", selected);
     applyThemeBackground(t);
     renderCurrentAssets(t);
-    updateCreatePathAssetSummary();
     updateLaunchSummary();
     scheduleLocalAssetCleanup(selected);
     showToast("Session background removed");
@@ -19982,7 +18749,6 @@ function removeOverlay(index) {
     renderOptions();
     renderCurrentAssets(activeTheme);
     renderAssetLibrary();
-    updateCreatePathAssetSummary();
     updateLaunchSummary();
     scheduleLocalAssetCleanup(src);
     showToast("Session overlay removed");
@@ -19993,7 +18759,6 @@ function removeOverlay(index) {
     renderOptions();
     renderCurrentAssets(activeTheme);
     renderAssetLibrary();
-    updateCreatePathAssetSummary();
     updateLaunchSummary();
     scheduleLocalAssetCleanup(src);
     showToast("Session overlay removed");
@@ -20027,7 +18792,6 @@ function removeTemplate(index) {
     renderOptions();
     renderCurrentAssets(activeTheme);
     renderAssetLibrary();
-    updateCreatePathAssetSummary();
     updateLaunchSummary();
     scheduleLocalAssetCleanup(src);
     showToast("Session template removed");
@@ -20038,7 +18802,6 @@ function removeTemplate(index) {
     renderOptions();
     renderCurrentAssets(activeTheme);
     renderAssetLibrary();
-    updateCreatePathAssetSummary();
     updateLaunchSummary();
     scheduleLocalAssetCleanup(src);
     showToast("Session template removed");
@@ -20140,7 +18903,6 @@ function removeSessionOverlay(src) {
   renderOptions();
   renderCurrentAssets(activeTheme);
   renderAssetLibrary();
-  updateCreatePathAssetSummary();
   updateLaunchSummary();
   scheduleLocalAssetCleanup(src);
   showToast("Session overlay removed");
@@ -20152,7 +18914,6 @@ function removeSessionBackground(src) {
   renderOptions();
   renderCurrentAssets(activeTheme);
   renderAssetLibrary();
-  updateCreatePathAssetSummary();
   updateLaunchSummary();
   scheduleLocalAssetCleanup(src);
   showToast("Session background removed");
@@ -20163,7 +18924,6 @@ function removeSessionTemplate(src) {
   renderOptions();
   renderCurrentAssets(activeTheme);
   renderAssetLibrary();
-  updateCreatePathAssetSummary();
   updateLaunchSummary();
   scheduleLocalAssetCleanup(src);
   showToast("Session template removed");
@@ -20519,8 +19279,7 @@ function removeGreenBackgroundAt(idx) {
         activeSessionAssets.greenBackgrounds.length - 1
       );
     }
-    renderCurrentAssets(target);
-    updateCreatePathAssetSummary();
+  renderCurrentAssets(target);
     updateLaunchSummary();
     scheduleLocalAssetCleanup(selected);
     return;
@@ -21355,8 +20114,6 @@ window.addEventListener("message", (event) => {
 });
 
 Object.assign(window, {
-  addFontByFamily,
-  addFontByUrl,
   __photoboothQA: {
     auditLayout: auditBoothLayout,
     enterState: enterBoothQaState,
@@ -21461,7 +20218,6 @@ Object.assign(window, {
       return calls;
     },
   },
-  appendEmailText,
   cancelHideTimer,
   capturePhotoFlow,
   clearAnalytics,
@@ -21497,7 +20253,6 @@ Object.assign(window, {
   savePrintSettings,
   saveEmailJsSettings,
   saveTheme,
-  sendEmail,
   sendPendingNow,
   sendTestEmail,
   setMode,

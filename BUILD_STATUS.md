@@ -2,12 +2,18 @@
 
 ## Current goal
 
-- Simplify final guest actions to a large QR, with Retake and Print shown only when printing is enabled.
+- Remove obsolete font and deleted-element code without changing the active booth flow.
 
 ## Current progress
 
+- Installed and validated the personal `photo-booth-theme-creator` skill at `/Users/ashleyfletcher/.agents/skills/photo-booth-theme-creator`.
+- Linked the skill into `/Users/ashleyfletcher/.codex/skills` for Codex discovery while keeping one canonical copy.
+- Confirmed the complete six-asset workflow, independent portrait/landscape composition rules, screen-specific touch-zone rules, prompt guidance, and quality checklist.
+- Added the approved Summer portrait and landscape idle screens as bundled craftsmanship and recomposition references without making their imagery a theme default.
 - Added eight read-only popular font pairs to the existing setup dropdown, with no individual-font choices.
 - Removed the legacy dual-font modal, hidden heading/body controls, editable custom-pairing storage/UI, quick-pick grids, and duplicate dual-font initializer.
+- Removed the remaining individual-font add, preview, suggestion, option-population, and single-font activation helpers.
+- Removed stale JavaScript element lookups, deleted final-review/email UI hooks, and orphaned CSS selectors; added regression coverage for future stale IDs.
 - Removed the Love It review stage.
 - Increased QR render and display size.
 - Print-enabled sessions show Retake and Print below the QR; Print explicitly submits to the existing queue.
