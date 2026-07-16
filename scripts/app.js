@@ -14903,6 +14903,11 @@ function collectThemeAssetRows(category = "") {
     if (Array.isArray(theme && theme.templates)) {
       theme.templates.forEach((entry) => add(entry, "template", themeName, themeKey));
     }
+    if (Array.isArray(theme && theme.idleScreens)) {
+      theme.idleScreens.forEach((entry) =>
+        add(entry, "idle-screen", themeName, themeKey)
+      );
+    }
   });
   return Array.from(byKey.values()).map((row) => ({
     ...row,
@@ -15118,6 +15123,32 @@ function getAssetLibrarySearchText(asset) {
     .toLowerCase();
 }
 
+function getActiveAssetLibraryThemeContext() {
+  const key = normalizeThemeSelectionKey(
+    activeSessionThemeKey || getSelectedThemeKey()
+  );
+  const theme = key ? resolveThemeByKey(key) : null;
+  return {
+    key,
+    label: String((theme && theme.name) || key || "").trim(),
+  };
+}
+
+function assetMatchesActiveLibraryTheme(asset, themeKey = "") {
+  const key = normalizeThemeSelectionKey(themeKey);
+  if (!key) return true;
+  return (Array.isArray(asset && asset.themeKeys) ? asset.themeKeys : []).some(
+    (assetThemeKey) => normalizeThemeSelectionKey(assetThemeKey) === key
+  );
+}
+
+function getThemeScopedAssetLibraryRows() {
+  const { key } = getActiveAssetLibraryThemeContext();
+  return getAllAssetLibraryRows().filter((asset) =>
+    assetMatchesActiveLibraryTheme(asset, key)
+  );
+}
+
 function getFilteredAssetLibraryRows() {
   const query = DOM.assetLibrarySearch
     ? DOM.assetLibrarySearch.value.trim().toLowerCase()
@@ -15127,7 +15158,7 @@ function getFilteredAssetLibraryRows() {
     : "";
   const pillCategory = assetLibraryState.selectedCategory || "";
   const sortMode = DOM.assetLibrarySort ? DOM.assetLibrarySort.value : "newest";
-  const rows = getAllAssetLibraryRows().filter((asset) => {
+  const rows = getThemeScopedAssetLibraryRows().filter((asset) => {
     if (!asset) return false;
     if (!assetMatchesLibraryCategoryFilter(asset, pillCategory)) return false;
     if (!assetMatchesLibraryCategoryFilter(asset, category)) return false;
@@ -15929,7 +15960,7 @@ function renderAssetLibraryPills() {
   const pillsContainer = DOM.assetLibraryPills;
   if (!pillsContainer) return;
   
-  const allAssets = getAllAssetLibraryRows();
+  const allAssets = getThemeScopedAssetLibraryRows();
   const counts = {
     all: allAssets.length,
     background: 0,
@@ -16128,7 +16159,8 @@ function renderAssetLibrary() {
     }));
   }
   if (status) {
-    const total = getAllAssetLibraryRows().length;
+    const themeContext = getActiveAssetLibraryThemeContext();
+    const total = getThemeScopedAssetLibraryRows().length;
     const filterLabels = [];
     if (assetLibraryState.selectedCategory && assetLibraryState.selectedCategory !== "all") {
       filterLabels.push(`Asset type: ${assetLibraryState.selectedCategory}`);
@@ -16145,11 +16177,14 @@ function renderAssetLibrary() {
         "hidden",
         filterLabels.length === 0
       );
+    const themeLabel = themeContext.label ? ` for ${themeContext.label}` : "";
     status.textContent = total
       ? filterLabels.length
-        ? `Showing ${assets.length} of ${total} assets. Filters active: ${filterLabels.join(", ")}`
-        : `Showing ${assets.length} of ${total} assets`
-      : "No assets available yet.";
+        ? `Showing ${assets.length} of ${total} assets${themeLabel}. Filters active: ${filterLabels.join(", ")}`
+        : `Showing ${assets.length} assets${themeLabel}`
+      : themeContext.label
+        ? `No assets are associated with ${themeContext.label} yet.`
+        : "No assets available yet.";
   }
 }
 

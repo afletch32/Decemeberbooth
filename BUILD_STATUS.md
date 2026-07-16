@@ -31,6 +31,10 @@
 - Increased QR render and display size.
 - Print-enabled sessions show Retake and Print below the QR; Print explicitly submits to the existing queue.
 - Removed the separate printed-photo card and its remaining Love your photos heading from final-screen markup.
+- Fixed hidden setup controls and inactive sections so they no longer reserve blank layout space.
+- Restored Asset Library and Current Selections as open-by-default event panels.
+- Relabeled Device Tools as Advanced Device Tools to distinguish operator fallbacks from normal setup.
+- Scoped the Asset Library and its type counts to the selected theme, including associated idle and photo-choice screens.
 
 ## Photo Choice Screen Feature
 

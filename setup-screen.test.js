@@ -65,6 +65,17 @@ test("setup screen uses a compact toolbar for section controls", () => {
     "Asset Library should remain the setup asset surface"
   );
   assert.ok(
+    html.includes("#adminScreen .hidden") &&
+      html.includes("#adminScreen [hidden]") &&
+      html.includes("display: none !important;"),
+    "hidden setup controls and inactive sections should not reserve layout space"
+  );
+  assert.ok(
+    html.includes('<details class="event-library-section" id="uploadedAssetLibraryPanel" open>') &&
+      html.includes('<details class="event-library-section" open>\n              <summary>Current Selections</summary>'),
+    "Asset Library and Current Selections should be visible by default"
+  );
+  assert.ok(
     appScript.includes("function renderAssetLibrary()"),
     "Asset Library should be wired as the setup asset renderer"
   );
@@ -275,6 +286,11 @@ test("setup presents a numbered flow with one share-stage launch action", () => 
       html.includes('<h3>Capture Timing</h3>') &&
       html.includes('<h3>Camera Quality</h3>'),
     "Event and Capture settings should be grouped into obvious sections"
+  );
+  assert.ok(
+    html.includes('href="#offlineSection">Advanced Device Tools</a>') &&
+      html.includes("<summary>Advanced Device Tools</summary>"),
+    "advanced device fallbacks should be clearly labeled"
   );
 });
 
@@ -682,6 +698,26 @@ test("asset library supports explicit multi-theme defaults without manifest auto
       appScript.includes("ASSET_DEFAULT_REPAIR_VERSION") &&
       appScript.includes("isCompleteBackgroundCatalogSelection(backgrounds, globalCatalog)"),
     "theme and global all-backgrounds selection signatures should be repaired once"
+  );
+});
+
+test("asset library follows the selected theme and includes theme idle screens", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("function getActiveAssetLibraryThemeContext()") &&
+      appScript.includes("activeSessionThemeKey || getSelectedThemeKey()") &&
+      appScript.includes("function assetMatchesActiveLibraryTheme(asset, themeKey = \"\")") &&
+      appScript.includes("function getThemeScopedAssetLibraryRows()") &&
+      appScript.includes("const rows = getThemeScopedAssetLibraryRows().filter((asset) => {") &&
+      appScript.includes("const allAssets = getThemeScopedAssetLibraryRows();"),
+    "the selected theme should scope library cards and asset-type counts"
+  );
+  assert.ok(
+    appScript.includes("if (Array.isArray(theme && theme.idleScreens))") &&
+      appScript.includes('add(entry, "idle-screen", themeName, themeKey)') &&
+      appScript.includes("No assets are associated with ${themeContext.label} yet."),
+    "theme idle and photo-choice screens should appear with clear theme-scoped status copy"
   );
 });
 

@@ -107,6 +107,11 @@
 
     .hidden { opacity: 0; pointer-events: none; transition: opacity 300ms ease; }
 
+    #adminScreen .hidden,
+    #adminScreen [hidden] {
+      display: none !important;
+    }
+
     button,
     input,
     select,
@@ -6674,7 +6679,7 @@
               <a href="#printSettings">Print</a>
               <a href="#cloudShareSettings">QR &amp; Cloud</a>
               <a href="#emailShareSettings">Email</a>
-              <a href="#offlineSection">Device Tools</a>
+              <a href="#offlineSection">Advanced Device Tools</a>
             </nav>
 
             <section class="share-settings-group share-settings-group-priority" id="printSettings" aria-labelledby="printSettingsTitle">
@@ -6750,7 +6755,7 @@
           </div>
         </details>
         <details class="panel-section" id="offlineSection" data-setup-section="share">
-          <summary>Device &amp; Offline Tools</summary>
+          <summary>Advanced Device Tools</summary>
           <div class="section-content">
             <div class="admin-field" style="display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin:0;">
               <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
@@ -6866,7 +6871,7 @@
                 <button type="button" id="eventToSubThemeBtn" class="hidden">Save Theme Preset</button>
               </div>
             </section>
-            <details class="event-library-section" id="uploadedAssetLibraryPanel">
+            <details class="event-library-section" id="uploadedAssetLibraryPanel" open>
               <summary>Asset Library</summary>
               <div class="event-library-section-content">
                 <div style="display:flex; align-items:center; justify-content:flex-end; gap:16px; margin-bottom:8px;">
@@ -6934,7 +6939,7 @@
                 </div>
               </div>
             </div>
-            <details class="event-library-section">
+            <details class="event-library-section" open>
               <summary>Current Selections</summary>
               <div id="currentAssets" class="current-assets event-library-section-content">
               <div
