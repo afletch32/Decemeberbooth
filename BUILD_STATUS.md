@@ -2,10 +2,22 @@
 
 ## Current goal
 
-- Remove obsolete font and deleted-element code without changing the active booth flow.
+- Clarify the admin setup flow and staff print sharing without changing working output behavior.
 
 ## Current progress
 
+- Fixed inactive setup sections so they no longer reserve invisible space above the active tab.
+- Moved frequently changed print controls to the top of Share and separated print, QR/cloud, email, and device settings with jump navigation.
+- Collapsed the less-frequently changed paid-print copy fields into a dedicated subsection.
+- Setup tabs now bring the selected section directly into view.
+- Matched URL and long-text fields to the rest of the Share form and removed the retired control's leftover gap.
+- Replaced the tall setup status cards with compact one-line statuses and green indicator dots.
+- Moved event-specific staff queue access to the top of Share with open, copy, and QR sharing controls.
+- Turned setup into a numbered Event → Capture → Share → Launch flow with Continue actions between steps.
+- Grouped Event settings into Basics, Guest Screen, Event Assets, and collapsed asset-library sections.
+- Grouped Capture settings into Guest Options, Timing, Camera Quality, and collapsed Operator Tools.
+- Collapsed low-frequency Cloudinary and email connection settings in Share.
+- Replaced competing top launch actions with one Share-only Launch Booth action and a short review step.
 - Installed and validated the personal `photo-booth-theme-creator` skill at `/Users/ashleyfletcher/.agents/skills/photo-booth-theme-creator`.
 - Linked the skill into `/Users/ashleyfletcher/.codex/skills` for Codex discovery while keeping one canonical copy.
 - Confirmed the complete six-asset workflow, independent portrait/landscape composition rules, screen-specific touch-zone rules, prompt guidance, and quality checklist.

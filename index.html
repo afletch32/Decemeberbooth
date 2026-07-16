@@ -230,26 +230,29 @@
       max-width: 1220px;
       width: min(1220px, 100%);
       margin: 0 auto 16px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
       position: relative;
       z-index: 1;
     }
 
     .status-pill {
-      position: relative;
-      padding: 16px 24px;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 255, 251, 0.93)),
-        radial-gradient(circle at top, rgba(111, 231, 215, 0.12), rgba(255, 255, 255, 0) 55%);
+      flex: 1 1 160px;
+      min-width: 0;
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.62);
       color: var(--text-muted);
       text-align: center;
       white-space: nowrap;
-      box-shadow: 0 14px 28px rgba(17, 17, 17, 0.06);
-      overflow: hidden;
+      box-shadow: none;
     }
 
     .setup-session-card {
@@ -650,18 +653,21 @@
 
     .status-pill::before {
       content: "";
-      position: absolute;
-      inset: 0 0 auto;
-      height: 4px;
-      background: linear-gradient(90deg, #52d8c6 0%, #8ff3e6 100%);
-      opacity: 0.85;
+      flex: 0 0 8px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #35b96f;
+      box-shadow: 0 0 0 3px rgba(53, 185, 111, 0.13);
     }
 
     .status-pill strong {
-      display: block;
-      margin-top: 8px;
+      display: inline;
+      margin: 0;
       color: #111111;
-      font-size: 1rem;
+      font-size: 0.9rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .setup-section-switcher {
@@ -811,6 +817,257 @@
     .section-content {
       display: grid;
       gap: 16px;
+    }
+
+    .share-settings-content {
+      gap: 24px;
+    }
+
+    .share-settings-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid rgba(200, 238, 229, 0.92);
+      border-radius: 16px;
+      background: rgba(239, 255, 251, 0.72);
+    }
+
+    .share-settings-nav a {
+      flex: 1 1 120px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      color: #294640;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .share-settings-nav a:hover,
+    .share-settings-nav a:focus-visible {
+      border-color: #8ae6d9;
+      box-shadow: 0 8px 18px rgba(121, 183, 172, 0.14);
+      outline: none;
+    }
+
+    .share-settings-group {
+      display: grid;
+      gap: 16px;
+      padding: 24px;
+      scroll-margin-top: 24px;
+      border: 1px solid rgba(200, 238, 229, 0.92);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 12px 28px rgba(17, 17, 17, 0.04);
+    }
+
+    .share-settings-group-priority {
+      border-color: #aee8dc;
+      background: linear-gradient(180deg, rgba(245, 255, 252, 0.98), rgba(255, 255, 255, 0.9));
+    }
+
+    .staff-queue-access-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .staff-queue-access-copy {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .staff-queue-qr-wrap {
+      width: 196px;
+      min-height: 196px;
+      display: grid;
+      place-items: center;
+      padding: 10px;
+      border: 1px solid rgba(200, 238, 229, 0.92);
+      border-radius: 18px;
+      background: #ffffff;
+    }
+
+    #staffPrintQueueQr {
+      width: 176px;
+      height: 176px;
+    }
+
+    .staff-queue-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 12px 20px;
+      border: var(--button-border);
+      border-radius: var(--button-radius);
+      background: var(--button-bg);
+      color: var(--button-text);
+      box-shadow: var(--button-shadow);
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .share-settings-heading {
+      display: grid;
+      gap: 4px;
+    }
+
+    .share-settings-heading h3,
+    .share-settings-heading p {
+      margin: 0;
+    }
+
+    .share-settings-heading p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .share-settings-subgroup {
+      border-top: 1px solid rgba(200, 238, 229, 0.92);
+      padding-top: 16px;
+    }
+
+    .share-settings-subgroup > summary {
+      cursor: pointer;
+      color: #294640;
+      font-weight: 700;
+    }
+
+    .share-settings-subgroup-content {
+      display: grid;
+      gap: 16px;
+      padding-top: 16px;
+    }
+
+    .legacy-print-setting {
+      display: none !important;
+    }
+
+    #offlineSection {
+      scroll-margin-top: 24px;
+    }
+
+    .setup-flow-card,
+    .event-section-card {
+      display: grid;
+      gap: 16px;
+      padding: 24px;
+      border: 1px solid rgba(200, 238, 229, 0.92);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+    }
+
+    .setup-flow-card h3,
+    .event-section-card h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: #294640;
+    }
+
+    .capture-settings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .capture-settings-grid > label {
+      min-height: 44px;
+    }
+
+    .setup-operator-tools,
+    .event-library-section {
+      border: 1px solid rgba(200, 238, 229, 0.92);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.72);
+      overflow: hidden;
+    }
+
+    .setup-operator-tools > summary,
+    .event-library-section > summary,
+    .share-connection-group > summary {
+      cursor: pointer;
+      padding: 16px 24px;
+      color: #294640;
+      font-weight: 700;
+      list-style: none;
+    }
+
+    .setup-operator-tools > summary::-webkit-details-marker,
+    .event-library-section > summary::-webkit-details-marker,
+    .share-connection-group > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .setup-operator-tools-content,
+    .event-library-section-content {
+      display: grid;
+      gap: 16px;
+      padding: 0 24px 24px;
+    }
+
+    .setup-next-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 8px;
+    }
+
+    .setup-next-actions button {
+      min-width: min(320px, 100%);
+    }
+
+    .share-connection-group {
+      padding: 0;
+    }
+
+    .share-connection-group[open] > summary {
+      border-bottom: 1px solid rgba(200, 238, 229, 0.92);
+    }
+
+    .share-connection-content {
+      display: grid;
+      gap: 16px;
+      padding: 24px;
+    }
+
+    .admin-launch-dock {
+      position: fixed;
+      left: 50%;
+      bottom: max(16px, env(safe-area-inset-bottom, 0px) + 8px);
+      transform: translateX(-50%);
+      width: min(520px, calc(100% - 32px));
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px;
+      border: 1px solid rgba(155, 230, 218, 0.95);
+      border-radius: 22px;
+      background: rgba(252, 255, 254, 0.94);
+      box-shadow: 0 20px 48px rgba(17, 17, 17, 0.16);
+      backdrop-filter: blur(18px);
+    }
+
+    .admin-launch-dock-copy {
+      flex: 1 1 auto;
+      padding-left: 8px;
+      color: #294640;
+      font-weight: 700;
+    }
+
+    .admin-launch-dock #startBoothButton {
+      flex: 1 1 240px;
+      min-width: 0;
     }
 
     .theme-editor-summary {
@@ -2301,7 +2558,9 @@
 
     #adminScreen input[type="text"],
     #adminScreen input[type="email"],
+    #adminScreen input[type="url"],
     #adminScreen input[type="color"],
+    #adminScreen textarea,
     #adminScreen select {
       width: 100%;
       border: 1px solid var(--border);
@@ -3975,7 +4234,7 @@
 
     @media (max-width: 760px) {
       #adminScreen { padding: 16px; }
-      .status-pill { white-space: normal; border-radius: 16px; }
+      .status-pill { white-space: nowrap; }
       .theme-editor-group { grid-template-columns: 1fr; }
       .font-pairing-layout { grid-template-columns: 1fr; }
       #adminScreen .btn-row > * { flex: 1 1 100%; }
@@ -3996,6 +4255,22 @@
       }
       .share-mock {
         grid-template-columns: 1fr;
+      }
+
+      .staff-queue-access-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .staff-queue-qr-wrap {
+        justify-self: center;
+      }
+
+      .capture-settings-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-launch-dock-copy {
+        display: none;
       }
     }
 
@@ -5937,6 +6212,10 @@
         grid-template-columns: 1fr 1fr;
       }
 
+      .setup-status .status-label {
+        display: none;
+      }
+
       .setup-tabs {
         gap: 8px;
       }
@@ -6171,27 +6450,22 @@
 <body>
   <div id="adminScreen">
     <h1 class="admin-title">Photobooth Setup</h1>
-    <p class="admin-subtitle">Choose a theme, confirm capture settings, and launch a booth that looks camera-ready from the first screen. Guests can pick an overlay from the booth screen after launch.</p>
+    <p class="admin-subtitle">Set up the event, capture, and sharing, then launch.</p>
     <div class="setup-status" id="setupStatus">
-      <div class="status-pill">Camera: <strong id="statusCamera">Not Started</strong></div>
-      <div class="status-pill">Uploads: <strong id="statusUpload">Checking</strong></div>
-      <div class="status-pill">Sync: <strong id="statusSync">Idle</strong></div>
-      <div class="status-pill">Queue: <strong id="statusQueue">0 Pending</strong></div>
-    </div>
-    <div class="btn-row admin-actions">
-      <button type="button" id="openLayoutBuilderBtn" onclick="openLayoutBuilder()">Overlay Builder</button>
-      <button type="button" id="startBoothButton" class="start-booth-hero">Start Booth</button>
-      <button type="button" id="startKioskButton" class="button-ghost" title="Fullscreen hides browser controls.">Start Booth Fullscreen</button>
+      <div class="status-pill"><span class="status-label">Camera:</span> <strong id="statusCamera">Not Started</strong></div>
+      <div class="status-pill"><span class="status-label">Uploads:</span> <strong id="statusUpload">Checking</strong></div>
+      <div class="status-pill"><span class="status-label">Sync:</span> <strong id="statusSync">Idle</strong></div>
+      <div class="status-pill"><span class="status-label">Queue:</span> <strong id="statusQueue">0 Pending</strong></div>
     </div>
     <div class="setup-section-switcher" aria-label="Setup Sections">
-      <div class="setup-section-switcher-label">Setup Sections</div>
+      <div class="setup-section-switcher-label">Setup Flow</div>
       <div class="setup-tabs">
-        <button type="button" id="setupTabEvent" class="setup-tab active" data-setup-tab="event" aria-pressed="true">Event</button>
-        <button type="button" id="setupTabCapture" class="setup-tab" data-setup-tab="capture" aria-pressed="false">Capture</button>
-        <button type="button" id="setupTabShare" class="setup-tab" data-setup-tab="share" aria-pressed="false">Share</button>
+        <button type="button" id="setupTabEvent" class="setup-tab active" data-setup-tab="event" aria-pressed="true">1 Event</button>
+        <button type="button" id="setupTabCapture" class="setup-tab" data-setup-tab="capture" aria-pressed="false">2 Capture</button>
+        <button type="button" id="setupTabShare" class="setup-tab" data-setup-tab="share" aria-pressed="false">3 Share</button>
       </div>
     </div>
-    <div class="setup-session-card glass-panel rounded-2xl p-6">
+    <div class="setup-session-card glass-panel rounded-2xl p-6" data-setup-section="event">
       <div class="flex items-center gap-2 mb-2">
         <i
           data-lucide="clipboard-check"
@@ -6279,7 +6553,7 @@
       </details>
       <div id="launchWarning" class="setup-launch-warning hidden"></div>
     </div>
-    <div class="capture-mode-bar">
+    <div class="capture-mode-bar" data-setup-section="capture">
       <div class="capture-mode-copy">
         <p class="capture-mode-title">Booth Type</p>
         <p class="capture-mode-note">Choose Normal for the built-in camera booth, or switch to 360 for the remote arm workflow and AirDrop upload.</p>
@@ -6289,122 +6563,194 @@
     <div class="admin-container">
       <div class="admin-left panel">
         <details class="panel-section" id="captureSection" data-setup-section="capture">
-          <summary>Capture Modes</summary>
+          <summary>Capture Settings</summary>
           <div class="section-content">
-            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-              <input type="checkbox" id="allowRetakes" checked>
-              Allow Retakes
-            </label>
-            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-              <input type="checkbox" id="livePhotoToggle" checked>
-              Live Photo Capture
-            </label>
-            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-              <input type="checkbox" id="recordingModeToggle" checked>
-              Recording Mode
-            </label>
-            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-              <input type="checkbox" id="instantCaptureToggle">
-              Instant Capture (no countdown)
-            </label>
-            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-              <input type="checkbox" id="countdownFiveToggle">
-              5 Second Countdown
-            </label>
-            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-              <input type="checkbox" id="lowLightToggle">
-              Low Light Flash (torch/screen)
-            </label>
-            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-              <input type="checkbox" id="aiBackgroundToggle">
-              AI Background Removal (no green screen)
-            </label>
-            <label for="enhancementModeSelect">Enhancement Mode</label>
-            <select id="enhancementModeSelect">
-              <option value="natural">Natural</option>
-              <option value="bridal-glow" selected>Bridal Glow</option>
-              <option value="harsh-light-fix">Harsh Light Fix</option>
-            </select>
-            <label for="cameraZoomInput">Camera Zoom</label>
-            <div style="display:flex; align-items:center; gap:16px;">
-              <input type="range" id="cameraZoomInput" min="1" max="2.5" step="0.05">
-              <span id="cameraZoomValue" style="color:#5d6c69; min-width:48px; text-align:right;"></span>
-            </div>
-            <div class="btn-row">
+            <section class="setup-flow-card">
+              <h3>Guest Options</h3>
+              <div class="capture-settings-grid">
+                <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+                  <input type="checkbox" id="allowRetakes" checked>
+                  Allow Retakes
+                </label>
+                <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+                  <input type="checkbox" id="livePhotoToggle" checked>
+                  Live Photo Capture
+                </label>
+                <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+                  <input type="checkbox" id="recordingModeToggle" checked>
+                  Recording Mode
+                </label>
+              </div>
+            </section>
+
+            <section class="setup-flow-card">
+              <h3>Capture Timing</h3>
+              <div class="capture-settings-grid">
+                <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+                  <input type="checkbox" id="instantCaptureToggle">
+                  Skip Countdown
+                </label>
+                <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+                  <input type="checkbox" id="countdownFiveToggle">
+                  Use 5-Second Countdown
+                </label>
+              </div>
+            </section>
+
+            <section class="setup-flow-card">
+              <h3>Camera Quality</h3>
+              <div class="capture-settings-grid">
+                <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+                  <input type="checkbox" id="lowLightToggle">
+                  Low Light Flash
+                </label>
+                <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+                  <input type="checkbox" id="aiBackgroundToggle">
+                  AI Background Removal
+                </label>
+              </div>
+              <label for="enhancementModeSelect">Enhancement Mode</label>
+              <select id="enhancementModeSelect">
+                <option value="natural">Natural</option>
+                <option value="bridal-glow" selected>Bridal Glow</option>
+                <option value="harsh-light-fix">Harsh Light Fix</option>
+              </select>
+              <label for="cameraZoomInput">Camera Zoom</label>
+              <div style="display:flex; align-items:center; gap:16px;">
+                <input type="range" id="cameraZoomInput" min="1" max="2.5" step="0.05">
+                <span id="cameraZoomValue" style="color:#5d6c69; min-width:48px; text-align:right;"></span>
+              </div>
               <button id="startCameraButton" class="primary">Start Camera</button>
-              <button type="button" onclick="toggleAnalytics()">Analytics</button>
-              <button type="button" id="editLayoutBtn">Edit Booth Layout</button>
-            </div>
-            <div id="analytics" class="hidden">
-              <h2>Analytics</h2>
-              <pre id="analyticsData"
-                style="background:#f6f9ff; padding:16px; border-radius:8px; white-space:pre-wrap; word-wrap:break-word;"></pre>
-              <div class="btn-row"><button onclick="clearAnalytics()">Clear Analytics</button></div>
+            </section>
+
+            <details class="setup-operator-tools">
+              <summary>Operator Tools</summary>
+              <div class="setup-operator-tools-content">
+                <div class="btn-row">
+                  <button type="button" onclick="toggleAnalytics()">Analytics</button>
+                  <button type="button" id="editLayoutBtn">Edit Booth Layout</button>
+                </div>
+                <div id="analytics" class="hidden">
+                  <h2>Analytics</h2>
+                  <pre id="analyticsData"
+                    style="background:#f6f9ff; padding:16px; border-radius:8px; white-space:pre-wrap; word-wrap:break-word;"></pre>
+                  <div class="btn-row"><button onclick="clearAnalytics()">Clear Analytics</button></div>
+                </div>
+              </div>
+            </details>
+
+            <div class="setup-next-actions">
+              <button type="button" class="primary" data-setup-next="share">Continue to Share</button>
             </div>
           </div>
         </details>
         <details class="panel-section" id="sharingSection" data-setup-section="share">
-          <summary>Sharing / Email</summary>
-          <div class="section-content">
-            <h3 style="margin:0;">Cloudinary (QR Links)</h3>
-            <label for="cloudNameInput">Cloud Name</label>
-            <input type="text" id="cloudNameInput" placeholder="your_cloud_name">
-            <label for="cloudPresetInput">Unsigned Upload Preset</label>
-            <input type="text" id="cloudPresetInput" placeholder="photobooth_unsigned">
-            <label for="cloudFolderInput">Folder Base (optional)</label>
-            <input type="text" id="cloudFolderInput" placeholder="photobooth/events">
-            <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-              <input type="checkbox" id="cloudUseToggle"> Use Cloudinary for share links
-            </label>
-            <small style="display:block; color:#5d6c69;">Uploads for overlays/backgrounds/templates are shared immediately across devices when online.</small>
-            <h3 style="margin:16px 0 0;">Print Queue</h3>
-            <label for="printModeInput">Print Mode</label>
-            <select id="printModeInput">
-              <option value="off">Off</option>
-              <option value="free">Free Printing</option>
-              <option value="paid">Paid Printing</option>
-            </select>
-            <label class="hidden" style="display:inline-flex; align-items:center; gap:8px; margin:16px 0 0;">
-              <input type="checkbox" id="printNoPaymentRequiredInput"> No payment required for prints
-            </label>
-            <small style="display:block; color:#5d6c69;">Free Printing queues sponsor/included prints immediately. Paid Printing requires staff payment confirmation before printing.</small>
-            <label for="printPriceLabelInput">Print price label</label>
-            <input type="text" id="printPriceLabelInput" value="$3" placeholder="$3">
-            <label for="printPanelTitleInput">Payment panel title</label>
-            <input type="text" id="printPanelTitleInput" value="Printed Photo Upgrade">
-            <label for="printPanelBodyInput">Payment panel body</label>
-            <input type="text" id="printPanelBodyInput" value="Take home a 4x6 keepsake print for $3.">
-            <label for="printInstructionsInput">Payment instructions</label>
-            <textarea id="printInstructionsInput" rows="3">Scan the payment code below to complete your purchase. Your print will be prepared after payment is confirmed.</textarea>
-            <label for="printPaymentQrInput">Payment QR image URL or payment link</label>
-            <input type="url" id="printPaymentQrInput" placeholder="https://...">
-            <label for="printEventIdInput">Optional event ID / slug</label>
-            <input type="text" id="printEventIdInput" placeholder="summer-fair-2026">
-            <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
-              <button type="button" onclick="savePrintSettings()">Save Print Settings</button>
-              <button type="button" onclick="copyStaffPrintQueueUrl()">Copy Staff Queue URL</button>
-            </div>
-            <small id="staffPrintQueueUrl" style="display:block; overflow-wrap:anywhere; color:#5d6c69;"></small>
-            <h3 style="margin:0;">Email (EmailJS)</h3>
-            <label for="emailJsPublic">Public Key</label>
-            <input type="text" id="emailJsPublic" placeholder="public_xxxxx">
-            <label for="emailJsService">Service ID</label>
-            <input type="text" id="emailJsService" placeholder="service_...">
-            <label for="emailJsTemplate">Template ID</label>
-            <input type="text" id="emailJsTemplate" placeholder="template_...">
-            <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
-              <button type="button" onclick="saveCloudinarySettings()">Save Cloudinary Settings</button>
-              <button type="button" id="migrateAssetsBtn" onclick="saveCloudinarySettings(); migrateAllManagedLocalAssets()">Migrate Local Assets</button>
-              <button type="button" onclick="connectMotorRelay()">Connect Motor Relay</button>
-              <button type="button" onclick="saveEmailJsSettings()">Save Email Settings</button>
-              <button type="button" onclick="sendTestEmail()">Send Test Email</button>
-              <button type="button" id="syncNowBtn" onclick="syncNow()">Sync Now</button>
-              <span id="syncStatus" style="color:#aaa; font-size:0.9em;"></span>
-            </div>
+          <summary>Sharing &amp; Printing</summary>
+          <div class="section-content share-settings-content">
+            <section class="share-settings-group share-settings-group-priority" id="staffQueueAccess" aria-labelledby="staffQueueAccessTitle">
+              <div class="share-settings-heading">
+                <h3 id="staffQueueAccessTitle">Staff Print Queue</h3>
+              </div>
+              <div class="staff-queue-access-layout">
+                <div class="staff-queue-access-copy">
+                  <label for="printEventIdInput">Optional event ID / slug</label>
+                  <input type="text" id="printEventIdInput" placeholder="summer-fair-2026">
+                  <small id="staffPrintQueueUrl" style="display:block; overflow-wrap:anywhere; color:#5d6c69;"></small>
+                  <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
+                    <a id="staffPrintQueueOpen" class="staff-queue-link" href="staff-print.html" target="_blank" rel="noopener">Open Staff Queue</a>
+                    <button type="button" onclick="copyStaffPrintQueueUrl()">Copy Queue Link</button>
+                  </div>
+                </div>
+                <div>
+                  <div class="staff-queue-qr-wrap">
+                    <canvas id="staffPrintQueueQr" width="176" height="176" aria-label="Staff print queue QR code"></canvas>
+                  </div>
+                  <small id="staffPrintQueueQrStatus" style="display:block; margin-top:8px; color:#5d6c69; text-align:center;">Preparing QR code…</small>
+                </div>
+              </div>
+            </section>
+
+            <nav class="share-settings-nav" aria-label="Share settings navigation">
+              <a href="#printSettings">Print</a>
+              <a href="#cloudShareSettings">QR &amp; Cloud</a>
+              <a href="#emailShareSettings">Email</a>
+              <a href="#offlineSection">Device Tools</a>
+            </nav>
+
+            <section class="share-settings-group share-settings-group-priority" id="printSettings" aria-labelledby="printSettingsTitle">
+              <div class="share-settings-heading">
+                <h3 id="printSettingsTitle">Print Settings</h3>
+              </div>
+              <label for="printModeInput">Print Mode</label>
+              <select id="printModeInput">
+                <option value="off">Off</option>
+                <option value="free">Free Printing</option>
+                <option value="paid">Paid Printing</option>
+              </select>
+              <label class="legacy-print-setting" hidden aria-hidden="true">
+                <input type="checkbox" id="printNoPaymentRequiredInput"> No payment required for prints
+              </label>
+              <small style="display:block; color:#5d6c69;">Free Printing queues sponsor/included prints immediately. Paid Printing requires staff payment confirmation before printing.</small>
+              <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
+                <button type="button" onclick="savePrintSettings()">Save Print Settings</button>
+              </div>
+              <details class="share-settings-subgroup">
+                <summary>Paid print checkout</summary>
+                <div class="share-settings-subgroup-content">
+                  <label for="printPriceLabelInput">Print price label</label>
+                  <input type="text" id="printPriceLabelInput" value="$3" placeholder="$3">
+                  <label for="printPanelTitleInput">Payment panel title</label>
+                  <input type="text" id="printPanelTitleInput" value="Printed Photo Upgrade">
+                  <label for="printPanelBodyInput">Payment panel body</label>
+                  <input type="text" id="printPanelBodyInput" value="Take home a 4x6 keepsake print for $3.">
+                  <label for="printInstructionsInput">Payment instructions</label>
+                  <textarea id="printInstructionsInput" rows="3">Scan the payment code below to complete your purchase. Your print will be prepared after payment is confirmed.</textarea>
+                  <label for="printPaymentQrInput">Payment QR image URL or payment link</label>
+                  <input type="url" id="printPaymentQrInput" placeholder="https://...">
+                </div>
+              </details>
+            </section>
+
+            <details class="share-settings-group share-connection-group" id="cloudShareSettings">
+              <summary id="cloudShareSettingsTitle">QR Links &amp; Cloudinary</summary>
+              <div class="share-connection-content">
+                <label for="cloudNameInput">Cloud Name</label>
+                <input type="text" id="cloudNameInput" placeholder="your_cloud_name">
+                <label for="cloudPresetInput">Unsigned Upload Preset</label>
+                <input type="text" id="cloudPresetInput" placeholder="photobooth_unsigned">
+                <label for="cloudFolderInput">Folder Base (optional)</label>
+                <input type="text" id="cloudFolderInput" placeholder="photobooth/events">
+                <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+                  <input type="checkbox" id="cloudUseToggle"> Use Cloudinary for share links
+                </label>
+                <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
+                  <button type="button" onclick="saveCloudinarySettings()">Save Cloudinary Settings</button>
+                  <button type="button" id="migrateAssetsBtn" onclick="saveCloudinarySettings(); migrateAllManagedLocalAssets()">Migrate Local Assets</button>
+                  <button type="button" id="syncNowBtn" onclick="syncNow()">Sync Now</button>
+                  <span id="syncStatus" style="color:#5d6c69; font-size:0.9em;"></span>
+                </div>
+              </div>
+            </details>
+
+            <details class="share-settings-group share-connection-group" id="emailShareSettings">
+              <summary id="emailShareSettingsTitle">Email Delivery</summary>
+              <div class="share-connection-content">
+                <label for="emailJsPublic">Public Key</label>
+                <input type="text" id="emailJsPublic" placeholder="public_xxxxx">
+                <label for="emailJsService">Service ID</label>
+                <input type="text" id="emailJsService" placeholder="service_...">
+                <label for="emailJsTemplate">Template ID</label>
+                <input type="text" id="emailJsTemplate" placeholder="template_...">
+                <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
+                  <button type="button" onclick="saveEmailJsSettings()">Save Email Settings</button>
+                  <button type="button" onclick="sendTestEmail()">Send Test Email</button>
+                </div>
+              </div>
+            </details>
           </div>
         </details>
         <details class="panel-section" id="offlineSection" data-setup-section="share">
-          <summary>Offline / Device Tools</summary>
+          <summary>Device &amp; Offline Tools</summary>
           <div class="section-content">
             <div class="admin-field" style="display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin:0;">
               <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
@@ -6412,6 +6758,7 @@
               </label>
               <button type="button" id="sendPendingBtn" onclick="sendPendingNow()" disabled>Send Pending (0)</button>
               <button type="button" id="cacheAssetsBtn" onclick="makeAvailableOffline()">Make Available Offline</button>
+              <button type="button" onclick="connectMotorRelay()">Connect Motor Relay</button>
               <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
                 <input type="checkbox" id="forceCameraFileToggle"> Force camera on file://
               </label>
@@ -6419,18 +6766,10 @@
           </div>
         </details>
         <details class="panel-section" id="currentAssetsSection" data-setup-section="event">
-          <summary>Event Details</summary>
+          <summary>Event Setup</summary>
           <div id="currentAssetsContent" class="section-content">
-            <div class="panel" style="margin-bottom:16px;">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
-                <div>
-                  <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Advanced Theme Controls</div>
-                  <div style="font-weight:700; font-size:1.02em;">Edit this event without changing the base theme</div>
-                </div>
-                <div style="max-width:280px; color:#9aa; font-size:0.9em;">
-                  Theme edits stay in Theme Library. This panel is the normal place to change this event’s text, logo, overlays, templates, and other event-level visuals.
-                </div>
-              </div>
+            <section class="event-section-card">
+              <h3>Event Basics</h3>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:16px;">
                 <div class="theme-field">
                   <label for="eventNameInput">Session Name</label>
@@ -6465,6 +6804,7 @@
                   <input type="text" id="eventExpoCompanyInput" placeholder="Name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
               </div>
+              <h3>Guest Screen</h3>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:16px;">
                 <div class="theme-field">
                   <label for="eventBannerTextInput">Banner Text</label>
@@ -6510,22 +6850,26 @@
                   <div id="eventThemeReferenceText" style="color:#9aa; font-size:0.92em;">This event inherits from its chosen theme until you add event-only assets or text here.</div>
                 </div>
               </div>
-            </div>
-            <div class="asset-actions">
-              <button type="button" id="addLogoBtn">Add Logo</button>
-              <button type="button" id="addAssetsBtn">Add Assets</button>
-              <button type="button" id="addIdleScreensBtn">Add Idle Screens</button>
-              <button type="button" id="addPhotoChoiceScreenBtn">Add Photo Choice Screen</button>
-              <div id="eventGalleryActions" class="hidden admin-gallery-actions">
-                <button type="button" onclick="copyEventGalleryLink()">Share Gallery Link</button>
-                <button type="button" onclick="openEventGalleryLink()">Open Gallery</button>
+            </section>
+            <section class="event-section-card">
+              <h3>Event Assets</h3>
+              <div class="asset-actions">
+                <button type="button" id="addLogoBtn">Add Logo</button>
+                <button type="button" id="addAssetsBtn">Add Assets</button>
+                <button type="button" id="addIdleScreensBtn">Add Idle Screens</button>
+                <button type="button" id="addPhotoChoiceScreenBtn">Add Photo Choice Screen</button>
+                <div id="eventGalleryActions" class="hidden admin-gallery-actions">
+                  <button type="button" onclick="copyEventGalleryLink()">Share Gallery Link</button>
+                  <button type="button" onclick="openEventGalleryLink()">Open Gallery</button>
+                </div>
+                <button type="button" id="openLayoutBuilderBtn" aria-label="Open Overlay Builder" onclick="openLayoutBuilder()">Open Layout Builder</button>
+                <button type="button" id="eventToSubThemeBtn" class="hidden">Save Theme Preset</button>
               </div>
-              <button type="button" onclick="openLayoutBuilder()">Open Layout Builder</button>
-              <button type="button" id="eventToSubThemeBtn" class="hidden">Save Theme Preset</button>
-            </div>
-            <div class="asset-library-panel" id="uploadedAssetLibraryPanel">
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:8px;">
-                <span style="font-weight:600; color:#334155;">Asset Library</span>
+            </section>
+            <details class="event-library-section" id="uploadedAssetLibraryPanel">
+              <summary>Asset Library</summary>
+              <div class="event-library-section-content">
+                <div style="display:flex; align-items:center; justify-content:flex-end; gap:16px; margin-bottom:8px;">
                 <div class="asset-library-panel-actions">
                   <button type="button" id="assetLibraryClearFilters" class="hidden">Clear filters</button>
                   <button type="button" id="refreshAssetLibraryBtn">Refresh</button>
@@ -6562,7 +6906,8 @@
               </div>
               <div id="assetLibraryGrid" class="asset-library-grid"></div>
               <div id="assetLibraryStatus" class="asset-library-empty" aria-live="polite"></div>
-            </div>
+              </div>
+            </details>
             <div id="assetUploadInputs" class="hidden">
               <input type="file" id="themeBackground" accept="image/*">
               <input type="file" id="themeLogo" accept="image/*">
@@ -6589,10 +6934,11 @@
                 </div>
               </div>
             </div>
-            <div id="currentAssets" class="current-assets">
+            <details class="event-library-section">
+              <summary>Current Selections</summary>
+              <div id="currentAssets" class="current-assets event-library-section-content">
               <div
                 style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px;">
-                <span style="font-weight:600; color:var(--accent2);">Selections</span>
                 <span id="undoBar" style="display:inline-flex; align-items:center; gap:8px; font-size:.9em;">
                   <button id="undoBtn" onclick="undoLastRemoval()" disabled>Undo last remove</button>
                   <span id="undoCount" style="color:#aaa;"></span>
@@ -6606,6 +6952,10 @@
                 <label>Logo:</label>
                 <div id="currentLogo" class="asset-single"></div>
               </div>
+              </div>
+            </details>
+            <div class="setup-next-actions">
+              <button type="button" class="primary" data-setup-next="capture">Continue to Capture</button>
             </div>
           </div>
         </details>
@@ -6736,6 +7086,10 @@
 
       </div>
       </div>
+    </div>
+    <div class="admin-launch-dock" data-setup-section="share" hidden aria-hidden="true">
+      <span class="admin-launch-dock-copy">4 Launch</span>
+      <button type="button" id="startBoothButton" class="primary start-booth-hero">Launch Booth</button>
     </div>
   </div>
 
@@ -6901,11 +7255,9 @@
       <div id="launchConfirmCard">
         <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
           <div>
-            <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Confirm Launch</div>
-            <div style="font-weight:700; font-size:1.05em;">Review the session summary before the booth opens</div>
+            <div style="font-weight:700; font-size:1.05em;">Ready to launch?</div>
           </div>
         </div>
-        <p class="launch-confirm-note">This confirmation does not change any overlay export data. It only reviews the setup that will be used when the booth starts.</p>
         <div class="launch-confirm-grid">
           <div class="setup-session-item">
             <span>Session</span>

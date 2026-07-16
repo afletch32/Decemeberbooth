@@ -937,6 +937,9 @@ const DOM = {
   printPaymentQrInput: document.getElementById("printPaymentQrInput"),
   printEventIdInput: document.getElementById("printEventIdInput"),
   staffPrintQueueUrl: document.getElementById("staffPrintQueueUrl"),
+  staffPrintQueueOpen: document.getElementById("staffPrintQueueOpen"),
+  staffPrintQueueQr: document.getElementById("staffPrintQueueQr"),
+  staffPrintQueueQrStatus: document.getElementById("staffPrintQueueQrStatus"),
   migrateAssetsBtn: document.getElementById("migrateAssetsBtn"),
   emailJsPublic: document.getElementById("emailJsPublic"),
   emailJsService: document.getElementById("emailJsService"),
@@ -2967,7 +2970,7 @@ function setupBoothButtons() {
 
   const startBoothBtn = document.getElementById("startBoothButton");
   if (startBoothBtn) {
-    startBoothBtn.addEventListener("click", startBooth);
+    startBoothBtn.addEventListener("click", openBoothLaunchConfirm);
   }
   else console.warn("Start Booth button not found in DOM.");
 
@@ -4326,6 +4329,8 @@ function setSetupSection(section = "event") {
   document.querySelectorAll("[data-setup-section]").forEach((panel) => {
     const show = panel.dataset.setupSection === section;
     panel.classList.toggle("hidden", !show);
+    panel.hidden = !show;
+    panel.setAttribute("aria-hidden", show ? "false" : "true");
     if (show && panel.tagName === "DETAILS" && !panel.open) panel.open = true;
   });
   closeAdminModal();
@@ -4346,12 +4351,27 @@ function focusSetupElement(selector) {
   }
 }
 
+function scrollSetupSectionIntoView(section) {
+  const panel = document.querySelector(`[data-setup-section="${section}"]`);
+  if (!panel || typeof panel.scrollIntoView !== "function") return;
+  panel.scrollIntoView({ block: "start", behavior: "smooth" });
+}
+
 function setupSetupTabs() {
   [DOM.setupTabEvent, DOM.setupTabCapture, DOM.setupTabShare].forEach((btn) => {
     if (!btn) return;
-    btn.addEventListener("click", () =>
-      setSetupSection(btn.dataset.setupTab || "event")
-    );
+    btn.addEventListener("click", () => {
+      const section = btn.dataset.setupTab || "event";
+      setSetupSection(section);
+      requestAnimationFrame(() => scrollSetupSectionIntoView(section));
+    });
+  });
+  document.querySelectorAll("[data-setup-next]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const section = btn.dataset.setupNext || "event";
+      setSetupSection(section);
+      requestAnimationFrame(() => scrollSetupSectionIntoView(section));
+    });
   });
   document.querySelectorAll("[data-session-action]").forEach((card) => {
     const activate = () => routeSetupSessionCard(card.dataset.sessionAction);
@@ -5929,12 +5949,36 @@ function getPrintQueueEventId() {
 
 function getStaffPrintQueueUrl() {
   const url = new URL("staff-print.html", window.location.href);
-  url.searchParams.set("eventId", getPrintQueueEventId());
+  const draftEventId = DOM.printEventIdInput
+    ? DOM.printEventIdInput.value.trim()
+    : "";
+  const eventId = draftEventId
+    ? draftEventId
+        .replace(/[^a-zA-Z0-9_-]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")
+    : getPrintQueueEventId();
+  url.searchParams.set("eventId", eventId || "default");
   return url.toString();
 }
 
 function updateStaffPrintQueueUrl() {
-  if (DOM.staffPrintQueueUrl) DOM.staffPrintQueueUrl.textContent = getStaffPrintQueueUrl();
+  const url = getStaffPrintQueueUrl();
+  if (DOM.staffPrintQueueUrl) DOM.staffPrintQueueUrl.textContent = url;
+  if (DOM.staffPrintQueueOpen) DOM.staffPrintQueueOpen.href = url;
+  if (!DOM.staffPrintQueueQr) return;
+  DOM.staffPrintQueueQr.dataset.queueUrl = url;
+  if (DOM.staffPrintQueueQrStatus) {
+    DOM.staffPrintQueueQrStatus.textContent = "Preparing QR code…";
+  }
+  renderQrCodeAtWidth(DOM.staffPrintQueueQr, url, 176).then((rendered) => {
+    if (DOM.staffPrintQueueQr.dataset.queueUrl !== url) return;
+    if (DOM.staffPrintQueueQrStatus) {
+      DOM.staffPrintQueueQrStatus.textContent = rendered
+        ? "Scan to open the staff queue"
+        : "QR code unavailable. Use the queue link instead.";
+    }
+  });
 }
 
 function loadPrintSettings() {
@@ -5947,6 +5991,10 @@ function loadPrintSettings() {
   if (DOM.printInstructionsInput) DOM.printInstructionsInput.value = settings.instructions;
   if (DOM.printPaymentQrInput) DOM.printPaymentQrInput.value = settings.paymentQr;
   if (DOM.printEventIdInput) DOM.printEventIdInput.value = settings.eventId;
+  if (DOM.printEventIdInput && !DOM.printEventIdInput.dataset.queuePreviewBound) {
+    DOM.printEventIdInput.dataset.queuePreviewBound = "true";
+    DOM.printEventIdInput.addEventListener("input", updateStaffPrintQueueUrl);
+  }
   updateStaffPrintQueueUrl();
 }
 
@@ -11612,12 +11660,12 @@ function showFinal(url, options = {}) {
   // No local-QR fallback: only show QR when a public link is ready (handled above)
 }
 
-async function renderQrCode(canvas, text) {
+async function renderQrCodeAtWidth(canvas, text, width = 360) {
   if (!canvas || !text) return false;
   try {
     const qrCode = await loadQrCodeLibrary();
     return await new Promise((resolve) => {
-      qrCode.toCanvas(canvas, text, { width: 360, margin: 1 }, function (error) {
+      qrCode.toCanvas(canvas, text, { width, margin: 1 }, function (error) {
         if (error) {
           console.error(error);
           resolve(false);
@@ -11630,6 +11678,10 @@ async function renderQrCode(canvas, text) {
     console.error(e);
     return false;
   }
+}
+
+async function renderQrCode(canvas, text) {
+  return renderQrCodeAtWidth(canvas, text, 360);
 }
 
 function copyEventGalleryLink() {

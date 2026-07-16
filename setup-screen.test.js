@@ -54,6 +54,13 @@ test("setup screen uses a compact toolbar for section controls", () => {
     "selected asset counts should remain visible"
   );
   assert.ok(
+    html.includes(".status-pill::before") &&
+      html.includes("background: #35b96f;") &&
+      html.includes("border-radius: 999px;") &&
+      html.includes('class="status-label">Camera:</span>'),
+    "system statuses should use compact one-line items with green indicators"
+  );
+  assert.ok(
     html.includes('id="assetLibraryGrid"'),
     "Asset Library should remain the setup asset surface"
   );
@@ -142,6 +149,54 @@ test("setup section state updates button and panel accessibility attributes", ()
     appScript.includes("setSetupSection(activeSetupSection);"),
     "existing section state should continue to drive visibility"
   );
+  assert.ok(
+    appScript.includes("panel.hidden = !show;") &&
+      appScript.includes('panel.setAttribute("aria-hidden", show ? "false" : "true")'),
+    "inactive setup panels should leave the layout and expose their state to assistive technology"
+  );
+  assert.ok(
+    appScript.includes("function scrollSetupSectionIntoView(section)") &&
+      appScript.includes("requestAnimationFrame(() => scrollSetupSectionIntoView(section));"),
+    "selecting a setup tab should bring its active panel into view"
+  );
+});
+
+test("share settings prioritize printing and separate connection groups", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+  const queueIndex = html.indexOf('id="staffQueueAccess"');
+  const printIndex = html.indexOf('id="printSettings"');
+  const cloudIndex = html.indexOf('id="cloudShareSettings"');
+  const emailIndex = html.indexOf('id="emailShareSettings"');
+
+  assert.ok(
+    html.includes('class="share-settings-nav"') &&
+      html.includes('href="#printSettings"') &&
+      html.includes('href="#offlineSection"'),
+    "share settings should include jump navigation"
+  );
+  assert.ok(
+    queueIndex > -1 && printIndex > queueIndex && cloudIndex > printIndex && emailIndex > cloudIndex,
+    "staff queue access should appear before print and connection settings"
+  );
+  assert.ok(
+      html.includes('id="staffPrintQueueQr"') &&
+      html.includes('id="staffPrintQueueOpen"') &&
+      appScript.includes("renderQrCodeAtWidth(DOM.staffPrintQueueQr, url, 176)") &&
+      appScript.includes('addEventListener("input", updateStaffPrintQueueUrl)'),
+    "staff queue access should include a live QR and event-specific open link"
+  );
+  assert.ok(
+    html.includes('class="share-settings-group share-settings-group-priority"') &&
+      html.includes('class="share-settings-subgroup"'),
+    "share settings should use distinct cards and collapse paid checkout details"
+  );
+  assert.ok(
+    html.includes("#adminScreen input[type=\"url\"]") &&
+      html.includes("#adminScreen textarea") &&
+      html.includes('class="legacy-print-setting" hidden'),
+    "all share fields should share form styling without reserving space for retired controls"
+  );
 });
 
 test("setup flow uses direct theme and font activation", () => {
@@ -189,6 +244,37 @@ test("setup flow uses direct theme and font activation", () => {
       html.includes('id="sharingSection"') &&
       html.includes('id="currentAssetsSection"'),
     "capture, share, and event content should remain in the section panels"
+  );
+});
+
+test("setup presents a numbered flow with one share-stage launch action", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    html.includes(">1 Event</button>") &&
+      html.includes(">2 Capture</button>") &&
+      html.includes(">3 Share</button>") &&
+      html.includes('data-setup-next="capture"') &&
+      html.includes('data-setup-next="share"'),
+    "setup should show its order and continue actions"
+  );
+  assert.ok(
+    html.includes('class="admin-launch-dock" data-setup-section="share"') &&
+      html.split('id="startBoothButton"').length - 1 === 1 &&
+      appScript.includes('startBoothBtn.addEventListener("click", openBoothLaunchConfirm)') &&
+      appScript.includes('document.querySelectorAll("[data-setup-next]")'),
+    "Share should own the only launch action and review setup before launch"
+  );
+  assert.ok(
+    html.includes('<h3>Event Basics</h3>') &&
+      html.includes('<h3>Guest Screen</h3>') &&
+      html.includes('<h3>Event Assets</h3>') &&
+      html.includes('<summary>Asset Library</summary>') &&
+      html.includes('<h3>Guest Options</h3>') &&
+      html.includes('<h3>Capture Timing</h3>') &&
+      html.includes('<h3>Camera Quality</h3>'),
+    "Event and Capture settings should be grouped into obvious sections"
   );
 });
 
@@ -1072,7 +1158,8 @@ test("share-ready QR is large and only shows retake and print when printing is e
   assert.ok(qrMarkup.includes('id="finalPrintActions" class="final-print-actions hidden"'));
   assert.ok(qrMarkup.includes('id="requestPrintBtn"'));
   assert.ok(html.includes("width: min(100%, 340px);"));
-  assert.ok(appScript.includes('{ width: 360, margin: 1 }'));
+  assert.ok(appScript.includes("renderQrCodeAtWidth(canvas, text, 360)"));
+  assert.ok(appScript.includes("qrCode.toCanvas(canvas, text, { width, margin: 1 }"));
   assert.ok(appScript.includes('DOM.finalPrintActions.classList.toggle("hidden", !printEnabled)'));
   assert.ok(appScript.includes("await enqueueFinalPrintIfNeeded(pendingFinalPrintImageUrl, true);"));
   assert.ok(!html.includes("Love your photos?"));
