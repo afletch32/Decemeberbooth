@@ -34,3 +34,18 @@ test("staff must clear payment before printing paid queue items", () => {
   assert.ok(staff.includes('${paymentCleared ? "" : "disabled"}>Open/Print'));
   assert.ok(staff.includes('${paymentCleared ? "" : "disabled"}>Mark Printed'));
 });
+
+test("staff print settings explain the sheet arrangement visually", () => {
+  const html = read("staff-print.html");
+  const staff = read("scripts", "staff-print.js");
+
+  assert.ok(html.includes("Photos on each sheet"));
+  assert.ok(html.includes("Paper direction"));
+  assert.ok(html.includes('id="printPreviewSheet"'));
+  assert.ok(html.includes('id="printPreviewSummary"'));
+  assert.ok(staff.includes("function renderPrintPreview()"));
+  assert.ok(staff.includes('sheetLandscape ? " side by side" : " stacked"'));
+  assert.ok(staff.includes('count === 1 ? "photo" : "photos"'));
+  assert.ok(!html.includes('id="printRotation"'));
+  assert.ok(!staff.includes("photoboothStaffPrintRotation"));
+});

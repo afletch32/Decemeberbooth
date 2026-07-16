@@ -31,8 +31,22 @@
     .badge.reprint, .badge.unpaid { background: #fff0cf; color: #75520b; }
     .badge.void { background: #f8d6d6; color: #7c2222; }
     .empty { padding: 32px; text-align: center; background: white; border-radius: 14px; color: #5b716d; }
+    .print-preview { flex: 1 0 100%; display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: center; gap: 24px; padding: 20px; margin-top: 8px; background: white; border: 1px solid #d8e5e2; border-radius: 14px; box-shadow: 0 3px 12px rgba(20, 67, 61, .06); }
+    .print-preview-visual { min-height: 170px; display: grid; place-items: center; padding: 12px; border-radius: 10px; background: #edf4f2; }
+    .print-preview-sheet { display: grid; overflow: hidden; background: white; border: 2px solid #aac1bc; box-shadow: 0 5px 14px rgba(20, 67, 61, .14); transition: width .18s ease, height .18s ease; }
+    .print-preview-sheet.landscape { width: 150px; height: 100px; }
+    .print-preview-sheet.portrait { width: 100px; height: 150px; }
+    .print-preview-sheet.double.landscape { grid-template-columns: 1fr 1fr; }
+    .print-preview-sheet.double.portrait { grid-template-rows: 1fr 1fr; }
+    .print-preview-slot { position: relative; min-width: 0; min-height: 0; overflow: hidden; border: 1px dashed #c7d8d4; }
+    .print-preview-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+    .print-preview-copy { min-width: 0; }
+    .print-preview-label { margin: 0 0 6px; color: #52716c; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    #printPreviewSummary { display: block; margin-bottom: 6px; font-size: 1.05rem; color: #163d38; }
+    #printPreviewDetails { margin: 0; color: #5b716d; line-height: 1.45; }
     @media (max-width: 900px) { header, main { padding: 24px; } }
-    @media (max-width: 540px) { header, main { padding: 16px; } .queue-item { grid-template-columns: 92px 1fr; } .queue-item img { width: 92px; height: 126px; } }
+    @media (max-width: 620px) { .print-preview { grid-template-columns: 1fr; text-align: center; } }
+    @media (max-width: 540px) { header, main { padding: 16px; } .controls, .control-group { width: 100%; } input, select, #refreshQueue { width: 100%; } .queue-item { grid-template-columns: 92px 1fr; } .queue-item img { width: 92px; height: 126px; } }
   </style>
 </head>
 <body>
@@ -47,31 +61,32 @@
         <input id="eventId" aria-label="Event ID" placeholder="Event ID">
       </label>
       <label class="control-group">
-        Print layout
+        Photos on each sheet
         <select id="printLayout">
-          <option value="single">1 photo on 4x6</option>
-          <option value="double">2 photos on 4x6</option>
+          <option value="single">1 full-size photo</option>
+          <option value="double">2 copies of the photo</option>
         </select>
       </label>
       <label class="control-group">
-        Page orientation
+        Paper direction
         <select id="printOrientation">
-          <option value="auto">Auto from photo</option>
-          <option value="landscape">Landscape 6×4</option>
-          <option value="portrait">Portrait 4×6</option>
-        </select>
-      </label>
-      <label class="control-group">
-        Rotate photo
-        <select id="printRotation">
-          <option value="0">No rotation</option>
-          <option value="90">90° clockwise</option>
-          <option value="180">180°</option>
-          <option value="270">90° counter-clockwise</option>
+          <option value="auto">Automatic — match turned photo</option>
+          <option value="landscape">Landscape — 6 wide × 4 tall</option>
+          <option value="portrait">Portrait — 4 wide × 6 tall</option>
         </select>
       </label>
       <button type="button" id="setToken" class="secondary" hidden>Unlock Staff Actions</button>
       <button type="button" id="refreshQueue">Refresh</button>
+      <section class="print-preview" aria-labelledby="printPreviewLabel">
+        <div class="print-preview-visual" aria-hidden="true">
+          <div id="printPreviewSheet" class="print-preview-sheet landscape single"></div>
+        </div>
+        <div class="print-preview-copy">
+          <p id="printPreviewLabel" class="print-preview-label">Print preview</p>
+          <strong id="printPreviewSummary">Waiting for the next queued photo</strong>
+          <p id="printPreviewDetails">Change the three print settings to see exactly how the sheet will be arranged.</p>
+        </div>
+      </section>
     </div>
   </header>
   <main>

@@ -119,8 +119,8 @@ test("staff print route links and popup printing handle reliable handoff", () =>
   );
   assert.ok(
     html.includes('id="printLayout"') &&
-      html.includes("1 photo on 4x6") &&
-      html.includes("2 photos on 4x6"),
+      html.includes("1 full-size photo") &&
+      html.includes("2 copies of the photo"),
     "staff print page should expose a layout choice for single-photo and 2-up pages"
   );
   assert.ok(
@@ -136,11 +136,11 @@ test("staff print route links and popup printing handle reliable handoff", () =>
     "staff print popup should support a 2-up 4x6 composition"
   );
   assert.ok(
-    html.includes('id="printRotation"') &&
-      staffScript.includes("photoboothStaffPrintRotation") &&
-      staffScript.includes("image.style.width=(swaps?slot.clientHeight:slot.clientWidth)") &&
-      staffScript.includes("image.style.height=(swaps?slot.clientWidth:slot.clientHeight)"),
-    "staff print popup should rotate each photo within its own print slot"
+    !html.includes('id="printRotation"') &&
+      !staffScript.includes("photoboothStaffPrintRotation") &&
+      html.includes('id="printPreviewSheet"') &&
+      staffScript.includes("function renderPrintPreview()"),
+    "staff print setup should use a live sheet preview instead of a separate rotation control"
   );
 });
 
