@@ -17,6 +17,9 @@
   let staffAuthRequired = false;
   const LAYOUT_KEY = "photoboothStaffPrintLayout";
   const ORIENTATION_KEY = "photoboothStaffPrintOrientation";
+  const OVERRIDES_KEY = "photoboothStaffPrintOverrides";
+  let printOverrides = {};
+  const expandedPrintSettings = new Set();
 
   function cleanEventId(value) {
     return String(value || "default").trim().replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "default";
@@ -44,6 +47,69 @@
     localStorage.setItem(ORIENTATION_KEY, next);
     if (orientationInput) orientationInput.value = next;
     return next;
+  }
+
+  function normalizePrintSettings(value) {
+    if (!value || typeof value !== "object") return null;
+    return {
+      layout: value.layout === "double" ? "double" : "single",
+      orientation: ["landscape", "portrait"].includes(value.orientation)
+        ? value.orientation
+        : "auto",
+    };
+  }
+
+  function getPrintOverridesKey() {
+    return `${OVERRIDES_KEY}:${eventId}`;
+  }
+
+  function loadPrintOverrides() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(getPrintOverridesKey()) || "{}");
+      printOverrides = Object.fromEntries(
+        Object.entries(stored || {})
+          .map(([id, settings]) => [id, normalizePrintSettings(settings)])
+          .filter((entry) => entry[1])
+      );
+    } catch (_) {
+      printOverrides = {};
+    }
+  }
+
+  function savePrintOverrides() {
+    localStorage.setItem(getPrintOverridesKey(), JSON.stringify(printOverrides));
+  }
+
+  function getResolvedPrintSettings(item) {
+    const override =
+      item && item.id ? normalizePrintSettings(printOverrides[item.id]) : null;
+    return {
+      layout: override ? override.layout : getPrintLayout(),
+      orientation: override ? override.orientation : getPrintOrientation(),
+      isOverride: Boolean(override),
+    };
+  }
+
+  function setPrintOverride(item, patch) {
+    if (!item || !item.id) return;
+    const current = getResolvedPrintSettings(item);
+    const next = normalizePrintSettings({ ...current, ...patch });
+    if (!next) return;
+    if (
+      next.layout === getPrintLayout() &&
+      next.orientation === getPrintOrientation()
+    ) {
+      delete printOverrides[item.id];
+    } else {
+      printOverrides[item.id] = next;
+    }
+    savePrintOverrides();
+  }
+
+  function clearPrintOverride(item) {
+    if (!item || !item.id || !printOverrides[item.id]) return;
+    delete printOverrides[item.id];
+    savePrintOverrides();
   }
 
   function staffHeaders() {
@@ -139,6 +205,50 @@
     }
   }
 
+  function printSettingsLabel(settings, sheetOrientation = "") {
+    const source = settings.isOverride ? "Custom" : "Session default";
+    const layout =
+      settings.layout === "double" ? "2 copies" : "1 full-size photo";
+    const orientation =
+      settings.orientation === "auto"
+        ? sheetOrientation
+          ? `Automatic (${sheetOrientation})`
+          : "Automatic"
+        : settings.orientation === "portrait"
+        ? "Portrait"
+        : "Landscape";
+    return `${source} · ${layout} · ${orientation}`;
+  }
+
+  function updateQueuePrintSettingPreview(item) {
+    const card = Array.from(list.querySelectorAll(".queue-item")).find(
+      (candidate) => candidate.dataset.itemId === String(item.id)
+    );
+    if (!card) return;
+    const settings = getResolvedPrintSettings(item);
+    const image = card.querySelector(":scope > img");
+    const photoOrientation =
+      image && image.naturalWidth && image.naturalHeight
+        ? image.naturalWidth >= image.naturalHeight
+          ? "landscape"
+          : "portrait"
+        : "";
+    const sheetOrientation =
+      settings.orientation === "auto"
+        ? photoOrientation || "landscape"
+        : settings.orientation;
+    const summary = card.querySelector("[data-print-settings-summary]");
+    const icon = card.querySelector("[data-print-layout-icon]");
+    if (summary) {
+      summary.textContent = printSettingsLabel(settings, sheetOrientation);
+    }
+    if (icon) {
+      icon.className = `queue-layout-icon ${sheetOrientation} ${settings.layout}`;
+      icon.innerHTML =
+        settings.layout === "double" ? "<span></span><span></span>" : "<span></span>";
+    }
+  }
+
   function render() {
     const visible = items.filter((item) => item.printStatus !== "void");
     status.textContent = `${visible.length} active ${visible.length === 1 ? "item" : "items"} · refreshes every 5 seconds`;
@@ -155,7 +265,9 @@
       const quantity = Math.max(1, Number.parseInt(item.quantity, 10) || 1);
       const printed = item.printStatus === "printed" || item.printStatus === "reprint";
       const paymentCleared = item.paymentStatus === "paid" || item.paymentStatus === "comped";
-      return `<article class="queue-item">
+      const settings = getResolvedPrintSettings(item);
+      const expanded = expandedPrintSettings.has(String(item.id));
+      return `<article class="queue-item" data-item-id="${escapeText(item.id)}">
         <img src="${escapeText(item.thumbnailUrl || item.imageUrl)}" alt="Queued photo created ${escapeText(createdAt(item.createdAt))}">
         <div>
           <h2>Queued photo · Qty ${escapeText(quantity)}</h2>
@@ -169,13 +281,61 @@
             <button type="button" data-action="reprint" data-id="${escapeText(item.id)}" ${printed && paymentCleared ? "" : "disabled"}>Reprint</button>
             <button type="button" data-action="void" data-id="${escapeText(item.id)}" class="danger">Void</button>
           </div>
+          <div class="queue-print-settings">
+            <div class="queue-print-settings-summary">
+              <span class="queue-layout-icon landscape single" data-print-layout-icon aria-hidden="true"><span></span></span>
+              <div class="queue-print-settings-copy">
+                <span class="queue-print-settings-label">Print layout</span>
+                <strong data-print-settings-summary>${escapeText(printSettingsLabel(settings))}</strong>
+              </div>
+              <button type="button" class="secondary" data-action="toggle-print-settings" data-id="${escapeText(item.id)}" aria-expanded="${expanded}">
+                ${expanded ? "Done" : "Change for this photo"}
+              </button>
+            </div>
+            <div class="item-print-controls" ${expanded ? "" : "hidden"}>
+              <label class="control-group">
+                Photos on this sheet
+                <select data-print-setting="layout" data-id="${escapeText(item.id)}">
+                  <option value="single" ${settings.layout === "single" ? "selected" : ""}>1 full-size photo</option>
+                  <option value="double" ${settings.layout === "double" ? "selected" : ""}>2 copies of the photo</option>
+                </select>
+              </label>
+              <label class="control-group">
+                Paper direction for this photo
+                <select data-print-setting="orientation" data-id="${escapeText(item.id)}">
+                  <option value="auto" ${settings.orientation === "auto" ? "selected" : ""}>Automatic — match turned photo</option>
+                  <option value="landscape" ${settings.orientation === "landscape" ? "selected" : ""}>Landscape — 6 wide × 4 tall</option>
+                  <option value="portrait" ${settings.orientation === "portrait" ? "selected" : ""}>Portrait — 4 wide × 6 tall</option>
+                </select>
+              </label>
+              <button type="button" class="secondary" data-action="reset-print-settings" data-id="${escapeText(item.id)}" ${settings.isOverride ? "" : "disabled"}>Use session default</button>
+            </div>
+          </div>
         </div>
       </article>`;
     }).join("");
+    visible.forEach((item) => {
+      updateQueuePrintSettingPreview(item);
+      const cardImage = Array.from(list.querySelectorAll(".queue-item")).find(
+        (candidate) => candidate.dataset.itemId === String(item.id)
+      )?.querySelector(":scope > img");
+      if (cardImage && !cardImage.complete) {
+        cardImage.addEventListener(
+          "load",
+          () => updateQueuePrintSettingPreview(item),
+          { once: true }
+        );
+      }
+    });
   }
 
   async function loadQueue() {
-    eventId = cleanEventId(eventInput.value || eventId);
+    const nextEventId = cleanEventId(eventInput.value || eventId);
+    if (nextEventId !== eventId) {
+      eventId = nextEventId;
+      expandedPrintSettings.clear();
+      loadPrintOverrides();
+    }
     eventInput.value = eventId;
     try {
       const response = await fetch(`/api/print-queue?eventId=${encodeURIComponent(eventId)}`, { cache: "no-store" });
@@ -216,6 +376,11 @@
       }
       throw new Error(payload.error || "Could not remove queue item.");
     }
+    if (printOverrides[id]) {
+      delete printOverrides[id];
+      savePrintOverrides();
+    }
+    expandedPrintSettings.delete(String(id));
     await loadQueue();
   }
 
@@ -243,7 +408,8 @@
 
   function printQueueItem(item) {
     if (!item || !item.imageUrl) throw new Error("This queue item has no printable image.");
-    openPrintWindowForImage(item.imageUrl);
+    const settings = getResolvedPrintSettings(item);
+    openPrintWindowForImage(item.imageUrl, settings.layout, settings.orientation);
   }
 
   list.addEventListener("click", async (event) => {
@@ -252,6 +418,18 @@
     const item = items.find((candidate) => candidate.id === button.dataset.id);
     if (!item) return;
     try {
+      if (button.dataset.action === "toggle-print-settings") {
+        const key = String(item.id);
+        if (expandedPrintSettings.has(key)) expandedPrintSettings.delete(key);
+        else expandedPrintSettings.add(key);
+        render();
+        return;
+      }
+      if (button.dataset.action === "reset-print-settings") {
+        clearPrintOverride(item);
+        render();
+        return;
+      }
       if (button.dataset.action === "print") printQueueItem(item);
       if (button.dataset.action === "paid") await updateItem(item.id, { paymentStatus: "paid" });
       if (button.dataset.action === "printed") await updateItem(item.id, { printStatus: "printed" });
@@ -265,6 +443,15 @@
     }
   });
 
+  list.addEventListener("change", (event) => {
+    const select = event.target.closest("select[data-print-setting]");
+    if (!select) return;
+    const item = items.find((candidate) => candidate.id === select.dataset.id);
+    if (!item) return;
+    setPrintOverride(item, { [select.dataset.printSetting]: select.value });
+    render();
+  });
+
   document.getElementById("refreshQueue").addEventListener("click", loadQueue);
   if (tokenButton) tokenButton.addEventListener("click", () => {
     const value = window.prompt("Staff access token (stored only for this browser session):", sessionStorage.getItem(TOKEN_KEY) || "");
@@ -276,20 +463,21 @@
     layoutInput.value = getPrintLayout();
     layoutInput.addEventListener("change", () => {
       setPrintLayout(layoutInput.value);
-      renderPrintPreview();
+      render();
     });
   }
   if (orientationInput) {
     orientationInput.value = getPrintOrientation();
     orientationInput.addEventListener("change", () => {
       setPrintOrientation(orientationInput.value);
-      renderPrintPreview();
+      render();
     });
   }
   eventInput.value = eventId;
   eventInput.addEventListener("change", loadQueue);
   window.openPrintWindowForImage = openPrintWindowForImage;
   window.printQueueItem = printQueueItem;
+  loadPrintOverrides();
   loadQueue();
   window.setInterval(loadQueue, REFRESH_MS);
 })();

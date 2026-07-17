@@ -27,6 +27,7 @@
 - Removed the remaining individual-font add, preview, suggestion, option-population, and single-font activation helpers.
 - Removed stale JavaScript element lookups, deleted final-review/email UI hooks, and orphaned CSS selectors; added regression coverage for future stale IDs.
 - Replaced the staff rotation control with a live diagram and plain-language summary showing one or two photos on portrait or landscape paper.
+- Kept print layout and paper direction as session defaults while adding a visual per-photo override with a one-click return to the session default.
 - Removed the Love It review stage.
 - Increased QR render and display size.
 - Print-enabled sessions show Retake and Print below the QR; Print explicitly submits to the existing queue.

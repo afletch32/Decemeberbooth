@@ -120,7 +120,10 @@ test("staff print route links and popup printing handle reliable handoff", () =>
   assert.ok(
     html.includes('id="printLayout"') &&
       html.includes("1 full-size photo") &&
-      html.includes("2 copies of the photo"),
+      html.includes("2 copies of the photo") &&
+      html.includes("Session print defaults") &&
+      staffScript.includes("Change for this photo") &&
+      staffScript.includes("Use session default"),
     "staff print page should expose a layout choice for single-photo and 2-up pages"
   );
   assert.ok(
