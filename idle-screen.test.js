@@ -75,7 +75,7 @@ test("idle screen selection uses event orientation before theme and general fall
 test("legacy welcome remains the fallback when custom artwork is unavailable", () => {
   assert.ok(app.includes("else clearCustomIdleScreen();"));
   assert.ok(app.includes("DOM.welcomeScreen.classList.remove(\"custom-idle-screen\")"));
-  assert.ok(app.includes("DOM.welcomeImg.onerror = clearCustomIdleScreen"));
+  assert.ok(app.includes("media.onerror = clearCustomIdleScreen"));
 });
 
 test("custom artwork hides legacy chrome only in custom idle mode", () => {
@@ -127,15 +127,59 @@ test("custom welcome artwork hides legacy UI before its image finishes loading",
 
   assert.ok(
     photoChoice.indexOf('classList.add("custom-photo-choice-screen",') <
-      photoChoice.indexOf("DOM.welcomeImg.onload")
+      photoChoice.indexOf("loadWelcomeArtwork(")
   );
   assert.ok(
     idle.indexOf('classList.add("custom-idle-screen",') <
-      idle.indexOf("DOM.welcomeImg.onload")
+      idle.indexOf("loadWelcomeArtwork(")
   );
   assert.ok(html.includes("#welcomeScreen.custom-artwork-loading::after"));
   assert.ok(app.includes("startCustomArtworkLoadFallback();"));
   assert.ok(app.includes("}, 8000);"));
+});
+
+test("idle and photo choice screens accept looping video without blocking hotspots", () => {
+  assert.ok(html.includes('id="idleScreensInput" accept="image/*,video/*"'));
+  assert.ok(html.includes('id="photoChoiceScreenInput" accept="image/*,video/*"'));
+  assert.ok(
+    html.includes(
+      'id="welcomeVideo" class="hidden" autoplay muted loop playsinline'
+    )
+  );
+  assert.ok(html.includes("#welcomeScreen.custom-idle-screen #welcomeVideo"));
+  assert.ok(
+    html.includes("#welcomeScreen.custom-photo-choice-screen #welcomeVideo")
+  );
+  assert.ok(html.includes("#welcomeVideo {") || html.includes("#welcomeVideo { z-index:"));
+  assert.ok(app.includes("function isVideoAsset(entry)"));
+  assert.ok(app.includes("function loadWelcomeArtwork(entry, onReady)"));
+  assert.ok(app.includes("media.play().catch(() => {});"));
+  assert.ok(app.includes("const media = getWelcomeArtworkMedia(entry);"));
+});
+
+test("video screen hotspots use media dimensions in runtime and editor", () => {
+  const coverRect = extractFunction(app, "getCoverImageRect");
+  assert.ok(coverRect.includes("img.videoWidth"));
+  assert.ok(coverRect.includes("img.videoHeight"));
+  assert.ok(html.includes('id="idleScreenEditorVideo"'));
+  assert.ok(app.includes("function getIdleScreenEditorMedia()"));
+  assert.ok(app.includes("DOM.idleScreenEditorVideo.onloadedmetadata"));
+  assert.ok(app.includes("contentType: (file && file.type) || \"\""));
+});
+
+test("background assets accept video and render through shared video surfaces", () => {
+  assert.ok(html.includes('id="themeBackground" accept="image/*,video/*"'));
+  assert.ok(
+    html.includes('id="themeGreenBackgrounds" accept="image/*,video/*"')
+  );
+  assert.ok(html.includes('id="boothBackgroundVideo"'));
+  assert.ok(html.includes('id="photoBackgroundVideo"'));
+  assert.ok(app.includes("setLoopingVideoSource(DOM.boothBackgroundVideo, bg)"));
+  assert.ok(
+    app.includes("setLoopingVideoSource(DOM.photoBackgroundVideo, background.src)")
+  );
+  assert.ok(app.includes('isVideoFile ? "video" : "image"'));
+  assert.ok(app.includes("const bgImg = await loadDrawableMedia(bg);"));
 });
 
 test("dedicated photo choice uploads persist as photo-choice idle screens", () => {

@@ -766,6 +766,47 @@ test("asset library toggles backgrounds before restoring theme-backed assets", (
   );
 });
 
+test("theme normalization preserves frame objects and repairs corrupted frame lists", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const normalizeThemeObject = extractFunction(
+    appScript,
+    "normalizeThemeObject"
+  );
+  const arrayUniqueOverlays = extractFunction(
+    appScript,
+    "arrayUniqueOverlays"
+  );
+  const applyOverlaysFallback = extractFunction(
+    appScript,
+    "applyOverlaysFallback"
+  );
+
+  assert.ok(
+    normalizeThemeObject.includes("arrayUniqueOverlays(t.overlays)") &&
+      !normalizeThemeObject.includes("arrayUniqueStrings(t.overlays)"),
+    "theme saves should preserve frame objects instead of converting them to [object Object]"
+  );
+  assert.ok(
+    arrayUniqueOverlays.includes("getAssetEntrySrc(entry)") &&
+      arrayUniqueOverlays.includes("cloneThemeValue(entry)"),
+    "frame normalization should deduplicate by source while retaining frame metadata"
+  );
+  assert.ok(
+    applyOverlaysFallback.includes("storedOverlaysCorrupted") &&
+      appScript.includes("hasCorruptedThemeOverlayEntries(remote)") &&
+      appScript.includes("repairedOverlayDefaults"),
+    "remote themes with unusable frame entries should restore built-in frames and sync the repair"
+  );
+  assert.ok(
+    appScript.includes(
+      '["[object Object]", "undefined", "null"].includes(value)'
+    ) &&
+      appScript.includes("foregroundSrc ||") &&
+      appScript.includes("getAssetEntrySrc(overlay.renderSrc)"),
+    "invalid saved layer sources should fall back to the frame source in preview and final rendering"
+  );
+});
+
 test("asset library explains saved, filtered, and removal actions", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");

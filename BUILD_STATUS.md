@@ -2,7 +2,7 @@
 
 ## Current goal
 
-- Clarify the admin setup flow and staff print sharing without changing working output behavior.
+- Support responsive moving booth screens and backgrounds while keeping guest controls clickable.
 
 ## Current progress
 
@@ -38,6 +38,7 @@
 - Scoped the Asset Library and its type counts to the selected theme, including associated idle and photo-choice screens.
 - Kept Asset Library card refreshes on the active library theme so saved-event background additions retain their green selected outline.
 - Fixed Asset Library card toggles so background selection and event-asset removal immediately match the toast, green outline, badge, and effective session state.
+- Fixed theme normalization so frame objects remain valid image definitions, and corrupted `[object Object]` frame lists restore from built-in theme frames for live preview and final output.
 
 ## Photo Choice Screen Feature
 
@@ -164,3 +165,15 @@ Key test coverage:
 - Modified freeze/unfreeze logic to fade out/in live preview instead of instant hide/show.
 - Preserved all existing capture and processing logic; only visual transition behavior changed.
 - Verified focused overlay-slot tests pass (34/34) and full suite passes (153/153).
+
+### Moving Screen and Background Support
+
+- Added looping MP4 support for booth backgrounds, idle screens, photo-choice screens, and green-screen backgrounds.
+- Kept Start and photo-mode hotspots as real controls layered above the video.
+- Added responsive landscape and portrait video selection using the existing screen-orientation rules.
+- Added video previews to setup, Asset Library, and hotspot positioning tools.
+- Route supported video uploads through Cloudinary's video endpoint while keeping image-only assets protected.
+- Preserve a video background frame when producing the final still photo.
+- Added regression coverage for upload routing, playback surfaces, hotspot geometry, and saved output rendering.
+- Optimized the four supplied 30-second Summer videos to H.264, 30 fps, approximately 7 MB each.
+- Next step: upload the optimized copies, assign the portrait and landscape variants, and verify on the booth device before deployment.

@@ -19,6 +19,7 @@ export function buildIdleScreenEntryFromUrl(url, file = null) {
   return {
     src: url,
     name,
+    contentType: (file && file.type) || "",
     orientation: "landscape",
     role: isPhotoChoice ? "photo-choice" : "idle",
     buttonZones: isPhotoChoice

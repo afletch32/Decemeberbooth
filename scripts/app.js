@@ -719,6 +719,7 @@ const DOM = {
   setupTabCapture: document.getElementById("setupTabCapture"),
   setupTabShare: document.getElementById("setupTabShare"),
   boothScreen: document.getElementById("boothScreen"),
+  boothBackgroundVideo: document.getElementById("boothBackgroundVideo"),
   boothHeader: document.getElementById("boothHeader"),
   boothControls: document.getElementById("controls"),
   mobileSettingsToggle: document.getElementById("mobileSettingsToggle"),
@@ -793,6 +794,7 @@ const DOM = {
   videoWrap: document.getElementById("videoWrap"),
   videoContainer: document.getElementById("videoContainer"),
   overlayBackground: document.getElementById("overlayBackground"),
+  photoBackgroundVideo: document.getElementById("photoBackgroundVideo"),
   photoSlotLayer: document.getElementById("photoSlotLayer"),
   video: document.getElementById("video"),
   livePreviewCanvas: document.getElementById("livePreviewCanvas"),
@@ -832,6 +834,7 @@ const DOM = {
   welcomeIdleStep: document.getElementById("welcomeIdleStep"),
   welcomeModeStep: document.getElementById("welcomeModeStep"),
   welcomeImg: document.getElementById("welcomeImg"),
+  welcomeVideo: document.getElementById("welcomeVideo"),
   welcomeEventLogo: document.getElementById("welcomeEventLogo"),
   welcomeHostLine: document.getElementById("welcomeHostLine"),
   welcomeTitle: document.getElementById("welcomeTitle"),
@@ -967,6 +970,7 @@ const DOM = {
   idleScreenEditorModal: document.getElementById("idleScreenEditorModal"),
   idleScreenEditorCanvas: document.getElementById("idleScreenEditorCanvas"),
   idleScreenEditorImage: document.getElementById("idleScreenEditorImage"),
+  idleScreenEditorVideo: document.getElementById("idleScreenEditorVideo"),
   idleScreenEditorZone: document.getElementById("idleScreenEditorZone"),
   photoChoiceSingleZone: document.getElementById("photoChoiceSingleZone"),
   photoChoiceStripZone: document.getElementById("photoChoiceStripZone"),
@@ -1937,10 +1941,9 @@ function renderMissingThumbnail(container, src) {
 function createAssetTile(src, options = {}) {
   const item = document.createElement("div");
   item.className = "asset-item";
-  const img = document.createElement("img");
-  img.src = withBust(src);
-  img.onerror = () => renderMissingThumbnail(item, src);
-  item.appendChild(img);
+  const media = createAssetPreviewMedia(src);
+  media.onerror = () => renderMissingThumbnail(item, src);
+  item.appendChild(media);
   if (options.badge) {
     const badgeEl = document.createElement("div");
     badgeEl.className = "asset-badge";
@@ -2032,7 +2035,48 @@ function getAssetEntrySrc(entry) {
       ? entry
       : entry && (entry.src || entry.url || entry.secure_url || "")
   ).trim();
-  return value === "[object Object]" ? "" : value;
+  return ["[object Object]", "undefined", "null"].includes(value)
+    ? ""
+    : value;
+}
+
+function isVideoAsset(entry) {
+  if (!entry) return false;
+  const contentType =
+    typeof entry === "object"
+      ? String(entry.contentType || entry.type || "").toLowerCase()
+      : "";
+  if (contentType.startsWith("video/")) return true;
+  const src = getAssetEntrySrc(entry);
+  if (!src) return false;
+  const clean = src.split("#")[0].split("?")[0].toLowerCase();
+  return (
+    clean.startsWith("data:video/") ||
+    clean.includes("/video/upload/") ||
+    /\.(mp4|webm|mov|m4v|ogv|ogg)$/.test(clean)
+  );
+}
+
+function createAssetPreviewMedia(entry, alt = "") {
+  const src = getAssetEntrySrc(entry);
+  if (isVideoAsset(entry)) {
+    const video = document.createElement("video");
+    video.src = withBust(src);
+    video.autoplay = true;
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    video.setAttribute("aria-label", alt);
+    video.play().catch(() => {});
+    return video;
+  }
+  const img = document.createElement("img");
+  img.src = withBust(src);
+  img.alt = alt;
+  img.loading = "lazy";
+  img.decoding = "async";
+  return img;
 }
 
 function createAssetSelectionSet(value) {
@@ -4122,6 +4166,7 @@ function setupGreenScreenToggle() {
   DOM.greenScreenToggle.checked = getGreenScreenEnabled();
   DOM.greenScreenToggle.addEventListener("change", () => {
     setGreenScreenEnabled(DOM.greenScreenToggle.checked);
+    syncOverlayPreviewSurface({ mode: "live" });
   });
 }
 
@@ -4164,6 +4209,7 @@ function setupAiBackgroundToggle() {
       DOM.greenScreenToggle.checked = false;
       setGreenScreenEnabled(false);
     }
+    syncOverlayPreviewSurface({ mode: "live" });
   });
 }
 
@@ -5353,6 +5399,8 @@ async function loadThemesRemote() {
     const resp = await fetch("/api/themes", { cache: "no-store" });
     if (!resp.ok) return;
     const remote = await resp.json();
+    const repairedOverlayDefaults =
+      hasCorruptedThemeOverlayEntries(remote);
     const hasKeys =
       remote && typeof remote === "object" && Object.keys(remote).length > 0;
     if (!hasKeys) {
@@ -5375,7 +5423,11 @@ async function loadThemesRemote() {
     const globalLogo = getGlobalLogo();
     if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
     localStorage.setItem("photoboothThemes", JSON.stringify(themes));
-    if (repairedBackgroundDefaults || removedLegacyThemes)
+    if (
+      repairedBackgroundDefaults ||
+      repairedOverlayDefaults ||
+      removedLegacyThemes
+    )
       scheduleThemesRemoteSync();
     // Refresh UI if already initialized
     const selected = populateThemeSelector(DEFAULT_THEME_KEY);
@@ -7347,10 +7399,9 @@ function renderCurrentAssets(theme) {
       greenBgList.forEach((src, idx) => {
         const item = document.createElement("div");
         item.className = "asset-item";
-        const img = document.createElement("img");
-        img.src = withBust(src);
-        img.onerror = () => renderMissingThumbnail(item, src);
-        item.appendChild(img);
+        const media = createAssetPreviewMedia(src);
+        media.onerror = () => renderMissingThumbnail(item, src);
+        item.appendChild(media);
         wrap.appendChild(item);
       });
     }
@@ -7459,6 +7510,29 @@ function goAdmin() {
   document.documentElement.classList.add("admin-open");
   setBoothControlsVisible(true);
 }
+
+function clearLoopingVideo(video) {
+  if (!video) return;
+  video.pause();
+  video.removeAttribute("src");
+  video.dataset.src = "";
+  video.classList.add("hidden");
+  video.load();
+}
+
+function setLoopingVideoSource(video, src) {
+  if (!video || !src) return false;
+  if (video.dataset.src !== src) {
+    video.crossOrigin = "anonymous";
+    video.src = src;
+    video.dataset.src = src;
+    video.load();
+  }
+  video.classList.remove("hidden");
+  video.play().catch(() => {});
+  return true;
+}
+
 function applyThemeBackground(theme) {
   if (!theme) return;
   let bg = getActiveBackground(theme) || "";
@@ -7466,9 +7540,14 @@ function applyThemeBackground(theme) {
     const list = getBackgroundList(theme);
     if (list && list.length) bg = list[0];
   }
-  if (bg && !bg.endsWith("/")) {
+  if (bg && !bg.endsWith("/") && isVideoAsset(bg)) {
+    DOM.boothScreen.style.backgroundImage = "";
+    setLoopingVideoSource(DOM.boothBackgroundVideo, bg);
+  } else if (bg && !bg.endsWith("/")) {
+    clearLoopingVideo(DOM.boothBackgroundVideo);
     DOM.boothScreen.style.backgroundImage = `url(${bg})`;
   } else {
+    clearLoopingVideo(DOM.boothBackgroundVideo);
     DOM.boothScreen.style.backgroundImage = "";
   }
   if (DOM.welcomeScreen)
@@ -7509,12 +7588,29 @@ function resolveStillPhotoUrl(source) {
 
 function applyOverlayBackgroundLayer(overlay) {
   if (!DOM.overlayBackground) return;
-  const background = overlay && overlay.background;
+  const photoBackground =
+    activeTheme && (getAiBackgroundEnabled() || getGreenScreenEnabled())
+      ? getActiveGreenBackground(activeTheme)
+      : "";
+  const background =
+    (overlay && overlay.background) ||
+    (photoBackground
+      ? {
+          type: isVideoAsset(photoBackground) ? "video" : "image",
+          src: photoBackground,
+        }
+      : null);
   DOM.overlayBackground.style.backgroundImage = "";
   DOM.overlayBackground.style.backgroundColor = "";
+  clearLoopingVideo(DOM.photoBackgroundVideo);
   if (!background) return;
   if (background.type === "color") {
     DOM.overlayBackground.style.backgroundColor = background.value || "#ffffff";
+  } else if (
+    (background.type === "video" || isVideoAsset(background.src)) &&
+    background.src
+  ) {
+    setLoopingVideoSource(DOM.photoBackgroundVideo, background.src);
   } else if (background.type === "image" && background.src) {
     DOM.overlayBackground.style.backgroundImage = `url(${withBust(
       background.src
@@ -7524,12 +7620,15 @@ function applyOverlayBackgroundLayer(overlay) {
 
 function applyOverlayForegroundLayer(overlay) {
   if (!DOM.liveOverlay) return;
-  const src =
+  const foregroundSrc =
     overlay && overlay.foreground && overlay.foreground.type === "image"
-      ? overlay.foreground.src
-      : overlay
-      ? overlay.renderSrc || resolveOverlayRenderSrc(activeTheme, overlay.src)
+      ? getAssetEntrySrc(overlay.foreground.src)
       : "";
+  const src = overlay
+    ? foregroundSrc ||
+      getAssetEntrySrc(overlay.renderSrc) ||
+      resolveOverlayRenderSrc(activeTheme, overlay.src)
+    : "";
   if (!src) {
     if (DOM.liveOverlay.src) DOM.liveOverlay.src = "";
     DOM.liveOverlay.style.display = "none";
@@ -7652,6 +7751,7 @@ function clearOverlayPreviewSurface() {
     DOM.overlayBackground.style.backgroundImage = "";
     DOM.overlayBackground.style.backgroundColor = "";
   }
+  clearLoopingVideo(DOM.photoBackgroundVideo);
   if (DOM.liveOverlay) {
     DOM.liveOverlay.src = "";
     DOM.liveOverlay.style.display = "none";
@@ -8186,9 +8286,8 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
     greenList.forEach((src, idx) => {
       const wrap = document.createElement("div");
       wrap.className = "thumb";
-      const img = document.createElement("img");
-      wrap.appendChild(img);
-      img.src = withBust(src);
+      const media = createAssetPreviewMedia(src);
+      wrap.appendChild(media);
       if (activeGreen === src) wrap.classList.add("selected");
       wrap.onclick = () => {
         greenGrid
@@ -8605,8 +8704,8 @@ function selectPhotoChoiceScreenEntry() {
 function getCoverImageRect(img, container) {
   const width = container.clientWidth;
   const height = container.clientHeight;
-  const naturalWidth = img.naturalWidth || width;
-  const naturalHeight = img.naturalHeight || height;
+  const naturalWidth = img.naturalWidth || img.videoWidth || width;
+  const naturalHeight = img.naturalHeight || img.videoHeight || height;
   const scale = Math.max(width / naturalWidth, height / naturalHeight);
   const renderedWidth = naturalWidth * scale;
   const renderedHeight = naturalHeight * scale;
@@ -8618,10 +8717,15 @@ function getCoverImageRect(img, container) {
   };
 }
 
+function getWelcomeArtworkMedia(entry) {
+  return isVideoAsset(entry) ? DOM.welcomeVideo : DOM.welcomeImg;
+}
+
 function positionIdleStartHotspot(entry) {
-  if (!DOM.welcomeImg || !DOM.welcomeScreen || !DOM.startButton) return;
+  const media = getWelcomeArtworkMedia(entry);
+  if (!media || !DOM.welcomeScreen || !DOM.startButton) return;
   const zone = normalizeIdleButtonZone(entry && entry.buttonZones && entry.buttonZones.start);
-  const rect = getCoverImageRect(DOM.welcomeImg, DOM.welcomeScreen);
+  const rect = getCoverImageRect(media, DOM.welcomeScreen);
   Object.assign(DOM.startButton.style, {
     left: `${rect.left + (zone.x / 100) * rect.width}px`,
     top: `${rect.top + (zone.y / 100) * rect.height}px`,
@@ -8681,12 +8785,21 @@ function clearCustomIdleScreen() {
     DOM.welcomeImg.src = "";
     DOM.welcomeImg.classList.add("hidden");
   }
+  if (DOM.welcomeVideo) {
+    DOM.welcomeVideo.onloadedmetadata = null;
+    DOM.welcomeVideo.onerror = null;
+    DOM.welcomeVideo.pause();
+    DOM.welcomeVideo.removeAttribute("src");
+    DOM.welcomeVideo.load();
+    DOM.welcomeVideo.classList.add("hidden");
+  }
   if (DOM.startButton) DOM.startButton.removeAttribute("style");
 }
 
 function positionPhotoChoiceHotspots(entry) {
-  if (!DOM.welcomeImg || !DOM.welcomeScreen) return;
-  const rect = getCoverImageRect(DOM.welcomeImg, DOM.welcomeScreen);
+  const media = getWelcomeArtworkMedia(entry);
+  if (!media || !DOM.welcomeScreen) return;
+  const rect = getCoverImageRect(media, DOM.welcomeScreen);
   const zones = entry && entry.buttonZones ? entry.buttonZones : {};
   const place = (modeName, zoneValue) => {
     const button = document.querySelector(`.welcome-mode-btn[data-welcome-mode="${modeName}"]`);
@@ -8703,43 +8816,55 @@ function positionPhotoChoiceHotspots(entry) {
   place("strip", zones.photoStrip || photoChoiceEditorZones.photoStrip);
 }
 
+function loadWelcomeArtwork(entry, onReady) {
+  const src = getAssetEntrySrc(entry);
+  const media = getWelcomeArtworkMedia(entry);
+  if (!src || !media) return false;
+  if (DOM.welcomeImg) DOM.welcomeImg.classList.add("hidden");
+  if (DOM.welcomeVideo) DOM.welcomeVideo.classList.add("hidden");
+  startCustomArtworkLoadFallback();
+  if (isVideoAsset(entry)) {
+    media.onloadedmetadata = () => {
+      clearCustomArtworkLoadTimer();
+      DOM.welcomeScreen.classList.remove("custom-artwork-loading");
+      media.classList.remove("hidden");
+      media.play().catch(() => {});
+      onReady();
+    };
+    media.onerror = clearCustomIdleScreen;
+    media.crossOrigin = "anonymous";
+    media.src = src;
+    media.load();
+  } else {
+    media.onload = () => {
+      clearCustomArtworkLoadTimer();
+      DOM.welcomeScreen.classList.remove("custom-artwork-loading");
+      media.classList.remove("hidden");
+      onReady();
+    };
+    media.onerror = clearCustomIdleScreen;
+    media.src = src;
+  }
+  return true;
+}
+
 function applyCustomPhotoChoiceScreen(entry) {
   const src = getAssetEntrySrc(entry);
-  if (!src || !DOM.welcomeImg || !DOM.welcomeScreen) return false;
+  if (!src || !DOM.welcomeImg || !DOM.welcomeVideo || !DOM.welcomeScreen) return false;
   DOM.welcomeScreen.classList.remove("custom-idle-screen");
   DOM.welcomeScreen.classList.add("custom-photo-choice-screen", "custom-artwork-loading");
-  DOM.welcomeImg.classList.add("hidden");
-  startCustomArtworkLoadFallback();
-  DOM.welcomeImg.onload = () => {
-    clearCustomArtworkLoadTimer();
-    DOM.welcomeScreen.classList.remove("custom-artwork-loading");
-    DOM.welcomeImg.classList.remove("hidden");
-    positionPhotoChoiceHotspots(entry);
-  };
-  DOM.welcomeImg.onerror = clearCustomIdleScreen;
-  DOM.welcomeImg.src = src;
-  return true;
+  return loadWelcomeArtwork(entry, () => positionPhotoChoiceHotspots(entry));
 }
 
 function applyCustomIdleScreen(entry) {
   const src = getAssetEntrySrc(entry);
-  if (!src || !DOM.welcomeImg || !DOM.welcomeScreen) {
+  if (!src || !DOM.welcomeImg || !DOM.welcomeVideo || !DOM.welcomeScreen) {
     clearCustomIdleScreen();
     return false;
   }
   DOM.welcomeScreen.classList.remove("custom-photo-choice-screen");
   DOM.welcomeScreen.classList.add("custom-idle-screen", "custom-artwork-loading");
-  DOM.welcomeImg.classList.add("hidden");
-  startCustomArtworkLoadFallback();
-  DOM.welcomeImg.onload = () => {
-    clearCustomArtworkLoadTimer();
-    DOM.welcomeScreen.classList.remove("custom-artwork-loading");
-    DOM.welcomeImg.classList.remove("hidden");
-    positionIdleStartHotspot(entry);
-  };
-  DOM.welcomeImg.onerror = clearCustomIdleScreen;
-  DOM.welcomeImg.src = src;
-  return true;
+  return loadWelcomeArtwork(entry, () => positionIdleStartHotspot(entry));
 }
 
 function showWelcome(step = null) {
@@ -9117,6 +9242,8 @@ function enterBoothQaState(state = "capture") {
   if (!isBoothTestMode()) return;
   const target = state || "capture";
   startBooth({ preserveSession: true });
+  applyBoothVideoFixturesFromUrl();
+  if (target === "welcome") showWelcome("idle");
   requestAnimationFrame(() => {
     if (target === "welcome") return;
     beginModeSelection("still-photo");
@@ -9129,9 +9256,70 @@ function enterBoothQaState(state = "capture") {
   });
 }
 
+function applyBoothVideoFixturesFromUrl() {
+  if (!isBoothTestMode() || !activeTheme) return;
+  const idleLandscape = getUrlParam("idleVideoLandscape");
+  const idlePortrait = getUrlParam("idleVideoPortrait");
+  const choiceLandscape = getUrlParam("choiceVideoLandscape");
+  const choicePortrait = getUrlParam("choiceVideoPortrait");
+  const screenEntries = [
+    idleLandscape
+      ? {
+          src: idleLandscape,
+          contentType: "video/mp4",
+          orientation: "landscape",
+          role: "idle",
+          buttonZones: { start: normalizeIdleButtonZone() },
+        }
+      : null,
+    idlePortrait
+      ? {
+          src: idlePortrait,
+          contentType: "video/mp4",
+          orientation: "portrait",
+          role: "idle",
+          buttonZones: { start: normalizeIdleButtonZone() },
+        }
+      : null,
+    choiceLandscape
+      ? {
+          src: choiceLandscape,
+          contentType: "video/mp4",
+          orientation: "landscape",
+          role: "photo-choice",
+          buttonZones: {
+            singlePhoto: normalizeIdleButtonZone(photoChoiceEditorZones.singlePhoto),
+            photoStrip: normalizeIdleButtonZone(photoChoiceEditorZones.photoStrip),
+          },
+        }
+      : null,
+    choicePortrait
+      ? {
+          src: choicePortrait,
+          contentType: "video/mp4",
+          orientation: "portrait",
+          role: "photo-choice",
+          buttonZones: {
+            singlePhoto: normalizeIdleButtonZone(photoChoiceEditorZones.singlePhoto),
+            photoStrip: normalizeIdleButtonZone(photoChoiceEditorZones.photoStrip),
+          },
+        }
+      : null,
+  ].filter(Boolean);
+  if (!screenEntries.length) return;
+  activeTheme.idleScreens = screenEntries;
+  const background = getUrlParam("backgroundVideo") || idleLandscape || idlePortrait;
+  if (background) {
+    activeTheme.backgrounds = [background];
+    activeTheme.backgroundIndex = 0;
+    applyThemeBackground(activeTheme);
+  }
+}
+
 function applyBoothTestModeFromUrl() {
   if (!isBoothTestMode()) return;
   document.documentElement.dataset.boothTestMode = "true";
+  applyBoothVideoFixturesFromUrl();
   const state = getBoothQaState();
   if (state) {
     requestAnimationFrame(() => enterBoothQaState(state));
@@ -9875,6 +10063,30 @@ function loadImage(url) {
     img.src = url;
   });
 }
+
+function loadDrawableMedia(url) {
+  if (!isVideoAsset(url)) return loadImage(url);
+  if (
+    DOM.photoBackgroundVideo &&
+    DOM.photoBackgroundVideo.dataset.src === url &&
+    DOM.photoBackgroundVideo.readyState >= 2 &&
+    DOM.photoBackgroundVideo.videoWidth
+  ) {
+    return Promise.resolve(DOM.photoBackgroundVideo);
+  }
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.crossOrigin = "anonymous";
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.onloadeddata = () => resolve(video);
+    video.onerror = reject;
+    video.src = url;
+    video.load();
+  });
+}
+
 async function getOrientationFromImage(imgSrc) {
   const img = await loadImage(imgSrc);
   if (img.naturalHeight > img.naturalWidth) return "portrait";
@@ -9901,8 +10113,8 @@ async function applyOverlay(canvas, overlaySrc) {
 function drawCoverInRect(ctx, source, dx, dy, dw, dh) {
   if (!source) return;
   const img = source;
-  const iw = img.naturalWidth || img.width;
-  const ih = img.naturalHeight || img.height;
+  const iw = img.naturalWidth || img.videoWidth || img.width;
+  const ih = img.naturalHeight || img.videoHeight || img.height;
   if (!iw || !ih || !dw || !dh) return;
   const scale = Math.max(dw / iw, dh / ih);
   const rw = iw * scale;
@@ -9923,8 +10135,8 @@ function drawImageCover(ctx, img, dx, dy, dw, dh) {
 
 // Draw image/canvas into a destination rect preserving aspect without cropping
 function drawImageContain(ctx, img, dx, dy, dw, dh) {
-  const iw = img.naturalWidth || img.width;
-  const ih = img.naturalHeight || img.height;
+  const iw = img.naturalWidth || img.videoWidth || img.width;
+  const ih = img.naturalHeight || img.videoHeight || img.height;
   if (!iw || !ih || !dw || !dh) return;
   const scale = Math.min(dw / iw, dh / ih);
   const rw = iw * scale;
@@ -10900,7 +11112,7 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
       : "";
   if (bg) {
     try {
-      const bgImg = await loadImage(bg);
+      const bgImg = await loadDrawableMedia(bg);
       drawImageCover(ctx, bgImg, 0, 0, targetW, targetH);
     } catch (_) {}
   }
@@ -14111,6 +14323,7 @@ function buildIdleScreenEntryFromUrl(url, file = null, explicitRole = "") {
     src: url,
     orientation: "general",
     name,
+    contentType: (file && file.type) || "",
     role,
     buttonZones:
       role === "photo-choice"
@@ -15069,17 +15282,24 @@ function promptForAssetName(asset) {
 function getContainedImageRect(img, container) {
   const width = container.clientWidth;
   const height = container.clientHeight;
-  const naturalWidth = img.naturalWidth || width;
-  const naturalHeight = img.naturalHeight || height;
+  const naturalWidth = img.naturalWidth || img.videoWidth || width;
+  const naturalHeight = img.naturalHeight || img.videoHeight || height;
   const scale = Math.min(width / naturalWidth, height / naturalHeight);
   const renderedWidth = naturalWidth * scale;
   const renderedHeight = naturalHeight * scale;
   return { left: (width - renderedWidth) / 2, top: (height - renderedHeight) / 2, width: renderedWidth, height: renderedHeight };
 }
 
+function getIdleScreenEditorMedia() {
+  return activeIdleScreenEditorAsset && isVideoAsset(activeIdleScreenEditorAsset)
+    ? DOM.idleScreenEditorVideo
+    : DOM.idleScreenEditorImage;
+}
+
 function renderIdleScreenEditorZone() {
-  if (!DOM.idleScreenEditorImage || !DOM.idleScreenEditorCanvas) return;
-  const rect = getContainedImageRect(DOM.idleScreenEditorImage, DOM.idleScreenEditorCanvas);
+  const media = getIdleScreenEditorMedia();
+  if (!media || !DOM.idleScreenEditorCanvas) return;
+  const rect = getContainedImageRect(media, DOM.idleScreenEditorCanvas);
   const render = (element, zoneValue) => {
     if (!element) return;
     const zone = normalizeIdleButtonZone(zoneValue);
@@ -15107,7 +15327,9 @@ function bindIdleScreenEditorPointer() {
     const original = { ...getZone() };
     zoneElement.setPointerCapture(event.pointerId);
     const move = (nextEvent) => {
-      const rect = getContainedImageRect(DOM.idleScreenEditorImage, DOM.idleScreenEditorCanvas);
+      const media = getIdleScreenEditorMedia();
+      if (!media) return;
+      const rect = getContainedImageRect(media, DOM.idleScreenEditorCanvas);
       const dx = ((nextEvent.clientX - startX) / rect.width) * 100;
       const dy = ((nextEvent.clientY - startY) / rect.height) * 100;
       const nextZone = resize
@@ -15132,6 +15354,7 @@ function bindIdleScreenEditorPointer() {
 }
 
 function closeIdleScreenEditor() {
+  if (DOM.idleScreenEditorVideo) DOM.idleScreenEditorVideo.pause();
   activeIdleScreenEditorAsset = null;
   if (DOM.idleScreenEditorModal) DOM.idleScreenEditorModal.classList.add("hidden");
 }
@@ -15153,8 +15376,18 @@ function openIdleScreenEditor(asset) {
   DOM.photoChoiceSingleZone.classList.toggle("hidden", !isPhotoChoice);
   DOM.photoChoiceStripZone.classList.toggle("hidden", !isPhotoChoice);
   DOM.idleScreenOrientation.value = normalizeIdleScreenOrientation(asset.orientation) === "portrait" ? "portrait" : "landscape";
-  DOM.idleScreenEditorImage.onload = renderIdleScreenEditorZone;
-  DOM.idleScreenEditorImage.src = getAssetEntrySrc(asset);
+  DOM.idleScreenEditorImage.classList.toggle("hidden", isVideoAsset(asset));
+  DOM.idleScreenEditorVideo.classList.toggle("hidden", !isVideoAsset(asset));
+  if (isVideoAsset(asset)) {
+    DOM.idleScreenEditorVideo.onloadedmetadata = renderIdleScreenEditorZone;
+    DOM.idleScreenEditorVideo.crossOrigin = "anonymous";
+    DOM.idleScreenEditorVideo.src = getAssetEntrySrc(asset);
+    DOM.idleScreenEditorVideo.load();
+    DOM.idleScreenEditorVideo.play().catch(() => {});
+  } else {
+    DOM.idleScreenEditorImage.onload = renderIdleScreenEditorZone;
+    DOM.idleScreenEditorImage.src = getAssetEntrySrc(asset);
+  }
   DOM.idleScreenEditorModal.classList.remove("hidden");
   bindIdleScreenEditorPointer();
 }
@@ -15360,6 +15593,7 @@ function buildThemeDefaultAssetEntry(asset) {
       ...cloneThemeValue(raw),
       src,
       name: asset.name,
+      contentType: asset.contentType || raw.contentType || "",
       orientation: normalizeIdleScreenOrientation(asset.orientation),
       role,
       buttonZones:
@@ -15664,9 +15898,7 @@ function openThemeDefaultsSetupModal() {
           checkbox.value = asset.id;
           checkbox.dataset.category = category;
           checkbox.checked = explicitSources.has(src);
-          const thumbnail = document.createElement("img");
-          thumbnail.src = withBust(src);
-          thumbnail.alt = "";
+          const thumbnail = createAssetPreviewMedia(asset);
           thumbnail.onerror = () => thumbnail.remove();
           const name = document.createElement("span");
           name.className = "theme-defaults-setup-name";
@@ -15888,11 +16120,10 @@ function renderAssetLibrary() {
           event.preventDefault();
           toggleLibraryAsset(asset);
         });
-        const img = document.createElement("img");
-        img.src = withBust(assetSrc);
-        img.alt = asset.name || asset.category;
-        img.loading = "lazy";
-        img.decoding = "async";
+        const img = createAssetPreviewMedia(
+          asset,
+          asset.name || asset.category
+        );
         img.onerror = () => renderMissingThumbnail(card, assetSrc);
         const name = document.createElement("div");
         name.className = "asset-library-name";
@@ -16078,6 +16309,22 @@ function toggleLibraryAsset(asset) {
 // Upload an asset to a shared Cloudinary URL.
 async function uploadAsset(file, kind, options = {}) {
   try {
+    const isVideoFile = !!(
+      file &&
+      (String(file.type || "").toLowerCase().startsWith("video/") ||
+        isVideoAsset(file.name || ""))
+    );
+    const videoKinds = new Set([
+      "background",
+      "backgrounds",
+      "greenBackgrounds",
+      "idle-screens",
+      "photo-choice-screens",
+    ]);
+    if (isVideoFile && !videoKinds.has(kind)) {
+      showToast("Videos can be used for backgrounds, idle screens, and photo choice screens.");
+      return "";
+    }
     const index = getAssetIndex();
     const hash = await fileSha256Hex(file);
     const folder = (
@@ -16108,7 +16355,9 @@ async function uploadAsset(file, kind, options = {}) {
     form.append("upload_preset", cfg.preset);
     form.append("folder", folder);
     const resp = await fetch(
-      `https://api.cloudinary.com/v1_1/${cfg.cloud}/image/upload`,
+      `https://api.cloudinary.com/v1_1/${cfg.cloud}/${
+        isVideoFile ? "video" : "image"
+      }/upload`,
       { method: "POST", body: form }
     );
     const json = await resp.json();
@@ -16388,6 +16637,10 @@ function applyTemplatesFallback(baseLeaf, merged, storedLeaf) {
 
 function applyOverlaysFallback(baseLeaf, merged, storedLeaf) {
   const storedArrayExists = Array.isArray(storedLeaf && storedLeaf.overlays);
+  const storedOverlays = storedArrayExists ? storedLeaf.overlays : [];
+  const storedOverlaysCorrupted =
+    storedOverlays.length > 0 &&
+    !storedOverlays.some((entry) => getAssetEntrySrc(entry));
   const baseOverlays = Array.isArray(baseLeaf.overlays)
     ? baseLeaf.overlays
     : null;
@@ -16397,11 +16650,26 @@ function applyOverlaysFallback(baseLeaf, merged, storedLeaf) {
   if (
     baseOverlays &&
     baseOverlays.length &&
-    (!mergedOverlays || mergedOverlays.length === 0) &&
-    !storedArrayExists
+    (((!mergedOverlays || mergedOverlays.length === 0) &&
+      !storedArrayExists) ||
+      storedOverlaysCorrupted)
   ) {
-    merged.overlays = baseOverlays.slice();
+    merged.overlays = baseOverlays.map(cloneThemeValue);
   }
+}
+
+function hasCorruptedThemeOverlayEntries(value) {
+  if (!value || typeof value !== "object") return false;
+  if (
+    Array.isArray(value.overlays) &&
+    value.overlays.length > 0 &&
+    !value.overlays.some((entry) => getAssetEntrySrc(entry))
+  ) {
+    return true;
+  }
+  return Object.values(value).some((entry) =>
+    hasCorruptedThemeOverlayEntries(entry)
+  );
 }
 
 function applyArrayFallback(baseLeaf, merged, prop) {
@@ -18295,6 +18563,24 @@ function arrayUniqueStrings(arr) {
   }
   return out;
 }
+
+function arrayUniqueOverlays(arr) {
+  if (!Array.isArray(arr)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const entry of arr) {
+    const src = getAssetEntrySrc(entry);
+    if (!src || seen.has(src)) continue;
+    seen.add(src);
+    out.push(
+      entry && typeof entry === "object"
+        ? { ...cloneThemeValue(entry), src }
+        : src
+    );
+  }
+  return out;
+}
+
 function arrayUniqueTemplates(arr) {
   if (!Array.isArray(arr)) return [];
   const seen = new Set();
@@ -18322,7 +18608,7 @@ function arrayUniqueTemplates(arr) {
 function normalizeThemeObject(t) {
   if (!t || typeof t !== "object") return;
   if (typeof t.name === "string") t.name = normalizeThemeName(t.name);
-  if (Array.isArray(t.overlays)) t.overlays = arrayUniqueStrings(t.overlays);
+  if (Array.isArray(t.overlays)) t.overlays = arrayUniqueOverlays(t.overlays);
   if (Array.isArray(t.templates))
     t.templates = arrayUniqueTemplates(t.templates);
   // Background normalization: ensure index in range
@@ -19178,6 +19464,7 @@ function setGreenBackgroundIndex(idx) {
     activeSessionAssets.greenBackgroundIndex = sessionIndex;
     renderCurrentAssets(target);
     renderOptions();
+    syncOverlayPreviewSurface({ mode: "live" });
     return;
   }
   const eventIndex = eventList.indexOf(selected);
@@ -19204,6 +19491,7 @@ function setGreenBackgroundIndex(idx) {
   }
   renderCurrentAssets(target);
   renderOptions();
+  syncOverlayPreviewSurface({ mode: "live" });
 }
 
 function removeGreenBackgroundAt(idx) {
@@ -19377,10 +19665,12 @@ function buildOverlayIdFromSrc(src) {
 function normalizeOverlayLayerDescriptor(layer, fallbackSrc = "") {
   if (!layer && !fallbackSrc) return null;
   if (typeof layer === "string") {
-    return { type: "image", src: layer };
+    const src = getAssetEntrySrc(layer) || getAssetEntrySrc(fallbackSrc);
+    return src ? { type: "image", src } : null;
   }
   if (!layer || typeof layer !== "object") {
-    return fallbackSrc ? { type: "image", src: fallbackSrc } : null;
+    const src = getAssetEntrySrc(fallbackSrc);
+    return src ? { type: "image", src } : null;
   }
   if (layer.type === "color") {
     return {
@@ -19389,9 +19679,14 @@ function normalizeOverlayLayerDescriptor(layer, fallbackSrc = "") {
     };
   }
   if (layer.type === "image" || layer.src || fallbackSrc) {
+    const src =
+      getAssetEntrySrc(layer.src) ||
+      getAssetEntrySrc(layer.value) ||
+      getAssetEntrySrc(fallbackSrc);
+    if (!src) return null;
     return {
       type: "image",
-      src: String(layer.src || layer.value || fallbackSrc || "").trim(),
+      src,
     };
   }
   return null;
