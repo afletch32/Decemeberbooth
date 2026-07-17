@@ -37,6 +37,7 @@
 - Relabeled Device Tools as Advanced Device Tools to distinguish operator fallbacks from normal setup.
 - Scoped the Asset Library and its type counts to the selected theme, including associated idle and photo-choice screens.
 - Kept Asset Library card refreshes on the active library theme so saved-event background additions retain their green selected outline.
+- Fixed Asset Library card toggles so background selection and event-asset removal immediately match the toast, green outline, badge, and effective session state.
 
 ## Photo Choice Screen Feature
 

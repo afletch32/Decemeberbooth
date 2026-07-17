@@ -371,8 +371,9 @@ test("asset library background selection only reflects explicit theme defaults",
   assert.ok(
     appScript.includes("function getEffectiveSelectedBackgroundList(theme)") &&
       appScript.includes("getSessionEffectiveAssetSourceSet(category") &&
-      appScript.includes("new Set(getEffectiveSelectedBackgroundList(theme))"),
-    "manual background selections should stay clickable without selecting the catalog"
+      appScript.includes("const activeBackground = getActiveBackground(theme);") &&
+      appScript.includes("new Set(activeBackground ? [activeBackground] : [])"),
+    "only the active background should show as selected without selecting the catalog"
   );
   assert.ok(
     appScript.includes("Array.isArray(theme.backgrounds)") &&
@@ -730,11 +731,38 @@ test("asset library card refresh stays on the theme that rendered the library", 
   const toggleLibraryAsset = extractFunction(appScript, "toggleLibraryAsset");
 
   assert.ok(
-    toggleLibraryAsset.includes(
-      "const key = getActiveAssetLibraryThemeContext().key;"
-    ) &&
-      !toggleLibraryAsset.includes("DOM.eventSelect && DOM.eventSelect.value"),
-    "session asset toggles should not reload a different hidden event theme and discard the selected card state"
+    !toggleLibraryAsset.includes("loadTheme(") &&
+      toggleLibraryAsset.includes("renderAssetLibrary();"),
+    "session asset toggles should rerender their changed state without reloading a theme over it"
+  );
+});
+
+test("asset library toggles backgrounds before restoring theme-backed assets", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const toggleLibraryAsset = extractFunction(appScript, "toggleLibraryAsset");
+  const backgroundBranch = toggleLibraryAsset.indexOf(
+    'category === "background"'
+  );
+  const restoreBranch = toggleLibraryAsset.indexOf(
+    "themeSources.has(src) || eventSources.has(src)"
+  );
+
+  assert.ok(
+    backgroundBranch >= 0 &&
+      restoreBranch >= 0 &&
+      backgroundBranch < restoreBranch &&
+      toggleLibraryAsset.includes('addSessionAssetUrl("backgrounds", src);'),
+    "clicking an unselected background should activate it instead of only clearing removal state"
+  );
+  assert.ok(
+    appScript.includes("function getEventAssetSourceSet(kind)") &&
+      appScript.includes(
+        "if (themeSources.has(cleanSrc) || eventSources.has(cleanSrc))"
+      ) &&
+      appScript.includes("const activeBackground = getActiveBackground(theme);") &&
+      appScript.includes("getOverlayList(theme)") &&
+      appScript.includes("getTemplateList(theme)"),
+    "removing a selected event asset should hide it for the session as well as theme assets"
   );
 });
 
