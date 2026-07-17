@@ -763,17 +763,6 @@ const DOM = {
   launchTemplateThumb: document.getElementById("launchTemplateThumb"),
   launchTemplateSummary: document.getElementById("launchTemplateSummary"),
   launchWarning: document.getElementById("launchWarning"),
-  launchConfirmModal: document.getElementById("launchConfirmModal"),
-  launchConfirmEventName: document.getElementById("launchConfirmEventName"),
-  launchConfirmOverlayName: document.getElementById("launchConfirmOverlayName"),
-  launchConfirmFontStatus: document.getElementById("launchConfirmFontStatus"),
-  launchConfirmOverlayCount: document.getElementById(
-    "launchConfirmOverlayCount"
-  ),
-  launchConfirmStripStatus: document.getElementById("launchConfirmStripStatus"),
-  launchConfirmWarning: document.getElementById("launchConfirmWarning"),
-  launchConfirmCancel: document.getElementById("launchConfirmCancel"),
-  launchConfirmStart: document.getElementById("launchConfirmStart"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
@@ -1541,7 +1530,6 @@ let welcomeFlowStep = "demo";
 let captureAspectRatio = null; // Override capture aspect (width/height) when set
 const SETUP_LAUNCH_MODE_STORAGE_KEY = "photoboothSetupLaunchMode";
 let setupLaunchMode = "single_photo";
-let launchSummaryRevision = 0;
 const ASSET_PICKER_INITIAL_LIMIT = 24;
 const ASSET_PICKER_PAGE_SIZE = 24;
 let assetPickerVisibleLimits = {
@@ -2947,22 +2935,6 @@ function handleEventSelectChange(event) {
   updateLaunchSummary();
 }
 
-function openBoothLaunchConfirm() {
-  const modal = document.getElementById("launchConfirmModal");
-  if (modal) modal.style.display = "flex";
-  updateLaunchSummary();
-}
-
-function closeBoothLaunchConfirm() {
-  const modal = document.getElementById("launchConfirmModal");
-  if (modal) modal.style.display = "none";
-}
-
-function confirmBoothLaunch() {
-  closeBoothLaunchConfirm();
-  startBooth();
-}
-
 function setupBoothButtons() {
   const startCameraBtn = document.getElementById("startCameraButton");
   if (startCameraBtn) startCameraBtn.addEventListener("click", startCamera);
@@ -2970,23 +2942,10 @@ function setupBoothButtons() {
 
   const startBoothBtn = document.getElementById("startBoothButton");
   if (startBoothBtn) {
-    startBoothBtn.addEventListener("click", openBoothLaunchConfirm);
+    startBoothBtn.addEventListener("click", startBooth);
   }
   else console.warn("Start Booth button not found in DOM.");
 
-  if (DOM.launchConfirmCancel) {
-    DOM.launchConfirmCancel.addEventListener("click", closeBoothLaunchConfirm);
-  }
-  if (DOM.launchConfirmStart) {
-    DOM.launchConfirmStart.addEventListener("click", confirmBoothLaunch);
-  }
-  if (DOM.launchConfirmModal) {
-    DOM.launchConfirmModal.addEventListener("click", (event) => {
-      if (event.target === DOM.launchConfirmModal) {
-        closeBoothLaunchConfirm();
-      }
-    });
-  }
   if (DOM.launchModeSingleBtn) {
     DOM.launchModeSingleBtn.addEventListener("click", () =>
       setSetupLaunchMode("single_photo")
@@ -4533,35 +4492,6 @@ function syncSetupLaunchModeUi() {
   }
 }
 
-function getLaunchThemeName() {
-  const active = getActiveEvent();
-  if (active && active.name) return active.name;
-  if (DOM.eventSelect && DOM.eventSelect.selectedOptions.length) {
-    return DOM.eventSelect.selectedOptions[0].textContent || "No theme selected";
-  }
-  return "No theme selected";
-}
-
-function getLaunchThemeLabel() {
-  return getThemeSetupDisplayLabel(
-    DOM.eventSelect ? DOM.eventSelect.value : "",
-    activeTheme || resolveThemeByKey(DOM.eventSelect ? DOM.eventSelect.value : "")
-  );
-}
-
-function getLaunchFontLabel() {
-  const theme = activeTheme || getSelectedThemeTarget() || {};
-  const heading =
-    primaryFontFamily(theme.fontHeading || theme.font || "") || "";
-  const body =
-    primaryFontFamily(theme.fontBody || theme.font || "") || heading;
-  if (!heading && !body) return "Use theme fonts";
-  if (heading && body && heading !== body) {
-    return `${heading} + ${body}`;
-  }
-  return heading || body || "Use theme fonts";
-}
-
 function getLaunchBackgroundCountLabel() {
   const backgroundCount = getSessionEffectiveAssetSourceSet("background").size;
   if (!backgroundCount) return "No backgrounds selected";
@@ -4585,30 +4515,6 @@ function getLaunchStripTemplate() {
     isStripTemplateLayout(template && template.layout)
   );
   return templates.length ? templates[0] : null;
-}
-
-function getLaunchCameraLabel() {
-  if (demoMode) return "Demo mode";
-  if (hasLiveVideoStream()) return "Ready";
-  if (!navigator.permissions || typeof navigator.permissions.query !== "function") {
-    return "Not started yet";
-  }
-  return "Checking camera permission...";
-}
-
-function getLaunchOutputLabel() {
-  const uploadReady = cloudinaryConfigured();
-  const pending = (() => {
-    try {
-      return getPendingUploads().length;
-    } catch (_) {
-      return 0;
-    }
-  })();
-  if (uploadReady) {
-    return pending ? `Cloudinary ready · ${pending} pending` : "Cloudinary ready";
-  }
-  return pending ? `Local uploads · ${pending} pending` : "Local uploads";
 }
 
 function getLaunchWarning() {
@@ -4711,54 +4617,12 @@ function getLaunchSummaryThumbnailLabel(kind) {
   return "";
 }
 
-async function refreshLaunchCameraStatus() {
-  if (demoMode) return "Demo mode";
-  if (hasLiveVideoStream()) return "Ready";
-  if (!navigator.permissions || typeof navigator.permissions.query !== "function") {
-    return "Not started yet";
-  }
-  try {
-    const status = await navigator.permissions.query({ name: "camera" });
-    if (status && status.state === "granted") {
-      return "Permission granted, camera not started yet";
-    }
-    if (status && status.state === "denied") {
-      return "Camera permission blocked in the browser";
-    }
-    return "Camera permission needed";
-  } catch (_) {
-    return "Not started yet";
-  }
-}
-
-async function updateLaunchSummary() {
-  const revision = ++launchSummaryRevision;
-  const eventName = getLaunchThemeName();
-  const layoutMode = currentMode === "360" ? "360 Mode" : "Normal Mode";
-  const themeLabel = getLaunchThemeLabel();
-  const fontLabel = getLaunchFontLabel();
+function updateLaunchSummary() {
   const backgroundCountLabel = getLaunchBackgroundCountLabel();
   const overlayCountLabel = getLaunchOverlayCountLabel();
   const templateCountLabel = getLaunchTemplateCountLabel();
-  const outputLabel = getLaunchOutputLabel();
   const warning = getLaunchWarning();
 
-  setLaunchSummaryText(
-    ["launchEventName", "launchConfirmEventName"],
-    eventName
-  );
-  setLaunchSummaryText(
-    ["launchLayoutMode", "launchConfirmLayoutMode"],
-    layoutMode
-  );
-  setLaunchSummaryText(
-    ["launchOverlayName", "launchConfirmOverlayName"],
-    themeLabel
-  );
-  setLaunchSummaryText(
-    ["launchFontStatus", "launchConfirmFontStatus"],
-    fontLabel
-  );
   setLaunchSummaryText(["launchBackgroundCount"], backgroundCountLabel);
   setLaunchSummaryText(
     ["launchBackgroundSummary"],
@@ -4769,46 +4633,24 @@ async function updateLaunchSummary() {
     getLaunchSummaryThumbnailSrc("background"),
     getLaunchSummaryThumbnailLabel("background") || "Background"
   );
-  setLaunchSummaryText(
-    ["launchOverlayCount", "launchConfirmOverlayCount"],
-    overlayCountLabel
-  );
+  setLaunchSummaryText(["launchOverlayCount"], overlayCountLabel);
   setLaunchSummaryText(["launchOverlaySummary"], overlayCountLabel);
   setLaunchSummaryThumbnail(
     "launchOverlayThumb",
     getLaunchSummaryThumbnailSrc("overlay"),
     getLaunchSummaryThumbnailLabel("overlay") || "Overlay"
   );
-  setLaunchSummaryText(
-    ["launchStripStatus", "launchConfirmStripStatus"],
-    templateCountLabel
-  );
+  setLaunchSummaryText(["launchStripStatus"], templateCountLabel);
   setLaunchSummaryText(["launchTemplateSummary"], templateCountLabel);
   setLaunchSummaryThumbnail(
     "launchTemplateThumb",
     getLaunchSummaryThumbnailSrc("template"),
     getLaunchSummaryThumbnailLabel("template") || "Template"
   );
-  setLaunchSummaryText(
-    ["launchOutputStatus", "launchConfirmOutputStatus"],
-    outputLabel
-  );
-
   if (DOM.launchWarning) {
     DOM.launchWarning.textContent = warning;
     DOM.launchWarning.classList.toggle("hidden", !warning);
   }
-  if (DOM.launchConfirmWarning) {
-    DOM.launchConfirmWarning.textContent = warning;
-    DOM.launchConfirmWarning.classList.toggle("hidden", !warning);
-  }
-
-  const cameraLabel = await refreshLaunchCameraStatus();
-  if (revision !== launchSummaryRevision) return;
-  setLaunchSummaryText(
-    ["launchCameraStatus", "launchConfirmCameraStatus"],
-    cameraLabel
-  );
 }
 
 const EDIT_SCALE_CONFIG = [
@@ -20334,7 +20176,6 @@ Object.assign(window, {
   openShareLink,
   openLayoutBuilder,
   openEventGalleryLink,
-  openBoothLaunchConfirm,
   retakePhoto,
   saveCloudinarySettings,
   savePrintSettings,
@@ -20345,8 +20186,6 @@ Object.assign(window, {
   setMode,
   setSetupLaunchMode,
   syncNow,
-  closeBoothLaunchConfirm,
-  confirmBoothLaunch,
   toggleAnalytics,
   undoLastRemoval,
 });

@@ -17,7 +17,7 @@
 - Grouped Event settings into Basics, Guest Screen, Event Assets, and collapsed asset-library sections.
 - Grouped Capture settings into Guest Options, Timing, Camera Quality, and collapsed Operator Tools.
 - Collapsed low-frequency Cloudinary and email connection settings in Share.
-- Replaced competing top launch actions with one Share-only Launch Booth action and a short review step.
+- Replaced competing top launch actions with one Share-only Launch Booth action that starts the booth directly.
 - Installed and validated the personal `photo-booth-theme-creator` skill at `/Users/ashleyfletcher/.agents/skills/photo-booth-theme-creator`.
 - Linked the skill into `/Users/ashleyfletcher/.codex/skills` for Codex discovery while keeping one canonical copy.
 - Confirmed the complete six-asset workflow, independent portrait/landscape composition rules, screen-specific touch-zone rules, prompt guidance, and quality checklist.
@@ -91,6 +91,13 @@ Key test coverage:
 - Upload `photo choice.png` using new action
 - Assign to Summer theme through Theme Defaults model
 - Deploy with `npm run deploy` after verification
+
+### Direct Booth Launch
+
+- Removed the redundant Ready to launch confirmation.
+- The Share-stage Launch Booth action now enters the guest booth immediately.
+- The fixed launch dock is hidden after Setup closes so it cannot cover the guest screen.
+- Added regression coverage for the direct launch path.
 
 ### Parser Regression Fix
 

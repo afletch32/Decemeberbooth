@@ -273,9 +273,9 @@ test("setup presents a numbered flow with one share-stage launch action", () => 
   assert.ok(
     html.includes('class="admin-launch-dock" data-setup-section="share"') &&
       html.split('id="startBoothButton"').length - 1 === 1 &&
-      appScript.includes('startBoothBtn.addEventListener("click", openBoothLaunchConfirm)') &&
+      appScript.includes('startBoothBtn.addEventListener("click", startBooth)') &&
       appScript.includes('document.querySelectorAll("[data-setup-next]")'),
-    "Share should own the only launch action and review setup before launch"
+    "Share should own the only launch action and start the booth directly"
   );
   assert.ok(
     html.includes('<h3>Event Basics</h3>') &&
@@ -445,14 +445,18 @@ test("demo booth mode showcases wedding, birthday, and general looks", () => {
   );
 });
 
-test("setup removes duplicate launch confirmation statuses", () => {
+test("launch booth starts directly without a confirmation modal", () => {
   const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    !html.includes('id="launchConfirmCameraStatus"') &&
-      !html.includes('id="launchConfirmOutputStatus"') &&
-      !html.includes('id="launchConfirmLayoutMode"'),
-    "launch confirmation should not duplicate top-bar camera, upload, or booth-mode status"
+    !html.includes('id="launchConfirmModal"') &&
+      !html.includes("Ready to launch?") &&
+      html.includes("body:not(.admin-open) .admin-launch-dock") &&
+      !appScript.includes("openBoothLaunchConfirm") &&
+      !appScript.includes("confirmBoothLaunch") &&
+      appScript.includes('startBoothBtn.addEventListener("click", startBooth)'),
+    "launch should enter the booth without an intermediate confirmation or setup dock"
   );
 });
 

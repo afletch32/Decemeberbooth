@@ -612,50 +612,6 @@
       text-transform: none;
     }
 
-    #launchConfirmModal {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      background: rgba(34, 48, 81, 0.45);
-      z-index: 10035;
-    }
-
-    #launchConfirmCard {
-      width: min(560px, 94vw);
-      max-height: 90svh;
-      overflow: auto;
-      padding: 24px;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 16px;
-    }
-
-    .launch-confirm-grid {
-      display: grid;
-      gap: 16px;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    }
-
-    .launch-confirm-note {
-      margin: 0;
-      color: #5d6c69;
-      font-size: 0.95rem;
-      line-height: 1.4;
-    }
-
-    .launch-confirm-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
     .status-pill::before {
       content: "";
       flex: 0 0 8px;
@@ -1061,6 +1017,10 @@
       background: rgba(252, 255, 254, 0.94);
       box-shadow: 0 20px 48px rgba(17, 17, 17, 0.16);
       backdrop-filter: blur(18px);
+    }
+
+    body:not(.admin-open) .admin-launch-dock {
+      display: none !important;
     }
 
     .admin-launch-dock-copy {
@@ -7253,42 +7213,6 @@
         <div id="confirmActions">
           <button onclick="closeConfirm()">Back</button>
           <button class="primary" onclick="confirmTemplate()">Yes, Use This</button>
-        </div>
-      </div>
-    </div>
-    <div id="launchConfirmModal">
-      <div id="launchConfirmCard">
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-          <div>
-            <div style="font-weight:700; font-size:1.05em;">Ready to launch?</div>
-          </div>
-        </div>
-        <div class="launch-confirm-grid">
-          <div class="setup-session-item">
-            <span>Session</span>
-            <strong id="launchConfirmEventName">No event selected</strong>
-          </div>
-          <div class="setup-session-item">
-            <span>Theme</span>
-            <strong id="launchConfirmOverlayName">No theme selected</strong>
-          </div>
-          <div class="setup-session-item">
-            <span>Font</span>
-            <strong id="launchConfirmFontStatus">Use theme fonts</strong>
-          </div>
-          <div class="setup-session-item">
-            <span>Overlays</span>
-            <strong id="launchConfirmOverlayCount">0 assigned</strong>
-          </div>
-          <div class="setup-session-item">
-            <span>Templates</span>
-            <strong id="launchConfirmStripStatus">0 assigned</strong>
-          </div>
-        </div>
-        <div id="launchConfirmWarning" class="setup-launch-warning hidden"></div>
-        <div class="launch-confirm-actions">
-          <button type="button" id="launchConfirmCancel" onclick="closeBoothLaunchConfirm()">Back</button>
-          <button type="button" id="launchConfirmStart" class="primary" onclick="confirmBoothLaunch()">Start Booth</button>
         </div>
       </div>
     </div>
