@@ -33,7 +33,7 @@ function extractFunction(source, name) {
 test("Idle Screens are a first-class Cloudinary asset type", () => {
   assert.ok(app.includes('return "idle-screen"'));
   assert.ok(app.includes('kinds.push("idle-screens")'));
-  assert.ok(app.includes('registerUploadedAsset(json.secure_url, kind'));
+  assert.ok(app.includes("registerUploadedAsset(deliveryUrl, kind"));
   assert.ok(html.includes("Idle Screens"));
   assert.ok(html.includes('id="addIdleScreensBtn"'));
   assert.ok(html.includes('id="idleScreensInput"'));

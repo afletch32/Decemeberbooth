@@ -9,6 +9,8 @@ async function loadBuildEventFolderPath() {
   const moduleUrl = pathToFileURL(join(process.cwd(), "scripts/cloudinary-utils.mjs"));
   const mod = await import(moduleUrl.href);
   return {
+      BOOTH_VIDEO_TRANSFORMATION: mod.BOOTH_VIDEO_TRANSFORMATION,
+      buildBoothVideoUrl: mod.buildBoothVideoUrl,
       buildAssetIndexKey: mod.buildAssetIndexKey,
       buildDateSessionFolderPath: mod.buildDateSessionFolderPath,
       buildEventAssetFolderPath: mod.buildEventAssetFolderPath,
@@ -133,4 +135,35 @@ test("getCloudinaryDerivedUrl returns empty string when no usable url exists", a
   });
 
   assert.equal(result, "");
+});
+
+test("buildBoothVideoUrl inserts the booth transformation into the delivery path", async () => {
+  const {
+    BOOTH_VIDEO_TRANSFORMATION,
+    buildBoothVideoUrl
+  } = await loadBuildEventFolderPath();
+  const original =
+    "https://res.cloudinary.com/demo/video/upload/v123/events/summer.mov";
+
+  assert.equal(
+    buildBoothVideoUrl(original),
+    `https://res.cloudinary.com/demo/video/upload/${BOOTH_VIDEO_TRANSFORMATION}/v123/events/summer.mov`
+  );
+});
+
+test("buildBoothVideoUrl preserves queries and does not duplicate its transformation", async () => {
+  const {
+    BOOTH_VIDEO_TRANSFORMATION,
+    buildBoothVideoUrl
+  } = await loadBuildEventFolderPath();
+  const optimized =
+    `https://res.cloudinary.com/demo/video/upload/${BOOTH_VIDEO_TRANSFORMATION}/v123/events/summer.mp4?cache=1`;
+
+  assert.equal(buildBoothVideoUrl(optimized), optimized);
+  assert.equal(
+    buildBoothVideoUrl(
+      "https://res.cloudinary.com/demo/image/upload/v123/events/summer.png"
+    ),
+    "https://res.cloudinary.com/demo/image/upload/v123/events/summer.png"
+  );
 });

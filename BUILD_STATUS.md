@@ -28,6 +28,9 @@
 - Removed stale JavaScript element lookups, deleted final-review/email UI hooks, and orphaned CSS selectors; added regression coverage for future stale IDs.
 - Replaced the staff rotation control with a live diagram and plain-language summary showing one or two photos on portrait or landscape paper.
 - Kept print layout and paper direction as session defaults while adding a visual per-photo override with a one-click return to the session default.
+- Hardened managed asset uploads with file validation, duplicate-submit protection, Cloudinary response checks, and actionable status/error messages.
+- Managed booth videos now save and use an H.264 MP4 Cloudinary delivery URL limited to 1200 × 1200, 30 fps, automatic good quality, and no audio.
+- Preserve the original Cloudinary source URL and detected portrait/landscape orientation as asset metadata.
 - Removed the Love It review stage.
 - Increased QR render and display size.
 - Print-enabled sessions show Retake and Print below the QR; Print explicitly submits to the existing queue.
@@ -175,5 +178,8 @@ Key test coverage:
 - Route supported video uploads through Cloudinary's video endpoint while keeping image-only assets protected.
 - Preserve a video background frame when producing the final still photo.
 - Added regression coverage for upload routing, playback surfaces, hotspot geometry, and saved output rendering.
+- Added regression coverage for Cloudinary transformation-path generation, upload validation, duplicate blocking, and non-OK responses.
+- Verified 105 focused tests and 172 full-suite tests pass.
+- Verified the booth transformation path returns an H.264 MP4 response from Cloudinary.
 - Optimized the four supplied 30-second Summer videos to H.264, 30 fps, approximately 7 MB each.
-- Next step: upload the optimized copies, assign the portrait and landscape variants, and verify on the booth device before deployment.
+- Next step: verify a real Cloudinary video upload on the booth device before deployment.

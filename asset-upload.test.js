@@ -11,7 +11,7 @@ test("managed asset uploads are Cloudinary-only", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    appScript.includes('showToast("Upload failed: configure Cloudinary to store assets.");'),
+    appScript.includes('showToast("Upload failed: configure Cloudinary first.");'),
     "asset upload failures should point users to Cloudinary"
   );
   assert.ok(
@@ -212,7 +212,7 @@ test("uploaded assets register in a persistent shared library", () => {
   );
   assert.ok(
     appScript.includes('fetch("/api/assets"') &&
-      appScript.includes("registerUploadedAsset(json.secure_url, kind"),
+      appScript.includes("registerUploadedAsset(deliveryUrl, kind"),
     "Cloudinary asset uploads should persist metadata to the shared asset API"
   );
   assert.ok(
@@ -233,6 +233,63 @@ test("uploaded assets register in a persistent shared library", () => {
       appScript.includes("hidden: true,") &&
       appScript.includes("archived: true,"),
     "repo-backed asset deletes should keep a local/remote tombstone instead of reappearing from theme manifests"
+  );
+});
+
+test("managed video assets use optimized Cloudinary delivery URLs", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const cloudinaryUtils = readProjectFile("scripts", "cloudinary-utils.mjs");
+
+  assert.ok(
+    appScript.includes("buildBoothVideoUrl(originalUrl)") &&
+      appScript.includes("index[indexKey] = deliveryUrl") &&
+      appScript.includes("return deliveryUrl"),
+    "video uploads should save and return the booth-ready URL"
+  );
+  assert.ok(
+    cloudinaryUtils.includes('const marker = "/video/upload/";') &&
+      cloudinaryUtils.includes(
+        "c_limit,w_1200,h_1200,f_mp4,vc_h264,q_auto:good,fps_30,ac_none"
+      ) &&
+      !cloudinaryUtils.includes('const separator = trimmed.includes("?")'),
+    "Cloudinary transformations should be inserted into the delivery path"
+  );
+  assert.ok(
+    appScript.includes('contentType: isVideoFile ? "video/mp4"') &&
+      appScript.includes("originalSrc: originalUrl") &&
+      appScript.includes("orientation,"),
+    "optimized video records should retain source and orientation metadata"
+  );
+});
+
+test("managed asset uploads validate files, block duplicates, and report failures", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("function validateManagedAssetUpload(file, kind)") &&
+      appScript.includes("MAX_MANAGED_ASSET_UPLOAD_BYTES") &&
+      appScript.includes("supportedVideoUploadTypes") &&
+      appScript.includes("supportedVideoUploadExtensions"),
+    "asset uploads should reject empty, oversized, and unsupported files"
+  );
+  assert.ok(
+    appScript.includes("activeManagedAssetUploads.has(uploadKey)") &&
+      appScript.includes("activeManagedAssetUploads.set(uploadKey, uploadPromise)") &&
+      appScript.includes("activeManagedAssetUploads.delete(uploadKey)"),
+    "duplicate in-flight uploads should share one promise"
+  );
+  assert.ok(
+    appScript.includes("if (!resp.ok)") &&
+      appScript.includes("getCloudinaryUploadFailureMessage(json, resp.status)") &&
+      appScript.includes('console.error("Managed asset upload failed", error)') &&
+      !appScript.includes("async function uploadAsset(file, kind, options = {}) {\n  try {"),
+    "Cloudinary failures should be checked and surfaced instead of silently swallowed"
+  );
+  assert.ok(
+    appScript.includes('showToast(isVideoFile ? "Uploading video…"') &&
+      appScript.includes('showToast("Preparing booth video…")') &&
+      appScript.includes('showToast("Video ready.")'),
+    "video uploads should report upload, preparation, and completion states"
   );
 });
 

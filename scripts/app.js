@@ -1,5 +1,6 @@
 import { CanvasBuffer, offscreenToDataURL } from "./canvas-utils.mjs";
 import {
+  buildBoothVideoUrl,
   buildAssetIndexKey,
   buildDateSessionFolderPath,
   buildEventAssetFolderPath,
@@ -14517,6 +14518,7 @@ function normalizeAssetLibraryPayload(payload) {
       folder: String(item.folder || "").trim(),
       hash: String(item.hash || "").trim(),
       contentType: String(item.contentType || item.type || "").trim(),
+      originalSrc: String(item.originalSrc || "").trim(),
       createdAt: String(item.createdAt || item.created_at || new Date().toISOString()),
       updatedAt: String(item.updatedAt || item.updated_at || new Date().toISOString()),
       customizable:
@@ -15989,6 +15991,7 @@ function registerUploadedAsset(url, kind, details = {}) {
     folder: details.folder || "",
     hash: details.hash || "",
     contentType: details.contentType || "",
+    originalSrc: details.originalSrc || "",
     createdAt: details.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     customizable: details.customizable === true,
@@ -16306,47 +16309,158 @@ function toggleLibraryAsset(asset) {
   showToast(isSelected ? "Asset removed from this session" : "Asset added to this session");
 }
 
-// Upload an asset to a shared Cloudinary URL.
-async function uploadAsset(file, kind, options = {}) {
+const MAX_MANAGED_ASSET_UPLOAD_BYTES = 100 * 1024 * 1024;
+const activeManagedAssetUploads = new Map();
+const supportedVideoUploadExtensions = new Set([
+  "mp4",
+  "m4v",
+  "mov",
+  "webm",
+  "ogv",
+  "ogg",
+]);
+const supportedVideoUploadTypes = new Set([
+  "video/mp4",
+  "video/x-m4v",
+  "video/quicktime",
+  "video/webm",
+  "video/ogg",
+]);
+
+function getAssetUploadExtension(file) {
+  return extFromName(file && file.name, "");
+}
+
+function validateManagedAssetUpload(file, kind) {
+  if (!file) return { valid: false, message: "Choose a file first." };
+  if (Number(file.size) === 0) {
+    return { valid: false, message: "That file is empty." };
+  }
+  if (Number(file.size) > MAX_MANAGED_ASSET_UPLOAD_BYTES) {
+    return {
+      valid: false,
+      message: "That file is larger than the 100 MB asset upload limit.",
+    };
+  }
+
+  const contentType = String(file.type || "").trim().toLowerCase();
+  const extension = getAssetUploadExtension(file);
+  const claimsVideo =
+    contentType.startsWith("video/") ||
+    supportedVideoUploadExtensions.has(extension);
+  const isVideoFile =
+    supportedVideoUploadTypes.has(contentType) ||
+    supportedVideoUploadExtensions.has(extension);
+  const isImageFile =
+    contentType.startsWith("image/") ||
+    ["avif", "gif", "jpeg", "jpg", "png", "svg", "webp"].includes(extension);
+
+  if (claimsVideo && !isVideoFile) {
+    return {
+      valid: false,
+      message: "Use an MP4, MOV, WebM, M4V, OGV, or OGG video.",
+    };
+  }
+  if (!isVideoFile && !isImageFile) {
+    return {
+      valid: false,
+      message: "Use a supported image or video file.",
+    };
+  }
+
+  const videoKinds = new Set([
+    "background",
+    "backgrounds",
+    "greenBackgrounds",
+    "idle-screens",
+    "photo-choice-screens",
+  ]);
+  if (isVideoFile && !videoKinds.has(kind)) {
+    return {
+      valid: false,
+      message:
+        "Videos can be used for backgrounds, idle screens, and photo choice screens.",
+    };
+  }
+
+  return { valid: true, isVideoFile };
+}
+
+function inferAssetOrientationFromName(file) {
+  const name = String((file && file.name) || "").toLowerCase();
+  if (name.includes("portrait")) return "portrait";
+  if (name.includes("landscape")) return "landscape";
+  return "general";
+}
+
+function detectVideoUploadOrientation(file) {
+  const fallback = inferAssetOrientationFromName(file);
+  if (
+    !file ||
+    typeof document === "undefined" ||
+    typeof URL === "undefined" ||
+    typeof URL.createObjectURL !== "function"
+  ) {
+    return Promise.resolve(fallback);
+  }
+
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    const objectUrl = URL.createObjectURL(file);
+    let settled = false;
+    const finish = (orientation) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      video.removeAttribute("src");
+      video.load();
+      URL.revokeObjectURL(objectUrl);
+      resolve(orientation);
+    };
+    const timeout = setTimeout(() => finish(fallback), 2500);
+    video.preload = "metadata";
+    video.muted = true;
+    video.onloadedmetadata = () => {
+      if (video.videoHeight > video.videoWidth) finish("portrait");
+      else if (video.videoWidth > video.videoHeight) finish("landscape");
+      else finish(fallback);
+    };
+    video.onerror = () => finish(fallback);
+    video.src = objectUrl;
+  });
+}
+
+function getCloudinaryUploadFailureMessage(payload, status) {
+  const detail = String(
+    payload && payload.error && payload.error.message
+      ? payload.error.message
+      : ""
+  ).trim();
+  return detail || `Cloudinary upload failed with status ${status || "unknown"}.`;
+}
+
+async function performManagedAssetUpload({
+  file,
+  kind,
+  options,
+  isVideoFile,
+  hash,
+  folder,
+  indexKey,
+  orientation,
+}) {
+  const cfg = getCloudinaryConfig();
+  if (!cfg.use || !cfg.cloud || !cfg.preset) {
+    showToast("Upload failed: configure Cloudinary first.");
+    return "";
+  }
+
   try {
-    const isVideoFile = !!(
-      file &&
-      (String(file.type || "").toLowerCase().startsWith("video/") ||
-        isVideoAsset(file.name || ""))
-    );
-    const videoKinds = new Set([
-      "background",
-      "backgrounds",
-      "greenBackgrounds",
-      "idle-screens",
-      "photo-choice-screens",
-    ]);
-    if (isVideoFile && !videoKinds.has(kind)) {
-      showToast("Videos can be used for backgrounds, idle screens, and photo choice screens.");
-      return "";
-    }
-    const index = getAssetIndex();
-    const hash = await fileSha256Hex(file);
-    const folder = (
-      options.folder || getThemeAssetUploadFolderPath(kind)
-    ).replace(/\/+$/g, "");
-    const indexKey = buildAssetIndexKey({ hash, folder });
-    if (index[indexKey]) {
-      registerUploadedAsset(index[indexKey], kind, {
-        name: file && file.name,
-        role: isPhotoChoiceAssetKind(kind) ? "photo-choice" : undefined,
-        hash,
-        folder,
-        contentType: file && file.type,
-      });
-      return index[indexKey];
-    }
-    const cfg = getCloudinaryConfig();
-    if (!cfg.use || !cfg.cloud || !cfg.preset) return "";
+    showToast(isVideoFile ? "Uploading video…" : "Uploading asset…");
     const form = new FormData();
     const fname = `${kind || "file"}-${hash}.${extFromName(
       file && file.name,
-      "png"
+      isVideoFile ? "mp4" : "png"
     )}`;
     const wrapped = new File([file], fname, {
       type: file.type || "application/octet-stream",
@@ -16354,28 +16468,131 @@ async function uploadAsset(file, kind, options = {}) {
     form.append("file", wrapped);
     form.append("upload_preset", cfg.preset);
     form.append("folder", folder);
+
     const resp = await fetch(
       `https://api.cloudinary.com/v1_1/${cfg.cloud}/${
         isVideoFile ? "video" : "image"
       }/upload`,
       { method: "POST", body: form }
     );
-    const json = await resp.json();
-    if (json && json.secure_url) {
-      index[indexKey] = json.secure_url;
-      saveThemesToStorage();
-      registerUploadedAsset(json.secure_url, kind, {
+    let json = {};
+    try {
+      json = await resp.json();
+    } catch (parseError) {
+      console.warn("Cloudinary upload response was not JSON", parseError);
+    }
+    if (!resp.ok) {
+      throw new Error(getCloudinaryUploadFailureMessage(json, resp.status));
+    }
+
+    const originalUrl = String(
+      (json && (json.secure_url || json.url)) || ""
+    ).trim();
+    if (!originalUrl) {
+      throw new Error("Cloudinary did not return an asset URL.");
+    }
+
+    if (isVideoFile) showToast("Preparing booth video…");
+    const deliveryUrl = isVideoFile
+      ? buildBoothVideoUrl(originalUrl)
+      : originalUrl;
+    if (!deliveryUrl) {
+      throw new Error("The booth-ready asset URL could not be created.");
+    }
+
+    const index = getAssetIndex();
+    index[indexKey] = deliveryUrl;
+    saveThemesToStorage();
+    registerUploadedAsset(deliveryUrl, kind, {
+      name: file && file.name,
+      originalSrc: originalUrl,
+      role: isPhotoChoiceAssetKind(kind) ? "photo-choice" : undefined,
+      hash,
+      folder,
+      contentType: isVideoFile ? "video/mp4" : file && file.type,
+      orientation,
+      buttonZones: options.buttonZones,
+    });
+    if (isVideoFile) showToast("Video ready.");
+    return deliveryUrl;
+  } catch (error) {
+    console.error("Managed asset upload failed", error);
+    const message =
+      error && error.message
+        ? `Upload failed: ${error.message}`
+        : "Upload failed: check Cloudinary settings and try again.";
+    showToast(message);
+    return "";
+  }
+}
+
+// Upload an asset to a shared Cloudinary URL.
+async function uploadAsset(file, kind, options = {}) {
+  const validation = validateManagedAssetUpload(file, kind);
+  if (!validation.valid) {
+    showToast(validation.message);
+    return "";
+  }
+
+  try {
+    const hash = await fileSha256Hex(file);
+    const folder = (
+      options.folder || getThemeAssetUploadFolderPath(kind)
+    ).replace(/\/+$/g, "");
+    const indexKey = buildAssetIndexKey({ hash, folder });
+    const uploadKey = `${kind || "asset"}::${indexKey}`;
+    const orientation = validation.isVideoFile
+      ? normalizeIdleScreenOrientation(
+          options.orientation || (await detectVideoUploadOrientation(file))
+        )
+      : normalizeIdleScreenOrientation(options.orientation);
+    if (activeManagedAssetUploads.has(uploadKey)) {
+      showToast("That asset is already uploading.");
+      return activeManagedAssetUploads.get(uploadKey);
+    }
+    const index = getAssetIndex();
+    if (index[indexKey]) {
+      const originalUrl = index[indexKey];
+      const deliveryUrl = validation.isVideoFile
+        ? buildBoothVideoUrl(originalUrl)
+        : originalUrl;
+      if (deliveryUrl !== originalUrl) {
+        index[indexKey] = deliveryUrl;
+        saveThemesToStorage();
+      }
+      registerUploadedAsset(deliveryUrl, kind, {
         name: file && file.name,
+        originalSrc: originalUrl,
         role: isPhotoChoiceAssetKind(kind) ? "photo-choice" : undefined,
         hash,
         folder,
-        contentType: file && file.type,
+        contentType: validation.isVideoFile ? "video/mp4" : file && file.type,
+        orientation,
+        buttonZones: options.buttonZones,
       });
-      return json.secure_url;
+      if (validation.isVideoFile) showToast("Video ready.");
+      return deliveryUrl;
     }
-  } catch (_) {}
-  showToast("Upload failed: configure Cloudinary to store assets.");
-  return "";
+
+    const uploadPromise = performManagedAssetUpload({
+      file,
+      kind,
+      options,
+      isVideoFile: validation.isVideoFile,
+      hash,
+      folder,
+      indexKey,
+      orientation,
+    }).finally(() => {
+      activeManagedAssetUploads.delete(uploadKey);
+    });
+    activeManagedAssetUploads.set(uploadKey, uploadPromise);
+    return uploadPromise;
+  } catch (error) {
+    console.error("Managed asset preparation failed", error);
+    showToast("Upload failed: the selected asset could not be prepared.");
+    return "";
+  }
 }
 
 function saveThemesToStorage() {
