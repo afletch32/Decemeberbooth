@@ -58,18 +58,17 @@ test("idle screen editor state does not call late-defined helpers during app sta
   );
 });
 
-test("idle screen selection uses event orientation before theme and general fallbacks", () => {
-  const resolver = extractFunctionFromEither(app, idleScreenModule, "selectIdleScreenEntry");
-  assert.ok(resolver.includes("sessionEntries"), "session entries should be defined first");
+test("idle screen selection uses the manually selected event entry before theme defaults", () => {
+  const resolver = extractFunctionFromEither(app, "", "selectIdleScreenEntry");
   assert.ok(
-    resolver.indexOf("sessionEntries") < resolver.indexOf("themeEntries"),
-    "event/session entries should be searched before theme entries"
+    resolver.includes("getIdleScreenAssignmentEntries()"),
+    "the resolver should use the event and session assignment source"
   );
   assert.ok(
-    resolver.indexOf('return landscapeEntry') < resolver.indexOf('|| portraitEntry') ||
-    resolver.indexOf('return portraitEntry') < resolver.indexOf('|| landscapeEntry'),
-    "orientation-specific entries should be returned before fallbacks"
+    resolver.includes("find(eventEntries) || find(themeEntries)"),
+    "the selected event/session screen should win without changing with the viewport"
   );
+  assert.ok(!resolver.includes("getIdleScreenViewportOrientation()"));
 });
 
 test("legacy welcome remains the fallback when custom artwork is unavailable", () => {
@@ -194,6 +193,70 @@ test("dedicated photo choice uploads persist as photo-choice idle screens", () =
   assert.ok(app.includes("replaceIdleScreenRoleEntry("));
   assert.ok(
     app.includes('isPhotoChoiceAssetKind(kind) ? "photo-choice" : undefined')
+  );
+});
+
+test("selecting a screen replaces only the matching role", () => {
+  const replaceSource = extractFunctionFromEither(
+    app,
+    "",
+    "replaceIdleScreenRoleEntry"
+  );
+  const replaceIdleScreenRoleEntry = Function(
+    `${replaceSource}; return replaceIdleScreenRoleEntry;`
+  )();
+  const entries = [
+    { src: "idle-landscape.mp4", role: "idle", orientation: "landscape" },
+    {
+      src: "choice-landscape.mp4",
+      role: "photo-choice",
+      orientation: "landscape",
+    },
+  ];
+  const replacement = {
+    src: "idle-portrait.mp4",
+    role: "idle",
+    orientation: "portrait",
+  };
+
+  assert.deepEqual(
+    replaceIdleScreenRoleEntry(entries, replacement),
+    [entries[1], replacement]
+  );
+});
+
+test("uploaded idle screen entries preserve their detected orientation", () => {
+  const builder = extractFunctionFromEither(
+    app,
+    "",
+    "buildIdleScreenEntryFromUrl"
+  );
+  assert.ok(builder.includes("storedAsset && storedAsset.orientation"));
+  assert.ok(builder.includes("inferAssetOrientationFromName(file)"));
+  assert.ok(!builder.includes('orientation: "general"'));
+});
+
+test("Asset Library cards identify idle-screen orientation and role", () => {
+  assert.ok(app.includes('orientationBadge.textContent ='));
+  assert.ok(app.includes('? "Portrait"'));
+  assert.ok(app.includes(': "Landscape"'));
+  assert.ok(app.includes('? "Photo choice" : "Idle screen"'));
+  assert.ok(app.includes('container.classList.contains("asset-library-card")'));
+  assert.ok(app.includes('fallback.textContent = "Preview unavailable"'));
+  assert.ok(html.includes(".asset-library-preview-fallback"));
+  const canonicalRow = extractFunction(app, "createCanonicalAssetRow");
+  assert.ok(canonicalRow.includes("normalizeIdleScreenOrientation(raw.orientation)"));
+  assert.ok(canonicalRow.includes('raw.role === "photo-choice"'));
+  assert.ok(canonicalRow.includes("contentType: String(raw.contentType"));
+  const effectiveSelection = extractFunction(
+    app,
+    "getSessionEffectiveAssetSourceSet"
+  );
+  assert.ok(effectiveSelection.includes('["idle", "photo-choice"]'));
+  assert.ok(
+    effectiveSelection.includes(
+      "findRole(assignedEntries, role) || findRole(themeEntries, role)"
+    )
   );
 });
 

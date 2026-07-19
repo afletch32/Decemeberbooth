@@ -1420,7 +1420,10 @@ function setMobileSettingsOpen(open) {
 
 function syncMobileSettingsUi() {
   if (DOM.mobileSettingsToggle) {
-    DOM.mobileSettingsToggle.classList.add("hidden");
+    DOM.mobileSettingsToggle.classList.toggle(
+      "hidden",
+      !canShowFrameSettings() || !isMobileBoothViewport()
+    );
   }
   if (!canShowFrameSettings()) setMobileSettingsOpen(false);
 }
@@ -1925,6 +1928,17 @@ function getThemeTypeForKey(themeKey, favorites = getThemeFavorites()) {
 
 function renderMissingThumbnail(container, src) {
   if (!container) return;
+  if (container.classList.contains("asset-library-card")) {
+    const media = container.querySelector("img, video");
+    if (media) media.remove();
+    if (!container.querySelector(".asset-library-preview-fallback")) {
+      const fallback = document.createElement("div");
+      fallback.className = "asset-library-preview-fallback";
+      fallback.textContent = "Preview unavailable";
+      container.prepend(fallback);
+    }
+    return;
+  }
   const panel = container.closest("[data-asset-panel]");
   if (panel && panel.dataset.assetPanel) {
     const kind = panel.dataset.assetPanel === "template" ? "template" : "overlay";
@@ -2178,14 +2192,30 @@ function getSessionEffectiveAssetSourceSet(category = "") {
     const sessionEntries = Array.isArray(activeSessionAssets.idleScreens)
       ? activeSessionAssets.idleScreens
       : [];
-    const entries = sessionEntries.length
+    const assignedEntries = sessionEntries.length
       ? sessionEntries
       : Array.isArray(overrides.idleScreens) && overrides.idleScreens.length
       ? overrides.idleScreens
-      : Array.isArray(theme && theme.idleScreens)
+      : [];
+    const themeEntries = Array.isArray(theme && theme.idleScreens)
       ? theme.idleScreens
       : [];
-    return new Set(entries.map(getAssetEntrySrc).filter(Boolean));
+    const findRole = (entries, role) =>
+      entries.find(
+        (entry) =>
+          (entry && entry.role === "photo-choice"
+            ? "photo-choice"
+            : "idle") === role
+      );
+    return new Set(
+      ["idle", "photo-choice"]
+        .map((role) =>
+          getAssetEntrySrc(
+            findRole(assignedEntries, role) || findRole(themeEntries, role)
+          )
+        )
+        .filter(Boolean)
+    );
   }
   if (normalized === "template") {
     return new Set(
@@ -3427,7 +3457,9 @@ function replaceIdleScreenRoleEntry(entries, entry) {
   const role = entry && entry.role === "photo-choice" ? "photo-choice" : "idle";
   return [
     ...(Array.isArray(entries) ? entries : []).filter(
-      (item) => (item && item.role === "photo-choice" ? "photo-choice" : "idle") !== role
+      (item) =>
+        (item && item.role === "photo-choice" ? "photo-choice" : "idle") !==
+        role
     ),
     entry,
   ];
@@ -8666,38 +8698,20 @@ function hydrateIdleScreenEntry(entry) {
 }
 
 function selectIdleScreenEntry() {
-  const orientation = getIdleScreenViewportOrientation();
   const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
-  const find = (entries, target) =>
-    entries.find(
-      (entry) =>
-        entry.role !== "photo-choice" &&
-        normalizeIdleScreenOrientation(entry.orientation) === target
-    );
+  const find = (entries) =>
+    entries.find((entry) => entry.role !== "photo-choice");
   return hydrateIdleScreenEntry(
-    find(eventEntries, orientation) ||
-      find(themeEntries, orientation) ||
-      find(eventEntries, "general") ||
-      find(themeEntries, "general") ||
-      null
+    find(eventEntries) || find(themeEntries) || null
   );
 }
 
 function selectPhotoChoiceScreenEntry() {
-  const orientation = getIdleScreenViewportOrientation();
   const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
-  const find = (entries, target) =>
-    entries.find(
-      (entry) =>
-        entry.role === "photo-choice" &&
-        normalizeIdleScreenOrientation(entry.orientation) === target
-    );
+  const find = (entries) =>
+    entries.find((entry) => entry.role === "photo-choice");
   return hydrateIdleScreenEntry(
-    find(eventEntries, orientation) ||
-      find(themeEntries, orientation) ||
-      find(eventEntries, "general") ||
-      find(themeEntries, "general") ||
-      null
+    find(eventEntries) || find(themeEntries) || null
   );
 }
 
@@ -14320,9 +14334,18 @@ function buildIdleScreenEntryFromUrl(url, file = null, explicitRole = "") {
     explicitRole === "photo-choice" || /photo[\s_-]*choice/i.test(name)
       ? "photo-choice"
       : "idle";
+  const urlKey = getAssetLibraryUrlKey(url);
+  const storedAsset = (assetLibrary.assets || []).find(
+    (asset) =>
+      asset.category === "idle-screen" &&
+      getAssetLibraryUrlKey(getAssetEntrySrc(asset)) === urlKey
+  );
   return {
     src: url,
-    orientation: "general",
+    orientation: normalizeIdleScreenOrientation(
+      (storedAsset && storedAsset.orientation) ||
+        inferAssetOrientationFromName(file)
+    ),
     name,
     contentType: (file && file.type) || "",
     role,
@@ -14865,13 +14888,14 @@ function getAssetBadgeLabels(asset) {
 function createCanonicalAssetRow(entry, category, themeName, themeKey) {
   const src = getAssetEntrySrc(entry);
   if (!src) return null;
+  const raw = entry && typeof entry === "object" ? entry : {};
   const name = getAssetDisplayName({
-    name: entry && typeof entry === "object" ? entry.name : "",
+    name: raw.name,
     url: src,
   });
   const textFields =
-    entry && typeof entry === "object" && entry.textFields
-      ? Object.keys(entry.textFields)
+    raw.textFields
+      ? Object.keys(raw.textFields)
       : [];
   const editableFields = normalizeEditableFields([
     ...textFields,
@@ -14890,6 +14914,21 @@ function createCanonicalAssetRow(entry, category, themeName, themeKey) {
     updatedAt: "",
     customizable: editableFields.length > 0,
     editableFields,
+    contentType: String(raw.contentType || raw.type || "").trim(),
+    orientation:
+      normalizedCategory === "idle-screen"
+        ? normalizeIdleScreenOrientation(raw.orientation)
+        : undefined,
+    role:
+      normalizedCategory === "idle-screen"
+        ? raw.role === "photo-choice" || /photo[\s_-]*choice/i.test(name)
+          ? "photo-choice"
+          : "idle"
+        : undefined,
+    buttonZones:
+      normalizedCategory === "idle-screen"
+        ? cloneThemeValue(raw.buttonZones || {})
+        : undefined,
     raw: entry,
   };
 }
@@ -16139,6 +16178,20 @@ function renderAssetLibrary() {
           .join(" • ");
         const badges = document.createElement("div");
         badges.className = "asset-library-badges";
+        if (asset.category === "idle-screen") {
+          const orientationBadge = document.createElement("span");
+          orientationBadge.className = "asset-library-badge";
+          orientationBadge.textContent =
+            normalizeIdleScreenOrientation(asset.orientation) === "portrait"
+              ? "Portrait"
+              : "Landscape";
+          badges.appendChild(orientationBadge);
+          const roleBadge = document.createElement("span");
+          roleBadge.className = "asset-library-badge";
+          roleBadge.textContent =
+            asset.role === "photo-choice" ? "Photo choice" : "Idle screen";
+          badges.appendChild(roleBadge);
+        }
         if (isAssetLibraryFavorite(asset)) {
           const favoriteBadge = document.createElement("span");
           favoriteBadge.className = "asset-library-badge";
@@ -16293,10 +16346,16 @@ function toggleLibraryAsset(asset) {
     const active = getActiveEvent();
     if (active) {
       const overrides = ensureEventOverrides(active);
-      overrides.idleScreens = isSelected ? [] : [entry];
+      overrides.idleScreens = replaceIdleScreenRoleEntry(
+        overrides.idleScreens,
+        entry
+      );
       updateActiveEventDetails({ overrides });
     } else {
-      activeSessionAssets.idleScreens = isSelected ? [] : [entry];
+      activeSessionAssets.idleScreens = replaceIdleScreenRoleEntry(
+        activeSessionAssets.idleScreens,
+        entry
+      );
     }
   }
   if (category === "background") {
@@ -19347,6 +19406,22 @@ function removeSessionAssetBySrc(kind, src) {
     activeSessionAssets.templates = activeSessionAssets.templates.filter(
       (item) => getAssetEntrySrc(item) !== cleanSrc
     );
+  } else if (kind === "idle-screen") {
+    const active = getActiveEvent();
+    if (active) {
+      const overrides = ensureEventOverrides(active);
+      overrides.idleScreens = (Array.isArray(overrides.idleScreens)
+        ? overrides.idleScreens
+        : []
+      ).filter((item) => getAssetEntrySrc(item) !== cleanSrc);
+      updateActiveEventDetails({ overrides });
+    } else {
+      activeSessionAssets.idleScreens = (
+        Array.isArray(activeSessionAssets.idleScreens)
+          ? activeSessionAssets.idleScreens
+          : []
+      ).filter((item) => getAssetEntrySrc(item) !== cleanSrc);
+    }
   }
   const eventSources = getEventAssetSourceSet(kind);
   if (themeSources.has(cleanSrc) || eventSources.has(cleanSrc))

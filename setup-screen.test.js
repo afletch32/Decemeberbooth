@@ -1179,7 +1179,7 @@ test("booth filter carousel has touch-sized global controls", () => {
   );
 });
 
-test("booth frame selection starts plain and stays beside capture controls", () => {
+test("booth frame selection starts plain and keeps a mobile frame-menu trigger", () => {
   const html = readProjectFile("index.html");
   const app = readProjectFile("scripts/app.js");
   assert.ok(html.includes('id="frameCarousel"'));
@@ -1190,8 +1190,9 @@ test("booth frame selection starts plain and stays beside capture controls", () 
   assert.ok(!app.includes("selectFirstPhotoOverlayAfterWelcome"));
   assert.ok(
     app.includes("requestAnimationFrame(() => {\n    syncFrameCarouselUi();") &&
-      html.includes("#boothScreen.booth-ready #mobileSettingsToggle {\n        display: none !important;"),
-    "ready state should reveal the central frame carousel and retire the corner trigger"
+      html.includes("#boothScreen.booth-ready #mobileSettingsToggle {\n        display: inline-flex !important;") &&
+      app.includes('"hidden",\n      !canShowFrameSettings() || !isMobileBoothViewport()'),
+    "ready state should keep the frame menu reachable on a phone while hiding it elsewhere"
   );
 });
 

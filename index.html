@@ -2237,6 +2237,19 @@
       border-radius: 6px;
     }
 
+    .asset-library-preview-fallback {
+      display: grid;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      place-items: center;
+      padding: 12px;
+      border-radius: 6px;
+      background: #111827;
+      color: #cbd5e1;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
     .asset-library-name {
       font-size: 0.78em;
       color: #334155;
@@ -5358,7 +5371,7 @@
       }
 
       #boothScreen.booth-ready #mobileSettingsToggle {
-        display: none !important;
+        display: inline-flex !important;
       }
 
       #boothScreen.booth-ready #videoWrap {

@@ -173,13 +173,18 @@ Key test coverage:
 
 - Added looping MP4 support for booth backgrounds, idle screens, photo-choice screens, and green-screen backgrounds.
 - Kept Start and photo-mode hotspots as real controls layered above the video.
-- Added responsive landscape and portrait video selection using the existing screen-orientation rules.
+- Keep every uploaded portrait and landscape file as its own Asset Library record.
+- Let the operator choose the active idle and photo-choice files from the library; selecting a different orientation replaces only the matching screen role.
+- Do not switch screen artwork when the browser or device orientation changes.
+- Carry the video orientation detected from its dimensions into the saved theme or event screen entry.
+- Keep saved video cards visible and selectable when their preview thumbnail cannot load.
+- Restore the mobile frame-menu trigger so it remains visible and tappable while the booth is ready.
 - Added video previews to setup, Asset Library, and hotspot positioning tools.
 - Route supported video uploads through Cloudinary's video endpoint while keeping image-only assets protected.
 - Preserve a video background frame when producing the final still photo.
 - Added regression coverage for upload routing, playback surfaces, hotspot geometry, and saved output rendering.
 - Added regression coverage for Cloudinary transformation-path generation, upload validation, duplicate blocking, and non-OK responses.
-- Verified 105 focused tests and 172 full-suite tests pass.
+- Verified 23 idle-screen tests, 80 focused setup/idle tests, and 175 full-suite tests pass.
 - Verified the booth transformation path returns an H.264 MP4 response from Cloudinary.
 - Optimized the four supplied 30-second Summer videos to H.264, 30 fps, approximately 7 MB each.
 - Next step: verify a real Cloudinary video upload on the booth device before deployment.
