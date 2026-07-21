@@ -2,7 +2,7 @@
 
 ## Current goal
 
-- Make custom booth hotspots feel responsive with a press animation and short screen transitions.
+- Reduce the main application file by extracting cohesive admin behavior into tested modules.
 
 ## Current progress
 
@@ -57,10 +57,12 @@
 - Fixed the visible Base Theme summary so changing the setup theme refreshes it from the newly loaded theme instead of leaving the previous theme name and counts.
 - Added a touch-safe press ripple for Start and photo-choice hotspots, including invisible hotspots over custom screen artwork.
 - Added a short transition hold so guests see their tap register before the next welcome or camera screen appears.
+- Extracted Asset Library category, URL, metadata, deduplication, and screen-record normalization from `scripts/app.js` into `scripts/asset-library-utils.mjs`.
+- Added direct unit coverage for legacy URL repair, cache-safe IDs, duplicate merging, idle/photo-choice metadata, and unsafe record rejection.
 
 ## Next steps
 
-- Continue extracting self-contained admin state and rendering helpers from `scripts/app.js` when those areas are next changed.
+- Extract the next self-contained Asset Library filtering and sorting helpers from `scripts/app.js`.
 
 ## Known bugs/blockers
 

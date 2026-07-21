@@ -264,6 +264,7 @@ test("managed video assets use optimized Cloudinary delivery URLs", () => {
 
 test("asset uploads show an in-progress state and repair legacy Hawks paths", () => {
   const appScript = readProjectFile("scripts", "app.js");
+  const assetLibraryUtils = readProjectFile("scripts", "asset-library-utils.mjs");
   const assetsFn = readProjectFile("functions", "api", "assets.js");
   const html = readProjectFile("index.html");
 
@@ -274,8 +275,9 @@ test("asset uploads show an in-progress state and repair legacy Hawks paths", ()
     "the upload modal should clearly show and protect an in-progress upload"
   );
   assert.ok(
-    appScript.includes("function normalizeLegacyAssetUrl(value)") &&
-      appScript.includes('"assets/school/hawks/"') &&
+    appScript.includes("normalizeLegacyAssetUrl") &&
+      assetLibraryUtils.includes("function normalizeLegacyAssetUrl(value)") &&
+      assetLibraryUtils.includes('"assets/school/hawks/"') &&
       assetsFn.includes("function normalizeLegacyAssetUrl(value)") &&
       assetsFn.includes('"assets/school/hawks/"'),
     "saved records using the former Hawks folder should resolve to the current assets"
@@ -364,6 +366,7 @@ test("asset library management supports sorting and category metadata", () => {
 
 test("canonical asset collection includes explicit theme arrays and deduplicates category URLs", () => {
   const appScript = readProjectFile("scripts", "app.js");
+  const assetLibraryUtils = readProjectFile("scripts", "asset-library-utils.mjs");
 
   assert.ok(
     appScript.includes("theme.backgrounds.forEach") &&
@@ -372,14 +375,14 @@ test("canonical asset collection includes explicit theme arrays and deduplicates
     "explicit theme backgrounds, overlays, and templates should feed the canonical collection"
   );
   assert.ok(
-    appScript.includes("function getAssetLibraryUrlKey(url)") &&
+    assetLibraryUtils.includes("function getAssetLibraryUrlKey(url)") &&
       appScript.includes("const key = row.id;") &&
       appScript.includes("getAssetLibraryId(normalizedCategory, src)"),
     "canonical entries should deduplicate by category and normalized URL"
   );
   assert.ok(
-    appScript.includes('replace(/^\\/+/, "")') &&
-      appScript.includes("raw.split(\"#\")[0].split(\"?\")[0]"),
+    assetLibraryUtils.includes('replace(/^\\/+/, "")') &&
+      assetLibraryUtils.includes("raw.split(\"#\")[0].split(\"?\")[0]"),
     "asset library ids should collapse leading-slash and cache-busted URL variants"
   );
   assert.ok(

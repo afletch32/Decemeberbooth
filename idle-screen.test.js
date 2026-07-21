@@ -5,6 +5,10 @@ const assert = require("node:assert/strict");
 
 const app = readFileSync(join(process.cwd(), "scripts/app.js"), "utf8");
 const idleScreenModule = readFileSync(join(process.cwd(), "scripts/idle-screen.mjs"), "utf8");
+const assetLibraryUtils = readFileSync(
+  join(process.cwd(), "scripts/asset-library-utils.mjs"),
+  "utf8"
+);
 const html = readFileSync(join(process.cwd(), "index.html"), "utf8");
 
 function extractFunctionFromEither(source, moduleSource, name) {
@@ -31,7 +35,7 @@ function extractFunction(source, name) {
 }
 
 test("Idle Screens are a first-class Cloudinary asset type", () => {
-  assert.ok(app.includes('return "idle-screen"'));
+  assert.ok(assetLibraryUtils.includes('return "idle-screen"'));
   assert.ok(app.includes('kinds.push("idle-screens")'));
   assert.ok(app.includes("registerUploadedAsset(deliveryUrl, kind"));
   assert.ok(html.includes("Idle Screens"));
@@ -51,8 +55,8 @@ test("idle screens share canonical records and theme defaults", () => {
 
 test("idle screen editor state does not call late-defined helpers during app startup", () => {
   const stateIndex = app.indexOf("let idleScreenEditorZone =");
-  const defaultsIndex = app.indexOf("const DEFAULT_IDLE_START_ZONE");
-  assert.ok(stateIndex >= 0 && defaultsIndex > stateIndex);
+  assert.ok(stateIndex >= 0);
+  assert.ok(assetLibraryUtils.includes("const DEFAULT_IDLE_START_ZONE"));
   assert.ok(
     app.includes(
       "let idleScreenEditorZone = { x: 50, y: 73, width: 28, height: 20 };"
@@ -200,8 +204,8 @@ test("background assets accept video and render through shared video surfaces", 
 test("shared photo choice uploads persist as photo-choice idle screens", () => {
   assert.ok(app.includes('kinds.push("photo-choice-screens")'));
   assert.ok(
-    app.includes('raw === "photo-choice-screens"') &&
-      app.includes('return "idle-screen"')
+    assetLibraryUtils.includes('raw === "photo-choice-screens"') &&
+      assetLibraryUtils.includes('return "idle-screen"')
   );
   assert.ok(
     app.includes('isPhotoChoiceAssetKind(kind) ? "photo-choice" : "idle"')
