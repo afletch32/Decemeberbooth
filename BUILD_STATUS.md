@@ -12,6 +12,7 @@
 - Replaced autoplaying admin video previews with lazy still images: Cloudinary first-frame JPGs, explicit bundled posters, or a local placeholder.
 - Scoped Asset Library rendering and search to the selected theme's main event category by default; choosing another Category switches the preview scope, and clearing filters returns to the main category.
 - Simplified the default Event admin step to Saved Event, Session Name, Theme, and selected-asset summary; optional guest text, font, date, preset editing, and the Asset Library now stay collapsed until requested.
+- Tightened the Event setup first viewport: compacted the title, statuses, flow navigation, asset summary, and setup controls so configuration begins without a long scroll.
 - Removed the non-actionable yellow overlay warning and promoted Theme to the first, largest, touch-friendly Event setup control.
 - Fixed inactive setup sections so they no longer reserve invisible space above the active tab.
 - Moved frequently changed print controls to the top of Share and separated print, QR/cloud, email, and device settings with jump navigation.

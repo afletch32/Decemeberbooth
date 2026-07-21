@@ -188,9 +188,9 @@
     }
 
     .admin-title {
-      margin: 16px 0 8px;
+      margin: 8px 0 4px;
       font-family: var(--font-heading);
-      font-size: clamp(2.2rem, 5vw, 4rem);
+      font-size: clamp(2rem, 4vw, 3.1rem);
       letter-spacing: -0.04em;
       line-height: 0.95;
       color: #111111;
@@ -202,7 +202,7 @@
 
     .admin-subtitle {
       max-width: 760px;
-      margin: 0 auto 24px;
+      margin: 0 auto 16px;
       color: var(--text-muted);
       text-align: center;
       font-size: 1.04rem;
@@ -234,7 +234,7 @@
     .setup-status {
       max-width: 1220px;
       width: min(1220px, 100%);
-      margin: 0 auto 16px;
+      margin: 0 auto 12px;
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
@@ -263,15 +263,15 @@
     .setup-session-card {
       max-width: 1220px;
       width: min(1220px, 100%);
-      margin: 0 auto 16px;
+      margin: 0 auto 12px;
       display: grid;
-      gap: 16px;
+      gap: 12px;
     }
 
     .setup-session-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 16px;
+      gap: 12px;
     }
 
     .setup-session-theme {
@@ -279,7 +279,7 @@
     }
 
     .setup-session-theme #sessionThemeToggle {
-      min-height: 58px;
+      min-height: 52px;
       border-color: rgba(80, 191, 174, 0.68);
       font-size: 1.08rem;
       font-weight: 700;
@@ -361,8 +361,8 @@
       list-style: none;
       cursor: pointer;
       display: grid;
-      gap: 10px;
-      padding: 16px 24px;
+      gap: 6px;
+      padding: 12px 16px;
     }
 
     .setup-session-assets-toggle > summary::-webkit-details-marker {
@@ -416,7 +416,7 @@
     }
 
     .setup-session-item {
-      padding: 16px 24px;
+      padding: 12px 16px;
       border: 1px solid var(--border);
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 255, 251, 0.92));
@@ -670,7 +670,7 @@
     .setup-section-switcher {
       max-width: 1220px;
       width: min(1220px, 100%);
-      margin: 0 auto 16px;
+      margin: 0 auto 12px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -688,6 +688,17 @@
       text-transform: uppercase;
     }
 
+    .setup-section-switcher-label::after {
+      content: "Choose an event, then configure capture and sharing.";
+      display: block;
+      margin-top: 4px;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
     .setup-tabs {
       width: auto;
       max-width: none;
@@ -695,15 +706,15 @@
       display: flex;
       flex: 0 1 auto;
       flex-wrap: wrap;
-      gap: 16px;
+      gap: 8px;
       position: relative;
       z-index: 1;
     }
 
     .setup-tab {
       min-width: 0;
-      min-height: 50px;
-      padding: 16px 24px;
+      min-height: 44px;
+      padding: 10px 18px;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(239, 255, 251, 0.88));
@@ -6519,7 +6530,7 @@
             font-weight: 600;
             color: #3d3442;
           "
-          >Session Setup</span
+          >Event Setup</span
         >
       </div>
       <div class="setup-session-grid">
