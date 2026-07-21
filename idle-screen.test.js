@@ -35,9 +35,11 @@ test("Idle Screens are a first-class Cloudinary asset type", () => {
   assert.ok(app.includes('kinds.push("idle-screens")'));
   assert.ok(app.includes("registerUploadedAsset(deliveryUrl, kind"));
   assert.ok(html.includes("Idle Screens"));
-  assert.ok(html.includes('id="addIdleScreensBtn"'));
-  assert.ok(html.includes('id="idleScreensInput"'));
-  assert.ok(app.includes("DOM.idleScreensInput.files"));
+  assert.ok(html.includes('id="addAssetsBtn"'));
+  assert.ok(html.includes('id="bulkToIdleScreens"'));
+  assert.ok(html.includes('id="bulkToPhotoChoiceScreens"'));
+  assert.ok(!html.includes('id="addIdleScreensBtn"'));
+  assert.ok(!html.includes('id="addPhotoChoiceScreenBtn"'));
 });
 
 test("idle screens share canonical records and theme defaults", () => {
@@ -91,11 +93,21 @@ test("the existing start handler remains the only guest start path", () => {
 
 test("starting from custom artwork reveals the mode selection step", () => {
   const beginWelcome = extractFunction(app, "beginWelcome");
+  assert.ok(beginWelcome.includes("runWelcomeInteraction(event"));
   assert.ok(beginWelcome.includes("clearCustomIdleScreen();"));
   assert.ok(
     beginWelcome.indexOf("clearCustomIdleScreen();") <
       beginWelcome.indexOf('setWelcomeFlowStep("mode");')
   );
+});
+
+test("welcome hotspots provide a press response before changing screens", () => {
+  const interaction = extractFunction(app, "runWelcomeInteraction");
+  assert.ok(interaction.includes('classList.add("welcome-transitioning")'));
+  assert.ok(interaction.includes('classList.add("welcome-hotspot-pressed")'));
+  assert.ok(interaction.includes("window.setTimeout"));
+  assert.ok(html.includes("#welcomeScreen.welcome-transitioning #welcomeOverlay::after"));
+  assert.ok(html.includes("@keyframes welcomeHotspotPress"));
 });
 
 test("returning from mode selection restores custom idle artwork", () => {
@@ -138,8 +150,12 @@ test("custom welcome artwork hides legacy UI before its image finishes loading",
 });
 
 test("idle and photo choice screens accept looping video without blocking hotspots", () => {
-  assert.ok(html.includes('id="idleScreensInput" accept="image/*,video/*"'));
-  assert.ok(html.includes('id="photoChoiceScreenInput" accept="image/*,video/*"'));
+  assert.ok(html.includes('id="bulkAssetsInput" accept="image/*,video/*"'));
+  assert.ok(
+    html.includes(
+      "MP4 works for backgrounds, idle screens, and photo choice screens."
+    )
+  );
   assert.ok(
     html.includes(
       'id="welcomeVideo" class="hidden" autoplay muted loop playsinline'
@@ -181,7 +197,7 @@ test("background assets accept video and render through shared video surfaces", 
   assert.ok(app.includes("const bgImg = await loadDrawableMedia(bg);"));
 });
 
-test("dedicated photo choice uploads persist as photo-choice idle screens", () => {
+test("shared photo choice uploads persist as photo-choice idle screens", () => {
   assert.ok(app.includes('kinds.push("photo-choice-screens")'));
   assert.ok(
     app.includes('raw === "photo-choice-screens"') &&

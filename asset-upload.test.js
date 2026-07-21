@@ -262,6 +262,31 @@ test("managed video assets use optimized Cloudinary delivery URLs", () => {
   );
 });
 
+test("asset uploads show an in-progress state and repair legacy Hawks paths", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const assetsFn = readProjectFile("functions", "api", "assets.js");
+  const html = readProjectFile("index.html");
+
+  assert.ok(
+    appScript.includes("function setBulkAssetUploadBusy(isBusy)") &&
+      appScript.includes('DOM.bulkAssetApply.textContent = busy ? "Uploading…" : "Upload";') &&
+      appScript.includes('DOM.bulkAssetModal.setAttribute("aria-busy"'),
+    "the upload modal should clearly show and protect an in-progress upload"
+  );
+  assert.ok(
+    appScript.includes("function normalizeLegacyAssetUrl(value)") &&
+      appScript.includes('"assets/school/hawks/"') &&
+      assetsFn.includes("function normalizeLegacyAssetUrl(value)") &&
+      assetsFn.includes('"assets/school/hawks/"'),
+    "saved records using the former Hawks folder should resolve to the current assets"
+  );
+  assert.ok(
+    html.includes('id="bulkToBackgrounds" checked') &&
+      html.includes('id="bulkToOverlays"> Overlays'),
+    "the general asset upload should default to one valid background destination"
+  );
+});
+
 test("managed asset uploads validate files, block duplicates, and report failures", () => {
   const appScript = readProjectFile("scripts", "app.js");
 

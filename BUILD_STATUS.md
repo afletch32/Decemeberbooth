@@ -2,7 +2,7 @@
 
 ## Current goal
 
-- Support responsive moving booth screens and backgrounds while keeping guest controls clickable.
+- Make custom booth hotspots feel responsive with a press animation and short screen transitions.
 
 ## Current progress
 
@@ -38,10 +38,34 @@
 - Fixed hidden setup controls and inactive sections so they no longer reserve blank layout space.
 - Restored Asset Library and Current Selections as open-by-default event panels.
 - Relabeled Device Tools as Advanced Device Tools to distinguish operator fallbacks from normal setup.
-- Scoped the Asset Library and its type counts to the selected theme, including associated idle and photo-choice screens.
+- Kept Asset Library cards and type counts available across theme selections, including idle and photo-choice screens.
 - Kept Asset Library card refreshes on the active library theme so saved-event background additions retain their green selected outline.
 - Fixed Asset Library card toggles so background selection and event-asset removal immediately match the toast, green outline, badge, and effective session state.
 - Fixed theme normalization so frame objects remain valid image definitions, and corrupted `[object Object]` frame lists restore from built-in theme frames for live preview and final output.
+- Repaired legacy `assets/Hawks/...` records to the current `assets/school/hawks/...` paths so older previews load again.
+- Added a disabled `Uploading…` state while asset files are being sent, preventing duplicate clicks and making MP4 progress clear.
+- Defaulted the general Add Assets modal to Backgrounds only so an MP4 is not also submitted to the unsupported overlay destination.
+- Removed the redundant Idle Screen and Photo Choice upload buttons; one Add Assets flow now handles all destinations from its checklist.
+- Removed the unused admin modal navigation, backdrop, and close controls that had no current trigger.
+- Removed the dead session-card router and its links to retired asset buttons.
+- Removed orphan handlers for the retired per-type asset upload buttons; the shared Add Assets handler is now the only upload entry point.
+- Verified the cleanup with 94 focused checks, all 177 automated tests, and a browser MP4 selection for Photo Choice Screens with no console warnings or errors.
+- Removed the hidden legacy theme-editor panel and its hidden form fields from `index.html`.
+- Moved selected-theme options, selection, editor mode, and theme draft values into the dedicated `scripts/theme-admin-state.mjs` module.
+- Removed the retired quick-theme-card renderer and hidden live-preview DOM logic from the main app bundle.
+- Added focused tests for the modular state contract and for keeping the retired hidden markup out of HTML.
+- Fixed the visible Base Theme summary so changing the setup theme refreshes it from the newly loaded theme instead of leaving the previous theme name and counts.
+- Added a touch-safe press ripple for Start and photo-choice hotspots, including invisible hotspots over custom screen artwork.
+- Added a short transition hold so guests see their tap register before the next welcome or camera screen appears.
+
+## Next steps
+
+- Continue extracting self-contained admin state and rendering helpers from `scripts/app.js` when those areas are next changed.
+
+## Known bugs/blockers
+
+- No active blocker for the unified upload flow.
+- No active blocker for the hidden theme-editor migration.
 
 ## Photo Choice Screen Feature
 
@@ -53,8 +77,7 @@
 
 ### Implementation Notes
 
-- Added dedicated upload action (`Add Photo Choice Screen` button + hidden input)
-- Route photo-choice uploads through bulk modal as `photo-choice` role
+- Route photo-choice uploads through the shared Add Assets modal as `photo-choice` role
 - Preserve role and zones in normalization/persistence across all paths:
   - `registerUploadedAsset()` - explicit photo-choice role and buttonZones
   - `normalizeAssetLibraryPayload()` - preserves role and zones

@@ -91,6 +91,14 @@ function isManageableAssetUrl(value) {
   return true;
 }
 
+function normalizeLegacyAssetUrl(value) {
+  const url = String(value || "").trim();
+  if (!url || /^https?:\/\//i.test(url) || /^(data:|blob:)/i.test(url)) {
+    return url;
+  }
+  return url.replace(/^\/?assets\/hawks\//i, "assets/school/hawks/");
+}
+
 function normalizeTags(value) {
   const source = Array.isArray(value)
     ? value
@@ -157,7 +165,9 @@ function normalizeEditableFields(value) {
 
 function normalizeAsset(item) {
   if (!item || typeof item !== "object") return null;
-  const url = String(item.url || item.secure_url || item.src || "").trim();
+  const url = normalizeLegacyAssetUrl(
+    item.url || item.secure_url || item.src || ""
+  );
   if (!isManageableAssetUrl(url)) return null;
   const category = normalizeCategory(item.category || item.kind);
   if (!category) return null;

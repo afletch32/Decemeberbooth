@@ -147,7 +147,7 @@ test("setup section state updates button and panel accessibility attributes", ()
     "Booth Mode control should remain in the simplified setup flow"
   );
   assert.ok(
-    appScript.includes("option.value = entry.key;") &&
+    appScript.includes("item.dataset.themeKey = entry.key;") &&
       appScript.includes("activateThemeFromSetupKey(entry.key)"),
     "theme option clicks should activate immediately"
   );
@@ -324,9 +324,9 @@ test("setup theme dropdown groups themes by user-facing category", () => {
     "grouped theme options should dedupe by key and render non-selectable section headers"
   );
   assert.ok(
-    appScript.includes("option.value = entry.key;") &&
+    appScript.includes("item.dataset.themeKey = entry.key;") &&
       appScript.includes("activateThemeFromSetupKey(entry.key)") &&
-      appScript.includes('option.textContent = entry.label;'),
+      appScript.includes("item.textContent = entry.label;"),
     "setup options should keep the original keys while showing friendly labels"
   );
   assert.ok(
@@ -504,12 +504,55 @@ test("event setup owns the day-to-day event editing controls", () => {
     "blank event text should remain event-owned instead of snapping back to the theme default"
   );
   assert.ok(
-    appScript.includes('title: DOM.themeWelcomeTitle ? DOM.themeWelcomeTitle.value : "Welcome!",'),
+    appScript.includes("title: THEME_EDITOR.welcomeTitle.value,"),
     "new themes should allow an intentionally blank welcome title"
   );
   assert.ok(
-    appScript.includes('if (DOM.themeWelcomeTitle) target.welcome.title = DOM.themeWelcomeTitle.value;'),
+    appScript.includes("target.welcome.title = THEME_EDITOR.welcomeTitle.value;"),
     "theme updates should preserve intentionally blank welcome titles"
+  );
+});
+
+test("hidden theme editor markup is replaced by modular application state", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+  const stateModule = readProjectFile("scripts", "theme-admin-state.mjs");
+
+  [
+    "themeEditorPanel",
+    "themeEditorActive",
+    "themeEditorModeSelect",
+    "eventSelect",
+    "themeQuickSelect",
+    "stylePreviewWrap",
+    "themeName",
+    "themeAccent",
+  ].forEach((retiredId) => {
+    assert.ok(!html.includes(`id=\"${retiredId}\"`), `${retiredId} should stay out of HTML`);
+  });
+  assert.ok(
+    appScript.includes('from "./theme-admin-state.mjs"') &&
+      appScript.includes("const themeAdminState = createThemeAdminState();"),
+    "the app should import the dedicated theme admin state module"
+  );
+  assert.ok(
+    stateModule.includes("export function createThemeAdminState()") &&
+      stateModule.includes("setThemeOptions(options)") &&
+      stateModule.includes("setSelectedThemeKey(key)"),
+    "theme selection and editor draft state should live in the module"
+  );
+});
+
+test("loading a theme refreshes the visible event editor directly", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const start = appScript.indexOf("function syncAdminUiWithTheme(themeKey, theme)");
+  const end = appScript.indexOf("\nfunction loadTheme", start);
+  const syncAdminUi = appScript.slice(start, end);
+
+  assert.ok(start >= 0 && end > start);
+  assert.ok(
+    syncAdminUi.includes("syncEventSetupEditor(theme);"),
+    "theme changes should refresh the visible base-theme summary from the loaded theme"
   );
 });
 
@@ -706,23 +749,21 @@ test("asset library supports explicit multi-theme defaults without manifest auto
   );
 });
 
-test("asset library follows the selected theme and includes theme idle screens", () => {
+test("asset library keeps every saved asset visible across theme selections", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    appScript.includes("function getActiveAssetLibraryThemeContext()") &&
-      appScript.includes("activeSessionThemeKey || getSelectedThemeKey()") &&
-      appScript.includes("function assetMatchesActiveLibraryTheme(asset, themeKey = \"\")") &&
-      appScript.includes("function getThemeScopedAssetLibraryRows()") &&
-      appScript.includes("const rows = getThemeScopedAssetLibraryRows().filter((asset) => {") &&
-      appScript.includes("const allAssets = getThemeScopedAssetLibraryRows();"),
-    "the selected theme should scope library cards and asset-type counts"
+    appScript.includes("function getVisibleAssetLibraryRows()") &&
+      appScript.includes("return getAllAssetLibraryRows();") &&
+      appScript.includes("const rows = getVisibleAssetLibraryRows().filter((asset) => {") &&
+      appScript.includes("const allAssets = getVisibleAssetLibraryRows();"),
+    "theme selection should not hide saved library cards or change asset-type counts"
   );
   assert.ok(
     appScript.includes("if (Array.isArray(theme && theme.idleScreens))") &&
       appScript.includes('add(entry, "idle-screen", themeName, themeKey)') &&
-      appScript.includes("No assets are associated with ${themeContext.label} yet."),
-    "theme idle and photo-choice screens should appear with clear theme-scoped status copy"
+      appScript.includes('"No assets available yet."'),
+    "theme idle and photo-choice screens should remain part of the complete library"
   );
 });
 
@@ -1521,5 +1562,33 @@ test("booth test mode provides deterministic camera, upload, and layout audit he
       appScript.includes("smallTapTargets") &&
       appScript.includes("overlaps"),
     "booth test mode should expose a compact layout audit helper"
+  );
+});
+
+test("retired admin navigation and orphan asset buttons stay removed", () => {
+  const html = readProjectFile("index.html");
+  const appScript = readProjectFile("scripts", "app.js");
+
+  [
+    "adminModalBackdrop",
+    "adminModalClose",
+    "data-admin-modal",
+    "data-session-action",
+    "addBackgroundsBtn",
+    "addGreenBackgroundsBtn",
+    "addOverlaysBtn",
+    "addTemplatesBtn",
+  ].forEach((retiredHook) => {
+    assert.ok(
+      !html.includes(retiredHook) && !appScript.includes(retiredHook),
+      `${retiredHook} should stay removed`
+    );
+  });
+  assert.ok(!appScript.includes("setupAdminModalNavigation"));
+  assert.ok(!appScript.includes("routeSetupSessionCard"));
+  assert.ok(
+    html.includes('id="addAssetsBtn"') &&
+      appScript.includes("openBulkAssetModal(DOM.bulkAssetsInput.files)"),
+    "the unified Add Assets flow should remain wired"
   );
 });

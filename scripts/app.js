@@ -24,6 +24,10 @@ import {
 import { formatRecordingTime } from "./recording-utils.mjs";
 import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
 import { getGuestVisibleBeautyPresets } from "./beauty/presets.mjs";
+import { createThemeAdminState } from "./theme-admin-state.mjs";
+
+const themeAdminState = createThemeAdminState();
+const THEME_EDITOR = themeAdminState.editor;
 
 function isLocalDevHost() {
   const hostname = window.location.hostname || "";
@@ -732,7 +736,6 @@ const DOM = {
   frameCarouselName: document.getElementById("frameCarouselName"),
   framePrevBtn: document.getElementById("framePrevBtn"),
   frameNextBtn: document.getElementById("frameNextBtn"),
-  eventSelect: document.getElementById("eventSelect"),
   allowRetakes: document.getElementById("allowRetakes"),
   analyticsData: document.getElementById("analyticsData"),
   logo: document.getElementById("logo"),
@@ -788,8 +791,6 @@ const DOM = {
   editPositionRow: document.getElementById("editPositionRow"),
   editPositionLabel: document.getElementById("editPositionLabel"),
   editModeExitBtn: document.getElementById("editModeExitBtn"),
-  adminModalBackdrop: document.getElementById("adminModalBackdrop"),
-  adminModalClose: document.getElementById("adminModalClose"),
   eventDateInput: document.getElementById("eventDateInput"),
   options: document.getElementById("options"),
   videoWrap: document.getElementById("videoWrap"),
@@ -852,19 +853,7 @@ const DOM = {
   recordingModeBtn: document.getElementById("recordingModeBtn"),
   triggerZone: document.getElementById("triggerZone"),
   analytics: document.getElementById("analytics"),
-  themeEditor: document.getElementById("themeEditor"),
-  themeEditorActive: document.getElementById("themeEditorActive"),
-  themeEditorEditing: document.getElementById("themeEditorEditing"),
-  stylePreview: document.getElementById("stylePreview"),
-  stylePreviewWrap: document.getElementById("stylePreviewWrap"),
-  stylePreviewHeading: document.getElementById("stylePreviewHeading"),
-  stylePreviewSubheading: document.getElementById("stylePreviewSubheading"),
-  stylePreviewBody: document.getElementById("stylePreviewBody"),
-  stylePreviewButton: document.getElementById("stylePreviewButton"),
   eventGalleryActions: document.getElementById("eventGalleryActions"),
-  themeVibesSection: document.getElementById("themeVibesSection"),
-  themeSeasonalSection: document.getElementById("themeSeasonalSection"),
-  themeSeasonalContent: document.getElementById("themeSeasonalContent"),
   eventPartner1Input: document.getElementById("eventPartner1Input"),
   eventPartner2Input: document.getElementById("eventPartner2Input"),
   eventBirthdayNameInput: document.getElementById("eventBirthdayNameInput"),
@@ -888,11 +877,6 @@ const DOM = {
     "eventBaseThemeAssetsSummary"
   ),
   eventThemeReferenceText: document.getElementById("eventThemeReferenceText"),
-  bannerSizeInput: document.getElementById("bannerSizeInput"),
-  bannerSizeValue: document.getElementById("bannerSizeValue"),
-  welcomeTitleSizeInput: document.getElementById("welcomeTitleSizeInput"),
-  welcomeTitleSizeValue: document.getElementById("welcomeTitleSizeValue"),
-  fontEventStyleSelect: document.getElementById("fontEventStyleSelect"),
   createEventModal: document.getElementById("createEventModal"),
   createEventName: document.getElementById("createEventName"),
   createEventUseThemeDefaults: document.getElementById(
@@ -915,7 +899,6 @@ const DOM = {
   createEventSummary: document.getElementById("createEventSummary"),
   createEventCancel: document.getElementById("createEventCancel"),
   createEventConfirm: document.getElementById("createEventConfirm"),
-  themeName: document.getElementById("themeName"),
   eventNameInput: document.getElementById("eventNameInput"),
   cloudNameInput: document.getElementById("cloudNameInput"),
   cloudPresetInput: document.getElementById("cloudPresetInput"),
@@ -943,13 +926,8 @@ const DOM = {
   sendPendingBtn: document.getElementById("sendPendingBtn"),
   cacheAssetsBtn: document.getElementById("cacheAssetsBtn"),
   forceCameraFileToggle: document.getElementById("forceCameraFileToggle"),
-  themeQuickSelect: document.getElementById("themeQuickSelect"),
   addAssetsBtn: document.getElementById("addAssetsBtn"),
-  addIdleScreensBtn: document.getElementById("addIdleScreensBtn"),
-  addPhotoChoiceScreenBtn: document.getElementById("addPhotoChoiceScreenBtn"),
   bulkAssetsInput: document.getElementById("bulkAssetsInput"),
-  idleScreensInput: document.getElementById("idleScreensInput"),
-  photoChoiceScreenInput: document.getElementById("photoChoiceScreenInput"),
   bulkAssetModal: document.getElementById("bulkAssetModal"),
   bulkAssetSummary: document.getElementById("bulkAssetSummary"),
   bulkToBackgrounds: document.getElementById("bulkToBackgrounds"),
@@ -1003,24 +981,13 @@ const DOM = {
   themeDefaultsSetupSave: document.getElementById("themeDefaultsSetupSave"),
   themeGreenBackgrounds: document.getElementById("themeGreenBackgrounds"),
   currentGreenBackgrounds: document.getElementById("currentGreenBackgrounds"),
-  themeFontSelect: document.getElementById("themeFontSelect"),
-  themeEditorModeSelect: document.getElementById("themeEditorModeSelect"),
   addLogoBtn: document.getElementById("addLogoBtn"),
   eventToSubThemeBtn: document.getElementById("eventToSubThemeBtn"),
-  themeAccent: document.getElementById("themeAccent"),
-  themeAccent2: document.getElementById("themeAccent2"),
   themeBackground: document.getElementById("themeBackground"),
   themeLogo: document.getElementById("themeLogo"),
   themeOverlays: document.getElementById("themeOverlays"),
   themeTemplates: document.getElementById("themeTemplates"),
-  themeWelcomeTitle: document.getElementById("themeWelcomeTitle"),
-  themeWelcomePrompt: document.getElementById("themeWelcomePrompt"),
-  summaryBackground: document.getElementById("summaryBackground"),
-  summaryLogo: document.getElementById("summaryLogo"),
-  summaryOverlays: document.getElementById("summaryOverlays"),
-  summaryTemplates: document.getElementById("summaryTemplates"),
   currentLogo: document.getElementById("currentLogo"),
-  currentFont: document.getElementById("currentFont"),
   backgroundThumbnailsSelected: document.getElementById(
     "launchBackgroundCount"
   ),
@@ -1042,9 +1009,6 @@ const DOM = {
   createThemeCancel: document.getElementById("createThemeCancel"),
   createThemeConfirm: document.getElementById("createThemeConfirm"),
   createThemeFolderInput: document.getElementById("createThemeFolderInput"),
-  btnUpdateTheme: document.getElementById("btnUpdateTheme"),
-  btnSaveTheme: document.getElementById("btnSaveTheme"),
-  themeEditorCloseBtn: document.getElementById("themeEditorCloseBtn"),
 };
 
 function setBoothControlsVisible(show) {
@@ -1778,9 +1742,7 @@ function getSessionUploadDate() {
 
 function getShowcaseDemoThemeKey(kind) {
   const normalized = (kind || "").toString().trim().toLowerCase();
-  const options = Array.from(
-    (DOM.eventSelect && DOM.eventSelect.options) || []
-  ).filter((opt) => opt && opt.value);
+  const options = getThemeOptions();
   const candidates = SHOWCASE_DEMO_THEME_CANDIDATES[normalized] || [];
   const direct = candidates.find((key) =>
     options.some((opt) => opt.value === key)
@@ -2314,19 +2276,9 @@ function resetIdleTimer() {
   }, IDLE_TIMEOUT_MS);
 }
 
-function setupEventSelector() {
-  if (!DOM.eventSelect) {
-    console.warn("Event select dropdown not found; themes will not switch.");
-    return;
-  }
-  DOM.eventSelect.addEventListener("change", handleEventSelectChange);
-}
-
 function populateCreatePathThemeSelect(preferredThemeKey) {
   if (!DOM.createPathThemeSelect) return;
-  const options = Array.from(
-    (DOM.eventSelect && DOM.eventSelect.options) || []
-  ).filter((opt) => opt && opt.value);
+  const options = getThemeOptions();
   const selectedBefore =
     preferredThemeKey || DOM.createPathThemeSelect.value || "";
   DOM.createPathThemeSelect.innerHTML = "";
@@ -2349,18 +2301,17 @@ function populateCreatePathThemeSelect(preferredThemeKey) {
     ? selectedBefore
     : options[0].value;
   const selectedKey = DOM.createPathThemeSelect.value || "";
-  if (selectedKey && DOM.eventSelect && DOM.eventSelect.value !== selectedKey) {
+  if (selectedKey && getSelectedThemeKey() !== selectedKey) {
     setActiveEventId("");
     setQuickStartSessionDate(getLocalIsoDate());
     setEventSelection(selectedKey);
     loadTheme(selectedKey);
-    highlightThemeQuickSelect(selectedKey);
   }
   syncSessionThemeSearch();
 }
 
 function getThemeOptionLabel(key = "") {
-  const options = Array.from((DOM.eventSelect && DOM.eventSelect.options) || []);
+  const options = getThemeOptions();
   const match = options.find((option) => option.value === key);
   if (match) return match.textContent || key;
   return getThemeSetupDisplayLabel(key, resolveThemeByKey(key));
@@ -2528,7 +2479,7 @@ function getSetupThemeEntries(filter = "") {
 
 function getSessionThemeOptions(filter = "") {
   const needle = String(filter || "").trim().toLowerCase();
-  return Array.from((DOM.eventSelect && DOM.eventSelect.options) || []).filter(
+  return getThemeOptions().filter(
     (option) => {
       if (!option || !option.value) return false;
       if (!needle) return true;
@@ -2541,11 +2492,11 @@ function getSessionThemeOptions(filter = "") {
 }
 
 function renderSessionThemeOptions(filter = "") {
-  if (DOM.sessionThemeOptions && DOM.eventSelect) {
+  if (DOM.sessionThemeOptions) {
     DOM.sessionThemeOptions.innerHTML = "";
     const selectedKey =
       (DOM.createPathThemeSelect && DOM.createPathThemeSelect.value) ||
-      (DOM.eventSelect && DOM.eventSelect.value) ||
+      getSelectedThemeKey() ||
       "";
     const entries = getSetupThemeEntries(filter);
     const groupedEntries = new Map();
@@ -2606,7 +2557,7 @@ function syncSessionThemeSearch() {
   renderSessionThemeOptions();
   const key =
     (DOM.createPathThemeSelect && DOM.createPathThemeSelect.value) ||
-    (DOM.eventSelect && DOM.eventSelect.value) ||
+    getSelectedThemeKey() ||
     "";
   if (DOM.sessionThemeValue)
     DOM.sessionThemeValue.textContent = getThemeOptionLabel(key) || "Choose theme";
@@ -2615,8 +2566,8 @@ function syncSessionThemeSearch() {
 
 function resolveThemeKeyFromSearchValue(value = "") {
   const needle = String(value || "").trim().toLowerCase();
-  if (!needle || !DOM.eventSelect) return "";
-  const options = Array.from(DOM.eventSelect.options || []);
+  if (!needle) return "";
+  const options = getThemeOptions();
   const byLabel = options.find(
     (option) => String(option.textContent || "").trim().toLowerCase() === needle
   );
@@ -2810,7 +2761,7 @@ function prepareThemeSessionFromSetup() {
   setQuickStartSessionDate(getLocalIsoDate());
   const key =
     (DOM.createPathThemeSelect && DOM.createPathThemeSelect.value) ||
-    (DOM.eventSelect && DOM.eventSelect.value) ||
+    getSelectedThemeKey() ||
     DEFAULT_THEME_KEY;
   const resolved = resolvePreferredThemeKey(key);
   if (!resolved) return false;
@@ -2829,7 +2780,7 @@ function quickStartThemeOnly(preferredThemeKey = "") {
   const preferred =
     preferredThemeKey ||
     getLastThemeKey() ||
-    (DOM.eventSelect && DOM.eventSelect.value) ||
+    getSelectedThemeKey() ||
     DEFAULT_THEME_KEY;
   const themeKey = resolvePreferredThemeKey(preferred);
   if (!themeKey) return;
@@ -2847,9 +2798,7 @@ function quickStartThemeOnly(preferredThemeKey = "") {
 
 function populateQuickStartThemeSelect() {
   if (!DOM.quickStartThemeSelect) return;
-  const options = Array.from(
-    (DOM.eventSelect && DOM.eventSelect.options) || []
-  ).filter((opt) => opt && opt.value);
+  const options = getThemeOptions();
   DOM.quickStartThemeSelect.innerHTML = "";
   options.forEach((opt) => {
     const next = document.createElement("option");
@@ -2859,7 +2808,7 @@ function populateQuickStartThemeSelect() {
   });
   const preferred =
     getLastThemeKey() ||
-    (DOM.eventSelect && DOM.eventSelect.value) ||
+    getSelectedThemeKey() ||
     DEFAULT_THEME_KEY;
   const resolved = resolvePreferredThemeKey(preferred);
   if (resolved) DOM.quickStartThemeSelect.value = resolved;
@@ -2906,9 +2855,8 @@ function setupEventProfileControls() {
       if (!key) return;
       setActiveEventId("");
       setQuickStartSessionDate(getLocalIsoDate());
-      if (DOM.eventSelect) DOM.eventSelect.value = key;
+      setEventSelection(key);
       loadTheme(key);
-      highlightThemeQuickSelect(key);
     });
   }
   if (DOM.sessionThemeToggle) {
@@ -2973,7 +2921,7 @@ function setupEventProfileControls() {
     });
   });
   populateCreatePathThemeSelect(
-    (DOM.eventSelect && DOM.eventSelect.value) || ""
+    getSelectedThemeKey()
   );
   syncSessionThemeSearch();
   syncSessionFontSearch();
@@ -2991,24 +2939,6 @@ function setupEventProfileControls() {
       updateStylePreview();
     });
   }
-}
-
-function handleEventSelectChange(event) {
-  disableShowcaseDemo();
-  const key = event.target.value;
-  loadTheme(key);
-  highlightThemeQuickSelect(key);
-  syncThemeEditorWithActiveTheme();
-  if (getActiveEvent()) {
-    updateActiveEventDetails({ themeKey: key });
-  }
-  if (DOM.eventNameInput) {
-    const active = getActiveEvent();
-    DOM.eventNameInput.value =
-      (active && active.name) || getStoredEventName(key) || "";
-  }
-  updateThemeEditorSummary();
-  updateLaunchSummary();
 }
 
 function setupBoothButtons() {
@@ -3093,61 +3023,50 @@ function setupFinalPreviewListeners() {
 }
 
 function setupThemeEditorControls() {
-  if (DOM.themeEditorCloseBtn)
-    DOM.themeEditorCloseBtn.addEventListener("click", closeAdminModal);
-  if (DOM.themeEditorModeSelect)
-    DOM.themeEditorModeSelect.addEventListener("change", (e) =>
-      setThemeEditorMode(e.target.value)
-    );
+  THEME_EDITOR.mode.addEventListener("change", (e) =>
+    setThemeEditorMode(e.target.value)
+  );
   document.querySelectorAll("[data-event-type-tile]").forEach((button) => {
     button.addEventListener("click", () => {
       setSelectedEventType(button.dataset.eventTypeTile || "general");
     });
   });
-  if (DOM.fontEventStyleSelect) {
-    DOM.fontEventStyleSelect.addEventListener("change", () => {
-      syncEventTypeTiles();
-      populateThemeSelector((DOM.eventSelect && DOM.eventSelect.value) || "");
-    });
-  }
-  if (DOM.themeName)
-    DOM.themeName.addEventListener("input", updateThemeEditorSummary);
+  THEME_EDITOR.eventType.addEventListener("change", () => {
+    syncEventTypeTiles();
+    populateThemeSelector(getSelectedThemeKey());
+  });
   if (DOM.themeCloneName)
     DOM.themeCloneName.addEventListener("input", updateThemeEditorSummary);
   if (DOM.createThemeName)
     DOM.createThemeName.addEventListener("input", updateThemeEditorSummary);
-  if (DOM.bannerSizeInput) {
-    DOM.bannerSizeInput.addEventListener("input", () => {
+  THEME_EDITOR.bannerSize.addEventListener("input", () => {
       if (getActiveEvent()) {
         syncBannerSizeUI(activeTheme || getSelectedThemeTarget());
         return;
       }
       const target = activeTheme || getSelectedThemeTarget();
       if (!target) return;
-      const size = parseInt(DOM.bannerSizeInput.value, 10);
+      const size = parseInt(THEME_EDITOR.bannerSize.value, 10);
       if (!Number.isFinite(size)) return;
       target.bannerSize = size;
       applyBannerSize(target);
       syncBannerSizeUI(target);
       saveThemesToStorage();
-    });
-  }
-  if (DOM.welcomeTitleSizeInput) {
-    DOM.welcomeTitleSizeInput.addEventListener("input", () => {
+  });
+  THEME_EDITOR.welcomeTitleSize.addEventListener("input", () => {
       if (getActiveEvent()) {
         syncWelcomeTitleSizeUI(activeTheme || getSelectedThemeTarget());
         return;
       }
       const target = activeTheme || getSelectedThemeTarget();
       if (!target) return;
-      const size = parseInt(DOM.welcomeTitleSizeInput.value, 10);
+      const size = parseInt(THEME_EDITOR.welcomeTitleSize.value, 10);
       if (!Number.isFinite(size)) return;
       target.welcomeTitleSize = size;
       applyWelcomeTitleSize(target);
       syncWelcomeTitleSizeUI(target);
       saveThemesToStorage();
-    });
-  }
+  });
   if (DOM.cloneThemeBtn)
     DOM.cloneThemeBtn.addEventListener("click", handleCloneTheme);
   if (DOM.addLogoBtn && DOM.themeLogo)
@@ -3156,62 +3075,24 @@ function setupThemeEditorControls() {
     DOM.addAssetsBtn.addEventListener("click", () =>
       DOM.bulkAssetsInput.click()
     );
-  if (DOM.addIdleScreensBtn && DOM.idleScreensInput)
-    DOM.addIdleScreensBtn.addEventListener("click", () =>
-      DOM.idleScreensInput.click()
-    );
-  if (DOM.addPhotoChoiceScreenBtn && DOM.photoChoiceScreenInput)
-    DOM.addPhotoChoiceScreenBtn.addEventListener("click", () =>
-      DOM.photoChoiceScreenInput.click()
-    );
-  if (DOM.addBackgroundsBtn && DOM.themeBackground)
-    DOM.addBackgroundsBtn.addEventListener("click", () =>
-      DOM.themeBackground.click()
-    );
-  if (DOM.addGreenBackgroundsBtn && DOM.themeGreenBackgrounds) {
-    DOM.addGreenBackgroundsBtn.addEventListener("click", () =>
-      DOM.themeGreenBackgrounds.click()
-    );
-  }
-  if (DOM.addOverlaysBtn && DOM.themeOverlays)
-    DOM.addOverlaysBtn.addEventListener("click", () =>
-      DOM.themeOverlays.click()
-    );
-  if (DOM.addTemplatesBtn && DOM.themeTemplates)
-    DOM.addTemplatesBtn.addEventListener("click", () =>
-      DOM.themeTemplates.click()
-    );
   if (DOM.bulkAssetsInput)
     DOM.bulkAssetsInput.addEventListener("change", () =>
       openBulkAssetModal(DOM.bulkAssetsInput.files)
     );
-  if (DOM.idleScreensInput)
-    DOM.idleScreensInput.addEventListener("change", () => {
-      if (DOM.bulkToBackgrounds) DOM.bulkToBackgrounds.checked = false;
-      if (DOM.bulkToGreenBackgrounds) DOM.bulkToGreenBackgrounds.checked = false;
-      if (DOM.bulkToOverlays) DOM.bulkToOverlays.checked = false;
-      if (DOM.bulkToTemplates) DOM.bulkToTemplates.checked = false;
-      if (DOM.bulkToIdleScreens) DOM.bulkToIdleScreens.checked = true;
-      openBulkAssetModal(DOM.idleScreensInput.files);
-    });
-  if (DOM.photoChoiceScreenInput)
-    DOM.photoChoiceScreenInput.addEventListener("change", () => {
-      if (DOM.bulkToBackgrounds) DOM.bulkToBackgrounds.checked = false;
-      if (DOM.bulkToGreenBackgrounds) DOM.bulkToGreenBackgrounds.checked = false;
-      if (DOM.bulkToOverlays) DOM.bulkToOverlays.checked = false;
-      if (DOM.bulkToTemplates) DOM.bulkToTemplates.checked = false;
-      if (DOM.bulkToIdleScreens) DOM.bulkToIdleScreens.checked = false;
-      if (DOM.bulkToPhotoChoiceScreens) DOM.bulkToPhotoChoiceScreens.checked = true;
-      openPhotoChoiceBulkAssetModal(DOM.photoChoiceScreenInput.files);
-    });
   if (DOM.bulkAssetCancel)
     DOM.bulkAssetCancel.addEventListener("click", closeBulkAssetModal);
   if (DOM.bulkAssetApply)
-    DOM.bulkAssetApply.addEventListener("click", () => {
-      applyBulkAssetUpload().catch((err) => {
+    DOM.bulkAssetApply.addEventListener("click", async () => {
+      if (DOM.bulkAssetApply.disabled) return;
+      setBulkAssetUploadBusy(true);
+      try {
+        await applyBulkAssetUpload();
+      } catch (err) {
         console.error("Bulk asset upload failed", err);
         showToast("Bulk upload failed.");
-      });
+      } finally {
+        setBulkAssetUploadBusy(false);
+      }
     });
   if (DOM.bulkAssetModal) {
     DOM.bulkAssetModal.addEventListener("click", (event) => {
@@ -3310,10 +3191,8 @@ function setupThemeEditorControls() {
     DOM.themeCharacter.addEventListener("change", () =>
       handleThemeAssetInputChange("character")
     );
-  if (DOM.themeWelcomeTitle)
-    DOM.themeWelcomeTitle.addEventListener("input", updateStylePreview);
-  if (DOM.themeWelcomePrompt)
-    DOM.themeWelcomePrompt.addEventListener("input", updateStylePreview);
+  THEME_EDITOR.welcomeTitle.addEventListener("input", updateStylePreview);
+  THEME_EDITOR.welcomePrompt.addEventListener("input", updateStylePreview);
 }
 
 function handleThemeAssetInputChange(kind) {
@@ -3382,6 +3261,7 @@ function handleThemeAssetInputChange(kind) {
 function openBulkAssetModal(fileList) {
   pendingBulkAssetFiles = Array.from(fileList || []).filter(Boolean);
   if (!pendingBulkAssetFiles.length) return;
+  setBulkAssetUploadBusy(false);
   if (DOM.bulkAssetSummary) {
     const count = pendingBulkAssetFiles.length;
     DOM.bulkAssetSummary.textContent = `${count} file${
@@ -3391,16 +3271,37 @@ function openBulkAssetModal(fileList) {
   if (DOM.bulkAssetModal) DOM.bulkAssetModal.classList.remove("hidden");
 }
 
-function openPhotoChoiceBulkAssetModal(fileList) {
-  openBulkAssetModal(fileList);
-  if (DOM.bulkToPhotoChoiceScreens) DOM.bulkToPhotoChoiceScreens.checked = true;
+function setBulkAssetUploadBusy(isBusy) {
+  const busy = isBusy === true;
+  if (DOM.bulkAssetApply) {
+    DOM.bulkAssetApply.disabled = busy;
+    DOM.bulkAssetApply.textContent = busy ? "Uploading…" : "Upload";
+  }
+  if (DOM.bulkAssetCancel) DOM.bulkAssetCancel.disabled = busy;
+  if (DOM.bulkAssetModal) {
+    DOM.bulkAssetModal.setAttribute("aria-busy", busy ? "true" : "false");
+    DOM.bulkAssetModal
+      .querySelectorAll('input[type="checkbox"]')
+      .forEach((input) => {
+        input.disabled = busy;
+      });
+  }
+  if (DOM.bulkAssetSummary && busy) {
+    const count = pendingBulkAssetFiles.length;
+    DOM.bulkAssetSummary.textContent = `Uploading ${count} file${
+      count === 1 ? "" : "s"
+    }…`;
+  } else if (DOM.bulkAssetSummary && pendingBulkAssetFiles.length) {
+    const count = pendingBulkAssetFiles.length;
+    DOM.bulkAssetSummary.textContent = `${count} file${
+      count === 1 ? "" : "s"
+    } selected`;
+  }
 }
 
 function closeBulkAssetModal() {
   pendingBulkAssetFiles = [];
   if (DOM.bulkAssetsInput) DOM.bulkAssetsInput.value = "";
-  if (DOM.idleScreensInput) DOM.idleScreensInput.value = "";
-  if (DOM.photoChoiceScreenInput) DOM.photoChoiceScreenInput.value = "";
   if (DOM.bulkAssetModal) DOM.bulkAssetModal.classList.add("hidden");
 }
 
@@ -3567,7 +3468,7 @@ async function applyBulkAssetUpload() {
     showToast("No assets were uploaded.");
     return;
   }
-  const key = DOM.eventSelect && DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   if (key) loadTheme(key);
   closeBulkAssetModal();
   showToast(`Added ${uploaded} session asset item${uploaded === 1 ? "" : "s"}.`);
@@ -3601,10 +3502,8 @@ function setupCreateThemeModalControls() {
     DOM.createThemeCancel.addEventListener("click", () => {
       hideCreateThemeModal();
       resetCreateThemeModal();
-      if (DOM.themeEditorModeSelect) {
-        DOM.themeEditorModeSelect.value = "edit";
-        setThemeEditorMode("edit");
-      }
+      THEME_EDITOR.mode.value = "edit";
+      setThemeEditorMode("edit");
     });
   if (DOM.createThemeConfirm)
     DOM.createThemeConfirm.addEventListener("click", confirmCreateTheme);
@@ -3879,7 +3778,7 @@ function handleCreateEventFiles(kind, fileList) {
 }
 
 async function confirmCreateEventModal() {
-  const themeKey = DOM.eventSelect && DOM.eventSelect.value;
+  const themeKey = getSelectedThemeKey();
   if (!themeKey) {
     alert("Select a theme before saving.");
     return;
@@ -4313,49 +4212,6 @@ function setupCameraZoomControls() {
   });
 }
 
-let activeAdminModal = null;
-
-function openAdminModal(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  if (activeAdminModal) activeAdminModal.classList.remove("admin-modal-target");
-  activeAdminModal = el;
-  activeAdminModal.classList.add("admin-modal-target");
-  if (activeAdminModal.tagName === "DETAILS") activeAdminModal.open = true;
-  if (DOM.adminModalBackdrop) DOM.adminModalBackdrop.classList.add("show");
-  if (DOM.adminModalClose) DOM.adminModalClose.classList.remove("hidden");
-}
-
-function closeAdminModal() {
-  if (activeAdminModal) activeAdminModal.classList.remove("admin-modal-target");
-  activeAdminModal = null;
-  if (DOM.adminModalBackdrop) DOM.adminModalBackdrop.classList.remove("show");
-  if (DOM.adminModalClose) DOM.adminModalClose.classList.add("hidden");
-}
-
-function setupAdminModalNavigation() {
-  const buttons = document.querySelectorAll("[data-admin-modal]");
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => openAdminModal(btn.dataset.adminModal));
-  });
-  document
-    .querySelectorAll("#adminScreen details.panel-section")
-    .forEach((panel) => {
-      panel.addEventListener("toggle", () => {
-        if (!panel.open && panel.classList.contains("admin-modal-target"))
-          closeAdminModal();
-      });
-    });
-  document.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") return;
-    if (activeAdminModal) closeAdminModal();
-  });
-  if (DOM.adminModalBackdrop)
-    DOM.adminModalBackdrop.addEventListener("click", closeAdminModal);
-  if (DOM.adminModalClose)
-    DOM.adminModalClose.addEventListener("click", closeAdminModal);
-}
-
 let activeSetupSection = "event";
 
 function setSetupSection(section = "event") {
@@ -4372,22 +4228,6 @@ function setSetupSection(section = "event") {
     panel.setAttribute("aria-hidden", show ? "false" : "true");
     if (show && panel.tagName === "DETAILS" && !panel.open) panel.open = true;
   });
-  closeAdminModal();
-}
-
-function focusSetupElement(selector) {
-  const el = document.querySelector(selector);
-  if (!el) return;
-  if (typeof el.scrollIntoView === "function") {
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
-  }
-  if (typeof el.focus === "function") {
-    try {
-      el.focus({ preventScroll: true });
-    } catch (_) {
-      el.focus();
-    }
-  }
 }
 
 function scrollSetupSectionIntoView(section) {
@@ -4410,15 +4250,6 @@ function setupSetupTabs() {
       const section = btn.dataset.setupNext || "event";
       setSetupSection(section);
       requestAnimationFrame(() => scrollSetupSectionIntoView(section));
-    });
-  });
-  document.querySelectorAll("[data-session-action]").forEach((card) => {
-    const activate = () => routeSetupSessionCard(card.dataset.sessionAction);
-    card.addEventListener("click", activate);
-    card.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      activate();
     });
   });
   setSetupSection(activeSetupSection);
@@ -4508,53 +4339,6 @@ function setSetupLaunchMode(modeValue) {
   } catch (_) {}
   syncSetupLaunchModeUi();
   updateLaunchSummary();
-}
-
-function routeSetupSessionCard(action) {
-  const key = String(action || "").trim();
-  if (!key) return;
-  if (key === "event") {
-    setSetupSection("event");
-    requestAnimationFrame(() => focusSetupElement("#eventPathCreateBtn"));
-    return;
-  }
-  if (key === "capture") {
-    setSetupSection("capture");
-    requestAnimationFrame(() => focusSetupElement("#startCameraButton"));
-    return;
-  }
-  if (key === "theme") {
-    setSetupSection("event");
-    requestAnimationFrame(() => focusSetupElement("#sessionThemeToggle"));
-    return;
-  }
-  if (key === "camera") {
-    setSetupSection("capture");
-    requestAnimationFrame(() => focusSetupElement("#startCameraButton"));
-    return;
-  }
-  if (key === "save") {
-    setSetupSection("share");
-    return;
-  }
-  if (key === "overlays") {
-    setSetupSection("event");
-    const panel = document.getElementById("currentAssetsSection");
-    if (panel && panel.tagName === "DETAILS") {
-      panel.open = true;
-    }
-    requestAnimationFrame(() => focusSetupElement("#addOverlaysBtn"));
-    return;
-  }
-  if (key === "templates") {
-    setSetupSection("event");
-    const panel = document.getElementById("currentAssetsSection");
-    if (panel && panel.tagName === "DETAILS") {
-      panel.open = true;
-    }
-    requestAnimationFrame(() => focusSetupElement("#addTemplatesBtn"));
-    return;
-  }
 }
 
 function syncSetupLaunchModeUi() {
@@ -4984,7 +4768,6 @@ function applyEditModeState(active) {
 
 function enterEditMode() {
   applyEditModeState(true);
-  closeAdminModal();
   if (DOM.adminScreen) DOM.adminScreen.classList.add("hidden");
   if (DOM.boothScreen) DOM.boothScreen.classList.remove("hidden");
   document.body.classList.remove("admin-open");
@@ -5161,7 +4944,7 @@ function setupEventNameInput() {
     if (active) {
       updateActiveEventDetails({ name });
     } else {
-      const key = DOM.eventSelect && DOM.eventSelect.value;
+      const key = getSelectedThemeKey();
       updateActiveSessionTextDetails({ name });
       if (key) saveStoredEventName(key, name);
     }
@@ -5267,7 +5050,7 @@ function setupEventDateInput() {
     if (active) {
       updateActiveEventDetails({ date: dateValue });
     } else {
-      const key = DOM.eventSelect && DOM.eventSelect.value;
+      const key = getSelectedThemeKey();
       updateActiveSessionTextDetails({ date: dateValue });
       if (key) saveStoredEventDate(key, dateValue);
     }
@@ -5278,7 +5061,6 @@ function setupEventDateInput() {
 function init() {
   setupLaunchMode = loadSetupLaunchMode();
   syncSetupLaunchModeUi();
-  setupEventSelector();
   setupBoothButtons();
   setupMobileSettingsControls();
   setupVideoListeners();
@@ -5304,14 +5086,11 @@ function init() {
   setupEventDateInput();
   setupEventProfileControls();
   setupAssetPanelControls();
-  setupAdminModalNavigation();
   setupSetupTabs();
   setupWelcomeInteractions();
   loadCloudinarySettings();
   loadPrintSettings();
-  setThemeEditorMode(
-    DOM.themeEditorModeSelect ? DOM.themeEditorModeSelect.value : "edit"
-  );
+  setThemeEditorMode(THEME_EDITOR.mode.value);
   loadEmailJsSettings();
   updatePendingUI();
   flushPendingUploads();
@@ -6003,42 +5782,14 @@ const SPOT_MASK = {
 
 function populateThemeSelector(preferredKey, attempt = 0) {
   console.log("Themes object:", themes);
-  const select = DOM.eventSelect;
-  if (!select) return null;
-  select.innerHTML = "";
   const selectedType = getSelectedEventType();
   const entries = getSetupThemeEntries().filter((entry) =>
     shouldIncludeThemeForSelectedType(entry.key, entry.theme, selectedType)
   );
-  const groupedEntries = new Map();
-  entries.forEach((entry) => {
-    if (!groupedEntries.has(entry.group)) groupedEntries.set(entry.group, []);
-    groupedEntries.get(entry.group).push(entry);
-  });
-  let optionCount = 0;
-  const orderedGroups = THEME_SETUP_GROUP_ORDER.filter((group) =>
-    groupedEntries.has(group)
-  ).concat(
-    Array.from(groupedEntries.keys()).filter(
-      (group) => !THEME_SETUP_GROUP_ORDER.includes(group)
-    )
+  themeAdminState.setThemeOptions(
+    entries.map((entry) => ({ value: entry.key, textContent: entry.label }))
   );
-  orderedGroups.forEach((groupName) => {
-    const groupEntries = groupedEntries.get(groupName);
-    if (!groupEntries || !groupEntries.length) return;
-    const optgroup = document.createElement("optgroup");
-    optgroup.label = groupName;
-    groupEntries.forEach((entry) => {
-      const option = document.createElement("option");
-      option.value = entry.key;
-      option.textContent = entry.label;
-      optgroup.appendChild(option);
-      optionCount += 1;
-    });
-    select.appendChild(optgroup);
-  });
-  if (optionCount === 0) {
-    renderThemeQuickSelect(select);
+  if (entries.length === 0) {
     if (attempt === 0) {
       resetThemesToBuiltins("no selectable themes for dropdown");
       ensureBuiltinThemes();
@@ -6050,25 +5801,19 @@ function populateThemeSelector(preferredKey, attempt = 0) {
       }
       return populateThemeSelector(preferredKey, attempt + 1);
     }
-    highlightThemeQuickSelect(null);
     updateThemeEditorSummary();
     return null;
   }
-  renderThemeQuickSelect(select);
   const resolved = resolvePreferredThemeKey(preferredKey);
-  if (resolved && !setEventSelection(resolved) && select.options.length > 0) {
-    select.selectedIndex = 0;
-  }
-  const selectedKey = (DOM.eventSelect && DOM.eventSelect.value) || null;
-  highlightThemeQuickSelect(selectedKey);
+  if (resolved) setEventSelection(resolved);
+  const selectedKey = getSelectedThemeKey() || null;
   populateCreatePathThemeSelect(selectedKey || "");
   updateThemeEditorSummary();
   return selectedKey;
 }
 
 function getSelectedEventType() {
-  if (!DOM.fontEventStyleSelect) return "general";
-  return normalizeEventStyle(DOM.fontEventStyleSelect.value) || "general";
+  return normalizeEventStyle(THEME_EDITOR.eventType.value) || "general";
 }
 
 function syncEventTypeTiles() {
@@ -6083,11 +5828,9 @@ function syncEventTypeTiles() {
 
 function setSelectedEventType(nextType) {
   const normalized = normalizeEventStyle(nextType) || "general";
-  if (DOM.fontEventStyleSelect) {
-    DOM.fontEventStyleSelect.value = normalized;
-  }
+  THEME_EDITOR.eventType.value = normalized;
   syncEventTypeTiles();
-  populateThemeSelector((DOM.eventSelect && DOM.eventSelect.value) || "");
+  populateThemeSelector(getSelectedThemeKey());
 }
 
 function getThemeEventTypePriority(item, selectedType) {
@@ -6215,185 +5958,6 @@ function getEventTypeCopy(selectedType) {
     },
   };
   return copy[normalized] || copy.general;
-}
-
-function buildThemeCard(item, options = {}) {
-  const {
-    isHoliday = false,
-    showSummary = false,
-    selectEl = DOM.eventSelect,
-  } = options;
-  const card = document.createElement("button");
-  card.type = "button";
-  card.className = `theme-card${isHoliday ? " holiday" : ""}`;
-  card.dataset.value = item.value;
-  card.textContent = item.label;
-  const accent = item.theme && item.theme.accent ? item.theme.accent : null;
-  const accent2 = item.theme && item.theme.accent2 ? item.theme.accent2 : null;
-  if (accent) card.style.setProperty("--card-accent", accent);
-  if (accent2) card.style.setProperty("--card-accent2", accent2);
-  if (showSummary && item.theme && item.theme.vibeSummary) {
-    const summary = document.createElement("span");
-    summary.className = "theme-card-summary";
-    summary.textContent = item.theme.vibeSummary;
-    card.appendChild(summary);
-  }
-  card.addEventListener("click", () => {
-    if (selectEl && selectEl.value !== item.value) {
-      selectEl.value = item.value;
-      selectEl.dispatchEvent(new Event("change", { bubbles: true }));
-    } else {
-      highlightThemeQuickSelect(item.value);
-    }
-  });
-  return card;
-}
-
-function renderThemeVibesSection(items, selectedKey) {
-  const container = DOM.themeVibesSection;
-  if (!container) return;
-  const selected = items.find((item) => item.value === selectedKey);
-  let parentKey = null;
-  if (selected && selected.theme && selected.theme.vibeParentKey) {
-    parentKey = selected.theme.vibeParentKey;
-  } else if (selectedKey) {
-    const hasVibes = items.some(
-      (item) => item.theme && item.theme.vibeParentKey === selectedKey
-    );
-    parentKey = hasVibes ? selectedKey : null;
-  }
-  if (!parentKey) {
-    container.classList.add("hidden");
-    container.innerHTML = "";
-    return;
-  }
-  const vibeItems = items.filter(
-    (item) => item.theme && item.theme.vibeParentKey === parentKey
-  );
-  if (!vibeItems.length) {
-    container.classList.add("hidden");
-    container.innerHTML = "";
-    return;
-  }
-  const parentTheme = resolveThemeByKey(parentKey);
-  const parentLabel =
-    parentTheme && parentTheme.name ? parentTheme.name : "Holiday";
-  container.classList.remove("hidden");
-  container.innerHTML = "";
-  const section = document.createElement("div");
-  section.className = "theme-card-section";
-  const heading = document.createElement("h3");
-  heading.textContent = `${parentLabel} Vibes`;
-  const grid = document.createElement("div");
-  grid.className = "theme-card-grid";
-  vibeItems.forEach((item) => {
-    grid.appendChild(
-      buildThemeCard(item, { isHoliday: true, showSummary: true })
-    );
-  });
-  section.appendChild(heading);
-  section.appendChild(grid);
-  container.appendChild(section);
-}
-
-function renderThemeQuickSelect(selectEl = DOM.eventSelect) {
-  const container = DOM.themeQuickSelect;
-  const seasonalSection = DOM.themeSeasonalSection;
-  const seasonalContent = DOM.themeSeasonalContent;
-  if (!container || !selectEl) return;
-  container.innerHTML = "";
-  if (seasonalContent) seasonalContent.innerHTML = "";
-  if (seasonalSection) seasonalSection.classList.add("hidden");
-  const options = Array.from(selectEl.options || []).filter(
-    (opt) => opt && opt.value
-  );
-  if (!options.length) {
-    container.classList.add("hidden");
-    return;
-  }
-  container.classList.remove("hidden");
-  const holidayOrder = [
-    { key: "newyear", order: 1 },
-    { key: "valentine", order: 2 },
-    { key: "st-patrick", order: 3 },
-    { key: "stpatrick", order: 3 },
-    { key: "easter", order: 4 },
-    { key: "fourthofjuly", order: 5 },
-    { key: "fourthof", order: 5 },
-    { key: "4thofjuly", order: 5 },
-    { key: "halloween", order: 10 },
-    { key: "thanksgiving", order: 11 },
-    { key: "christmas", order: 12 },
-  ];
-  const getHolidayOrder = (value, label) => {
-    const text = `${value} ${label}`.toLowerCase().replace(/\s+/g, "");
-    const hit = holidayOrder.find((entry) => text.includes(entry.key));
-    return hit ? hit.order : null;
-  };
-  const items = options.map((opt) => {
-    const theme = resolveThemeByKey(opt.value);
-    const label = opt.textContent || opt.value;
-    const holidayOrderValue = getHolidayOrder(opt.value, label);
-    return {
-      value: opt.value,
-      label,
-      theme,
-      holidayOrder: holidayOrderValue,
-    };
-  });
-  const selectedType = getSelectedEventType();
-  const mainItems = items
-    .filter((item) => !(item.theme && item.theme.vibeParentKey))
-    .filter((item) => item.holidayOrder === null)
-    .filter((item) =>
-      shouldIncludeThemeForSelectedType(item.value, item.theme, selectedType)
-    )
-    .sort((a, b) => {
-      const aPriority = getThemeEventTypePriority(a, selectedType);
-      const bPriority = getThemeEventTypePriority(b, selectedType);
-      if (aPriority !== bPriority) return aPriority - bPriority;
-      return a.label.localeCompare(b.label);
-    });
-  const holidayItems = items
-    .filter((item) => !(item.theme && item.theme.vibeParentKey))
-    .filter((item) => item.holidayOrder !== null)
-    .filter((item) =>
-      shouldIncludeThemeForSelectedType(item.value, item.theme, selectedType)
-    )
-    .sort((a, b) => (a.holidayOrder || 99) - (b.holidayOrder || 99));
-
-  if (!mainItems.length) {
-    container.classList.add("hidden");
-  } else {
-    const grid = document.createElement("div");
-    grid.className = "theme-card-grid";
-    mainItems.forEach((item) => {
-      grid.appendChild(buildThemeCard(item, { isHoliday: false, selectEl }));
-    });
-    container.appendChild(grid);
-    container.classList.remove("hidden");
-  }
-
-  if (seasonalSection && seasonalContent && holidayItems.length) {
-    seasonalSection.classList.remove("hidden");
-    const grid = document.createElement("div");
-    grid.className = "theme-card-grid";
-    holidayItems.forEach((item) => {
-      grid.appendChild(buildThemeCard(item, { isHoliday: true, selectEl }));
-    });
-    seasonalContent.appendChild(grid);
-  }
-
-  highlightThemeQuickSelect(selectEl.value);
-  renderThemeVibesSection(items, selectEl.value);
-}
-
-function highlightThemeQuickSelect(value) {
-  const container = DOM.themeQuickSelect;
-  if (!container) return;
-  Array.from(document.querySelectorAll(".theme-card")).forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.value === value);
-  });
 }
 
 function showToast(message, duration = 2000) {
@@ -6788,21 +6352,16 @@ function setup360ModeControls() {
 }
 
 function setEventSelection(key) {
-  if (!DOM.eventSelect || !key) return false;
+  if (!key) return false;
   key = normalizeThemeSelectionKey(key);
-  const options = Array.from(DOM.eventSelect.options || []);
-  const match = options.find((opt) => opt.value === key);
-  if (!match) return false;
-  DOM.eventSelect.value = key;
-  highlightThemeQuickSelect(key);
+  if (!themeAdminState.setSelectedThemeKey(key)) return false;
   updateThemeEditorSummary();
   return true;
 }
 
 function resolvePreferredThemeKey(preferredKey) {
   preferredKey = normalizeThemeSelectionKey(preferredKey);
-  if (!DOM.eventSelect) return preferredKey || DEFAULT_THEME_KEY || null;
-  const options = Array.from(DOM.eventSelect.options || []);
+  const options = getThemeOptions();
   const hasKey = (key) => !!key && options.some((opt) => opt.value === key);
   if (hasKey(preferredKey)) return preferredKey;
   if (hasKey(DEFAULT_THEME_KEY)) return DEFAULT_THEME_KEY;
@@ -6955,14 +6514,13 @@ function refreshFontSelectForTheme(theme) {
 
 function syncAdminUiWithTheme(themeKey, theme) {
   const currentKey =
-    themeKey || (DOM.eventSelect && DOM.eventSelect.value) || "";
+    themeKey || getSelectedThemeKey();
   const active = getActiveEvent();
   const storedName = active ? active.name : getStoredEventName(currentKey);
   const storedDate = active ? active.date : getStoredEventDate(currentKey);
   const sessionDate = getDateSessionSlug();
   const sessionName = getSessionUploadName();
   syncBannerText();
-  renderThemeQuickSelect(DOM.eventSelect);
   if (DOM.logo) {
     const logoSrc = resolveEventLogo(theme);
     if (logoSrc) {
@@ -6981,6 +6539,7 @@ function syncAdminUiWithTheme(themeKey, theme) {
   syncThemeEditorWithActiveTheme();
   if (DOM.eventNameInput) DOM.eventNameInput.value = storedName || "";
   if (DOM.eventDateInput) DOM.eventDateInput.value = storedDate || sessionDate || "";
+  syncEventSetupEditor(theme);
   updateStylePreview();
 }
 
@@ -6997,7 +6556,6 @@ function loadTheme(themeKey) {
     return;
   }
   setEventSelection(themeKey);
-  highlightThemeQuickSelect(themeKey);
   if (activeSessionThemeKey && activeSessionThemeKey !== themeKey) {
     resetActiveSessionAssets();
   }
@@ -7035,51 +6593,13 @@ function colorToHex(colorStr) {
 }
 
 function updateThemeEditorSummary() {
-  const eventKey = DOM.eventSelect && DOM.eventSelect.value;
-  const eventTheme = getThemeByKey(eventKey);
-  if (DOM.themeEditorActive) {
-    DOM.themeEditorActive.textContent = describeActiveTheme(
-      eventTheme,
-      eventKey
-    );
-  }
-  if (DOM.themeEditorEditing) {
-    DOM.themeEditorEditing.textContent = describeEditingState();
-  }
   updateStylePreview();
-}
-
-function describeActiveTheme(theme, key) {
-  if (theme || key) return getThemeSetupDisplayLabel(key, theme);
-  return "None selected";
-}
-
-function describeEditingState() {
-  const mode = DOM.themeEditorModeSelect
-    ? DOM.themeEditorModeSelect.value
-    : "edit";
-  if (mode === "create") {
-    const name =
-      valueFromInput(DOM.createThemeName) || valueFromInput(DOM.themeName);
-    return name
-      ? `Creating Custom Theme: \"${name}\"`
-      : "Creating Custom Theme";
-  }
-  const currentKey = DOM.eventSelect && DOM.eventSelect.value;
-  const currentTheme = getThemeByKey(currentKey);
-  const displayName =
-    valueFromInput(DOM.themeName) ||
-    (currentTheme && currentTheme.name) ||
-    currentKey ||
-    "Choose a theme";
-  return `Using: ${displayName}`;
 }
 
 function syncThemeEditorWithActiveTheme() {
   if (!activeTheme) return;
   applyThemeEditorBasics(activeTheme);
   applyThemeEditorColors(activeTheme);
-  updateThemeEditorSummaries(activeTheme);
   renderCurrentAssets(activeTheme);
   updateCurrentEventAssetsPanel(activeTheme);
   syncBannerSizeUI(activeTheme);
@@ -7088,30 +6608,6 @@ function syncThemeEditorWithActiveTheme() {
 }
 
 function updateStylePreview() {
-  if (
-    !DOM.stylePreviewHeading ||
-    !DOM.stylePreviewSubheading ||
-    !DOM.stylePreviewBody ||
-    !DOM.stylePreviewButton
-  )
-    return;
-  const bannerText = resolveBannerText();
-  const welcomeTitle = resolveWelcomeTitle();
-  const prompt = resolveStartButtonText();
-  const captureLabel = resolveCaptureLabel();
-
-  if (!isPreviewEditing(DOM.stylePreviewHeading)) {
-    DOM.stylePreviewHeading.textContent = bannerText || welcomeTitle;
-  }
-  if (!isPreviewEditing(DOM.stylePreviewSubheading)) {
-    DOM.stylePreviewSubheading.textContent = welcomeTitle;
-  }
-  if (!isPreviewEditing(DOM.stylePreviewBody)) {
-    DOM.stylePreviewBody.textContent = captureLabel;
-  }
-  if (!isPreviewEditing(DOM.stylePreviewButton)) {
-    DOM.stylePreviewButton.textContent = prompt;
-  }
   syncBannerText();
   syncWelcomeText();
   syncCaptureButtonText();
@@ -7121,13 +6617,12 @@ function updateStylePreview() {
 }
 
 function applyThemeEditorBasics(theme) {
-  if (DOM.themeName) DOM.themeName.value = theme.name || "";
+  THEME_EDITOR.name.value = theme.name || "";
   setupFontPicker().then(syncSessionFontSearch).catch(() => {});
-  if (DOM.themeWelcomeTitle)
-    DOM.themeWelcomeTitle.value = (theme.welcome && theme.welcome.title) || "";
-  if (DOM.themeWelcomePrompt)
-    DOM.themeWelcomePrompt.value =
-      (theme.welcome && theme.welcome.prompt) || "";
+  THEME_EDITOR.welcomeTitle.value =
+    (theme.welcome && theme.welcome.title) || "";
+  THEME_EDITOR.welcomePrompt.value =
+    (theme.welcome && theme.welcome.prompt) || "";
 }
 
 function applyThemeEditorColors(theme) {
@@ -7139,29 +6634,8 @@ function applyThemeEditorColors(theme) {
     theme.accent2 && theme.accent2.startsWith("#")
       ? theme.accent2
       : colorToHex(theme.accent2 || "");
-  if (primary && DOM.themeAccent) DOM.themeAccent.value = primary;
-  if (secondary && DOM.themeAccent2) DOM.themeAccent2.value = secondary;
-}
-
-function updateThemeEditorSummaries(theme) {
-  const baseOverlays = getBaseOverlayList(theme);
-  const baseTemplates = getBaseTemplateList(theme);
-  if (DOM.summaryBackground) {
-    const hasExplicit =
-      Array.isArray(theme.backgrounds) && theme.backgrounds.length > 0;
-    const hasAny = !!theme.background || hasExplicit;
-    DOM.summaryBackground.textContent = hasAny
-      ? "Current background: set"
-      : "Current background: none";
-  }
-  if (DOM.summaryLogo)
-    DOM.summaryLogo.textContent = theme.logo
-      ? "Current logo: set"
-      : "Current logo: none";
-  if (DOM.summaryOverlays)
-    DOM.summaryOverlays.textContent = `Existing overlays: ${baseOverlays.length}`;
-  if (DOM.summaryTemplates)
-    DOM.summaryTemplates.textContent = `Templates: ${baseTemplates.length}`;
+  if (primary) THEME_EDITOR.accent.value = primary;
+  if (secondary) THEME_EDITOR.accent2.value = secondary;
 }
 
 function setThemeAccentValue(theme, key, color) {
@@ -7440,39 +6914,6 @@ function renderCurrentAssets(theme) {
     }
   }
   setSingle(DOM.currentLogo, resolveEventLogo(theme), "logo");
-  // Font preview
-  if (DOM.currentFont) {
-    DOM.currentFont.innerHTML = "";
-    const entries = [
-      { label: "Heading", font: theme.fontHeading || theme.font },
-      { label: "Body", font: theme.fontBody || theme.font },
-    ];
-    let rendered = 0;
-    entries.forEach((entry) => {
-      const fam = primaryFontFamily(entry.font || "");
-      if (!entry.font && !fam) return;
-      const box = document.createElement("div");
-      box.className = "font-item";
-      const sample = document.createElement("div");
-      sample.textContent = "Aa Bb 123";
-      sample.style.fontFamily = entry.font || "inherit";
-      sample.style.fontSize = "1.2em";
-      sample.style.padding = "2px 6px";
-      const meta = document.createElement("div");
-      meta.className = "font-meta";
-      meta.textContent = `${entry.label}: ${fam || "System"}`;
-      box.appendChild(sample);
-      box.appendChild(meta);
-      DOM.currentFont.appendChild(box);
-      rendered++;
-    });
-    if (!rendered) {
-      const span = document.createElement("span");
-      span.style.color = "#888";
-      span.textContent = "None";
-      DOM.currentFont.appendChild(span);
-    }
-  }
   // Accent colors
   if (DOM.currentAccents) {
     DOM.currentAccents.innerHTML = "";
@@ -8916,30 +8357,69 @@ function showWelcome(step = null) {
   setupWelcomeInteractions();
 }
 
+function runWelcomeInteraction(event, action) {
+  const screen = DOM.welcomeScreen;
+  if (!screen || screen.classList.contains("welcome-transitioning")) return false;
+  const target =
+    event && event.currentTarget instanceof HTMLElement
+      ? event.currentTarget
+      : event && event.target instanceof Element
+      ? event.target.closest("button")
+      : null;
+  const screenRect = screen.getBoundingClientRect();
+  const targetRect = target && target.getBoundingClientRect();
+  if (targetRect && screenRect.width && screenRect.height) {
+    screen.style.setProperty(
+      "--welcome-press-x",
+      `${targetRect.left - screenRect.left + targetRect.width / 2}px`
+    );
+    screen.style.setProperty(
+      "--welcome-press-y",
+      `${targetRect.top - screenRect.top + targetRect.height / 2}px`
+    );
+    screen.style.setProperty(
+      "--welcome-press-size",
+      `${Math.max(targetRect.width, targetRect.height) * 0.9}px`
+    );
+  }
+  if (target) target.classList.add("welcome-hotspot-pressed");
+  screen.classList.add("welcome-transitioning");
+  window.setTimeout(() => {
+    if (target) target.classList.remove("welcome-hotspot-pressed");
+    action();
+    window.setTimeout(() => screen.classList.remove("welcome-transitioning"), 220);
+  }, 140);
+  return true;
+}
+
 function beginWelcome(event) {
   if (welcomeFlowStep !== "idle") return;
-  unlockBoothAudio();
-  playBoothSound("tap");
   if (event) {
     event.preventDefault();
     event.stopPropagation();
   }
-  clearCustomIdleScreen();
-  setWelcomeFlowStep("mode");
-  const photoChoiceEntry = selectPhotoChoiceScreenEntry();
-  if (photoChoiceEntry) applyCustomPhotoChoiceScreen(photoChoiceEntry);
+  if (!runWelcomeInteraction(event, () => {
+    clearCustomIdleScreen();
+    setWelcomeFlowStep("mode");
+    const photoChoiceEntry = selectPhotoChoiceScreenEntry();
+    if (photoChoiceEntry) applyCustomPhotoChoiceScreen(photoChoiceEntry);
+  })) return;
+  unlockBoothAudio();
+  playBoothSound("tap");
 }
 
 function beginModeSelection(nextMode, event) {
-  unlockBoothAudio();
-  playBoothSound("tap");
   if (event) {
     event.preventDefault();
     event.stopPropagation();
   }
-  setMode(nextMode);
-  clearCustomIdleScreen();
-  hideWelcome();
+  if (!runWelcomeInteraction(event, () => {
+    setMode(nextMode);
+    clearCustomIdleScreen();
+    hideWelcome();
+  })) return;
+  unlockBoothAudio();
+  playBoothSound("tap");
 }
 
 function goBackFromWelcome(event) {
@@ -9086,7 +8566,7 @@ async function startCamera(autoStartBooth = false) {
 
   try {
     // Load the theme first to ensure all assets and settings are ready.
-    loadTheme(DOM.eventSelect.value);
+    loadTheme(getSelectedThemeKey());
 
     if (isBoothTestMode()) {
       setBoothTestCameraStream();
@@ -9187,8 +8667,8 @@ async function startBooth(options = {}) {
   if (!options.preserveSession) {
     prepareThemeSessionFromSetup();
   }
-  if (DOM.eventSelect && DOM.eventSelect.value) {
-    loadTheme(DOM.eventSelect.value);
+  if (getSelectedThemeKey()) {
+    loadTheme(getSelectedThemeKey());
   }
   if (!activeTheme) {
     const fallbackKey = resolvePreferredThemeKey(DEFAULT_THEME_KEY);
@@ -11781,7 +11261,7 @@ function openEventGalleryLink() {
 function getCurrentEventSlug() {
   try {
     const val =
-      DOM.eventSelect && DOM.eventSelect.value ? DOM.eventSelect.value : "";
+      getSelectedThemeKey();
     if (!val) return "";
     // value is like "fall:halloween" or "school:hawks"; use it directly
     return String(val)
@@ -11959,7 +11439,7 @@ function getEventEditorThemeKey() {
   const active = getActiveEvent();
   return (
     (active && active.themeKey) ||
-    (DOM.eventSelect && DOM.eventSelect.value) ||
+    getSelectedThemeKey() ||
     ""
   );
 }
@@ -12300,7 +11780,7 @@ function getEventNameForUploads() {
   if (nameInput) return nameInput;
   if (activeTheme && activeTheme.welcome && activeTheme.welcome.title)
     return activeTheme.welcome.title;
-  const key = DOM.eventSelect && DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   const stored = key ? getStoredEventName(key) : "";
   return stored || key || "event";
 }
@@ -12310,7 +11790,7 @@ function getEventDateForUploads() {
   if (active && active.date) return active.date;
   const input = DOM.eventDateInput ? DOM.eventDateInput.value : "";
   if (input) return input;
-  const key = DOM.eventSelect && DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   return key ? getStoredEventDate(key) : "";
 }
 
@@ -12344,7 +11824,7 @@ function getEventUploadSlug() {
 }
 
 function createNewEventFromSelection() {
-  const themeKey = DOM.eventSelect && DOM.eventSelect.value;
+  const themeKey = getSelectedThemeKey();
   if (!themeKey) {
     alert("Select a theme before creating an event.");
     return;
@@ -12632,7 +12112,7 @@ function saveStoredEventDate(key, dateValue) {
 
 // --- Export current event (settings + theme) ---
 function exportCurrentEvent() {
-  const key = DOM.eventSelect && DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   if (!key || !activeTheme) {
     alert("Select an event first.");
     return;
@@ -13317,7 +12797,7 @@ function queuePendingEmail(email, dataUrl) {
       email,
       image: dataUrl,
       createdAt: new Date().toISOString(),
-      event: DOM.eventSelect && DOM.eventSelect.value,
+      event: getSelectedThemeKey(),
     });
     setPending(q);
     return true;
@@ -13745,11 +13225,7 @@ function clearAnalytics() {
 
 // --- Theme Management ---
 function saveTheme() {
-  if (!DOM.themeName) {
-    alert("Theme creation is disabled in the simplified editor layout.");
-    return;
-  }
-  const themeName = DOM.themeName.value.trim();
+  const themeName = THEME_EDITOR.name.value.trim();
   if (!themeName) {
     alert("Please enter a theme name.");
     return;
@@ -13763,8 +13239,8 @@ function saveTheme() {
 
   const newTheme = {
     name: themeName,
-    accent: DOM.themeAccent.value,
-    accent2: DOM.themeAccent2.value,
+    accent: THEME_EDITOR.accent.value,
+    accent2: THEME_EDITOR.accent2.value,
     fontHeading: headingCss,
     fontBody: bodyCss,
     font: bodyCss,
@@ -13773,12 +13249,10 @@ function saveTheme() {
     overlays: [],
     templates: [],
     welcome: {
-      title: DOM.themeWelcomeTitle ? DOM.themeWelcomeTitle.value : "Welcome!",
+      title: THEME_EDITOR.welcomeTitle.value,
       portrait: "",
       landscape: "",
-      prompt: DOM.themeWelcomePrompt
-        ? DOM.themeWelcomePrompt.value
-        : "Touch to start",
+      prompt: THEME_EDITOR.welcomePrompt.value,
     },
   };
 
@@ -13829,12 +13303,8 @@ function saveTheme() {
     populateThemeSelector(newKey);
     setEventSelection(newKey);
     loadTheme(newKey);
-    if (DOM.themeEditorModeSelect) {
-      DOM.themeEditorModeSelect.value = "edit";
-      setThemeEditorMode("edit");
-    } else {
-      setThemeEditorMode("edit");
-    }
+    THEME_EDITOR.mode.value = "edit";
+    setThemeEditorMode("edit");
     alert(`Theme '${themeName}' saved!`);
   });
 }
@@ -14405,9 +13875,17 @@ function normalizeAssetLibraryRecordId(category, url, id = "") {
 }
 
 function getAssetUrlValue(item) {
-  return String(
+  return normalizeLegacyAssetUrl(
     (item && (item.url || item.secure_url || item.src || item.renderSrc)) || ""
-  ).trim();
+  );
+}
+
+function normalizeLegacyAssetUrl(value) {
+  const url = String(value || "").trim();
+  if (!url || /^https?:\/\//i.test(url) || /^(data:|blob:)/i.test(url)) {
+    return url;
+  }
+  return url.replace(/^\/?assets\/hawks\//i, "assets/school/hawks/");
 }
 
 function isManageableAssetUrl(url) {
@@ -15220,30 +14698,8 @@ function getAssetLibrarySearchText(asset) {
     .toLowerCase();
 }
 
-function getActiveAssetLibraryThemeContext() {
-  const key = normalizeThemeSelectionKey(
-    activeSessionThemeKey || getSelectedThemeKey()
-  );
-  const theme = key ? resolveThemeByKey(key) : null;
-  return {
-    key,
-    label: String((theme && theme.name) || key || "").trim(),
-  };
-}
-
-function assetMatchesActiveLibraryTheme(asset, themeKey = "") {
-  const key = normalizeThemeSelectionKey(themeKey);
-  if (!key) return true;
-  return (Array.isArray(asset && asset.themeKeys) ? asset.themeKeys : []).some(
-    (assetThemeKey) => normalizeThemeSelectionKey(assetThemeKey) === key
-  );
-}
-
-function getThemeScopedAssetLibraryRows() {
-  const { key } = getActiveAssetLibraryThemeContext();
-  return getAllAssetLibraryRows().filter((asset) =>
-    assetMatchesActiveLibraryTheme(asset, key)
-  );
+function getVisibleAssetLibraryRows() {
+  return getAllAssetLibraryRows();
 }
 
 function getFilteredAssetLibraryRows() {
@@ -15255,7 +14711,7 @@ function getFilteredAssetLibraryRows() {
     : "";
   const pillCategory = assetLibraryState.selectedCategory || "";
   const sortMode = DOM.assetLibrarySort ? DOM.assetLibrarySort.value : "newest";
-  const rows = getThemeScopedAssetLibraryRows().filter((asset) => {
+  const rows = getVisibleAssetLibraryRows().filter((asset) => {
     if (!asset) return false;
     if (!assetMatchesLibraryCategoryFilter(asset, pillCategory)) return false;
     if (!assetMatchesLibraryCategoryFilter(asset, category)) return false;
@@ -15873,7 +15329,7 @@ function saveAssetThemeDefaults() {
   });
   saveThemesToStorage();
   const selectedThemeKey = normalizeThemeSelectionKey(
-    (DOM.eventSelect && DOM.eventSelect.value) || ""
+    getSelectedThemeKey()
   );
   if (selectedThemeKey && selected.has(selectedThemeKey)) {
     clearSessionRemovedAsset(category, src);
@@ -15895,7 +15351,7 @@ const THEME_DEFAULTS_SETUP_CATEGORIES = [
 
 function openThemeDefaultsSetupModal() {
   const key = normalizeThemeSelectionKey(
-    (DOM.eventSelect && DOM.eventSelect.value) || ""
+    getSelectedThemeKey()
   );
   const theme = resolveThemeByKey(key);
   if (!key || !theme || !DOM.themeDefaultsSetupModal) return;
@@ -16077,7 +15533,7 @@ function renderAssetLibraryPills() {
   const pillsContainer = DOM.assetLibraryPills;
   if (!pillsContainer) return;
   
-  const allAssets = getThemeScopedAssetLibraryRows();
+  const allAssets = getVisibleAssetLibraryRows();
   const counts = {
     all: allAssets.length,
     background: 0,
@@ -16289,8 +15745,7 @@ function renderAssetLibrary() {
     }));
   }
   if (status) {
-    const themeContext = getActiveAssetLibraryThemeContext();
-    const total = getThemeScopedAssetLibraryRows().length;
+    const total = getVisibleAssetLibraryRows().length;
     const filterLabels = [];
     if (assetLibraryState.selectedCategory && assetLibraryState.selectedCategory !== "all") {
       filterLabels.push(`Asset type: ${assetLibraryState.selectedCategory}`);
@@ -16307,14 +15762,11 @@ function renderAssetLibrary() {
         "hidden",
         filterLabels.length === 0
       );
-    const themeLabel = themeContext.label ? ` for ${themeContext.label}` : "";
     status.textContent = total
       ? filterLabels.length
-        ? `Showing ${assets.length} of ${total} assets${themeLabel}. Filters active: ${filterLabels.join(", ")}`
-        : `Showing ${assets.length} assets${themeLabel}`
-      : themeContext.label
-        ? `No assets are associated with ${themeContext.label} yet.`
-        : "No assets available yet.";
+        ? `Showing ${assets.length} of ${total} assets. Filters active: ${filterLabels.join(", ")}`
+        : `Showing ${assets.length} assets`
+      : "No assets available yet.";
   }
 }
 
@@ -17089,7 +16541,7 @@ function loadThemesFromStorage() {
 
 function openLayoutBuilder() {
   const url = new URL("./overlay-maker.html", window.location.href);
-  const themeKey = (DOM.eventSelect && DOM.eventSelect.value) || "";
+  const themeKey = getSelectedThemeKey();
   if (themeKey) url.searchParams.set("themeKey", themeKey);
   window.open(url.toString(), "_blank", "noopener");
 }
@@ -17520,33 +16972,18 @@ async function setupFontPicker() {
 }
 
 function setThemeEditorMode(mode) {
-  let resolved =
-    mode ||
-    (DOM.themeEditorModeSelect ? DOM.themeEditorModeSelect.value : "edit");
+  let resolved = mode || THEME_EDITOR.mode.value;
   if (resolved === "clone") resolved = "edit";
-  if (DOM.themeEditorModeSelect) DOM.themeEditorModeSelect.value = resolved;
+  THEME_EDITOR.mode.value = resolved;
   const isCreate = resolved === "create";
-
-  if (DOM.btnUpdateTheme)
-    DOM.btnUpdateTheme.style.display = isCreate ? "none" : "inline-block";
-  if (DOM.btnSaveTheme)
-    DOM.btnSaveTheme.style.display = isCreate ? "inline-block" : "none";
   if (DOM.themeCloneSection) DOM.themeCloneSection.classList.add("hidden");
   if (DOM.themeCloneName) DOM.themeCloneName.value = "";
 
   if (isCreate) {
     resetCreateThemeModal();
     showCreateThemeModal();
-    if (DOM.themeName) DOM.themeName.value = "";
-    if (DOM.themeWelcomeTitle) DOM.themeWelcomeTitle.value = "";
-    if (DOM.themeWelcomePrompt) DOM.themeWelcomePrompt.value = "";
+    themeAdminState.resetEditorDraft();
     clearThemeFileInputs();
-    if (DOM.summaryBackground) DOM.summaryBackground.textContent = "";
-    if (DOM.summaryLogo) DOM.summaryLogo.textContent = "";
-    if (DOM.summaryOverlays) DOM.summaryOverlays.textContent = "";
-    if (DOM.summaryTemplates) DOM.summaryTemplates.textContent = "";
-    if (DOM.themeAccent) DOM.themeAccent.value = "#ff0000";
-    if (DOM.themeAccent2) DOM.themeAccent2.value = "#ffffff";
     setupFontPicker()
       .then(() => {
         syncSessionFontSearch();
@@ -17594,8 +17031,11 @@ function buildGoogleFontsURL(fonts) {
 
 // --- Editing Existing Themes ---
 function getSelectedThemeKey() {
-  const eventKey = DOM.eventSelect && DOM.eventSelect.value;
-  return eventKey || "";
+  return themeAdminState.getSelectedThemeKey();
+}
+
+function getThemeOptions() {
+  return themeAdminState.getThemeOptions();
 }
 function getSelectedThemeTarget() {
   const key = getSelectedThemeKey();
@@ -17610,7 +17050,7 @@ async function updateSelectedTheme(reason = "") {
     clearThemeFileInputs();
     return;
   }
-  const name = valueFromInput(DOM.themeName) || target.name || "New Theme";
+  const name = THEME_EDITOR.name.value || target.name || "New Theme";
   const slug = slugifyThemeName(name);
   if (!slug) {
     alert("Enter a valid name for the new sub theme.");
@@ -17755,7 +17195,7 @@ function createSubThemeFromEvent() {
   }
 
   const baseKey =
-    active.themeKey || (DOM.eventSelect && DOM.eventSelect.value) || "";
+    active.themeKey || getSelectedThemeKey();
   const baseTheme = getThemeByKey(baseKey) || getSelectedThemeTarget();
   if (!baseTheme) {
     alert("Select a theme first.");
@@ -17988,19 +17428,12 @@ function applyBannerSize(theme) {
     DOM.eventTitle.dataset.baseFontSize = String(size);
     DOM.eventTitle.style.fontSize = `${size}px`;
   }
-  if (DOM.stylePreviewHeading)
-    DOM.stylePreviewHeading.style.fontSize = `${Math.max(
-      20,
-      Math.round(size * 0.6)
-    )}px`;
   fitBannerTextToViewport();
 }
 
 function syncBannerSizeUI(theme) {
-  if (!DOM.bannerSizeInput || !DOM.bannerSizeValue) return;
   const size = getBannerSize(theme || activeTheme);
-  DOM.bannerSizeInput.value = String(size);
-  DOM.bannerSizeValue.textContent = `${size}px`;
+  THEME_EDITOR.bannerSize.value = String(size);
 }
 
 function getThemeWelcomeTitleSize(theme) {
@@ -18037,34 +17470,19 @@ function applyWelcomeTitleSize(theme) {
       DOM.welcomeTitle.dataset.baseFontSize = String(size);
       DOM.welcomeTitle.style.fontSize = `${size}px`;
     }
-    if (DOM.stylePreviewSubheading) {
-      DOM.stylePreviewSubheading.style.fontSize = `${Math.max(
-        14,
-        Math.round(size * 0.5)
-      )}px`;
-    }
   } else {
     document.documentElement.style.removeProperty("--welcome-title-size");
     if (DOM.welcomeTitle) {
       delete DOM.welcomeTitle.dataset.baseFontSize;
       DOM.welcomeTitle.style.fontSize = "";
     }
-    if (DOM.stylePreviewSubheading)
-      DOM.stylePreviewSubheading.style.fontSize = "";
   }
   fitWelcomeTitleToViewport();
 }
 
 function syncWelcomeTitleSizeUI(theme) {
-  if (!DOM.welcomeTitleSizeInput || !DOM.welcomeTitleSizeValue) return;
   const size = getThemeWelcomeTitleSize(theme || activeTheme);
-  DOM.welcomeTitleSizeInput.value = String(size);
-  DOM.welcomeTitleSizeValue.textContent = `${size}px`;
-}
-
-function isPreviewEditing(node) {
-  if (!node) return false;
-  return document.activeElement === node;
+  THEME_EDITOR.welcomeTitleSize.value = String(size);
 }
 
 function resolveBannerText() {
@@ -18125,7 +17543,7 @@ function getBoothPersonalitySource() {
     active && active.name,
     active && active.date,
     target && target.name,
-    DOM.eventSelect && DOM.eventSelect.value,
+    getSelectedThemeKey(),
     target && target.bannerText,
     target && target.welcome && target.welcome.title,
   ];
@@ -18508,7 +17926,7 @@ async function traverseFileEntry(entry, path = "") {
 
 async function confirmCreateTheme() {
   const name =
-    valueFromInput(DOM.createThemeName) || valueFromInput(DOM.themeName);
+    valueFromInput(DOM.createThemeName) || THEME_EDITOR.name.value;
   const slug = slugifyThemeName(name);
   if (!slug) {
     alert("Enter a valid name for the new theme.");
@@ -18594,8 +18012,8 @@ async function confirmCreateTheme() {
     populateThemeSelector(slug);
     setEventSelection(slug);
     loadTheme(slug);
-    if (DOM.themeName) DOM.themeName.value = newTheme.name;
-    if (DOM.themeEditorModeSelect) DOM.themeEditorModeSelect.value = "edit";
+    THEME_EDITOR.name.value = newTheme.name;
+    THEME_EDITOR.mode.value = "edit";
     setThemeEditorMode("edit");
     hideCreateThemeModal();
     resetCreateThemeModal();
@@ -18617,7 +18035,7 @@ function handleCloneTheme() {
     alert("Enter a name for the cloned theme.");
     return;
   }
-  const currentKey = DOM.eventSelect && DOM.eventSelect.value;
+  const currentKey = getSelectedThemeKey();
   const location = resolveThemeStorage(currentKey);
   const cloned = cloneThemeValue(activeTheme);
   cloned.name = name;
@@ -18654,15 +18072,15 @@ function handleCloneTheme() {
   setEventSelection(newKey);
   loadTheme(newKey);
   if (DOM.themeCloneName) DOM.themeCloneName.value = "";
-  if (DOM.themeEditorModeSelect) DOM.themeEditorModeSelect.value = "edit";
+  THEME_EDITOR.mode.value = "edit";
   setThemeEditorMode("edit");
   showToast(`Cloned theme as "${name}"`);
 }
 
 function applyThemeBasicsFromEditor(target) {
-  target.name = valueFromInput(DOM.themeName) || target.name;
-  target.accent = valueFromInput(DOM.themeAccent) || target.accent;
-  target.accent2 = valueFromInput(DOM.themeAccent2) || target.accent2;
+  target.name = THEME_EDITOR.name.value || target.name;
+  target.accent = THEME_EDITOR.accent.value || target.accent;
+  target.accent2 = THEME_EDITOR.accent2.value || target.accent2;
   const picker = getFontPickerSelection();
   if (picker.heading) {
     target.fontHeading = composeFontString(picker.heading);
@@ -18679,12 +18097,8 @@ function applyThemeBasicsFromEditor(target) {
       "Comic Neue"
   );
   target.welcome = target.welcome || {};
-  if (DOM.themeWelcomeTitle) target.welcome.title = DOM.themeWelcomeTitle.value;
-  else if (typeof target.welcome.title !== "string") target.welcome.title = "";
-  if (DOM.themeWelcomePrompt)
-    target.welcome.prompt = DOM.themeWelcomePrompt.value;
-  else if (typeof target.welcome.prompt !== "string")
-    target.welcome.prompt = "";
+  target.welcome.title = THEME_EDITOR.welcomeTitle.value;
+  target.welcome.prompt = THEME_EDITOR.welcomePrompt.value;
 }
 
 function resolveEventLogo(theme) {
@@ -19065,7 +18479,7 @@ function updateCurrentThemeFont() {
 
 // --- Remove asset handlers ---
 function removeBackground() {
-  const key = DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   const t = getSelectedThemeTarget();
   if (!t) return;
   const overrides = getActiveEventOverrides();
@@ -19101,7 +18515,7 @@ function removeBackground() {
   showToast("Background removed");
 }
 function removeBackgroundAt(index) {
-  const key = DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   const t = getSelectedThemeTarget();
   if (!t) return;
   const overrides = getActiveEventOverrides();
@@ -19157,7 +18571,7 @@ function removeBackgroundAt(index) {
   scheduleLocalAssetCleanup(selected);
 }
 function setBackgroundIndex(index) {
-  const key = DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   const t = getSelectedThemeTarget();
   if (!t) return;
   const overrides = getActiveEventOverrides();
@@ -19211,7 +18625,7 @@ function setBackgroundIndex(index) {
   showToast("Background selected");
 }
 function removeLogo() {
-  const key = DOM.eventSelect && DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   if (!key) {
     alert("Select a theme first.");
     return;
@@ -19229,7 +18643,7 @@ function removeLogo() {
   showToast("Logo removed from all themes");
 }
 function removeOverlay(index) {
-  const key = DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   const t = getSelectedThemeTarget();
   if (!t) return;
   const list = getEffectiveOverlayList(t);
@@ -19272,7 +18686,7 @@ function removeOverlay(index) {
   showToast("Overlay removed");
 }
 function removeTemplate(index) {
-  const key = DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   const t = getSelectedThemeTarget();
   if (!t) return;
   const list = getEffectiveTemplateList(t);
@@ -19462,7 +18876,7 @@ function removeSessionTemplate(src) {
 
 // Hide a folder-based overlay/template by adding it to a per-theme blocklist
 function removeFolderOverlay(src) {
-  const key = DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   const t = getSelectedThemeTarget();
   if (!t) return;
   if (!Array.isArray(t.overlaysRemoved)) t.overlaysRemoved = [];
@@ -19473,7 +18887,7 @@ function removeFolderOverlay(src) {
   showToast("Overlay hidden");
 }
 function removeFolderBackground(src) {
-  const key = DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   const t = getSelectedThemeTarget();
   if (!t) return;
   if (!Array.isArray(t.backgroundsRemoved)) t.backgroundsRemoved = [];
@@ -19484,7 +18898,7 @@ function removeFolderBackground(src) {
   showToast("Background hidden");
 }
 function removeFolderTemplate(src) {
-  const key = DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   const t = getSelectedThemeTarget();
   if (!t) return;
   if (!Array.isArray(t.templatesRemoved)) t.templatesRemoved = [];
@@ -19496,7 +18910,7 @@ function removeFolderTemplate(src) {
 }
 
 function reorderAssets(kind, from, to) {
-  const key = DOM.eventSelect.value;
+  const key = getSelectedThemeKey();
   const t = getSelectedThemeTarget();
   if (!t) return;
   const arr = kind === "overlay" ? t.overlays : t.templates;
@@ -19566,7 +18980,7 @@ function undoLastRemoval() {
       );
   }
   saveThemesToStorage();
-  if (DOM.eventSelect && DOM.eventSelect.value === last.key) {
+  if (getSelectedThemeKey() === last.key) {
     loadTheme(last.key);
   }
   updateUndoUI();
@@ -20638,7 +20052,7 @@ function setupInstallPrompt() {
 window.addEventListener("storage", (event) => {
   if (!event || event.key !== STORAGE_KEYS.THEMES) return;
   loadThemesFromStorage();
-  const selectedKey = (DOM.eventSelect && DOM.eventSelect.value) || "";
+  const selectedKey = getSelectedThemeKey();
   const preferredKey = selectedKey || DEFAULT_THEME_KEY;
   const resolvedKey = populateThemeSelector(preferredKey);
   if (resolvedKey) {
@@ -20654,7 +20068,7 @@ window.addEventListener("message", (event) => {
   loadThemesFromStorage();
   const preferredKey =
     (typeof data.themeKey === "string" && data.themeKey) ||
-    ((DOM.eventSelect && DOM.eventSelect.value) || DEFAULT_THEME_KEY);
+    (getSelectedThemeKey() || DEFAULT_THEME_KEY);
   const resolvedKey = populateThemeSelector(preferredKey);
   if (resolvedKey) {
     setEventSelection(resolvedKey);

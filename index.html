@@ -2570,16 +2570,6 @@
       max-width: 980px;
     }
 
-    .admin-modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(103, 143, 136, 0.2);
-      display: none;
-      z-index: 10000;
-    }
-
-    .admin-modal-backdrop.show { display: block; }
-
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -2612,21 +2602,6 @@
       flex-wrap: wrap;
       justify-content: flex-end;
       margin-top: 16px;
-    }
-
-    .admin-modal-target {
-      display: block !important;
-      position: fixed;
-      inset: 6vh 6vw;
-      overflow: auto;
-      z-index: 10001;
-    }
-
-    .admin-modal-close {
-      position: fixed;
-      top: 14px;
-      right: 14px;
-      z-index: 10002;
     }
 
     .edit-controls {
@@ -3425,6 +3400,7 @@
     }
 
     #welcomeScreen.faded { opacity: 0; pointer-events: none; }
+    #welcomeScreen.welcome-transitioning { pointer-events: none; }
     #boothBackgroundVideo,
     #welcomeImg,
     #welcomeVideo {
@@ -3471,6 +3447,21 @@
     #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn > * { visibility: hidden !important; }
     #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn[data-welcome-mode="live-photo"] { display: none !important; }
     #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn:focus-visible { outline: 4px solid #fff; outline-offset: -4px; box-shadow: 0 0 0 7px #155eef; }
+    #welcomeScreen.welcome-transitioning #welcomeOverlay::after {
+      content: "";
+      position: absolute;
+      left: var(--welcome-press-x, 50%);
+      top: var(--welcome-press-y, 50%);
+      width: var(--welcome-press-size, 96px);
+      aspect-ratio: 1;
+      border: 3px solid rgba(255, 255, 255, 0.92);
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0) 68%);
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(0.56);
+      animation: welcomeHotspotPress 320ms cubic-bezier(.2, .8, .2, 1) both;
+      z-index: 4;
+    }
     #welcomeScreen.custom-artwork-loading::after {
       content: "Loading booth…";
       display: grid !important;
@@ -3632,6 +3623,27 @@
     .start-button:focus-visible {
       filter: saturate(1.03);
       box-shadow: 0 22px 40px rgba(121, 183, 172, 0.22);
+    }
+
+    .start-button.welcome-hotspot-pressed,
+    .welcome-mode-btn.welcome-hotspot-pressed {
+      filter: brightness(1.08) saturate(1.08);
+    }
+
+    .welcome-mode-btn.welcome-hotspot-pressed {
+      transform: translateY(0) scale(0.96);
+    }
+
+    @keyframes welcomeHotspotPress {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.56); }
+      20% { opacity: 0.98; }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.7); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #welcomeScreen.welcome-transitioning #welcomeOverlay::after { animation-duration: 1ms; }
+      .start-button.welcome-hotspot-pressed,
+      .welcome-mode-btn.welcome-hotspot-pressed { transition-duration: 1ms; }
     }
 
     .demo-theme-bar {
@@ -5647,8 +5659,6 @@
     .mode-btn,
     .booth-360-action,
     #adminBtn,
-    #themeEditorCloseBtn,
-    #adminModalClose,
     #editControls button,
     .modal-footer button {
       border-radius: var(--button-radius);
@@ -5657,8 +5667,6 @@
     #adminScreen .setup-tab,
     .mode-btn,
     .booth-360-action,
-    #themeEditorCloseBtn,
-    #adminModalClose,
     #editControls button,
     .modal-footer button {
       background: var(--button-bg);
@@ -5695,14 +5703,6 @@
       border-color: var(--button-primary-border);
       color: var(--button-primary-text);
       box-shadow: 0 14px 30px rgba(215, 191, 113, 0.24);
-    }
-
-    #themeEditorCloseBtn,
-    #adminModalClose {
-      background: var(--button-ghost-bg);
-      border-color: var(--button-ghost-border);
-      color: #2d3a38;
-      box-shadow: none;
     }
 
     #boothMain {
@@ -6861,8 +6861,6 @@
               <div class="asset-actions">
                 <button type="button" id="addLogoBtn">Add Logo</button>
                 <button type="button" id="addAssetsBtn">Add Assets</button>
-                <button type="button" id="addIdleScreensBtn">Add Idle Screens</button>
-                <button type="button" id="addPhotoChoiceScreenBtn">Add Photo Choice Screen</button>
                 <div id="eventGalleryActions" class="hidden admin-gallery-actions">
                   <button type="button" onclick="copyEventGalleryLink()">Share Gallery Link</button>
                   <button type="button" onclick="openEventGalleryLink()">Open Gallery</button>
@@ -6920,16 +6918,15 @@
               <input type="file" id="themeOverlays" accept="image/*" multiple>
               <input type="file" id="themeTemplates" accept="image/*" multiple>
               <input type="file" id="bulkAssetsInput" accept="image/*,video/*" multiple>
-              <input type="file" id="idleScreensInput" accept="image/*,video/*" multiple>
-              <input type="file" id="photoChoiceScreenInput" accept="image/*,video/*">
             </div>
             <div id="bulkAssetModal" class="hidden" style="position:fixed; inset:0; background:rgba(28,40,72,0.35); z-index:10010; display:flex; align-items:center; justify-content:center; padding:16px;">
               <div style="width:min(520px, 96vw); background:#fff; border:1px solid #cedcf4; border-radius:16px; box-shadow:0 12px 30px rgba(99, 123, 175, 0.18); padding:16px;">
                 <h3 style="margin:0 0 16px;">Add Assets</h3>
                 <p id="bulkAssetSummary" style="margin:0 0 16px; color:#5c6b93;">0 files selected</p>
+                <p style="margin:0 0 12px; color:#5c6b93; font-size:0.92em;">Choose where the selected files belong. MP4 works for backgrounds, idle screens, and photo choice screens.</p>
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToBackgrounds" checked> Backgrounds</label>
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToGreenBackgrounds"> Green Screen Backgrounds</label>
-                <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToOverlays" checked> Overlays</label>
+                <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToOverlays"> Overlays</label>
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToTemplates"> Templates</label>
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToIdleScreens"> Idle Screens</label>
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToPhotoChoiceScreens"> Photo Choice Screens</label>
@@ -6966,130 +6963,6 @@
         </details>
       </div>
       <div id="toast" role="status" aria-live="polite"></div>
-      <div class="admin-right panel hidden" id="themeEditorPanel" data-setup-section="event" hidden aria-hidden="true" style="display:none;">
-        <div id="themeEditor">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
-            <h2 style="margin:0;">Live Preview</h2>
-            <button type="button" id="themeEditorCloseBtn">Done</button>
-          </div>
-          <div class="theme-editor-summary">
-            <div class="theme-editor-current">
-              <div class="theme-editor-current-label">Selected Theme</div>
-              <div id="themeEditorActive" class="theme-editor-current-name">None selected</div>
-              <div id="themeEditorEditing" class="theme-editor-current-sub">Preview follows Path 1 or Path 2.</div>
-            </div>
-            <div class="theme-editor-action hidden">
-              <label for="themeEditorModeSelect">Theme Action</label>
-              <select id="themeEditorModeSelect">
-                <option value="edit">Use Theme</option>
-                <option value="create">Create Theme Preset</option>
-              </select>
-            </div>
-          </div>
-          <select id="fontEventStyleSelect" class="hidden" aria-hidden="true">
-            <option value="general">General</option>
-            <option value="wedding">Wedding</option>
-            <option value="expo">Expo</option>
-            <option value="party">Party</option>
-            <option value="community">Community</option>
-          </select>
-          <select id="eventSelect" class="hidden" aria-hidden="true"></select>
-          <div id="themeQuickSelect" class="hidden" aria-hidden="true"></div>
-          <details id="themeSeasonalSection" class="panel-section hidden" aria-hidden="true">
-            <summary>Seasonal & Holiday Themes</summary>
-            <div id="themeSeasonalContent" class="section-content"></div>
-          </details>
-          <div id="themeVibesSection" class="hidden" aria-hidden="true"></div>
-          <div class="builder-section-heading">Event Setup</div>
-          <div class="editor-explainer">
-            <strong>Finish the event and start the booth.</strong> All event choices belong in Path 1 or Path 2. This panel only previews what you picked.
-          </div>
-          <div id="stylePreviewWrap" class="style-preview-wrap">
-            <div id="stylePreview" class="style-preview" aria-label="Style preview">
-              <h3 id="stylePreviewHeading" class="style-preview-heading">Welcome to Fletch Photobooth</h3>
-              <p id="stylePreviewSubheading" class="style-preview-subheading">Event Title Example</p>
-              <div id="stylePreviewBody" class="style-preview-button preview-capture-button" role="presentation">Take Photo</div>
-              <div id="stylePreviewButton" class="style-preview-button start-button preview-start-button" role="presentation">Touch to start</div>
-            </div>
-          </div>
-          <div class="preview-controls">
-            <div class="preview-controls-header">
-              <p class="preview-controls-title">Preview Controls</p>
-              <p class="preview-controls-note">Adjust the live preview text sizes here. Theme assets are managed from the
-                left-side controls, and one shared logo applies across themes.</p>
-            </div>
-            <div class="preview-control-grid">
-              <div class="preview-slider">
-                <label for="bannerSizeInput">Banner Size</label>
-                <div class="preview-slider-row">
-                  <input type="range" id="bannerSizeInput" min="24" max="120" step="2">
-                  <span id="bannerSizeValue" class="preview-slider-value"></span>
-                </div>
-              </div>
-              <div class="preview-slider">
-                <label for="welcomeTitleSizeInput">Welcome Title Size</label>
-                <div class="preview-slider-row">
-                  <input type="range" id="welcomeTitleSizeInput" min="24" max="120" step="2">
-                  <span id="welcomeTitleSizeValue" class="preview-slider-value"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="hidden" aria-hidden="true">
-            <div class="theme-editor-group">
-              <div class="theme-field">
-                <label for="themeName">Theme Name</label>
-                <input type="text" id="themeName" placeholder="Theme name">
-              </div>
-              <div class="theme-field hidden">
-                <label for="themeFontSelect">Theme Font</label>
-                <select id="themeFontSelect"></select>
-              </div>
-            </div>
-            <div class="theme-editor-group">
-              <div class="theme-field">
-                <label for="themeWelcomeTitle">Welcome Title</label>
-                <input type="text" id="themeWelcomeTitle" placeholder="Welcome!">
-              </div>
-              <div class="theme-field">
-                <label for="themeWelcomePrompt">Start Prompt</label>
-                <input type="text" id="themeWelcomePrompt" placeholder="Touch to start">
-              </div>
-            </div>
-            <div class="theme-editor-group">
-              <div class="theme-field">
-                <label for="themeAccent">Accent Color</label>
-                <input type="color" id="themeAccent" value="#ff0000">
-              </div>
-            </div>
-            <input type="hidden" id="themeAccent2" value="#ffffff">
-            <div class="btn-row" style="justify-content:flex-start;">
-              <button type="button" id="btnUpdateTheme" onclick="updateSelectedTheme()">Save Theme Changes</button>
-              <button type="button" id="btnSaveTheme" class="hidden" onclick="saveTheme()">Save New Theme</button>
-            </div>
-          </div>
-          <details class="panel-section" style="margin-top:16px;">
-            <summary>Selected Theme Summary</summary>
-            <div class="section-content">
-              <div class="theme-editor-group">
-                <div class="theme-field">
-                  <div id="summaryBackground" style="color:#9aa;"></div>
-                  <div id="summaryLogo" style="color:#9aa;"></div>
-                  <div id="summaryOverlays" style="color:#9aa;"></div>
-                  <div id="summaryTemplates" style="color:#9aa;"></div>
-                </div>
-              </div>
-              <div class="theme-editor-group">
-                <div class="theme-field">
-                  <label>Current Fonts</label>
-                  <div id="currentFont" class="asset-single"></div>
-                </div>
-              </div>
-            </div>
-          </details>
-        </div>
-
-      </div>
       </div>
     </div>
     <div class="admin-launch-dock" data-setup-section="share" hidden aria-hidden="true">
@@ -7260,8 +7133,6 @@
       </div>
     </div>
     <div id="gallery"></div>
-    <div id="adminModalBackdrop" class="admin-modal-backdrop"></div>
-    <button type="button" id="adminModalClose" class="admin-modal-close hidden">Close</button>
     <div id="editControls" class="edit-controls">
       <div class="edit-controls-header">
         <div id="editControlsTitle" class="edit-controls-title">Edit</div>
