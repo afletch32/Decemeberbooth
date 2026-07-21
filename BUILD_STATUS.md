@@ -2,10 +2,11 @@
 
 ## Current goal
 
-- Reduce the main application file by extracting cohesive admin behavior into tested modules.
+- Improve initial load time by deferring optional feature libraries until they are used.
 
 ## Current progress
 
+- Created the six-piece Amanda North Elementary Coyote Back to School artwork foundation pack, with bright royal-navy, sky-blue, and gold portrait and landscape backgrounds, idle screens, and photo-choice screens.
 - Fixed inactive setup sections so they no longer reserve invisible space above the active tab.
 - Moved frequently changed print controls to the top of Share and separated print, QR/cloud, email, and device settings with jump navigation.
 - Collapsed the less-frequently changed paid-print copy fields into a dedicated subsection.
@@ -60,10 +61,11 @@
 - Extracted Asset Library category, URL, metadata, deduplication, and screen-record normalization from `scripts/app.js` into `scripts/asset-library-utils.mjs`.
 - Added direct unit coverage for legacy URL repair, cache-safe IDs, duplicate merging, idle/photo-choice metadata, and unsafe record rejection.
 - Extracted Asset Library category inference, search matching, filtering, and sorting into `scripts/asset-library-view.mjs` with pure view-model tests.
+- Removed unused JSZip startup loading and deferred QRCode, EmailJS, and MediaPipe Selfie Segmentation until their features are used.
 
 ## Next steps
 
-- Extract Asset Library favorite/recent persistence from `scripts/app.js` when that area is next changed.
+- Measure the deployed initial-load waterfall and split another large feature only if browser evidence shows a meaningful remaining startup cost.
 
 ## Known bugs/blockers
 

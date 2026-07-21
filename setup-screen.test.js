@@ -1270,11 +1270,17 @@ test("completed guest flows return directly to the idle screen", () => {
 
 test("final share QR is only marked ready after rendering succeeds", () => {
   const appScript = readProjectFile("scripts", "app.js");
+  const libraryLoader = readProjectFile(
+    "scripts",
+    "external-library-loader.mjs"
+  );
 
   assert.ok(
     appScript.includes("async function renderQrCode(canvas, text)") &&
-      appScript.includes("function loadQrCodeLibrary") &&
-      appScript.includes("https://unpkg.com/qrcode@1.5.1/build/qrcode.min.js"),
+      appScript.includes("loadQrCodeLibrary") &&
+      libraryLoader.includes(
+        "https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"
+      ),
     "QR rendering should have an async fallback loader"
   );
   assert.ok(

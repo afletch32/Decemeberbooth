@@ -42,6 +42,11 @@ import {
   filterAssetLibraryRows,
   themeKeyToCategory,
 } from "./asset-library-view.mjs";
+import {
+  loadEmailJsLibrary,
+  loadQrCodeLibrary,
+  loadSelfieSegmentationLibrary,
+} from "./external-library-loader.mjs";
 
 const themeAdminState = createThemeAdminState();
 const THEME_EDITOR = themeAdminState.editor;
@@ -4141,17 +4146,20 @@ function setupAiBackgroundToggle() {
     DOM.greenScreenToggle.checked = false;
     setGreenScreenEnabled(false);
   }
-  DOM.aiBackgroundToggle.addEventListener("change", () => {
+  DOM.aiBackgroundToggle.addEventListener("change", async () => {
     const enabled = DOM.aiBackgroundToggle.checked;
-    if (
-      enabled &&
-      (typeof window === "undefined" ||
-        typeof window.SelfieSegmentation === "undefined")
-    ) {
-      DOM.aiBackgroundToggle.checked = false;
-      setAiBackgroundEnabled(false);
-      showToast("AI background not available yet. Refresh to load.");
-      return;
+    if (enabled) {
+      DOM.aiBackgroundToggle.disabled = true;
+      try {
+        await loadSelfieSegmentationLibrary();
+      } catch (_) {
+        DOM.aiBackgroundToggle.checked = false;
+        setAiBackgroundEnabled(false);
+        showToast("AI background could not be loaded.");
+        return;
+      } finally {
+        DOM.aiBackgroundToggle.disabled = false;
+      }
     }
     setAiBackgroundEnabled(enabled);
     if (enabled && DOM.greenScreenToggle) {
@@ -5519,21 +5527,35 @@ function getEmailJsConfig() {
   return { service, template, pub };
 }
 function loadEmailJsSettings() {
-  const cfg = getEmailJsConfig();
   if (DOM.emailJsPublic)
     DOM.emailJsPublic.value = localStorage.getItem("emailJsPublic") || "";
   if (DOM.emailJsService)
     DOM.emailJsService.value = localStorage.getItem("emailJsService") || "";
   if (DOM.emailJsTemplate)
     DOM.emailJsTemplate.value = localStorage.getItem("emailJsTemplate") || "";
-  try {
-    emailjs.init({ publicKey: cfg.pub });
-  } catch (_e) {
+}
+
+let emailJsClientPromise = null;
+
+async function ensureEmailJsClient() {
+  if (emailJsClientPromise) return emailJsClientPromise;
+  emailJsClientPromise = loadEmailJsLibrary().then((client) => {
+    const cfg = getEmailJsConfig();
     try {
-      emailjs.init(cfg.pub);
-    } catch (__e) {}
+      client.init({ publicKey: cfg.pub });
+    } catch (_) {
+      client.init(cfg.pub);
+    }
+    return client;
+  });
+  try {
+    return await emailJsClientPromise;
+  } catch (error) {
+    emailJsClientPromise = null;
+    throw error;
   }
 }
+
 function saveEmailJsSettings() {
   if (DOM.emailJsPublic)
     localStorage.setItem(
@@ -5550,7 +5572,7 @@ function saveEmailJsSettings() {
       "emailJsTemplate",
       (DOM.emailJsTemplate.value || "").trim()
     );
-  loadEmailJsSettings();
+  emailJsClientPromise = null;
   showToast("Email settings saved");
 }
 async function sendTestEmail() {
@@ -5566,7 +5588,8 @@ async function sendTestEmail() {
     image_data_url: tiny,
   };
   try {
-    await emailjs.send(cfg.service, cfg.template, params);
+    const client = await ensureEmailJsClient();
+    await client.send(cfg.service, cfg.template, params);
     alert("Test email sent");
   } catch (e) {
     const details = e && (e.text || e.message || e.status || JSON.stringify(e));
@@ -6683,11 +6706,12 @@ function removeGreen(ctx, width, height) {
 async function ensureAiSegmentation() {
   if (aiSegmentation) return aiSegmentation;
   if (aiSegmentationPromise) return aiSegmentationPromise;
-  if (
-    typeof window === "undefined" ||
-    typeof window.SelfieSegmentation === "undefined"
-  )
+  if (typeof window === "undefined") return null;
+  try {
+    await loadSelfieSegmentationLibrary();
+  } catch (_) {
     return null;
+  }
   aiSegmentationPromise = new Promise((resolve) => {
     const segmenter = new window.SelfieSegmentation({
       locateFile: (file) =>
@@ -10981,30 +11005,6 @@ function revealFinalSaveStage() {
   }
 }
 
-let qrCodeLibraryPromise = null;
-
-function loadQrCodeLibrary() {
-  if (window.QRCode && typeof window.QRCode.toCanvas === "function") {
-    return Promise.resolve(window.QRCode);
-  }
-  if (qrCodeLibraryPromise) return qrCodeLibraryPromise;
-  qrCodeLibraryPromise = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/qrcode@1.5.1/build/qrcode.min.js";
-    script.async = true;
-    script.onload = () => {
-      if (window.QRCode && typeof window.QRCode.toCanvas === "function") {
-        resolve(window.QRCode);
-        return;
-      }
-      reject(new Error("QR library loaded without QRCode.toCanvas"));
-    };
-    script.onerror = () => reject(new Error("QR library failed to load"));
-    document.head.appendChild(script);
-  });
-  return qrCodeLibraryPromise;
-}
-
 function showGoodbyeMoment() {
   if (!DOM.goodbyeOverlay) return;
   const personality = getBoothPersonality();
@@ -13126,7 +13126,8 @@ async function sendPendingNow() {
         image_data_url: item.image,
       };
       const cfg = getEmailJsConfig();
-      await emailjs.send(cfg.service, cfg.template, params);
+      const client = await ensureEmailJsClient();
+      await client.send(cfg.service, cfg.template, params);
       sent++;
       // remove from queue
       const cur = getPending();
