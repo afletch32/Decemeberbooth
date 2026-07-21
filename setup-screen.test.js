@@ -755,7 +755,8 @@ test("asset library keeps every saved asset visible across theme selections", ()
   assert.ok(
     appScript.includes("function getVisibleAssetLibraryRows()") &&
       appScript.includes("return getAllAssetLibraryRows();") &&
-      appScript.includes("const rows = getVisibleAssetLibraryRows().filter((asset) => {") &&
+      appScript.includes("filterAssetLibraryRows(") &&
+      appScript.includes("getVisibleAssetLibraryRows(),") &&
       appScript.includes("const allAssets = getVisibleAssetLibraryRows();"),
     "theme selection should not hide saved library cards or change asset-type counts"
   );

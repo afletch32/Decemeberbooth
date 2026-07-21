@@ -59,10 +59,11 @@
 - Added a short transition hold so guests see their tap register before the next welcome or camera screen appears.
 - Extracted Asset Library category, URL, metadata, deduplication, and screen-record normalization from `scripts/app.js` into `scripts/asset-library-utils.mjs`.
 - Added direct unit coverage for legacy URL repair, cache-safe IDs, duplicate merging, idle/photo-choice metadata, and unsafe record rejection.
+- Extracted Asset Library category inference, search matching, filtering, and sorting into `scripts/asset-library-view.mjs` with pure view-model tests.
 
 ## Next steps
 
-- Extract the next self-contained Asset Library filtering and sorting helpers from `scripts/app.js`.
+- Extract Asset Library favorite/recent persistence from `scripts/app.js` when that area is next changed.
 
 ## Known bugs/blockers
 

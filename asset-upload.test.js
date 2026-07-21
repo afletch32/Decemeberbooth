@@ -322,6 +322,7 @@ test("managed asset uploads validate files, block duplicates, and report failure
 
 test("asset library management supports sorting and category metadata", () => {
   const appScript = readProjectFile("scripts", "app.js");
+  const assetLibraryView = readProjectFile("scripts", "asset-library-view.mjs");
   const html = readProjectFile("index.html");
 
   assert.ok(
@@ -335,14 +336,15 @@ test("asset library management supports sorting and category metadata", () => {
   );
   assert.ok(
     appScript.includes("function getFilteredAssetLibraryRows()") &&
-      appScript.includes('sortMode === "name"') &&
-      appScript.includes('sortMode === "oldest"') &&
-      appScript.includes("function assetMatchesLibraryCategoryFilter") &&
-      appScript.includes("getAssetLibraryFilterCategories(asset)") &&
+      appScript.includes("filterAssetLibraryRows(") &&
+      assetLibraryView.includes('sortMode === "name"') &&
+      assetLibraryView.includes('sortMode === "oldest"') &&
+      assetLibraryView.includes("function assetMatchesLibraryCategoryFilter") &&
+      assetLibraryView.includes("getAssetLibraryFilterCategories(asset)") &&
       appScript.includes("themeKeys.map(themeKeyToCategory)") &&
-      appScript.includes('["fall", "winter", "spring", "summer"].includes(root)') &&
-      appScript.includes("function addAssetCategoryHint(") &&
-      appScript.includes('return "holidays";'),
+      assetLibraryView.includes('["fall", "winter", "spring", "summer"].includes(root)') &&
+      assetLibraryView.includes("function addAssetCategoryHint(") &&
+      assetLibraryView.includes('return "holidays";'),
     "asset library rows should support sorting and category filtering"
   );
   assert.ok(
