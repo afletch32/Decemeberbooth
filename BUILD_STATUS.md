@@ -2,10 +2,15 @@
 
 ## Current goal
 
-- Improve initial load time by deferring optional feature libraries until they are used.
+- Add an Amanda North STREAM Night foundation pack with guest-ready portrait and landscape screens.
 
 ## Current progress
 
+- Redesigned the Event step around a visual theme picker with category filters, selected-theme summary, and a direct Continue to Capture action; saved events and session naming now follow as secondary controls.
+- Theme picker previews now prefer supplied idle-screen artwork (including the Amanda North Back to School pack poster) before a theme background, so operators see the real guest visual when one exists.
+- Expanded the Amanda North Back to School pack with independently composed portrait and landscape share-screen backdrops. The live final-photo and QR controls render over the new artwork rather than using baked-in placeholder sharing content.
+- Created and registered the Amanda North STREAM Night foundation pack: reusable backgrounds, Tap to Start idle screens, and photo-choice screens in portrait and landscape. Runtime selection now prefers the matching orientation for both idle and photo-choice artwork.
+- Categorized STREAM Night under Schools in the fast setup picker.
 - Added Avery's Birthday portrait and landscape idle/photo-choice artwork with touch-safe Start, Single Photo, and Photo Strip hotspots; its sound profile plays Digital Circus on Start, Moxie after capture, and What Do You Think after the QR link renders.
 - Created the six-piece Amanda North Elementary Coyote Back to School artwork foundation pack, with bright royal-navy, sky-blue, and gold portrait and landscape backgrounds, idle screens, and photo-choice screens.
 - Registered the optimized Amanda North Coyote portrait waving idle MP4 as the ANE theme's looping guest idle screen, with a touch-safe Start hotspot over the artwork button.

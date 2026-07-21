@@ -463,6 +463,18 @@ let themes = {
             },
           },
         ],
+        shareScreens: [
+          {
+            src: "/assets/themes/back-to-school/back-to-school-share-portrait.png",
+            orientation: "portrait",
+            name: "Amanda North Coyote share screen portrait",
+          },
+          {
+            src: "/assets/themes/back-to-school/back-to-school-share-landscape.png",
+            orientation: "landscape",
+            name: "Amanda North Coyote share screen landscape",
+          },
+        ],
         overlays: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788490/photobooth/events/assets/ane-overlay-ane-frame-stream-night-landscape-2_tbkq3g.png", name: "ane-overlay-frame-night-landscape" },
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788491/photobooth/events/assets/ane-overlay-school-frame-landscape-1_nddhkg.png", name: "ane-overlay-school-frame-landscape" },
@@ -474,6 +486,73 @@ let themes = {
           landscape: "",
           prompt: "Touch to start",
         },
+      },
+      streamNight: {
+        name: "STREAM Night",
+        eventTypes: ["community"],
+        fontPairingStyle: "community",
+        accent: "#0e62d9",
+        accent2: "#f7bf21",
+        font: "'Comic Neue', cursive",
+        logo: "",
+        backgrounds: [
+          "/assets/themes/stream-night/stream-night-background-landscape.png",
+          "/assets/themes/stream-night/stream-night-background-portrait.png",
+        ],
+        idleScreens: [
+          {
+            src: "/assets/themes/stream-night/stream-night-idle-portrait.png",
+            name: "Amanda North STREAM Night idle portrait",
+            role: "idle",
+            orientation: "portrait",
+            buttonZones: {
+              start: { x: 50, y: 86, width: 80, height: 14 },
+            },
+          },
+          {
+            src: "/assets/themes/stream-night/stream-night-idle-landscape.png",
+            name: "Amanda North STREAM Night idle landscape",
+            role: "idle",
+            orientation: "landscape",
+            buttonZones: {
+              start: { x: 50, y: 76, width: 52, height: 18 },
+            },
+          },
+          {
+            src: "/assets/themes/stream-night/stream-night-photo-choice-portrait.png",
+            name: "Amanda North STREAM Night photo choice portrait",
+            role: "photo-choice",
+            orientation: "portrait",
+            buttonZones: {
+              singlePhoto: { x: 50, y: 40, width: 78, height: 28 },
+              photoStrip: { x: 50, y: 70, width: 78, height: 28 },
+            },
+          },
+          {
+            src: "/assets/themes/stream-night/stream-night-photo-choice-landscape.png",
+            name: "Amanda North STREAM Night photo choice landscape",
+            role: "photo-choice",
+            orientation: "landscape",
+            buttonZones: {
+              singlePhoto: { x: 29, y: 60, width: 36, height: 52 },
+              photoStrip: { x: 71, y: 60, width: 36, height: 52 },
+            },
+          },
+        ],
+        overlays: [
+          {
+            src: "https://res.cloudinary.com/afletch32/image/upload/v1783788490/photobooth/events/assets/ane-overlay-ane-frame-stream-night-landscape-2_tbkq3g.png",
+            name: "ane-overlay-frame-stream-night-landscape",
+          },
+        ],
+        templates: [],
+        welcome: {
+          title: "STREAM Night",
+          portrait: "",
+          landscape: "",
+          prompt: "Touch to start",
+        },
+        vibeSummary: "Nighttime discovery, maker energy, and coyote pride",
       },
     },
   },
@@ -837,6 +916,10 @@ const DOM = {
   sessionThemeMenu: document.getElementById("sessionThemeMenu"),
   sessionThemeSearch: document.getElementById("sessionThemeSearch"),
   sessionThemeOptions: document.getElementById("sessionThemeOptions"),
+  themeQuickFilters: document.getElementById("themeQuickFilters"),
+  themeQuickGrid: document.getElementById("themeQuickGrid"),
+  themeQuickSelectionName: document.getElementById("themeQuickSelectionName"),
+  themeQuickSelectionMeta: document.getElementById("themeQuickSelectionMeta"),
   sessionFontToggle: document.getElementById("sessionFontToggle"),
   sessionFontValue: document.getElementById("sessionFontValue"),
   sessionFontMenu: document.getElementById("sessionFontMenu"),
@@ -2508,7 +2591,7 @@ function getThemeSetupDisplayGroup(themeKey, theme) {
   ]
     .filter(Boolean)
     .join(" ");
-  if (/(hawks|amanda north|ane)/.test(normalized)) return "Youth";
+  if (/(hawks|amanda north|ane|stream night)/.test(normalized)) return "Youth";
   if (/(garden vows|timeless romance|wedding)/.test(normalized)) return "Wedding";
   if (/(fourth of july|4th of july|halloween|christmas|valentine|st patrick)/.test(normalized)) return "Holidays";
   if (
@@ -2642,6 +2725,87 @@ function syncSessionThemeSearch() {
   if (DOM.sessionThemeValue)
     DOM.sessionThemeValue.textContent = getThemeOptionLabel(key) || "Choose theme";
   if (DOM.sessionThemeSearch) DOM.sessionThemeSearch.value = "";
+  renderThemeQuickPicker();
+}
+
+let activeThemeQuickFilter = "All";
+
+const THEME_QUICK_FILTERS = ["All", "Celebrations", "Weddings", "Schools", "Seasons", "Holidays"];
+
+function themeMatchesQuickFilter(entry, filter) {
+  if (filter === "All") return true;
+  const group = entry.group;
+  if (filter === "Celebrations") return group === "General";
+  if (filter === "Weddings") return group === "Wedding";
+  if (filter === "Schools") return group === "Youth";
+  if (filter === "Seasons") return group === "Seasonal";
+  return group === "Holidays";
+}
+
+function getThemeQuickPreview(theme) {
+  const idleScreens = Array.isArray(theme && theme.idleScreens) ? theme.idleScreens : [];
+  const preferredIdle = idleScreens.find((entry) =>
+    entry && (entry.orientation === "landscape" || entry.orientation === "portrait")
+  );
+  if (preferredIdle) {
+    return preferredIdle.poster || getAssetEntrySrc(preferredIdle) || "";
+  }
+  const backgrounds = Array.isArray(theme && theme.backgrounds) ? theme.backgrounds : [];
+  return getAssetEntrySrc(backgrounds[0]) || "";
+}
+
+function getThemeQuickMeta(theme) {
+  const parts = [];
+  const idleScreens = Array.isArray(theme && theme.idleScreens) ? theme.idleScreens : [];
+  if (idleScreens.length) parts.push(`${idleScreens.length} guest screen${idleScreens.length === 1 ? "" : "s"}`);
+  if (Array.isArray(theme && theme.backgrounds) && theme.backgrounds.length) parts.push(`${theme.backgrounds.length} background${theme.backgrounds.length === 1 ? "" : "s"}`);
+  if (Array.isArray(theme && theme.overlays) && theme.overlays.length) parts.push(`${theme.overlays.length} frame${theme.overlays.length === 1 ? "" : "s"}`);
+  return parts.length ? parts.join(" · ") : "Ready for your event";
+}
+
+function renderThemeQuickPicker() {
+  if (!DOM.themeQuickFilters || !DOM.themeQuickGrid) return;
+  const selectedKey = (DOM.createPathThemeSelect && DOM.createPathThemeSelect.value) || getSelectedThemeKey() || "";
+  DOM.themeQuickFilters.innerHTML = "";
+  THEME_QUICK_FILTERS.forEach((filter) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "theme-quick-filter";
+    button.textContent = filter;
+    button.classList.toggle("active", filter === activeThemeQuickFilter);
+    button.setAttribute("aria-pressed", filter === activeThemeQuickFilter ? "true" : "false");
+    button.addEventListener("click", () => {
+      activeThemeQuickFilter = filter;
+      renderThemeQuickPicker();
+    });
+    DOM.themeQuickFilters.appendChild(button);
+  });
+  const entries = getSetupThemeEntries().filter((entry) => themeMatchesQuickFilter(entry, activeThemeQuickFilter));
+  DOM.themeQuickGrid.innerHTML = "";
+  entries.slice(0, 8).forEach((entry) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "theme-quick-card";
+    card.classList.toggle("active", entry.key === selectedKey);
+    card.setAttribute("aria-pressed", entry.key === selectedKey ? "true" : "false");
+    const preview = document.createElement("div");
+    preview.className = "theme-quick-card-art";
+    const previewUrl = getThemeQuickPreview(entry.theme);
+    if (previewUrl) preview.style.backgroundImage = `url("${previewUrl}")`;
+    const copy = document.createElement("span");
+    copy.className = "theme-quick-card-copy";
+    const label = document.createElement("strong");
+    label.textContent = entry.label;
+    const group = document.createElement("span");
+    group.textContent = entry.group;
+    copy.append(label, group);
+    card.append(preview, copy);
+    card.addEventListener("click", () => activateThemeFromSetupKey(entry.key));
+    DOM.themeQuickGrid.appendChild(card);
+  });
+  const selectedEntry = getSetupThemeEntries().find((entry) => entry.key === selectedKey);
+  if (DOM.themeQuickSelectionName) DOM.themeQuickSelectionName.textContent = selectedEntry ? selectedEntry.label : "Choose a theme";
+  if (DOM.themeQuickSelectionMeta) DOM.themeQuickSelectionMeta.textContent = selectedEntry ? `${selectedEntry.group} · ${getThemeQuickMeta(selectedEntry.theme)}` : "Choose a look to see the included guest screens and photo styling.";
 }
 
 function resolveThemeKeyFromSearchValue(value = "") {
@@ -2674,6 +2838,7 @@ function activateThemeFromSetupKey(key) {
   if (DOM.createPathThemeSelect) DOM.createPathThemeSelect.value = key;
   loadTheme(key);
   updateLaunchSummary();
+  renderThemeQuickPicker();
   closeSetupCombobox("theme");
 }
 
@@ -6571,9 +6736,28 @@ function applyThemeBasics(theme) {
   );
   document.documentElement.style.setProperty("--action-text", palette.text);
   applyThemeFontStyles(theme);
+  applyThemeShareScreen(theme);
   applyBannerSize(theme);
   applyWelcomeTitleSize(theme);
   applyThemeBackground(theme);
+}
+
+function applyThemeShareScreen(theme) {
+  const screens = Array.isArray(theme && theme.shareScreens) ? theme.shareScreens : [];
+  const orientation = getIdleScreenViewportOrientation();
+  const selected =
+    screens.find((entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation) ||
+    screens[0] ||
+    null;
+  const src = getAssetEntrySrc(selected);
+  if (!DOM.boothScreen) return;
+  if (src) {
+    DOM.boothScreen.style.setProperty("--theme-share-screen-image", `url("${src}")`);
+    DOM.boothScreen.classList.add("has-theme-share-screen");
+  } else {
+    DOM.boothScreen.style.removeProperty("--theme-share-screen-image");
+    DOM.boothScreen.classList.remove("has-theme-share-screen");
+  }
 }
 
 function refreshFontSelectForTheme(theme) {
@@ -8209,8 +8393,15 @@ function hydrateIdleScreenEntry(entry) {
 
 function selectIdleScreenEntry() {
   const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
-  const find = (entries) =>
-    entries.find((entry) => entry.role !== "photo-choice");
+  const find = (entries) => {
+    const idleEntries = entries.filter((entry) => entry && entry.role !== "photo-choice");
+    const orientation = getIdleScreenViewportOrientation();
+    return (
+      idleEntries.find(
+        (entry) => normalizeIdleScreenOrientation(entry.orientation) === orientation
+      ) || idleEntries[0]
+    );
+  };
   return hydrateIdleScreenEntry(
     find(eventEntries) || find(themeEntries) || null
   );
@@ -8218,8 +8409,15 @@ function selectIdleScreenEntry() {
 
 function selectPhotoChoiceScreenEntry() {
   const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
-  const find = (entries) =>
-    entries.find((entry) => entry.role === "photo-choice");
+  const find = (entries) => {
+    const choiceEntries = entries.filter((entry) => entry && entry.role === "photo-choice");
+    const orientation = getIdleScreenViewportOrientation();
+    return (
+      choiceEntries.find(
+        (entry) => normalizeIdleScreenOrientation(entry.orientation) === orientation
+      ) || choiceEntries[0]
+    );
+  };
   return hydrateIdleScreenEntry(
     find(eventEntries) || find(themeEntries) || null
   );

@@ -279,7 +279,7 @@
     }
 
     .setup-session-theme #sessionThemeToggle {
-      min-height: 52px;
+      min-height: 58px;
       border-color: rgba(80, 191, 174, 0.68);
       font-size: 1.08rem;
       font-weight: 700;
@@ -292,6 +292,148 @@
       font-weight: 700;
       letter-spacing: 0;
       text-transform: none;
+    }
+
+    .theme-quick-picker {
+      display: grid;
+      grid-column: 1 / -1;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 0.32fr);
+      gap: 18px;
+      padding: 18px;
+      border: 1px solid rgba(127, 219, 207, 0.62);
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(233, 255, 249, 0.9));
+    }
+
+    .theme-quick-picker-heading {
+      margin: 0;
+      color: #1a342e;
+      font-family: var(--font-heading);
+      font-size: 1.35rem;
+      letter-spacing: -0.025em;
+    }
+
+    .theme-quick-picker-note {
+      margin: 4px 0 14px;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+
+    .theme-quick-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .theme-quick-filter {
+      min-height: 38px;
+      padding: 7px 13px;
+      border: 1px solid rgba(127, 219, 207, 0.5);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.76);
+      color: #49635d;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .theme-quick-filter.active {
+      border-color: #55cdbb;
+      background: #173b34;
+      color: #ffffff;
+    }
+
+    .theme-quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .theme-quick-card {
+      min-height: 154px;
+      overflow: hidden;
+      border: 1px solid rgba(127, 219, 207, 0.48);
+      border-radius: 16px;
+      background: #effaf7;
+      color: #173b34;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(41, 70, 64, 0.06);
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+
+    .theme-quick-card:hover,
+    .theme-quick-card:focus-visible {
+      transform: translateY(-2px);
+      border-color: #55cdbb;
+      box-shadow: 0 14px 26px rgba(41, 70, 64, 0.13);
+      outline: none;
+    }
+
+    .theme-quick-card.active {
+      border: 2px solid #2db7a2;
+      box-shadow: 0 0 0 3px rgba(45, 183, 162, 0.15), 0 14px 26px rgba(41, 70, 64, 0.12);
+    }
+
+    .theme-quick-card-art {
+      height: 82px;
+      background: linear-gradient(135deg, #c2eee5, #f8ffff);
+      background-position: center;
+      background-size: cover;
+    }
+
+    .theme-quick-card-copy {
+      display: grid;
+      gap: 2px;
+      padding: 10px 11px 12px;
+    }
+
+    .theme-quick-card-copy strong { font-size: 0.94rem; }
+    .theme-quick-card-copy span { color: var(--text-muted); font-size: 0.74rem; }
+
+    .theme-quick-selection {
+      display: grid;
+      align-content: space-between;
+      gap: 18px;
+      padding: 18px;
+      border-radius: 17px;
+      background: #173b34;
+      color: #f6fffc;
+    }
+
+    .theme-quick-selection-label {
+      margin: 0 0 6px;
+      color: #a8e9dc;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .theme-quick-selection h3 { margin: 0; font-family: var(--font-heading); font-size: 1.55rem; letter-spacing: -0.03em; }
+    .theme-quick-selection p:last-child { margin: 7px 0 0; color: #d5f5ee; font-size: 0.86rem; line-height: 1.45; }
+    .theme-quick-selection button { width: 100%; background: #ffffff; color: #173b34; }
+
+    .setup-session-secondary {
+      display: grid;
+      grid-column: 1 / -1;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 12px;
+    }
+
+    .setup-session-secondary .setup-session-item { min-width: 0; }
+
+    @media (max-width: 900px) {
+      .theme-quick-picker { grid-template-columns: 1fr; }
+      .theme-quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      .theme-quick-picker { padding: 12px; }
+      .theme-quick-grid { grid-template-columns: 1fr 1fr; }
+      .setup-session-secondary { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 900px) {
@@ -4642,6 +4784,21 @@
       pointer-events: auto;
     }
 
+    #boothScreen.has-theme-share-screen.share-mode #finalPreview {
+      background-image:
+        linear-gradient(180deg, rgba(3, 18, 45, 0.12), rgba(3, 18, 45, 0.24)),
+        var(--theme-share-screen-image);
+      background-position: center;
+      background-size: cover;
+      background-color: #071d41;
+    }
+
+    #boothScreen.has-theme-share-screen.share-mode #finalPreviewContent::before {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(246, 251, 255, 0.76)),
+        linear-gradient(135deg, rgba(255, 203, 48, 0.18), rgba(17, 115, 221, 0.12));
+    }
+
     #finalStrip {
       grid-column: 1;
       grid-row: 1 / span 2;
@@ -6534,26 +6691,45 @@
         >
       </div>
       <div class="setup-session-grid">
-        <div class="setup-session-item setup-combobox setup-session-theme" data-setup-combobox="theme">
-          <label for="sessionThemeSearch">Theme</label>
-          <button type="button" id="sessionThemeToggle" class="setup-combobox-button" aria-expanded="false" aria-controls="sessionThemeMenu">
-            <span id="sessionThemeValue">Choose theme</span>
-            <span class="setup-combobox-caret" aria-hidden="true">▼</span>
-          </button>
-          <div id="sessionThemeMenu" class="setup-combobox-menu hidden">
-            <input type="search" id="sessionThemeSearch" class="setup-combobox-search" placeholder="Search themes" autocomplete="off">
-            <div id="sessionThemeOptions" class="setup-combobox-options" role="listbox" aria-label="Theme options"></div>
+        <section class="theme-quick-picker setup-session-theme" aria-labelledby="themeQuickPickerHeading">
+          <div>
+            <h2 id="themeQuickPickerHeading" class="theme-quick-picker-heading">Choose a look</h2>
+            <p class="theme-quick-picker-note">Pick a theme first. You can change the details after the booth is ready.</p>
+            <div id="themeQuickFilters" class="theme-quick-filters" aria-label="Theme categories"></div>
+            <div id="themeQuickGrid" class="theme-quick-grid" aria-live="polite"></div>
           </div>
-          <select id="createPathThemeSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
-        </div>
-        <div class="setup-session-item">
-          <label for="eventProfileSelect">Saved Event</label>
-          <select id="eventProfileSelect"></select>
-        </div>
-        <div class="setup-session-item">
-          <label for="eventNameInput">Session Name</label>
-          <input type="text" id="eventNameInput" placeholder="Session name" autocomplete="off" autocapitalize="words" spellcheck="false">
-          <button type="button" class="setup-session-save-btn" onclick="createNewEventFromSelection()">Save as New Event</button>
+          <aside class="theme-quick-selection" aria-live="polite">
+            <div>
+              <p class="theme-quick-selection-label">Selected theme</p>
+              <h3 id="themeQuickSelectionName">Choose a theme</h3>
+              <p id="themeQuickSelectionMeta">Choose a look to see the included guest screens and photo styling.</p>
+            </div>
+            <button type="button" data-setup-next="capture">Continue to Capture</button>
+          </aside>
+        </section>
+        <div class="setup-session-secondary">
+          <div class="setup-session-item setup-combobox" data-setup-combobox="theme">
+            <label for="sessionThemeSearch">Browse all themes</label>
+            <button type="button" id="sessionThemeToggle" class="setup-combobox-button" aria-expanded="false" aria-controls="sessionThemeMenu">
+              <span id="sessionThemeValue">Choose theme</span>
+              <span class="setup-combobox-caret" aria-hidden="true">▼</span>
+            </button>
+            <div id="sessionThemeMenu" class="setup-combobox-menu hidden">
+              <input type="search" id="sessionThemeSearch" class="setup-combobox-search" placeholder="Search themes" autocomplete="off">
+              <div id="sessionThemeOptions" class="setup-combobox-options" role="listbox" aria-label="Theme options"></div>
+            </div>
+            <select id="createPathThemeSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
+          </button>
+          </div>
+          <div class="setup-session-item">
+            <label for="eventProfileSelect">Saved Event</label>
+            <select id="eventProfileSelect"></select>
+          </div>
+          <div class="setup-session-item">
+            <label for="eventNameInput">Session Name</label>
+            <input type="text" id="eventNameInput" placeholder="Session name" autocomplete="off" autocapitalize="words" spellcheck="false">
+            <button type="button" class="setup-session-save-btn" onclick="createNewEventFromSelection()">Save as New Event</button>
+          </div>
         </div>
       </div>
       <details class="setup-session-assets-toggle" id="setupSessionAssetsToggle">

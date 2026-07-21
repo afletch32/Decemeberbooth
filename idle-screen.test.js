@@ -64,7 +64,7 @@ test("idle screen editor state does not call late-defined helpers during app sta
   );
 });
 
-test("idle screen selection uses the manually selected event entry before theme defaults", () => {
+test("idle screen selection uses the manually selected event entry and matching orientation", () => {
   const resolver = extractFunctionFromEither(app, "", "selectIdleScreenEntry");
   assert.ok(
     resolver.includes("getIdleScreenAssignmentEntries()"),
@@ -74,7 +74,26 @@ test("idle screen selection uses the manually selected event entry before theme 
     resolver.includes("find(eventEntries) || find(themeEntries)"),
     "the selected event/session screen should win without changing with the viewport"
   );
-  assert.ok(!resolver.includes("getIdleScreenViewportOrientation()"));
+  assert.ok(resolver.includes("getIdleScreenViewportOrientation()"));
+  assert.ok(resolver.includes("normalizeIdleScreenOrientation(entry.orientation)"));
+});
+
+test("Amanda North STREAM Night includes the complete six-screen foundation pack", () => {
+  [
+    "stream-night-background-portrait.png",
+    "stream-night-background-landscape.png",
+    "stream-night-idle-portrait.png",
+    "stream-night-idle-landscape.png",
+    "stream-night-photo-choice-portrait.png",
+    "stream-night-photo-choice-landscape.png",
+  ].forEach((filename) => {
+    assert.ok(
+      readFileSync(join(process.cwd(), "assets/themes/stream-night", filename)).length > 0,
+      `${filename} should be bundled`
+    );
+  });
+  assert.ok(app.includes('name: "STREAM Night"'));
+  assert.ok(app.includes('role: "photo-choice"'));
 });
 
 test("legacy welcome remains the fallback when custom artwork is unavailable", () => {
@@ -189,6 +208,27 @@ test("Amanda North has a built-in portrait looping idle screen", () => {
     )
   );
   assert.ok(app.includes("start: { x: 50, y: 88, width: 84, height: 14 }"));
+});
+
+test("Amanda North provides portrait and landscape share-screen artwork", () => {
+  assert.ok(
+    app.includes('src: "/assets/themes/back-to-school/back-to-school-share-portrait.png"')
+  );
+  assert.ok(
+    app.includes('src: "/assets/themes/back-to-school/back-to-school-share-landscape.png"')
+  );
+  assert.ok(app.includes("function applyThemeShareScreen(theme)"));
+  assert.ok(html.includes("#boothScreen.has-theme-share-screen.share-mode #finalPreview"));
+  assert.ok(
+    readFileSync(
+      join(process.cwd(), "assets/themes/back-to-school/back-to-school-share-portrait.png")
+    ).length > 0
+  );
+  assert.ok(
+    readFileSync(
+      join(process.cwd(), "assets/themes/back-to-school/back-to-school-share-landscape.png")
+    ).length > 0
+  );
 });
 
 test("admin video previews use still images without downloading or autoplaying MP4s", () => {
