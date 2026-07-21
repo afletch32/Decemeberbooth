@@ -326,7 +326,8 @@ test("asset library management supports sorting and category metadata", () => {
   const html = readProjectFile("index.html");
 
   assert.ok(
-    html.includes('<option value="general">General</option>') &&
+    html.includes('<option value="">Main Category</option>') &&
+      html.includes('<option value="general">General</option>') &&
       html.includes('<option value="school">School</option>') &&
       html.includes('<option value="wedding">Wedding</option>') &&
       html.includes('<option value="holidays">Holidays</option>') &&
@@ -363,6 +364,28 @@ test("asset library management supports sorting and category metadata", () => {
       appScript.includes("editableFields:") &&
       appScript.includes("detectEditableFieldsFromText"),
     "customizable detection metadata should be normalized and detected"
+  );
+});
+
+test("asset library defaults to the selected theme main category", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const html = readProjectFile("index.html");
+
+  assert.ok(html.includes('<option value="">Main Category</option>'));
+  assert.ok(!html.includes('<option value="">All Categories</option>'));
+  assert.ok(appScript.includes("function getMainAssetLibraryCategory()"));
+  assert.ok(
+    appScript.includes("getMainAssetLibraryCategory(),") &&
+      appScript.includes("tags: normalizeAssetTags([")
+  );
+  assert.ok(
+    appScript.includes(
+      "DOM.assetLibraryCategory.value || getMainAssetLibraryCategory()"
+    )
+  );
+  assert.ok(
+    appScript.includes('DOM.assetLibraryCategory.value = "";') &&
+      appScript.includes("selectedCategory || getMainAssetLibraryCategory()")
   );
 });
 

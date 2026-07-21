@@ -51,6 +51,7 @@ export function getAssetLibraryFilterCategories(asset) {
   [asset?.folder, asset?.url, asset?.secure_url, asset?.name].forEach((value) =>
     addAssetCategoryHint(categories, value)
   );
+  if (categories.size === 0) categories.add("general");
   return Array.from(categories);
 }
 

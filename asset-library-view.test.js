@@ -46,6 +46,10 @@ test("asset view categories derive from theme keys and asset metadata", async ()
   assert.equal(themeKeyToCategory("general:birthday"), "birthday");
   assert.deepEqual(getAssetLibraryFilterCategories(rows[0]), ["school"]);
   assert.deepEqual(getAssetLibraryFilterCategories(rows[1]), ["wedding"]);
+  assert.deepEqual(
+    getAssetLibraryFilterCategories({ name: "Uncategorized upload" }),
+    ["general"]
+  );
 });
 
 test("asset view filters combine type, event category, and search", async () => {

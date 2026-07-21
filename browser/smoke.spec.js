@@ -1447,9 +1447,7 @@ test("setup screen keeps overlay choice in the booth and can start a plain layou
   await expect(page.locator("#launchLayoutMode")).toHaveText("Normal Mode");
   await expect(page.locator("#launchOverlayName")).toContainText("Basic");
   await expect(page.locator("#launchOverlayCount")).toContainText("overlays");
-  await expect(page.locator("#launchWarning")).toContainText(
-    "Guests can choose from"
-  );
+  await expect(page.locator("#launchWarning")).toHaveCount(0);
 
   await page.locator("#startBoothButton").click({ force: true });
   await expect(page.locator("#adminScreen")).toHaveClass(/hidden/);

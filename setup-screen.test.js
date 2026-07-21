@@ -71,9 +71,10 @@ test("setup screen uses a compact toolbar for section controls", () => {
     "hidden setup controls and inactive sections should not reserve layout space"
   );
   assert.ok(
-    html.includes('<details class="event-library-section" id="uploadedAssetLibraryPanel" open>') &&
-      html.includes('<details class="event-library-section" open>\n              <summary>Current Selections</summary>'),
-    "Asset Library and Current Selections should be visible by default"
+    html.includes('<details class="event-library-section" id="eventDetailsPanel">') &&
+      html.includes('<details class="event-library-section" id="uploadedAssetLibraryPanel">') &&
+      html.includes("<summary>Advanced Asset Selections</summary>"),
+    "optional event details and asset tools should stay collapsed by default"
   );
   assert.ok(
     appScript.includes("function renderAssetLibrary()"),
@@ -141,6 +142,18 @@ test("setup section state updates button and panel accessibility attributes", ()
     html.includes(".setup-combobox-button") &&
       html.includes(".setup-combobox-options"),
     "session setup controls should style dropdown comboboxes"
+  );
+  assert.ok(
+    html.includes(".setup-session-theme") &&
+      html.includes("grid-column: span 2;") &&
+      html.includes("min-height: 58px;") &&
+      html.indexOf('data-setup-combobox="theme"') < html.indexOf('id="eventProfileSelect"'),
+    "theme selection should be the first and largest session control"
+  );
+  assert.ok(
+    !html.includes('id="launchWarning"') &&
+      !appScript.includes("function getLaunchWarning()"),
+    "the non-actionable overlay warning block should stay removed"
   );
   assert.ok(
     html.includes('id="modeToggle"'),
@@ -278,14 +291,14 @@ test("setup presents a numbered flow with one share-stage launch action", () => 
     "Share should own the only launch action and start the booth directly"
   );
   assert.ok(
-    html.includes('<h3>Event Basics</h3>') &&
-      html.includes('<h3>Guest Screen</h3>') &&
-      html.includes('<h3>Event Assets</h3>') &&
-      html.includes('<summary>Asset Library</summary>') &&
+    html.includes('<summary>Customize Event Details</summary>') &&
+      html.includes('<h3>Guest Screen Text</h3>') &&
+      html.includes('<summary>Customize Assets</summary>') &&
+      !html.includes('id="uploadedAssetLibraryPanel" open') &&
       html.includes('<h3>Guest Options</h3>') &&
       html.includes('<h3>Capture Timing</h3>') &&
       html.includes('<h3>Camera Quality</h3>'),
-    "Event and Capture settings should be grouped into obvious sections"
+    "optional event details and asset customization should stay collapsed while Capture settings remain grouped"
   );
   assert.ok(
     html.includes('href="#offlineSection">Advanced Device Tools</a>') &&
@@ -978,7 +991,7 @@ test("event name and date drive the session upload folder", () => {
 
   assert.ok(
     html.includes('<label for="eventNameInput">Session Name</label>') &&
-      html.includes('<label for="eventDateInput">Session Date</label>'),
+      html.includes('<label for="eventDateInput">Session Date (optional)</label>'),
     "setup should present one session name and one session date field"
   );
   assert.ok(

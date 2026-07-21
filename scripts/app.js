@@ -47,6 +47,7 @@ import {
   loadQrCodeLibrary,
   loadSelfieSegmentationLibrary,
 } from "./external-library-loader.mjs";
+import { getVideoPreviewPosterSrc } from "./media-preview-utils.mjs";
 
 const themeAdminState = createThemeAdminState();
 const THEME_EDITOR = themeAdminState.editor;
@@ -450,6 +451,18 @@ let themes = {
         font: "'Comic Neue', cursive",
         logo: "",
         backgrounds: [],
+        idleScreens: [
+          {
+            src: "/assets/themes/back-to-school/amanda-north-coyotes-idle-wave-portrait.mp4",
+            poster: "/assets/themes/back-to-school/back-to-school-idle-portrait.png",
+            name: "Amanda North Coyote waving idle screen",
+            role: "idle",
+            orientation: "portrait",
+            buttonZones: {
+              start: { x: 50, y: 88, width: 84, height: 14 },
+            },
+          },
+        ],
         overlays: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788490/photobooth/events/assets/ane-overlay-ane-frame-stream-night-landscape-2_tbkq3g.png", name: "ane-overlay-frame-night-landscape" },
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788491/photobooth/events/assets/ane-overlay-school-frame-landscape-1_nddhkg.png", name: "ane-overlay-school-frame-landscape" },
@@ -716,6 +729,61 @@ themes.spring = {
   },
 };
 
+themes.general.themes.averyBirthday = {
+  ...JSON.parse(JSON.stringify(themes.general.themes.birthday)),
+  name: "Avery's Birthday",
+  welcome: {
+    ...themes.general.themes.birthday.welcome,
+    title: "Happy 14th, Avery!",
+    prompt: "Tap to Start",
+  },
+  soundEffects: {
+    start: "/assets/themes/avery-birthday/sounds/the-amazing-digital-circus.mp3",
+    photoCaptured: "/assets/themes/avery-birthday/sounds/my-my-thats-quite-a-bit-of-moxie.mp3",
+    shareReady: "/assets/themes/avery-birthday/sounds/what-do-you-think.mp3",
+  },
+  idleScreens: [
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-idle-portrait.png",
+      name: "Avery birthday portrait idle screen",
+      role: "idle",
+      orientation: "portrait",
+      buttonZones: {
+        start: { x: 50, y: 78, width: 58, height: 20 },
+      },
+    },
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-idle-landscape.png",
+      name: "Avery birthday idle screen",
+      role: "idle",
+      orientation: "landscape",
+      buttonZones: {
+        start: { x: 50, y: 81, width: 55, height: 24 },
+      },
+    },
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.png",
+      name: "Avery birthday portrait photo choice screen",
+      role: "photo-choice",
+      orientation: "portrait",
+      buttonZones: {
+        singlePhoto: { x: 50, y: 52, width: 70, height: 24 },
+        photoStrip: { x: 50, y: 77, width: 70, height: 24 },
+      },
+    },
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.png",
+      name: "Avery birthday photo choice screen",
+      role: "photo-choice",
+      orientation: "landscape",
+      buttonZones: {
+        singlePhoto: { x: 35, y: 68, width: 27, height: 49 },
+        photoStrip: { x: 65, y: 68, width: 27, height: 49 },
+      },
+    },
+  ],
+};
+
 const BUILTIN_THEMES = JSON.parse(JSON.stringify(themes));
 const DEFAULT_THEME_KEY = "general:basic";
 const BUILTIN_THEME_LOCATIONS = (() => {
@@ -789,7 +857,6 @@ const DOM = {
   launchStripStatus: document.getElementById("launchStripStatus"),
   launchTemplateThumb: document.getElementById("launchTemplateThumb"),
   launchTemplateSummary: document.getElementById("launchTemplateSummary"),
-  launchWarning: document.getElementById("launchWarning"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
@@ -1645,6 +1712,7 @@ let photoChoiceEditorZones = {
 let activeSessionTextDetails = {};
 let boothAudioContext = null;
 let boothAudioEnabled = false;
+let boothThemeAudio = null;
 const ACCENT_PRESET_COLORS = [
   "#ffffff",
   "#0f1222",
@@ -2058,20 +2126,10 @@ function isVideoAsset(entry) {
 
 function createAssetPreviewMedia(entry, alt = "") {
   const src = getAssetEntrySrc(entry);
-  if (isVideoAsset(entry)) {
-    const video = document.createElement("video");
-    video.src = withBust(src);
-    video.autoplay = true;
-    video.muted = true;
-    video.loop = true;
-    video.playsInline = true;
-    video.preload = "metadata";
-    video.setAttribute("aria-label", alt);
-    video.play().catch(() => {});
-    return video;
-  }
   const img = document.createElement("img");
-  img.src = withBust(src);
+  img.src = withBust(
+    isVideoAsset(entry) ? getVideoPreviewPosterSrc(entry, src) : src
+  );
   img.alt = alt;
   img.loading = "lazy";
   img.decoding = "async";
@@ -4399,31 +4457,6 @@ function getLaunchTemplateCountLabel() {
   return `${templateCount} template${templateCount === 1 ? "" : "s"} selected`;
 }
 
-function getLaunchStripTemplate() {
-  const templates = getTemplateList(activeTheme).filter((template) =>
-    isStripTemplateLayout(template && template.layout)
-  );
-  return templates.length ? templates[0] : null;
-}
-
-function getLaunchWarning() {
-  const warnings = [];
-  if (!getLaunchStripTemplate()) {
-    warnings.push(
-      "No strip preset is available yet. Guests can still choose photo mode in the booth, but strip selection will be empty until templates are added."
-    );
-  }
-  if (!selectedOverlay) {
-    const overlayCount = getOverlayList(activeTheme).length;
-    warnings.push(
-      overlayCount
-        ? `Guests can choose from ${overlayCount} overlays on the booth screen, and the booth will still open with a plain camera layout.`
-        : "No booth overlays are available yet. The booth will open with a plain camera layout until overlays are added."
-    );
-  }
-  return warnings.join(" ");
-}
-
 function setLaunchSummaryText(targetIds, value) {
   targetIds.forEach((id) => {
     const node = document.getElementById(id);
@@ -4510,7 +4543,6 @@ function updateLaunchSummary() {
   const backgroundCountLabel = getLaunchBackgroundCountLabel();
   const overlayCountLabel = getLaunchOverlayCountLabel();
   const templateCountLabel = getLaunchTemplateCountLabel();
-  const warning = getLaunchWarning();
 
   setLaunchSummaryText(["launchBackgroundCount"], backgroundCountLabel);
   setLaunchSummaryText(
@@ -4536,10 +4568,6 @@ function updateLaunchSummary() {
     getLaunchSummaryThumbnailSrc("template"),
     getLaunchSummaryThumbnailLabel("template") || "Template"
   );
-  if (DOM.launchWarning) {
-    DOM.launchWarning.textContent = warning;
-    DOM.launchWarning.classList.toggle("hidden", !warning);
-  }
 }
 
 const EDIT_SCALE_CONFIG = [
@@ -8446,7 +8474,7 @@ function beginWelcome(event) {
     if (photoChoiceEntry) applyCustomPhotoChoiceScreen(photoChoiceEntry);
   })) return;
   unlockBoothAudio();
-  playBoothSound("tap");
+  if (!playThemeSoundEffect("start")) playBoothSound("tap");
 }
 
 function beginModeSelection(nextMode, event) {
@@ -10196,6 +10224,52 @@ function unlockBoothAudio() {
   } catch (_) {}
 }
 
+function getThemeSoundEffect(kind) {
+  const soundEffects = activeTheme && activeTheme.soundEffects;
+  const src = soundEffects && soundEffects[kind];
+  return typeof src === "string" && src.trim() ? src.trim() : "";
+}
+
+function playThemeSoundEffect(kind, { afterCurrent = false } = {}) {
+  if (!boothAudioEnabled) return false;
+  const src = getThemeSoundEffect(kind);
+  if (!src) return false;
+
+  const start = () => {
+    if (boothThemeAudio) {
+      boothThemeAudio.pause();
+      boothThemeAudio.currentTime = 0;
+    }
+    const audio = new Audio(src);
+    boothThemeAudio = audio;
+    audio.preload = "auto";
+    audio.volume = 0.72;
+    audio.addEventListener(
+      "ended",
+      () => {
+        if (boothThemeAudio === audio) boothThemeAudio = null;
+      },
+      { once: true }
+    );
+    audio.play().catch(() => {});
+  };
+
+  const current = boothThemeAudio;
+  if (afterCurrent && current && !current.paused && !current.ended) {
+    current.addEventListener(
+      "ended",
+      () => {
+        if (boothThemeAudio === current) boothThemeAudio = null;
+        start();
+      },
+      { once: true }
+    );
+  } else {
+    start();
+  }
+  return true;
+}
+
 function playBoothSound(kind = "tap") {
   if (!boothAudioEnabled) return;
   try {
@@ -10304,6 +10378,7 @@ async function countdownAndSnap(options = {}) {
   const shot = await getCurrentProcessedFrameCanvas();
   if (torchUsed) await setTorch(false);
   freezeCapturePreview(shot);
+  playThemeSoundEffect("photoCaptured");
   if (livePromise) {
     const clip = await livePromise;
     setLiveClip(clip);
@@ -11154,7 +11229,10 @@ function showFinal(url, options = {}) {
             : "Open the link button if the QR does not appear.";
           DOM.qrHint.style.display = qrRendered ? "none" : "block";
         }
-        if (qrRendered) revealFinalSaveStage();
+        if (qrRendered) {
+          revealFinalSaveStage();
+          playThemeSoundEffect("shareReady", { afterCurrent: true });
+        }
       });
     } else if (!skipShare) {
       lastShareUrl = null;
@@ -14320,13 +14398,17 @@ function getVisibleAssetLibraryRows() {
   return getAllAssetLibraryRows();
 }
 
+function getMainAssetLibraryCategory() {
+  return themeKeyToCategory(getSelectedThemeKey() || DEFAULT_THEME_KEY);
+}
+
 function getFilteredAssetLibraryRows() {
   const query = DOM.assetLibrarySearch
     ? DOM.assetLibrarySearch.value.trim().toLowerCase()
     : "";
   const category = DOM.assetLibraryCategory
-    ? DOM.assetLibraryCategory.value
-    : "";
+    ? DOM.assetLibraryCategory.value || getMainAssetLibraryCategory()
+    : getMainAssetLibraryCategory();
   const pillCategory = assetLibraryState.selectedCategory || "";
   const sortMode = DOM.assetLibrarySort ? DOM.assetLibrarySort.value : "newest";
   return filterAssetLibraryRows(
@@ -15102,7 +15184,10 @@ function registerUploadedAsset(url, kind, details = {}) {
     url,
     secure_url: url,
     name: uploadedName,
-    tags: details.tags || [],
+    tags: normalizeAssetTags([
+      ...(Array.isArray(details.tags) ? details.tags : []),
+      getMainAssetLibraryCategory(),
+    ]),
     folder: details.folder || "",
     hash: details.hash || "",
     contentType: details.contentType || "",
@@ -15370,9 +15455,19 @@ function renderAssetLibrary() {
     if (assetLibraryState.selectedCategory && assetLibraryState.selectedCategory !== "all") {
       filterLabels.push(`Asset type: ${assetLibraryState.selectedCategory}`);
     }
-    if (DOM.assetLibraryCategory && DOM.assetLibraryCategory.value) {
-      const option = DOM.assetLibraryCategory.selectedOptions[0];
-      filterLabels.push(`Category: ${(option && option.textContent) || DOM.assetLibraryCategory.value}`);
+    const selectedCategory = DOM.assetLibraryCategory
+      ? DOM.assetLibraryCategory.value
+      : "";
+    const effectiveCategory =
+      selectedCategory || getMainAssetLibraryCategory();
+    if (effectiveCategory) {
+      const option = selectedCategory
+        ? DOM.assetLibraryCategory.selectedOptions[0]
+        : null;
+      const categoryLabel = option && option.textContent
+        ? option.textContent
+        : effectiveCategory.charAt(0).toUpperCase() + effectiveCategory.slice(1);
+      filterLabels.push(`Category: ${categoryLabel}`);
     }
     if (assetLibraryState.searchQuery) {
       filterLabels.push(`Search: ${assetLibraryState.searchQuery}`);
@@ -15380,7 +15475,12 @@ function renderAssetLibrary() {
     if (DOM.assetLibraryClearFilters)
       DOM.assetLibraryClearFilters.classList.toggle(
         "hidden",
-        filterLabels.length === 0
+        !(
+          selectedCategory ||
+          assetLibraryState.searchQuery ||
+          (assetLibraryState.selectedCategory &&
+            assetLibraryState.selectedCategory !== "all")
+        )
       );
     status.textContent = total
       ? filterLabels.length

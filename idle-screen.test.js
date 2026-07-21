@@ -176,6 +176,29 @@ test("idle and photo choice screens accept looping video without blocking hotspo
   assert.ok(app.includes("const media = getWelcomeArtworkMedia(entry);"));
 });
 
+test("Amanda North has a built-in portrait looping idle screen", () => {
+  assert.ok(
+    app.includes(
+      'src: "/assets/themes/back-to-school/amanda-north-coyotes-idle-wave-portrait.mp4"'
+    )
+  );
+  assert.ok(app.includes('orientation: "portrait"'));
+  assert.ok(
+    app.includes(
+      'poster: "/assets/themes/back-to-school/back-to-school-idle-portrait.png"'
+    )
+  );
+  assert.ok(app.includes("start: { x: 50, y: 88, width: 84, height: 14 }"));
+});
+
+test("admin video previews use still images without downloading or autoplaying MP4s", () => {
+  const preview = extractFunction(app, "createAssetPreviewMedia");
+  assert.ok(preview.includes('document.createElement("img")'));
+  assert.ok(preview.includes("getVideoPreviewPosterSrc(entry, src)"));
+  assert.ok(!preview.includes('document.createElement("video")'));
+  assert.ok(!preview.includes(".play()"));
+});
+
 test("video screen hotspots use media dimensions in runtime and editor", () => {
   const coverRect = extractFunction(app, "getCoverImageRect");
   assert.ok(coverRect.includes("img.videoWidth"));

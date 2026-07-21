@@ -270,8 +270,48 @@
 
     .setup-session-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 16px;
+    }
+
+    .setup-session-theme {
+      grid-column: span 2;
+    }
+
+    .setup-session-theme #sessionThemeToggle {
+      min-height: 58px;
+      border-color: rgba(80, 191, 174, 0.68);
+      font-size: 1.08rem;
+      font-weight: 700;
+      padding: 12px 18px;
+    }
+
+    .setup-session-theme #sessionThemeValue {
+      color: #172e29;
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    @media (max-width: 900px) {
+      .setup-session-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .setup-session-theme {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .setup-session-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .setup-session-theme {
+        grid-column: auto;
+      }
     }
 
     .setup-session-assets {
@@ -399,8 +439,7 @@
 
     .setup-session-item span,
     .setup-session-item label,
-    .setup-session-mode span,
-    .setup-launch-warning {
+    .setup-session-mode span {
       display: block;
       color: var(--text-muted);
       font-size: 0.8rem;
@@ -409,6 +448,7 @@
     }
 
     .setup-session-item input,
+    .setup-session-item select,
     .setup-combobox-button,
     .setup-combobox-search {
       width: 100%;
@@ -420,6 +460,11 @@
       background: rgba(255, 255, 255, 0.92);
       color: #111111;
       font: inherit;
+    }
+
+    .setup-session-save-btn {
+      width: 100%;
+      margin-top: 8px;
     }
 
     .setup-combobox {
@@ -601,15 +646,6 @@
       background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(230, 246, 235, 0.99));
       border-color: #9fd3b6;
       box-shadow: 0 14px 26px rgba(92, 136, 112, 0.16);
-    }
-
-    .setup-launch-warning {
-      padding: 16px 24px;
-      border: 1px solid #f2c988;
-      border-radius: 16px;
-      background: #fffaf0;
-      color: #8b5a00;
-      text-transform: none;
     }
 
     .status-pill::before {
@@ -6487,7 +6523,7 @@
         >
       </div>
       <div class="setup-session-grid">
-        <div class="setup-session-item setup-combobox" data-setup-combobox="theme">
+        <div class="setup-session-item setup-combobox setup-session-theme" data-setup-combobox="theme">
           <label for="sessionThemeSearch">Theme</label>
           <button type="button" id="sessionThemeToggle" class="setup-combobox-button" aria-expanded="false" aria-controls="sessionThemeMenu">
             <span id="sessionThemeValue">Choose theme</span>
@@ -6498,18 +6534,15 @@
             <div id="sessionThemeOptions" class="setup-combobox-options" role="listbox" aria-label="Theme options"></div>
           </div>
           <select id="createPathThemeSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
-          <button type="button" id="setupThemeDefaultsBtn" class="setup-theme-defaults-btn">Set Up Theme Defaults</button>
         </div>
-        <div class="setup-session-item setup-combobox" data-setup-combobox="font">
-          <label for="sessionFontSearch">Font pairing</label>
-          <button type="button" id="sessionFontToggle" class="setup-combobox-button" aria-expanded="false" aria-controls="sessionFontMenu">
-            <span id="sessionFontValue">Choose pairing</span>
-            <span class="setup-combobox-caret" aria-hidden="true">▼</span>
-          </button>
-          <div id="sessionFontMenu" class="setup-combobox-menu hidden">
-            <input type="search" id="sessionFontSearch" class="setup-combobox-search" placeholder="Search pairings" autocomplete="off">
-            <div id="sessionFontOptions" class="setup-combobox-options" role="listbox" aria-label="Font pairing options"></div>
-          </div>
+        <div class="setup-session-item">
+          <label for="eventProfileSelect">Saved Event</label>
+          <select id="eventProfileSelect"></select>
+        </div>
+        <div class="setup-session-item">
+          <label for="eventNameInput">Session Name</label>
+          <input type="text" id="eventNameInput" placeholder="Session name" autocomplete="off" autocapitalize="words" spellcheck="false">
+          <button type="button" class="setup-session-save-btn" onclick="createNewEventFromSelection()">Save as New Event</button>
         </div>
       </div>
       <details class="setup-session-assets-toggle" id="setupSessionAssetsToggle">
@@ -6556,7 +6589,6 @@
           </div>
         </div>
       </details>
-      <div id="launchWarning" class="setup-launch-warning hidden"></div>
     </div>
     <div class="capture-mode-bar" data-setup-section="capture">
       <div class="capture-mode-copy">
@@ -6773,24 +6805,24 @@
         <details class="panel-section" id="currentAssetsSection" data-setup-section="event">
           <summary>Event Setup</summary>
           <div id="currentAssetsContent" class="section-content">
-            <section class="event-section-card">
-              <h3>Event Basics</h3>
+            <details class="event-library-section" id="eventDetailsPanel">
+              <summary>Customize Event Details</summary>
+              <div class="event-library-section-content">
+              <div class="setup-session-item setup-combobox" data-setup-combobox="font">
+                <label for="sessionFontSearch">Font pairing</label>
+                <button type="button" id="sessionFontToggle" class="setup-combobox-button" aria-expanded="false" aria-controls="sessionFontMenu">
+                  <span id="sessionFontValue">Choose pairing</span>
+                  <span class="setup-combobox-caret" aria-hidden="true">▼</span>
+                </button>
+                <div id="sessionFontMenu" class="setup-combobox-menu hidden">
+                  <input type="search" id="sessionFontSearch" class="setup-combobox-search" placeholder="Search pairings" autocomplete="off">
+                  <div id="sessionFontOptions" class="setup-combobox-options" role="listbox" aria-label="Font pairing options"></div>
+                </div>
+              </div>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:16px;">
                 <div class="theme-field">
-                  <label for="eventNameInput">Session Name</label>
-                  <input type="text" id="eventNameInput" placeholder="Session name" autocomplete="off" autocapitalize="words" spellcheck="false">
-                </div>
-                <div class="theme-field">
-                  <label for="eventDateInput">Session Date</label>
+                  <label for="eventDateInput">Session Date (optional)</label>
                   <input type="text" id="eventDateInput" placeholder="e.g., April 2026" autocomplete="off" spellcheck="false">
-                </div>
-                <div class="theme-field">
-                  <label for="eventProfileSelect">Saved Event</label>
-                  <select id="eventProfileSelect"></select>
-                </div>
-                <div class="theme-field">
-                  <label>&nbsp;</label>
-                  <button type="button" onclick="createNewEventFromSelection()">Save Event</button>
                 </div>
                 <div class="theme-field wedding-only-event-field">
                   <label for="eventPartner1Input">Partner 1</label>
@@ -6809,7 +6841,7 @@
                   <input type="text" id="eventExpoCompanyInput" placeholder="Name" autocomplete="off" autocapitalize="words" spellcheck="false">
                 </div>
               </div>
-              <h3>Guest Screen</h3>
+              <h3>Guest Screen Text</h3>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:16px;">
                 <div class="theme-field">
                   <label for="eventBannerTextInput">Banner Text</label>
@@ -6844,6 +6876,9 @@
                   </div>
                 </div>
               </div>
+              <div class="asset-actions">
+                <button type="button" id="setupThemeDefaultsBtn" class="setup-theme-defaults-btn">Edit Theme Preset</button>
+              </div>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
                 <div>
                   <div style="font-size:0.8em; color:#9aa; text-transform:uppercase; letter-spacing:0.12em;">Base Theme</div>
@@ -6855,10 +6890,12 @@
                   <div id="eventThemeReferenceText" style="color:#9aa; font-size:0.92em;">This event inherits from its chosen theme until you add event-only assets or text here.</div>
                 </div>
               </div>
-            </section>
-            <section class="event-section-card">
-              <h3>Event Assets</h3>
-              <div class="asset-actions">
+              </div>
+            </details>
+            <details class="event-library-section" id="uploadedAssetLibraryPanel">
+              <summary>Customize Assets</summary>
+              <div class="event-library-section-content">
+                <div class="asset-actions">
                 <button type="button" id="addLogoBtn">Add Logo</button>
                 <button type="button" id="addAssetsBtn">Add Assets</button>
                 <div id="eventGalleryActions" class="hidden admin-gallery-actions">
@@ -6867,11 +6904,7 @@
                 </div>
                 <button type="button" id="openLayoutBuilderBtn" aria-label="Open Overlay Builder" onclick="openLayoutBuilder()">Open Layout Builder</button>
                 <button type="button" id="eventToSubThemeBtn" class="hidden">Save Theme Preset</button>
-              </div>
-            </section>
-            <details class="event-library-section" id="uploadedAssetLibraryPanel" open>
-              <summary>Asset Library</summary>
-              <div class="event-library-section-content">
+                </div>
                 <div style="display:flex; align-items:center; justify-content:flex-end; gap:16px; margin-bottom:8px;">
                 <div class="asset-library-panel-actions">
                   <button type="button" id="assetLibraryClearFilters" class="hidden">Clear filters</button>
@@ -6887,7 +6920,7 @@
                 <label>
                   Category
                   <select id="assetLibraryCategory">
-                    <option value="">All Categories</option>
+                    <option value="">Main Category</option>
                     <option value="general">General</option>
                     <option value="birthday">Birthday</option>
                     <option value="school">School</option>
@@ -6936,8 +6969,8 @@
                 </div>
               </div>
             </div>
-            <details class="event-library-section" open>
-              <summary>Current Selections</summary>
+            <details class="event-library-section">
+              <summary>Advanced Asset Selections</summary>
               <div id="currentAssets" class="current-assets event-library-section-content">
               <div
                 style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px;">

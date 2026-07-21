@@ -6,7 +6,13 @@
 
 ## Current progress
 
+- Added Avery's Birthday portrait and landscape idle/photo-choice artwork with touch-safe Start, Single Photo, and Photo Strip hotspots; its sound profile plays Digital Circus on Start, Moxie after capture, and What Do You Think after the QR link renders.
 - Created the six-piece Amanda North Elementary Coyote Back to School artwork foundation pack, with bright royal-navy, sky-blue, and gold portrait and landscape backgrounds, idle screens, and photo-choice screens.
+- Registered the optimized Amanda North Coyote portrait waving idle MP4 as the ANE theme's looping guest idle screen, with a touch-safe Start hotspot over the artwork button.
+- Replaced autoplaying admin video previews with lazy still images: Cloudinary first-frame JPGs, explicit bundled posters, or a local placeholder.
+- Scoped Asset Library rendering and search to the selected theme's main event category by default; choosing another Category switches the preview scope, and clearing filters returns to the main category.
+- Simplified the default Event admin step to Saved Event, Session Name, Theme, and selected-asset summary; optional guest text, font, date, preset editing, and the Asset Library now stay collapsed until requested.
+- Removed the non-actionable yellow overlay warning and promoted Theme to the first, largest, touch-friendly Event setup control.
 - Fixed inactive setup sections so they no longer reserve invisible space above the active tab.
 - Moved frequently changed print controls to the top of Share and separated print, QR/cloud, email, and device settings with jump navigation.
 - Collapsed the less-frequently changed paid-print copy fields into a dedicated subsection.
