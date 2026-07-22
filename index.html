@@ -4050,6 +4050,15 @@
       opacity: 1;
     }
 
+    #boothScreen.has-theme-goodbye-screen #goodbyeOverlay {
+      background-image:
+        linear-gradient(180deg, rgba(3, 18, 45, 0.2), rgba(3, 18, 45, 0.38)),
+        var(--theme-goodbye-screen-image);
+      background-position: center;
+      background-size: cover;
+      background-color: var(--accent);
+    }
+
     .goodbye-card {
       position: relative;
       display: grid;
@@ -4062,6 +4071,11 @@
       box-shadow: 0 24px 48px rgba(58, 88, 78, 0.16);
       animation: reviewRise 320ms ease-out both;
       overflow: hidden;
+    }
+
+    #boothScreen.has-theme-goodbye-screen .goodbye-card {
+      border-color: color-mix(in srgb, var(--accent2) 76%, white);
+      box-shadow: 0 24px 48px rgba(3, 18, 45, 0.3);
     }
 
     .goodbye-card::before,

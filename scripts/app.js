@@ -823,7 +823,7 @@ themes.general.themes.averyBirthday = {
   },
   idleScreens: [
     {
-      src: "/assets/themes/avery-birthday/avery-birthday-idle-portrait.png",
+      src: "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp",
       name: "Avery birthday portrait idle screen",
       role: "idle",
       orientation: "portrait",
@@ -832,7 +832,7 @@ themes.general.themes.averyBirthday = {
       },
     },
     {
-      src: "/assets/themes/avery-birthday/avery-birthday-idle-landscape.png",
+      src: "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp",
       name: "Avery birthday idle screen",
       role: "idle",
       orientation: "landscape",
@@ -841,7 +841,7 @@ themes.general.themes.averyBirthday = {
       },
     },
     {
-      src: "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.png",
+      src: "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.webp",
       name: "Avery birthday portrait photo choice screen",
       role: "photo-choice",
       orientation: "portrait",
@@ -851,7 +851,7 @@ themes.general.themes.averyBirthday = {
       },
     },
     {
-      src: "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.png",
+      src: "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp",
       name: "Avery birthday photo choice screen",
       role: "photo-choice",
       orientation: "landscape",
@@ -5449,6 +5449,7 @@ async function loadThemesRemote() {
       normalizeAllThemes();
     } catch (_e) {}
     const removedLegacyThemes = removeLegacyFlatBuiltinThemes();
+    const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
     const repairedBackgroundDefaults = repairCorruptedBackgroundDefaults();
     const globalLogo = getGlobalLogo();
     if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
@@ -5456,7 +5457,8 @@ async function loadThemesRemote() {
     if (
       repairedBackgroundDefaults ||
       repairedOverlayDefaults ||
-      removedLegacyThemes
+      removedLegacyThemes ||
+      migratedAveryScreens
     )
       scheduleThemesRemoteSync();
     // Refresh UI if already initialized
@@ -6750,6 +6752,13 @@ function applyThemeShareScreen(theme) {
     screens[0] ||
     null;
   const src = getAssetEntrySrc(selected);
+  const backgroundIndex = Number.isInteger(theme && theme.backgroundIndex)
+    ? theme.backgroundIndex
+    : 0;
+  const goodbyeSrc =
+    src ||
+    getAssetEntrySrc(theme && theme.backgrounds && theme.backgrounds[backgroundIndex]) ||
+    getAssetEntrySrc(theme && theme.backgrounds && theme.backgrounds[0]);
   if (!DOM.boothScreen) return;
   if (src) {
     DOM.boothScreen.style.setProperty("--theme-share-screen-image", `url("${src}")`);
@@ -6757,6 +6766,16 @@ function applyThemeShareScreen(theme) {
   } else {
     DOM.boothScreen.style.removeProperty("--theme-share-screen-image");
     DOM.boothScreen.classList.remove("has-theme-share-screen");
+  }
+  if (goodbyeSrc) {
+    DOM.boothScreen.style.setProperty(
+      "--theme-goodbye-screen-image",
+      `url("${goodbyeSrc}")`
+    );
+    DOM.boothScreen.classList.add("has-theme-goodbye-screen");
+  } else {
+    DOM.boothScreen.style.removeProperty("--theme-goodbye-screen-image");
+    DOM.boothScreen.classList.remove("has-theme-goodbye-screen");
   }
 }
 
@@ -12976,13 +12995,13 @@ async function downloadShareImage() {
   }
 }
 
-function hideFinal() {
+function hideFinal(options = {}) {
   selectedFilter = "natural";
   applyFilterToVideo();
   updateFilterCarouselUI();
   clearPreviewFreezeFrame();
   DOM.finalPreview.classList.remove("show");
-  showGoodbyeMoment();
+  if (options.showGoodbye) showGoodbyeMoment();
   if (DOM.boothScreen)
     DOM.boothScreen.classList.remove("share-mode", "finalizing-mode");
   DOM.qrCodeContainer.classList.add("hidden");
@@ -13003,7 +13022,7 @@ function hideFinal() {
 }
 
 function finishBoothFlow() {
-  hideFinal();
+  hideFinal({ showGoodbye: true });
   clearTimeout(idleTimer);
   selectedOverlay = null;
   lastPhotoOverlay = null;
@@ -16136,6 +16155,25 @@ function ensureBuiltinThemes() {
   pruneMisplacedBuiltinThemes(themes);
 }
 
+function migrateOptimizedAveryScreenAssets(target = themes) {
+  const screens = target?.general?.themes?.averyBirthday?.idleScreens;
+  if (!Array.isArray(screens)) return false;
+  const replacements = {
+    "/assets/themes/avery-birthday/avery-birthday-idle-portrait.png": "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp",
+    "/assets/themes/avery-birthday/avery-birthday-idle-landscape.png": "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp",
+    "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.png": "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.webp",
+    "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.png": "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp",
+  };
+  let migrated = false;
+  screens.forEach((screen) => {
+    const nextSrc = screen && replacements[screen.src];
+    if (!nextSrc) return;
+    screen.src = nextSrc;
+    migrated = true;
+  });
+  return migrated;
+}
+
 function migrateLegacyBuiltinRootThemeDefaults() {
   for (const rootKey of Object.keys(BUILTIN_THEMES)) {
     const builtinGroup = BUILTIN_THEMES[rootKey];
@@ -16441,12 +16479,14 @@ function loadThemesFromStorage() {
       mergeStoredThemes(themes, parsed);
       fixBuiltinThemePlacements(themes);
       ensureBuiltinThemes();
+      const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
       try {
         normalizeAllThemes();
       } catch (_e) {}
       if (!hasCoreBuiltins(themes)) {
         resetThemesToBuiltins("stored themes missing core entries");
       }
+      if (migratedAveryScreens) saveThemesToStorage();
     } catch (err) {
       console.warn("Failed to parse stored themes", err);
     }

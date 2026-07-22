@@ -1275,10 +1275,28 @@ test("filter controls are hidden during countdown and non-interactive booth stat
 test("completed guest flows return directly to the idle screen", () => {
   const app = readProjectFile("scripts/app.js");
   assert.ok(app.includes("function finishBoothFlow()"));
+  assert.ok(
+    app.includes("function hideFinal(options = {})") &&
+      app.includes("if (options.showGoodbye) showGoodbyeMoment();") &&
+      app.includes("hideFinal({ showGoodbye: true });"),
+    "the Thank You overlay should only appear after a completed guest flow"
+  );
   assert.ok(app.includes('showWelcome("idle");'));
   assert.ok(app.includes("function exitFinalPreview() {\n  finishBoothFlow();"));
   assert.ok(app.includes("hidePreviewTimer = setTimeout(finishBoothFlow, 15000);"));
   assert.ok(app.includes("function retakePhoto() {\n  hideFinal();"));
+});
+
+test("Thank You uses the chosen theme artwork when available", () => {
+  const app = readProjectFile("scripts/app.js");
+  const html = readProjectFile("index.html");
+  assert.ok(
+    app.includes("--theme-goodbye-screen-image") &&
+      app.includes("const goodbyeSrc =") &&
+      app.includes("theme.backgrounds") &&
+      html.includes("#boothScreen.has-theme-goodbye-screen #goodbyeOverlay"),
+    "the Thank You screen should reuse the active theme share screen or background"
+  );
 });
 
 test("final share QR is only marked ready after rendering succeeds", () => {

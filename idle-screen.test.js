@@ -96,6 +96,24 @@ test("Amanda North STREAM Night includes the complete six-screen foundation pack
   assert.ok(app.includes('role: "photo-choice"'));
 });
 
+test("Avery's guest screens use bundled WebP artwork", () => {
+  [
+    "avery-birthday-idle-portrait.webp",
+    "avery-birthday-idle-landscape.webp",
+    "avery-birthday-photo-choice-portrait.webp",
+    "avery-birthday-photo-choice-landscape.webp",
+  ].forEach((filename) => {
+    assert.ok(
+      readFileSync(join(process.cwd(), "assets/themes/avery-birthday", filename)).length > 0,
+      `${filename} should be bundled`
+    );
+  });
+  assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp"'));
+  assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp"'));
+  assert.ok(app.includes("function migrateOptimizedAveryScreenAssets"));
+  assert.ok(app.includes("avery-birthday-idle-landscape.png\": \"/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp"));
+});
+
 test("legacy welcome remains the fallback when custom artwork is unavailable", () => {
   assert.ok(app.includes("else clearCustomIdleScreen();"));
   assert.ok(app.includes("DOM.welcomeScreen.classList.remove(\"custom-idle-screen\")"));
