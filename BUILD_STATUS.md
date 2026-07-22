@@ -2,10 +2,11 @@
 
 ## Current goal
 
-- Keep the guest Thank You screen tied to the completed photo-booth flow and active event theme.
+- Deliver polished, Snapchat-style photo correction without complicating the guest capture flow.
 
 ## Current progress
 
+- Upgraded the guest filter carousel from mild generic looks to camera-ready Natural, Soft Glow, Golden Hour, Vivid, and Mono presets. Each now includes restrained face-aware smoothing and targeted lighting correction, while Natural remains the default.
 - Fixed the idle timeout so it returns to the welcome screen without briefly showing Thank You; that overlay now appears only when a guest completes a final-preview flow.
 - Thank You now uses the selected theme's matching share artwork, or its selected background when no share artwork is supplied.
 - Redesigned the Event step around a visual theme picker with category filters, selected-theme summary, and a direct Continue to Capture action; saved events and session naming now follow as secondary controls.
@@ -85,12 +86,11 @@
 
 ## Next steps
 
-- Measure the deployed initial-load waterfall and split another large feature only if browser evidence shows a meaningful remaining startup cost.
+- Validate the new looks on the booth camera with real skin tones and both portrait and landscape lighting.
 
 ## Known bugs/blockers
 
-- No active blocker for the unified upload flow.
-- No active blocker for the hidden theme-editor migration.
+- No active blocker. The correction strength should be tuned with real event-camera lighting before any stronger retouching is added.
 
 ## Photo Choice Screen Feature
 
