@@ -112,6 +112,9 @@ test("Avery's guest screens use bundled WebP artwork", () => {
   assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp"'));
   assert.ok(app.includes("function migrateOptimizedAveryScreenAssets"));
   assert.ok(app.includes("avery-birthday-idle-landscape.png\": \"/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp"));
+  assert.ok(app.includes('"/assets/themes/avery-birthday/avery-birthday-background-landscape.webp"'));
+  assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp"'));
+  assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-share-portrait.webp"'));
 });
 
 test("legacy welcome remains the fallback when custom artwork is unavailable", () => {

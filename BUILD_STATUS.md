@@ -15,6 +15,8 @@
 - Categorized STREAM Night under Schools in the fast setup picker.
 - Added Avery's Birthday portrait and landscape idle/photo-choice artwork with touch-safe Start, Single Photo, and Photo Strip hotspots; its sound profile plays Digital Circus on Start, Moxie after capture, and What Do You Think after the QR link renders.
 - Optimized Avery's four guest screens as bundled WebP artwork at the existing dimensions, reducing the idle-screen downloads from 2.7–3.4 MB to 272–296 KB without changing the visual composition or hotspot geometry.
+- Added matching Avery birthday reusable backgrounds and share screens in portrait and landscape, with dark carnival-neon edge framing and clear center zones for live camera, final-photo, QR, and thank-you UI.
+- Replaced Avery's landscape background and share-screen base with a character-free dark carnival stage so the live camera and final photo have an uncluttered backdrop.
 - Created the six-piece Amanda North Elementary Coyote Back to School artwork foundation pack, with bright royal-navy, sky-blue, and gold portrait and landscape backgrounds, idle screens, and photo-choice screens.
 - Registered the optimized Amanda North Coyote portrait waving idle MP4 as the ANE theme's looping guest idle screen, with a touch-safe Start hotspot over the artwork button.
 - Replaced autoplaying admin video previews with lazy still images: Cloudinary first-frame JPGs, explicit bundled posters, or a local placeholder.

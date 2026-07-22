@@ -821,6 +821,21 @@ themes.general.themes.averyBirthday = {
     photoCaptured: "/assets/themes/avery-birthday/sounds/my-my-thats-quite-a-bit-of-moxie.mp3",
     shareReady: "/assets/themes/avery-birthday/sounds/what-do-you-think.mp3",
   },
+  backgrounds: [
+    "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
+  ],
+  shareScreens: [
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-share-portrait.webp",
+      orientation: "portrait",
+      name: "Avery birthday share screen portrait",
+    },
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
+      orientation: "landscape",
+      name: "Avery birthday character-free share screen landscape",
+    },
+  ],
   idleScreens: [
     {
       src: "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp",
@@ -16156,7 +16171,8 @@ function ensureBuiltinThemes() {
 }
 
 function migrateOptimizedAveryScreenAssets(target = themes) {
-  const screens = target?.general?.themes?.averyBirthday?.idleScreens;
+  const theme = target?.general?.themes?.averyBirthday;
+  const screens = theme?.idleScreens;
   if (!Array.isArray(screens)) return false;
   const replacements = {
     "/assets/themes/avery-birthday/avery-birthday-idle-portrait.png": "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp",
@@ -16171,6 +16187,18 @@ function migrateOptimizedAveryScreenAssets(target = themes) {
     screen.src = nextSrc;
     migrated = true;
   });
+  const legacyBirthdayBackground =
+    "https://res.cloudinary.com/afletch32/image/upload/v1783788398/photobooth/events/assets/birthday-background-1_wbydtd.png";
+  if (
+    Array.isArray(theme.backgrounds) &&
+    theme.backgrounds.length === 1 &&
+    theme.backgrounds[0] === legacyBirthdayBackground
+  ) {
+    theme.backgrounds = [
+      "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
+    ];
+    migrated = true;
+  }
   return migrated;
 }
 
