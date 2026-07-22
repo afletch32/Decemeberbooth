@@ -17,6 +17,8 @@
 - Optimized Avery's four guest screens as bundled WebP artwork at the existing dimensions, reducing the idle-screen downloads from 2.7–3.4 MB to 272–296 KB without changing the visual composition or hotspot geometry.
 - Added matching Avery birthday reusable backgrounds and share screens in portrait and landscape, with dark carnival-neon edge framing and clear center zones for live camera, final-photo, QR, and thank-you UI.
 - Replaced Avery's landscape background and share-screen base with a character-free dark carnival stage so the live camera and final photo have an uncluttered backdrop.
+- Added dedicated Avery birthday Thank You screens in portrait and landscape, so the completion moment uses the matching dark carnival stage instead of reusing the share background.
+- Styled the live Thank You! message for themed completion screens with high-contrast carnival typography, so the text remains prominent over Avery's dark artwork.
 - Created the six-piece Amanda North Elementary Coyote Back to School artwork foundation pack, with bright royal-navy, sky-blue, and gold portrait and landscape backgrounds, idle screens, and photo-choice screens.
 - Registered the optimized Amanda North Coyote portrait waving idle MP4 as the ANE theme's looping guest idle screen, with a touch-safe Start hotspot over the artwork button.
 - Replaced autoplaying admin video previews with lazy still images: Cloudinary first-frame JPGs, explicit bundled posters, or a local placeholder.

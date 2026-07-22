@@ -252,6 +252,32 @@ test("Amanda North provides portrait and landscape share-screen artwork", () => 
   );
 });
 
+test("Avery provides dedicated portrait and landscape thank-you screens", () => {
+  assert.ok(
+    app.includes(
+      'src: "/assets/themes/avery-birthday/avery-birthday-thank-you-portrait.webp"'
+    )
+  );
+  assert.ok(
+    app.includes(
+      'src: "/assets/themes/avery-birthday/avery-birthday-thank-you-landscape.webp"'
+    )
+  );
+  assert.ok(app.includes("const thankYouScreens = Array.isArray(theme && theme.thankYouScreens)"));
+  assert.ok(
+    readFileSync(
+      join(process.cwd(), "assets/themes/avery-birthday/avery-birthday-thank-you-portrait.webp")
+    ).length > 0
+  );
+  assert.ok(
+    readFileSync(
+      join(process.cwd(), "assets/themes/avery-birthday/avery-birthday-thank-you-landscape.webp")
+    ).length > 0
+  );
+  assert.ok(html.includes("#boothScreen.has-theme-goodbye-screen .goodbye-card h2"));
+  assert.ok(html.includes("<h2>Thank You!</h2>"));
+});
+
 test("admin video previews use still images without downloading or autoplaying MP4s", () => {
   const preview = extractFunction(app, "createAssetPreviewMedia");
   assert.ok(preview.includes('document.createElement("img")'));

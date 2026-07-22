@@ -836,6 +836,18 @@ themes.general.themes.averyBirthday = {
       name: "Avery birthday character-free share screen landscape",
     },
   ],
+  thankYouScreens: [
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-thank-you-portrait.webp",
+      orientation: "portrait",
+      name: "Avery birthday thank-you screen portrait",
+    },
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-thank-you-landscape.webp",
+      orientation: "landscape",
+      name: "Avery birthday thank-you screen landscape",
+    },
+  ],
   idleScreens: [
     {
       src: "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp",
@@ -6761,16 +6773,26 @@ function applyThemeBasics(theme) {
 
 function applyThemeShareScreen(theme) {
   const screens = Array.isArray(theme && theme.shareScreens) ? theme.shareScreens : [];
+  const thankYouScreens = Array.isArray(theme && theme.thankYouScreens)
+    ? theme.thankYouScreens
+    : [];
   const orientation = getIdleScreenViewportOrientation();
   const selected =
     screens.find((entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation) ||
     screens[0] ||
+    null;
+  const selectedThankYou =
+    thankYouScreens.find(
+      (entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation
+    ) ||
+    thankYouScreens[0] ||
     null;
   const src = getAssetEntrySrc(selected);
   const backgroundIndex = Number.isInteger(theme && theme.backgroundIndex)
     ? theme.backgroundIndex
     : 0;
   const goodbyeSrc =
+    getAssetEntrySrc(selectedThankYou) ||
     src ||
     getAssetEntrySrc(theme && theme.backgrounds && theme.backgrounds[backgroundIndex]) ||
     getAssetEntrySrc(theme && theme.backgrounds && theme.backgrounds[0]);
