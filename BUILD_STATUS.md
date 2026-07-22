@@ -19,6 +19,7 @@
 - Replaced Avery's landscape background and share-screen base with a character-free dark carnival stage so the live camera and final photo have an uncluttered backdrop.
 - Added dedicated Avery birthday Thank You screens in portrait and landscape, so the completion moment uses the matching dark carnival stage instead of reusing the share background.
 - Styled the live Thank You! message for themed completion screens with high-contrast carnival typography, so the text remains prominent over Avery's dark artwork.
+- Restored subtle animated sparkles over custom idle and photo-choice artwork, plus a gentle Thank You light sweep; all motion is non-interactive and disabled for reduced-motion guests.
 - Created the six-piece Amanda North Elementary Coyote Back to School artwork foundation pack, with bright royal-navy, sky-blue, and gold portrait and landscape backgrounds, idle screens, and photo-choice screens.
 - Registered the optimized Amanda North Coyote portrait waving idle MP4 as the ANE theme's looping guest idle screen, with a touch-safe Start hotspot over the artwork button.
 - Replaced autoplaying admin video previews with lazy still images: Cloudinary first-frame JPGs, explicit bundled posters, or a local placeholder.

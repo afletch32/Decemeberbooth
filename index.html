@@ -3606,10 +3606,31 @@
 
     #welcomeScreen.custom-idle-screen { overflow: hidden; background: #000 !important; }
     #welcomeScreen.custom-idle-screen::before,
-    #welcomeScreen.custom-idle-screen::after { display: none; }
+    #welcomeScreen.custom-idle-screen::after,
+    #welcomeScreen.custom-photo-choice-screen::before,
+    #welcomeScreen.custom-photo-choice-screen::after {
+      display: block;
+      z-index: 1;
+      mix-blend-mode: screen;
+      opacity: 0.42;
+      background:
+        radial-gradient(circle at 14% 24%, rgba(255, 255, 255, 0.8) 0 2px, transparent 4px),
+        radial-gradient(circle at 82% 18%, rgba(255, 209, 91, 0.92) 0 3px, transparent 5px),
+        radial-gradient(circle at 72% 76%, rgba(255, 52, 161, 0.68) 0 3px, transparent 5px),
+        radial-gradient(circle at 24% 70%, rgba(255, 89, 118, 0.62) 0 2px, transparent 4px);
+      background-size: 280px 280px;
+      animation: boothArtworkSparkle 12s linear infinite;
+    }
+    #welcomeScreen.custom-idle-screen::after,
+    #welcomeScreen.custom-photo-choice-screen::after {
+      opacity: 0.26;
+      background-size: 420px 420px;
+      animation-duration: 18s;
+      animation-direction: reverse;
+    }
     #welcomeScreen.custom-idle-screen #welcomeImg,
     #welcomeScreen.custom-idle-screen #welcomeVideo { display: block !important; z-index: 0; }
-    #welcomeScreen.custom-idle-screen #welcomeOverlay { position: absolute; inset: 0; width: 100%; max-width: none; min-width: 0; max-height: none; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; animation: none; transform: none; overflow: visible; }
+    #welcomeScreen.custom-idle-screen #welcomeOverlay { position: absolute; inset: 0; z-index: 2; width: 100%; max-width: none; min-width: 0; max-height: none; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; animation: none; transform: none; overflow: visible; }
     #welcomeScreen.custom-idle-screen #welcomeEyebrow,
     #welcomeScreen.custom-idle-screen #welcomeDemoStep,
     #welcomeScreen.custom-idle-screen #welcomeModeStep,
@@ -3620,11 +3641,9 @@
     #welcomeScreen.custom-idle-screen #startButton { position: absolute; margin: 0; min-width: 0; padding: 0; border: 0; outline: 0; border-radius: 0; background: transparent; box-shadow: none; color: transparent; font-size: 0; opacity: 1; filter: none; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; transform: none; cursor: pointer; touch-action: manipulation; }
     #welcomeScreen.custom-idle-screen #startButton:focus-visible { outline: 4px solid #fff; outline-offset: -4px; box-shadow: 0 0 0 7px #155eef; }
     #welcomeScreen.custom-photo-choice-screen { overflow: hidden; background: #000 !important; }
-    #welcomeScreen.custom-photo-choice-screen::before,
-    #welcomeScreen.custom-photo-choice-screen::after { display: none; }
     #welcomeScreen.custom-photo-choice-screen #welcomeImg,
     #welcomeScreen.custom-photo-choice-screen #welcomeVideo { display: block !important; z-index: 0; }
-    #welcomeScreen.custom-photo-choice-screen #welcomeOverlay { position: absolute; inset: 0; width: 100%; max-width: none; min-width: 0; max-height: none; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; animation: none; transform: none; overflow: visible; }
+    #welcomeScreen.custom-photo-choice-screen #welcomeOverlay { position: absolute; inset: 0; z-index: 2; width: 100%; max-width: none; min-width: 0; max-height: none; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; animation: none; transform: none; overflow: visible; }
     #welcomeScreen.custom-photo-choice-screen #welcomeEyebrow,
     #welcomeScreen.custom-photo-choice-screen #welcomeDemoStep,
     #welcomeScreen.custom-photo-choice-screen #welcomeIdleStep,
@@ -3833,6 +3852,11 @@
       #welcomeScreen.welcome-transitioning #welcomeOverlay::after { animation-duration: 1ms; }
       .start-button.welcome-hotspot-pressed,
       .welcome-mode-btn.welcome-hotspot-pressed { transition-duration: 1ms; }
+      #welcomeScreen.custom-idle-screen::before,
+      #welcomeScreen.custom-idle-screen::after,
+      #welcomeScreen.custom-photo-choice-screen::before,
+      #welcomeScreen.custom-photo-choice-screen::after,
+      #boothScreen.has-theme-goodbye-screen #goodbyeOverlay::after { animation: none; }
     }
 
     .demo-theme-bar {
@@ -4059,6 +4083,16 @@
       background-color: var(--accent);
     }
 
+    #boothScreen.has-theme-goodbye-screen #goodbyeOverlay::after {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      pointer-events: none;
+      background: linear-gradient(112deg, transparent 42%, rgba(255, 235, 171, 0.2) 50%, transparent 58%);
+      transform: translateX(-42%);
+      animation: boothThankYouSweep 4.8s ease-in-out infinite;
+    }
+
     .goodbye-card {
       position: relative;
       display: grid;
@@ -4138,6 +4172,17 @@
     @keyframes boothAmbientFloat {
       from { transform: translate3d(-8px, -6px, 0) scale(1); }
       to { transform: translate3d(10px, 8px, 0) scale(1.02); }
+    }
+
+    @keyframes boothArtworkSparkle {
+      from { background-position: 0 0, 0 0, 0 0, 0 0; }
+      to { background-position: 94px -116px, -142px 88px, 78px 132px, -72px -96px; }
+    }
+
+    @keyframes boothThankYouSweep {
+      0%, 58% { opacity: 0; transform: translateX(-42%) rotate(0.001deg); }
+      72% { opacity: 1; }
+      100% { opacity: 0; transform: translateX(42%) rotate(0.001deg); }
     }
 
     @keyframes boothPanelDrift {

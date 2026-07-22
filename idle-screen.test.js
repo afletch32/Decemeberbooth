@@ -278,6 +278,16 @@ test("Avery provides dedicated portrait and landscape thank-you screens", () => 
   assert.ok(html.includes("<h2>Thank You!</h2>"));
 });
 
+test("custom guest artwork keeps lightweight ambient motion without blocking hotspots", () => {
+  assert.ok(html.includes("#welcomeScreen.custom-idle-screen::before"));
+  assert.ok(html.includes("#welcomeScreen.custom-photo-choice-screen::before"));
+  assert.ok(html.includes("animation: boothArtworkSparkle 12s linear infinite"));
+  assert.ok(html.includes("#boothScreen.has-theme-goodbye-screen #goodbyeOverlay::after"));
+  assert.ok(html.includes("@keyframes boothThankYouSweep"));
+  assert.ok(html.includes("pointer-events: none;"));
+  assert.ok(html.includes("@media (prefers-reduced-motion: reduce)"));
+});
+
 test("admin video previews use still images without downloading or autoplaying MP4s", () => {
   const preview = extractFunction(app, "createAssetPreviewMedia");
   assert.ok(preview.includes('document.createElement("img")'));
