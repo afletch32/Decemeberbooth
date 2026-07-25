@@ -2,10 +2,13 @@
 
 ## Current goal
 
-- Keep the Amanda North guest flow fully themed from Tap to Start through photo-type choice.
+- Make selecting a theme automatically apply its available booth-screen package, with only portrait or landscape to choose.
 
 ## Current progress
 
+- Completed the separate General Back to School eight-screen package: portrait and landscape Start, photo-choice, reusable chalkboard background, and Thank You screens. It is intentionally distinct from the Amanda North Coyote Back to School theme.
+- The Schools picker now lists two separate Amanda North themes: Amanda North Back to School and Amanda North STREAM Night. Older saved names migrate to the clearer labels.
+- Theme setup now has one Booth screen shape choice (Portrait or Landscape). That selection drives the matching theme idle, photo-choice, background, share, and Thank You screens; a partial event screen override no longer replaces the matching built-in screen for the other shape.
 - Registered Amanda North's bundled portrait and landscape photo-choice artwork and touch-safe Single Photo/Photo Strip hotspots. Tapping Start now goes to the custom Coyote selection screen instead of the generic Start Strip chooser; registered the matching background and landscape idle screen at the same time.
 - Upgraded the guest filter carousel from mild generic looks to camera-ready Natural, Soft Glow, Golden Hour, Vivid, and Mono presets. Each now includes restrained face-aware smoothing and targeted lighting correction, while Natural remains the default.
 - Added Infernal Toon to the guest filter carousel. Finished images use Cloudinary's cartoonify delivery effect for an actual illustrated result, while the booth keeps a light, natural-color preview. Natural remains the default.

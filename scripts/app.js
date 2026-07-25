@@ -202,6 +202,80 @@ let themes = {
           prompt: "Touch to start",
         },
       },
+      backToSchool: {
+        name: "Back to School",
+        eventTypes: ["general", "community"],
+        fontPairingStyle: "community",
+        accent: "#b3261e",
+        accent2: "#f5d08a",
+        font: "'Bree Serif', serif",
+        logo: "",
+        backgrounds: [
+          "/assets/themes/general-back-to-school/back-to-school-background-landscape.png",
+          "/assets/themes/general-back-to-school/back-to-school-background-portrait.png",
+        ],
+        idleScreens: [
+          {
+            src: "/assets/themes/general-back-to-school/back-to-school-idle-portrait.png",
+            name: "Back to School idle screen portrait",
+            role: "idle",
+            orientation: "portrait",
+            buttonZones: {
+              start: { x: 50, y: 75, width: 43, height: 22 },
+            },
+          },
+          {
+            src: "/assets/themes/general-back-to-school/back-to-school-idle-landscape.png",
+            name: "Back to School idle screen landscape",
+            role: "idle",
+            orientation: "landscape",
+            buttonZones: {
+              start: { x: 50, y: 67, width: 50, height: 19 },
+            },
+          },
+          {
+            src: "/assets/themes/general-back-to-school/back-to-school-photo-choice-portrait.png",
+            name: "Back to School photo choice portrait",
+            role: "photo-choice",
+            orientation: "portrait",
+            buttonZones: {
+              singlePhoto: { x: 50, y: 39, width: 65, height: 25 },
+              photoStrip: { x: 50, y: 75, width: 65, height: 39 },
+            },
+          },
+          {
+            src: "/assets/themes/general-back-to-school/back-to-school-photo-choice-landscape.png",
+            name: "Back to School photo choice landscape",
+            role: "photo-choice",
+            orientation: "landscape",
+            buttonZones: {
+              singlePhoto: { x: 34, y: 48, width: 32, height: 47 },
+              photoStrip: { x: 67, y: 48, width: 32, height: 47 },
+            },
+          },
+        ],
+        thankYouScreens: [
+          {
+            src: "/assets/themes/general-back-to-school/back-to-school-thank-you-portrait.png",
+            name: "Back to School Thank You screen portrait",
+            orientation: "portrait",
+          },
+          {
+            src: "/assets/themes/general-back-to-school/back-to-school-thank-you-landscape.png",
+            name: "Back to School Thank You screen landscape",
+            orientation: "landscape",
+          },
+        ],
+        overlays: [],
+        templates: [],
+        welcome: {
+          title: "Back to School",
+          portrait: "",
+          landscape: "",
+          prompt: "Tap to start",
+        },
+        vibeSummary: "Classic classroom warmth with chalkboard, books, and apples",
+      },
       birthday: {
         name: "Birthday",
         eventTypes: ["party", "general"],
@@ -444,7 +518,7 @@ let themes = {
         },
       },
       ane: {
-        name: "ANE",
+        name: "Amanda North Back to School",
         eventTypes: ["community"],
         fontPairingStyle: "community",
         accent: "#041E42",
@@ -521,7 +595,7 @@ let themes = {
         },
       },
       streamNight: {
-        name: "STREAM Night",
+        name: "Amanda North STREAM Night",
         eventTypes: ["community"],
         fontPairingStyle: "community",
         accent: "#0e62d9",
@@ -1019,6 +1093,7 @@ const DOM = {
   sessionThemeMenu: document.getElementById("sessionThemeMenu"),
   sessionThemeSearch: document.getElementById("sessionThemeSearch"),
   sessionThemeOptions: document.getElementById("sessionThemeOptions"),
+  guestScreenOrientation: document.getElementById("guestScreenOrientation"),
   themeQuickFilters: document.getElementById("themeQuickFilters"),
   themeQuickGrid: document.getElementById("themeQuickGrid"),
   themeQuickSelectionName: document.getElementById("themeQuickSelectionName"),
@@ -2596,6 +2671,7 @@ const THEME_SETUP_GROUP_ORDER = [
 const THEME_SETUP_GROUP_ITEM_ORDER = {
   General: [
     "Basic",
+    "Back to School",
     "Birthday",
     "Expo",
     "Brand Studio",
@@ -2618,11 +2694,12 @@ const THEME_SETUP_GROUP_ITEM_ORDER = {
     "St. Patrick's Day",
   ],
   Wedding: ["Garden Vows", "Timeless Romance"],
-  Youth: ["Hawks", "Amanda North"],
+  Youth: ["Hawks", "Amanda North Back to School", "Amanda North STREAM Night"],
 };
 
 const THEME_SETUP_LABEL_OVERRIDES = {
   basic: "Basic",
+  "back to school": "Back to School",
   birthday: "Birthday",
   summer: "Summer",
   fall: "Fall",
@@ -2646,7 +2723,8 @@ const THEME_SETUP_LABEL_OVERRIDES = {
   "garden vows": "Garden Vows",
   "timeless romance": "Timeless Romance",
   hawks: "Hawks",
-  ane: "Amanda North",
+  ane: "Amanda North Back to School",
+  "stream night": "Amanda North STREAM Night",
   "winter wonderland": "Winter Wonderland",
   "santa s workshop": "Santa's Workshop",
   "santa's workshop": "Santa's Workshop",
@@ -3207,6 +3285,11 @@ function setupEventProfileControls() {
       setQuickStartSessionDate(getLocalIsoDate());
       setEventSelection(key);
       loadTheme(key);
+    });
+  }
+  if (DOM.guestScreenOrientation) {
+    DOM.guestScreenOrientation.addEventListener("change", () => {
+      setGuestScreenOrientation(DOM.guestScreenOrientation.value);
     });
   }
   if (DOM.sessionThemeToggle) {
@@ -5594,6 +5677,7 @@ async function loadThemesRemote() {
     } catch (_e) {}
     const removedLegacyThemes = removeLegacyFlatBuiltinThemes();
     const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
+    const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
     const repairedBackgroundDefaults = repairCorruptedBackgroundDefaults();
     const globalLogo = getGlobalLogo();
     if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
@@ -5602,7 +5686,8 @@ async function loadThemesRemote() {
       repairedBackgroundDefaults ||
       repairedOverlayDefaults ||
       removedLegacyThemes ||
-      migratedAveryScreens
+      migratedAveryScreens ||
+      migratedAmandaNorthScreens
     )
       scheduleThemesRemoteSync();
     // Refresh UI if already initialized
@@ -6894,7 +6979,7 @@ function applyThemeShareScreen(theme) {
     ? theme.thankYouScreens
     : [];
   const eventThankYouScreens = getActiveEventOverrides().thankYouScreens;
-  const orientation = getIdleScreenViewportOrientation();
+  const orientation = getGuestScreenOrientation();
   const selected =
     screens.find((entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation) ||
     screens[0] ||
@@ -6910,14 +6995,10 @@ function applyThemeShareScreen(theme) {
     thankYouScreens[0] ||
     null;
   const src = getAssetEntrySrc(selected);
-  const backgroundIndex = Number.isInteger(theme && theme.backgroundIndex)
-    ? theme.backgroundIndex
-    : 0;
   const goodbyeSrc =
     getAssetEntrySrc(selectedThankYou) ||
     src ||
-    getAssetEntrySrc(theme && theme.backgrounds && theme.backgrounds[backgroundIndex]) ||
-    getAssetEntrySrc(theme && theme.backgrounds && theme.backgrounds[0]);
+    getActiveBackground(theme);
   if (!DOM.boothScreen) return;
   if (src) {
     DOM.boothScreen.style.setProperty("--theme-share-screen-image", `url("${src}")`);
@@ -6969,6 +7050,7 @@ function syncAdminUiWithTheme(themeKey, theme) {
   syncThemeEditorWithActiveTheme();
   if (DOM.eventNameInput) DOM.eventNameInput.value = storedName || "";
   if (DOM.eventDateInput) DOM.eventDateInput.value = storedDate || sessionDate || "";
+  syncGuestScreenOrientationControl();
   syncEventSetupEditor(theme);
   updateStylePreview();
 }
@@ -7107,7 +7189,7 @@ async function ensureAiSegmentation() {
       locateFile: (file) =>
         `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`,
     });
-    segmenter.setOptions({ modelSelection: 1 });
+    segmenter.setOptions({ modelSelection: 0 });
     segmenter.onResults((results) => {
       if (typeof aiSegmentationResolver === "function") {
         aiSegmentationResolver(results);
@@ -7130,6 +7212,8 @@ async function getAiSegmentationMask(sourceCanvas) {
       maskCanvas.height = sourceCanvas.height;
       const maskCtx = maskCanvas.getContext("2d");
       if (maskCtx && results && results.segmentationMask) {
+        maskCtx.imageSmoothingEnabled = true;
+        maskCtx.imageSmoothingQuality = "high";
         maskCtx.drawImage(
           results.segmentationMask,
           0,
@@ -7137,13 +7221,49 @@ async function getAiSegmentationMask(sourceCanvas) {
           maskCanvas.width,
           maskCanvas.height
         );
-        resolve(maskCanvas);
+        resolve(refineAiSegmentationMask(maskCanvas));
       } else {
         resolve(null);
       }
     };
     segmenter.send({ image: sourceCanvas }).catch(() => resolve(null));
   });
+}
+
+function refineAiSegmentationMask(maskCanvas) {
+  if (!maskCanvas) return null;
+  const width = maskCanvas.width;
+  const height = maskCanvas.height;
+  const sourceCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
+  if (!sourceCtx || !width || !height) return maskCanvas;
+  const source = sourceCtx.getImageData(0, 0, width, height);
+  const pixels = source.data;
+  let hasTransparentPixels = false;
+  for (let index = 3; index < pixels.length; index += 4) {
+    if (pixels[index] < 250) {
+      hasTransparentPixels = true;
+      break;
+    }
+  }
+  for (let index = 0; index < pixels.length; index += 4) {
+    const luma = Math.round(
+      pixels[index] * 0.299 + pixels[index + 1] * 0.587 + pixels[index + 2] * 0.114
+    );
+    pixels[index] = 255;
+    pixels[index + 1] = 255;
+    pixels[index + 2] = 255;
+    pixels[index + 3] = hasTransparentPixels ? pixels[index + 3] : luma;
+  }
+  sourceCtx.putImageData(source, 0, 0);
+  const feathered = document.createElement("canvas");
+  feathered.width = width;
+  feathered.height = height;
+  const featheredCtx = feathered.getContext("2d");
+  if (!featheredCtx) return maskCanvas;
+  featheredCtx.filter = "blur(2px)";
+  featheredCtx.drawImage(maskCanvas, 0, 0);
+  featheredCtx.filter = "none";
+  return feathered;
 }
 
 function applyAiMaskToCanvas(sourceCanvas, maskCanvas) {
@@ -8562,6 +8682,43 @@ function getIdleScreenViewportOrientation() {
   return window.innerHeight > window.innerWidth ? "portrait" : "landscape";
 }
 
+function getGuestScreenOrientation() {
+  const active = getActiveEvent();
+  const stored =
+    (active && active.guestScreenOrientation) ||
+    activeSessionTextDetails.guestScreenOrientation ||
+    "";
+  return stored
+    ? normalizeIdleScreenOrientation(stored)
+    : getIdleScreenViewportOrientation();
+}
+
+function syncGuestScreenOrientationControl() {
+  if (!DOM.guestScreenOrientation) return;
+  DOM.guestScreenOrientation.value = getGuestScreenOrientation();
+  DOM.guestScreenOrientation.disabled = !(
+    getActiveEvent() ||
+    activeTheme ||
+    getSelectedThemeTarget()
+  );
+}
+
+function setGuestScreenOrientation(value) {
+  const orientation = normalizeIdleScreenOrientation(value);
+  const active = getActiveEvent();
+  if (active) {
+    updateActiveEventDetails({ guestScreenOrientation: orientation });
+  } else {
+    updateActiveSessionTextDetails({ guestScreenOrientation: orientation });
+    if (activeTheme) applyThemeBasics(activeTheme);
+  }
+  photoOverlayOrientation = orientation;
+  applyPreviewOrientation();
+  renderOptions();
+  syncGuestScreenOrientationControl();
+  updateLaunchSummary();
+}
+
 function getIdleScreenAssignmentEntries() {
   const themeEntries = Array.isArray(activeTheme && activeTheme.idleScreens)
     ? activeTheme.idleScreens
@@ -8585,15 +8742,13 @@ function hydrateIdleScreenEntry(entry) {
 
 function selectIdleScreenEntry() {
   const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
-  const find = (entries) => {
-    const idleEntries = entries.filter((entry) => entry && entry.role !== "photo-choice");
-    const orientation = getIdleScreenViewportOrientation();
-    return (
-      idleEntries.find(
+  const orientation = getGuestScreenOrientation();
+  const find = (entries) =>
+    entries
+      .filter((entry) => entry && entry.role !== "photo-choice")
+      .find(
         (entry) => normalizeIdleScreenOrientation(entry.orientation) === orientation
-      ) || idleEntries[0]
-    );
-  };
+      ) || null;
   return hydrateIdleScreenEntry(
     find(eventEntries) || find(themeEntries) || null
   );
@@ -8601,15 +8756,13 @@ function selectIdleScreenEntry() {
 
 function selectPhotoChoiceScreenEntry() {
   const { eventEntries, themeEntries } = getIdleScreenAssignmentEntries();
-  const find = (entries) => {
-    const choiceEntries = entries.filter((entry) => entry && entry.role === "photo-choice");
-    const orientation = getIdleScreenViewportOrientation();
-    return (
-      choiceEntries.find(
+  const orientation = getGuestScreenOrientation();
+  const find = (entries) =>
+    entries
+      .filter((entry) => entry && entry.role === "photo-choice")
+      .find(
         (entry) => normalizeIdleScreenOrientation(entry.orientation) === orientation
-      ) || choiceEntries[0]
-    );
-  };
+      ) || null;
   return hydrateIdleScreenEntry(
     find(eventEntries) || find(themeEntries) || null
   );
@@ -12170,6 +12323,7 @@ function updateActiveEventDetails({
   welcomeTitleSize,
   startButtonText,
   captureLabel,
+  guestScreenOrientation,
   partner1,
   partner2,
   birthdayName,
@@ -12206,6 +12360,11 @@ function updateActiveEventDetails({
   if (typeof startButtonText === "string")
     target.startButtonText = startButtonText;
   if (typeof captureLabel === "string") target.captureLabel = captureLabel;
+  if (typeof guestScreenOrientation === "string") {
+    target.guestScreenOrientation = normalizeIdleScreenOrientation(
+      guestScreenOrientation
+    );
+  }
   if (typeof logo === "string") {
     if (logo) target.logo = logo;
     else delete target.logo;
@@ -12722,6 +12881,7 @@ function updateActiveSessionTextDetails(changes = {}) {
     "partner2",
     "birthdayName",
     "expoCompany",
+    "guestScreenOrientation",
   ].forEach((key) => {
     if (typeof changes[key] === "string") {
       activeSessionTextDetails[key] = changes[key];
@@ -16517,6 +16677,40 @@ function migrateOptimizedAveryScreenAssets(target = themes) {
   return migrated;
 }
 
+function migrateAmandaNorthScreenAssets(target = themes) {
+  const theme = target?.youth?.themes?.ane;
+  const defaults = BUILTIN_THEMES.youth?.themes?.ane;
+  if (!theme || !defaults) return false;
+  let migrated = false;
+  if (theme.name === "ANE" || theme.name === "Amanda North") {
+    theme.name = defaults.name;
+    migrated = true;
+  }
+  ["idleScreens", "backgrounds", "shareScreens"].forEach((field) => {
+    const existing = Array.isArray(theme[field]) ? theme[field] : [];
+    const missing = (Array.isArray(defaults[field]) ? defaults[field] : []).filter(
+      (entry) => {
+        const src = getAssetEntrySrc(entry);
+        return src && !existing.some((item) => getAssetEntrySrc(item) === src);
+      }
+    );
+    if (!missing.length) return;
+    theme[field] = [...existing, ...missing.map(cloneThemeValue)];
+    migrated = true;
+  });
+  const streamNight = target?.youth?.themes?.streamNight;
+  const streamNightDefaults = BUILTIN_THEMES.youth?.themes?.streamNight;
+  if (
+    streamNight &&
+    streamNightDefaults &&
+    streamNight.name === "STREAM Night"
+  ) {
+    streamNight.name = streamNightDefaults.name;
+    migrated = true;
+  }
+  return migrated;
+}
+
 function migrateLegacyBuiltinRootThemeDefaults() {
   for (const rootKey of Object.keys(BUILTIN_THEMES)) {
     const builtinGroup = BUILTIN_THEMES[rootKey];
@@ -16823,13 +17017,14 @@ function loadThemesFromStorage() {
       fixBuiltinThemePlacements(themes);
       ensureBuiltinThemes();
       const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
+      const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
       try {
         normalizeAllThemes();
       } catch (_e) {}
       if (!hasCoreBuiltins(themes)) {
         resetThemesToBuiltins("stored themes missing core entries");
       }
-      if (migratedAveryScreens) saveThemesToStorage();
+      if (migratedAveryScreens || migratedAmandaNorthScreens) saveThemesToStorage();
     } catch (err) {
       console.warn("Failed to parse stored themes", err);
     }
@@ -19442,6 +19637,12 @@ function getActiveBackground(theme) {
     return overrides.backgrounds[idx];
   }
   if (baseList.length === 0) return "";
+  const orientation = getGuestScreenOrientation();
+  const orientationMatch = baseList.find((entry) => {
+    const src = getAssetEntrySrc(entry).toLowerCase();
+    return src.includes(`-${orientation}.`) || src.includes(`-${orientation}-`);
+  });
+  if (orientationMatch) return orientationMatch;
   const idx =
     typeof theme.backgroundIndex === "number"
       ? Math.min(Math.max(theme.backgroundIndex, 0), baseList.length - 1)

@@ -64,7 +64,7 @@ test("idle screen editor state does not call late-defined helpers during app sta
   );
 });
 
-test("idle screen selection uses the manually selected event entry and matching orientation", () => {
+test("idle screen selection uses the matching event entry and selected booth shape", () => {
   const resolver = extractFunctionFromEither(app, "", "selectIdleScreenEntry");
   assert.ok(
     resolver.includes("getIdleScreenAssignmentEntries()"),
@@ -74,8 +74,23 @@ test("idle screen selection uses the manually selected event entry and matching 
     resolver.includes("find(eventEntries) || find(themeEntries)"),
     "the selected event/session screen should win without changing with the viewport"
   );
-  assert.ok(resolver.includes("getIdleScreenViewportOrientation()"));
+  assert.ok(resolver.includes("getGuestScreenOrientation()"));
   assert.ok(resolver.includes("normalizeIdleScreenOrientation(entry.orientation)"));
+});
+
+test("theme selection uses one booth screen shape for every themed guest screen", () => {
+  assert.ok(html.includes('id="guestScreenOrientation"'));
+  assert.ok(html.includes("Booth screen shape"));
+  assert.ok(app.includes("function getGuestScreenOrientation()"));
+  assert.ok(app.includes("function setGuestScreenOrientation(value)"));
+  assert.ok(app.includes("const orientation = getGuestScreenOrientation();"));
+  assert.ok(app.includes("getActiveBackground(theme);"));
+  const idleResolver = extractFunctionFromEither(app, "", "selectIdleScreenEntry");
+  const choiceResolver = extractFunctionFromEither(app, "", "selectPhotoChoiceScreenEntry");
+  assert.ok(idleResolver.includes("find(eventEntries) || find(themeEntries)"));
+  assert.ok(choiceResolver.includes("find(eventEntries) || find(themeEntries)"));
+  assert.ok(!idleResolver.includes("idleEntries[0]"));
+  assert.ok(!choiceResolver.includes("choiceEntries[0]"));
 });
 
 test("Amanda North STREAM Night includes the complete six-screen foundation pack", () => {
@@ -92,8 +107,38 @@ test("Amanda North STREAM Night includes the complete six-screen foundation pack
       `${filename} should be bundled`
     );
   });
-  assert.ok(app.includes('name: "STREAM Night"'));
+  assert.ok(app.includes('name: "Amanda North STREAM Night"'));
   assert.ok(app.includes('role: "photo-choice"'));
+});
+
+test("General Back to School stays separate from Amanda North artwork", () => {
+  [
+    "back-to-school-background-portrait.png",
+    "back-to-school-background-landscape.png",
+    "back-to-school-idle-portrait.png",
+    "back-to-school-idle-landscape.png",
+    "back-to-school-photo-choice-portrait.png",
+    "back-to-school-photo-choice-landscape.png",
+    "back-to-school-thank-you-portrait.png",
+    "back-to-school-thank-you-landscape.png",
+  ].forEach((filename) => {
+    assert.ok(
+      readFileSync(
+        join(process.cwd(), "assets/themes/general-back-to-school", filename)
+      ).length > 0,
+      `${filename} should be bundled`
+    );
+  });
+  assert.ok(app.includes('backToSchool: {'));
+  assert.ok(app.includes('name: "Back to School"'));
+  assert.ok(
+    app.includes('src: "/assets/themes/general-back-to-school/back-to-school-idle-portrait.png"')
+  );
+  assert.ok(app.includes('name: "Back to School photo choice portrait"'));
+  assert.ok(app.includes('name: "Back to School photo choice landscape"'));
+  assert.ok(app.includes('name: "Back to School Thank You screen portrait"'));
+  assert.ok(app.includes('name: "Back to School Thank You screen landscape"'));
+  assert.ok(!app.includes('src: "/assets/themes/back-to-school/back-to-school-idle-portrait.png",\n            name: "Back to School idle screen portrait"'));
 });
 
 test("Avery's guest screens use bundled WebP artwork", () => {
@@ -245,6 +290,8 @@ test("Amanda North uses its custom photo-choice artwork after Tap to Start", () 
   assert.ok(app.includes('name: "Amanda North Coyote photo choice landscape"'));
   assert.ok(app.includes("singlePhoto: { x: 50, y: 40, width: 78, height: 28 }"));
   assert.ok(app.includes("photoStrip: { x: 70, y: 60, width: 31, height: 52 }"));
+  assert.ok(app.includes("function migrateAmandaNorthScreenAssets"));
+  assert.ok(app.includes("migratedAmandaNorthScreens"));
 });
 
 test("Amanda North provides portrait and landscape share-screen artwork", () => {
