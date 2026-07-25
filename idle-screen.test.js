@@ -312,12 +312,29 @@ test("Avery includes dedicated portrait and landscape carnival overlays", () => 
   assert.ok(readFileSync(join(process.cwd(), landscape)).length > 0);
 });
 
+test("Avery includes infernal-town background and overlay pairs", () => {
+  const assets = [
+    "assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.png",
+    "assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.png",
+    "assets/themes/avery-birthday/avery-birthday-infernal-town-overlay-portrait.png",
+    "assets/themes/avery-birthday/avery-birthday-infernal-town-overlay-landscape.png",
+  ];
+
+  assert.ok(app.includes("Avery infernal town overlay portrait"));
+  assert.ok(app.includes("Avery infernal town overlay landscape"));
+  assets.forEach((asset) => {
+    assert.ok(readFileSync(join(process.cwd(), asset)).length > 0);
+  });
+});
+
 test("saved Avery themes receive new built-in overlays without replacing custom ones", () => {
   const migration = extractFunction(app, "migrateOptimizedAveryScreenAssets");
 
   assert.ok(migration.includes("const overlayDefaults"));
   assert.ok(migration.includes("...missingOverlayDefaults.map(cloneThemeValue)"));
   assert.ok(migration.includes("removedOverlaySources.has(src)"));
+  assert.ok(migration.includes("const backgroundDefaults"));
+  assert.ok(migration.includes("...missingBackgroundDefaults.map(cloneThemeValue)"));
 });
 
 test("custom guest artwork keeps lightweight ambient motion without blocking hotspots", () => {

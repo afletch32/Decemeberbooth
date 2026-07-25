@@ -841,9 +841,21 @@ themes.general.themes.averyBirthday = {
       name: "Avery birthday carnival overlay landscape",
       type: "photo",
     },
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-overlay-portrait.png",
+      name: "Avery infernal town overlay portrait",
+      type: "photo",
+    },
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-overlay-landscape.png",
+      name: "Avery infernal town overlay landscape",
+      type: "photo",
+    },
     ...themes.general.themes.birthday.overlays,
   ],
   backgrounds: [
+    "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.png",
+    "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.png",
     "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
   ],
   shareScreens: [
@@ -16382,6 +16394,29 @@ function migrateOptimizedAveryScreenAssets(target = themes) {
     theme.overlays = [
       ...missingOverlayDefaults.map(cloneThemeValue),
       ...theme.overlays,
+    ];
+    migrated = true;
+  }
+  const backgroundDefaults =
+    BUILTIN_THEMES.general?.themes?.averyBirthday?.backgrounds || [];
+  const removedBackgroundSources = new Set(
+    (Array.isArray(theme.backgroundsRemoved) ? theme.backgroundsRemoved : [])
+      .map(getAssetEntrySrc)
+      .filter(Boolean)
+  );
+  if (!Array.isArray(theme.backgrounds)) theme.backgrounds = [];
+  const missingBackgroundDefaults = backgroundDefaults.filter((background) => {
+    const src = getAssetEntrySrc(background);
+    return (
+      src &&
+      !removedBackgroundSources.has(src) &&
+      !theme.backgrounds.some((entry) => getAssetEntrySrc(entry) === src)
+    );
+  });
+  if (missingBackgroundDefaults.length) {
+    theme.backgrounds = [
+      ...missingBackgroundDefaults.map(cloneThemeValue),
+      ...theme.backgrounds,
     ];
     migrated = true;
   }

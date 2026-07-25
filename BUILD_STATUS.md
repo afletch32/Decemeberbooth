@@ -8,6 +8,7 @@
 
 - Upgraded the guest filter carousel from mild generic looks to camera-ready Natural, Soft Glow, Golden Hour, Vivid, and Mono presets. Each now includes restrained face-aware smoothing and targeted lighting correction, while Natural remains the default.
 - Added Infernal Toon to the guest filter carousel. Finished images use Cloudinary's cartoonify delivery effect for an actual illustrated result, while the booth keeps a light, natural-color preview. Natural remains the default.
+- Added Avery's original infernal-carnival town background and transparent foreground-overlay pairs in portrait and landscape. Existing saved Avery themes receive the new choices without replacing custom assets.
 - Fixed the idle timeout so it returns to the welcome screen without briefly showing Thank You; that overlay now appears only when a guest completes a final-preview flow.
 - Thank You now uses the selected theme's matching share artwork, or its selected background when no share artwork is supplied.
 - Added Thank You Screens to the shared Add Assets upload flow. Image uploads save as orientation-aware theme or event completion artwork and override the fallback completion backdrop.
