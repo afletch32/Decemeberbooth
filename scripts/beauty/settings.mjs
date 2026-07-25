@@ -31,6 +31,7 @@ export function normalizeBeautyPreset(preset = {}) {
     lighting: normalizeNumberMap(DEFAULT_LIGHTING_VALUES, source.lighting),
     cartoon: {
       enabled: source.cartoon?.enabled === true,
+      deliveryOnly: source.cartoon?.deliveryOnly === true,
       levels: Number(source.cartoon?.levels) || 6,
       edgeThreshold: Number(source.cartoon?.edgeThreshold) || 42,
     },

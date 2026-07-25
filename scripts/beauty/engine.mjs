@@ -50,6 +50,6 @@ export async function applyBeautyFrame({ canvas, video, settings } = {}) {
     shine: preset.beauty.shine,
     tone: preset.beauty.tone,
   });
-  applyCartoonEffect(canvas, preset.cartoon);
+  if (!preset.cartoon.deliveryOnly) applyCartoonEffect(canvas, preset.cartoon);
   return canvas;
 }

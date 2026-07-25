@@ -1424,9 +1424,10 @@ test("output surfaces consume the finalized processed frame artifact", () => {
   assert.ok(
     appScript.includes("lastOutputSurfaceTrace = createOutputSurfaceTrace(finalUrl)") &&
       appScript.includes("previewUrl: finalUrl") &&
-      appScript.includes("showFinal(\n      finalUrl") &&
-      appScript.includes("addToGallery(finalUrl)"),
-    "capture should create one finalized image artifact and pass it to upload, final preview, and gallery"
+      appScript.includes("const deliveredPreviewUrl = livePhotoEnabled") &&
+      appScript.includes("showFinal(\n      deliveredPreviewUrl") &&
+      appScript.includes("addToGallery(deliveredPreviewUrl)"),
+    "capture should upload the finalized artifact, then use the delivered cartoon rendition when selected"
   );
   assert.ok(
     appScript.includes("function getShareOutputUrl()") &&

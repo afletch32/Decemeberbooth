@@ -24,5 +24,8 @@ test("guest beauty presets provide polished corrections while keeping Natural fi
   assert.ok(presets.every((preset) => preset.lighting.sharpness > 0));
   const infernalToon = presets.find((preset) => preset.id === "infernal-toon");
   assert.equal(infernalToon.cartoon.enabled, true);
-  assert.ok(infernalToon.cartoon.levels >= 4);
+  assert.equal(infernalToon.cartoon.deliveryOnly, true);
+  assert.equal(infernalToon.cloudinaryTransformation, "e_cartoonify");
+  assert.ok(infernalToon.cartoon.levels >= 8);
+  assert.ok(infernalToon.cartoon.edgeThreshold >= 70);
 });

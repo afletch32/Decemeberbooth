@@ -1,6 +1,7 @@
 import { CanvasBuffer, offscreenToDataURL } from "./canvas-utils.mjs";
 import {
   buildBoothVideoUrl,
+  buildCloudinaryImageTransformationUrl,
   buildAssetIndexKey,
   buildDateSessionFolderPath,
   buildEventAssetFolderPath,
@@ -7835,6 +7836,20 @@ function getSelectedFilterBeautySettings() {
   return filterDef || { beauty: {}, lighting: {} };
 }
 
+function getSelectedFilterCloudinaryTransformation() {
+  const filterDef = getSelectedFilterDef();
+  return typeof filterDef?.cloudinaryTransformation === "string"
+    ? filterDef.cloudinaryTransformation.trim()
+    : "";
+}
+
+function getDeliveredFilterPreviewUrl(localUrl, uploadResult) {
+  const deliveredUrl = String(uploadResult?.publicUrl || "").trim();
+  return getSelectedFilterCloudinaryTransformation() && /^https?:/i.test(deliveredUrl)
+    ? deliveredUrl
+    : localUrl;
+}
+
 function setPhotoOverlayOrientation(nextOrientation) {
   const next = normalizePhotoOverlayOrientation(nextOrientation);
   if (!next || next === photoOverlayOrientation) return;
@@ -9396,8 +9411,11 @@ async function capturePhotoFlow() {
       resourceType: livePhotoEnabled && lastLiveClipBlob ? "video" : "image",
       modeName: livePhotoEnabled ? "live-photo" : "photo",
     });
+    const deliveredPreviewUrl = livePhotoEnabled
+      ? finalUrl
+      : getDeliveredFilterPreviewUrl(finalUrl, uploadResult);
     showFinal(
-      finalUrl,
+      deliveredPreviewUrl,
       livePhotoEnabled && lastLiveClipBlob
         ? {
             shareType: "video",
@@ -9412,7 +9430,7 @@ async function capturePhotoFlow() {
     );
     finalPreviewStarted = true;
     recordAnalytics(livePhotoEnabled ? "live-photo" : "photo", selectedOverlay);
-    addToGallery(finalUrl);
+    addToGallery(deliveredPreviewUrl);
   } finally {
     if (!finalPreviewStarted) leaveFinalizingState();
   }
@@ -10519,7 +10537,7 @@ async function runStripSequence(template) {
       resourceType: "image",
       modeName: "strip",
     });
-    showFinal(stripUrl, {
+    showFinal(getDeliveredFilterPreviewUrl(stripUrl, uploadResult), {
       shareUrl: uploadResult.publicUrl,
       uploadQueued: uploadResult.queued,
     });
@@ -12962,7 +12980,7 @@ async function uploadCaptureOnce(options = {}) {
   const blob = mediaBlob || (previewUrl ? await dataUrlToBlob(previewUrl) : null);
   if (!blob) return result;
 
-  const publicUrl =
+  let publicUrl =
     resourceType === "video"
       ? await uploadCloudinaryWithRetry(
           uploadVideoToCloudinary,
@@ -12987,6 +13005,13 @@ async function uploadCaptureOnce(options = {}) {
           },
           "image"
         );
+
+  if (resourceType === "image") {
+    publicUrl = buildCloudinaryImageTransformationUrl(
+      publicUrl,
+      getSelectedFilterCloudinaryTransformation()
+    );
+  }
 
   if (!publicUrl) {
     const ok = await queueCaptureForRetry({

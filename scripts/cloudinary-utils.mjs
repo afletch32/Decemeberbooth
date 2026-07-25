@@ -56,6 +56,19 @@ export function getCloudinaryDerivedUrl(response) {
 export const BOOTH_VIDEO_TRANSFORMATION =
   "c_limit,w_1200,h_1200,f_mp4,vc_h264,q_auto:good,fps_30,ac_none";
 
+export function buildCloudinaryImageTransformationUrl(value, transformation = "") {
+  const originalUrl = String(value || "").trim();
+  const effect = String(transformation || "").trim().replace(/^\/+|\/+$/g, "");
+  if (!originalUrl || !effect || !/^https?:\/\//i.test(originalUrl)) return originalUrl;
+  const marker = "/image/upload/";
+  const markerIndex = originalUrl.indexOf(marker);
+  if (markerIndex < 0) return originalUrl;
+  const prefix = originalUrl.slice(0, markerIndex + marker.length);
+  const remainder = originalUrl.slice(markerIndex + marker.length);
+  if (remainder === effect || remainder.startsWith(`${effect}/`)) return originalUrl;
+  return `${prefix}${effect}/${remainder}`;
+}
+
 export function buildBoothVideoUrl(value) {
   const originalUrl = String(value || "").trim();
   if (!originalUrl || !/^https?:\/\//i.test(originalUrl)) return originalUrl;

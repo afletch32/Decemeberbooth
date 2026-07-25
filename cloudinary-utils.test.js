@@ -10,6 +10,7 @@ async function loadBuildEventFolderPath() {
   const mod = await import(moduleUrl.href);
   return {
       BOOTH_VIDEO_TRANSFORMATION: mod.BOOTH_VIDEO_TRANSFORMATION,
+      buildCloudinaryImageTransformationUrl: mod.buildCloudinaryImageTransformationUrl,
       buildBoothVideoUrl: mod.buildBoothVideoUrl,
       buildAssetIndexKey: mod.buildAssetIndexKey,
       buildDateSessionFolderPath: mod.buildDateSessionFolderPath,
@@ -166,4 +167,16 @@ test("buildBoothVideoUrl preserves queries and does not duplicate its transforma
     ),
     "https://res.cloudinary.com/demo/image/upload/v123/events/summer.png"
   );
+});
+
+test("buildCloudinaryImageTransformationUrl adds cartoon delivery effects once", async () => {
+  const { buildCloudinaryImageTransformationUrl } = await loadBuildEventFolderPath();
+  const source = "https://res.cloudinary.com/demo/image/upload/v1/example.png";
+  const transformed = buildCloudinaryImageTransformationUrl(source, "e_cartoonify");
+
+  assert.equal(
+    transformed,
+    "https://res.cloudinary.com/demo/image/upload/e_cartoonify/v1/example.png"
+  );
+  assert.equal(buildCloudinaryImageTransformationUrl(transformed, "e_cartoonify"), transformed);
 });

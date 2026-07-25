@@ -15,8 +15,8 @@ export function applyCartoonEffect(canvas, settings = {}) {
   const image = ctx.getImageData(0, 0, width, height);
   const pixels = image.data;
   const source = new Uint8ClampedArray(pixels);
-  const levels = Math.max(4, Math.min(10, Number(settings.levels) || 6));
-  const edgeThreshold = Math.max(12, Math.min(96, Number(settings.edgeThreshold) || 42));
+  const levels = Math.max(6, Math.min(16, Number(settings.levels) || 10));
+  const edgeThreshold = Math.max(24, Math.min(128, Number(settings.edgeThreshold) || 78));
   const luminance = (index) =>
     source[index] * 0.299 + source[index + 1] * 0.587 + source[index + 2] * 0.114;
 
@@ -28,17 +28,17 @@ export function applyCartoonEffect(canvas, settings = {}) {
       const edge = Math.abs(luminance(index) - luminance(right)) +
         Math.abs(luminance(index) - luminance(below));
       if (edge > edgeThreshold) {
-        pixels[index] = 24;
-        pixels[index + 1] = 3;
-        pixels[index + 2] = 17;
+        pixels[index] = 18;
+        pixels[index + 1] = 12;
+        pixels[index + 2] = 20;
         continue;
       }
       const red = posterize(source[index], levels);
       const green = posterize(source[index + 1], levels);
       const blue = posterize(source[index + 2], levels);
-      pixels[index] = clampChannel(red * 1.13 + blue * 0.08);
-      pixels[index + 1] = clampChannel(green * 0.62);
-      pixels[index + 2] = clampChannel(blue * 0.96 + red * 0.12);
+      pixels[index] = clampChannel((red - 128) * 1.08 + 128);
+      pixels[index + 1] = clampChannel((green - 128) * 1.05 + 128);
+      pixels[index + 2] = clampChannel((blue - 128) * 1.05 + 128);
     }
   }
   ctx.putImageData(image, 0, 0);
