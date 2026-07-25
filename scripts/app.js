@@ -830,7 +830,6 @@ themes.general.themes.averyBirthday = {
     flash: "vintage-camera",
   },
   overlays: [
-    ...themes.general.themes.birthday.overlays,
     {
       src: "/assets/themes/avery-birthday/avery-birthday-carnival-overlay-portrait.png",
       name: "Avery birthday carnival overlay portrait",
@@ -841,6 +840,7 @@ themes.general.themes.averyBirthday = {
       name: "Avery birthday carnival overlay landscape",
       type: "photo",
     },
+    ...themes.general.themes.birthday.overlays,
   ],
   backgrounds: [
     "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
@@ -16307,8 +16307,8 @@ function ensureBuiltinThemes() {
 
 function migrateOptimizedAveryScreenAssets(target = themes) {
   const theme = target?.general?.themes?.averyBirthday;
-  const screens = theme?.idleScreens;
-  if (!Array.isArray(screens)) return false;
+  if (!theme || typeof theme !== "object") return false;
+  const screens = Array.isArray(theme.idleScreens) ? theme.idleScreens : [];
   const replacements = {
     "/assets/themes/avery-birthday/avery-birthday-idle-portrait.png": "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp",
     "/assets/themes/avery-birthday/avery-birthday-idle-landscape.png": "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp",
@@ -16331,6 +16331,32 @@ function migrateOptimizedAveryScreenAssets(target = themes) {
   ) {
     theme.backgrounds = [
       "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
+    ];
+    migrated = true;
+  }
+  const overlayDefaults =
+    BUILTIN_THEMES.general?.themes?.averyBirthday?.overlays || [];
+  const removedOverlaySources = new Set(
+    (Array.isArray(theme.overlaysRemoved) ? theme.overlaysRemoved : [])
+      .map(getAssetEntrySrc)
+      .filter(Boolean)
+  );
+  if (!Array.isArray(theme.overlays)) theme.overlays = [];
+  const missingOverlayDefaults = overlayDefaults.filter((overlay) => {
+    const src = getAssetEntrySrc(overlay);
+    if (
+      !src ||
+      removedOverlaySources.has(src) ||
+      theme.overlays.some((entry) => getAssetEntrySrc(entry) === src)
+    ) {
+      return false;
+    }
+    return true;
+  });
+  if (missingOverlayDefaults.length) {
+    theme.overlays = [
+      ...missingOverlayDefaults.map(cloneThemeValue),
+      ...theme.overlays,
     ];
     migrated = true;
   }

@@ -312,6 +312,14 @@ test("Avery includes dedicated portrait and landscape carnival overlays", () => 
   assert.ok(readFileSync(join(process.cwd(), landscape)).length > 0);
 });
 
+test("saved Avery themes receive new built-in overlays without replacing custom ones", () => {
+  const migration = extractFunction(app, "migrateOptimizedAveryScreenAssets");
+
+  assert.ok(migration.includes("const overlayDefaults"));
+  assert.ok(migration.includes("...missingOverlayDefaults.map(cloneThemeValue)"));
+  assert.ok(migration.includes("removedOverlaySources.has(src)"));
+});
+
 test("custom guest artwork keeps lightweight ambient motion without blocking hotspots", () => {
   assert.ok(html.includes("#welcomeScreen.custom-idle-screen::before"));
   assert.ok(html.includes("#welcomeScreen.custom-photo-choice-screen::before"));
