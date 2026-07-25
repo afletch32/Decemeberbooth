@@ -299,9 +299,10 @@ test("asset uploads show an in-progress state and repair legacy Hawks paths", ()
     "saved records using the former Hawks folder should resolve to the current assets"
   );
   assert.ok(
-    html.includes('id="bulkToBackgrounds" checked') &&
+    html.includes('id="bulkToBackgrounds" value="backgrounds" checked') &&
+      html.includes('id="bulkToGreenBackgrounds" value="greenBackgrounds"') &&
       html.includes('id="bulkToOverlays"> Overlays'),
-    "the general asset upload should default to one valid background destination"
+    "the general asset upload should offer one clear standard or green-screen background destination"
   );
 });
 

@@ -415,6 +415,23 @@ test("asset library keeps backgrounds single-select while overlays and templates
   );
 });
 
+test("background assets can be added directly as green-screen replacements", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const html = readProjectFile("index.html");
+
+  assert.ok(
+    html.includes('name="bulkBackgroundType"') &&
+      html.includes("Green-screen replacement background"),
+    "bulk uploads should make the two background destinations mutually exclusive"
+  );
+  assert.ok(
+    appScript.includes("function useLibraryAssetAsGreenScreenBackground(asset)") &&
+      appScript.includes("Use as green-screen") &&
+      appScript.includes("overrides.greenBackgrounds.push(src)"),
+    "an existing background card should offer a direct green-screen action"
+  );
+});
+
 test("asset library state uses the concise variable name", () => {
   const appScript = readProjectFile("scripts", "app.js");
 

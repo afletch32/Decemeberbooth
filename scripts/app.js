@@ -854,9 +854,11 @@ themes.general.themes.averyBirthday = {
     ...themes.general.themes.birthday.overlays,
   ],
   backgrounds: [
+    "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
+  ],
+  greenBackgrounds: [
     "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.png",
     "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.png",
-    "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
   ],
   shareScreens: [
     {
@@ -3615,9 +3617,8 @@ function closeBulkAssetModal() {
 
 function getBulkAssetKinds() {
   const kinds = [];
-  if (DOM.bulkToBackgrounds && DOM.bulkToBackgrounds.checked)
-    kinds.push("backgrounds");
-  if (DOM.bulkToGreenBackgrounds && DOM.bulkToGreenBackgrounds.checked)
+  if (DOM.bulkToBackgrounds && DOM.bulkToBackgrounds.checked) kinds.push("backgrounds");
+  else if (DOM.bulkToGreenBackgrounds && DOM.bulkToGreenBackgrounds.checked)
     kinds.push("greenBackgrounds");
   if (DOM.bulkToOverlays && DOM.bulkToOverlays.checked) kinds.push("overlays");
   if (DOM.bulkToTemplates && DOM.bulkToTemplates.checked)
@@ -15798,6 +15799,14 @@ function renderAssetLibrary() {
           event.stopPropagation();
           openAssetThemeDefaultsModal(asset);
         });
+        const greenScreenBtn = document.createElement("button");
+        greenScreenBtn.type = "button";
+        greenScreenBtn.textContent = "Use as green-screen";
+        greenScreenBtn.classList.toggle("hidden", asset.category !== "background");
+        greenScreenBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          useLibraryAssetAsGreenScreenBackground(asset);
+        });
         const hotspotBtn = document.createElement("button");
         hotspotBtn.type = "button";
         hotspotBtn.textContent = asset.role === "photo-choice" ? "Position Choices" : "Position Start";
@@ -15823,6 +15832,7 @@ function renderAssetLibrary() {
         actions.appendChild(favoriteBtn);
         actions.appendChild(renameBtn);
         actions.appendChild(tagsBtn);
+        actions.appendChild(greenScreenBtn);
         actions.appendChild(hotspotBtn);
         actions.appendChild(defaultsBtn);
         actions.appendChild(deleteBtn);
@@ -15942,6 +15952,24 @@ function toggleLibraryAsset(asset) {
   renderAssetLibrary();
   updateLaunchSummary();
   showToast(isSelected ? "Asset removed from this session" : "Asset added to this session");
+}
+
+function useLibraryAssetAsGreenScreenBackground(asset) {
+  if (!asset || normalizeUploadedAssetCategory(asset.category) !== "background") return;
+  const src = getAssetEntrySrc(asset);
+  if (!src) return;
+  const active = getActiveEvent();
+  if (active) {
+    const overrides = ensureEventOverrides(active);
+    if (!overrides.greenBackgrounds.includes(src)) overrides.greenBackgrounds.push(src);
+    updateActiveEventDetails({ overrides });
+  } else if (!activeSessionAssets.greenBackgrounds.includes(src)) {
+    activeSessionAssets.greenBackgrounds.push(src);
+  }
+  renderCurrentAssets(activeTheme || getSelectedThemeTarget());
+  renderOptions();
+  updateLaunchSummary();
+  showToast("Asset added as a green-screen background.");
 }
 
 const MAX_MANAGED_ASSET_UPLOAD_BYTES = 100 * 1024 * 1024;
@@ -16417,6 +16445,20 @@ function migrateOptimizedAveryScreenAssets(target = themes) {
     theme.backgrounds = [
       ...missingBackgroundDefaults.map(cloneThemeValue),
       ...theme.backgrounds,
+    ];
+    migrated = true;
+  }
+  const greenBackgroundDefaults =
+    BUILTIN_THEMES.general?.themes?.averyBirthday?.greenBackgrounds || [];
+  if (!Array.isArray(theme.greenBackgrounds)) theme.greenBackgrounds = [];
+  const missingGreenBackgroundDefaults = greenBackgroundDefaults.filter((background) => {
+    const src = getAssetEntrySrc(background);
+    return src && !theme.greenBackgrounds.some((entry) => getAssetEntrySrc(entry) === src);
+  });
+  if (missingGreenBackgroundDefaults.length) {
+    theme.greenBackgrounds = [
+      ...missingGreenBackgroundDefaults.map(cloneThemeValue),
+      ...theme.greenBackgrounds,
     ];
     migrated = true;
   }

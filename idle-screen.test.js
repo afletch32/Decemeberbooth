@@ -322,6 +322,7 @@ test("Avery includes infernal-town background and overlay pairs", () => {
 
   assert.ok(app.includes("Avery infernal town overlay portrait"));
   assert.ok(app.includes("Avery infernal town overlay landscape"));
+  assert.ok(app.includes("greenBackgrounds: ["));
   assets.forEach((asset) => {
     assert.ok(readFileSync(join(process.cwd(), asset)).length > 0);
   });
@@ -335,6 +336,8 @@ test("saved Avery themes receive new built-in overlays without replacing custom 
   assert.ok(migration.includes("removedOverlaySources.has(src)"));
   assert.ok(migration.includes("const backgroundDefaults"));
   assert.ok(migration.includes("...missingBackgroundDefaults.map(cloneThemeValue)"));
+  assert.ok(migration.includes("const greenBackgroundDefaults"));
+  assert.ok(migration.includes("...missingGreenBackgroundDefaults.map(cloneThemeValue)"));
 });
 
 test("custom guest artwork keeps lightweight ambient motion without blocking hotspots", () => {
