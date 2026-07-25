@@ -43,7 +43,10 @@ export function normalizeUploadedAssetCategory(value) {
   ) {
     return "idle-screen";
   }
-  return ["background", "overlay", "template", "idle-screen"].includes(raw)
+  if (raw === "thank-you-screens" || raw === "thankyouscreens") {
+    return "thank-you-screen";
+  }
+  return ["background", "overlay", "template", "idle-screen", "thank-you-screen"].includes(raw)
     ? raw
     : "";
 }
@@ -239,7 +242,7 @@ export function normalizeAssetLibraryPayload(payload, options = {}) {
       archived: item.archived === true,
       hidden: item.hidden === true || item.archived === true,
       orientation:
-        category === "idle-screen"
+        category === "idle-screen" || category === "thank-you-screen"
           ? normalizeIdleScreenOrientation(item.orientation)
           : undefined,
       role: category === "idle-screen" ? (isPhotoChoice ? "photo-choice" : "idle") : undefined,

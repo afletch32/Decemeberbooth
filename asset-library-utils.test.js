@@ -19,6 +19,10 @@ test("asset categories share one canonical classification", async () => {
     normalizeUploadedAssetCategory("photo-choice-screens"),
     "idle-screen"
   );
+  assert.equal(
+    normalizeUploadedAssetCategory("thank-you-screens"),
+    "thank-you-screen"
+  );
   assert.equal(normalizeUploadedAssetCategory("unsupported"), "");
 });
 

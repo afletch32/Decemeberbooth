@@ -236,6 +236,22 @@ test("uploaded assets register in a persistent shared library", () => {
   );
 });
 
+test("bulk uploads provide a dedicated Thank You screen path", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const html = readProjectFile("index.html");
+
+  assert.ok(
+    html.includes('id="bulkToThankYouScreens"'),
+    "Add Assets should expose a Thank You screen destination"
+  );
+  assert.ok(
+    appScript.includes('kinds.push("thank-you-screens")') &&
+      appScript.includes("function buildThankYouScreenEntryFromUrl") &&
+      appScript.includes("overrides.thankYouScreens"),
+    "Thank You uploads should persist with their event or theme"
+  );
+});
+
 test("managed video assets use optimized Cloudinary delivery URLs", () => {
   const appScript = readProjectFile("scripts", "app.js");
   const cloudinaryUtils = readProjectFile("scripts", "cloudinary-utils.mjs");

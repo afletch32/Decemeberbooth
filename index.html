@@ -4133,21 +4133,6 @@
       text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
     }
 
-    .goodbye-card::before,
-    .goodbye-card::after {
-      content: "";
-      position: absolute;
-      inset: -12px;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at 20% 20%, #ff6b9c 0 4px, transparent 5px),
-        radial-gradient(circle at 78% 22%, #ffd166 0 4px, transparent 5px),
-        radial-gradient(circle at 36% 76%, #6fe7d7 0 4px, transparent 5px),
-        radial-gradient(circle at 84% 78%, #5b8cff 0 4px, transparent 5px);
-      animation: boothAmbientFloat 900ms ease-out infinite alternate;
-      opacity: 0.72;
-    }
-
     .goodbye-card h2 {
       position: relative;
       margin: 0;
@@ -7230,6 +7215,7 @@
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToTemplates"> Templates</label>
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToIdleScreens"> Idle Screens</label>
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToPhotoChoiceScreens"> Photo Choice Screens</label>
+                <label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="bulkToThankYouScreens"> Thank You Screens</label>
                 <div class="btn-row" style="margin-top:16px;">
                   <button type="button" id="bulkAssetCancel">Cancel</button>
                   <button type="button" id="bulkAssetApply" class="primary">Upload</button>

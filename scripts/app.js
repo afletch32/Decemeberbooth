@@ -1135,6 +1135,7 @@ const DOM = {
   bulkToTemplates: document.getElementById("bulkToTemplates"),
   bulkToIdleScreens: document.getElementById("bulkToIdleScreens"),
   bulkToPhotoChoiceScreens: document.getElementById("bulkToPhotoChoiceScreens"),
+  bulkToThankYouScreens: document.getElementById("bulkToThankYouScreens"),
   bulkAssetCancel: document.getElementById("bulkAssetCancel"),
   bulkAssetApply: document.getElementById("bulkAssetApply"),
   assetLibrarySearch: document.getElementById("assetLibrarySearch"),
@@ -3590,6 +3591,8 @@ function getBulkAssetKinds() {
     kinds.push("idle-screens");
   if (DOM.bulkToPhotoChoiceScreens && DOM.bulkToPhotoChoiceScreens.checked)
     kinds.push("photo-choice-screens");
+  if (DOM.bulkToThankYouScreens && DOM.bulkToThankYouScreens.checked)
+    kinds.push("thank-you-screens");
   return kinds;
 }
 
@@ -3624,6 +3627,29 @@ function addAssetUrlToTheme(target, kind, url) {
 
 function isPhotoChoiceAssetKind(kind) {
   return kind === "photo-choice-screens";
+}
+
+function isThankYouAssetKind(kind) {
+  return kind === "thank-you-screens";
+}
+
+function buildThankYouScreenEntryFromUrl(url, file = null) {
+  return {
+    src: url,
+    orientation: inferAssetOrientationFromName(file),
+    name: (file && file.name) || "Thank You Screen",
+    contentType: (file && file.type) || "",
+  };
+}
+
+function replaceThankYouScreenOrientation(entries, entry) {
+  const orientation = normalizeIdleScreenOrientation(entry && entry.orientation);
+  return [
+    ...(Array.isArray(entries) ? entries : []).filter(
+      (item) => normalizeIdleScreenOrientation(item && item.orientation) !== orientation
+    ),
+    entry,
+  ];
 }
 
 function replaceIdleScreenRoleEntry(entries, entry) {
@@ -3670,6 +3696,12 @@ async function applyBulkAssetUpload() {
             if (kind === "overlays") overrides.overlays.push(url);
             if (kind === "templates")
               overrides.templates.push({ src: url, layout: "double_column" });
+            if (isThankYouAssetKind(kind)) {
+              overrides.thankYouScreens = replaceThankYouScreenOrientation(
+                overrides.thankYouScreens,
+                buildThankYouScreenEntryFromUrl(url, file)
+              );
+            }
             if (kind === "idle-screens" || isPhotoChoiceAssetKind(kind)) {
               const entry = buildIdleScreenEntryFromUrl(
                 url,
@@ -3724,6 +3756,15 @@ async function applyBulkAssetUpload() {
               target.idleScreens = replaceIdleScreenRoleEntry(
                 target.idleScreens,
                 entry
+              );
+            }
+            saveThemesToStorage();
+          } else if (isThankYouAssetKind(kind)) {
+            const target = getSelectedThemeTarget();
+            if (target) {
+              target.thankYouScreens = replaceThankYouScreenOrientation(
+                target.thankYouScreens,
+                buildThankYouScreenEntryFromUrl(url, file)
               );
             }
             saveThemesToStorage();
@@ -6776,12 +6817,17 @@ function applyThemeShareScreen(theme) {
   const thankYouScreens = Array.isArray(theme && theme.thankYouScreens)
     ? theme.thankYouScreens
     : [];
+  const eventThankYouScreens = getActiveEventOverrides().thankYouScreens;
   const orientation = getIdleScreenViewportOrientation();
   const selected =
     screens.find((entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation) ||
     screens[0] ||
     null;
   const selectedThankYou =
+    eventThankYouScreens.find(
+      (entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation
+    ) ||
+    eventThankYouScreens[0] ||
     thankYouScreens.find(
       (entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation
     ) ||
@@ -11691,6 +11737,7 @@ function ensureEventOverrides(event) {
     event.overrides.backgrounds = [];
   if (!Array.isArray(event.overrides.overlays)) event.overrides.overlays = [];
   if (!Array.isArray(event.overrides.templates)) event.overrides.templates = [];
+  if (!Array.isArray(event.overrides.thankYouScreens)) event.overrides.thankYouScreens = [];
   if (typeof event.overrides.backgroundIndex !== "number")
     event.overrides.backgroundIndex = 0;
   if (!Array.isArray(event.overrides.greenBackgrounds))
@@ -11707,6 +11754,7 @@ function getActiveEventOverrides() {
       backgrounds: [],
       overlays: [],
       templates: [],
+      thankYouScreens: [],
       backgroundIndex: 0,
       greenBackgrounds: [],
       greenBackgroundIndex: 0,
