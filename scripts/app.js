@@ -829,6 +829,19 @@ themes.general.themes.averyBirthday = {
     tap: "digital-circus-button",
     flash: "vintage-camera",
   },
+  overlays: [
+    ...themes.general.themes.birthday.overlays,
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-carnival-overlay-portrait.png",
+      name: "Avery birthday carnival overlay portrait",
+      type: "photo",
+    },
+    {
+      src: "/assets/themes/avery-birthday/avery-birthday-carnival-overlay-landscape.png",
+      name: "Avery birthday carnival overlay landscape",
+      type: "photo",
+    },
+  ],
   backgrounds: [
     "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
   ],

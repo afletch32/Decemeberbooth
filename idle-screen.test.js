@@ -302,6 +302,16 @@ test("Avery alternates its share-ready cue", () => {
   );
 });
 
+test("Avery includes dedicated portrait and landscape carnival overlays", () => {
+  const portrait = "assets/themes/avery-birthday/avery-birthday-carnival-overlay-portrait.png";
+  const landscape = "assets/themes/avery-birthday/avery-birthday-carnival-overlay-landscape.png";
+
+  assert.ok(app.includes("Avery birthday carnival overlay portrait"));
+  assert.ok(app.includes("Avery birthday carnival overlay landscape"));
+  assert.ok(readFileSync(join(process.cwd(), portrait)).length > 0);
+  assert.ok(readFileSync(join(process.cwd(), landscape)).length > 0);
+});
+
 test("custom guest artwork keeps lightweight ambient motion without blocking hotspots", () => {
   assert.ok(html.includes("#welcomeScreen.custom-idle-screen::before"));
   assert.ok(html.includes("#welcomeScreen.custom-photo-choice-screen::before"));
