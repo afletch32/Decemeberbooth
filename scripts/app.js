@@ -15801,7 +15801,7 @@ function renderAssetLibrary() {
         });
         const greenScreenBtn = document.createElement("button");
         greenScreenBtn.type = "button";
-        greenScreenBtn.textContent = "Use as green-screen";
+        greenScreenBtn.textContent = "Use as photo background";
         greenScreenBtn.classList.toggle("hidden", asset.category !== "background");
         greenScreenBtn.addEventListener("click", (event) => {
           event.stopPropagation();
@@ -15969,7 +15969,7 @@ function useLibraryAssetAsGreenScreenBackground(asset) {
   renderCurrentAssets(activeTheme || getSelectedThemeTarget());
   renderOptions();
   updateLaunchSummary();
-  showToast("Asset added as a green-screen background.");
+  showToast("Asset added as a photo background behind the guest.");
 }
 
 const MAX_MANAGED_ASSET_UPLOAD_BYTES = 100 * 1024 * 1024;

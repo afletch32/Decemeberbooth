@@ -421,12 +421,12 @@ test("background assets can be added directly as green-screen replacements", () 
 
   assert.ok(
     html.includes('name="bulkBackgroundType"') &&
-      html.includes("Green-screen replacement background"),
+      html.includes("Photo background (behind a green-screen subject)"),
     "bulk uploads should make the two background destinations mutually exclusive"
   );
   assert.ok(
     appScript.includes("function useLibraryAssetAsGreenScreenBackground(asset)") &&
-      appScript.includes("Use as green-screen") &&
+      appScript.includes("Use as photo background") &&
       appScript.includes("overrides.greenBackgrounds.push(src)"),
     "an existing background card should offer a direct green-screen action"
   );
