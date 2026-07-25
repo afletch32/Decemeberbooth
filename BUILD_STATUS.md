@@ -10,6 +10,8 @@
 - Fixed the idle timeout so it returns to the welcome screen without briefly showing Thank You; that overlay now appears only when a guest completes a final-preview flow.
 - Thank You now uses the selected theme's matching share artwork, or its selected background when no share artwork is supplied.
 - Added Thank You Screens to the shared Add Assets upload flow. Image uploads save as orientation-aware theme or event completion artwork and override the fallback completion backdrop.
+- Added Avery-specific interaction audio: a playful digital-circus button click and a mechanical vintage-camera shutter at the capture flash, alongside Avery's existing voice clips.
+- Avery's QR/share-ready cue now alternates between the existing "What Do You Think?" clip and Adam's "What Do You Think?" clip each time a new share link is ready.
 - Redesigned the Event step around a visual theme picker with category filters, selected-theme summary, and a direct Continue to Capture action; saved events and session naming now follow as secondary controls.
 - Theme picker previews now prefer supplied idle-screen artwork (including the Amanda North Back to School pack poster) before a theme background, so operators see the real guest visual when one exists.
 - Expanded the Amanda North Back to School pack with independently composed portrait and landscape share-screen backdrops. The live final-photo and QR controls render over the new artwork rather than using baked-in placeholder sharing content.

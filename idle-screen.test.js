@@ -278,6 +278,30 @@ test("Avery provides dedicated portrait and landscape thank-you screens", () => 
   assert.ok(html.includes("<h2>Thank You!</h2>"));
 });
 
+test("Avery uses themed button and vintage-camera flash sounds", () => {
+  assert.ok(
+    app.includes('tap: "digital-circus-button"') &&
+      app.includes('flash: "vintage-camera"'),
+    "Avery should define distinct interaction sound cues"
+  );
+  assert.ok(
+    app.includes('themeSound === "vintage-camera"') &&
+      app.includes('themeSound === "digital-circus-button"'),
+    "the booth audio system should render Avery's themed effects"
+  );
+});
+
+test("Avery alternates its share-ready cue", () => {
+  assert.ok(app.includes("shareReadyAlternates"));
+  assert.ok(app.includes("adam-what-do-you-think.mp3"));
+  assert.ok(app.includes("const themeSoundEffectIndexes = new WeakMap()"));
+  assert.ok(
+    readFileSync(
+      join(process.cwd(), "assets/themes/avery-birthday/sounds/adam-what-do-you-think.mp3")
+    ).length > 0
+  );
+});
+
 test("custom guest artwork keeps lightweight ambient motion without blocking hotspots", () => {
   assert.ok(html.includes("#welcomeScreen.custom-idle-screen::before"));
   assert.ok(html.includes("#welcomeScreen.custom-photo-choice-screen::before"));

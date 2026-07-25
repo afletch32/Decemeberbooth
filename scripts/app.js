@@ -820,6 +820,14 @@ themes.general.themes.averyBirthday = {
     start: "/assets/themes/avery-birthday/sounds/the-amazing-digital-circus.mp3",
     photoCaptured: "/assets/themes/avery-birthday/sounds/my-my-thats-quite-a-bit-of-moxie.mp3",
     shareReady: "/assets/themes/avery-birthday/sounds/what-do-you-think.mp3",
+    shareReadyAlternates: [
+      "/assets/themes/avery-birthday/sounds/what-do-you-think.mp3",
+      "/assets/themes/avery-birthday/sounds/adam-what-do-you-think.mp3",
+    ],
+  },
+  soundProfile: {
+    tap: "digital-circus-button",
+    flash: "vintage-camera",
   },
   backgrounds: [
     "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
@@ -1824,6 +1832,7 @@ let activeSessionTextDetails = {};
 let boothAudioContext = null;
 let boothAudioEnabled = false;
 let boothThemeAudio = null;
+const themeSoundEffectIndexes = new WeakMap();
 const ACCENT_PRESET_COLORS = [
   "#ffffff",
   "#0f1222",
@@ -10526,6 +10535,19 @@ function unlockBoothAudio() {
 
 function getThemeSoundEffect(kind) {
   const soundEffects = activeTheme && activeTheme.soundEffects;
+  const alternates = soundEffects && soundEffects[`${kind}Alternates`];
+  if (Array.isArray(alternates)) {
+    const options = alternates.filter(
+      (src) => typeof src === "string" && src.trim()
+    );
+    if (options.length) {
+      const indexes = themeSoundEffectIndexes.get(activeTheme) || {};
+      const index = indexes[kind] || 0;
+      indexes[kind] = index + 1;
+      themeSoundEffectIndexes.set(activeTheme, indexes);
+      return options[index % options.length].trim();
+    }
+  }
   const src = soundEffects && soundEffects[kind];
   return typeof src === "string" && src.trim() ? src.trim() : "";
 }
@@ -10578,6 +10600,8 @@ function playBoothSound(kind = "tap") {
     if (!boothAudioContext) boothAudioContext = new AudioContextCtor();
     const context = boothAudioContext;
     if (context.state === "suspended") context.resume().catch(() => {});
+    const soundProfile = activeTheme && activeTheme.soundProfile;
+    const themeSound = soundProfile && soundProfile[kind];
     const config =
       {
         tap: { frequency: 520, duration: 0.08, gain: 0.035 },
@@ -10587,11 +10611,26 @@ function playBoothSound(kind = "tap") {
         qr: { frequency: 620, duration: 0.14, gain: 0.035 },
         goodbye: { frequency: 520, duration: 0.22, gain: 0.04 },
       }[kind] || { frequency: 520, duration: 0.08, gain: 0.035 };
+    if (themeSound === "digital-circus-button") {
+      config.frequency = 740;
+      config.duration = 0.06;
+      config.gain = 0.032;
+      config.type = "square";
+    }
+    if (themeSound === "vintage-camera") {
+      config.frequency = 170;
+      config.duration = 0.18;
+      config.gain = 0.06;
+      config.type = "sawtooth";
+    }
     const now = context.currentTime;
     const osc = context.createOscillator();
     const gain = context.createGain();
-    osc.type = "sine";
+    osc.type = config.type || "sine";
     osc.frequency.setValueAtTime(config.frequency, now);
+    if (themeSound === "vintage-camera") {
+      osc.frequency.exponentialRampToValueAtTime(62, now + config.duration);
+    }
     gain.gain.setValueAtTime(0.0001, now);
     gain.gain.exponentialRampToValueAtTime(config.gain, now + 0.015);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + config.duration);
@@ -10599,6 +10638,19 @@ function playBoothSound(kind = "tap") {
     gain.connect(context.destination);
     osc.start(now);
     osc.stop(now + config.duration + 0.02);
+    if (themeSound === "digital-circus-button") {
+      const chime = context.createOscillator();
+      const chimeGain = context.createGain();
+      chime.type = "sine";
+      chime.frequency.setValueAtTime(1180, now + 0.025);
+      chimeGain.gain.setValueAtTime(0.0001, now + 0.025);
+      chimeGain.gain.exponentialRampToValueAtTime(0.018, now + 0.04);
+      chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
+      chime.connect(chimeGain);
+      chimeGain.connect(context.destination);
+      chime.start(now + 0.025);
+      chime.stop(now + 0.13);
+    }
   } catch (_) {}
 }
 
