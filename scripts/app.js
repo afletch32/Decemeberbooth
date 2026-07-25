@@ -451,7 +451,10 @@ let themes = {
         accent2: "#FFB81C",
         font: "'Comic Neue', cursive",
         logo: "",
-        backgrounds: [],
+        backgrounds: [
+          "/assets/themes/back-to-school/back-to-school-background-landscape.png",
+          "/assets/themes/back-to-school/back-to-school-background-portrait.png",
+        ],
         idleScreens: [
           {
             src: "/assets/themes/back-to-school/amanda-north-coyotes-idle-wave-portrait.mp4",
@@ -461,6 +464,35 @@ let themes = {
             orientation: "portrait",
             buttonZones: {
               start: { x: 50, y: 88, width: 84, height: 14 },
+            },
+          },
+          {
+            src: "/assets/themes/back-to-school/back-to-school-idle-landscape.png",
+            name: "Amanda North Coyote idle screen landscape",
+            role: "idle",
+            orientation: "landscape",
+            buttonZones: {
+              start: { x: 50, y: 78, width: 52, height: 18 },
+            },
+          },
+          {
+            src: "/assets/themes/back-to-school/back-to-school-photo-choice-portrait.png",
+            name: "Amanda North Coyote photo choice portrait",
+            role: "photo-choice",
+            orientation: "portrait",
+            buttonZones: {
+              singlePhoto: { x: 50, y: 40, width: 78, height: 28 },
+              photoStrip: { x: 50, y: 70, width: 78, height: 28 },
+            },
+          },
+          {
+            src: "/assets/themes/back-to-school/back-to-school-photo-choice-landscape.png",
+            name: "Amanda North Coyote photo choice landscape",
+            role: "photo-choice",
+            orientation: "landscape",
+            buttonZones: {
+              singlePhoto: { x: 35, y: 60, width: 31, height: 52 },
+              photoStrip: { x: 70, y: 60, width: 31, height: 52 },
             },
           },
         ],
@@ -845,11 +877,19 @@ themes.general.themes.averyBirthday = {
       src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-overlay-portrait.png",
       name: "Avery infernal town overlay portrait",
       type: "photo",
+      background: {
+        type: "image",
+        src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.png",
+      },
     },
     {
       src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-overlay-landscape.png",
       name: "Avery infernal town overlay landscape",
       type: "photo",
+      background: {
+        type: "image",
+        src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.png",
+      },
     },
     ...themes.general.themes.birthday.overlays,
   ],
@@ -16425,6 +16465,18 @@ function migrateOptimizedAveryScreenAssets(target = themes) {
     ];
     migrated = true;
   }
+  const builtinOverlayBackgrounds = new Map(
+    overlayDefaults
+      .map((overlay) => [getAssetEntrySrc(overlay), overlay && overlay.background])
+      .filter(([src, background]) => src && background)
+  );
+  theme.overlays.forEach((overlay) => {
+    if (!overlay || typeof overlay !== "object" || overlay.background) return;
+    const pairedBackground = builtinOverlayBackgrounds.get(getAssetEntrySrc(overlay));
+    if (!pairedBackground) return;
+    overlay.background = cloneThemeValue(pairedBackground);
+    migrated = true;
+  });
   const backgroundDefaults =
     BUILTIN_THEMES.general?.themes?.averyBirthday?.backgrounds || [];
   const removedBackgroundSources = new Set(

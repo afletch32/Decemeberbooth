@@ -2,14 +2,16 @@
 
 ## Current goal
 
-- Deliver polished, Snapchat-style photo correction without complicating the guest capture flow.
+- Keep the Amanda North guest flow fully themed from Tap to Start through photo-type choice.
 
 ## Current progress
 
+- Registered Amanda North's bundled portrait and landscape photo-choice artwork and touch-safe Single Photo/Photo Strip hotspots. Tapping Start now goes to the custom Coyote selection screen instead of the generic Start Strip chooser; registered the matching background and landscape idle screen at the same time.
 - Upgraded the guest filter carousel from mild generic looks to camera-ready Natural, Soft Glow, Golden Hour, Vivid, and Mono presets. Each now includes restrained face-aware smoothing and targeted lighting correction, while Natural remains the default.
 - Added Infernal Toon to the guest filter carousel. Finished images use Cloudinary's cartoonify delivery effect for an actual illustrated result, while the booth keeps a light, natural-color preview. Natural remains the default.
 - Added Avery's original infernal-carnival town background and transparent foreground-overlay pairs in portrait and landscape. Existing saved Avery themes receive the new choices without replacing custom assets.
 - Asset Library background cards now include a direct "Use as photo background" action. Booth backgrounds are explicitly for live preview/share, while photo backgrounds render behind a green-screen guest like the photo overlay layer.
+- Avery's infernal-town portrait and landscape overlays each carry their matching photo background, so selecting either overlay automatically applies the matching scene.
 - Fixed the idle timeout so it returns to the welcome screen without briefly showing Thank You; that overlay now appears only when a guest completes a final-preview flow.
 - Thank You now uses the selected theme's matching share artwork, or its selected background when no share artwork is supplied.
 - Added Thank You Screens to the shared Add Assets upload flow. Image uploads save as orientation-aware theme or event completion artwork and override the fallback completion backdrop.

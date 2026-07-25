@@ -231,6 +231,22 @@ test("Amanda North has a built-in portrait looping idle screen", () => {
   assert.ok(app.includes("start: { x: 50, y: 88, width: 84, height: 14 }"));
 });
 
+test("Amanda North uses its custom photo-choice artwork after Tap to Start", () => {
+  [
+    "back-to-school-photo-choice-portrait.png",
+    "back-to-school-photo-choice-landscape.png",
+  ].forEach((filename) => {
+    assert.ok(
+      readFileSync(join(process.cwd(), "assets/themes/back-to-school", filename)).length > 0,
+      `${filename} should be bundled`
+    );
+  });
+  assert.ok(app.includes('name: "Amanda North Coyote photo choice portrait"'));
+  assert.ok(app.includes('name: "Amanda North Coyote photo choice landscape"'));
+  assert.ok(app.includes("singlePhoto: { x: 50, y: 40, width: 78, height: 28 }"));
+  assert.ok(app.includes("photoStrip: { x: 70, y: 60, width: 31, height: 52 }"));
+});
+
 test("Amanda North provides portrait and landscape share-screen artwork", () => {
   assert.ok(
     app.includes('src: "/assets/themes/back-to-school/back-to-school-share-portrait.png"')
@@ -322,6 +338,8 @@ test("Avery includes infernal-town background and overlay pairs", () => {
 
   assert.ok(app.includes("Avery infernal town overlay portrait"));
   assert.ok(app.includes("Avery infernal town overlay landscape"));
+  assert.ok(app.includes("avery-birthday-infernal-town-background-portrait.png"));
+  assert.ok(app.includes("avery-birthday-infernal-town-background-landscape.png"));
   assert.ok(app.includes("greenBackgrounds: ["));
   assets.forEach((asset) => {
     assert.ok(readFileSync(join(process.cwd(), asset)).length > 0);
@@ -332,6 +350,8 @@ test("saved Avery themes receive new built-in overlays without replacing custom 
   const migration = extractFunction(app, "migrateOptimizedAveryScreenAssets");
 
   assert.ok(migration.includes("const overlayDefaults"));
+  assert.ok(migration.includes("const builtinOverlayBackgrounds"));
+  assert.ok(migration.includes("overlay.background = cloneThemeValue(pairedBackground)"));
   assert.ok(migration.includes("...missingOverlayDefaults.map(cloneThemeValue)"));
   assert.ok(migration.includes("removedOverlaySources.has(src)"));
   assert.ok(migration.includes("const backgroundDefaults"));
