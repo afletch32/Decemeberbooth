@@ -15,11 +15,14 @@ test("guest beauty presets provide polished corrections while keeping Natural fi
 
   assert.deepEqual(
     presets.map((preset) => preset.id),
-    ["natural", "soft", "golden", "vivid", "bw"]
+    ["natural", "soft", "golden", "vivid", "bw", "infernal-toon"]
   );
   assert.equal(presets[0].default, true);
   assert.ok(presets.every((preset) => preset.css));
   assert.equal(presets[0].beauty.skinSmooth, 0);
   assert.ok(presets.slice(1).every((preset) => preset.beauty.skinSmooth > 0));
   assert.ok(presets.every((preset) => preset.lighting.sharpness > 0));
+  const infernalToon = presets.find((preset) => preset.id === "infernal-toon");
+  assert.equal(infernalToon.cartoon.enabled, true);
+  assert.ok(infernalToon.cartoon.levels >= 4);
 });

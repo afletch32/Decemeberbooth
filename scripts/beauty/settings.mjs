@@ -29,6 +29,11 @@ export function normalizeBeautyPreset(preset = {}) {
       ...normalizeNumberMap(DEFAULT_BEAUTY_VALUES, source.beauty),
     },
     lighting: normalizeNumberMap(DEFAULT_LIGHTING_VALUES, source.lighting),
+    cartoon: {
+      enabled: source.cartoon?.enabled === true,
+      levels: Number(source.cartoon?.levels) || 6,
+      edgeThreshold: Number(source.cartoon?.edgeThreshold) || 42,
+    },
   };
 }
 

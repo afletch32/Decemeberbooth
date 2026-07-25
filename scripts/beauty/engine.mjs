@@ -7,6 +7,7 @@ import { applyBlemishCorrection } from "./blemish.mjs";
 import { applyUndereyeCorrection } from "./undereye.mjs";
 import { applyToneCorrection } from "./tone.mjs";
 import { applyLightingCorrection } from "./lighting.mjs";
+import { applyCartoonEffect } from "./cartoon.mjs";
 
 let trackerReady = false;
 let trackerFailed = false;
@@ -49,5 +50,6 @@ export async function applyBeautyFrame({ canvas, video, settings } = {}) {
     shine: preset.beauty.shine,
     tone: preset.beauty.tone,
   });
+  applyCartoonEffect(canvas, preset.cartoon);
   return canvas;
 }

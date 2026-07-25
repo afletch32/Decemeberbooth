@@ -124,6 +124,36 @@ export const BEAUTY_PRESETS = [
       sharpness: 10,
     },
   },
+  {
+    id: "infernal-toon",
+    name: "Infernal Toon",
+    guestVisible: true,
+    default: false,
+    icon: "😈",
+    css: "brightness(0.98) contrast(1.28) saturate(1.32) hue-rotate(324deg)",
+    beauty: {
+      skinSmooth: 7,
+      blemish: 8,
+      teeth: 8,
+      underEye: 5,
+      shine: 4,
+      tone: 14,
+    },
+    lighting: {
+      exposure: -2,
+      contrast: 20,
+      warmth: -4,
+      vibrance: 26,
+      highlights: -16,
+      shadows: 5,
+      sharpness: 18,
+    },
+    cartoon: {
+      enabled: true,
+      levels: 6,
+      edgeThreshold: 42,
+    },
+  },
 ];
 
 export function getGuestVisibleBeautyPresets() {
