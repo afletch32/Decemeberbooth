@@ -121,3 +121,18 @@ test("wedding overlay manifests define explicit photo windows", () => {
   assert.ok(garden.includes('"foreground"'));
   assert.ok(garden.includes('"background"'));
 });
+
+test("imported overlays can save a draggable photo window without using the legacy builder", () => {
+  const indexHtml = readProjectFile("index.html");
+  const appJs = readProjectFile("scripts/app.js");
+
+  assert.ok(indexHtml.includes('id="overlaySlotEditorModal"'));
+  assert.ok(indexHtml.includes('id="overlaySlotEditorZone"'));
+  assert.ok(appJs.includes("function openOverlaySlotEditor(asset)"));
+  assert.ok(appJs.includes("function bindOverlaySlotEditorPointer()"));
+  assert.ok(appJs.includes("function saveOverlaySlotEditor()"));
+  assert.ok(appJs.includes('photoWindowBtn.textContent = "Adjust Photo Window"'));
+  assert.ok(appJs.includes("await updateAssetLibraryItem(asset.id, { photoSlots }, asset)"));
+  assert.ok(appJs.includes("replaceSavedPhotoSlotInThemes(asset, photoSlots)"));
+  assert.ok(appJs.includes("drawCoverInRect(ctx, img, rect.x, rect.y, rect.w, rect.h, slot.objectPosition)"));
+});

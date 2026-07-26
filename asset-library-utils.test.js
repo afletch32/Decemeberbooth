@@ -116,3 +116,29 @@ test("asset payload normalization rejects unsafe and unsupported records", async
   assert.equal(normalized.assets.length, 1);
   assert.equal(normalized.assets[0].category, "overlay");
 });
+
+test("asset payload normalization preserves an adjusted overlay photo window", async () => {
+  const { normalizeAssetLibraryPayload } = await loadAssetLibraryUtils();
+  const normalized = normalizeAssetLibraryPayload([
+    {
+      category: "overlay",
+      url: "assets/frame.png",
+      photoSlots: [
+        { x: 0.2, y: 0.15, width: 0.6, height: 0.7, objectFit: "contain" },
+      ],
+    },
+  ]);
+
+  assert.deepEqual(normalized.assets[0].photoSlots, [
+    {
+      x: 0.2,
+      y: 0.15,
+      width: 0.6,
+      height: 0.7,
+      borderRadius: 0,
+      objectFit: "contain",
+      objectPosition: "center",
+      sourceIndex: 0,
+    },
+  ]);
+});

@@ -1129,6 +1129,9 @@ const DOM = {
   lowLightToggle: document.getElementById("lowLightToggle"),
   aiBackgroundToggle: document.getElementById("aiBackgroundToggle"),
   enhancementModeSelect: document.getElementById("enhancementModeSelect"),
+  beautyPresetSelect: document.getElementById("beautyPresetSelect"),
+  beautyPresetControls: document.getElementById("beautyPresetControls"),
+  resetBeautyPresetButton: document.getElementById("resetBeautyPresetButton"),
   cameraZoomInput: document.getElementById("cameraZoomInput"),
   cameraZoomValue: document.getElementById("cameraZoomValue"),
   editLayoutBtn: document.getElementById("editLayoutBtn"),
@@ -1309,6 +1312,15 @@ const DOM = {
   idleScreenResetZone: document.getElementById("idleScreenResetZone"),
   idleScreenEditorCancel: document.getElementById("idleScreenEditorCancel"),
   idleScreenEditorSave: document.getElementById("idleScreenEditorSave"),
+  overlaySlotEditorModal: document.getElementById("overlaySlotEditorModal"),
+  overlaySlotEditorCanvas: document.getElementById("overlaySlotEditorCanvas"),
+  overlaySlotEditorArtwork: document.getElementById("overlaySlotEditorArtwork"),
+  overlaySlotEditorSample: document.getElementById("overlaySlotEditorSample"),
+  overlaySlotEditorZone: document.getElementById("overlaySlotEditorZone"),
+  overlaySlotEditorFit: document.getElementById("overlaySlotEditorFit"),
+  overlaySlotEditorReset: document.getElementById("overlaySlotEditorReset"),
+  overlaySlotEditorCancel: document.getElementById("overlaySlotEditorCancel"),
+  overlaySlotEditorSave: document.getElementById("overlaySlotEditorSave"),
   assetThemeDefaultsModal: document.getElementById("assetThemeDefaultsModal"),
   assetThemeDefaultsTitle: document.getElementById("assetThemeDefaultsTitle"),
   assetThemeDefaultsSummary: document.getElementById("assetThemeDefaultsSummary"),
@@ -1906,7 +1918,20 @@ const ENHANCEMENT_MODE_CONFIG = {
   },
 };
 
-const FILTER_EFFECTS = getGuestVisibleBeautyPresets();
+let FILTER_EFFECTS = getGuestVisibleBeautyPresets().map(cloneThemeValue);
+const BEAUTY_PRESET_CONTROL_DEFINITIONS = [
+  ["beauty", "skinSmooth", "Skin smoothing", 0, 12],
+  ["beauty", "blemish", "Blemish correction", 0, 12],
+  ["beauty", "teeth", "Teeth brightening", 0, 30],
+  ["beauty", "underEye", "Under-eye lift", 0, 10],
+  ["lighting", "exposure", "Exposure", -20, 20],
+  ["lighting", "contrast", "Contrast", -20, 20],
+  ["lighting", "warmth", "Warmth", -20, 20],
+  ["lighting", "vibrance", "Vibrance", -20, 20],
+  ["lighting", "highlights", "Highlights", -30, 10],
+  ["lighting", "shadows", "Shadows", -10, 30],
+  ["lighting", "sharpness", "Sharpness", 0, 20],
+];
 
 function getAssetPickerFilename(src = "") {
   const value = String(src || "").split("?")[0].split("#")[0];
@@ -1967,6 +1992,8 @@ let sessionRemovedTemplates = [];
 let activeThemeDefaultsAsset = null;
 let activeThemeDefaultsSetupKey = "";
 let activeIdleScreenEditorAsset = null;
+let activeOverlaySlotEditorAsset = null;
+let overlaySlotEditorSlot = null;
 let idleScreenEditorZone = { x: 50, y: 73, width: 28, height: 20 };
 let photoChoiceEditorZones = {
   singlePhoto: { x: 34, y: 59, width: 27, height: 50 },
@@ -3596,6 +3623,20 @@ function setupThemeEditorControls() {
     DOM.idleScreenEditorCancel.addEventListener("click", closeIdleScreenEditor);
   if (DOM.idleScreenEditorSave)
     DOM.idleScreenEditorSave.addEventListener("click", saveIdleScreenEditor);
+  if (DOM.overlaySlotEditorFit)
+    DOM.overlaySlotEditorFit.addEventListener("change", () => {
+      if (!overlaySlotEditorSlot) return;
+      overlaySlotEditorSlot.objectFit = DOM.overlaySlotEditorFit.value === "contain" ? "contain" : "cover";
+    });
+  if (DOM.overlaySlotEditorReset)
+    DOM.overlaySlotEditorReset.addEventListener("click", () => {
+      overlaySlotEditorSlot = createDefaultOverlayPhotoSlot();
+      renderOverlaySlotEditorZone();
+    });
+  if (DOM.overlaySlotEditorCancel)
+    DOM.overlaySlotEditorCancel.addEventListener("click", closeOverlaySlotEditor);
+  if (DOM.overlaySlotEditorSave)
+    DOM.overlaySlotEditorSave.addEventListener("click", saveOverlaySlotEditor);
   if (DOM.refreshAssetLibraryBtn)
     DOM.refreshAssetLibraryBtn.addEventListener("click", () => {
       loadAssetLibraryRemote().catch((err) => {
@@ -4659,6 +4700,112 @@ function setupEnhancementModeSelect() {
   });
 }
 
+function getBeautyPresetOverrides() {
+  const overrides = themes && themes._meta && themes._meta.beautyPresetOverrides;
+  return overrides && typeof overrides === "object" ? overrides : {};
+}
+
+function refreshBeautyPresetEffects() {
+  const overrides = getBeautyPresetOverrides();
+  FILTER_EFFECTS = getGuestVisibleBeautyPresets().map((preset) => {
+    const override = overrides[preset.id] || {};
+    return {
+      ...cloneThemeValue(preset),
+      ...cloneThemeValue(override),
+      beauty: { ...preset.beauty, ...(override.beauty || {}) },
+      lighting: { ...preset.lighting, ...(override.lighting || {}) },
+    };
+  });
+  if (!FILTER_EFFECTS.some((preset) => preset.id === selectedFilter)) {
+    selectedFilter = FILTER_EFFECTS[0] ? FILTER_EFFECTS[0].id : "natural";
+  }
+  updateFilterCarouselUI();
+}
+
+function getEditableBeautyPreset() {
+  return FILTER_EFFECTS.find((preset) => preset.id === DOM.beautyPresetSelect?.value) || FILTER_EFFECTS[0] || null;
+}
+
+function renderBeautyPresetEditor() {
+  if (!DOM.beautyPresetSelect || !DOM.beautyPresetControls) return;
+  const previous = DOM.beautyPresetSelect.value;
+  DOM.beautyPresetSelect.innerHTML = "";
+  FILTER_EFFECTS.forEach((preset) => {
+    const option = document.createElement("option");
+    option.value = preset.id;
+    option.textContent = `${preset.icon || ""} ${preset.name}`.trim();
+    DOM.beautyPresetSelect.appendChild(option);
+  });
+  DOM.beautyPresetSelect.value = FILTER_EFFECTS.some((preset) => preset.id === previous)
+    ? previous
+    : selectedFilter;
+  const preset = getEditableBeautyPreset();
+  DOM.beautyPresetControls.innerHTML = "";
+  if (!preset) return;
+  BEAUTY_PRESET_CONTROL_DEFINITIONS.forEach(([group, key, label, min, max]) => {
+    const row = document.createElement("div");
+    row.className = "beauty-preset-control";
+    const inputId = `beautyPreset-${preset.id}-${key}`;
+    const value = Number(preset[group] && preset[group][key]) || 0;
+    row.innerHTML = `<label for="${inputId}">${label}</label><output for="${inputId}">${value}</output><input id="${inputId}" type="range" min="${min}" max="${max}" step="1" value="${value}">`;
+    const input = row.querySelector("input");
+    const output = row.querySelector("output");
+    input.addEventListener("input", () => {
+      const nextValue = Number(input.value);
+      output.value = String(nextValue);
+      output.textContent = String(nextValue);
+      updateBeautyPresetValue(preset.id, group, key, nextValue, false);
+    });
+    input.addEventListener("change", () => {
+      updateBeautyPresetValue(preset.id, group, key, Number(input.value), true);
+    });
+    DOM.beautyPresetControls.appendChild(row);
+  });
+}
+
+function updateBeautyPresetValue(presetId, group, key, value, persist) {
+  const overrides = getBeautyPresetOverrides();
+  if (!themes._meta) themes._meta = {};
+  if (!themes._meta.beautyPresetOverrides) themes._meta.beautyPresetOverrides = overrides;
+  const presetOverride = overrides[presetId] || {};
+  const groupOverride = { ...(presetOverride[group] || {}), [key]: value };
+  overrides[presetId] = { ...presetOverride, [group]: groupOverride };
+  refreshBeautyPresetEffects();
+  if (persist) persistBeautyPresetEdits();
+}
+
+async function persistBeautyPresetEdits() {
+  saveThemesToStorage();
+  if (!canSyncRemote()) {
+    showToast("Filter saved locally. Launch from the shared booth site to sync it.");
+    return;
+  }
+  const saved = await syncThemesRemote();
+  showToast(saved ? "Guest filter saved to shared booth settings." : "Filter saved locally; shared sync will retry.");
+}
+
+function resetBeautyPreset(presetId) {
+  if (!presetId) return;
+  const overrides = getBeautyPresetOverrides();
+  if (!overrides[presetId]) return;
+  delete overrides[presetId];
+  refreshBeautyPresetEffects();
+  renderBeautyPresetEditor();
+  persistBeautyPresetEdits();
+}
+
+function setupBeautyPresetEditor() {
+  if (!DOM.beautyPresetSelect || !DOM.beautyPresetControls) return;
+  refreshBeautyPresetEffects();
+  renderBeautyPresetEditor();
+  DOM.beautyPresetSelect.addEventListener("change", renderBeautyPresetEditor);
+  if (DOM.resetBeautyPresetButton) {
+    DOM.resetBeautyPresetButton.addEventListener("click", () => {
+      resetBeautyPreset(DOM.beautyPresetSelect.value);
+    });
+  }
+}
+
 function getCameraZoom() {
   try {
     const stored = localStorage.getItem("photoboothCameraZoom");
@@ -5529,6 +5676,7 @@ function init() {
   setupGreenScreenToggle();
   setupAiBackgroundToggle();
   setupEnhancementModeSelect();
+  setupBeautyPresetEditor();
   setupCameraZoomControls();
   setupEditModeControls();
   setupEventNameInput();
@@ -5668,6 +5816,7 @@ async function loadThemesRemote() {
     mergeStoredThemes(themes, remote);
     fixBuiltinThemePlacements(themes);
     ensureBuiltinThemes();
+    refreshBeautyPresetEffects();
     if (!hasCoreBuiltins(themes)) {
       resetThemesToBuiltins("remote themes missing core entries");
     }
@@ -5755,14 +5904,17 @@ async function loadEventsRemote() {
   } catch (_) {}
 }
 async function syncThemesRemote() {
-  if (!canSyncRemote()) return;
+  if (!canSyncRemote()) return false;
   try {
-    await fetch("/api/themes", {
+    const response = await fetch("/api/themes", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(themes),
     });
-  } catch (_) {}
+    return response.ok;
+  } catch (_) {
+    return false;
+  }
 }
 function scheduleThemesRemoteSync() {
   if (!canSyncRemote()) return;
@@ -10228,7 +10380,14 @@ async function applyOverlay(canvas, overlaySrc) {
 }
 
 // Draw image/canvas into a destination rect using CSS-like object-fit: cover math
-function drawCoverInRect(ctx, source, dx, dy, dw, dh) {
+function getObjectPositionAnchor(value) {
+  const raw = String(value || "center").toLowerCase();
+  const horizontal = raw.includes("left") ? 0 : raw.includes("right") ? 1 : 0.5;
+  const vertical = raw.includes("top") ? 0 : raw.includes("bottom") ? 1 : 0.5;
+  return { horizontal, vertical };
+}
+
+function drawCoverInRect(ctx, source, dx, dy, dw, dh, objectPosition = "center") {
   if (!source) return;
   const img = source;
   const iw = img.naturalWidth || img.videoWidth || img.width;
@@ -10237,8 +10396,9 @@ function drawCoverInRect(ctx, source, dx, dy, dw, dh) {
   const scale = Math.max(dw / iw, dh / ih);
   const rw = iw * scale;
   const rh = ih * scale;
-  const rx = dx + (dw - rw) / 2;
-  const ry = dy + (dh - rh) / 2;
+  const anchor = getObjectPositionAnchor(objectPosition);
+  const rx = dx + (dw - rw) * anchor.horizontal;
+  const ry = dy + (dh - rh) * anchor.vertical;
   ctx.save();
   ctx.beginPath();
   ctx.rect(dx, dy, dw, dh);
@@ -10317,7 +10477,7 @@ function drawPhotoSlot(ctx, source, slot, outputW, outputH) {
   if (slot.objectFit === "contain") {
     drawImageContain(ctx, img, rect.x, rect.y, rect.w, rect.h);
   } else {
-    drawCoverInRect(ctx, img, rect.x, rect.y, rect.w, rect.h);
+    drawCoverInRect(ctx, img, rect.x, rect.y, rect.w, rect.h, slot.objectPosition);
   }
   ctx.restore();
 }
@@ -14551,6 +14711,7 @@ function getLibraryOverlayEntries() {
     category: asset.category,
     tags: asset.tags,
     textFields: asset.textFields,
+    photoSlots: asset.photoSlots,
     __library: true,
   }));
 }
@@ -14562,6 +14723,7 @@ function getLibraryTemplateEntries() {
     tags: asset.tags,
     textFields: asset.textFields,
     layout: "double_column",
+    photoSlots: asset.photoSlots,
     __library: true,
   }));
 }
@@ -15246,6 +15408,140 @@ function saveIdleScreenEditor() {
   showToast(isPhotoChoice ? "Photo choice hotspots saved." : "Idle screen hotspot saved.");
 }
 
+function createDefaultOverlayPhotoSlot() {
+  return {
+    x: 0.15,
+    y: 0.15,
+    width: 0.7,
+    height: 0.7,
+    borderRadius: 0,
+    objectFit: "cover",
+    objectPosition: "center",
+    sourceIndex: 0,
+  };
+}
+
+function normalizeOverlaySlotEditorSlot(slot) {
+  const source = normalizePhotoSlotDescriptor(slot || createDefaultOverlayPhotoSlot(), 0);
+  if (!source || !source.width || !source.height) return createDefaultOverlayPhotoSlot();
+  return {
+    ...source,
+    x: Math.min(source.x, 1 - source.width),
+    y: Math.min(source.y, 1 - source.height),
+  };
+}
+
+function renderOverlaySlotEditorZone() {
+  if (!DOM.overlaySlotEditorZone || !overlaySlotEditorSlot) return;
+  const slot = overlaySlotEditorSlot;
+  DOM.overlaySlotEditorZone.style.left = `${slot.x * 100}%`;
+  DOM.overlaySlotEditorZone.style.top = `${slot.y * 100}%`;
+  DOM.overlaySlotEditorZone.style.width = `${slot.width * 100}%`;
+  DOM.overlaySlotEditorZone.style.height = `${slot.height * 100}%`;
+  if (DOM.overlaySlotEditorFit) DOM.overlaySlotEditorFit.value = slot.objectFit || "cover";
+}
+
+function bindOverlaySlotEditorPointer() {
+  const zone = DOM.overlaySlotEditorZone;
+  const canvas = DOM.overlaySlotEditorCanvas;
+  if (!zone || !canvas || zone.dataset.bound === "true") return;
+  zone.dataset.bound = "true";
+  zone.addEventListener("pointerdown", (event) => {
+    if (!overlaySlotEditorSlot) return;
+    event.preventDefault();
+    const resize = event.target.tagName === "I";
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const original = { ...overlaySlotEditorSlot };
+    zone.setPointerCapture(event.pointerId);
+    const move = (nextEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const dx = (nextEvent.clientX - startX) / rect.width;
+      const dy = (nextEvent.clientY - startY) / rect.height;
+      if (resize) {
+        overlaySlotEditorSlot = normalizeOverlaySlotEditorSlot({
+          ...original,
+          width: Math.min(1 - original.x, Math.max(0.06, original.width + dx)),
+          height: Math.min(1 - original.y, Math.max(0.06, original.height + dy)),
+        });
+      } else {
+        overlaySlotEditorSlot = normalizeOverlaySlotEditorSlot({
+          ...original,
+          x: Math.max(0, Math.min(1 - original.width, original.x + dx)),
+          y: Math.max(0, Math.min(1 - original.height, original.y + dy)),
+        });
+      }
+      renderOverlaySlotEditorZone();
+    };
+    const stop = () => {
+      zone.removeEventListener("pointermove", move);
+      zone.removeEventListener("pointerup", stop);
+      zone.removeEventListener("pointercancel", stop);
+    };
+    zone.addEventListener("pointermove", move);
+    zone.addEventListener("pointerup", stop);
+    zone.addEventListener("pointercancel", stop);
+  });
+}
+
+function closeOverlaySlotEditor() {
+  activeOverlaySlotEditorAsset = null;
+  overlaySlotEditorSlot = null;
+  if (DOM.overlaySlotEditorModal) DOM.overlaySlotEditorModal.classList.add("hidden");
+}
+
+function openOverlaySlotEditor(asset) {
+  if (!asset || !DOM.overlaySlotEditorModal || !DOM.overlaySlotEditorArtwork) return;
+  activeOverlaySlotEditorAsset = asset;
+  const savedSlot = Array.isArray(asset.photoSlots) && asset.photoSlots[0];
+  overlaySlotEditorSlot = normalizeOverlaySlotEditorSlot(savedSlot || createDefaultOverlayPhotoSlot());
+  const sampleSrc = DOM.lastShot ? DOM.lastShot.getAttribute("src") || "" : "";
+  if (DOM.overlaySlotEditorSample) {
+    DOM.overlaySlotEditorSample.src = sampleSrc;
+    DOM.overlaySlotEditorSample.classList.toggle("hidden", !sampleSrc);
+  }
+  DOM.overlaySlotEditorArtwork.onload = () => {
+    const width = DOM.overlaySlotEditorArtwork.naturalWidth;
+    const height = DOM.overlaySlotEditorArtwork.naturalHeight;
+    if (width && height && DOM.overlaySlotEditorCanvas) {
+      DOM.overlaySlotEditorCanvas.style.aspectRatio = `${width} / ${height}`;
+    }
+    renderOverlaySlotEditorZone();
+  };
+  DOM.overlaySlotEditorArtwork.src = getAssetEntrySrc(asset);
+  DOM.overlaySlotEditorModal.classList.remove("hidden");
+  bindOverlaySlotEditorPointer();
+  renderOverlaySlotEditorZone();
+}
+
+function replaceSavedPhotoSlotInThemes(asset, photoSlots) {
+  const category = asset.category === "template" ? "template" : "overlay";
+  const arrayName = category === "template" ? "templates" : "overlays";
+  const assetSrc = getAssetEntrySrc(asset);
+  forEachThemeEntry((theme) => {
+    if (!Array.isArray(theme[arrayName])) return;
+    theme[arrayName] = theme[arrayName].map((entry) => {
+      if (getAssetEntrySrc(entry) !== assetSrc) return entry;
+      if (category === "overlay" && typeof entry === "string") {
+        return { src: entry, name: asset.name, photoSlots: cloneThemeValue(photoSlots) };
+      }
+      return { ...entry, photoSlots: cloneThemeValue(photoSlots) };
+    });
+  });
+  saveThemesToStorage();
+}
+
+async function saveOverlaySlotEditor() {
+  if (!activeOverlaySlotEditorAsset || !overlaySlotEditorSlot) return;
+  const photoSlots = [normalizeOverlaySlotEditorSlot(overlaySlotEditorSlot)];
+  const asset = activeOverlaySlotEditorAsset;
+  await updateAssetLibraryItem(asset.id, { photoSlots }, asset);
+  replaceSavedPhotoSlotInThemes(asset, photoSlots);
+  closeOverlaySlotEditor();
+  showToast("Photo window saved. It will use this exact placement on the final photo.");
+}
+
 const THEME_DEFAULTS_GROUP_ORDER = [
   "General",
   "Wedding",
@@ -15404,16 +15700,23 @@ function buildThemeDefaultAssetEntry(asset) {
   const src = getAssetEntrySrc(asset);
   if (!src) return null;
   const category = normalizeUploadedAssetCategory(asset.category);
-  if (category === "background") return src;
-  if (category === "overlay") return src;
   const raw = asset.raw && typeof asset.raw === "object" ? asset.raw : {};
+  if (category === "background") return src;
+  if (category === "overlay") {
+    return {
+      ...cloneThemeValue(raw),
+      src,
+      name: asset.name,
+      photoSlots: raw.photoSlots || asset.photoSlots,
+    };
+  }
   if (category === "template") {
     return {
       ...cloneThemeValue(raw),
       src,
       layout: normalizeTemplateLayout(raw.layout || asset.layout || "double_column"),
       slots: raw.slots,
-      photoSlots: raw.photoSlots,
+      photoSlots: asset.photoSlots || raw.photoSlots,
       background: raw.background,
       foreground: raw.foreground,
       textFields: normalizeTemplateTextFields(raw.textFields || asset.textFields),
@@ -15850,6 +16153,12 @@ function registerUploadedAsset(url, kind, details = {}) {
             }
           : { start: normalizeIdleButtonZone(details.buttonZones && details.buttonZones.start) }
         : undefined,
+    photoSlots:
+      category === "overlay" || category === "template"
+        ? Array.isArray(details.photoSlots)
+          ? details.photoSlots
+          : []
+        : undefined,
   };
   if (mergeLibraryAsset(asset)) {
     syncAssetLibraryRemoteAsset(asset).catch(() => {});
@@ -16050,6 +16359,17 @@ function renderAssetLibrary() {
           event.stopPropagation();
           openIdleScreenEditor(asset);
         });
+        const photoWindowBtn = document.createElement("button");
+        photoWindowBtn.type = "button";
+        photoWindowBtn.textContent = "Adjust Photo Window";
+        photoWindowBtn.classList.toggle(
+          "hidden",
+          asset.category !== "overlay" && asset.category !== "template"
+        );
+        photoWindowBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openOverlaySlotEditor(asset);
+        });
         const deleteBtn = document.createElement("button");
         deleteBtn.type = "button";
         deleteBtn.textContent = "Delete";
@@ -16069,6 +16389,7 @@ function renderAssetLibrary() {
         actions.appendChild(tagsBtn);
         actions.appendChild(greenScreenBtn);
         actions.appendChild(hotspotBtn);
+        actions.appendChild(photoWindowBtn);
         actions.appendChild(defaultsBtn);
         actions.appendChild(deleteBtn);
         card.appendChild(img);
@@ -17053,6 +17374,7 @@ function loadThemesFromStorage() {
       mergeStoredThemes(themes, parsed);
       fixBuiltinThemePlacements(themes);
       ensureBuiltinThemes();
+      refreshBeautyPresetEffects();
       const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
       const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
       try {

@@ -1135,6 +1135,23 @@
       min-height: 44px;
     }
 
+    .beauty-preset-editor {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid rgba(91, 128, 122, 0.2);
+      border-radius: 14px;
+      background: rgba(246, 255, 251, 0.76);
+    }
+
+    .beauty-preset-editor summary { cursor: pointer; color: #28443e; font-weight: 800; }
+    .beauty-preset-editor > p { margin: 10px 0 12px; color: #5d6c69; font-size: 0.88rem; line-height: 1.4; }
+    .beauty-preset-editor select, .beauty-preset-editor button { width: 100%; }
+    .beauty-preset-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px 14px; margin: 14px 0; }
+    .beauty-preset-control { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; }
+    .beauty-preset-control label { color: #39564f; font-size: 0.82rem; font-weight: 700; }
+    .beauty-preset-control output { min-width: 28px; color: #167c68; font-size: 0.82rem; font-weight: 800; text-align: right; }
+    .beauty-preset-control input { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: #167c68; }
+
     .setup-operator-tools,
     .event-library-section {
       border: 1px solid rgba(200, 238, 229, 0.92);
@@ -3692,6 +3709,12 @@
     .idle-screen-editor-zone { position: absolute; border: 3px dashed #f97316; background: rgba(249, 115, 22, 0.18); cursor: move; transform: translate(-50%, -50%); }
     .idle-screen-editor-zone span { position: absolute; left: 0; bottom: 100%; padding: 4px 8px; background: #f97316; color: #fff; font-size: 12px; white-space: nowrap; }
     .idle-screen-editor-zone i { position: absolute; right: -8px; bottom: -8px; width: 20px; height: 20px; border-radius: 50%; background: #f97316; cursor: nwse-resize; }
+    .overlay-slot-editor-canvas { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: min(62vh, 620px); margin: 16px 0; overflow: hidden; background: linear-gradient(135deg, #dbeafe, #fce7f3 48%, #dcfce7); touch-action: none; }
+    .overlay-slot-editor-canvas img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+    .overlay-slot-editor-canvas .overlay-slot-editor-sample { object-fit: cover; opacity: 0.9; }
+    .overlay-slot-editor-zone { position: absolute; border: 3px dashed #0ea5e9; background: rgba(14, 165, 233, 0.14); cursor: move; box-shadow: 0 0 0 999px rgba(15, 23, 42, 0.18); }
+    .overlay-slot-editor-zone span { position: absolute; left: 0; bottom: 100%; padding: 4px 8px; background: #0369a1; color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .overlay-slot-editor-zone i { position: absolute; right: -10px; bottom: -10px; width: 22px; height: 22px; border-radius: 50%; background: #0369a1; border: 2px solid #fff; cursor: nwse-resize; }
 
     #welcomeOverlay {
       display: grid;
@@ -6914,6 +6937,14 @@
                 <option value="bridal-glow" selected>Bridal Glow</option>
                 <option value="harsh-light-fix">Harsh Light Fix</option>
               </select>
+              <details class="beauty-preset-editor" id="beautyPresetEditor">
+                <summary>Guest Filter Editor</summary>
+                <p>Adjust the selected guest filter. Changes are saved to the shared booth settings and never appear in the guest flow.</p>
+                <label for="beautyPresetSelect">Guest Filter</label>
+                <select id="beautyPresetSelect"></select>
+                <div id="beautyPresetControls" class="beauty-preset-controls"></div>
+                <button type="button" id="resetBeautyPresetButton">Reset Selected Filter</button>
+              </details>
               <label for="cameraZoomInput">Camera Zoom</label>
               <div style="display:flex; align-items:center; gap:16px;">
                 <input type="range" id="cameraZoomInput" min="1" max="2.5" step="0.05">
@@ -7519,6 +7550,26 @@
         <button type="button" id="idleScreenResetZone">Reset button position</button>
         <button type="button" id="idleScreenEditorCancel">Cancel</button>
         <button type="button" id="idleScreenEditorSave" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlaySlotEditorModal" class="hidden idle-screen-editor-modal" role="dialog" aria-modal="true" aria-labelledby="overlaySlotEditorTitle">
+    <div class="idle-screen-editor-panel">
+      <h2 id="overlaySlotEditorTitle">Adjust Photo Window</h2>
+      <p>Drag the blue window over the open space in your Canva or AI artwork. The artwork itself is never changed.</p>
+      <label>Photo fit
+        <select id="overlaySlotEditorFit"><option value="cover">Fill window (recommended)</option><option value="contain">Show whole photo</option></select>
+      </label>
+      <div id="overlaySlotEditorCanvas" class="overlay-slot-editor-canvas">
+        <img id="overlaySlotEditorSample" class="overlay-slot-editor-sample hidden" alt="Current photo preview">
+        <img id="overlaySlotEditorArtwork" alt="Imported overlay artwork">
+        <div id="overlaySlotEditorZone" class="overlay-slot-editor-zone" tabindex="0"><span>Photo window</span><i aria-hidden="true"></i></div>
+      </div>
+      <div class="btn-row">
+        <button type="button" id="overlaySlotEditorReset">Reset window</button>
+        <button type="button" id="overlaySlotEditorCancel">Cancel</button>
+        <button type="button" id="overlaySlotEditorSave" class="primary">Save photo window</button>
       </div>
     </div>
   </div>

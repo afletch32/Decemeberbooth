@@ -259,6 +259,14 @@ export function normalizeAssetLibraryPayload(payload, options = {}) {
               ),
             }
           : { start: normalizeIdleButtonZone(item.buttonZones?.start) },
+      photoSlots:
+        category === "overlay" || category === "template"
+          ? Array.isArray(item.photoSlots)
+            ? item.photoSlots
+                .map((slot, index) => normalizePhotoSlot(slot, index))
+                .filter(Boolean)
+            : []
+          : undefined,
     };
     const mergeKey = getAssetLibraryId(category, url) || id;
     const existing = byId.get(mergeKey);
@@ -288,5 +296,27 @@ export function normalizeAssetLibraryPayload(payload, options = {}) {
     assets: Array.from(byId.values()).sort((a, b) =>
       String(b.createdAt).localeCompare(String(a.createdAt))
     ),
+  };
+}
+
+function normalizePhotoSlot(slot, index) {
+  if (!slot || typeof slot !== "object") return null;
+  const clamp = (value) => Math.min(1, Math.max(0, Number(value)));
+  const x = clamp(slot.x);
+  const y = clamp(slot.y);
+  const width = clamp(slot.width ?? slot.w);
+  const height = clamp(slot.height ?? slot.h);
+  if (![x, y, width, height].every(Number.isFinite) || !width || !height) return null;
+  return {
+    x,
+    y,
+    width: Math.min(width, 1 - x),
+    height: Math.min(height, 1 - y),
+    borderRadius: clamp(slot.borderRadius || 0),
+    objectFit: slot.objectFit === "contain" ? "contain" : "cover",
+    objectPosition: String(slot.objectPosition || "center").trim() || "center",
+    sourceIndex: Number.isFinite(Number(slot.sourceIndex))
+      ? Math.max(0, Math.floor(Number(slot.sourceIndex)))
+      : index,
   };
 }
