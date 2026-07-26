@@ -686,7 +686,23 @@ app.delete('/api/print-queue/:id', requirePrintQueueStaff, (req, res) => {
 // API: GET/POST/PATCH/DELETE /api/assets (persistent uploaded asset library)
 app.get('/api/assets', (req, res) => {
   try {
-    res.json(normalizeAssetLibraryPayload(readJsonFile('asset-library.json', { assets: [] })));
+    const library = normalizeAssetLibraryPayload(readJsonFile('asset-library.json', { assets: [] }));
+    const themeCategory = String(req.query.themeCategory || '').trim().toLowerCase();
+    const validThemeCategories = new Set(['general', 'birthday', 'school', 'wedding', 'holidays']);
+    const matchesThemeCategory = (asset) => {
+      if (!validThemeCategories.has(themeCategory)) return true;
+      const hints = [
+        ...(Array.isArray(asset.tags) ? asset.tags : []),
+        asset.folder,
+        asset.name,
+        asset.url,
+      ].join(' ').toLowerCase();
+      if (themeCategory === 'holidays') {
+        return /(^|[\s/_:-])(holiday|holidays|fall|winter|spring|summer)(?=$|[\s/_:-])/.test(hints);
+      }
+      return new RegExp(`(^|[\\s/_:-])${themeCategory}(?=$|[\\s/_:-])`).test(hints);
+    };
+    res.json({ assets: library.assets.filter(matchesThemeCategory) });
   } catch (err) {
     console.error('Error reading asset library:', err);
     res.status(500).json({ ok: false, error: err.message });

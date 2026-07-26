@@ -26,6 +26,35 @@ function normalizeCategory(value) {
   return VALID_CATEGORIES.has(raw) ? raw : "";
 }
 
+const THEME_CATEGORIES = new Set([
+  "general",
+  "birthday",
+  "school",
+  "wedding",
+  "holidays",
+]);
+
+function normalizeThemeCategory(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  return THEME_CATEGORIES.has(raw) ? raw : "";
+}
+
+function assetMatchesThemeCategory(asset, themeCategory) {
+  if (!themeCategory) return true;
+  const hints = [
+    ...(Array.isArray(asset.tags) ? asset.tags : []),
+    asset.folder,
+    asset.name,
+    asset.url,
+  ]
+    .join(" ")
+    .toLowerCase();
+  if (themeCategory === "holidays") {
+    return /(^|[\s/_:-])(holiday|holidays|fall|winter|spring|summer)(?=$|[\s/_:-])/.test(hints);
+  }
+  return new RegExp(`(^|[\\s/_:-])${themeCategory}(?=$|[\\s/_:-])`).test(hints);
+}
+
 function getAssetLibraryUrlKey(value) {
   const raw = String(value || "").trim();
   if (!raw) return "";
@@ -265,7 +294,15 @@ export async function onRequest(context) {
   }
 
   if (request.method === "GET") {
-    return buildJsonResponse(await readLibrary(env));
+    const themeCategory = normalizeThemeCategory(
+      new URL(request.url).searchParams.get("themeCategory")
+    );
+    const library = await readLibrary(env);
+    return buildJsonResponse({
+      assets: library.assets.filter((asset) =>
+        assetMatchesThemeCategory(asset, themeCategory)
+      ),
+    });
   }
 
   if (request.method === "POST") {

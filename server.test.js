@@ -135,6 +135,33 @@ test("asset library deduplicates URL variants by category", withTempEnv(async (_
   }
 }));
 
+test("asset library can return only the requested theme category", withTempEnv(async (_tmp, t) => {
+  const server = await startTempServer(t);
+  if (!server) return;
+  try {
+    const { port } = server.address();
+    for (const [name, tag] of [["Birthday frame", "birthday"], ["Wedding frame", "wedding"]]) {
+      const response = await fetch(`http://127.0.0.1:${port}/api/assets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: "overlay",
+          url: `https://example.test/${tag}-${name.replace(/ /g, "-")}.png`,
+          name,
+          tags: [tag],
+        }),
+      });
+      assert.equal(response.status, 200);
+    }
+    const response = await fetch(`http://127.0.0.1:${port}/api/assets?themeCategory=birthday`);
+    const payload = await response.json();
+    assert.equal(payload.assets.length, 1);
+    assert.equal(payload.assets[0].name, "Birthday frame");
+  } finally {
+    await new Promise((resolve) => server.close(() => resolve()));
+  }
+}));
+
 test("print queue shares items by event and requires manual payment before staff workflow", withTempEnv(async (_tmp, t) => {
   const server = await startTempServer(t);
   if (!server) return;

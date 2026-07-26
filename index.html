@@ -6769,7 +6769,10 @@
               <h3 id="themeQuickSelectionName">Choose a theme</h3>
               <p id="themeQuickSelectionMeta">Choose a look to see the included guest screens and photo styling.</p>
             </div>
-            <button type="button" data-setup-next="capture">Continue to Capture</button>
+            <div class="btn-row" style="margin:0;">
+              <button type="button" id="cacheAssetsBtn" onclick="makeAvailableOffline()">Make Selected Theme Available Offline</button>
+              <button type="button" data-setup-next="capture">Continue to Capture</button>
+            </div>
           </aside>
         </section>
         <div class="setup-session-secondary">
@@ -7053,7 +7056,6 @@
                 <input type="checkbox" id="offlineModeToggle"> Offline Mode (no QR; queue emails)
               </label>
               <button type="button" id="sendPendingBtn" onclick="sendPendingNow()" disabled>Send Pending (0)</button>
-              <button type="button" id="cacheAssetsBtn" onclick="makeAvailableOffline()">Make Available Offline</button>
               <button type="button" onclick="connectMotorRelay()">Connect Motor Relay</button>
               <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
                 <input type="checkbox" id="forceCameraFileToggle"> Force camera on file://

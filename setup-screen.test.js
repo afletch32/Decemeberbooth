@@ -185,6 +185,69 @@ test("setup section state updates button and panel accessibility attributes", ()
   );
 });
 
+test("offline preparation is available with the selected theme at the top of setup", () => {
+  const html = readProjectFile("index.html");
+  const themePicker = html.indexOf('class="theme-quick-picker setup-session-theme"');
+  const offlineButton = html.indexOf('id="cacheAssetsBtn" onclick="makeAvailableOffline()"');
+  const advancedTools = html.indexOf('id="offlineSection"');
+
+  assert.ok(
+    themePicker >= 0 && offlineButton > themePicker && offlineButton < advancedTools,
+    "offline preparation should stay beside the selected theme, above Advanced Device Tools"
+  );
+  assert.equal(
+    (html.match(/id="cacheAssetsBtn"/g) || []).length,
+    1,
+    "the main setup control should be the single offline-preparation entry point"
+  );
+});
+
+test("asset library limits initial thumbnail loading to a small batch", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("const ASSET_LIBRARY_PAGE_SIZE = 12;") &&
+      appScript.includes("visibleCount: ASSET_LIBRARY_PAGE_SIZE") &&
+      appScript.includes("assets.slice(0, assetLibraryState.visibleCount)") &&
+      appScript.includes("assetLibraryState.visibleCount += ASSET_LIBRARY_PAGE_SIZE"),
+    "the library should render only a small thumbnail batch, then load more on request"
+  );
+  assert.ok(
+    appScript.includes("function resetAssetLibraryVisibleCount()") &&
+      appScript.includes("const refreshAssetLibraryFromFilter = () =>"),
+    "changing a library filter should return to the small initial batch"
+  );
+});
+
+test("asset library scopes loaded and rendered assets to the selected theme category", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("?themeCategory=${encodeURIComponent(normalizedThemeCategory)}") &&
+      appScript.includes("function getVisibleAssetLibraryRows()") &&
+      appScript.includes("if (themeKeys.length) return themeKeys.includes(themeKey);") &&
+      appScript.includes("getAssetLibraryFilterCategories(asset).includes(themeCategory)"),
+    "the library should request and render assets within the active theme/category scope"
+  );
+});
+
+test("the most recently selected theme is restored when no saved event is active", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes('const LAST_THEME_KEY_STORAGE = "photoboothLastThemeKey"') &&
+      appScript.includes("function getLastThemeKey()") &&
+      appScript.includes("function getStartupThemeKey()") &&
+      appScript.includes("populateThemeSelector(getStartupThemeKey())"),
+    "startup should restore the last selected theme"
+  );
+  assert.ok(
+    appScript.includes("setLastThemeKey(key);") &&
+      appScript.includes("(activeEvent && activeEvent.themeKey) || getLastThemeKey()"),
+    "theme changes should be remembered while active saved events remain authoritative"
+  );
+});
+
 test("share settings prioritize printing and separate connection groups", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");
@@ -780,16 +843,18 @@ test("asset library supports explicit multi-theme defaults without manifest auto
   );
 });
 
-test("asset library keeps every saved asset visible across theme selections", () => {
+test("asset library scopes visible assets to the selected theme and category", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
     appScript.includes("function getVisibleAssetLibraryRows()") &&
-      appScript.includes("return getAllAssetLibraryRows();") &&
+      appScript.includes("const themeKey = normalizeThemeSelectionKey(getSelectedThemeKey());") &&
+      appScript.includes("if (themeKeys.length) return themeKeys.includes(themeKey);") &&
+      appScript.includes("getAssetLibraryFilterCategories(asset).includes(themeCategory)") &&
       appScript.includes("filterAssetLibraryRows(") &&
       appScript.includes("getVisibleAssetLibraryRows(),") &&
       appScript.includes("const allAssets = getVisibleAssetLibraryRows();"),
-    "theme selection should not hide saved library cards or change asset-type counts"
+    "theme selection should limit cards and type counts to the active theme/category"
   );
   assert.ok(
     appScript.includes("if (Array.isArray(theme && theme.idleScreens))") &&

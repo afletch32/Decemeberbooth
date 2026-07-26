@@ -41,6 +41,7 @@ import {
 } from "./asset-library-utils.mjs";
 import {
   filterAssetLibraryRows,
+  getAssetLibraryFilterCategories,
   themeKeyToCategory,
 } from "./asset-library-view.mjs";
 import {
@@ -3564,12 +3565,16 @@ function setupThemeEditorControls() {
         closeThemeDefaultsSetupModal();
     });
   }
+  const refreshAssetLibraryFromFilter = () => {
+    resetAssetLibraryVisibleCount();
+    renderAssetLibrary();
+  };
   if (DOM.assetLibrarySearch)
-    DOM.assetLibrarySearch.addEventListener("input", renderAssetLibrary);
+    DOM.assetLibrarySearch.addEventListener("input", refreshAssetLibraryFromFilter);
   if (DOM.assetLibraryCategory)
-    DOM.assetLibraryCategory.addEventListener("change", renderAssetLibrary);
+    DOM.assetLibraryCategory.addEventListener("change", refreshAssetLibraryFromFilter);
   if (DOM.assetLibrarySort)
-    DOM.assetLibrarySort.addEventListener("change", renderAssetLibrary);
+    DOM.assetLibrarySort.addEventListener("change", refreshAssetLibraryFromFilter);
   if (DOM.assetLibraryClearFilters)
     DOM.assetLibraryClearFilters.addEventListener(
       "click",
@@ -5561,15 +5566,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (e) {
     console.warn("Font picker setup failed", e);
   }
-  const initialKey = populateThemeSelector(DEFAULT_THEME_KEY);
+  const initialKey = populateThemeSelector(getStartupThemeKey());
   populateEventProfileSelect(getActiveEventId());
-  const activeEvent = getActiveEvent();
-  if (activeEvent && activeEvent.themeKey) {
-    setEventSelection(activeEvent.themeKey);
-    loadTheme(activeEvent.themeKey);
-  } else if (initialKey) {
-    loadTheme(initialKey);
-  }
+  if (initialKey) loadTheme(initialKey);
   syncEventInputsFromActive();
   goAdmin(); // Start on admin screen
   ["click", "mousemove", "keydown", "touchstart"].forEach((evt) =>
@@ -5691,7 +5690,7 @@ async function loadThemesRemote() {
     )
       scheduleThemesRemoteSync();
     // Refresh UI if already initialized
-    const selected = populateThemeSelector(DEFAULT_THEME_KEY);
+    const selected = populateThemeSelector(getStartupThemeKey());
     if (selected) {
       loadTheme(selected);
     }
@@ -6819,8 +6818,16 @@ function setEventSelection(key) {
   if (!key) return false;
   key = normalizeThemeSelectionKey(key);
   if (!themeAdminState.setSelectedThemeKey(key)) return false;
+  setLastThemeKey(key);
   updateThemeEditorSummary();
   return true;
+}
+
+function getStartupThemeKey() {
+  const activeEvent = getActiveEvent();
+  // An explicitly active saved event remains authoritative. Otherwise, reopen
+  // the exact theme the operator used most recently.
+  return (activeEvent && activeEvent.themeKey) || getLastThemeKey() || DEFAULT_THEME_KEY;
 }
 
 function resolvePreferredThemeKey(preferredKey) {
@@ -7083,6 +7090,7 @@ function loadTheme(themeKey) {
   updateLaunchSummary();
   syncSessionThemeSearch();
   syncSessionFontSearch();
+  loadAssetLibraryRemote().catch(() => renderAssetLibrary());
 }
 
 // Convert any CSS color string to hex (#rrggbb); returns '' on failure
@@ -14607,14 +14615,24 @@ async function syncAssetLibraryRemoteAsset(asset) {
   }
 }
 
-async function loadAssetLibraryRemote() {
+const loadedAssetLibraryThemeCategories = new Set();
+
+async function loadAssetLibraryRemote(themeCategory = getMainAssetLibraryCategory()) {
   loadAssetLibraryLocal();
   if (!canSyncRemote()) {
     renderAssetLibrary();
     return;
   }
+  const normalizedThemeCategory = String(themeCategory || "").trim().toLowerCase();
+  if (normalizedThemeCategory && loadedAssetLibraryThemeCategories.has(normalizedThemeCategory)) {
+    renderAssetLibrary();
+    return;
+  }
   try {
-    const resp = await fetch("/api/assets", { cache: "no-store" });
+    const query = normalizedThemeCategory
+      ? `?themeCategory=${encodeURIComponent(normalizedThemeCategory)}`
+      : "";
+    const resp = await fetch(`/api/assets${query}`, { cache: "no-store" });
     if (!resp.ok) {
       renderAssetLibrary();
       return;
@@ -14625,6 +14643,8 @@ async function loadAssetLibraryRemote() {
     });
     assetLibrary = merged;
     saveAssetLibraryLocal();
+    if (normalizedThemeCategory)
+      loadedAssetLibraryThemeCategories.add(normalizedThemeCategory);
     renderAssetLibrary();
     if (activeTheme) {
       renderCurrentAssets(activeTheme);
@@ -15000,7 +15020,15 @@ function recordAssetLibraryRecent(asset) {
 }
 
 function getVisibleAssetLibraryRows() {
-  return getAllAssetLibraryRows();
+  const themeKey = normalizeThemeSelectionKey(getSelectedThemeKey());
+  const themeCategory = getMainAssetLibraryCategory();
+  return getAllAssetLibraryRows().filter((asset) => {
+    const themeKeys = Array.isArray(asset.themeKeys) ? asset.themeKeys : [];
+    if (themeKeys.length) return themeKeys.includes(themeKey);
+    const tags = Array.isArray(asset.tags) ? asset.tags : [];
+    if (themeKey && tags.includes(themeKey)) return true;
+    return getAssetLibraryFilterCategories(asset).includes(themeCategory);
+  });
 }
 
 function getMainAssetLibraryCategory() {
@@ -15043,7 +15071,7 @@ function clearAssetLibraryFilters() {
   if (DOM.assetLibrarySearch) DOM.assetLibrarySearch.value = "";
   if (DOM.assetLibraryCategory) DOM.assetLibraryCategory.value = "";
   assetLibraryState.selectedCategory = "";
-  assetLibraryState.visibleCount = 40;
+  resetAssetLibraryVisibleCount();
   renderAssetLibrary();
 }
 
@@ -15833,11 +15861,17 @@ function registerUploadedAsset(url, kind, details = {}) {
   }
 }
 
+const ASSET_LIBRARY_PAGE_SIZE = 12;
+
 let assetLibraryState = {
   selectedCategory: "",
   searchQuery: "",
-  visibleCount: 40,
+  visibleCount: ASSET_LIBRARY_PAGE_SIZE,
 };
+
+function resetAssetLibraryVisibleCount() {
+  assetLibraryState.visibleCount = ASSET_LIBRARY_PAGE_SIZE;
+}
 
 function renderAssetLibraryPills() {
   const pillsContainer = DOM.assetLibraryPills;
@@ -15879,7 +15913,7 @@ function renderAssetLibraryPills() {
     pill.innerHTML = `${cat.label} <span class="asset-library-pill-count">${counts[cat.key] || 0}</span>`;
     pill.addEventListener("click", () => {
       assetLibraryState.selectedCategory = cat.key;
-      assetLibraryState.visibleCount = 40;
+      resetAssetLibraryVisibleCount();
       renderAssetLibraryPills();
       renderAssetLibrary();
     });
@@ -15902,9 +15936,10 @@ function renderAssetLibrary() {
   const assets = getFilteredAssetLibraryRows();
   
   // Render grid
+  const visibleAssets = assets.slice(0, assetLibraryState.visibleCount);
+
   if (grid) {
     grid.innerHTML = "";
-    const visibleAssets = assets.slice(0, assetLibraryState.visibleCount);
     
     if (visibleAssets.length === 0) {
       const empty = document.createElement("div");
@@ -16049,9 +16084,11 @@ function renderAssetLibrary() {
         const showMoreBtn = document.createElement("button");
         showMoreBtn.type = "button";
         showMoreBtn.className = "asset-library-show-more";
-        showMoreBtn.textContent = `Show More (${assets.length - assetLibraryState.visibleCount} remaining)`;
+        const remaining = assets.length - visibleAssets.length;
+        const nextCount = Math.min(ASSET_LIBRARY_PAGE_SIZE, remaining);
+        showMoreBtn.textContent = `Show ${nextCount} More (${remaining} remaining)`;
         showMoreBtn.addEventListener("click", () => {
-          assetLibraryState.visibleCount += 40;
+          assetLibraryState.visibleCount += ASSET_LIBRARY_PAGE_SIZE;
           renderAssetLibrary();
         });
         grid.appendChild(showMoreBtn);
@@ -16098,8 +16135,8 @@ function renderAssetLibrary() {
       );
     status.textContent = total
       ? filterLabels.length
-        ? `Showing ${assets.length} of ${total} assets. Filters active: ${filterLabels.join(", ")}`
-        : `Showing ${assets.length} assets`
+        ? `Showing ${visibleAssets.length} of ${assets.length} matching assets (${total} total). Filters active: ${filterLabels.join(", ")}`
+        : `Showing ${visibleAssets.length} of ${assets.length} assets`
       : "No assets available yet.";
   }
 }

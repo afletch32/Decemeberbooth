@@ -2,10 +2,15 @@
 
 ## Current goal
 
-- Make selecting a theme automatically apply its available booth-screen package, with only portrait or landscape to choose.
+- Make the booth launch reliably on slow or intermittent connections.
 
 ## Current progress
 
+- The service worker now preloads the booth app shell after the first successful connection and serves it immediately from the local cache while refreshing it in the background.
+- Previously downloaded booth artwork, including Cloudinary-hosted guest screens saved through Make Available Offline, is now served from the same local cache on weak or offline connections. Newly viewed image/video assets are retained for the next launch.
+- Moved Make Selected Theme Available Offline beside the selected-theme summary at the top of Event Setup. The last selected theme now returns on opening unless an operator has explicitly kept a saved event active.
+- Reduced Asset Library startup thumbnail work from 40 assets to 12. Operators can reveal another 12 only when needed; search, category, and sort changes return to the small batch.
+- Asset Library now requests uploaded assets by the selected theme category and renders built-in assets only from the exact selected theme, preventing unrelated theme thumbnails from loading.
 - Completed the separate General Back to School eight-screen package: portrait and landscape Start, photo-choice, reusable chalkboard background, and Thank You screens. It is intentionally distinct from the Amanda North Coyote Back to School theme.
 - The Schools picker now lists two separate Amanda North themes: Amanda North Back to School and Amanda North STREAM Night. Older saved names migrate to the clearer labels.
 - Theme setup now has one Booth screen shape choice (Portrait or Landscape). That selection drives the matching theme idle, photo-choice, background, share, and Thank You screens; a partial event screen override no longer replaces the matching built-in screen for the other shape.
