@@ -13,6 +13,7 @@
 - The Hawks artwork uses the official hawk mark, a bright daytime cartoon rec/high-school football field, modest bleachers and fencing, navy/green/white varsity framing, and balanced football/fan spirit. It does not use stadium lights, reproduce the supplied youth team photo, or use cheer-specific wording.
 - The separate Spring Hill Hawks Cheer theme is intentionally paused until after the general cartoon Hawks theme is committed and deployed.
 - Added portrait and landscape Tap to Start, Single Photo, and three-slot Photo Strip hotspots, plus migration that brings the new screens into older saved Hawks themes while preserving existing optional overlays and templates.
+- Committed and deployed the general cartoon Hawks checkpoint (`011a205`); the deployed page and representative idle/photo-choice WebP assets returned HTTP 200.
 - Fixed booth-shape asset scoping so Landscape no longer marks portrait theme overlays selected, and Portrait no longer marks landscape overlays selected. Asset cards, selected counts, previews, and capture choices now share the same orientation-aware overlay list.
 - Bumped the offline app-shell cache and added a one-time reload when the new service worker takes control, preventing an already-open booth tab from continuing to show the previous Asset Library UI.
 - Theme Start, Photo Choice, Share, and Thank You screens no longer appear in the Asset Library. The old screen-by-screen preset editor is removed, and uploading one screen orientation now preserves the matching screen for the other orientation.
