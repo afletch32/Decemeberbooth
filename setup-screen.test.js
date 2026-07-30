@@ -387,7 +387,7 @@ test("setup theme dropdown groups themes by user-facing category", () => {
       appScript.includes('"General",') &&
       appScript.includes('"Youth",') &&
       appScript.includes('const THEME_SETUP_LABEL_OVERRIDES = {') &&
-      appScript.includes('hawks: "Hawks"') &&
+      appScript.includes('hawks: "Spring Hill Hawks"') &&
       appScript.includes('ane: "Amanda North Back to School"') &&
       appScript.includes('"stream night": "Amanda North STREAM Night"') &&
       appScript.includes('"st patricks day": "St. Patrick\'s Day"'),

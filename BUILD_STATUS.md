@@ -2,11 +2,17 @@
 
 ## Current goal
 
+- Deliver the general Spring Hill Hawks youth football program theme for players, cheerleaders, parents, families, and fans in the official navy, green, and white colors; add the separate Cheer theme only after this version is deployed.
 - Give key guest-flow moments sound effects that match the selected theme.
 - Keep theme screens preset-driven so event setup requires only a theme and Portrait or Landscape.
 
 ## Current progress
 
+- Rebuilt the existing Hawks theme as the general-audience Spring Hill Hawks experience with eight coordinated 1200 × 1800 and 1800 × 1200 cartoon guest screens: idle, photo choice, reusable background, and Thank You in both orientations.
+- Kept full-resolution PNG masters and added 147–238 KB WebP delivery copies for reliable booth loading.
+- The Hawks artwork uses the official hawk mark, a bright daytime cartoon rec/high-school football field, modest bleachers and fencing, navy/green/white varsity framing, and balanced football/fan spirit. It does not use stadium lights, reproduce the supplied youth team photo, or use cheer-specific wording.
+- The separate Spring Hill Hawks Cheer theme is intentionally paused until after the general cartoon Hawks theme is committed and deployed.
+- Added portrait and landscape Tap to Start, Single Photo, and three-slot Photo Strip hotspots, plus migration that brings the new screens into older saved Hawks themes while preserving existing optional overlays and templates.
 - Fixed booth-shape asset scoping so Landscape no longer marks portrait theme overlays selected, and Portrait no longer marks landscape overlays selected. Asset cards, selected counts, previews, and capture choices now share the same orientation-aware overlay list.
 - Bumped the offline app-shell cache and added a one-time reload when the new service worker takes control, preventing an already-open booth tab from continuing to show the previous Asset Library UI.
 - Theme Start, Photo Choice, Share, and Thank You screens no longer appear in the Asset Library. The old screen-by-screen preset editor is removed, and uploading one screen orientation now preserves the matching screen for the other orientation.

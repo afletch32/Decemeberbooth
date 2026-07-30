@@ -494,21 +494,75 @@ let themes = {
     name: "School",
     themes: {
       hawks: {
-        name: "Hawks",
-        eventTypes: ["community"],
+        name: "Spring Hill Hawks",
+        eventTypes: ["community", "sports"],
         fontPairingStyle: "community",
         accent: "#041E42",
-        accent2: "white",
-        font: "'Comic Neue', cursive",
+        accent2: "#16A34A",
+        font: "'Anton', sans-serif",
         background: "",
-        logo: "",
+        logo: "/assets/themes/spring-hill-hawks/spring-hill-hawks-logo.png",
         backgrounds: [
+          "/assets/themes/spring-hill-hawks/spring-hill-hawks-background-landscape.webp",
+          "/assets/themes/spring-hill-hawks/spring-hill-hawks-background-portrait.webp",
           "https://res.cloudinary.com/afletch32/image/upload/v1783788493/photobooth/events/assets/hawks-background-16_mzbqiq.png",
           "https://res.cloudinary.com/afletch32/image/upload/v1783788494/photobooth/events/assets/hawks-background-blue-green-background_rdyfln.png",
           "https://res.cloudinary.com/afletch32/image/upload/v1783788495/photobooth/events/assets/hawks-background-1_kl48cl.png",
           "https://res.cloudinary.com/afletch32/image/upload/v1783788496/photobooth/events/assets/hawks-background-football_bclba6.png",
           "https://res.cloudinary.com/afletch32/image/upload/v1783788497/photobooth/events/assets/hawks-background-gradient_relljc.png",
           "https://res.cloudinary.com/afletch32/image/upload/v1783788498/photobooth/events/assets/hawks-background-green-fog_jrxhfq.png",
+        ],
+        idleScreens: [
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-idle-portrait.webp",
+            name: "Spring Hill Hawks idle screen portrait",
+            role: "idle",
+            orientation: "portrait",
+            buttonZones: {
+              start: { x: 50, y: 75, width: 68, height: 14 },
+            },
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-idle-landscape.webp",
+            name: "Spring Hill Hawks idle screen landscape",
+            role: "idle",
+            orientation: "landscape",
+            buttonZones: {
+              start: { x: 50, y: 78, width: 48, height: 16 },
+            },
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-photo-choice-portrait.webp",
+            name: "Spring Hill Hawks photo choice portrait",
+            role: "photo-choice",
+            orientation: "portrait",
+            buttonZones: {
+              singlePhoto: { x: 50, y: 48, width: 64, height: 26 },
+              photoStrip: { x: 50, y: 74, width: 64, height: 24 },
+            },
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-photo-choice-landscape.webp",
+            name: "Spring Hill Hawks photo choice landscape",
+            role: "photo-choice",
+            orientation: "landscape",
+            buttonZones: {
+              singlePhoto: { x: 31, y: 57, width: 34, height: 45 },
+              photoStrip: { x: 69, y: 57, width: 34, height: 45 },
+            },
+          },
+        ],
+        thankYouScreens: [
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-thank-you-portrait.webp",
+            name: "Spring Hill Hawks Thank You screen portrait",
+            orientation: "portrait",
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-thank-you-landscape.webp",
+            name: "Spring Hill Hawks Thank You screen landscape",
+            orientation: "landscape",
+          },
         ],
         overlays: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788500/photobooth/events/assets/hawks-overlay-1_scvljp.png", name: "hawks-overlay-1" },
@@ -525,11 +579,12 @@ let themes = {
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788508/photobooth/events/assets/hawks-template-go-hawks_avfpzg.png", layout: "single_photo" },
         ],
         welcome: {
-          title: "Go Hawks!",
+          title: "Spring Hill Hawks",
           portrait: "",
           landscape: "",
-          prompt: "Touch to start",
+          prompt: "Tap to start",
         },
+        vibeSummary: "Youth football, sideline spirit, family pride, and Hawks game-day energy",
       },
       ane: {
         name: "Amanda North Back to School",
@@ -2742,7 +2797,11 @@ const THEME_SETUP_GROUP_ITEM_ORDER = {
     "St. Patrick's Day",
   ],
   Wedding: ["Garden Vows", "Timeless Romance"],
-  Youth: ["Hawks", "Amanda North Back to School", "Amanda North STREAM Night"],
+  Youth: [
+    "Spring Hill Hawks",
+    "Amanda North Back to School",
+    "Amanda North STREAM Night",
+  ],
 };
 
 const THEME_SETUP_LABEL_OVERRIDES = {
@@ -2770,7 +2829,7 @@ const THEME_SETUP_LABEL_OVERRIDES = {
   "st patrick's": "St. Patrick's Day",
   "garden vows": "Garden Vows",
   "timeless romance": "Timeless Romance",
-  hawks: "Hawks",
+  hawks: "Spring Hill Hawks",
   ane: "Amanda North Back to School",
   "stream night": "Amanda North STREAM Night",
   "winter wonderland": "Winter Wonderland",
@@ -6202,6 +6261,7 @@ async function loadThemesRemote() {
     const removedLegacyThemes = removeLegacyFlatBuiltinThemes();
     const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
     const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
+    const migratedSpringHillHawks = migrateSpringHillHawksAssets(themes);
     const repairedBackgroundDefaults = repairCorruptedBackgroundDefaults();
     const globalLogo = getGlobalLogo();
     if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
@@ -6211,7 +6271,8 @@ async function loadThemesRemote() {
       repairedOverlayDefaults ||
       removedLegacyThemes ||
       migratedAveryScreens ||
-      migratedAmandaNorthScreens
+      migratedAmandaNorthScreens ||
+      migratedSpringHillHawks
     )
       scheduleThemesRemoteSync();
     // Refresh UI if already initialized
@@ -17384,6 +17445,103 @@ function migrateAmandaNorthScreenAssets(target = themes) {
   return migrated;
 }
 
+function migrateSpringHillHawksAssets(target = themes) {
+  const theme = target?.school?.themes?.hawks;
+  const defaults = BUILTIN_THEMES.school?.themes?.hawks;
+  if (!theme || !defaults) return false;
+  let migrated = false;
+  const isCheerSpecificAsset = (entry) =>
+    getAssetEntrySrc(entry).includes("/assets/themes/spring-hill-hawks-cheer/");
+
+  if (
+    theme.name === "Hawks" ||
+    theme.name === "Hawks Cheer" ||
+    theme.name === "Spring Hill Hawks Cheer"
+  ) {
+    theme.name = defaults.name;
+    migrated = true;
+  }
+  if (
+    !theme.logo ||
+    theme.logo === "/assets/school/hawks/logo.png" ||
+    theme.logo ===
+      "/assets/themes/spring-hill-hawks-cheer/spring-hill-hawks-logo.png"
+  ) {
+    theme.logo = defaults.logo;
+    migrated = true;
+  }
+  if (
+    !theme.accent2 ||
+    String(theme.accent2).toLowerCase() === "white" ||
+    String(theme.accent2).toLowerCase() === "#ffffff"
+  ) {
+    theme.accent2 = defaults.accent2;
+    migrated = true;
+  }
+  if (!theme.font || theme.font === "'Comic Neue', cursive") {
+    theme.font = defaults.font;
+    migrated = true;
+  }
+  if (
+    theme.welcome?.title === "Go Hawks!" ||
+    theme.welcome?.title === "Spring Hill Hawks Cheer"
+  ) {
+    theme.welcome.title = defaults.welcome.title;
+    theme.welcome.prompt = defaults.welcome.prompt;
+    migrated = true;
+  }
+
+  ["idleScreens", "thankYouScreens"].forEach((field) => {
+    const stored = Array.isArray(theme[field]) ? theme[field] : [];
+    const existing = stored.filter((entry) => !isCheerSpecificAsset(entry));
+    if (existing.length !== stored.length) migrated = true;
+    const missing = (Array.isArray(defaults[field]) ? defaults[field] : []).filter(
+      (entry) => {
+        const src = getAssetEntrySrc(entry);
+        return src && !existing.some((item) => getAssetEntrySrc(item) === src);
+      }
+    );
+    if (missing.length || existing.length !== stored.length) {
+      theme[field] = [...missing.map(cloneThemeValue), ...existing];
+      migrated = true;
+    }
+  });
+
+  const storedBackgrounds = Array.isArray(theme.backgrounds)
+    ? theme.backgrounds
+    : [];
+  const existingBackgrounds = storedBackgrounds.filter(
+    (entry) => !isCheerSpecificAsset(entry)
+  );
+  if (existingBackgrounds.length !== storedBackgrounds.length) migrated = true;
+  const removedBackgrounds = new Set(
+    (Array.isArray(theme.backgroundsRemoved) ? theme.backgroundsRemoved : [])
+      .map(getAssetEntrySrc)
+      .filter(Boolean)
+  );
+  const foundationBackgrounds = defaults.backgrounds.slice(0, 2);
+  const missingBackgrounds = foundationBackgrounds.filter((entry) => {
+    const src = getAssetEntrySrc(entry);
+    return (
+      src &&
+      !removedBackgrounds.has(src) &&
+      !existingBackgrounds.some((item) => getAssetEntrySrc(item) === src)
+    );
+  });
+  if (
+    missingBackgrounds.length ||
+    existingBackgrounds.length !== storedBackgrounds.length
+  ) {
+    theme.backgrounds = [
+      ...missingBackgrounds.map(cloneThemeValue),
+      ...existingBackgrounds,
+    ];
+    migrated = true;
+  }
+
+  return migrated;
+}
+
 function migrateLegacyBuiltinRootThemeDefaults() {
   for (const rootKey of Object.keys(BUILTIN_THEMES)) {
     const builtinGroup = BUILTIN_THEMES[rootKey];
@@ -17692,13 +17850,20 @@ function loadThemesFromStorage() {
       refreshBeautyPresetEffects();
       const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
       const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
+      const migratedSpringHillHawksCheer =
+        migrateSpringHillHawksAssets(themes);
       try {
         normalizeAllThemes();
       } catch (_e) {}
       if (!hasCoreBuiltins(themes)) {
         resetThemesToBuiltins("stored themes missing core entries");
       }
-      if (migratedAveryScreens || migratedAmandaNorthScreens) saveThemesToStorage();
+      if (
+        migratedAveryScreens ||
+        migratedAmandaNorthScreens ||
+        migratedSpringHillHawksCheer
+      )
+        saveThemesToStorage();
     } catch (err) {
       console.warn("Failed to parse stored themes", err);
     }
