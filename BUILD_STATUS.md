@@ -7,6 +7,8 @@
 
 ## Current progress
 
+- Fixed booth-shape asset scoping so Landscape no longer marks portrait theme overlays selected, and Portrait no longer marks landscape overlays selected. Asset cards, selected counts, previews, and capture choices now share the same orientation-aware overlay list.
+- Bumped the offline app-shell cache and added a one-time reload when the new service worker takes control, preventing an already-open booth tab from continuing to show the previous Asset Library UI.
 - Theme Start, Photo Choice, Share, and Thank You screens no longer appear in the Asset Library. The old screen-by-screen preset editor is removed, and uploading one screen orientation now preserves the matching screen for the other orientation.
 - Added distinct sound palettes for classic, celebration, wedding, expo, school, Halloween, winter holiday, and romantic themes.
 - Theme-aware cues now cover guest taps, countdown beats, capture flash/completion, QR readiness, and goodbye; custom themes infer a suitable palette from their event metadata.

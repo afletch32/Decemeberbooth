@@ -1004,6 +1004,20 @@ test("theme screens stay preset and out of the Asset Library", () => {
   );
 });
 
+test("booth screen shape scopes effective theme overlays by orientation", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes(
+      "return filterPhotoOverlaysByOrientation(out, getGuestScreenOrientation());"
+    ) &&
+      appScript.includes("renderCurrentAssets(activeTheme || getSelectedThemeTarget());") &&
+      appScript.includes("renderAssetLibrary();") &&
+      appScript.includes("updateLaunchSummary();"),
+    "orientation changes and image probes should keep overlay choices, cards, and counts in sync"
+  );
+});
+
 test("setup exposes selected assets in a collapsible summary", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts/app.js");

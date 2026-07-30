@@ -153,6 +153,13 @@ window.addEventListener("beforeunload", () => {
 });
 
 if ("serviceWorker" in navigator) {
+  let serviceWorkerControllerReloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (serviceWorkerControllerReloaded) return;
+    serviceWorkerControllerReloaded = true;
+    window.location.reload();
+  });
+
   window.addEventListener("load", async () => {
     if (isLocalDevHost()) {
       await clearPhotoboothServiceWorkerState();
@@ -1679,7 +1686,12 @@ function queuePhotoOverlayOrientationProbe(asset) {
       if (width && height) {
         photoOverlayOrientationCache[src] =
           width >= height ? "landscape" : "portrait";
-        if (getSelectedCaptureMode() === "photo") renderOptions();
+        if (getSelectedCaptureMode() === "photo") {
+          renderOptions();
+          renderCurrentAssets(activeTheme || getSelectedThemeTarget());
+          renderAssetLibrary();
+          updateLaunchSummary();
+        }
       }
     })
     .catch(() => {})
@@ -21118,7 +21130,7 @@ function getOverlayList(theme) {
     seen.add(src);
     out.push(item);
   }
-  return out;
+  return filterPhotoOverlaysByOrientation(out, getGuestScreenOrientation());
 }
 
 function getAllThemeOverlayCatalogList(theme) {
