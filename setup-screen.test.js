@@ -968,34 +968,39 @@ test("asset library explains saved, filtered, and removal actions", () => {
   );
 });
 
-test("selected themes can configure all default assets in one modal", () => {
+test("theme screens stay preset and out of the Asset Library", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    html.includes('id="setupThemeDefaultsBtn"') &&
-      html.includes('id="themeDefaultsSetupModal"') &&
-      html.includes('id="themeDefaultsSetupList"'),
-    "setup should expose a selected-theme defaults button and modal"
+    html.includes('id="guestScreenOrientation"') &&
+      html.includes('value="portrait">Portrait</option>') &&
+      html.includes('value="landscape">Landscape</option>') &&
+      html.includes("Loads the theme’s preset Start, Photo Choice, Share, and Thank You screens."),
+    "setup should make screen shape the only theme-screen choice"
   );
   assert.ok(
-    appScript.includes("function openThemeDefaultsSetupModal()") &&
-      appScript.includes("Set Up Defaults: ${label}") &&
-      appScript.includes("getCanonicalAssetCollection()"),
-    "theme defaults setup should use the canonical background, overlay, and template catalog"
+    !html.includes('id="setupThemeDefaultsBtn"') &&
+      !html.includes('id="themeDefaultsSetupModal"') &&
+      !appScript.includes("function openThemeDefaultsSetupModal()"),
+    "setup should not expose a screen-by-screen preset editor"
   );
   assert.ok(
-    appScript.includes("function saveThemeDefaultsSetup()") &&
-      appScript.includes("replaceThemeDefaultEntries(") &&
-      appScript.includes("buildThemeDefaultAssetEntry(asset)"),
-    "save should update the selected theme with the existing asset entry shapes"
+    appScript.includes(
+      'if (normalizeUploadedAssetCategory(asset && asset.category) === "idle-screen")'
+    ) &&
+      appScript.includes("return false;") &&
+      !appScript.includes('{ key: "idle-screen", label: "Idle Screens" }'),
+    "preset screens and their filter should stay out of the Asset Library"
   );
   assert.ok(
-    appScript.includes("saveThemesToStorage();") &&
-      appScript.includes("clearSessionRemovedAsset(category, getAssetEntrySrc(asset));") &&
-      appScript.includes("renderAssetLibrary();") &&
-      appScript.includes("updateLaunchSummary();"),
-    "save should persist, restore selected defaults in-session, and refresh setup state"
+    appScript.includes(
+      "normalizeIdleScreenOrientation(item && item.orientation) !=="
+    ) &&
+      appScript.includes(
+        "normalizeIdleScreenOrientation(entry && entry.orientation)"
+      ),
+    "uploading one orientation should preserve the other orientation in the preset"
   );
 });
 
@@ -1094,14 +1099,13 @@ test("event name and date drive the session upload folder", () => {
   );
 });
 
-test("theme default setup normalizes corrupted built-in category selections", () => {
+test("theme selection normalizes corrupted built-in category selections", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
     appScript.includes("function normalizeThemeSelectionKey(themeKey)") &&
-      appScript.includes("const builtinGroup = BUILTIN_THEMES[key];") &&
-      appScript.includes("key = normalizeThemeSelectionKey(activeThemeDefaultsSetupKey);"),
-    "theme defaults should target a canonical child key rather than a built-in category root"
+      appScript.includes("const builtinGroup = BUILTIN_THEMES[key];"),
+    "theme selection should target a canonical child key rather than a built-in category root"
   );
   assert.ok(
     appScript.includes("function migrateLegacyBuiltinRootThemeDefaults()") &&
@@ -1273,8 +1277,8 @@ test("guest booth flow uses attraction-style host moments", () => {
   );
   assert.ok(
       appScript.includes("function playBoothSound(") &&
-      appScript.includes("countdown: { frequency") &&
-      appScript.includes("flash: { frequency") &&
+      appScript.includes("getThemeSoundCue(activeSessionThemeKey, activeTheme, kind)") &&
+      appScript.includes("cue.tones.forEach((tone) => {") &&
       appScript.includes("function getCountdownDurationSeconds()") &&
       appScript.includes("function showFlashBeat()") &&
       appScript.includes("function revealFinalSaveStage()") &&

@@ -978,47 +978,31 @@ test("asset defaults can be assigned to multiple themes without losing template 
   expect(backgroundRepair.summerBase).toEqual([]);
 });
 
-test("theme defaults setup persists checked assets after reopening", async ({
-  page,
-}) => {
+test("theme preset screens stay out of the Asset Library", async ({ page }) => {
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
 
-  await page.locator("#setupThemeDefaultsBtn").click();
-  await expect(page.locator("#themeDefaultsSetupModal")).toHaveClass(/show/);
+  await expect(
+    page.locator("#assetLibraryPills .asset-library-pill", {
+      hasText: "Idle Screens",
+    })
+  ).toHaveCount(0);
+  await expect(page.locator("#setupThemeDefaultsBtn")).toHaveCount(0);
+  await expect(page.locator("#themeDefaultsSetupModal")).toHaveCount(0);
 
-  const checkboxes = page.locator(
-    '#themeDefaultsSetupList input[type="checkbox"]'
+  const visibleCategories = await page
+    .locator("#assetLibraryGrid .asset-library-meta")
+    .allTextContents();
+  expect(
+    visibleCategories.some((value) => value.includes("idle-screen"))
+  ).toBe(false);
+
+  const screenRows = await page.evaluate(() =>
+    window.__photoboothTest
+      .getAllAssetLibraryRows()
+      .filter((asset) => asset.category === "idle-screen")
   );
-  const states = await checkboxes.evaluateAll((inputs) =>
-    inputs.map((input, index) => ({
-      index,
-      value: input.value,
-      checked: input.checked,
-    }))
-  );
-  const targets = states.filter((item) => !item.checked).slice(0, 3);
-  expect(targets.length).toBeGreaterThan(0);
-
-  for (const target of targets) {
-    await checkboxes.nth(target.index).check();
-  }
-
-  await page.locator("#themeDefaultsSetupSave").click();
-  await expect(page.locator("#themeDefaultsSetupModal")).toHaveClass(/hidden/);
-
-  await page.locator("#setupThemeDefaultsBtn").click();
-  const reopenedStates = await checkboxes.evaluateAll((inputs) =>
-    inputs.map((input) => ({
-      value: input.value,
-      checked: input.checked,
-    }))
-  );
-  for (const target of targets) {
-    expect(
-      reopenedStates.find((state) => state.value === target.value)?.checked
-    ).toBe(true);
-  }
+  expect(screenRows.length).toBeGreaterThan(0);
 });
 
 test("admin can open the layout builder and return to booth setup", async ({

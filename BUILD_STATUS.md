@@ -2,10 +2,19 @@
 
 ## Current goal
 
-- Make the booth launch reliably on slow or intermittent connections.
+- Give key guest-flow moments sound effects that match the selected theme.
+- Keep theme screens preset-driven so event setup requires only a theme and Portrait or Landscape.
 
 ## Current progress
 
+- Theme Start, Photo Choice, Share, and Thank You screens no longer appear in the Asset Library. The old screen-by-screen preset editor is removed, and uploading one screen orientation now preserves the matching screen for the other orientation.
+- Added distinct sound palettes for classic, celebration, wedding, expo, school, Halloween, winter holiday, and romantic themes.
+- Theme-aware cues now cover guest taps, countdown beats, capture flash/completion, QR readiness, and goodbye; custom themes infer a suitable palette from their event metadata.
+- Avery's voice clips, digital-circus button, and vintage-camera shutter remain exclusive to Avery's Birthday.
+- Added an operator-facing Theme Sound Effects toggle, enabled by default and stored as device UI state.
+- Added a per-theme sound editor in Capture settings with Preview, Upload/Replace, and Use Default actions for Start, Button Tap, Countdown, Photo Captured, QR Ready, and Thank You.
+- Theme sound uploads accept MP3, WAV, M4A, AAC, and OGG files up to 10 MB, save through the existing Cloudinary account, and persist with the selected theme across devices.
+- Uploaded sounds are included when the selected theme is made available offline; resetting a slot restores its built-in sound or synthesized theme palette.
 - The service worker now preloads the booth app shell after the first successful connection and serves it immediately from the local cache while refreshing it in the background.
 - Previously downloaded booth artwork, including Cloudinary-hosted guest screens saved through Make Available Offline, is now served from the same local cache on weak or offline connections. Newly viewed image/video assets are retained for the next launch.
 - Moved Make Selected Theme Available Offline beside the selected-theme summary at the top of Event Setup. The last selected theme now returns on opening unless an operator has explicitly kept a saved event active.
@@ -106,6 +115,7 @@
 
 ## Next steps
 
+- Listen to each sound palette on the actual booth speakers and tune relative volume if the event space is unusually loud or quiet.
 - Validate the new looks on the booth camera with real skin tones and both portrait and landscape lighting.
 
 ## Known bugs/blockers

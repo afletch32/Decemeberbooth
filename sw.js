@@ -26,6 +26,7 @@ const APP_SHELL_ASSETS = [
   "scripts/external-library-loader.mjs",
   "scripts/media-preview-utils.mjs",
   "scripts/recording-utils.mjs",
+  "scripts/theme-sound-utils.mjs",
   "scripts/beauty/presets.mjs",
 ];
 
@@ -126,8 +127,11 @@ self.addEventListener("fetch", (event) => {
     event.request.method === "GET" &&
     (event.request.destination === "image" ||
       event.request.destination === "video" ||
+      event.request.destination === "audio" ||
       (sameOrigin && url.pathname.includes("/assets/")) ||
-      /\.(png|jpg|jpeg|gif|webp|svg|mp4|webm)$/i.test(url.pathname));
+      /\.(png|jpg|jpeg|gif|webp|svg|mp4|webm|mp3|wav|m4a|aac|ogg|oga)$/i.test(
+        url.pathname
+      ));
 
   if (isAssetRequest) {
     event.respondWith((async () => {

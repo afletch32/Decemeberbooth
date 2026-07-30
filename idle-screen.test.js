@@ -46,10 +46,15 @@ test("Idle Screens are a first-class Cloudinary asset type", () => {
   assert.ok(!html.includes('id="addPhotoChoiceScreenBtn"'));
 });
 
-test("idle screens share canonical records and theme defaults", () => {
+test("idle screens share canonical records while staying out of the library view", () => {
   assert.ok(app.includes('if (category === "idle-screen")'));
   assert.ok(app.includes('return "idleScreens"'));
-  assert.ok(app.includes('{ key: "idle-screen", label: "Idle Screens" }'));
+  assert.ok(
+    app.includes(
+      'if (normalizeUploadedAssetCategory(asset && asset.category) === "idle-screen")'
+    )
+  );
+  assert.ok(!app.includes('{ key: "idle-screen", label: "Idle Screens" }'));
   assert.ok(app.includes("buttonZones:"));
 });
 
@@ -465,14 +470,20 @@ test("shared photo choice uploads persist as photo-choice idle screens", () => {
   );
 });
 
-test("selecting a screen replaces only the matching role", () => {
+test("saving a preset screen replaces only the matching role and orientation", () => {
   const replaceSource = extractFunctionFromEither(
     app,
     "",
     "replaceIdleScreenRoleEntry"
   );
   const replaceIdleScreenRoleEntry = Function(
-    `${replaceSource}; return replaceIdleScreenRoleEntry;`
+    `function normalizeIdleScreenOrientation(value) {
+      return String(value || "").toLowerCase() === "portrait"
+        ? "portrait"
+        : "landscape";
+    }
+    ${replaceSource};
+    return replaceIdleScreenRoleEntry;`
   )();
   const entries = [
     { src: "idle-landscape.mp4", role: "idle", orientation: "landscape" },
@@ -490,7 +501,22 @@ test("selecting a screen replaces only the matching role", () => {
 
   assert.deepEqual(
     replaceIdleScreenRoleEntry(entries, replacement),
-    [entries[1], replacement]
+    [...entries, replacement]
+  );
+  assert.deepEqual(
+    replaceIdleScreenRoleEntry(entries, {
+      src: "idle-landscape-new.mp4",
+      role: "idle",
+      orientation: "landscape",
+    }),
+    [
+      entries[1],
+      {
+        src: "idle-landscape-new.mp4",
+        role: "idle",
+        orientation: "landscape",
+      },
+    ]
   );
 });
 
@@ -505,23 +531,20 @@ test("uploaded idle screen entries preserve their detected orientation", () => {
   assert.ok(!builder.includes('orientation: "general"'));
 });
 
-test("Asset Library cards identify idle-screen orientation and role", () => {
-  assert.ok(app.includes('orientationBadge.textContent ='));
-  assert.ok(app.includes('? "Portrait"'));
-  assert.ok(app.includes(': "Landscape"'));
-  assert.ok(app.includes('? "Photo choice" : "Idle screen"'));
-  assert.ok(app.includes('container.classList.contains("asset-library-card")'));
-  assert.ok(app.includes('fallback.textContent = "Preview unavailable"'));
-  assert.ok(html.includes(".asset-library-preview-fallback"));
+test("preset screens retain orientation and role metadata without library cards", () => {
   const canonicalRow = extractFunction(app, "createCanonicalAssetRow");
   assert.ok(canonicalRow.includes("normalizeIdleScreenOrientation(raw.orientation)"));
   assert.ok(canonicalRow.includes('raw.role === "photo-choice"'));
   assert.ok(canonicalRow.includes("contentType: String(raw.contentType"));
+  const visibleRows = extractFunction(app, "getVisibleAssetLibraryRows");
+  assert.ok(visibleRows.includes('"idle-screen"'));
+  assert.ok(visibleRows.includes("return false"));
   const effectiveSelection = extractFunction(
     app,
     "getSessionEffectiveAssetSourceSet"
   );
   assert.ok(effectiveSelection.includes('["idle", "photo-choice"]'));
+  assert.ok(effectiveSelection.includes("getGuestScreenOrientation()"));
   assert.ok(
     effectiveSelection.includes(
       "findRole(assignedEntries, role) || findRole(themeEntries, role)"

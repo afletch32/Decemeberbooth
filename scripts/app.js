@@ -50,6 +50,12 @@ import {
   loadSelfieSegmentationLibrary,
 } from "./external-library-loader.mjs";
 import { getVideoPreviewPosterSrc } from "./media-preview-utils.mjs";
+import {
+  getThemeSoundCue,
+  resolveThemeSoundProfileName,
+  THEME_SOUND_SLOTS,
+  validateThemeSoundFile,
+} from "./theme-sound-utils.mjs";
 
 const themeAdminState = createThemeAdminState();
 const THEME_EDITOR = themeAdminState.editor;
@@ -1123,6 +1129,12 @@ const DOM = {
   recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
   countdownFiveToggle: document.getElementById("countdownFiveToggle"),
+  themeSoundToggle: document.getElementById("themeSoundToggle"),
+  themeSoundEditor: document.getElementById("themeSoundEditor"),
+  themeSoundThemeName: document.getElementById("themeSoundThemeName"),
+  themeSoundSlots: document.getElementById("themeSoundSlots"),
+  themeSoundStatus: document.getElementById("themeSoundStatus"),
+  themeSoundInput: document.getElementById("themeSoundInput"),
   boothInstantCaptureToggle: document.getElementById(
     "boothInstantCaptureToggle"
   ),
@@ -1336,13 +1348,6 @@ const DOM = {
   assetThemeDefaultsClearAll: document.getElementById(
     "assetThemeDefaultsClearAll"
   ),
-  setupThemeDefaultsBtn: document.getElementById("setupThemeDefaultsBtn"),
-  themeDefaultsSetupModal: document.getElementById("themeDefaultsSetupModal"),
-  themeDefaultsSetupTitle: document.getElementById("themeDefaultsSetupTitle"),
-  themeDefaultsSetupSummary: document.getElementById("themeDefaultsSetupSummary"),
-  themeDefaultsSetupList: document.getElementById("themeDefaultsSetupList"),
-  themeDefaultsSetupCancel: document.getElementById("themeDefaultsSetupCancel"),
-  themeDefaultsSetupSave: document.getElementById("themeDefaultsSetupSave"),
   themeGreenBackgrounds: document.getElementById("themeGreenBackgrounds"),
   currentGreenBackgrounds: document.getElementById("currentGreenBackgrounds"),
   addLogoBtn: document.getElementById("addLogoBtn"),
@@ -1990,7 +1995,6 @@ let sessionRemovedBackgrounds = [];
 let sessionRemovedOverlays = [];
 let sessionRemovedTemplates = [];
 let activeThemeDefaultsAsset = null;
-let activeThemeDefaultsSetupKey = "";
 let activeIdleScreenEditorAsset = null;
 let activeOverlaySlotEditorAsset = null;
 let overlaySlotEditorSlot = null;
@@ -2004,6 +2008,7 @@ let boothAudioContext = null;
 let boothAudioEnabled = false;
 let boothThemeAudio = null;
 const themeSoundEffectIndexes = new WeakMap();
+const THEME_SOUND_STORAGE_KEY = "photoboothThemeSounds";
 const ACCENT_PRESET_COLORS = [
   "#ffffff",
   "#0f1222",
@@ -2520,6 +2525,7 @@ function getSessionEffectiveAssetSourceSet(category = "") {
     );
   }
   if (normalized === "idle-screen") {
+    const orientation = getGuestScreenOrientation();
     const active = getActiveEvent();
     const overrides = active ? ensureEventOverrides(active) : {};
     const sessionEntries = Array.isArray(activeSessionAssets.idleScreens)
@@ -2538,7 +2544,9 @@ function getSessionEffectiveAssetSourceSet(category = "") {
         (entry) =>
           (entry && entry.role === "photo-choice"
             ? "photo-choice"
-            : "idle") === role
+            : "idle") === role &&
+          normalizeIdleScreenOrientation(entry && entry.orientation) ===
+            orientation
       );
     return new Set(
       ["idle", "photo-choice"]
@@ -3580,18 +3588,6 @@ function setupThemeEditorControls() {
         closeAssetThemeDefaultsModal();
     });
   }
-  if (DOM.setupThemeDefaultsBtn)
-    DOM.setupThemeDefaultsBtn.addEventListener("click", openThemeDefaultsSetupModal);
-  if (DOM.themeDefaultsSetupCancel)
-    DOM.themeDefaultsSetupCancel.addEventListener("click", closeThemeDefaultsSetupModal);
-  if (DOM.themeDefaultsSetupSave)
-    DOM.themeDefaultsSetupSave.addEventListener("click", saveThemeDefaultsSetup);
-  if (DOM.themeDefaultsSetupModal) {
-    DOM.themeDefaultsSetupModal.addEventListener("click", (event) => {
-      if (event.target === DOM.themeDefaultsSetupModal)
-        closeThemeDefaultsSetupModal();
-    });
-  }
   const refreshAssetLibraryFromFilter = () => {
     resetAssetLibraryVisibleCount();
     renderAssetLibrary();
@@ -3859,11 +3855,16 @@ function replaceThankYouScreenOrientation(entries, entry) {
 
 function replaceIdleScreenRoleEntry(entries, entry) {
   const role = entry && entry.role === "photo-choice" ? "photo-choice" : "idle";
+  const orientation = normalizeIdleScreenOrientation(
+    entry && entry.orientation
+  );
   return [
     ...(Array.isArray(entries) ? entries : []).filter(
       (item) =>
         (item && item.role === "photo-choice" ? "photo-choice" : "idle") !==
-        role
+          role ||
+        normalizeIdleScreenOrientation(item && item.orientation) !==
+          orientation
     ),
     entry,
   ];
@@ -4572,6 +4573,367 @@ function setupCountdownFiveToggle() {
   DOM.countdownFiveToggle.addEventListener("change", () => {
     setCountdownFiveSecondsEnabled(DOM.countdownFiveToggle.checked);
   });
+}
+
+function getThemeSoundsEnabled() {
+  try {
+    return localStorage.getItem(THEME_SOUND_STORAGE_KEY) !== "false";
+  } catch (_) {
+    return true;
+  }
+}
+
+function setThemeSoundsEnabled(enabled) {
+  try {
+    localStorage.setItem(THEME_SOUND_STORAGE_KEY, enabled ? "true" : "false");
+  } catch (_) {}
+  if (enabled) return;
+  boothAudioEnabled = false;
+  if (boothThemeAudio) {
+    boothThemeAudio.pause();
+    boothThemeAudio.currentTime = 0;
+    boothThemeAudio = null;
+  }
+}
+
+function setupThemeSoundToggle() {
+  if (!DOM.themeSoundToggle) return;
+  DOM.themeSoundToggle.checked = getThemeSoundsEnabled();
+  DOM.themeSoundToggle.addEventListener("change", () => {
+    const enabled = DOM.themeSoundToggle.checked;
+    setThemeSoundsEnabled(enabled);
+    if (enabled) {
+      unlockBoothAudio();
+      playBoothSound("success");
+    }
+  });
+}
+
+function getBuiltinThemeForKey(themeKey = "") {
+  const key = normalizeThemeSelectionKey(themeKey);
+  if (!key) return null;
+  if (!key.includes(":")) {
+    const direct = BUILTIN_THEMES[key];
+    return direct && !direct.themes && !direct.holidays ? direct : null;
+  }
+  const [rootKey, leafKey] = key.split(":");
+  const group = BUILTIN_THEMES[rootKey];
+  if (!group) return null;
+  return group.themes?.[leafKey] || group.holidays?.[leafKey] || null;
+}
+
+function getThemeSoundEditorTarget() {
+  const key = normalizeThemeSelectionKey(
+    getSelectedThemeKey() || activeSessionThemeKey
+  );
+  const theme = (key && resolveThemeByKey(key)) || activeTheme;
+  return { key, theme };
+}
+
+function getThemeSoundUrl(theme, kind) {
+  const effects = theme && theme.soundEffects;
+  const src = effects && effects[kind];
+  return typeof src === "string" ? src.trim() : "";
+}
+
+function getThemeSoundFilename(url = "") {
+  const clean = String(url || "").split("?")[0].split("#")[0];
+  try {
+    return decodeURIComponent(clean.split("/").pop() || "");
+  } catch (_) {
+    return clean.split("/").pop() || "";
+  }
+}
+
+function getThemeSoundSlotState(themeKey, theme, slot) {
+  const builtinTheme = getBuiltinThemeForKey(themeKey);
+  const builtinUrl = getThemeSoundUrl(builtinTheme, slot.key);
+  const currentUrl = getThemeSoundUrl(theme, slot.key);
+  const savedName =
+    theme &&
+    theme.soundEffectNames &&
+    typeof theme.soundEffectNames[slot.key] === "string"
+      ? theme.soundEffectNames[slot.key].trim()
+      : "";
+  const builtinAlternates =
+    builtinTheme &&
+    builtinTheme.soundEffects &&
+    builtinTheme.soundEffects[`${slot.key}Alternates`];
+  const currentAlternates =
+    theme && theme.soundEffects && theme.soundEffects[`${slot.key}Alternates`];
+  const custom =
+    !!savedName ||
+    currentUrl !== builtinUrl ||
+    JSON.stringify(currentAlternates || []) !==
+      JSON.stringify(builtinAlternates || []);
+  const profileName = resolveThemeSoundProfileName(themeKey, theme);
+  let label = `Using ${profileName} theme palette`;
+  if (currentUrl) {
+    if (!custom && builtinUrl === currentUrl) {
+      label = Array.isArray(currentAlternates) && currentAlternates.length > 1
+        ? "Using built-in alternating sounds"
+        : "Using built-in theme sound";
+    } else {
+      label = `Uploaded: ${savedName || getThemeSoundFilename(currentUrl) || "Custom sound"}`;
+    }
+  }
+  return { currentUrl, custom, label };
+}
+
+function setThemeSoundStatus(message = "") {
+  if (DOM.themeSoundStatus) DOM.themeSoundStatus.textContent = message;
+}
+
+function renderThemeSoundEditor(themeKey = "", theme = null) {
+  if (!DOM.themeSoundSlots) return;
+  const resolvedKey = normalizeThemeSelectionKey(
+    themeKey || getSelectedThemeKey() || activeSessionThemeKey
+  );
+  const resolvedTheme = theme || (resolvedKey && resolveThemeByKey(resolvedKey));
+  if (DOM.themeSoundThemeName) {
+    DOM.themeSoundThemeName.textContent =
+      (resolvedTheme && resolvedTheme.name) || "the selected theme";
+  }
+  DOM.themeSoundSlots.innerHTML = "";
+  if (!resolvedTheme || !resolvedKey) {
+    setThemeSoundStatus("Select a theme to customize its sounds.");
+    return;
+  }
+  THEME_SOUND_SLOTS.forEach((slot) => {
+    const state = getThemeSoundSlotState(resolvedKey, resolvedTheme, slot);
+    const row = document.createElement("div");
+    row.className = "theme-sound-row";
+    row.dataset.soundKind = slot.key;
+
+    const copy = document.createElement("div");
+    const title = document.createElement("strong");
+    title.textContent = slot.label;
+    const description = document.createElement("span");
+    description.className = "theme-sound-description";
+    description.textContent = slot.description;
+    const current = document.createElement("span");
+    current.className = "theme-sound-current";
+    current.textContent = state.label;
+    copy.append(title, description, current);
+
+    const actions = document.createElement("div");
+    actions.className = "theme-sound-actions";
+    const preview = document.createElement("button");
+    preview.type = "button";
+    preview.dataset.themeSoundAction = "preview";
+    preview.dataset.soundKind = slot.key;
+    preview.textContent = "Preview";
+    const upload = document.createElement("button");
+    upload.type = "button";
+    upload.dataset.themeSoundAction = "upload";
+    upload.dataset.soundKind = slot.key;
+    upload.textContent = state.currentUrl ? "Replace" : "Upload";
+    const reset = document.createElement("button");
+    reset.type = "button";
+    reset.dataset.themeSoundAction = "reset";
+    reset.dataset.soundKind = slot.key;
+    reset.textContent = "Use Default";
+    reset.disabled = !state.custom;
+    actions.append(preview, upload, reset);
+    row.append(copy, actions);
+    DOM.themeSoundSlots.appendChild(row);
+  });
+  setThemeSoundStatus("");
+}
+
+function previewThemeSound(kind) {
+  const slot = THEME_SOUND_SLOTS.find((item) => item.key === kind);
+  if (!slot) return;
+  if (!getThemeSoundsEnabled()) {
+    showToast("Turn on Theme Sound Effects to preview sounds.");
+    return;
+  }
+  unlockBoothAudio();
+  playThemeCue(slot.key, slot.fallbackCue);
+}
+
+function assignThemeSound(themeKey, theme, kind, url, originalName) {
+  if (!theme || !kind || !url) return;
+  if (!theme.soundEffects || typeof theme.soundEffects !== "object") {
+    theme.soundEffects = {};
+  }
+  if (!theme.soundEffectNames || typeof theme.soundEffectNames !== "object") {
+    theme.soundEffectNames = {};
+  }
+  theme.soundEffects[kind] = url;
+  const alternateKey = `${kind}Alternates`;
+  const builtinTheme = getBuiltinThemeForKey(themeKey);
+  const builtinAlternates =
+    builtinTheme &&
+    builtinTheme.soundEffects &&
+    builtinTheme.soundEffects[alternateKey];
+  if (
+    Array.isArray(theme.soundEffects[alternateKey]) ||
+    Array.isArray(builtinAlternates)
+  ) {
+    theme.soundEffects[alternateKey] = [url];
+  } else {
+    delete theme.soundEffects[alternateKey];
+  }
+  theme.soundEffectNames[kind] = originalName || getThemeSoundFilename(url);
+  saveThemesToStorage();
+  if (activeTheme === theme) activeTheme = theme;
+  renderThemeSoundEditor(themeKey, theme);
+}
+
+async function uploadThemeSound(file, kind) {
+  const validation = validateThemeSoundFile(file);
+  if (!validation.valid) {
+    setThemeSoundStatus(validation.message);
+    showToast(validation.message);
+    return "";
+  }
+  const { key, theme } = getThemeSoundEditorTarget();
+  if (!key || !theme) {
+    setThemeSoundStatus("Select a theme first.");
+    return "";
+  }
+  const cfg = getCloudinaryConfig();
+  if (!cfg.use || !cfg.cloud || !cfg.preset) {
+    setThemeSoundStatus("Configure Cloudinary before uploading sounds.");
+    showToast("Upload failed: configure Cloudinary first.");
+    return "";
+  }
+  const hash = await fileSha256Hex(file);
+  const folder = getThemeAssetUploadOptionsForKey(key, "sounds").folder;
+  const indexKey = buildAssetIndexKey({ hash, folder });
+  const uploadKey = `theme-sound::${indexKey}`;
+  const index = getAssetIndex();
+  if (index[indexKey]) {
+    assignThemeSound(key, theme, kind, index[indexKey], file.name);
+    setThemeSoundStatus(`${file.name} assigned to ${theme.name}.`);
+    return index[indexKey];
+  }
+  if (activeManagedAssetUploads.has(uploadKey)) {
+    return activeManagedAssetUploads.get(uploadKey);
+  }
+  const uploadPromise = (async () => {
+    setThemeSoundStatus(`Uploading ${file.name}…`);
+    const form = new FormData();
+    const wrapped = new File(
+      [file],
+      `${kind}-${hash}.${validation.extension}`,
+      { type: file.type || "application/octet-stream" }
+    );
+    form.append("file", wrapped);
+    form.append("upload_preset", cfg.preset);
+    form.append("folder", folder);
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cfg.cloud}/video/upload`,
+      { method: "POST", body: form }
+    );
+    let payload = {};
+    try {
+      payload = await response.json();
+    } catch (_) {}
+    if (!response.ok) {
+      throw new Error(getCloudinaryUploadFailureMessage(payload, response.status));
+    }
+    const url = String(
+      (payload && (payload.secure_url || payload.url)) || ""
+    ).trim();
+    if (!url) throw new Error("Cloudinary did not return a sound URL.");
+    index[indexKey] = url;
+    assignThemeSound(key, theme, kind, url, file.name);
+    setThemeSoundStatus(`${file.name} assigned to ${theme.name}.`);
+    showToast("Theme sound saved.");
+    return url;
+  })()
+    .catch((error) => {
+      console.error("Theme sound upload failed", error);
+      const message =
+        error && error.message
+          ? `Upload failed: ${error.message}`
+          : "Sound upload failed.";
+      setThemeSoundStatus(message);
+      showToast(message);
+      return "";
+    })
+    .finally(() => {
+      activeManagedAssetUploads.delete(uploadKey);
+    });
+  activeManagedAssetUploads.set(uploadKey, uploadPromise);
+  return uploadPromise;
+}
+
+function resetThemeSound(kind) {
+  const { key, theme } = getThemeSoundEditorTarget();
+  if (!key || !theme || !kind) return;
+  const builtinTheme = getBuiltinThemeForKey(key);
+  const builtinEffects = builtinTheme && builtinTheme.soundEffects;
+  if (!theme.soundEffects || typeof theme.soundEffects !== "object") {
+    theme.soundEffects = {};
+  }
+  const alternateKey = `${kind}Alternates`;
+  if (builtinEffects && typeof builtinEffects[kind] === "string") {
+    theme.soundEffects[kind] = builtinEffects[kind];
+  } else {
+    delete theme.soundEffects[kind];
+  }
+  if (builtinEffects && Array.isArray(builtinEffects[alternateKey])) {
+    theme.soundEffects[alternateKey] = cloneThemeValue(
+      builtinEffects[alternateKey]
+    );
+  } else {
+    delete theme.soundEffects[alternateKey];
+  }
+  if (theme.soundEffectNames && typeof theme.soundEffectNames === "object") {
+    delete theme.soundEffectNames[kind];
+    if (!Object.keys(theme.soundEffectNames).length) {
+      delete theme.soundEffectNames;
+    }
+  }
+  if (!Object.keys(theme.soundEffects).length) delete theme.soundEffects;
+  saveThemesToStorage();
+  if (boothThemeAudio) {
+    boothThemeAudio.pause();
+    boothThemeAudio.currentTime = 0;
+    boothThemeAudio = null;
+  }
+  renderThemeSoundEditor(key, theme);
+  setThemeSoundStatus("Theme default restored.");
+  showToast("Theme sound reset.");
+}
+
+function setupThemeSoundControls() {
+  if (DOM.themeSoundSlots) {
+    DOM.themeSoundSlots.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-theme-sound-action]");
+      if (!button) return;
+      const kind = button.dataset.soundKind || "";
+      const action = button.dataset.themeSoundAction || "";
+      if (action === "preview") previewThemeSound(kind);
+      if (action === "upload" && DOM.themeSoundInput) {
+        DOM.themeSoundInput.dataset.soundKind = kind;
+        DOM.themeSoundInput.value = "";
+        DOM.themeSoundInput.click();
+      }
+      if (action === "reset") resetThemeSound(kind);
+    });
+  }
+  if (DOM.themeSoundInput) {
+    DOM.themeSoundInput.addEventListener("change", async () => {
+      const file = DOM.themeSoundInput.files?.[0];
+      const kind = DOM.themeSoundInput.dataset.soundKind || "";
+      if (!file || !kind) return;
+      if (DOM.themeSoundSlots) {
+        DOM.themeSoundSlots
+          .querySelectorAll("button")
+          .forEach((button) => {
+            button.disabled = true;
+          });
+      }
+      await uploadThemeSound(file, kind);
+      renderThemeSoundEditor();
+      DOM.themeSoundInput.value = "";
+    });
+  }
+  renderThemeSoundEditor();
 }
 
 function getLowLightEnabled() {
@@ -5672,6 +6034,8 @@ function init() {
   setupRecordingModeToggle();
   setupInstantCaptureToggle();
   setupCountdownFiveToggle();
+  setupThemeSoundToggle();
+  setupThemeSoundControls();
   setupLowLightToggle();
   setupGreenScreenToggle();
   setupAiBackgroundToggle();
@@ -7211,6 +7575,7 @@ function syncAdminUiWithTheme(themeKey, theme) {
   if (DOM.eventDateInput) DOM.eventDateInput.value = storedDate || sessionDate || "";
   syncGuestScreenOrientationControl();
   syncEventSetupEditor(theme);
+  renderThemeSoundEditor(currentKey, theme);
   updateStylePreview();
 }
 
@@ -8875,6 +9240,8 @@ function setGuestScreenOrientation(value) {
   photoOverlayOrientation = orientation;
   applyPreviewOrientation();
   renderOptions();
+  renderAssetLibrary();
+  renderCurrentAssets(activeTheme || getSelectedThemeTarget());
   syncGuestScreenOrientationControl();
   updateLaunchSummary();
 }
@@ -9177,7 +9544,7 @@ function beginWelcome(event) {
     if (photoChoiceEntry) applyCustomPhotoChoiceScreen(photoChoiceEntry);
   })) return;
   unlockBoothAudio();
-  if (!playThemeSoundEffect("start")) playBoothSound("tap");
+  playThemeCue("start", "tap");
 }
 
 function beginModeSelection(nextMode, event) {
@@ -9191,7 +9558,7 @@ function beginModeSelection(nextMode, event) {
     hideWelcome();
   })) return;
   unlockBoothAudio();
-  playBoothSound("tap");
+  playThemeCue("tap", "tap");
 }
 
 function goBackFromWelcome(event) {
@@ -9851,7 +10218,7 @@ async function captureMessageFlow() {
 
 function handlePrimaryAction() {
   unlockBoothAudio();
-  playBoothSound("tap");
+  playThemeCue("tap", "tap");
   if (DOM.boothScreen && DOM.boothScreen.classList.contains("welcome-active"))
     return;
   if (mode === "message") {
@@ -10927,6 +11294,7 @@ function delay(ms) {
 }
 
 function unlockBoothAudio() {
+  if (!getThemeSoundsEnabled()) return;
   boothAudioEnabled = true;
   try {
     const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
@@ -10957,8 +11325,21 @@ function getThemeSoundEffect(kind) {
   return typeof src === "string" && src.trim() ? src.trim() : "";
 }
 
+function hasThemeSoundEffect(kind) {
+  const soundEffects = activeTheme && activeTheme.soundEffects;
+  if (!soundEffects || typeof soundEffects !== "object") return false;
+  const alternates = soundEffects[`${kind}Alternates`];
+  if (
+    Array.isArray(alternates) &&
+    alternates.some((src) => typeof src === "string" && src.trim())
+  ) {
+    return true;
+  }
+  return typeof soundEffects[kind] === "string" && Boolean(soundEffects[kind].trim());
+}
+
 function playThemeSoundEffect(kind, { afterCurrent = false } = {}) {
-  if (!boothAudioEnabled) return false;
+  if (!boothAudioEnabled || !getThemeSoundsEnabled()) return false;
   const src = getThemeSoundEffect(kind);
   if (!src) return false;
 
@@ -10997,8 +11378,14 @@ function playThemeSoundEffect(kind, { afterCurrent = false } = {}) {
   return true;
 }
 
+function playThemeCue(effectKind, fallbackKind = effectKind) {
+  if (playThemeSoundEffect(effectKind)) return true;
+  playBoothSound(fallbackKind);
+  return false;
+}
+
 function playBoothSound(kind = "tap") {
-  if (!boothAudioEnabled) return;
+  if (!boothAudioEnabled || !getThemeSoundsEnabled()) return;
   try {
     const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextCtor) return;
@@ -11007,55 +11394,68 @@ function playBoothSound(kind = "tap") {
     if (context.state === "suspended") context.resume().catch(() => {});
     const soundProfile = activeTheme && activeTheme.soundProfile;
     const themeSound = soundProfile && soundProfile[kind];
-    const config =
-      {
-        tap: { frequency: 520, duration: 0.08, gain: 0.035 },
-        countdown: { frequency: 660, duration: 0.12, gain: 0.04 },
-        flash: { frequency: 880, duration: 0.16, gain: 0.045 },
-        success: { frequency: 740, duration: 0.18, gain: 0.05 },
-        qr: { frequency: 620, duration: 0.14, gain: 0.035 },
-        goodbye: { frequency: 520, duration: 0.22, gain: 0.04 },
-      }[kind] || { frequency: 520, duration: 0.08, gain: 0.035 };
+    let cue = getThemeSoundCue(activeSessionThemeKey, activeTheme, kind);
     if (themeSound === "digital-circus-button") {
-      config.frequency = 740;
-      config.duration = 0.06;
-      config.gain = 0.032;
-      config.type = "square";
+      cue = {
+        ...cue,
+        tones: [
+          {
+            frequency: 740,
+            delay: 0,
+            duration: 0.06,
+            gain: 0.032,
+            type: "square",
+          },
+          {
+            frequency: 1180,
+            delay: 0.025,
+            duration: 0.105,
+            gain: 0.018,
+            type: "sine",
+          },
+        ],
+      };
     }
     if (themeSound === "vintage-camera") {
-      config.frequency = 170;
-      config.duration = 0.18;
-      config.gain = 0.06;
-      config.type = "sawtooth";
+      cue = {
+        ...cue,
+        tones: [
+          {
+            frequency: 170,
+            endFrequency: 62,
+            delay: 0,
+            duration: 0.18,
+            gain: 0.06,
+            type: "sawtooth",
+          },
+        ],
+      };
     }
     const now = context.currentTime;
-    const osc = context.createOscillator();
-    const gain = context.createGain();
-    osc.type = config.type || "sine";
-    osc.frequency.setValueAtTime(config.frequency, now);
-    if (themeSound === "vintage-camera") {
-      osc.frequency.exponentialRampToValueAtTime(62, now + config.duration);
-    }
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(config.gain, now + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + config.duration);
-    osc.connect(gain);
-    gain.connect(context.destination);
-    osc.start(now);
-    osc.stop(now + config.duration + 0.02);
-    if (themeSound === "digital-circus-button") {
-      const chime = context.createOscillator();
-      const chimeGain = context.createGain();
-      chime.type = "sine";
-      chime.frequency.setValueAtTime(1180, now + 0.025);
-      chimeGain.gain.setValueAtTime(0.0001, now + 0.025);
-      chimeGain.gain.exponentialRampToValueAtTime(0.018, now + 0.04);
-      chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
-      chime.connect(chimeGain);
-      chimeGain.connect(context.destination);
-      chime.start(now + 0.025);
-      chime.stop(now + 0.13);
-    }
+    cue.tones.forEach((tone) => {
+      const startAt = now + Math.max(0, Number(tone.delay) || 0);
+      const duration = Math.max(0.03, Number(tone.duration) || 0.08);
+      const osc = context.createOscillator();
+      const gain = context.createGain();
+      osc.type = tone.type || "sine";
+      osc.frequency.setValueAtTime(tone.frequency, startAt);
+      if (tone.endFrequency) {
+        osc.frequency.exponentialRampToValueAtTime(
+          tone.endFrequency,
+          startAt + duration
+        );
+      }
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.exponentialRampToValueAtTime(
+        Math.max(0.001, Number(tone.gain) || 0.02),
+        startAt + Math.min(0.015, duration / 3)
+      );
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+      osc.connect(gain);
+      gain.connect(context.destination);
+      osc.start(startAt);
+      osc.stop(startAt + duration + 0.02);
+    });
   } catch (_) {}
 }
 
@@ -11086,7 +11486,10 @@ async function showCountdown(text) {
   setMobileSettingsOpen(false);
   const co = DOM.countdownOverlay;
   co.textContent = text;
-  playBoothSound(String(text).toLowerCase() === "flash" ? "flash" : "countdown");
+  playThemeCue(
+    "countdown",
+    String(text).toLowerCase() === "flash" ? "flash" : "countdown"
+  );
   updateCountdownFontSize();
   if (DOM.boothScreen && getSelectedCaptureMode() !== "message")
     DOM.boothScreen.classList.add("countdown-mode");
@@ -11135,7 +11538,7 @@ async function countdownAndSnap(options = {}) {
   const shot = await getCurrentProcessedFrameCanvas();
   if (torchUsed) await setTorch(false);
   freezeCapturePreview(shot);
-  playThemeSoundEffect("photoCaptured");
+  if (!playThemeSoundEffect("photoCaptured")) playBoothSound("success");
   if (livePromise) {
     const clip = await livePromise;
     setLiveClip(clip);
@@ -11833,7 +12236,12 @@ function revealFinalSaveStage() {
   ) {
     DOM.qrCodeContainer.classList.remove("hidden");
     DOM.qrCodeContainer.classList.add("experience-reveal");
-    if (DOM.qrCodeContainer.dataset.ready === "true") playBoothSound("qr");
+    if (
+      DOM.qrCodeContainer.dataset.ready === "true" &&
+      !hasThemeSoundEffect("shareReady")
+    ) {
+      playBoothSound("qr");
+    }
   }
 }
 
@@ -11845,7 +12253,7 @@ function showGoodbyeMoment() {
   if (title) title.textContent = "Thank You!";
   if (body) body.textContent = personality.thanks.replace(/^thank you!?\s*/i, "") || "Enjoy your photos!";
   DOM.goodbyeOverlay.classList.add("show");
-  playBoothSound("goodbye");
+  playThemeCue("goodbye", "goodbye");
   setTimeout(() => {
     if (DOM.goodbyeOverlay) DOM.goodbyeOverlay.classList.remove("show");
   }, 1400);
@@ -11856,7 +12264,7 @@ function setupFinalExperienceActions() {
     DOM.reviewRetakeBtn.dataset.bound = "true";
     DOM.reviewRetakeBtn.addEventListener("click", () => {
       unlockBoothAudio();
-      playBoothSound("tap");
+      playThemeCue("tap", "tap");
       retakePhoto();
     });
   }
@@ -14029,6 +14437,20 @@ async function makeAvailableOffline() {
       getTemplateList(theme).forEach((t) => {
         if (t && t.src) urls.add(t.src);
       });
+      // Theme-specific sound effects and any rotating alternates.
+      const soundEffects =
+        theme.soundEffects && typeof theme.soundEffects === "object"
+          ? theme.soundEffects
+          : {};
+      Object.values(soundEffects).forEach((value) => {
+        if (typeof value === "string" && value.trim()) {
+          urls.add(value.trim());
+        } else if (Array.isArray(value)) {
+          value
+            .filter((src) => typeof src === "string" && src.trim())
+            .forEach((src) => urls.add(src.trim()));
+        }
+      });
     }
     if (urls.size === 0) {
       showToast("No assets to cache");
@@ -15185,6 +15607,8 @@ function getVisibleAssetLibraryRows() {
   const themeKey = normalizeThemeSelectionKey(getSelectedThemeKey());
   const themeCategory = getMainAssetLibraryCategory();
   return getAllAssetLibraryRows().filter((asset) => {
+    if (normalizeUploadedAssetCategory(asset && asset.category) === "idle-screen")
+      return false;
     const themeKeys = Array.isArray(asset.themeKeys) ? asset.themeKeys : [];
     if (themeKeys.length) return themeKeys.includes(themeKey);
     const tags = Array.isArray(asset.tags) ? asset.tags : [];
@@ -15980,131 +16404,6 @@ function saveAssetThemeDefaults() {
   showToast("Default theme choices saved.");
 }
 
-const THEME_DEFAULTS_SETUP_CATEGORIES = [
-  { key: "background", label: "Backgrounds" },
-  { key: "overlay", label: "Overlays" },
-  { key: "template", label: "Templates" },
-  { key: "idle-screen", label: "Idle Screens" },
-];
-
-function openThemeDefaultsSetupModal() {
-  const key = normalizeThemeSelectionKey(
-    getSelectedThemeKey()
-  );
-  const theme = resolveThemeByKey(key);
-  if (!key || !theme || !DOM.themeDefaultsSetupModal) return;
-  activeThemeDefaultsSetupKey = key;
-  const label = getThemeSetupDisplayLabel(key, theme);
-  if (DOM.themeDefaultsSetupTitle)
-    DOM.themeDefaultsSetupTitle.textContent = `Set Up Defaults: ${label}`;
-  if (DOM.themeDefaultsSetupSummary)
-    DOM.themeDefaultsSetupSummary.textContent =
-      "Choose the assets included by default whenever this theme is selected.";
-
-  const list = DOM.themeDefaultsSetupList;
-  if (list) {
-    list.innerHTML = "";
-    const assets = getCanonicalAssetCollection();
-    THEME_DEFAULTS_SETUP_CATEGORIES.forEach(({ key: category, label: title }) => {
-      const section = document.createElement("section");
-      section.className = "theme-defaults-setup-section";
-      const heading = document.createElement("div");
-      heading.className = "theme-defaults-group-title";
-      heading.textContent = title;
-      const grid = document.createElement("div");
-      grid.className = "theme-defaults-setup-grid";
-      const explicitSources = new Set(
-        getExplicitThemeAssetEntries(category, theme)
-          .map(getAssetEntrySrc)
-          .filter(Boolean)
-      );
-      assets
-        .filter(
-          (asset) =>
-            asset.category === category && !getAssetEntrySrc(asset).endsWith("/")
-        )
-        .forEach((asset) => {
-          const src = getAssetEntrySrc(asset);
-          if (!src) return;
-          const option = document.createElement("label");
-          option.className = "theme-defaults-setup-option";
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.value = asset.id;
-          checkbox.dataset.category = category;
-          checkbox.checked = explicitSources.has(src);
-          const thumbnail = createAssetPreviewMedia(asset);
-          thumbnail.onerror = () => thumbnail.remove();
-          const name = document.createElement("span");
-          name.className = "theme-defaults-setup-name";
-          name.textContent = getAssetDisplayName(asset);
-          option.append(checkbox, thumbnail, name);
-          grid.appendChild(option);
-        });
-      if (!grid.childNodes.length) {
-        const empty = document.createElement("div");
-        empty.className = "asset-library-empty";
-        empty.textContent = "No assets available.";
-        grid.appendChild(empty);
-      }
-      section.append(heading, grid);
-      list.appendChild(section);
-    });
-  }
-  DOM.themeDefaultsSetupModal.classList.remove("hidden");
-  DOM.themeDefaultsSetupModal.classList.add("show");
-}
-
-function closeThemeDefaultsSetupModal() {
-  activeThemeDefaultsSetupKey = "";
-  if (DOM.themeDefaultsSetupModal) {
-    DOM.themeDefaultsSetupModal.classList.remove("show");
-    DOM.themeDefaultsSetupModal.classList.add("hidden");
-  }
-}
-
-function saveThemeDefaultsSetup() {
-  const key = normalizeThemeSelectionKey(activeThemeDefaultsSetupKey);
-  const theme = resolveThemeByKey(key);
-  if (!key || !theme) return;
-  const assetsById = new Map(
-    getCanonicalAssetCollection().map((asset) => [asset.id, asset])
-  );
-  const selectedByCategory = new Map(
-    THEME_DEFAULTS_SETUP_CATEGORIES.map(({ key: category }) => [category, []])
-  );
-  const checked = DOM.themeDefaultsSetupList
-    ? DOM.themeDefaultsSetupList.querySelectorAll("input[type=checkbox]:checked")
-    : [];
-  checked.forEach((input) => {
-    const asset = assetsById.get(input.value);
-    const category = normalizeUploadedAssetCategory(input.dataset.category);
-    if (asset && selectedByCategory.has(category)) {
-      selectedByCategory.get(category).push(asset);
-    }
-  });
-
-  THEME_DEFAULTS_SETUP_CATEGORIES.forEach(({ key: category }) => {
-    const selectedAssets = selectedByCategory.get(category) || [];
-    selectedAssets.forEach((asset) => {
-      clearSessionRemovedAsset(category, getAssetEntrySrc(asset));
-    });
-    replaceThemeDefaultEntries(
-      theme,
-      category,
-      selectedAssets.map((asset) => buildThemeDefaultAssetEntry(asset)).filter(Boolean)
-    );
-  });
-
-  saveThemesToStorage();
-  loadTheme(key);
-  renderAssetLibrary();
-  renderCurrentAssets(activeTheme || theme);
-  updateLaunchSummary();
-  closeThemeDefaultsSetupModal();
-  showToast(`Theme defaults saved for ${getThemeSetupDisplayLabel(key, theme)}.`);
-}
-
 function registerUploadedAsset(url, kind, details = {}) {
   const category = normalizeUploadedAssetCategory(kind);
   if (!url || !category) return;
@@ -16163,7 +16462,13 @@ function registerUploadedAsset(url, kind, details = {}) {
   if (mergeLibraryAsset(asset)) {
     syncAssetLibraryRemoteAsset(asset).catch(() => {});
     showToast(
-      isAssetHiddenByCurrentLibraryFilters(asset)
+      category === "idle-screen"
+        ? `${
+            normalizeIdleScreenOrientation(asset.orientation) === "portrait"
+              ? "Portrait"
+              : "Landscape"
+          } theme screen saved to the preset.`
+        : isAssetHiddenByCurrentLibraryFilters(asset)
         ? "Asset saved, but hidden by current filters. Clear filters to view it."
         : "Asset saved and visible in Asset Library."
     );
@@ -16192,7 +16497,6 @@ function renderAssetLibraryPills() {
     background: 0,
     overlay: 0,
     template: 0,
-    "idle-screen": 0,
   };
   
   allAssets.forEach((asset) => {
@@ -16207,7 +16511,6 @@ function renderAssetLibraryPills() {
     { key: "background", label: "Backgrounds" },
     { key: "overlay", label: "Overlays" },
     { key: "template", label: "Templates" },
-    { key: "idle-screen", label: "Idle Screens" },
   ];
   
   pillsContainer.innerHTML = "";

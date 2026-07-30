@@ -1152,6 +1152,96 @@
     .beauty-preset-control output { min-width: 28px; color: #167c68; font-size: 0.82rem; font-weight: 800; text-align: right; }
     .beauty-preset-control input { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: #167c68; }
 
+    .theme-sound-editor {
+      margin-top: 4px;
+      padding: 12px 14px;
+      border: 1px solid rgba(91, 128, 122, 0.2);
+      border-radius: 14px;
+      background: rgba(246, 255, 251, 0.76);
+    }
+
+    .theme-sound-editor > summary {
+      cursor: pointer;
+      color: #28443e;
+      font-weight: 800;
+    }
+
+    .theme-sound-editor-copy {
+      margin: 10px 0 14px;
+      color: #5d6c69;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .theme-sound-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .theme-sound-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(91, 128, 122, 0.18);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .theme-sound-row strong,
+    .theme-sound-row span {
+      display: block;
+    }
+
+    .theme-sound-row strong {
+      color: #294640;
+      font-size: 0.9rem;
+    }
+
+    .theme-sound-description,
+    .theme-sound-current {
+      margin-top: 3px;
+      color: #5d6c69;
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .theme-sound-current {
+      color: #167c68;
+      font-weight: 700;
+    }
+
+    .theme-sound-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .theme-sound-actions button {
+      min-height: 44px;
+      padding: 8px 12px;
+    }
+
+    .theme-sound-status {
+      min-height: 20px;
+      margin-top: 10px;
+      color: #39564f;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    @media (max-width: 760px) {
+      .theme-sound-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .theme-sound-actions {
+        justify-content: flex-start;
+      }
+    }
+
     .setup-operator-tools,
     .event-library-section {
       border: 1px solid rgba(200, 238, 229, 0.92);
@@ -2546,65 +2636,6 @@
 
     .theme-defaults-child-option {
       margin-left: 16px;
-    }
-
-    .setup-theme-defaults-btn {
-      width: 100%;
-      margin-top: 8px;
-      min-height: 34px;
-      font-size: 0.82em;
-    }
-
-    .theme-defaults-setup-card {
-      width: min(920px, 96vw);
-    }
-
-    .theme-defaults-setup-list {
-      display: grid;
-      gap: 16px;
-      max-height: min(62svh, 620px);
-      overflow: auto;
-      padding: 8px 8px;
-    }
-
-    .theme-defaults-setup-section {
-      display: grid;
-      gap: 8px;
-    }
-
-    .theme-defaults-setup-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 8px;
-    }
-
-    .theme-defaults-setup-option {
-      display: grid;
-      grid-template-columns: auto 42px minmax(0, 1fr);
-      align-items: center;
-      gap: 8px;
-      min-height: 56px;
-      border: 1px solid #d7e1f2;
-      border-radius: 10px;
-      background: #f8fbff;
-      color: #334155;
-      padding: 8px;
-    }
-
-    .theme-defaults-setup-option img,
-    .theme-defaults-setup-option video {
-      width: 42px;
-      height: 42px;
-      border-radius: 6px;
-      object-fit: cover;
-      background: #e8eff8;
-    }
-
-    .theme-defaults-setup-name {
-      min-width: 0;
-      font-size: 0.82em;
-      font-weight: 700;
-      overflow-wrap: anywhere;
     }
 
     .asset-library-empty {
@@ -6818,6 +6849,7 @@
               <option value="portrait">Portrait</option>
               <option value="landscape">Landscape</option>
             </select>
+            <small>Loads the theme’s preset Start, Photo Choice, Share, and Thank You screens.</small>
           </div>
           <div class="setup-session-item">
             <label for="eventProfileSelect">Saved Event</label>
@@ -6902,7 +6934,26 @@
                   <input type="checkbox" id="recordingModeToggle" checked>
                   Recording Mode
                 </label>
+                <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
+                  <input type="checkbox" id="themeSoundToggle" checked>
+                  Theme Sound Effects
+                </label>
               </div>
+              <details class="theme-sound-editor" id="themeSoundEditor">
+                <summary>Customize Theme Sounds</summary>
+                <p class="theme-sound-editor-copy">
+                  Upload short sound effects for <strong id="themeSoundThemeName">the selected theme</strong>.
+                  MP3, WAV, M4A, AAC, and OGG files up to 10 MB are supported.
+                </p>
+                <div id="themeSoundSlots" class="theme-sound-list"></div>
+                <p id="themeSoundStatus" class="theme-sound-status" aria-live="polite"></p>
+                <input
+                  type="file"
+                  id="themeSoundInput"
+                  accept=".mp3,.wav,.m4a,.aac,.ogg,.oga,audio/mpeg,audio/wav,audio/mp4,audio/aac,audio/ogg"
+                  hidden
+                >
+              </details>
             </section>
 
             <section class="setup-flow-card">
@@ -7167,9 +7218,6 @@
                     <span id="eventWelcomeTitleSizeValue" style="color:#9aa; min-width:48px; text-align:right;"></span>
                   </div>
                 </div>
-              </div>
-              <div class="asset-actions">
-                <button type="button" id="setupThemeDefaultsBtn" class="setup-theme-defaults-btn">Edit Theme Preset</button>
               </div>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
                 <div>
@@ -7587,17 +7635,6 @@
         <div class="modal-footer">
           <button type="button" id="assetThemeDefaultsCancel">Cancel</button>
           <button type="button" id="assetThemeDefaultsSave" class="primary">Save theme choices</button>
-        </div>
-      </div>
-    </div>
-    <div id="themeDefaultsSetupModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="themeDefaultsSetupTitle">
-      <div class="modal-card theme-defaults-setup-card">
-        <h3 id="themeDefaultsSetupTitle">Set Up Defaults</h3>
-        <p id="themeDefaultsSetupSummary" style="margin:0 0 16px; color:#5c6b93;">Choose the default assets for this theme.</p>
-        <div id="themeDefaultsSetupList" class="theme-defaults-setup-list"></div>
-        <div class="modal-footer">
-          <button type="button" id="themeDefaultsSetupCancel">Cancel</button>
-          <button type="button" id="themeDefaultsSetupSave" class="primary">Save defaults</button>
         </div>
       </div>
     </div>
