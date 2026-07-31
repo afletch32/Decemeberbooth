@@ -2,7 +2,7 @@
 
 ## Current goal
 
-- Deliver the general Spring Hill Hawks youth football program theme for players, cheerleaders, parents, families, and fans in the official navy, green, and white colors; add the separate Cheer theme only after this version is deployed.
+- Keep the deployed general Spring Hill Hawks cartoon theme separate while adding the dedicated Spring Hill Hawks Cheer cartoon theme in the same official navy, green, and white colors.
 - Give key guest-flow moments sound effects that match the selected theme.
 - Keep theme screens preset-driven so event setup requires only a theme and Portrait or Landscape.
 
@@ -11,7 +11,7 @@
 - Rebuilt the existing Hawks theme as the general-audience Spring Hill Hawks experience with eight coordinated 1200 × 1800 and 1800 × 1200 cartoon guest screens: idle, photo choice, reusable background, and Thank You in both orientations.
 - Kept full-resolution PNG masters and added 147–238 KB WebP delivery copies for reliable booth loading.
 - The Hawks artwork uses the official hawk mark, a bright daytime cartoon rec/high-school football field, modest bleachers and fencing, navy/green/white varsity framing, and balanced football/fan spirit. It does not use stadium lights, reproduce the supplied youth team photo, or use cheer-specific wording.
-- The separate Spring Hill Hawks Cheer theme is intentionally paused until after the general cartoon Hawks theme is committed and deployed.
+- The separate Spring Hill Hawks Cheer theme now has its own daytime cartoon eight-screen pack with green-only pom-poms, navy megaphones, and cheer ribbons; it does not reuse the general theme's football/fan screens.
 - Added portrait and landscape Tap to Start, Single Photo, and three-slot Photo Strip hotspots, plus migration that brings the new screens into older saved Hawks themes while preserving existing optional overlays and templates.
 - Committed and deployed the general cartoon Hawks checkpoint (`011a205`); the deployed page and representative idle/photo-choice WebP assets returned HTTP 200.
 - Fixed booth-shape asset scoping so Landscape no longer marks portrait theme overlays selected, and Portrait no longer marks landscape overlays selected. Asset cards, selected counts, previews, and capture choices now share the same orientation-aware overlay list.

@@ -187,7 +187,43 @@ test("Spring Hill Hawks includes its complete navy green and white screen pack",
   assert.ok(app.includes("singlePhoto: { x: 31, y: 57, width: 34, height: 45 }"));
   assert.ok(app.includes("photoStrip: { x: 69, y: 57, width: 34, height: 45 }"));
   assert.ok(app.includes("function migrateSpringHillHawksAssets"));
-  assert.ok(!app.includes('name: "Spring Hill Hawks Cheer"'));
+});
+
+test("Spring Hill Hawks Cheer stays separate with its complete cartoon screen pack", () => {
+  const assetDirectory = join(
+    process.cwd(),
+    "assets/themes/spring-hill-hawks-cheer"
+  );
+  const assets = [
+    ["spring-hill-hawks-cheer-background-portrait.png", 1200, 1800],
+    ["spring-hill-hawks-cheer-background-landscape.png", 1800, 1200],
+    ["spring-hill-hawks-cheer-idle-portrait.png", 1200, 1800],
+    ["spring-hill-hawks-cheer-idle-landscape.png", 1800, 1200],
+    ["spring-hill-hawks-cheer-photo-choice-portrait.png", 1200, 1800],
+    ["spring-hill-hawks-cheer-photo-choice-landscape.png", 1800, 1200],
+    ["spring-hill-hawks-cheer-thank-you-portrait.png", 1200, 1800],
+    ["spring-hill-hawks-cheer-thank-you-landscape.png", 1800, 1200],
+  ];
+  assets.forEach(([filename, width, height]) => {
+    const image = readFileSync(join(assetDirectory, filename));
+    assert.ok(image.length > 0, `${filename} should be bundled`);
+    assert.equal(image.readUInt32BE(16), width, `${filename} should have the required width`);
+    assert.equal(image.readUInt32BE(20), height, `${filename} should have the required height`);
+    const deliveryImage = readFileSync(
+      join(assetDirectory, filename.replace(/\.png$/, ".webp"))
+    );
+    assert.ok(deliveryImage.length > 0, `${filename} should have a WebP delivery copy`);
+  });
+
+  assert.ok(app.includes('hawksCheer: {'));
+  assert.ok(app.includes('name: "Spring Hill Hawks Cheer"'));
+  assert.ok(
+    app.includes(
+      'src: "/assets/themes/spring-hill-hawks-cheer/spring-hill-hawks-cheer-idle-landscape.webp"'
+    )
+  );
+  assert.ok(app.includes("start: { x: 50, y: 82, width: 44, height: 15 }"));
+  assert.ok(app.includes("function migrateSpringHillHawksCheerAssets"));
 });
 
 test("Avery's guest screens use bundled WebP artwork", () => {
