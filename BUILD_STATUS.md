@@ -14,6 +14,7 @@
 - The separate Spring Hill Hawks Cheer theme now has its own daytime cartoon eight-screen pack with green-only pom-poms, navy megaphones, and cheer ribbons; it does not reuse the general theme's football/fan screens.
 - Added portrait and landscape Tap to Start, Single Photo, and three-slot Photo Strip hotspots, plus migration that brings the new screens into older saved Hawks themes while preserving existing optional overlays and templates.
 - Committed and deployed the general cartoon Hawks checkpoint (`011a205`); the deployed page and representative idle/photo-choice WebP assets returned HTTP 200.
+- Committed and deployed the separate cartoon Cheer checkpoint (`123bb9d`); the production script exposes both theme names and both themes' landscape idle assets returned HTTP 200.
 - Fixed booth-shape asset scoping so Landscape no longer marks portrait theme overlays selected, and Portrait no longer marks landscape overlays selected. Asset cards, selected counts, previews, and capture choices now share the same orientation-aware overlay list.
 - Bumped the offline app-shell cache and added a one-time reload when the new service worker takes control, preventing an already-open booth tab from continuing to show the previous Asset Library UI.
 - Theme Start, Photo Choice, Share, and Thank You screens no longer appear in the Asset Library. The old screen-by-screen preset editor is removed, and uploading one screen orientation now preserves the matching screen for the other orientation.
