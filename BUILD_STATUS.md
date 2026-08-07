@@ -2,12 +2,26 @@
 
 ## Current goal
 
+- Keep the guest-facing booth animation lifecycle explicit and modular while preserving the existing capture and upload pipeline.
+
+- Move skin smoothing from CPU pixel loops to a WebGL2 fragment shader with a safe CPU fallback.
+
+- Make offline captures shareable through a stable QR link that changes from a pending message to the uploaded photo after connectivity returns.
+- Keep incomplete theme drafts out of the admin theme picker until they have at least one screen or preset.
 - Keep the deployed general Spring Hill Hawks cartoon theme separate while adding the dedicated Spring Hill Hawks Cheer cartoon theme in the same official navy, green, and white colors.
 - Give key guest-flow moments sound effects that match the selected theme.
 - Keep theme screens preset-driven so event setup requires only a theme and Portrait or Landscape.
 
 ## Current progress
 
+- Added dedicated Amanda North Back to School and Amanda North STREAM Night Thank You backdrops in portrait and landscape at the required 1200 × 1800 and 1800 × 1200 dimensions; registered all four assets in the matching theme definitions. Hawks and Hawks Cheer remain isolated from Avery artwork.
+
+- Tightened Hawks and Hawks Cheer Thank You migrations so stale cross-theme screens, including Avery artwork, are removed from saved theme data before the matching built-in screen is selected; added regression coverage.
+
+- Created and registered matching Amanda North Back to School single-photo overlays in portrait and landscape; the portrait PNG now uses the supplied layered navy/gold school frame reference with its large transparent photo opening and Amanda North Elementary / Back to School 2026 text.
+
+- Added stable `/share/<capture-id>` links for queued captures. The QR can be saved while offline; the Cloudflare share page shows a pending message until the queued Cloudinary upload is registered, then serves that specific photo. Gallery registration now writes the capture mapping to `THEMES_KV`.
+- Admin theme options now include only completed themes with at least one usable guest screen or preset; incomplete Expo drafts such as Brand Studio and Lead Capture remain stored but are not selectable.
 - Rebuilt the existing Hawks theme as the general-audience Spring Hill Hawks experience with eight coordinated 1200 × 1800 and 1800 × 1200 cartoon guest screens: idle, photo choice, reusable background, and Thank You in both orientations.
 - Kept full-resolution PNG masters and added 147–238 KB WebP delivery copies for reliable booth loading.
 - The Hawks artwork uses the official hawk mark, a bright daytime cartoon rec/high-school football field, modest bleachers and fencing, navy/green/white varsity framing, and balanced football/fan spirit. It does not use stadium lights, reproduce the supplied youth team photo, or use cheer-specific wording.

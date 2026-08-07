@@ -733,6 +733,18 @@ let themes = {
             name: "Amanda North Coyote share screen landscape",
           },
         ],
+        thankYouScreens: [
+          {
+            src: "/assets/themes/back-to-school/back-to-school-thank-you-portrait.png",
+            name: "Amanda North Coyote Thank You screen portrait",
+            orientation: "portrait",
+          },
+          {
+            src: "/assets/themes/back-to-school/back-to-school-thank-you-landscape.png",
+            name: "Amanda North Coyote Thank You screen landscape",
+            orientation: "landscape",
+          },
+        ],
         overlays: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788490/photobooth/events/assets/ane-overlay-ane-frame-stream-night-landscape-2_tbkq3g.png", name: "ane-overlay-frame-night-landscape" },
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788491/photobooth/events/assets/ane-overlay-school-frame-landscape-1_nddhkg.png", name: "ane-overlay-school-frame-landscape" },
@@ -795,6 +807,18 @@ let themes = {
               singlePhoto: { x: 29, y: 60, width: 36, height: 52 },
               photoStrip: { x: 71, y: 60, width: 36, height: 52 },
             },
+          },
+        ],
+        thankYouScreens: [
+          {
+            src: "/assets/themes/stream-night/stream-night-thank-you-portrait.png",
+            name: "Amanda North STREAM Night Thank You screen portrait",
+            orientation: "portrait",
+          },
+          {
+            src: "/assets/themes/stream-night/stream-night-thank-you-landscape.png",
+            name: "Amanda North STREAM Night Thank You screen landscape",
+            orientation: "landscape",
           },
         ],
         overlays: [
