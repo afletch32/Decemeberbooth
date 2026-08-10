@@ -1,7 +1,8 @@
 import { initializeFaceTracker, detectFace } from "./tracker.mjs";
-import { buildBeautyMasks } from "./masks.mjs";
+import { buildBeautyMasks, buildSkinMaskCanvas } from "./masks.mjs";
 import { normalizeBeautyPreset } from "./settings.mjs";
 import { applySmoothing } from "./smoothing.mjs";
+import { applyGpuSmoothing } from "./gpu-smoothing.mjs";
 import { applyTeethWhitening } from "./teeth.mjs";
 import { applyBlemishCorrection } from "./blemish.mjs";
 import { applyUndereyeCorrection } from "./undereye.mjs";
@@ -43,7 +44,14 @@ export async function applyBeautyFrame({ canvas, video, settings } = {}) {
   const masks = buildBeautyMasks(faceResult, canvas.width, canvas.height);
   applyLightingCorrection(canvas, preset.lighting);
   applyBlemishCorrection(canvas, masks.face, preset.beauty.blemish);
-  applySmoothing(canvas, masks.face, preset.beauty.skinSmooth);
+  const gpuMask = buildSkinMaskCanvas(
+    faceResult && faceResult.faceLandmarks ? faceResult.faceLandmarks[0] : null,
+    canvas.width,
+    canvas.height
+  );
+  if (!applyGpuSmoothing(canvas, gpuMask, preset.beauty.skinSmooth)) {
+    applySmoothing(canvas, masks.face, preset.beauty.skinSmooth);
+  }
   applyUndereyeCorrection(canvas, masks.underEyes, preset.beauty.underEye);
   applyTeethWhitening(canvas, masks, preset.beauty.teeth);
   applyToneCorrection(canvas, masks.face, {

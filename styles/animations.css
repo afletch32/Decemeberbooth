@@ -1,0 +1,86 @@
+/* Shared hardware-friendly guest-flow animations. */
+.booth-theme-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.start-action-btn,
+#startButton {
+  animation: componentBreather 2.4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes componentBreather {
+  0%, 100% { transform: scale(1); opacity: 0.95; }
+  50% { transform: scale(1.04); opacity: 1; box-shadow: 0 0 25px rgba(255, 255, 255, 0.15); }
+}
+
+.countdown-num,
+#countdownOverlay {
+  will-change: transform, opacity;
+}
+
+.tick-pop {
+  animation: countdownTextPop 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes countdownTextPop {
+  0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  15% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+  80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0.85); opacity: 0; }
+}
+
+.camera-flash-overlay-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 999;
+  background: #fff;
+  pointer-events: none;
+  animation: screenFlashPulse 0.35s cubic-bezier(0.1, 0.8, 0.1, 1) forwards;
+}
+
+@keyframes screenFlashPulse {
+  0%, 15% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.qr-interaction-panel {
+  transform: translateY(100%);
+  transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.mode-share-mode .qr-interaction-panel,
+#boothScreen.share-mode #qrCodeContainer.experience-reveal {
+  transform: translateY(0);
+}
+
+.qr-code-active-graphic,
+#qrCode {
+  animation: qrCodeBreather 3200ms ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes qrCodeBreather {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.1)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .start-action-btn,
+  #startButton,
+  .tick-pop,
+  .camera-flash-overlay-panel,
+  .qr-code-active-graphic,
+  #qrCode {
+    animation: none;
+  }
+
+  .qr-interaction-panel,
+  #boothScreen.share-mode #qrCodeContainer.experience-reveal {
+    transition: none;
+  }
+}

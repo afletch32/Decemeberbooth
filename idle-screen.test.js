@@ -426,6 +426,29 @@ test("Avery provides dedicated portrait and landscape thank-you screens", () => 
   assert.ok(html.includes("<h2>Thank You!</h2>"));
 });
 
+test("Hawks thank-you screens stay isolated from Avery and Hawks Cheer assets", () => {
+  [
+    "spring-hill-hawks-thank-you-portrait.webp",
+    "spring-hill-hawks-thank-you-landscape.webp",
+    "spring-hill-hawks-cheer-thank-you-portrait.webp",
+    "spring-hill-hawks-cheer-thank-you-landscape.webp",
+  ].forEach((filename) => {
+    const themeDir = filename.includes("cheer")
+      ? "spring-hill-hawks-cheer"
+      : "spring-hill-hawks";
+    assert.ok(
+      readFileSync(join(process.cwd(), "assets/themes", themeDir, filename)).length > 0,
+      `${filename} should be bundled`
+    );
+  });
+  assert.ok(app.includes('src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-thank-you-portrait.webp"'));
+  assert.ok(app.includes('src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-thank-you-landscape.webp"'));
+  assert.ok(app.includes('src: "/assets/themes/spring-hill-hawks-cheer/spring-hill-hawks-cheer-thank-you-portrait.webp"'));
+  assert.ok(app.includes('src: "/assets/themes/spring-hill-hawks-cheer/spring-hill-hawks-cheer-thank-you-landscape.webp"'));
+  assert.ok(app.includes('"/assets/themes/spring-hill-hawks/"'));
+  assert.ok(app.includes('"/assets/themes/spring-hill-hawks-cheer/"'));
+});
+
 test("Avery uses themed button and vintage-camera flash sounds", () => {
   assert.ok(
     app.includes('tap: "digital-circus-button"') &&

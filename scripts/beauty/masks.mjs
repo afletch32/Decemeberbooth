@@ -8,6 +8,66 @@ export function buildBeautyMasks(faceResult, width, height) {
   };
 }
 
+const FOREHEAD_INDICES = [70, 63, 105, 66, 107, 9, 336, 296, 334, 293, 300, 285, 298, 333, 332, 297, 338, 10, 109, 67, 103, 54, 68, 71];
+const LEFT_CHEEK_INDICES = [31, 111, 116, 123, 147, 213, 192, 214, 212, 135, 138, 215, 177, 137, 127, 34, 143, 156, 124];
+const RIGHT_CHEEK_INDICES = [261, 340, 345, 352, 376, 433, 416, 434, 432, 364, 367, 435, 401, 366, 356, 264, 372, 383, 353];
+const maskCache = {
+  width: 0,
+  height: 0,
+  canvas: null,
+  feathered: null,
+  ctx: null,
+  featheredCtx: null
+};
+
+export function buildSkinMaskCanvas(landmarks, width, height) {
+  if (typeof document === "undefined" || !width || !height) return null;
+  if (maskCache.width !== width || maskCache.height !== height) {
+    maskCache.width = width;
+    maskCache.height = height;
+    maskCache.canvas = document.createElement("canvas");
+    maskCache.canvas.width = width;
+    maskCache.canvas.height = height;
+    maskCache.feathered = document.createElement("canvas");
+    maskCache.feathered.width = width;
+    maskCache.feathered.height = height;
+    maskCache.ctx = maskCache.canvas.getContext("2d");
+    maskCache.featheredCtx = maskCache.feathered.getContext("2d");
+  }
+  const maskCanvas = maskCache.canvas;
+  const ctx = maskCache.ctx;
+  if (!ctx) return null;
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, width, height);
+  if (!landmarks || landmarks.length < 468) return null;
+  ctx.fillStyle = "#ffffff";
+  drawPolygonMask(ctx, landmarks, FOREHEAD_INDICES, width, height);
+  drawPolygonMask(ctx, landmarks, LEFT_CHEEK_INDICES, width, height);
+  drawPolygonMask(ctx, landmarks, RIGHT_CHEEK_INDICES, width, height);
+  const feathered = maskCache.feathered;
+  const featheredCtx = maskCache.featheredCtx;
+  if (!featheredCtx) return maskCanvas;
+  featheredCtx.clearRect(0, 0, width, height);
+  featheredCtx.filter = "blur(8px)";
+  featheredCtx.drawImage(maskCanvas, 0, 0);
+  featheredCtx.filter = "none";
+  return feathered;
+}
+
+function drawPolygonMask(ctx, landmarks, indices, width, height) {
+  if (!ctx || !landmarks || landmarks.length === 0 || indices.length < 3) return;
+  const firstPoint = landmarks[indices[0]];
+  if (!firstPoint) return;
+  ctx.beginPath();
+  ctx.moveTo(firstPoint.x * width, firstPoint.y * height);
+  for (let index = 1; index < indices.length; index += 1) {
+    const point = landmarks[indices[index]];
+    if (point) ctx.lineTo(point.x * width, point.y * height);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
 function getPrimaryLandmarks(faceResult) {
   return faceResult &&
     Array.isArray(faceResult.faceLandmarks) &&

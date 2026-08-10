@@ -13,6 +13,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0f1222">
   <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="styles/animations.css">
 	<style>
     :root {
       --accent: #6fe7d7;
@@ -7135,7 +7136,7 @@
           <div class="section-content">
             <div class="admin-field" style="display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin:0;">
               <label style="display:inline-flex; align-items:center; gap:8px; margin:0;">
-                <input type="checkbox" id="offlineModeToggle"> Offline Mode (no QR; queue emails)
+                <input type="checkbox" id="offlineModeToggle"> Offline Mode (QR stays available; photo uploads later)
               </label>
               <button type="button" id="sendPendingBtn" onclick="sendPendingNow()" disabled>Send Pending (0)</button>
               <button type="button" onclick="connectMotorRelay()">Connect Motor Relay</button>

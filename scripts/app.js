@@ -746,8 +746,8 @@ let themes = {
           },
         ],
         overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788490/photobooth/events/assets/ane-overlay-ane-frame-stream-night-landscape-2_tbkq3g.png", name: "ane-overlay-frame-night-landscape" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788491/photobooth/events/assets/ane-overlay-school-frame-landscape-1_nddhkg.png", name: "ane-overlay-school-frame-landscape" },
+          { src: "/assets/themes/back-to-school/overlays/amanda-north-back-to-school-overlay-single-photo-portrait.png", orientation: "portrait", name: "Amanda North Back to School single photo portrait" },
+          { src: "/assets/themes/back-to-school/overlays/amanda-north-back-to-school-overlay-single-photo-landscape.png", orientation: "landscape", name: "Amanda North Back to School single photo landscape" },
         ],
         templates: [],
         welcome: {
@@ -7480,8 +7480,6 @@ function setup360ModeControls() {
     });
   }
   document.addEventListener("keydown", (event) => {
-    if (currentMode !== "360") return;
-
     // Common keys emitted by generic/unbranded Bluetooth remotes
     const remoteTriggerKeys = [
       "Space",
@@ -7490,6 +7488,8 @@ function setup360ModeControls() {
       "ArrowDown",
       "PageUp",
       "PageDown",
+      "Camera",
+      "MediaPlayPause",
     ];
 
     if (
@@ -7505,12 +7505,21 @@ function setup360ModeControls() {
     // Don't trigger if the user is actually typing in a field
     if (
       ["input", "textarea", "select"].includes(tag) ||
-      target?.isContentEditable
+      target?.isContentEditable ||
+      event.repeat
     )
       return;
 
     event.preventDefault();
-    start360Sequence();
+    if (currentMode === "360") {
+      start360Sequence();
+      return;
+    }
+
+    // Keyboard-emulating Bluetooth shutters use the same path as the booth
+    // button, preserving Instant Capture, countdown, strip, layout, and
+    // message behavior selected by the operator.
+    handlePrimaryAction();
   });
   updateCaptureModeUi();
 }
@@ -10338,11 +10347,11 @@ async function capturePhotoFlow() {
         ? {
             shareType: "video",
             shareBlob: lastLiveClipBlob,
-            shareUrl: uploadResult.publicUrl,
+            shareUrl: uploadResult.publicUrl || uploadResult.pendingShareUrl,
             uploadQueued: uploadResult.queued,
           }
         : {
-            shareUrl: uploadResult.publicUrl,
+            shareUrl: uploadResult.publicUrl || uploadResult.pendingShareUrl,
             uploadQueued: uploadResult.queued,
         }
     );
@@ -10387,7 +10396,7 @@ async function captureMessageFlow() {
     showFinal(posterUrl, {
       shareType: "video",
       shareBlob: clip,
-      shareUrl: uploadResult.publicUrl,
+      shareUrl: uploadResult.publicUrl || uploadResult.pendingShareUrl,
       uploadQueued: uploadResult.queued,
     });
     recordAnalytics("message", "video");
@@ -12575,9 +12584,15 @@ function showFinal(url, options = {}) {
         }
         if (DOM.qrHint) {
           DOM.qrHint.textContent = qrRendered
-            ? ""
+            ? options.uploadQueued
+              ? "Save this QR code. Your photo will appear at this link after the booth reconnects."
+              : ""
             : "Open the link button if the QR does not appear.";
-          DOM.qrHint.style.display = qrRendered ? "none" : "block";
+          DOM.qrHint.style.display = qrRendered && options.uploadQueued
+            ? "block"
+            : qrRendered
+              ? "none"
+              : "block";
         }
         if (qrRendered) {
           revealFinalSaveStage();
@@ -13772,6 +13787,32 @@ async function dataUrlToBlob(dataUrl) {
   return res.blob();
 }
 
+async function prepareLocalStorageFallbackImage(dataUrl) {
+  if (!dataUrl || typeof Image === "undefined") return dataUrl;
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const nextImage = new Image();
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = () => reject(new Error("Fallback image decode failed"));
+      nextImage.src = dataUrl;
+    });
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    if (!sourceWidth || !sourceHeight) return dataUrl;
+    const scale = Math.min(1, 800 / sourceWidth);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+    canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return dataUrl;
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.7);
+  } catch (error) {
+    console.warn("LocalStorage fallback image compression failed", error);
+    return dataUrl;
+  }
+}
+
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     try {
@@ -13789,6 +13830,13 @@ function createCaptureUploadId(prefix = "capture") {
   return `${prefix}-${Date.now().toString(36)}-${Math.random()
     .toString(36)
     .slice(2, 9)}`;
+}
+
+function getPendingShareUrl(captureId) {
+  const id = String(captureId || "").trim();
+  const origin = typeof location !== "undefined" ? String(location.origin || "") : "";
+  if (!id || !/^https?:/i.test(origin)) return "";
+  return `${origin}/share/${encodeURIComponent(id)}`;
 }
 
 function getCaptureUploadMeta(options = {}) {
@@ -13862,6 +13910,9 @@ async function queueCaptureForRetry(options = {}) {
     }
   }
   if (!retryDataUrl) return false;
+  if (retryResourceType === "image") {
+    retryDataUrl = await prepareLocalStorageFallbackImage(retryDataUrl);
+  }
   const queued = queuePendingUpload(retryDataUrl, {
     captureId: meta.captureId,
     slug: meta.slug,
@@ -13893,6 +13944,9 @@ async function uploadCaptureOnce(options = {}) {
   const meta = getCaptureUploadMeta(options);
   const result = {
     publicUrl: "",
+    pendingShareUrl: cloudinaryConfigured()
+      ? getPendingShareUrl(meta.captureId)
+      : "",
     queued: false,
     galleryQueued: false,
     captureId: meta.captureId,
@@ -14282,6 +14336,37 @@ function updatePendingUI() {
 // --- Offline upload queue (Cloudinary) ---
 let isFlushingPendingUploads = false;
 let isFlushingPendingGalleryRecords = false;
+let pendingQueueWakeLock = null;
+
+async function acquirePendingQueueWakeLock() {
+  if (
+    pendingQueueWakeLock ||
+    typeof navigator === "undefined" ||
+    !navigator.wakeLock ||
+    document.visibilityState !== "visible"
+  ) {
+    return;
+  }
+  try {
+    const lock = await navigator.wakeLock.request("screen");
+    pendingQueueWakeLock = lock;
+    lock.addEventListener("release", () => {
+      if (pendingQueueWakeLock === lock) pendingQueueWakeLock = null;
+    });
+  } catch (error) {
+    // Wake Lock is optional; uploads still retain their normal retry behavior.
+    console.warn("Pending queue screen wake lock unavailable", error);
+  }
+}
+
+async function releasePendingQueueWakeLock() {
+  const lock = pendingQueueWakeLock;
+  pendingQueueWakeLock = null;
+  if (!lock) return;
+  try {
+    await lock.release();
+  } catch (_) {}
+}
 
 function getPendingUploads() {
   try {
@@ -14382,12 +14467,16 @@ function queuePendingGalleryRecord(record = {}) {
 async function flushPendingUploads() {
   if (isFlushingPendingUploads || !cloudinaryConfigured() || !navigator.onLine)
     return;
-  await flushPendingUploadsIndexedDB();
-  const q = getPendingUploads();
-  if (!q.length) return;
   isFlushingPendingUploads = true;
-  let sent = 0;
+  await acquirePendingQueueWakeLock();
   try {
+    // Acquire the lock before any asynchronous IndexedDB work. Multiple
+    // online/visibility/manual triggers can otherwise read the same item
+    // before the first flush has marked it complete.
+    await flushPendingUploadsIndexedDB();
+    const q = getPendingUploads();
+    if (!q.length) return;
+    let sent = 0;
     for (const item of q.slice()) {
       try {
         await uploadEventPhoto(item.image, {
@@ -14417,11 +14506,12 @@ async function flushPendingUploads() {
         }
       }
     }
+    if (sent) showToast(`Uploaded ${sent} pending photo${sent === 1 ? "" : "s"}`);
+    await flushPendingGalleryRecords();
   } finally {
     isFlushingPendingUploads = false;
+    await releasePendingQueueWakeLock();
   }
-  if (sent) showToast(`Uploaded ${sent} pending photo${sent === 1 ? "" : "s"}`);
-  flushPendingGalleryRecords();
 }
 
 async function flushPendingUploadsIndexedDB() {
@@ -16236,6 +16326,7 @@ function getSelectableThemeEntries() {
       for (const leafKey of Object.keys(children)) {
         const theme = children[leafKey];
         if (!theme || typeof theme !== "object") continue;
+        if (!isCompletedTheme(theme)) continue;
         const displayGroup = getThemeDefaultsDisplayGroup(
           rootKey,
           leafKey,
@@ -16262,6 +16353,7 @@ function getSelectableThemeEntries() {
       group.name &&
       !isLegacyBuiltinSelectableRoot(rootKey, group)
     ) {
+      if (!isCompletedTheme(group)) continue;
       addEntry({ key: rootKey, group: "Other", label: groupName, theme: group });
     }
   }
@@ -16270,6 +16362,23 @@ function getSelectableThemeEntries() {
     a.group.localeCompare(b.group) ||
     a.label.localeCompare(b.label)
   );
+}
+
+function isCompletedTheme(theme) {
+  if (!theme || typeof theme !== "object") return false;
+  const hasEntries = (value) =>
+    Array.isArray(value) &&
+    value.some((entry) => {
+      if (typeof entry === "string") return entry.trim().length > 0;
+      return !!(entry && typeof entry === "object" && getAssetEntrySrc(entry));
+    });
+  return [
+    theme.idleScreens,
+    theme.photoChoiceScreens,
+    theme.shareScreens,
+    theme.thankYouScreens,
+    theme.presets,
+  ].some(hasEntries);
 }
 
 function getSelectableThemeGroups() {
@@ -17605,7 +17714,14 @@ function migrateSpringHillHawksAssets(target = themes) {
 
   ["idleScreens", "thankYouScreens"].forEach((field) => {
     const stored = Array.isArray(theme[field]) ? theme[field] : [];
-    const existing = stored.filter((entry) => !isCheerSpecificAsset(entry));
+    const existing = stored.filter((entry) => {
+      if (field === "thankYouScreens") {
+        return getAssetEntrySrc(entry).includes(
+          "/assets/themes/spring-hill-hawks/"
+        );
+      }
+      return !isCheerSpecificAsset(entry);
+    });
     if (existing.length !== stored.length) migrated = true;
     const missing = (Array.isArray(defaults[field]) ? defaults[field] : []).filter(
       (entry) => {
@@ -17679,14 +17795,22 @@ function migrateSpringHillHawksCheerAssets(target = themes) {
 
   ["idleScreens", "thankYouScreens", "backgrounds"].forEach((field) => {
     const existing = Array.isArray(theme[field]) ? theme[field] : [];
+    const filtered =
+      field === "thankYouScreens"
+        ? existing.filter((entry) =>
+            getAssetEntrySrc(entry).includes(
+              "/assets/themes/spring-hill-hawks-cheer/"
+            )
+          )
+        : existing;
     const missing = (Array.isArray(defaults[field]) ? defaults[field] : []).filter(
       (entry) => {
         const src = getAssetEntrySrc(entry);
-        return src && !existing.some((item) => getAssetEntrySrc(item) === src);
+        return src && !filtered.some((item) => getAssetEntrySrc(item) === src);
       }
     );
-    if (!missing.length) return;
-    theme[field] = [...missing.map(cloneThemeValue), ...existing];
+    if (!missing.length && filtered.length === existing.length) return;
+    theme[field] = [...missing.map(cloneThemeValue), ...filtered];
     migrated = true;
   });
 

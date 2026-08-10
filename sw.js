@@ -12,6 +12,7 @@ const APP_SHELL_ASSETS = [
   "manifest.json",
   "appicon.png",
   "fonts.css",
+  "styles/animations.css",
   "final-preview-sizing-fix.css",
   "scripts/app.js",
   "scripts/canvas-utils.mjs",

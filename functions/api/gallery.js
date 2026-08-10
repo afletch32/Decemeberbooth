@@ -128,6 +128,18 @@ export async function onRequest(context) {
         resources,
       };
       await env.THEMES_KV.put(`gallery:${tag}`, JSON.stringify(next));
+      if (nextResource.capture_id) {
+        await env.THEMES_KV.put(
+          `share:${nextResource.capture_id}`,
+          JSON.stringify({
+            capture_id: nextResource.capture_id,
+            secure_url: nextResource.secure_url,
+            resource_type: nextResource.resource_type,
+            title: next.title,
+            created_at: nextResource.created_at,
+          })
+        );
+      }
       return buildJsonResponse({ ok: true, count: resources.length });
     } catch (err) {
       return buildJsonResponse(
