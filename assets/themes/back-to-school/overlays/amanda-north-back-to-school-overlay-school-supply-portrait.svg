@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1800" viewBox="0 0 1200 1800">
+  <defs><mask id="school-photo-window"><rect width="1200" height="1800" fill="white"/><rect x="108" y="108" width="984" height="1270" rx="8" fill="black"/></mask></defs>
+  <rect width="1200" height="1800" fill="#F8F7F2" mask="url(#school-photo-window)"/>
+  <rect x="92" y="92" width="1016" height="1302" rx="18" fill="none" stroke="#062E63" stroke-width="14"/>
+  <rect x="108" y="108" width="984" height="1270" rx="8" fill="none" stroke="#F5B51B" stroke-width="7"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 52h180M100 0v130M42 10l116 116M158 10L42 126" stroke="#1677D2" stroke-width="12"/>
+    <path d="M1000 40l48 48m-48 0l48-48M38 1450l48 48m-48 0l48-48" stroke="#E7B21A" stroke-width="12"/>
+    <path d="M1010 1460q35-55 70 0t70 0M15 1650q35-55 70 0t70 0" stroke="#1677D2" stroke-width="10"/>
+  </g>
+  <g fill="#062E63"><circle cx="50" cy="220" r="22"/><circle cx="1150" cy="250" r="22"/><circle cx="58" cy="1400" r="18"/></g>
+  <g fill="#F5B51B" stroke="#062E63" stroke-width="5"><path d="M1080 118l9 27 29 2-22 18 7 28-24-16-24 16 8-28-22-18 29-2z"/><path d="M90 1480l9 27 29 2-22 18 7 28-24-16-24 16 8-28-22-18 29-2z"/></g>
+  <g fill="#062E63" font-family="Arial, sans-serif" font-weight="900" text-anchor="middle"><text x="600" y="1500" font-size="86" letter-spacing="2">BACK</text><text x="600" y="1590" font-size="86" letter-spacing="2">TO SCHOOL</text></g>
+  <rect x="340" y="1620" width="520" height="7" rx="3" fill="#F5B51B"/>
+  <text x="600" y="1685" fill="#1677D2" font-family="Arial, sans-serif" font-size="28" font-weight="800" text-anchor="middle" letter-spacing="4">AMANDA NORTH ELEMENTARY • 2026</text>
+  <g fill="#1677D2" font-family="Arial, sans-serif" font-weight="900" font-size="34"><text x="54" y="330">✎</text><text x="1090" y="420">★</text><text x="40" y="1260">✿</text><text x="1090" y="1290">✎</text></g>
+</svg>

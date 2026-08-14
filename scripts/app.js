@@ -565,15 +565,15 @@ let themes = {
           },
         ],
         overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788500/photobooth/events/assets/hawks-overlay-1_scvljp.png", name: "hawks-overlay-1" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788501/photobooth/events/assets/hawks-overlay-2_tqwxej.png", name: "hawks-overlay-2" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788502/photobooth/events/assets/hawks-overlay-3_m10caq.png", name: "hawks-overlay-3" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788502/photobooth/events/assets/hawks-overlay-hawks-frame-cheerleader_y050rk.png", name: "hawks-overlay-cheerleader" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788504/photobooth/events/assets/hawks-overlay-hawks-frame-fan_r0a1xo.png", name: "hawks-overlay-fan" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788505/photobooth/events/assets/hawks-overlay-hawks-frame-go-hawks_b7hl8z.png", name: "hawks-overlay-go-hawks" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788506/photobooth/events/assets/hawks-overlay-hawks-frame-grass_ggw2wk.png", name: "hawks-overlay-grass" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788507/photobooth/events/assets/hawks-overlay-hawks-frame-helmets_gdhcav.png", name: "hawks-overlay-helmets" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788507/photobooth/events/assets/hawks-overlay-hawks-frame-players_xpdnfs.png", name: "hawks-overlay-players" },
+          { src: "/assets/school/hawks/overlays/1.png", name: "hawks-overlay-1" },
+          { src: "/assets/school/hawks/overlays/2.png", name: "hawks-overlay-2" },
+          { src: "/assets/school/hawks/overlays/3.png", name: "hawks-overlay-3" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-cheerleader.png", name: "hawks-overlay-cheerleader" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-fan.png", name: "hawks-overlay-fan" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-go-hawks.png", name: "hawks-overlay-go-hawks" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-grass.png", name: "hawks-overlay-grass" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-helmets.png", name: "hawks-overlay-helmets" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-players.png", name: "hawks-overlay-players" },
         ],
         templates: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788508/photobooth/events/assets/hawks-template-go-hawks_avfpzg.png", layout: "single_photo" },
@@ -652,10 +652,10 @@ let themes = {
           },
         ],
         overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788500/photobooth/events/assets/hawks-overlay-1_scvljp.png", name: "hawks-overlay-1" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788502/photobooth/events/assets/hawks-overlay-hawks-frame-cheerleader_y050rk.png", name: "hawks-overlay-cheerleader" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788504/photobooth/events/assets/hawks-overlay-hawks-frame-fan_r0a1xo.png", name: "hawks-overlay-fan" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788505/photobooth/events/assets/hawks-overlay-hawks-frame-go-hawks_b7hl8z.png", name: "hawks-overlay-go-hawks" },
+          { src: "/assets/school/hawks/overlays/1.png", name: "hawks-overlay-1" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-cheerleader.png", name: "hawks-overlay-cheerleader" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-fan.png", name: "hawks-overlay-fan" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-go-hawks.png", name: "hawks-overlay-go-hawks" },
         ],
         templates: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788508/photobooth/events/assets/hawks-template-go-hawks_avfpzg.png", layout: "single_photo" },
@@ -747,6 +747,8 @@ let themes = {
         ],
         overlays: [
           { src: "/assets/themes/back-to-school/overlays/amanda-north-back-to-school-overlay-single-photo-portrait.png", orientation: "portrait", name: "Amanda North Back to School single photo portrait" },
+          { src: "/assets/themes/back-to-school/overlays/amanda-north-back-to-school-overlay-school-supply-portrait.png", orientation: "portrait", name: "Amanda North Back to School school supply portrait" },
+          { src: "/assets/themes/back-to-school/overlays/amanda-north-back-to-school-overlay-primary-portrait.png", orientation: "portrait", name: "Amanda North Back to School primary portrait frame" },
           { src: "/assets/themes/back-to-school/overlays/amanda-north-back-to-school-overlay-single-photo-landscape.png", orientation: "landscape", name: "Amanda North Back to School single photo landscape" },
         ],
         templates: [],
@@ -2015,6 +2017,7 @@ let currentMode = "photo";
 let stream;
 let torchEnabled = false;
 let selectedOverlay = null;
+let captureFlashArmed = false;
 let lastPhotoOverlay = null;
 let selectedFilter = "natural";
 let photoOverlayOrientation =
@@ -11725,6 +11728,7 @@ async function countdownAndSnap(options = {}) {
     DOM.countdownOverlay.classList.remove("show");
     if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
   }
+  captureFlashArmed = true;
   if (!live || (lowLightEnabled && !torchUsed)) triggerFlash();
   await delay(50);
   if (!live) setRecordingHighlight(false);
@@ -11742,6 +11746,7 @@ async function countdownAndSnap(options = {}) {
     setRecordingHighlight(false);
   }
   if (guide) guide.style.display = "";
+  captureFlashArmed = false;
   return shot;
 }
 
@@ -11757,6 +11762,7 @@ function freezeCapturePreview(photoCanvas) {
 }
 
 function triggerFlash() {
+  if (!captureFlashArmed) return;
   const fo = DOM.flashOverlay;
   if (!fo) return;
   // Restart animation by toggling class
@@ -13281,6 +13287,11 @@ function getQuickStartFolderLabel() {
 }
 
 function getEventUploadSlug() {
+  const active = getActiveEvent();
+  if (active && active.id) {
+    const eventKey = slugifyEventText(active.id);
+    if (eventKey) return `event-${eventKey}`;
+  }
   const sessionName = slugifyEventText(getSessionUploadName());
   if (sessionName) return sessionName;
   const quickStartDate = getQuickStartFolderDate();
@@ -13519,7 +13530,21 @@ function getEventGalleryUrl() {
   const cloud = encodeURIComponent(cfg.cloud);
   return `${
     location.origin
-  }/gallery.html?cloud=${cloud}&tag=${encodeURIComponent(tag)}&title=${title}`;
+  }/gallery.html?cloud=${cloud}&tag=${encodeURIComponent(tag)}&legacyTag=${encodeURIComponent(getLegacyEventGalleryTag())}&title=${title}&event=${encodeURIComponent(getActiveEventId())}&theme=${encodeURIComponent(getEventGalleryThemeKey())}`;
+}
+
+function getLegacyEventGalleryTag() {
+  const sessionName = slugifyEventText(getSessionUploadName());
+  if (sessionName) return sessionName;
+  const quickStartDate = getQuickStartFolderDate();
+  if (quickStartDate) return quickStartDate;
+  const name = slugifyEventText(getEventNameForUploads());
+  const date = slugifyEventText(getEventDateForUploads());
+  return name && date ? `${name}-${date}` : name || date || "";
+}
+
+function getEventGalleryThemeKey() {
+  return getActiveEvent()?.themeKey || getSelectedThemeKey() || "";
 }
 
 function getEventGalleryStatusText() {
@@ -15589,32 +15614,46 @@ async function deleteAssetLibraryItem(id, fallbackAsset = null) {
       },
       fallbackAsset
     );
-    return;
+  } else {
+    const library = normalizeAssetLibraryPayload(assetLibrary);
+    const index = library.assets.findIndex(
+      (asset) =>
+        asset &&
+        (asset.id === id || getAssetLibraryId(asset.category, asset.url) === id)
+    );
+    if (index !== -1) {
+      library.assets.splice(index, 1);
+    }
+    assetLibrary = normalizeAssetLibraryPayload(library);
+    saveAssetLibraryLocal();
+    scheduleAssetLibraryRender();
+    if (canSyncRemote()) {
+      try {
+        await fetch("/api/assets", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id,
+            url: fallbackUrl,
+          }),
+        });
+      } catch (err) {
+        console.warn("Asset library delete failed", err);
+      }
+    }
   }
-  const library = normalizeAssetLibraryPayload(assetLibrary);
-  const index = library.assets.findIndex(
-    (asset) =>
-      asset &&
-      (asset.id === id || getAssetLibraryId(asset.category, asset.url) === id)
-  );
-  if (index !== -1) {
-    library.assets.splice(index, 1);
-  }
-  assetLibrary = normalizeAssetLibraryPayload(library);
-  saveAssetLibraryLocal();
-  scheduleAssetLibraryRender();
-  if (canSyncRemote()) {
-    try {
-      await fetch("/api/assets", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
-          url: fallbackUrl,
-        }),
-      });
-    } catch (err) {
-      console.warn("Asset library delete failed", err);
+
+  if (fallbackUrl) {
+    const category = normalizeUploadedAssetCategory(
+      fallbackAsset && fallbackAsset.category
+    );
+    if (category) {
+      removeSessionAssetBySrc(category, fallbackUrl);
+      if (category === "background") applyThemeBackground(activeTheme);
+      if (DOM.options) renderOptions();
+      renderCurrentAssets(activeTheme || getSelectedThemeTarget());
+      renderAssetLibrary();
+      updateLaunchSummary();
     }
   }
 }
