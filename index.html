@@ -3516,6 +3516,12 @@
 
     #video.active { opacity: 1; }
 
+    /* Camera surfaces must switch atomically when an overlay changes. */
+    #video.hidden,
+    #livePreviewCanvas.hidden {
+      transition: none;
+    }
+
     #livePreviewCanvas {
       position: absolute;
       inset: 0;

@@ -7,6 +7,7 @@
 - Done: Full `npm test` suite passes (135 tests), Hawks regression coverage passes, and local runtime serves representative Hawks overlay files with HTTP 200.
 - Done: Capture flash is now explicitly armed only during capture, preventing overlay changes from triggering the flash effect.
 - Done: Asset Library deletion now removes the deleted asset from the active session assignment before booth launch, including theme-backed defaults.
+- Done: Removed the generic opacity fade from camera/canvas visibility changes so switching slotted overlays does not produce a white blink.
 - Next steps: Perform a real camera/browser interaction on the booth device before deployment.
 - Known bugs/blockers: Public gallery still depends on deployed `THEMES_KV`-backed gallery/events/themes Functions; Cloudinary image-list fallback may be unavailable when Cloudinary list delivery is disabled. Gallery links include the former name/date tag as a compatibility read so existing event photos remain visible.
 - Important decisions: `/api/gallery` remains authoritative; individual QR URLs remain unchanged; no infinite scroll and no new storage system.
