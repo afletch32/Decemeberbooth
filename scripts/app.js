@@ -2671,15 +2671,9 @@ function discardStaleSessionLibraryAssets() {
   activeSessionAssets.templates = (Array.isArray(activeSessionAssets.templates)
     ? activeSessionAssets.templates
     : []).filter((entry) => canonicalSources.template.has(getAssetEntrySrc(entry)));
-  sessionRemovedBackgrounds = sessionRemovedBackgrounds.filter((src) =>
-    canonicalSources.background.has(getAssetEntrySrc(src))
-  );
-  sessionRemovedOverlays = sessionRemovedOverlays.filter((src) =>
-    canonicalSources.overlay.has(getAssetEntrySrc(src))
-  );
-  sessionRemovedTemplates = sessionRemovedTemplates.filter((src) =>
-    canonicalSources.template.has(getAssetEntrySrc(src))
-  );
+  // Keep removal tombstones even after an asset is deleted from the library.
+  // Event/theme assignments can still reference the old source and would
+  // otherwise reappear in the selected count on the next render.
 }
 
 /**

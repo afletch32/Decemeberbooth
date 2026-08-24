@@ -15,6 +15,7 @@
 - Done: Final preview review controls use a compact two-button layout on mobile and desktop.
 - Verification: Browser/device QA remains the next release gate; no deployment was performed.
 - Verification: Local rendered browser check passed for the setup and booth shell; Retake and Done controls are present. MediaPipe/WebGL emitted expected runtime warnings only.
+- Done: Deleted overlays no longer return to the selected count through stale event assignments; removal tombstones are preserved after library cleanup.
 
 - Current goal: Restore Spring Hill Hawks overlays in the live photo preview while preserving final/share rendering.
 - Amanda North knowledge: Added the supplied campus/building, Coyotes logo and colors, school-supply motifs, “Building a Strong Foundation,” PTO badge, and premium overlay references to the theme creator guidance.
