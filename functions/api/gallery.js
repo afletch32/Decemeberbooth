@@ -44,7 +44,8 @@ function normalizeGalleryPayload(payload, tag) {
           created_at: String((item && item.created_at) || ""),
           resource_type: resourceType,
           type: resourceType,
-          mode: String((item && item.mode) || ""),
+        mode: String((item && item.mode) || ""),
+        gallery_url: String((item && item.gallery_url) || ""),
         };
       })
       .filter(Boolean),
@@ -110,6 +111,7 @@ export async function onRequest(context) {
             ? "video"
             : "image",
         mode: String(body.mode || ""),
+        gallery_url: String(body.gallery_url || ""),
       };
       const resources = [
         nextResource,
@@ -137,6 +139,7 @@ export async function onRequest(context) {
             resource_type: nextResource.resource_type,
             title: next.title,
             created_at: nextResource.created_at,
+            gallery_url: nextResource.gallery_url,
           })
         );
       }

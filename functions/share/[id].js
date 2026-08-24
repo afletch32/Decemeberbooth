@@ -21,8 +21,12 @@ export async function onRequest(context) {
   const url = String(item && item.secure_url || "").trim();
   if (!/^https:\/\//i.test(url)) return page("<h1>Photo unavailable</h1><p>Please try this link again later.</p>", 404);
   const safeUrl = escapeHtml(url);
+  const galleryUrl = String(item && item.gallery_url || "").trim();
+  const galleryLink = /^https:\/\//i.test(galleryUrl)
+    ? `<a href="${escapeHtml(galleryUrl)}">View the full event gallery</a>`
+    : "";
   const media = item.resource_type === "video"
     ? `<video controls playsinline src="${safeUrl}"></video>`
     : `<img src="${safeUrl}" alt="Your DecemberBooth photo">`;
-  return page(`<h1>Your photo is ready</h1>${media}<br><a href="${safeUrl}" download>Download photo</a>`);
+  return page(`<h1>Your photo is ready</h1>${media}<br><a href="${safeUrl}" download>Download photo</a>${galleryLink}`);
 }

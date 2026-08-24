@@ -1,5 +1,21 @@
 # Build status
 
+- Current fix: Make Thank You completion screens match the selected theme artwork, orientation, and accent treatment.
+- Current fix: Restrict Event Setup theme selection to complete portrait/landscape guest-screen packs.
+- Current fix: Tighten countdown and share-screen spacing while preserving capture and QR timing.
+- Current fix: Share the event gallery alongside each individual photo link.
+- Current fix: Make the photo-choice return action explicit.
+- Done: Relabeled the existing photo-choice back control to “Return to idle screen” while preserving its transition and artwork reset behavior.
+- Done: The individual capture QR now opens the individual photo and includes a link to the full event gallery; no separate gallery QR or native sharing is used.
+- Done: Reduced unused countdown spacing, share panel padding, QR size, preview frame weight, and mobile overflow pressure.
+- Done: Incomplete themes without both idle, photo-choice, and Thank You screen orientations are now excluded from theme selectors; Share remains optional and uses the existing background fallback.
+- Done: Replaced the globally hard-coded dark-magenta Thank You card treatment with active-theme colors while preserving the selected Thank You background.
+- Verification: Full `npm test` suite passes (245 tests).
+- Done: Retake is now available independently of print settings, and the final preview has an explicit Done action to return to idle.
+- Done: Final preview review controls use a compact two-button layout on mobile and desktop.
+- Verification: Browser/device QA remains the next release gate; no deployment was performed.
+- Verification: Local rendered browser check passed for the setup and booth shell; Retake and Done controls are present. MediaPipe/WebGL emitted expected runtime warnings only.
+
 - Current goal: Restore Spring Hill Hawks overlays in the live photo preview while preserving final/share rendering.
 - Amanda North knowledge: Added the supplied campus/building, Coyotes logo and colors, school-supply motifs, “Building a Strong Foundation,” PTO badge, and premium overlay references to the theme creator guidance.
 - Done: Added theme-aware public gallery styling, responsive photo grid, full-screen viewer, and bounded Load More rendering. Added a full-event-gallery action to the existing share screen. Gallery links now carry event/theme identifiers, and saved-event tags include the unique event ID so same-named events stay separate.

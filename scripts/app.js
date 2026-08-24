@@ -1356,6 +1356,7 @@ const DOM = {
   qrCode: document.getElementById("qrCode"),
   qrSaveCopy: document.getElementById("qrSaveCopy"),
   reviewRetakeBtn: document.getElementById("reviewRetakeBtn"),
+  finishBoothBtn: document.getElementById("finishBoothBtn"),
   finalPrintActions: document.getElementById("finalPrintActions"),
   requestPrintBtn: document.getElementById("requestPrintBtn"),
   lastShot: document.getElementById("lastShot"),
@@ -12468,6 +12469,14 @@ function setupFinalExperienceActions() {
       retakePhoto();
     });
   }
+  if (DOM.finishBoothBtn && !DOM.finishBoothBtn.dataset.bound) {
+    DOM.finishBoothBtn.dataset.bound = "true";
+    DOM.finishBoothBtn.addEventListener("click", () => {
+      unlockBoothAudio();
+      playThemeCue("tap", "tap");
+      finishBoothFlow();
+    });
+  }
   if (DOM.requestPrintBtn && !DOM.requestPrintBtn.dataset.bound) {
     DOM.requestPrintBtn.dataset.bound = "true";
     DOM.requestPrintBtn.addEventListener("click", async () => {
@@ -12707,7 +12716,6 @@ function copyEventGalleryLink() {
     return;
   }
   copyText(link);
-  showToast("Event gallery link copied");
 }
 
 function openEventGalleryLink() {
@@ -13871,6 +13879,7 @@ function getCaptureUploadMeta(options = {}) {
     slug,
     folder: options.folder || getEventUploadFolderPath(),
     title: options.title || getEventGalleryTitle(),
+    galleryUrl: options.galleryUrl || getEventGalleryUrl(),
   };
 }
 
@@ -13912,6 +13921,7 @@ async function queueCaptureForRetry(options = {}) {
     title: meta.title,
     email: meta.email || "",
     createdAt: meta.createdAt || new Date().toISOString(),
+    galleryUrl: meta.galleryUrl || getEventGalleryUrl(),
   };
   if (mediaBlob && offlineQueueSupported()) {
     try {
@@ -13956,6 +13966,7 @@ async function queueCaptureForRetry(options = {}) {
       resourceType: "image",
       modeName,
       title: meta.title,
+      galleryUrl: meta.galleryUrl,
     });
   }
   return queued;
@@ -14091,6 +14102,7 @@ async function uploadCaptureOnce(options = {}) {
     title: meta.title,
     resourceType,
     modeName,
+    galleryUrl: meta.galleryUrl,
   });
   if (!galleryOk) {
     const queued = queuePendingGalleryRecord({
@@ -14098,6 +14110,7 @@ async function uploadCaptureOnce(options = {}) {
       slug: meta.slug,
       url: publicUrl,
       title: meta.title,
+      galleryUrl: meta.galleryUrl,
       resourceType,
       modeName,
     });
@@ -14140,6 +14153,7 @@ async function recordGalleryPhoto(tag, url, options = {}) {
     resource_type: resourceType,
     type: resourceType,
     mode: options.modeName || "",
+    gallery_url: options.galleryUrl || getEventGalleryUrl(),
   };
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
@@ -14417,6 +14431,7 @@ function queuePendingUpload(dataUrl, meta = {}) {
       title: meta.title || getEventGalleryTitle(),
       resourceType: meta.resourceType === "video" ? "video" : "image",
       modeName: meta.modeName || "pending",
+      galleryUrl: meta.galleryUrl || getEventGalleryUrl(),
       attempts: Number(meta.attempts || 0),
     };
     const existingIndex = q.findIndex(
@@ -14469,6 +14484,7 @@ function queuePendingGalleryRecord(record = {}) {
       createdAt: record.createdAt || new Date().toISOString(),
       resourceType: record.resourceType === "video" ? "video" : "image",
       modeName: record.modeName || "",
+      galleryUrl: record.galleryUrl || getEventGalleryUrl(),
       attempts: Number(record.attempts || 0),
     };
     const existingIndex = q.findIndex(
@@ -14510,7 +14526,8 @@ async function flushPendingUploads() {
           folder: item.folder,
           title: item.title,
           resourceType: item.resourceType || "image",
-          modeName: item.modeName || "pending",
+      modeName: item.modeName || "pending",
+          galleryUrl: item.galleryUrl,
         });
         sent++;
         const cur = getPendingUploads();
@@ -14586,6 +14603,7 @@ async function flushPendingUploadsIndexedDB() {
         resourceType,
         modeName: metadata.modeName,
         createdAt: metadata.createdAt,
+        galleryUrl: metadata.galleryUrl,
       });
       if (!galleryOk) {
         queuePendingGalleryRecord({
@@ -14596,6 +14614,7 @@ async function flushPendingUploadsIndexedDB() {
           resourceType,
           modeName: metadata.modeName,
           createdAt: metadata.createdAt,
+          galleryUrl: metadata.galleryUrl,
         });
       }
     }
@@ -14626,6 +14645,7 @@ async function flushPendingGalleryRecords() {
           resourceType: item.resourceType,
           modeName: item.modeName,
           createdAt: item.createdAt,
+          galleryUrl: item.galleryUrl,
         });
         if (!ok) throw new Error("Gallery API rejected retry");
         sent++;
@@ -16405,19 +16425,29 @@ function getSelectableThemeEntries() {
 
 function isCompletedTheme(theme) {
   if (!theme || typeof theme !== "object") return false;
-  const hasEntries = (value) =>
-    Array.isArray(value) &&
-    value.some((entry) => {
-      if (typeof entry === "string") return entry.trim().length > 0;
-      return !!(entry && typeof entry === "object" && getAssetEntrySrc(entry));
-    });
-  return [
-    theme.idleScreens,
-    theme.photoChoiceScreens,
-    theme.shareScreens,
-    theme.thankYouScreens,
-    theme.presets,
-  ].some(hasEntries);
+  const entries = (value) => (Array.isArray(value) ? value : []);
+  const hasScreen = (value, role = "") => {
+    const screens = entries(value);
+    return ["portrait", "landscape"].every((orientation) =>
+      screens.some((entry) => {
+        if (!entry || typeof entry !== "object") return false;
+        if (role && entry.role && entry.role !== role) return false;
+        return (
+          normalizeIdleScreenOrientation(entry.orientation) === orientation &&
+          !!getAssetEntrySrc(entry)
+        );
+      })
+    );
+  };
+  const idleScreens = entries(theme.idleScreens);
+  const photoChoiceScreens = entries(theme.photoChoiceScreens).length
+    ? theme.photoChoiceScreens
+    : idleScreens;
+  return (
+    hasScreen(idleScreens, "idle") &&
+    hasScreen(photoChoiceScreens, "photo-choice") &&
+    hasScreen(theme.thankYouScreens)
+  );
 }
 
 function getSelectableThemeGroups() {
