@@ -18371,7 +18371,7 @@ function loadThemesFromStorage() {
   const globalLogo = getGlobalLogo();
   if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
   // Attempt remote load and prefer remote if available
-  loadThemesRemote().catch(() => {});
+  deferNonCriticalTask(() => loadThemesRemote().catch(() => {}));
 }
 
 function openLayoutBuilder() {
@@ -18383,7 +18383,7 @@ function openLayoutBuilder() {
 
 function loadEventsFromStorage() {
   populateEventProfileSelect(getActiveEventId());
-  loadEventsRemote().catch(() => {});
+  deferNonCriticalTask(() => loadEventsRemote().catch(() => {}));
 }
 
 // Folder import (device-only) helpers
@@ -18466,14 +18466,16 @@ function getStoredFonts() {
     // Fire-and-forget remote merge so new fonts sync to other devices
     if (!fontsRemoteRequested) {
       fontsRemoteRequested = true;
-      loadFontsRemote()
-        .then((remote) => {
-          if (Array.isArray(remote) && remote.length) {
-            const merged = mergeFonts(local, remote);
-            localStorage.setItem("photoboothFonts", JSON.stringify(merged));
-          }
-        })
-        .catch(() => {});
+      deferNonCriticalTask(() =>
+        loadFontsRemote()
+          .then((remote) => {
+            if (Array.isArray(remote) && remote.length) {
+              const merged = mergeFonts(local, remote);
+              localStorage.setItem("photoboothFonts", JSON.stringify(merged));
+            }
+          })
+          .catch(() => {})
+      );
     }
     return local;
   } catch (e) {

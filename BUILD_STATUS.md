@@ -10,6 +10,7 @@
 - Current fix: Optimize locally bundled theme screen/background artwork for faster live preview loading.
 - Current fix: Improve preview startup with lazy theme previews, orientation preloading, decoded-image caching, and deferred asset-library loading.
 - Current fix: Add dedicated thumbnails and automatic active-orientation offline caching.
+- Current fix: Defer remote theme, event, and font synchronization until after local setup is interactive.
 - Current fix: Tighten countdown and share-screen spacing while preserving capture and QR timing.
 - Current fix: Share the event gallery alongside each individual photo link.
 - Current fix: Make the photo-choice return action explicit.
@@ -27,6 +28,7 @@
 - Done: Converted 61 locally bundled screen/background assets to WebP and updated runtime references; original source files remain intact for safe rollback and asset workflows.
 - Done: Added a bounded decoded-image cache, lazy quick-picker artwork, selected-orientation preloading, and idle-time remote asset-library loading.
 - Done: Added 191 small WebP thumbnails for local asset previews; full-size files remain reserved for booth rendering. The active theme’s current orientation is now cached automatically when service-worker caching is available.
+- Done: Remote theme/event/font refreshes and Asset Library loading now run through idle-time scheduling instead of blocking initial local setup.
 - Done: Retake is now available independently of print settings, and the final preview has an explicit Done action to return to idle.
 - Done: Final preview review controls use a compact two-button layout on mobile and desktop.
 - Verification: Browser/device QA remains the next release gate; no deployment was performed.
