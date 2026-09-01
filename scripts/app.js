@@ -1102,6 +1102,33 @@ themes.spring = {
   },
 };
 
+themes.fall.holidays.cuteHalloween = {
+  name: "Happy Halloween",
+  eventTypes: ["party", "community", "general"],
+  fontPairingStyle: "party",
+  accent: "#d946ef",
+  accent2: "#f5b4ff",
+  font: "'Comic Neue', cursive",
+  logo: "",
+  backgrounds: [
+    "/assets/themes/cute-halloween/cute-halloween-background-portrait.png",
+    "/assets/themes/cute-halloween/cute-halloween-background-landscape.png",
+  ],
+  idleScreens: [
+    { src: "/assets/themes/cute-halloween/cute-halloween-idle-portrait.png", name: "Spooky Cute Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
+    { src: "/assets/themes/cute-halloween/cute-halloween-idle-landscape.png", name: "Spooky Cute Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 50, y: 82, width: 38, height: 20 } } },
+    { src: "/assets/themes/cute-halloween/cute-halloween-photo-choice-portrait.png", name: "Spooky Cute Halloween photo choice portrait", role: "photo-choice", orientation: "portrait", buttonZones: { singlePhoto: { x: 50, y: 43, width: 76, height: 22 }, photoStrip: { x: 50, y: 72, width: 76, height: 22 } } },
+    { src: "/assets/themes/cute-halloween/cute-halloween-photo-choice-landscape.png", name: "Spooky Cute Halloween photo choice landscape", role: "photo-choice", orientation: "landscape", buttonZones: { singlePhoto: { x: 30, y: 55, width: 34, height: 48 }, photoStrip: { x: 70, y: 55, width: 34, height: 48 } } },
+  ],
+  thankYouScreens: [
+    { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-portrait.png", name: "Spooky Cute Halloween Thank You portrait", orientation: "portrait" },
+    { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-landscape.png", name: "Spooky Cute Halloween Thank You landscape", orientation: "landscape" },
+  ],
+  overlays: [],
+  templates: [],
+  welcome: { title: "Happy Halloween", portrait: "", landscape: "", prompt: "Tap to Start" },
+};
+
 themes.general.themes.averyBirthday = {
   ...JSON.parse(JSON.stringify(themes.general.themes.birthday)),
   name: "Avery's Birthday",
