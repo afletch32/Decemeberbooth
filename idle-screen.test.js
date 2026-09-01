@@ -126,7 +126,7 @@ test("General Back to School stays separate from Amanda North artwork", () => {
   [
     "back-to-school-background-portrait.png",
     "back-to-school-background-landscape.png",
-    "back-to-school-idle-portrait.png",
+    "back-to-school-idle-portrait.webp",
     "back-to-school-idle-landscape.png",
     "back-to-school-photo-choice-portrait.png",
     "back-to-school-photo-choice-landscape.png",
@@ -143,13 +143,13 @@ test("General Back to School stays separate from Amanda North artwork", () => {
   assert.ok(app.includes('backToSchool: {'));
   assert.ok(app.includes('name: "Back to School"'));
   assert.ok(
-    app.includes('src: "/assets/themes/general-back-to-school/back-to-school-idle-portrait.png"')
+    app.includes('src: "/assets/themes/general-back-to-school/back-to-school-idle-portrait.webp"')
   );
   assert.ok(app.includes('name: "Back to School photo choice portrait"'));
   assert.ok(app.includes('name: "Back to School photo choice landscape"'));
   assert.ok(app.includes('name: "Back to School Thank You screen portrait"'));
   assert.ok(app.includes('name: "Back to School Thank You screen landscape"'));
-  assert.ok(!app.includes('src: "/assets/themes/back-to-school/back-to-school-idle-portrait.png",\n            name: "Back to School idle screen portrait"'));
+  assert.ok(!app.includes('src: "/assets/themes/back-to-school/back-to-school-idle-portrait.webp",\n            name: "Back to School idle screen portrait"'));
 });
 
 test("Spring Hill Hawks includes its complete navy green and white screen pack", () => {
@@ -247,7 +247,7 @@ test("Avery's guest screens use bundled WebP artwork", () => {
   assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp"'));
   assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp"'));
   assert.ok(app.includes("function migrateOptimizedAveryScreenAssets"));
-  assert.ok(app.includes("avery-birthday-idle-landscape.png\": \"/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp"));
+  assert.ok(app.includes("avery-birthday-idle-landscape.webp\": \"/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp"));
   assert.ok(app.includes('"/assets/themes/avery-birthday/avery-birthday-background-landscape.webp"'));
   assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp"'));
   assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-share-portrait.webp"'));
@@ -361,7 +361,7 @@ test("Amanda North has a built-in portrait looping idle screen", () => {
   assert.ok(app.includes('orientation: "portrait"'));
   assert.ok(
     app.includes(
-      'poster: "/assets/themes/back-to-school/back-to-school-idle-portrait.png"'
+      'poster: "/assets/themes/back-to-school/back-to-school-idle-portrait.webp"'
     )
   );
   assert.ok(app.includes("start: { x: 50, y: 88, width: 84, height: 14 }"));
@@ -387,21 +387,21 @@ test("Amanda North uses its custom photo-choice artwork after Tap to Start", () 
 
 test("Amanda North provides portrait and landscape share-screen artwork", () => {
   assert.ok(
-    app.includes('src: "/assets/themes/back-to-school/back-to-school-share-portrait.png"')
+    app.includes('src: "/assets/themes/back-to-school/back-to-school-share-portrait.webp"')
   );
   assert.ok(
-    app.includes('src: "/assets/themes/back-to-school/back-to-school-share-landscape.png"')
+    app.includes('src: "/assets/themes/back-to-school/back-to-school-share-landscape.webp"')
   );
   assert.ok(app.includes("function applyThemeShareScreen(theme)"));
   assert.ok(html.includes("#boothScreen.has-theme-share-screen.share-mode #finalPreview"));
   assert.ok(
     readFileSync(
-      join(process.cwd(), "assets/themes/back-to-school/back-to-school-share-portrait.png")
+      join(process.cwd(), "assets/themes/back-to-school/back-to-school-share-portrait.webp")
     ).length > 0
   );
   assert.ok(
     readFileSync(
-      join(process.cwd(), "assets/themes/back-to-school/back-to-school-share-landscape.png")
+      join(process.cwd(), "assets/themes/back-to-school/back-to-school-share-landscape.webp")
     ).length > 0
   );
 });
@@ -491,16 +491,16 @@ test("Avery includes dedicated portrait and landscape carnival overlays", () => 
 
 test("Avery includes infernal-town background and overlay pairs", () => {
   const assets = [
-    "assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.png",
-    "assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.png",
+    "assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.webp",
+    "assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.webp",
     "assets/themes/avery-birthday/avery-birthday-infernal-town-overlay-portrait.png",
     "assets/themes/avery-birthday/avery-birthday-infernal-town-overlay-landscape.png",
   ];
 
   assert.ok(app.includes("Avery infernal town overlay portrait"));
   assert.ok(app.includes("Avery infernal town overlay landscape"));
-  assert.ok(app.includes("avery-birthday-infernal-town-background-portrait.png"));
-  assert.ok(app.includes("avery-birthday-infernal-town-background-landscape.png"));
+  assert.ok(app.includes("avery-birthday-infernal-town-background-portrait.webp"));
+  assert.ok(app.includes("avery-birthday-infernal-town-background-landscape.webp"));
   assert.ok(app.includes("greenBackgrounds: ["));
   assets.forEach((asset) => {
     assert.ok(readFileSync(join(process.cwd(), asset)).length > 0);

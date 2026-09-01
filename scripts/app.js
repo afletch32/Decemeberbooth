@@ -88,6 +88,16 @@ const RESERVED_PHOTO_MARKER = {
   minAreaRatio: 0.001,
 };
 const reservedPhotoMarkerCache = new Map();
+const decodedImageCache = new Map();
+const DECODED_IMAGE_CACHE_LIMIT = 40;
+
+function deferNonCriticalTask(task) {
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(() => task(), { timeout: 2000 });
+  } else {
+    window.setTimeout(task, 250);
+  }
+}
 
 // --- USB Relay Automation (Web Serial) ---
 let relayPort = null;
@@ -3230,7 +3240,7 @@ function renderThemeQuickPicker() {
     const preview = document.createElement("div");
     preview.className = "theme-quick-card-art";
     const previewUrl = getThemeQuickPreview(entry.theme);
-    if (previewUrl) preview.style.backgroundImage = `url("${previewUrl}")`;
+    if (previewUrl) preview.dataset.previewSrc = previewUrl;
     const copy = document.createElement("span");
     copy.className = "theme-quick-card-copy";
     const label = document.createElement("strong");
@@ -3242,6 +3252,22 @@ function renderThemeQuickPicker() {
     card.addEventListener("click", () => activateThemeFromSetupKey(entry.key));
     DOM.themeQuickGrid.appendChild(card);
   });
+  const applyPreview = (node) => {
+    const src = node.dataset.previewSrc;
+    if (src && !node.style.backgroundImage) node.style.backgroundImage = `url("${src}")`;
+  };
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver((items, currentObserver) => {
+      items.forEach((item) => {
+        if (!item.isIntersecting) return;
+        applyPreview(item.target);
+        currentObserver.unobserve(item.target);
+      });
+    }, { rootMargin: "160px" });
+    DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach((node) => observer.observe(node));
+  } else {
+    DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach(applyPreview);
+  }
   const selectedEntry = getSetupThemeEntries().find((entry) => entry.key === selectedKey);
   if (DOM.themeQuickSelectionName) DOM.themeQuickSelectionName.textContent = selectedEntry ? selectedEntry.label : "Choose a theme";
   if (DOM.themeQuickSelectionMeta) DOM.themeQuickSelectionMeta.textContent = selectedEntry ? `${selectedEntry.group} · ${getThemeQuickMeta(selectedEntry.theme)}` : "Choose a look to see the included guest screens and photo styling.";
@@ -6309,7 +6335,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadFontsFromStorage();
   loadAssetLibraryLocal();
   if (repairCorruptedBackgroundDefaults()) saveThemesToStorage();
-  loadAssetLibraryRemote().catch(() => renderAssetLibrary());
+  deferNonCriticalTask(() => loadAssetLibraryRemote().catch(() => renderAssetLibrary()));
   try {
     await setupFontPicker();
   } catch (e) {
@@ -7866,13 +7892,14 @@ function loadTheme(themeKey) {
   if (globalLogo !== null) applyGlobalLogoToTheme(activeTheme, globalLogo);
 
   applyThemeBasics(theme);
+  preloadThemeOrientationAssets(theme);
   logEffectiveAssetState(theme, "loadTheme");
   syncAdminUiWithTheme(themeKey, theme);
   renderAssetLibrary();
   updateLaunchSummary();
   syncSessionThemeSearch();
   syncSessionFontSearch();
-  loadAssetLibraryRemote().catch(() => renderAssetLibrary());
+  deferNonCriticalTask(() => loadAssetLibraryRemote().catch(() => renderAssetLibrary()));
 }
 
 // Convert any CSS color string to hex (#rrggbb); returns '' on failure
@@ -10955,7 +10982,10 @@ function updateCountdownFontSize() {
   document.documentElement.style.setProperty("--countdown-size", `${size}px`);
 }
 function loadImage(url) {
-  return new Promise((resolve, reject) => {
+  if (!url) return Promise.reject(new Error("Image URL is empty"));
+  const cached = decodedImageCache.get(url);
+  if (cached) return cached;
+  const promise = new Promise((resolve, reject) => {
     const img = new Image();
     try {
       if (location.protocol.startsWith("http")) img.crossOrigin = "anonymous";
@@ -10964,6 +10994,30 @@ function loadImage(url) {
     img.onerror = reject;
     img.src = url;
   });
+  decodedImageCache.set(url, promise);
+  if (decodedImageCache.size > DECODED_IMAGE_CACHE_LIMIT) {
+    decodedImageCache.delete(decodedImageCache.keys().next().value);
+  }
+  promise.catch(() => decodedImageCache.delete(url));
+  return promise;
+}
+
+function preloadThemeOrientationAssets(theme) {
+  if (!theme) return;
+  const orientation = getGuestScreenOrientation();
+  const sources = [];
+  const add = (value) => {
+    const src = getAssetEntrySrc(value);
+    if (src && !sources.includes(src)) sources.push(src);
+  };
+  ["idleScreens", "thankYouScreens"].forEach((field) => {
+    (Array.isArray(theme[field]) ? theme[field] : [])
+      .filter((entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation)
+      .forEach(add);
+  });
+  const backgrounds = Array.isArray(theme.backgrounds) ? theme.backgrounds : [];
+  add(backgrounds.find((entry) => String(getAssetEntrySrc(entry)).toLowerCase().includes(orientation)) || backgrounds[0]);
+  sources.forEach((src) => loadImage(src).catch(() => {}));
 }
 
 function loadDrawableMedia(url) {

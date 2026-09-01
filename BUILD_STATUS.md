@@ -8,6 +8,7 @@
 - Current fix: Make the supplied button sounds available as explicit per-theme click-sound choices.
 - Current fix: Reduce Happy Halloween preview load time with optimized WebP artwork.
 - Current fix: Optimize locally bundled theme screen/background artwork for faster live preview loading.
+- Current fix: Improve preview startup with lazy theme previews, orientation preloading, decoded-image caching, and deferred asset-library loading.
 - Current fix: Tighten countdown and share-screen spacing while preserving capture and QR timing.
 - Current fix: Share the event gallery alongside each individual photo link.
 - Current fix: Make the photo-choice return action explicit.
@@ -23,6 +24,7 @@
 - Done: The supplied button, magic, and old-radio MP3s are shared library choices and are never applied automatically; operators can assign them to a selected theme’s Start or Button Tap slot.
 - Done: Happy Halloween screen assets are served as WebP, reducing the pack from about 22 MB of PNGs to about 1.3 MB.
 - Done: Converted 61 locally bundled screen/background assets to WebP and updated runtime references; original source files remain intact for safe rollback and asset workflows.
+- Done: Added a bounded decoded-image cache, lazy quick-picker artwork, selected-orientation preloading, and idle-time remote asset-library loading.
 - Done: Retake is now available independently of print settings, and the final preview has an explicit Done action to return to idle.
 - Done: Final preview review controls use a compact two-button layout on mobile and desktop.
 - Verification: Browser/device QA remains the next release gate; no deployment was performed.
