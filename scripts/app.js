@@ -225,12 +225,12 @@ let themes = {
         font: "'Bree Serif', serif",
         logo: "",
         backgrounds: [
-          "/assets/themes/general-back-to-school/back-to-school-background-landscape.png",
-          "/assets/themes/general-back-to-school/back-to-school-background-portrait.png",
+          "/assets/themes/general-back-to-school/back-to-school-background-landscape.webp",
+          "/assets/themes/general-back-to-school/back-to-school-background-portrait.webp",
         ],
         idleScreens: [
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-idle-portrait.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-idle-portrait.webp",
             name: "Back to School idle screen portrait",
             role: "idle",
             orientation: "portrait",
@@ -239,7 +239,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-idle-landscape.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-idle-landscape.webp",
             name: "Back to School idle screen landscape",
             role: "idle",
             orientation: "landscape",
@@ -248,7 +248,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-photo-choice-portrait.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-photo-choice-portrait.webp",
             name: "Back to School photo choice portrait",
             role: "photo-choice",
             orientation: "portrait",
@@ -258,7 +258,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-photo-choice-landscape.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-photo-choice-landscape.webp",
             name: "Back to School photo choice landscape",
             role: "photo-choice",
             orientation: "landscape",
@@ -270,12 +270,12 @@ let themes = {
         ],
         thankYouScreens: [
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-thank-you-portrait.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-thank-you-portrait.webp",
             name: "Back to School Thank You screen portrait",
             orientation: "portrait",
           },
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-thank-you-landscape.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-thank-you-landscape.webp",
             name: "Back to School Thank You screen landscape",
             orientation: "landscape",
           },
@@ -677,13 +677,13 @@ let themes = {
         font: "'Comic Neue', cursive",
         logo: "",
         backgrounds: [
-          "/assets/themes/back-to-school/back-to-school-background-landscape.png",
-          "/assets/themes/back-to-school/back-to-school-background-portrait.png",
+          "/assets/themes/back-to-school/back-to-school-background-landscape.webp",
+          "/assets/themes/back-to-school/back-to-school-background-portrait.webp",
         ],
         idleScreens: [
           {
             src: "/assets/themes/back-to-school/amanda-north-coyotes-idle-wave-portrait.mp4",
-            poster: "/assets/themes/back-to-school/back-to-school-idle-portrait.png",
+            poster: "/assets/themes/back-to-school/back-to-school-idle-portrait.webp",
             name: "Amanda North Coyote waving idle screen",
             role: "idle",
             orientation: "portrait",
@@ -692,7 +692,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/back-to-school/back-to-school-idle-landscape.png",
+            src: "/assets/themes/back-to-school/back-to-school-idle-landscape.webp",
             name: "Amanda North Coyote idle screen landscape",
             role: "idle",
             orientation: "landscape",
@@ -701,7 +701,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/back-to-school/back-to-school-photo-choice-portrait.png",
+            src: "/assets/themes/back-to-school/back-to-school-photo-choice-portrait.webp",
             name: "Amanda North Coyote photo choice portrait",
             role: "photo-choice",
             orientation: "portrait",
@@ -711,7 +711,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/back-to-school/back-to-school-photo-choice-landscape.png",
+            src: "/assets/themes/back-to-school/back-to-school-photo-choice-landscape.webp",
             name: "Amanda North Coyote photo choice landscape",
             role: "photo-choice",
             orientation: "landscape",
@@ -723,24 +723,24 @@ let themes = {
         ],
         shareScreens: [
           {
-            src: "/assets/themes/back-to-school/back-to-school-share-portrait.png",
+            src: "/assets/themes/back-to-school/back-to-school-share-portrait.webp",
             orientation: "portrait",
             name: "Amanda North Coyote share screen portrait",
           },
           {
-            src: "/assets/themes/back-to-school/back-to-school-share-landscape.png",
+            src: "/assets/themes/back-to-school/back-to-school-share-landscape.webp",
             orientation: "landscape",
             name: "Amanda North Coyote share screen landscape",
           },
         ],
         thankYouScreens: [
           {
-            src: "/assets/themes/back-to-school/back-to-school-thank-you-portrait.png",
+            src: "/assets/themes/back-to-school/back-to-school-thank-you-portrait.webp",
             name: "Amanda North Coyote Thank You screen portrait",
             orientation: "portrait",
           },
           {
-            src: "/assets/themes/back-to-school/back-to-school-thank-you-landscape.png",
+            src: "/assets/themes/back-to-school/back-to-school-thank-you-landscape.webp",
             name: "Amanda North Coyote Thank You screen landscape",
             orientation: "landscape",
           },
@@ -768,12 +768,12 @@ let themes = {
         font: "'Comic Neue', cursive",
         logo: "",
         backgrounds: [
-          "/assets/themes/stream-night/stream-night-background-landscape.png",
-          "/assets/themes/stream-night/stream-night-background-portrait.png",
+          "/assets/themes/stream-night/stream-night-background-landscape.webp",
+          "/assets/themes/stream-night/stream-night-background-portrait.webp",
         ],
         idleScreens: [
           {
-            src: "/assets/themes/stream-night/stream-night-idle-portrait.png",
+            src: "/assets/themes/stream-night/stream-night-idle-portrait.webp",
             name: "Amanda North STREAM Night idle portrait",
             role: "idle",
             orientation: "portrait",
@@ -782,7 +782,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/stream-night/stream-night-idle-landscape.png",
+            src: "/assets/themes/stream-night/stream-night-idle-landscape.webp",
             name: "Amanda North STREAM Night idle landscape",
             role: "idle",
             orientation: "landscape",
@@ -791,7 +791,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/stream-night/stream-night-photo-choice-portrait.png",
+            src: "/assets/themes/stream-night/stream-night-photo-choice-portrait.webp",
             name: "Amanda North STREAM Night photo choice portrait",
             role: "photo-choice",
             orientation: "portrait",
@@ -801,7 +801,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/stream-night/stream-night-photo-choice-landscape.png",
+            src: "/assets/themes/stream-night/stream-night-photo-choice-landscape.webp",
             name: "Amanda North STREAM Night photo choice landscape",
             role: "photo-choice",
             orientation: "landscape",
@@ -813,12 +813,12 @@ let themes = {
         ],
         thankYouScreens: [
           {
-            src: "/assets/themes/stream-night/stream-night-thank-you-portrait.png",
+            src: "/assets/themes/stream-night/stream-night-thank-you-portrait.webp",
             name: "Amanda North STREAM Night Thank You screen portrait",
             orientation: "portrait",
           },
           {
-            src: "/assets/themes/stream-night/stream-night-thank-you-landscape.png",
+            src: "/assets/themes/stream-night/stream-night-thank-you-landscape.webp",
             name: "Amanda North STREAM Night Thank You screen landscape",
             orientation: "landscape",
           },
@@ -850,18 +850,18 @@ let themes = {
         font: "'Creepster', cursive",
         logo: "",
         backgrounds: [
-          "/assets/themes/halloween/halloween-background-portrait.png",
-          "/assets/themes/halloween/halloween-background-landscape.png",
+          "/assets/themes/halloween/halloween-background-portrait.webp",
+          "/assets/themes/halloween/halloween-background-landscape.webp",
         ],
         idleScreens: [
-          { src: "/assets/themes/halloween/halloween-idle-portrait.png", name: "Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
-          { src: "/assets/themes/halloween/halloween-idle-landscape.png", name: "Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 50, y: 82, width: 38, height: 20 } } },
-          { src: "/assets/themes/halloween/halloween-photo-choice-portrait.png", name: "Halloween photo choice portrait", role: "photo-choice", orientation: "portrait", buttonZones: { singlePhoto: { x: 50, y: 43, width: 76, height: 22 }, photoStrip: { x: 50, y: 72, width: 76, height: 22 } } },
-          { src: "/assets/themes/halloween/halloween-photo-choice-landscape.png", name: "Halloween photo choice landscape", role: "photo-choice", orientation: "landscape", buttonZones: { singlePhoto: { x: 30, y: 55, width: 34, height: 48 }, photoStrip: { x: 70, y: 55, width: 34, height: 48 } } },
+          { src: "/assets/themes/halloween/halloween-idle-portrait.webp", name: "Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
+          { src: "/assets/themes/halloween/halloween-idle-landscape.webp", name: "Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 50, y: 82, width: 38, height: 20 } } },
+          { src: "/assets/themes/halloween/halloween-photo-choice-portrait.webp", name: "Halloween photo choice portrait", role: "photo-choice", orientation: "portrait", buttonZones: { singlePhoto: { x: 50, y: 43, width: 76, height: 22 }, photoStrip: { x: 50, y: 72, width: 76, height: 22 } } },
+          { src: "/assets/themes/halloween/halloween-photo-choice-landscape.webp", name: "Halloween photo choice landscape", role: "photo-choice", orientation: "landscape", buttonZones: { singlePhoto: { x: 30, y: 55, width: 34, height: 48 }, photoStrip: { x: 70, y: 55, width: 34, height: 48 } } },
         ],
         thankYouScreens: [
-          { src: "/assets/themes/halloween/halloween-thank-you-portrait.png", name: "Halloween Thank You portrait", orientation: "portrait" },
-          { src: "/assets/themes/halloween/halloween-thank-you-landscape.png", name: "Halloween Thank You landscape", orientation: "landscape" },
+          { src: "/assets/themes/halloween/halloween-thank-you-portrait.webp", name: "Halloween Thank You portrait", orientation: "portrait" },
+          { src: "/assets/themes/halloween/halloween-thank-you-landscape.webp", name: "Halloween Thank You landscape", orientation: "landscape" },
         ],
         overlays: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788426/photobooth/events/assets/fall-halloween-overlay-1_o52jc3.png", name: "fall-halloween-overlay-1" },
@@ -1111,18 +1111,18 @@ themes.fall.holidays.cuteHalloween = {
   font: "'Comic Neue', cursive",
   logo: "",
   backgrounds: [
-    "/assets/themes/cute-halloween/cute-halloween-background-portrait.png",
-    "/assets/themes/cute-halloween/cute-halloween-background-landscape.png",
+    "/assets/themes/cute-halloween/cute-halloween-background-portrait.webp",
+    "/assets/themes/cute-halloween/cute-halloween-background-landscape.webp",
   ],
   idleScreens: [
-    { src: "/assets/themes/cute-halloween/cute-halloween-idle-portrait.png", name: "Spooky Cute Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
-    { src: "/assets/themes/cute-halloween/cute-halloween-idle-landscape.png", name: "Spooky Cute Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 50, y: 82, width: 38, height: 20 } } },
-    { src: "/assets/themes/cute-halloween/cute-halloween-photo-choice-portrait.png", name: "Spooky Cute Halloween photo choice portrait", role: "photo-choice", orientation: "portrait", buttonZones: { singlePhoto: { x: 50, y: 43, width: 76, height: 22 }, photoStrip: { x: 50, y: 72, width: 76, height: 22 } } },
-    { src: "/assets/themes/cute-halloween/cute-halloween-photo-choice-landscape.png", name: "Spooky Cute Halloween photo choice landscape", role: "photo-choice", orientation: "landscape", buttonZones: { singlePhoto: { x: 30, y: 55, width: 34, height: 48 }, photoStrip: { x: 70, y: 55, width: 34, height: 48 } } },
+    { src: "/assets/themes/cute-halloween/cute-halloween-idle-portrait.webp", name: "Happy Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
+    { src: "/assets/themes/cute-halloween/cute-halloween-idle-landscape.webp", name: "Happy Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 50, y: 82, width: 38, height: 20 } } },
+    { src: "/assets/themes/cute-halloween/cute-halloween-photo-choice-portrait.webp", name: "Happy Halloween photo choice portrait", role: "photo-choice", orientation: "portrait", buttonZones: { singlePhoto: { x: 50, y: 43, width: 76, height: 22 }, photoStrip: { x: 50, y: 72, width: 76, height: 22 } } },
+    { src: "/assets/themes/cute-halloween/cute-halloween-photo-choice-landscape.webp", name: "Happy Halloween photo choice landscape", role: "photo-choice", orientation: "landscape", buttonZones: { singlePhoto: { x: 30, y: 55, width: 34, height: 48 }, photoStrip: { x: 70, y: 55, width: 34, height: 48 } } },
   ],
   thankYouScreens: [
-    { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-portrait.png", name: "Spooky Cute Halloween Thank You portrait", orientation: "portrait" },
-    { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-landscape.png", name: "Spooky Cute Halloween Thank You landscape", orientation: "landscape" },
+    { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-portrait.webp", name: "Happy Halloween Thank You portrait", orientation: "portrait" },
+    { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-landscape.webp", name: "Happy Halloween Thank You landscape", orientation: "landscape" },
   ],
   overlays: [],
   templates: [],
@@ -1167,7 +1167,7 @@ themes.general.themes.averyBirthday = {
       type: "photo",
       background: {
         type: "image",
-        src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.png",
+        src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.webp",
       },
     },
     {
@@ -1176,7 +1176,7 @@ themes.general.themes.averyBirthday = {
       type: "photo",
       background: {
         type: "image",
-        src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.png",
+        src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.webp",
       },
     },
     ...themes.general.themes.birthday.overlays,
@@ -1185,8 +1185,8 @@ themes.general.themes.averyBirthday = {
     "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
   ],
   greenBackgrounds: [
-    "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.png",
-    "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.png",
+    "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.webp",
+    "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.webp",
   ],
   shareScreens: [
     {
@@ -2222,6 +2222,11 @@ let boothAudioContext = null;
 let boothAudioEnabled = false;
 let boothThemeAudio = null;
 const themeSoundEffectIndexes = new WeakMap();
+const GLOBAL_BUTTON_SOUND_CHOICES = [
+  "/assets/sounds/button-ui-sound-effect-395762.mp3",
+  "/assets/sounds/magic-button-click-453258.mp3",
+  "/assets/sounds/old-radio-button-click-97549.mp3",
+];
 const THEME_SOUND_STORAGE_KEY = "photoboothThemeSounds";
 const ACCENT_PRESET_COLORS = [
   "#ffffff",
@@ -4950,6 +4955,18 @@ function renderThemeSoundEditor(themeKey = "", theme = null) {
     reset.textContent = "Use Default";
     reset.disabled = !state.custom;
     actions.append(preview, upload, reset);
+    if (slot.key === "start" || slot.key === "tap") {
+      GLOBAL_BUTTON_SOUND_CHOICES.forEach((url) => {
+        const choose = document.createElement("button");
+        choose.type = "button";
+        choose.dataset.themeSoundAction = "choose";
+        choose.dataset.soundKind = slot.key;
+        choose.dataset.soundUrl = url;
+        choose.dataset.soundName = getThemeSoundFilename(url);
+        choose.textContent = `Use ${getThemeSoundFilename(url).replace(/\.mp3$/i, "")}`;
+        actions.appendChild(choose);
+      });
+    }
     row.append(copy, actions);
     DOM.themeSoundSlots.appendChild(row);
   });
@@ -5122,7 +5139,12 @@ function setupThemeSoundControls() {
       if (!button) return;
       const kind = button.dataset.soundKind || "";
       const action = button.dataset.themeSoundAction || "";
-      if (action === "preview") previewThemeSound(kind);
+  if (action === "preview") previewThemeSound(kind);
+      if (action === "choose") {
+        const { key, theme } = getThemeSoundEditorTarget();
+        assignThemeSound(key, theme, kind, button.dataset.soundUrl, button.dataset.soundName);
+        setThemeSoundStatus(`${button.dataset.soundName} assigned to ${theme.name}.`);
+      }
       if (action === "upload" && DOM.themeSoundInput) {
         DOM.themeSoundInput.dataset.soundKind = kind;
         DOM.themeSoundInput.value = "";
@@ -17644,10 +17666,10 @@ function migrateOptimizedAveryScreenAssets(target = themes) {
   if (!theme || typeof theme !== "object") return false;
   const screens = Array.isArray(theme.idleScreens) ? theme.idleScreens : [];
   const replacements = {
-    "/assets/themes/avery-birthday/avery-birthday-idle-portrait.png": "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp",
-    "/assets/themes/avery-birthday/avery-birthday-idle-landscape.png": "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp",
-    "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.png": "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.webp",
-    "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.png": "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp",
+    "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp": "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp",
+    "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp": "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp",
+    "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.webp": "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.webp",
+    "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp": "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp",
   };
   let migrated = false;
   screens.forEach((screen) => {

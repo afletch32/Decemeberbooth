@@ -5,6 +5,9 @@
 - Current fix: Prevent stale/incomplete Summer selections from bypassing the completed-theme filter during load.
 - Current fix: Add the complete Halloween portrait/landscape guest-screen pack.
 - Current fix: Add the Happy Halloween pink-and-purple ghost-and-cat theme.
+- Current fix: Make the supplied button sounds available as explicit per-theme click-sound choices.
+- Current fix: Reduce Happy Halloween preview load time with optimized WebP artwork.
+- Current fix: Optimize locally bundled theme screen/background artwork for faster live preview loading.
 - Current fix: Tighten countdown and share-screen spacing while preserving capture and QR timing.
 - Current fix: Share the event gallery alongside each individual photo link.
 - Current fix: Make the photo-choice return action explicit.
@@ -17,6 +20,9 @@
 - Done: `loadTheme()` now validates the selected key against the completed-theme set and falls back to the configured valid theme; regression coverage protects stale incomplete selections.
 - Done: Halloween now has dedicated portrait and landscape background, Idle, Photo Choice, and Thank You assets with touch zones.
 - Done: Spooky Cute Halloween now has a complete eight-image foundation pack with responsive touch zones.
+- Done: The supplied button, magic, and old-radio MP3s are shared library choices and are never applied automatically; operators can assign them to a selected theme’s Start or Button Tap slot.
+- Done: Happy Halloween screen assets are served as WebP, reducing the pack from about 22 MB of PNGs to about 1.3 MB.
+- Done: Converted 61 locally bundled screen/background assets to WebP and updated runtime references; original source files remain intact for safe rollback and asset workflows.
 - Done: Retake is now available independently of print settings, and the final preview has an explicit Done action to return to idle.
 - Done: Final preview review controls use a compact two-button layout on mobile and desktop.
 - Verification: Browser/device QA remains the next release gate; no deployment was performed.
