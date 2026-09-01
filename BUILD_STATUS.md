@@ -2,6 +2,8 @@
 
 - Current fix: Make Thank You completion screens match the selected theme artwork, orientation, and accent treatment.
 - Current fix: Restrict Event Setup theme selection to complete portrait/landscape guest-screen packs.
+- Current fix: Prevent stale/incomplete Summer selections from bypassing the completed-theme filter during load.
+- Current fix: Add the complete Halloween portrait/landscape guest-screen pack.
 - Current fix: Tighten countdown and share-screen spacing while preserving capture and QR timing.
 - Current fix: Share the event gallery alongside each individual photo link.
 - Current fix: Make the photo-choice return action explicit.
@@ -10,7 +12,9 @@
 - Done: Reduced unused countdown spacing, share panel padding, QR size, preview frame weight, and mobile overflow pressure.
 - Done: Incomplete themes without both idle, photo-choice, and Thank You screen orientations are now excluded from theme selectors; Share remains optional and uses the existing background fallback.
 - Done: Replaced the globally hard-coded dark-magenta Thank You card treatment with active-theme colors while preserving the selected Thank You background.
-- Verification: Full `npm test` suite passes (245 tests).
+- Verification: Full `npm test` suite passes (246 tests).
+- Done: `loadTheme()` now validates the selected key against the completed-theme set and falls back to the configured valid theme; regression coverage protects stale incomplete selections.
+- Done: Halloween now has dedicated portrait and landscape background, Idle, Photo Choice, and Thank You assets with touch zones.
 - Done: Retake is now available independently of print settings, and the final preview has an explicit Done action to return to idle.
 - Done: Final preview review controls use a compact two-button layout on mobile and desktop.
 - Verification: Browser/device QA remains the next release gate; no deployment was performed.

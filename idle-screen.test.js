@@ -98,6 +98,12 @@ test("theme selection uses one booth screen shape for every themed guest screen"
   assert.ok(!choiceResolver.includes("choiceEntries[0]"));
 });
 
+test("incomplete themes cannot bypass the selector through a stale saved key", () => {
+  assert.ok(app.includes("function isSelectableThemeKey(themeKey)"));
+  assert.ok(app.includes("if (!isSelectableThemeKey(themeKey))"));
+  assert.ok(app.includes('console.warn("Theme is incomplete; loading fallback instead:"'));
+});
+
 test("Amanda North STREAM Night includes the complete six-screen foundation pack", () => {
   [
     "stream-night-background-portrait.png",

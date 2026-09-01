@@ -850,8 +850,18 @@ let themes = {
         font: "'Creepster', cursive",
         logo: "",
         backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788425/photobooth/events/assets/fall-halloween-background-halloween-background-grey-1_bfrn8g.jpg",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788425/photobooth/events/assets/fall-halloween-background-halloween-background-pink_dcgv0o.png",
+          "/assets/themes/halloween/halloween-background-portrait.png",
+          "/assets/themes/halloween/halloween-background-landscape.png",
+        ],
+        idleScreens: [
+          { src: "/assets/themes/halloween/halloween-idle-portrait.png", name: "Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
+          { src: "/assets/themes/halloween/halloween-idle-landscape.png", name: "Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 50, y: 82, width: 38, height: 20 } } },
+          { src: "/assets/themes/halloween/halloween-photo-choice-portrait.png", name: "Halloween photo choice portrait", role: "photo-choice", orientation: "portrait", buttonZones: { singlePhoto: { x: 50, y: 43, width: 76, height: 22 }, photoStrip: { x: 50, y: 72, width: 76, height: 22 } } },
+          { src: "/assets/themes/halloween/halloween-photo-choice-landscape.png", name: "Halloween photo choice landscape", role: "photo-choice", orientation: "landscape", buttonZones: { singlePhoto: { x: 30, y: 55, width: 34, height: 48 }, photoStrip: { x: 70, y: 55, width: 34, height: 48 } } },
+        ],
+        thankYouScreens: [
+          { src: "/assets/themes/halloween/halloween-thank-you-portrait.png", name: "Halloween Thank You portrait", orientation: "portrait" },
+          { src: "/assets/themes/halloween/halloween-thank-you-landscape.png", name: "Halloween Thank You landscape", orientation: "landscape" },
         ],
         overlays: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788426/photobooth/events/assets/fall-halloween-overlay-1_o52jc3.png", name: "fall-halloween-overlay-1" },
@@ -7553,6 +7563,11 @@ function resolvePreferredThemeKey(preferredKey) {
   return options.length ? options[0].value : null;
 }
 
+function isSelectableThemeKey(themeKey) {
+  const normalizedKey = normalizeThemeSelectionKey(themeKey);
+  return getSelectableThemeEntries().some((entry) => entry.key === normalizedKey);
+}
+
 function resolveThemeByKey(themeKey) {
   themeKey = normalizeThemeSelectionKey(themeKey);
   if (!themeKey) return null;
@@ -7777,6 +7792,15 @@ function loadTheme(themeKey) {
   if (!themeKey) {
     console.warn("No theme key provided to loadTheme");
     return;
+  }
+  if (!isSelectableThemeKey(themeKey)) {
+    const fallbackKey = resolvePreferredThemeKey(DEFAULT_THEME_KEY);
+    if (!fallbackKey || fallbackKey === themeKey) {
+      console.warn("Theme is incomplete and cannot be loaded:", themeKey);
+      return;
+    }
+    console.warn("Theme is incomplete; loading fallback instead:", themeKey, fallbackKey);
+    themeKey = fallbackKey;
   }
   const theme = resolveThemeByKey(themeKey);
   if (!theme) {
