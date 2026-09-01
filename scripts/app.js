@@ -2650,7 +2650,7 @@ function isVideoAsset(entry) {
 }
 
 function createAssetPreviewMedia(entry, alt = "") {
-  const src = getAssetEntrySrc(entry);
+  const src = getAssetPreviewSrc(getAssetEntrySrc(entry));
   const img = document.createElement("img");
   img.src = withBust(
     isVideoAsset(entry) ? getVideoPreviewPosterSrc(entry, src) : src
@@ -2659,6 +2659,12 @@ function createAssetPreviewMedia(entry, alt = "") {
   img.loading = "lazy";
   img.decoding = "async";
   return img;
+}
+
+function getAssetPreviewSrc(src) {
+  const value = String(src || "");
+  if (!/^\/assets\//.test(value) || /\.svg(?:$|[?#])/i.test(value)) return value;
+  return value.replace(/\.(png|jpe?g|webp)(?=($|[?#]))/i, ".thumb.webp");
 }
 
 function createAssetSelectionSet(value) {
@@ -3240,7 +3246,7 @@ function renderThemeQuickPicker() {
     const preview = document.createElement("div");
     preview.className = "theme-quick-card-art";
     const previewUrl = getThemeQuickPreview(entry.theme);
-    if (previewUrl) preview.dataset.previewSrc = previewUrl;
+    if (previewUrl) preview.dataset.previewSrc = getAssetPreviewSrc(previewUrl);
     const copy = document.createElement("span");
     copy.className = "theme-quick-card-copy";
     const label = document.createElement("strong");
@@ -7893,6 +7899,7 @@ function loadTheme(themeKey) {
 
   applyThemeBasics(theme);
   preloadThemeOrientationAssets(theme);
+  cacheActiveThemeOrientation(theme);
   logEffectiveAssetState(theme, "loadTheme");
   syncAdminUiWithTheme(themeKey, theme);
   renderAssetLibrary();
@@ -11018,6 +11025,32 @@ function preloadThemeOrientationAssets(theme) {
   const backgrounds = Array.isArray(theme.backgrounds) ? theme.backgrounds : [];
   add(backgrounds.find((entry) => String(getAssetEntrySrc(entry)).toLowerCase().includes(orientation)) || backgrounds[0]);
   sources.forEach((src) => loadImage(src).catch(() => {}));
+}
+
+function cacheActiveThemeOrientation(theme) {
+  if (!theme || !("caches" in window) || !location.protocol.startsWith("http")) return;
+  const orientation = getGuestScreenOrientation();
+  const urls = [];
+  const add = (value) => {
+    const src = getAssetEntrySrc(value);
+    if (src && !urls.includes(src)) urls.push(src);
+  };
+  ["idleScreens", "thankYouScreens"].forEach((field) => {
+    (Array.isArray(theme[field]) ? theme[field] : [])
+      .filter((entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation)
+      .forEach(add);
+  });
+  const backgrounds = Array.isArray(theme.backgrounds) ? theme.backgrounds : [];
+  add(backgrounds.find((entry) => String(getAssetEntrySrc(entry)).toLowerCase().includes(orientation)) || backgrounds[0]);
+  deferNonCriticalTask(async () => {
+    try {
+      const cache = await caches.open("pb-offline-assets-v1");
+      await Promise.all(urls.map(async (url) => {
+        const response = await fetch(url, { cache: "force-cache" });
+        if (response.ok) await cache.put(new Request(url), response.clone());
+      }));
+    } catch (_) {}
+  });
 }
 
 function loadDrawableMedia(url) {
