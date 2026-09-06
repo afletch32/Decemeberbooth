@@ -29,13 +29,18 @@
 - Done: Added a bounded decoded-image cache, lazy quick-picker artwork, selected-orientation preloading, and idle-time remote asset-library loading.
 - Done: Added 191 small WebP thumbnails for local asset previews; full-size files remain reserved for booth rendering. The active theme’s current orientation is now cached automatically when service-worker caching is available.
 - Done: Remote theme/event/font refreshes and Asset Library loading now run through idle-time scheduling instead of blocking initial local setup.
+- Done: Large theme asset grids, advanced selections, and the Asset Library now render only when their panels are opened; opening a panel refreshes its contents on demand.
 - Done: Retake is now available independently of print settings, and the final preview has an explicit Done action to return to idle.
 - Done: Final preview review controls use a compact two-button layout on mobile and desktop.
 - Verification: Browser/device QA remains the next release gate; no deployment was performed.
 - Verification: Local rendered browser check passed for the setup and booth shell; Retake and Done controls are present. MediaPipe/WebGL emitted expected runtime warnings only.
 - Done: Deleted overlays no longer return to the selected count through stale event assignments; removal tombstones are preserved after library cleanup.
 
-- Current goal: Restore Spring Hill Hawks overlays in the live photo preview while preserving final/share rendering.
+- Current goal: Keep only the six approved complete theme packs in event setup: Avery's Birthday, Halloween, Happy Halloween, Amanda North Back to School, Amanda North STREAM Night, and General Back to School.
+- Done: The event theme selector now excludes legacy themes, incomplete seasonal themes, and the incomplete Summer entry; existing migration and asset records remain preserved.
+- Known blocker: None for the Summer pack; browser/device QA and deployment remain separate release gates.
+- Done: Added the complete Summer portrait and landscape pack using the supplied optimized H.264 loops, matching idle artwork, and dedicated Thank You screens; Summer is now selectable.
+- Done: Summer startup migration now removes legacy Summer backgrounds, frames, templates, and stale session selections so the canonical Summer pack controls setup and booth launch.
 - Amanda North knowledge: Added the supplied campus/building, Coyotes logo and colors, school-supply motifs, “Building a Strong Foundation,” PTO badge, and premium overlay references to the theme creator guidance.
 - Done: Added theme-aware public gallery styling, responsive photo grid, full-screen viewer, and bounded Load More rendering. Added a full-event-gallery action to the existing share screen. Gallery links now carry event/theme identifiers, and saved-event tags include the unique event ID so same-named events stay separate.
 - Done: Repointed Spring Hill Hawks and Hawks Cheer overlay defaults from stale Cloudinary URLs to the committed `assets/school/hawks/overlays/` files used by the live-preview renderer.

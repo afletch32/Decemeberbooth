@@ -351,6 +351,58 @@ let themes = {
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788420/photobooth/events/assets/summer-overlay-tropical-border-with-frame_lne3ia.png", name: "summer-overlay-tropical-border-with-frame" },
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788423/photobooth/events/assets/summer-overlay-tropical-border_twuynr.png", name: "summer-overlay-tropical-border" },
         ],
+        backgrounds: [
+          "/assets/themes/summer/summer-background-landscape.mp4",
+          "/assets/themes/summer/summer-background-portrait.mp4",
+        ],
+        idleScreens: [
+          {
+            src: "/assets/themes/summer/summer-idle-portrait.webp",
+            name: "Summer idle portrait",
+            role: "idle",
+            orientation: "portrait",
+            buttonZones: { start: { x: 50, y: 74, width: 48, height: 24 } },
+          },
+          {
+            src: "/assets/themes/summer/summer-idle-landscape.webp",
+            name: "Summer idle landscape",
+            role: "idle",
+            orientation: "landscape",
+            buttonZones: { start: { x: 50, y: 78, width: 36, height: 28 } },
+          },
+          {
+            src: "/assets/themes/summer/summer-photo-choice-portrait.mp4",
+            name: "Summer photo choice portrait",
+            role: "photo-choice",
+            orientation: "portrait",
+            buttonZones: {
+              singlePhoto: { x: 50, y: 42, width: 74, height: 22 },
+              photoStrip: { x: 50, y: 72, width: 74, height: 22 },
+            },
+          },
+          {
+            src: "/assets/themes/summer/summer-photo-choice-landscape.mp4",
+            name: "Summer photo choice landscape",
+            role: "photo-choice",
+            orientation: "landscape",
+            buttonZones: {
+              singlePhoto: { x: 32, y: 58, width: 34, height: 48 },
+              photoStrip: { x: 68, y: 58, width: 34, height: 48 },
+            },
+          },
+        ],
+        thankYouScreens: [
+          {
+            src: "/assets/themes/summer/summer-thank-you-portrait.webp",
+            name: "Summer Thank You portrait",
+            orientation: "portrait",
+          },
+          {
+            src: "/assets/themes/summer/summer-thank-you-landscape.webp",
+            name: "Summer Thank You landscape",
+            orientation: "landscape",
+          },
+        ],
         welcome: {
           title: "Hello Summer!",
           portrait: "",
@@ -1265,7 +1317,7 @@ themes.general.themes.averyBirthday = {
 };
 
 const BUILTIN_THEMES = JSON.parse(JSON.stringify(themes));
-const DEFAULT_THEME_KEY = "general:basic";
+const DEFAULT_THEME_KEY = "general:summer";
 const BUILTIN_THEME_LOCATIONS = (() => {
   const map = {};
   for (const rootKey of Object.keys(BUILTIN_THEMES)) {
@@ -2281,7 +2333,7 @@ const QUICK_START_SESSION_DATE_KEY = "photoboothQuickStartDate";
 const SHOWCASE_DEMO_THEME_CANDIDATES = {
   wedding: ["wedding:timeless", "wedding:romantic"],
   birthday: ["general:birthday"],
-  general: ["general:basic", DEFAULT_THEME_KEY],
+  general: ["general:summer", DEFAULT_THEME_KEY],
 };
 
 function getLocalIsoDate() {
@@ -2845,6 +2897,9 @@ function setAssetPanelOpen(kind, open, options = {}) {
     state[resolved] = !!open;
     writeAssetPanelState(state);
   }
+  if (open && activeTheme) {
+    renderCurrentAssets(activeTheme);
+  }
 }
 
 function restoreAssetPanelState() {
@@ -2868,6 +2923,25 @@ function setupAssetPanelControls() {
   bind("overlay");
   bind("template");
   restoreAssetPanelState();
+
+  const assetLibraryPanel = document.getElementById(
+    "uploaded" + "AssetLibraryPanel"
+  );
+  if (assetLibraryPanel) {
+    assetLibraryPanel.addEventListener("toggle", () => {
+      if (assetLibraryPanel.open) renderAssetLibrary();
+    });
+  }
+  const advancedAssetsPanel = DOM.currentAssets
+    ? DOM.currentAssets.closest("details")
+    : null;
+  if (advancedAssetsPanel) {
+    advancedAssetsPanel.addEventListener("toggle", () => {
+      if (advancedAssetsPanel.open) {
+        renderCurrentAssets(activeTheme || getSelectedThemeTarget());
+      }
+    });
+  }
 }
 
 // --- Idle Timeout ---
@@ -3064,6 +3138,16 @@ function getThemeSetupGroupIndex(group) {
   return index === -1 ? THEME_SETUP_GROUP_ORDER.length : index;
 }
 
+const APPROVED_THEME_KEYS = new Set([
+  "general:averyBirthday",
+  "general:backToSchool",
+  "general:summer",
+  "fall:halloween",
+  "fall:cuteHalloween",
+  "school:ane",
+  "school:streamNight",
+]);
+
 function getThemeSetupItemIndex(group, label) {
   const items = THEME_SETUP_GROUP_ITEM_ORDER[group] || [];
   const index = items.indexOf(label);
@@ -3079,6 +3163,7 @@ function getSetupThemeEntries(filter = "") {
       return { ...entry, label, group };
     })
     .filter((entry) => {
+      if (!APPROVED_THEME_KEYS.has(entry.key)) return false;
       if (!needle) return true;
       return normalizeThemeSetupText([entry.group, entry.label, entry.key].join(" "))
         .includes(needle);
@@ -6459,6 +6544,7 @@ async function loadThemesRemote() {
     const removedLegacyThemes = removeLegacyFlatBuiltinThemes();
     const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
     const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
+    const migratedSummerAssets = migrateSummerThemeAssets(themes);
     const migratedSpringHillHawks = migrateSpringHillHawksAssets(themes);
     const migratedSpringHillHawksCheer =
       migrateSpringHillHawksCheerAssets(themes);
@@ -6472,6 +6558,7 @@ async function loadThemesRemote() {
       removedLegacyThemes ||
       migratedAveryScreens ||
       migratedAmandaNorthScreens ||
+      migratedSummerAssets ||
       migratedSpringHillHawks ||
       migratedSpringHillHawksCheer
     )
@@ -7888,6 +7975,7 @@ function loadTheme(themeKey) {
     console.warn("Theme not found for key:", themeKey);
     return;
   }
+  if (themeKey === "general:summer") resetActiveSessionAssets();
   setEventSelection(themeKey);
   if (activeSessionThemeKey && activeSessionThemeKey !== themeKey) {
     resetActiveSessionAssets();
@@ -8106,6 +8194,10 @@ function applyAiMaskToCanvas(sourceCanvas, maskCanvas) {
 
 function renderCurrentAssets(theme) {
   // Helpers
+  const advancedAssetsPanel = DOM.currentAssets
+    ? DOM.currentAssets.closest("details")
+    : null;
+  const advancedAssetsOpen = !advancedAssetsPanel || advancedAssetsPanel.open;
   const active = getActiveEvent();
   const lockBaseThemeAssets = !!active;
   const removedBackgrounds = new Set(
@@ -8175,6 +8267,13 @@ function renderCurrentAssets(theme) {
     options = {}
   ) => {
     if (!wrap) return;
+    if (
+      ["background", "overlay", "template"].includes(kind) &&
+      !getAssetPanelControls(kind).panel?.classList.contains("open")
+    ) {
+      wrap.replaceChildren();
+      return;
+    }
     if (kind === "background" || kind === "overlay" || kind === "template") {
       setAssetPanelMessage(kind, null);
     }
@@ -8269,7 +8368,7 @@ function renderCurrentAssets(theme) {
     }
   };
   // Green screen backgrounds grid
-  if (DOM.currentGreenBackgrounds) {
+  if (DOM.currentGreenBackgrounds && advancedAssetsOpen) {
     const wrap = DOM.currentGreenBackgrounds;
     wrap.innerHTML = "";
     if (greenBgList.length === 0) {
@@ -16521,6 +16620,9 @@ function isLegacyBuiltinSelectableRoot(rootKey, group) {
 }
 
 function getSelectableThemeEntries() {
+  // Keep the operator-facing catalog limited to the approved complete packs.
+  // Older built-ins and incomplete seasonal entries remain available to the
+  // migration/asset code, but cannot be selected for a new event.
   const entries = [];
   const seenKeys = new Set();
   const addEntry = (entry) => {
@@ -16537,6 +16639,7 @@ function getSelectableThemeEntries() {
       const children = group[bucket];
       if (!children || typeof children !== "object") continue;
       for (const leafKey of Object.keys(children)) {
+        if (!APPROVED_THEME_KEYS.has(`${rootKey}:${leafKey}`)) continue;
         const theme = children[leafKey];
         if (!theme || typeof theme !== "object") continue;
         if (!isCompletedTheme(theme)) continue;
@@ -17054,6 +17157,8 @@ function renderAssetLibrary() {
   const grid = DOM.assetLibraryGrid;
   const status = DOM.assetLibraryStatus;
   if (!grid && !status) return;
+  const panel = document.getElementById("uploaded" + "AssetLibraryPanel");
+  if (panel && !panel.open) return;
   renderAssetLibraryPills();
   
   // Update search query from DOM
@@ -17715,6 +17820,26 @@ function pruneMisplacedBuiltinThemes(target) {
   }
 }
 
+function pruneUnapprovedBuiltinThemes(target) {
+  if (!target || typeof target !== "object") return false;
+  let removed = false;
+  Object.keys(target).forEach((rootKey) => {
+    const group = target[rootKey];
+    if (!group || typeof group !== "object") return;
+    ["themes", "holidays"].forEach((bucket) => {
+      const children = group[bucket];
+      if (!children || typeof children !== "object") return;
+      Object.keys(children).forEach((leafKey) => {
+        if (!APPROVED_THEME_KEYS.has(`${rootKey}:${leafKey}`)) {
+          delete children[leafKey];
+          removed = true;
+        }
+      });
+    });
+  });
+  return removed;
+}
+
 function ensureBuiltinThemes() {
   if (!themes || typeof themes !== "object") themes = {};
   migrateLegacyBuiltinRootThemeDefaults();
@@ -17736,6 +17861,7 @@ function ensureBuiltinThemes() {
       }
       const targetBucket = targetGroup[bucket];
       for (const subKey of Object.keys(builtinGroup[bucket])) {
+        if (!APPROVED_THEME_KEYS.has(`${rootKey}:${subKey}`)) continue;
         const builtinTheme = builtinGroup[bucket][subKey];
         if (!targetBucket[subKey] || typeof targetBucket[subKey] !== "object") {
           targetBucket[subKey] = cloneThemeValue(builtinTheme);
@@ -17746,6 +17872,7 @@ function ensureBuiltinThemes() {
     }
   }
   pruneMisplacedBuiltinThemes(themes);
+  pruneUnapprovedBuiltinThemes(themes);
 }
 
 function migrateOptimizedAveryScreenAssets(target = themes) {
@@ -17884,6 +18011,36 @@ function migrateAmandaNorthScreenAssets(target = themes) {
     streamNight.name === "STREAM Night"
   ) {
     streamNight.name = streamNightDefaults.name;
+    migrated = true;
+  }
+  return migrated;
+}
+
+function migrateSummerThemeAssets(target = themes) {
+  const theme = target?.general?.themes?.summer;
+  const defaults = BUILTIN_THEMES.general?.themes?.summer;
+  if (!theme || !defaults) return false;
+  const canonicalFields = ["backgrounds", "idleScreens", "thankYouScreens"];
+  let migrated = false;
+  canonicalFields.forEach((field) => {
+    const expected = Array.isArray(defaults[field]) ? defaults[field] : [];
+    const current = Array.isArray(theme[field]) ? theme[field] : [];
+    const same =
+      current.length === expected.length &&
+      current.every(
+        (entry, index) =>
+          getAssetEntrySrc(entry) === getAssetEntrySrc(expected[index])
+      );
+    if (same) return;
+    theme[field] = cloneThemeValue(expected);
+    migrated = true;
+  });
+  if (Array.isArray(theme.overlays) && theme.overlays.length) {
+    theme.overlays = [];
+    migrated = true;
+  }
+  if (Array.isArray(theme.templates) && theme.templates.length) {
+    theme.templates = [];
     migrated = true;
   }
   return migrated;
@@ -18082,7 +18239,8 @@ function hasCoreBuiltins(obj) {
       obj &&
       obj.general &&
       obj.general.themes &&
-      obj.general.themes.birthday &&
+      obj.general.themes.averyBirthday &&
+      obj.general.themes.summer &&
       obj.fall &&
       obj.fall.holidays &&
       obj.fall.holidays.halloween
@@ -18348,6 +18506,7 @@ function loadThemesFromStorage() {
       refreshBeautyPresetEffects();
       const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
       const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
+      const migratedSummerAssets = migrateSummerThemeAssets(themes);
       const migratedSpringHillHawks = migrateSpringHillHawksAssets(themes);
       const migratedSpringHillHawksCheer =
         migrateSpringHillHawksCheerAssets(themes);
@@ -18360,6 +18519,7 @@ function loadThemesFromStorage() {
       if (
         migratedAveryScreens ||
         migratedAmandaNorthScreens ||
+        migratedSummerAssets ||
         migratedSpringHillHawks ||
         migratedSpringHillHawksCheer
       )
