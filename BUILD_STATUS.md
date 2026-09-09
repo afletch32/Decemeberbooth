@@ -1,5 +1,13 @@
 # Build status
 
+- Current goal: Validate the complete guest flow for all seven approved theme packs in portrait and landscape on the booth device.
+- Verification: `npm test` passes (246 tests).
+- Done: Playwright now uses `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome` when present, with `PLAYWRIGHT_EXECUTABLE_PATH` available for an explicit browser path and managed Chromium still used elsewhere.
+- Verification: Playwright launches system Chrome successfully. The full smoke suite reached application tests but has existing UI failures; no Chromium launch failure remains. `npm test` passes (246 tests).
+- Browser/device flow remains not verified in this run; the seven-pack portrait/landscape guest-flow pass is still a release gate.
+- Next step: Retry the rendered booth-device pass covering idle start, photo choice, capture, Thank You, and return to idle for all seven packs and both orientations, then triage only failures reproduced in that flow.
+- Known blocker: Existing smoke-test/application-state failures remain separate from the fixed browser-launch configuration.
+
 - Current fix: Make Thank You completion screens match the selected theme artwork, orientation, and accent treatment.
 - Current fix: Restrict Event Setup theme selection to complete portrait/landscape guest-screen packs.
 - Current fix: Prevent stale/incomplete Summer selections from bypassing the completed-theme filter during load.
