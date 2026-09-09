@@ -101,6 +101,17 @@ async function gotoApp(page, path) {
   await page.goto(path, { waitUntil: "domcontentloaded" });
 }
 
+async function openAssetLibrary(page) {
+  await page.locator("#uploadedAssetLibraryPanel").evaluate((panel) => {
+    panel.open = true;
+    panel.dispatchEvent(new Event("toggle"));
+  });
+  await expect(page.locator("#uploadedAssetLibraryPanel")).toHaveAttribute(
+    "open",
+    ""
+  );
+}
+
 async function launchStillPhotoBooth(page) {
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
@@ -529,7 +540,7 @@ test("final share photo and QR stay inside supported kiosk viewports", async ({ 
     await gotoApp(page, "/index.html?testMode=booth&qaState=final");
     await expect(page.locator("#finalPreview")).toHaveClass(/show/);
     await page.evaluate(() => {
-      document.querySelector("#reviewPanel").classList.add("hidden");
+      document.querySelector(".final-review-actions")?.classList.add("hidden");
       document.querySelector("#qrCodeContainer").classList.remove("hidden");
     });
     await expect(page.locator("#qrCodeContainer")).toBeVisible();
@@ -639,6 +650,7 @@ test("Asset Library keeps admin filters and sorting out of the public picker", a
 }) => {
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
+  await openAssetLibrary(page);
   await page.locator("#assetLibraryCategory").selectOption("wedding");
   await expect(page.locator("#assetLibraryStatus")).toContainText(
     "Filters active: Category"
@@ -670,6 +682,7 @@ test("asset library cards toggle selection from the full card surface", async ({
 }) => {
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
+  await openAssetLibrary(page);
 
   const card = page.locator("#assetLibraryGrid .asset-library-card").first();
   await expect(card).toBeVisible();
@@ -689,6 +702,7 @@ test("asset defaults persist across save, reopen, and reload", async ({
 }) => {
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
+  await openAssetLibrary(page);
 
   const asset = await page.evaluate(
     () => window.__photoboothTest.getAllAssetLibraryRows()[0]
@@ -779,6 +793,7 @@ test("asset defaults group themes by category and parent selects children", asyn
 }) => {
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
+  await openAssetLibrary(page);
 
   await page.evaluate(() => {
     const themes = window.__photoboothTest.getThemes();
