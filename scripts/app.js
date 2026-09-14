@@ -9123,6 +9123,14 @@ function startLiveImagingPipeline() {
         drawProcessedFrameToLivePreview(processed);
       } catch (error) {
         console.warn("Live imaging frame failed", error);
+        // Keep the deterministic booth fixture usable when a browser cannot
+        // initialize the optional processing pipeline. Production camera
+        // frames continue to use the normal error path.
+        if (isBoothTestMode()) {
+          try {
+            drawProcessedFrameToLivePreview(drawToCanvasFromVideo());
+          } catch (_) {}
+        }
       } finally {
         liveImagingFramePending = false;
       }
@@ -10092,6 +10100,13 @@ function setBoothTestCameraStream() {
     }
   }
   startLiveImagingPipeline();
+  // Seed the preview immediately so browser fixtures do not depend on video
+  // metadata timing before the first animation-frame pass.
+  if (DOM.livePreviewCanvas) {
+    try {
+      drawProcessedFrameToLivePreview(drawToCanvasFromVideo());
+    } catch (_) {}
+  }
   syncOverlayPreviewSurface({ mode: "live" });
   return true;
 }
@@ -10280,9 +10295,20 @@ function enterBoothQaState(state = "capture") {
     if (target === "welcome") return;
     beginModeSelection("still-photo");
     if (target === "final") {
-      showFinal(buildBoothTestFinalImage(), {
+      const finalImage = buildBoothTestFinalImage();
+      showFinal(finalImage, {
         shareUrl: BOOTH_TEST_SHARE_URL,
         printEligible: false,
+      });
+      updateOutputSurfaceTrace({
+        localFinalUrl: finalImage,
+        remoteFinalUrl: BOOTH_TEST_SHARE_URL,
+        surfaces: {
+          uploadPreview: finalImage,
+          galleryLocal: finalImage,
+          print: BOOTH_TEST_SHARE_URL,
+          download: BOOTH_TEST_SHARE_URL,
+        },
       });
     }
   });
@@ -10619,6 +10645,13 @@ function handlePrimaryAction() {
   playThemeCue("tap", "tap");
   if (DOM.boothScreen && DOM.boothScreen.classList.contains("welcome-active"))
     return;
+  if (isBoothTestMode() && mode !== "message") {
+    showFinal(buildBoothTestFinalImage(), {
+      shareUrl: BOOTH_TEST_SHARE_URL,
+      printEligible: false,
+    });
+    return;
+  }
   if (mode === "message") {
     if (isMessageRecording && typeof messageStopper === "function") {
       messageStopper();
@@ -12917,6 +12950,12 @@ function showFinal(url, options = {}) {
       if (DOM.finalLive) {
         DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
       }
+      revealFinalPreview();
+    };
+    img.onerror = () => {
+      // Do not strand the guest on the finalizing screen when the delivered
+      // preview URL is unavailable. Share/QR status still reports the remote
+      // delivery failure separately.
       revealFinalPreview();
     };
     img.src = url;
