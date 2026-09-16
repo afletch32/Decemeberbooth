@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1200" viewBox="0 0 1800 1200">
+  <defs>
+    <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9edb"/><stop offset="1" stop-color="#c86bff"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect x="96" y="86" width="1608" height="1028" rx="72" fill="none" stroke="#35134e" stroke-width="44"/>
+  <rect x="96" y="86" width="1608" height="1028" rx="72" fill="none" stroke="url(#pink)" stroke-width="12" filter="url(#glow)"/>
+  <g fill="#ff9edb" stroke="#35134e" stroke-width="8">
+    <path d="M120 168 Q54 120 82 48 Q158 66 180 142 Z"/><path d="M1680 168 Q1746 120 1718 48 Q1642 66 1620 142 Z"/>
+    <path d="M120 1032 Q54 1080 82 1152 Q158 1134 180 1058 Z"/><path d="M1680 1032 Q1746 1080 1718 1152 Q1642 1134 1620 1058 Z"/>
+  </g>
+  <g fill="#ff9edb" stroke="#35134e" stroke-width="7">
+    <path d="M255 118 l24 48 53 7-38 37 9 53-48-25-48 25 9-53-38-37 53-7z"/><path d="M1545 118 l24 48 53 7-38 37 9 53-48-25-48 25 9-53-38-37 53-7z"/>
+    <path d="M255 944 l24 48 53 7-38 37 9 53-48-25-48 25 9-53-38-37 53-7z"/><path d="M1545 944 l24 48 53 7-38 37 9 53-48-25-48 25 9-53-38-37 53-7z"/>
+  </g>
+  <g fill="none" stroke="#ffb8e8" stroke-width="9" opacity=".9">
+    <path d="M160 350 q-48 38 0 76 q48 38 0 76"/><path d="M1640 350 q48 38 0 76 q-48 38 0 76"/>
+    <path d="M160 700 q-48 38 0 76 q48 38 0 76"/><path d="M1640 700 q48 38 0 76 q-48 38 0 76"/>
+  </g>
+  <g transform="translate(900 42)" stroke="#35134e" stroke-width="7">
+    <path d="M-2 0 C-104-62-174 42-77 62 C-42 69-16 46 0 25 C16 46 42 69 77 62 C174 42 104-62 2 0Z" fill="url(#pink)"/>
+    <circle cx="0" cy="26" r="20" fill="#ffb8e8"/>
+  </g>
+  <g transform="translate(900 1158)">
+    <path d="M-210 8 Q-160-42-110 8 Q-60 58-10 8 Q40-42 90 8 Q140 58 190 8" fill="none" stroke="#ff9edb" stroke-width="12"/>
+    <path d="M0-12 C-44-60-88-5 0 72 C88-5 44-60 0-12Z" fill="#ff6dbd" stroke="#35134e" stroke-width="8"/>
+  </g>
+</svg>

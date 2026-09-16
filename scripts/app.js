@@ -1186,7 +1186,20 @@ themes.fall.holidays.cuteHalloween = {
     { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-portrait.webp", name: "Happy Halloween Thank You portrait", orientation: "portrait" },
     { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-landscape.webp", name: "Happy Halloween Thank You landscape", orientation: "landscape" },
   ],
-  overlays: [],
+  overlays: [
+    {
+      src: "/assets/themes/cute-halloween/overlays/happy-halloween-single-photo-portrait.png",
+      name: "Happy Halloween single photo portrait",
+      type: "photo",
+      orientation: "portrait",
+    },
+    {
+      src: "/assets/themes/cute-halloween/overlays/happy-halloween-single-photo-landscape.png",
+      name: "Happy Halloween single photo landscape",
+      type: "photo",
+      orientation: "landscape",
+    },
+  ],
   templates: [],
   welcome: { title: "Happy Halloween", portrait: "", landscape: "", prompt: "Tap to Start" },
 };
@@ -16739,10 +16752,12 @@ function isCompletedTheme(theme) {
   const photoChoiceScreens = entries(theme.photoChoiceScreens).length
     ? theme.photoChoiceScreens
     : idleScreens;
+  const overlays = entries(theme.overlays);
   return (
     hasScreen(idleScreens, "idle") &&
     hasScreen(photoChoiceScreens, "photo-choice") &&
-    hasScreen(theme.thankYouScreens)
+    hasScreen(theme.thankYouScreens) &&
+    overlays.some((entry) => !!getAssetEntrySrc(entry))
   );
 }
 

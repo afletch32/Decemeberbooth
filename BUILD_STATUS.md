@@ -17,6 +17,9 @@
 - Verification: Full Playwright run now completes with 28 passing and 18 explicitly skipped legacy-contract cases; no browser test failures. Dedicated release gate remains passing for all 14 approved theme/orientation flows.
 - Done: Added `browser/release-gate.spec.js` covering all seven approved theme packs in portrait and landscape across idle, photo choice, capture fixture, Thank You, and return-to-idle states.
 - Verification: Dedicated seven-pack release gate passes (2 tests, 14 theme/orientation flows); `npm test` passes (246 tests, 0 failures).
+- Done: Theme selector completeness now also requires at least one usable overlay in addition to portrait/landscape Idle, Photo Choice, and Thank You screens. Packs with empty overlay arrays remain hidden from new-event selectors.
+- Done: Added Happy Halloween single-photo portrait and landscape overlays matching the pink/lilac ghost-and-cat screen system; both are registered as theme photo overlays.
+- Verification: Happy Halloween overlay PNGs are RGBA with dimensions 1200x1800 portrait and 1800x1200 landscape; `npm test` passes (246 tests).
 - Browser/device flow remains not verified in this run; the seven-pack portrait/landscape guest-flow pass is still a release gate.
 - Known blocker: The 13 remaining browser failures are reproducible active-contract mismatches: setup/Asset Library visibility and transition assumptions, overlay mirroring/strip rendering, theme text/orientation controls, frame-picker transition, and camera/countdown geometry/timing. None is a browser-launch failure.
 - Next step: Add/run dedicated rendered coverage for the seven approved packs in both orientations, then fix only failures reproduced in that guest flow. Do not treat the unrelated legacy wedding assertions as approval for release.
