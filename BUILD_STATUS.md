@@ -20,6 +20,8 @@
 - Done: Theme selector completeness now also requires at least one usable overlay in addition to portrait/landscape Idle, Photo Choice, and Thank You screens. Packs with empty overlay arrays remain hidden from new-event selectors.
 - Done: Added Happy Halloween single-photo portrait and landscape overlays matching the pink/lilac ghost-and-cat screen system; both are registered as theme photo overlays.
 - Verification: Happy Halloween overlay PNGs are RGBA with dimensions 1200x1800 portrait and 1800x1200 landscape; `npm test` passes (246 tests).
+- Done: Bumped the service-worker app-shell cache and versioned the app module URL so deployed booth browsers refresh the theme picker instead of serving the legacy Basic/Birthday/Fall catalog.
+- Verification: `npm test` passes (246 tests, 0 failures) after the cache refresh change.
 - Browser/device flow remains not verified in this run; the seven-pack portrait/landscape guest-flow pass is still a release gate.
 - Known blocker: The 13 remaining browser failures are reproducible active-contract mismatches: setup/Asset Library visibility and transition assumptions, overlay mirroring/strip rendering, theme text/orientation controls, frame-picker transition, and camera/countdown geometry/timing. None is a browser-launch failure.
 - Next step: Add/run dedicated rendered coverage for the seven approved packs in both orientations, then fix only failures reproduced in that guest flow. Do not treat the unrelated legacy wedding assertions as approval for release.
