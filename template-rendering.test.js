@@ -115,6 +115,17 @@ test("strip capture keeps the template preview cleared until the completed strip
   );
 });
 
+test("strip capture keeps the live preview in the selected booth orientation", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const start = appScript.indexOf("async function prepareStripCapture(template)");
+  const end = appScript.indexOf("function openConfirm", start);
+  const stripPreparation = appScript.slice(start, end);
+
+  assert.ok(stripPreparation.includes("const screenOrientation = getGuestScreenOrientation();"));
+  assert.ok(stripPreparation.includes('screenOrientation === "portrait" ? "view-portrait" : "view-landscape"'));
+  assert.ok(!stripPreparation.includes("orientationFromTemplate(template)"));
+});
+
 test("photo capture freezes the completed print while upload is prepared", () => {
   const appScript = readProjectFile("scripts", "app.js");
   const html = readProjectFile("index.html");

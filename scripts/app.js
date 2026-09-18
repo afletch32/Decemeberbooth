@@ -9499,7 +9499,12 @@ function applyPreviewOrientation() {
       pendingTemplate ||
       templates.find((item) => getAssetCaptureType(item) === captureMode) ||
       (Array.isArray(templates) ? templates[0] : null);
-    DOM.videoWrap.className = orientationFromTemplate(template);
+    // The booth screen shape is the operator's source of truth for the live
+    // preview. A strip template can have portrait-oriented artwork, but it
+    // must not force a portrait camera window after landscape is selected.
+    const screenOrientation = getGuestScreenOrientation();
+    DOM.videoWrap.className =
+      screenOrientation === "portrait" ? "view-portrait" : "view-landscape";
     applyLiveCameraSizing();
     if (!template || !template.src) {
       setCaptureAspect(null);
@@ -9590,8 +9595,12 @@ async function getStripTemplateMetrics(template) {
 async function prepareStripCapture(template) {
   const state = capturePreviewState();
   clearOverlayPreviewSurface();
-  if (DOM.videoWrap)
-    DOM.videoWrap.className = orientationFromTemplate(template);
+  if (DOM.videoWrap) {
+    const screenOrientation = getGuestScreenOrientation();
+    DOM.videoWrap.className =
+      screenOrientation === "portrait" ? "view-portrait" : "view-landscape";
+  }
+  applyLiveCameraSizing();
   const prevAspect = captureAspectRatio;
   try {
     const metrics = await getStripTemplateMetrics(template);
@@ -16753,11 +16762,20 @@ function isCompletedTheme(theme) {
     ? theme.photoChoiceScreens
     : idleScreens;
   const overlays = entries(theme.overlays);
+  const hasPhotoOverlay = (orientation) =>
+    overlays.some((entry) => {
+      if (!entry || typeof entry !== "object" || !getAssetEntrySrc(entry)) {
+        return false;
+      }
+      const entryOrientation = normalizePhotoOverlayOrientation(entry.orientation);
+      return !entryOrientation || entryOrientation === orientation;
+    });
   return (
     hasScreen(idleScreens, "idle") &&
     hasScreen(photoChoiceScreens, "photo-choice") &&
     hasScreen(theme.thankYouScreens) &&
-    overlays.some((entry) => !!getAssetEntrySrc(entry))
+    hasPhotoOverlay("portrait") &&
+    hasPhotoOverlay("landscape")
   );
 }
 
@@ -22107,7 +22125,7 @@ function setupInstallPrompt() {
 }
 
 window.addEventListener("storage", (event) => {
-  if (!event || event.key !== STORAGE_KEYS.THEMES) return;
+  if (!event || event.key !== APP_CONFIG.STORAGE_KEYS.THEMES) return;
   loadThemesFromStorage();
   const selectedKey = getSelectedThemeKey();
   const preferredKey = selectedKey || DEFAULT_THEME_KEY;

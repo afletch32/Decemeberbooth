@@ -1,5 +1,15 @@
 # Build status
 
+- Current fix: Resolve code-review findings in theme storage refresh, strip orientation, completion filtering, and release-gate coverage.
+- Done: Storage events use `APP_CONFIG.STORAGE_KEYS.THEMES`; strip capture retains the selected booth orientation; a selectable theme must provide a usable photo overlay for both portrait and landscape (or an orientation-neutral overlay); themed capture shadows now retain the active palette.
+- Done: The seven-theme release gate waits for the real welcome transition, clicks Capture in booth test mode, verifies Thank You, and returns to idle instead of forcing final state.
+- Verification: `npm test` passes (249 tests, 0 failures); `npx playwright test browser/release-gate.spec.js --reporter=line` passes (2 tests, 14 theme/orientation flows).
+
+- Current fix: Make strip-mode live preview honor the selected booth screen orientation and theme the Start Strip capture control.
+- Done: Landscape strip previews now use the selected landscape camera window even when a strip template has portrait geometry; the capture button now uses the active theme action palette instead of the generic beige treatment.
+- Verification: `npm test` passes (246 tests, 0 failures); `npx playwright test browser/release-gate.spec.js --reporter=line` passes (2 tests, 14 theme/orientation flows).
+- Known blocker: The deployed booth alias has not been refreshed for this latest local fix yet.
+
 - Current goal: Validate the complete guest flow for all seven approved theme packs in portrait and landscape on the booth device.
 - Verification: `npm test` passes (246 tests, 0 failures).
 - Done: Removed stale setup-summary assertions for retired launch layout/overlay summary controls and removed the obsolete wedding-category browser checks from the active smoke gate.

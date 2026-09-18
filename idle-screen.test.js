@@ -104,6 +104,18 @@ test("incomplete themes cannot bypass the selector through a stale saved key", (
   assert.ok(app.includes('console.warn("Theme is incomplete; loading fallback instead:"'));
 });
 
+test("selectable themes need usable portrait and landscape photo overlays", () => {
+  const completionCheck = extractFunctionFromEither(app, "", "isCompletedTheme");
+  assert.ok(completionCheck.includes("const hasPhotoOverlay = (orientation) =>"));
+  assert.ok(completionCheck.includes('hasPhotoOverlay("portrait")'));
+  assert.ok(completionCheck.includes('hasPhotoOverlay("landscape")'));
+});
+
+test("theme storage refresh uses the canonical application storage key", () => {
+  assert.ok(app.includes("event.key !== APP_CONFIG.STORAGE_KEYS.THEMES"));
+  assert.ok(!app.includes("event.key !== STORAGE_KEYS.THEMES"));
+});
+
 test("Amanda North STREAM Night includes the complete six-screen foundation pack", () => {
   [
     "stream-night-background-portrait.png",
