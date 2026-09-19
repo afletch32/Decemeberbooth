@@ -1,5 +1,9 @@
 # Build status
 
+- Current fix: Force deployed booths to load the nine-pack approved theme catalog.
+- Done: Bumped the app module URL and service-worker caches after approving the two Hawks packs; existing browser caches can no longer retain the preceding seven-pack catalog.
+- Verification: `npm test` passes (252 tests, 0 failures); the nine-pack Playwright release gate passes (2 tests, 18 portrait/landscape guest flows). Publishing the refreshed branch preview now.
+
 - Current fix: Allow the complete Spring Hill Hawks and Spring Hill Hawks Cheer packs in Event Setup and the release gate.
 - Done: Added both complete packs to the approved catalog. Their portrait and landscape guest flows now run alongside the original seven packs.
 - Verification: `npm test` passes (252 tests, 0 failures); the expanded Playwright release gate passes (2 tests, 18 portrait/landscape guest flows).
