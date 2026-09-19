@@ -111,9 +111,27 @@ test("selectable themes need usable portrait and landscape photo overlays", () =
   assert.ok(completionCheck.includes('hasPhotoOverlay("landscape")'));
 });
 
+test("Halloween has dedicated portrait and landscape single-photo overlays", () => {
+  assert.ok(app.includes('src: "/assets/themes/halloween/overlays/halloween-single-photo-portrait.svg"'));
+  assert.ok(app.includes('src: "/assets/themes/halloween/overlays/halloween-single-photo-landscape.svg"'));
+  assert.ok(app.includes('name: "Halloween single photo portrait"'));
+  assert.ok(app.includes('name: "Halloween single photo landscape"'));
+});
+
 test("theme storage refresh uses the canonical application storage key", () => {
   assert.ok(app.includes("event.key !== APP_CONFIG.STORAGE_KEYS.THEMES"));
   assert.ok(!app.includes("event.key !== STORAGE_KEYS.THEMES"));
+});
+
+test("stored and remote theme cleanup persists removed legacy built-ins", () => {
+  const remoteLoad = extractFunctionFromEither(app, "", "loadThemesRemote");
+  const storedLoad = extractFunctionFromEither(app, "", "loadThemesFromStorage");
+  const ensureBuiltins = extractFunctionFromEither(app, "", "ensureBuiltinThemes");
+  assert.ok(ensureBuiltins.includes("return pruneUnapprovedBuiltinThemes(themes);"));
+  assert.ok(remoteLoad.includes("const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();"));
+  assert.ok(remoteLoad.includes("removedUnapprovedBuiltinThemes ||"));
+  assert.ok(storedLoad.includes("const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();"));
+  assert.ok(storedLoad.includes("removedUnapprovedBuiltinThemes"));
 });
 
 test("Amanda North STREAM Night includes the complete six-screen foundation pack", () => {

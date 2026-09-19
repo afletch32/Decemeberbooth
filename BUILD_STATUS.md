@@ -1,5 +1,13 @@
 # Build status
 
+- Current fix: Complete the regular Halloween pack, separate from Happy Halloween, with dedicated capture overlays.
+- Done: Replaced the mismatched legacy cloud overlay collection with two local transparent foreground frames: one 1200×1800 portrait and one independently composed 1800×1200 landscape. Both use a full-canvas photo slot and the regular Halloween pack's ember, raven, bat, and jack-o'-lantern visual system.
+- Verification: `npm test` passes (251 tests, 0 failures); the Playwright seven-theme portrait/landscape guest-flow gate passes (2 tests, 14 flows); rendered landscape review confirms the selected Halloween overlay is transparent and uses the matching 3:2 frame.
+
+- Current fix: Permanently purge unapproved legacy theme records after local or remote theme merges.
+- Done: Basic, Brand Studio, and Lead Capture remain excluded from every picker path; a merge that removes an unapproved built-in now writes the cleaned catalog locally and syncs it back to the shared theme store. Updated the app module and service-worker cache versions so existing booth browsers refresh the catalog.
+- Verification: Local rendered picker shows only approved complete packs and no Basic, Brand Studio, or Lead Capture entries; `npm test` passes (250 tests, 0 failures).
+
 - Current fix: Resolve code-review findings in theme storage refresh, strip orientation, completion filtering, and release-gate coverage.
 - Done: Storage events use `APP_CONFIG.STORAGE_KEYS.THEMES`; strip capture retains the selected booth orientation; a selectable theme must provide a usable photo overlay for both portrait and landscape (or an orientation-neutral overlay); themed capture shadows now retain the active palette.
 - Done: The seven-theme release gate waits for the real welcome transition, clicks Capture in booth test mode, verifies Thank You, and returns to idle instead of forcing final state.

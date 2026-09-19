@@ -926,31 +926,22 @@ let themes = {
           { src: "/assets/themes/halloween/halloween-thank-you-landscape.webp", name: "Halloween Thank You landscape", orientation: "landscape" },
         ],
         overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788426/photobooth/events/assets/fall-halloween-overlay-1_o52jc3.png", name: "fall-halloween-overlay-1" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788427/photobooth/events/assets/fall-halloween-overlay-11_hrnih0.png", name: "fall-halloween-overlay-11" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788428/photobooth/events/assets/fall-halloween-overlay-12_awh07v.png", name: "fall-halloween-overlay-12" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788429/photobooth/events/assets/fall-halloween-overlay-13_x2m6fk.png", name: "fall-halloween-overlay-13" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788431/photobooth/events/assets/fall-halloween-overlay-2_tsiq9i.png", name: "fall-halloween-overlay-2" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788432/photobooth/events/assets/fall-halloween-overlay-3_jjw6jy.png", name: "fall-halloween-overlay-3" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788433/photobooth/events/assets/fall-halloween-overlay-4_ckrgab.png", name: "fall-halloween-overlay-4" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788434/photobooth/events/assets/fall-halloween-overlay-5_tcmqpc.png", name: "fall-halloween-overlay-5" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788437/photobooth/events/assets/fall-halloween-overlay-6_bxgvts.png", name: "fall-halloween-overlay-6" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788438/photobooth/events/assets/fall-halloween-overlay-fall-leaves-frame_t9nior.png", name: "fall-halloween-overlay-leaves-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788440/photobooth/events/assets/fall-halloween-overlay-graveyard-transparent-frame_dlx0jh.png", name: "fall-halloween-overlay-graveyard" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788441/photobooth/events/assets/fall-halloween-overlay-halloween-frame-boo_qgmzt4.png", name: "fall-halloween-overlay-boo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788443/photobooth/events/assets/fall-halloween-overlay-halloween-frame-fog_sgsrd0.png", name: "fall-halloween-overlay-fog" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788444/photobooth/events/assets/fall-halloween-overlay-halloween-frame-groovy-ghosties_pjzxai.png", name: "fall-halloween-overlay-groovy-ghosties" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788445/photobooth/events/assets/fall-halloween-overlay-halloween-frame-groovy_djftw2.png", name: "fall-halloween-overlay-groovy" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788445/photobooth/events/assets/fall-halloween-overlay-halloween-frame-haunted-house_cowlp9.png", name: "fall-halloween-overlay-haunted-house" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788455/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-10_akzyqr.png", name: "fall-halloween-overlay-landscape-10" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788457/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-3_m3qy5z.png", name: "fall-halloween-overlay-landscape-3" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788459/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-5_kutf13.png", name: "fall-halloween-overlay-landscape-5" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788460/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-6_u3ie2u.png", name: "fall-halloween-overlay-landscape-6" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788460/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-7_axskxp.png", name: "fall-halloween-overlay-landscape-7" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788461/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-9_vzpql3.png", name: "fall-halloween-overlay-landscape-9" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788462/photobooth/events/assets/fall-halloween-overlay-halloween-frame-skeletons_zbfq6v.png", name: "fall-halloween-overlay-skeletons" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788463/photobooth/events/assets/fall-halloween-overlay-halloween-overlay-ghosts_oenchv.png", name: "fall-halloween-overlay-ghosts" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788464/photobooth/events/assets/fall-halloween-overlay-smoke-corner-frame_txmhij.png", name: "fall-halloween-overlay-smoke-corner" },
+          {
+            src: "/assets/themes/halloween/overlays/halloween-single-photo-portrait.svg",
+            name: "Halloween single photo portrait",
+            type: "photo",
+            orientation: "portrait",
+            aspectRatio: "2:3",
+            photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
+          },
+          {
+            src: "/assets/themes/halloween/overlays/halloween-single-photo-landscape.svg",
+            name: "Halloween single photo landscape",
+            type: "photo",
+            orientation: "landscape",
+            aspectRatio: "3:2",
+            photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
+          },
         ],
         templates: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788465/photobooth/events/assets/fall-halloween-template-halloween-template-2_kww0ma.png", layout: "single_photo" },
@@ -6546,7 +6537,7 @@ async function loadThemesRemote() {
     // Merge server themes over built-ins/local
     mergeStoredThemes(themes, remote);
     fixBuiltinThemePlacements(themes);
-    ensureBuiltinThemes();
+    const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();
     refreshBeautyPresetEffects();
     if (!hasCoreBuiltins(themes)) {
       resetThemesToBuiltins("remote themes missing core entries");
@@ -6568,6 +6559,7 @@ async function loadThemesRemote() {
     if (
       repairedBackgroundDefaults ||
       repairedOverlayDefaults ||
+      removedUnapprovedBuiltinThemes ||
       removedLegacyThemes ||
       migratedAveryScreens ||
       migratedAmandaNorthScreens ||
@@ -17944,7 +17936,7 @@ function ensureBuiltinThemes() {
     }
   }
   pruneMisplacedBuiltinThemes(themes);
-  pruneUnapprovedBuiltinThemes(themes);
+  return pruneUnapprovedBuiltinThemes(themes);
 }
 
 function migrateOptimizedAveryScreenAssets(target = themes) {
@@ -18574,7 +18566,7 @@ function loadThemesFromStorage() {
       const parsed = JSON.parse(storedThemes);
       mergeStoredThemes(themes, parsed);
       fixBuiltinThemePlacements(themes);
-      ensureBuiltinThemes();
+      const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();
       refreshBeautyPresetEffects();
       const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
       const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
@@ -18593,7 +18585,8 @@ function loadThemesFromStorage() {
         migratedAmandaNorthScreens ||
         migratedSummerAssets ||
         migratedSpringHillHawks ||
-        migratedSpringHillHawksCheer
+        migratedSpringHillHawksCheer ||
+        removedUnapprovedBuiltinThemes
       )
         saveThemesToStorage();
     } catch (err) {
