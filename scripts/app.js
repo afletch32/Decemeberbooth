@@ -3148,6 +3148,8 @@ const APPROVED_THEME_KEYS = new Set([
   "general:summer",
   "fall:halloween",
   "fall:cuteHalloween",
+  "school:hawks",
+  "school:hawksCheer",
   "school:ane",
   "school:streamNight",
 ]);

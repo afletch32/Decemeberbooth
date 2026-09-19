@@ -6,6 +6,8 @@ const APPROVED_THEMES = [
   "general:summer",
   "fall:halloween",
   "fall:cuteHalloween",
+  "school:hawks",
+  "school:hawksCheer",
   "school:ane",
   "school:streamNight",
 ];

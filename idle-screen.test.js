@@ -111,6 +111,11 @@ test("selectable themes need usable portrait and landscape photo overlays", () =
   assert.ok(completionCheck.includes('hasPhotoOverlay("landscape")'));
 });
 
+test("complete Spring Hill Hawks packs are approved for Event Setup", () => {
+  assert.ok(app.includes('"school:hawks"'));
+  assert.ok(app.includes('"school:hawksCheer"'));
+});
+
 test("Halloween has dedicated portrait and landscape single-photo overlays", () => {
   assert.ok(app.includes('src: "/assets/themes/halloween/overlays/halloween-single-photo-portrait.svg"'));
   assert.ok(app.includes('src: "/assets/themes/halloween/overlays/halloween-single-photo-landscape.svg"'));

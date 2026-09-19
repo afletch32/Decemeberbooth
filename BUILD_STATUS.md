@@ -1,5 +1,9 @@
 # Build status
 
+- Current fix: Allow the complete Spring Hill Hawks and Spring Hill Hawks Cheer packs in Event Setup and the release gate.
+- Done: Added both complete packs to the approved catalog. Their portrait and landscape guest flows now run alongside the original seven packs.
+- Verification: `npm test` passes (252 tests, 0 failures); the expanded Playwright release gate passes (2 tests, 18 portrait/landscape guest flows).
+
 - Current fix: Complete the regular Halloween pack, separate from Happy Halloween, with dedicated capture overlays.
 - Done: Replaced the mismatched legacy cloud overlay collection with two local transparent foreground frames: one 1200×1800 portrait and one independently composed 1800×1200 landscape. Both use a full-canvas photo slot and the regular Halloween pack's ember, raven, bat, and jack-o'-lantern visual system.
 - Verification: `npm test` passes (251 tests, 0 failures); the Playwright seven-theme portrait/landscape guest-flow gate passes (2 tests, 14 flows); rendered landscape review confirms the selected Halloween overlay is transparent and uses the matching 3:2 frame.
