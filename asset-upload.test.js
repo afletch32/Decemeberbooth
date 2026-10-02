@@ -217,15 +217,15 @@ test("uploaded assets register in a persistent shared library", () => {
   );
   assert.ok(
     appScript.includes("function getCanonicalAssetCollection(category = \"\")") &&
-      appScript.includes('getVisibleLibraryAssets("background")') &&
-      appScript.includes('getVisibleLibraryAssets("overlay")') &&
-      appScript.includes('getVisibleLibraryAssets("template")'),
+      appScript.includes('getCanonicalAssetCollection("background")') &&
+      appScript.includes('getCanonicalAssetCollection("overlay")') &&
+      appScript.includes('getCanonicalAssetCollection("template")'),
     "setup pickers and Asset Library should share one canonical asset collection"
   );
   assert.ok(
-    appScript.includes("function archiveLibraryAssetByUrl(url)") &&
-      appScript.includes('method: "DELETE"'),
-    "library assets should support hiding/archiving and deletion"
+    appScript.includes('method: "DELETE"') &&
+      appScript.includes("async function deleteAssetLibraryItem("),
+    "library assets should support deletion through the active item handler"
   );
   assert.ok(
     appScript.includes('const repoBackedAsset = fallbackAsset && fallbackAsset.source === "theme";') &&
@@ -452,7 +452,9 @@ test("asset library cards hide source labels and manage every asset through meta
   );
   assert.ok(
     appScript.includes("method: index >= 0 ? \"PATCH\" : \"POST\"") &&
-      appScript.includes("{ hidden: true, archived: true }"),
+      appScript.includes("async function deleteAssetLibraryItem(") &&
+      appScript.includes("hidden: true,") &&
+      appScript.includes("archived: true,"),
     "renaming/tagging/deleting repo-backed assets should create stored metadata overrides or tombstones"
   );
   assert.ok(
