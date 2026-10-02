@@ -132,7 +132,8 @@ test("stored and remote theme cleanup persists removed legacy built-ins", () => 
   const remoteLoad = extractFunctionFromEither(app, "", "loadThemesRemote");
   const storedLoad = extractFunctionFromEither(app, "", "loadThemesFromStorage");
   const ensureBuiltins = extractFunctionFromEither(app, "", "ensureBuiltinThemes");
-  assert.ok(ensureBuiltins.includes("return pruneUnapprovedBuiltinThemes(themes);"));
+  assert.ok(ensureBuiltins.includes("const removedUnapprovedThemes = pruneUnapprovedBuiltinThemes(themes);"));
+  assert.ok(ensureBuiltins.includes("if (!hasApprovedThemes) delete themes[rootKey];"));
   assert.ok(remoteLoad.includes("const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();"));
   assert.ok(remoteLoad.includes("removedUnapprovedBuiltinThemes ||"));
   assert.ok(storedLoad.includes("const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();"));

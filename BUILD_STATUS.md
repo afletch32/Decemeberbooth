@@ -1,8 +1,8 @@
 # Build status
 
-- Current fix: Keep only the nine approved complete theme packs in the app catalog.
-- Done: Pruned incomplete built-in packs and unapproved saved themes during catalog setup and storage normalization, removed user-created theme roots from selection, updated theme creation to use a current complete pack as its base, and bumped app/service-worker caches.
-- Verification: `npm test` passes (254 tests, 0 failures); focused rendered selector check passes in Playwright.
+- Current fix: Remove all unapproved legacy themes from the shared catalog and app source.
+- Done: Removed Brand Studio and Lead Capture built-ins; catalog cleanup deletes unapproved entries and their now-empty roots. Removed all 13 unapproved entries from the live Cloudflare theme store, preserving the nine approved packs. Bumped app and service-worker caches.
+- Verification: Live `/api/themes` returns only the nine approved packs. `npm test` passes (255 tests, 0 failures); the rendered approved-theme picker check passes.
 - In progress: None.
 - Next steps: None.
 - Known bugs/blockers: None.

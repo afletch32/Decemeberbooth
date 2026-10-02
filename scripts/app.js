@@ -463,77 +463,6 @@ let themes = {
       },
     },
   },
-  expo: {
-    name: "Expo",
-    themes: {
-      brandStudio: {
-        name: "Brand Studio",
-        eventTypes: ["expo"],
-        fontPairingStyle: "expo",
-        accent: "#1f5eff",
-        accent2: "#f4f7ff",
-        fontHeading: "'Montserrat', sans-serif",
-        fontBody: "'Inter', sans-serif",
-        logo: "",
-        backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788380/photobooth/events/assets/basic-background-1_pzpqmv.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788381/photobooth/events/assets/basic-background-sparkles_hanvy5.png",
-        ],
-        overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788382/photobooth/events/assets/basic-overlay-blue-smoke-frame_j11vpo.png", name: "basic-overlay-blue-smoke-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788383/photobooth/events/assets/basic-overlay-flowers-frame_aqcurj.png", name: "basic-overlay-flowers-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788385/photobooth/events/assets/basic-overlay-general-frame-black_cnp5qj.png", name: "basic-overlay-general-frame-black" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788388/photobooth/events/assets/basic-overlay-general-frame-blue-flowers_bkt18l.png", name: "basic-overlay-general-frame-blue-flowers" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788391/photobooth/events/assets/basic-overlay-shes-a-good-man-overlay_pzn5td.png", name: "basic-overlay-shes-a-good-man-overlay" },
-        ],
-        templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788392/photobooth/events/assets/basic-template-guide-single-photo-landscape_zjmllk.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788394/photobooth/events/assets/basic-template-guide-single-photo-portrait_jzgbkc.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788395/photobooth/events/assets/basic-template-guide-strip-double-column_iouo3d.svg", layout: "double_column" },
-        ],
-        welcome: {
-          title: "Step In + Share",
-          portrait: "",
-          landscape: "",
-          prompt: "Tap to begin",
-        },
-        vibeSummary: "Clean, branded, high traffic",
-      },
-      leadCapture: {
-        name: "Lead Capture",
-        eventTypes: ["expo"],
-        fontPairingStyle: "expo",
-        accent: "#0f766e",
-        accent2: "#f5fffd",
-        fontHeading: "'Raleway', sans-serif",
-        fontBody: "'Open Sans', sans-serif",
-        logo: "",
-        backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788380/photobooth/events/assets/basic-background-1_pzpqmv.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788381/photobooth/events/assets/basic-background-sparkles_hanvy5.png",
-        ],
-        overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788382/photobooth/events/assets/basic-overlay-blue-smoke-frame_j11vpo.png", name: "basic-overlay-blue-smoke-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788383/photobooth/events/assets/basic-overlay-flowers-frame_aqcurj.png", name: "basic-overlay-flowers-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788385/photobooth/events/assets/basic-overlay-general-frame-black_cnp5qj.png", name: "basic-overlay-general-frame-black" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788388/photobooth/events/assets/basic-overlay-general-frame-blue-flowers_bkt18l.png", name: "basic-overlay-general-frame-blue-flowers" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788391/photobooth/events/assets/basic-overlay-shes-a-good-man-overlay_pzn5td.png", name: "basic-overlay-shes-a-good-man-overlay" },
-        ],
-        templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788392/photobooth/events/assets/basic-template-guide-single-photo-landscape_zjmllk.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788394/photobooth/events/assets/basic-template-guide-single-photo-portrait_jzgbkc.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788395/photobooth/events/assets/basic-template-guide-strip-double-column_iouo3d.svg", layout: "double_column" },
-        ],
-        welcome: {
-          title: "Fast Photos, Fast Follow-Up",
-          portrait: "",
-          landscape: "",
-          prompt: "Touch to start",
-        },
-        vibeSummary: "Readable, efficient, promo-ready",
-      },
-    },
-  },
   school: {
     name: "School",
     themes: {
@@ -17762,7 +17691,19 @@ function ensureBuiltinThemes() {
     }
   }
   pruneMisplacedBuiltinThemes(themes);
-  return pruneUnapprovedBuiltinThemes(themes);
+  const removedUnapprovedThemes = pruneUnapprovedBuiltinThemes(themes);
+  for (const rootKey of Object.keys(themes)) {
+    if (rootKey === "_meta") continue;
+    const group = themes[rootKey];
+    if (!group || typeof group !== "object") continue;
+    const hasApprovedThemes = ["themes", "holidays"].some((bucket) =>
+      Object.keys(group[bucket] || {}).some((leafKey) =>
+        APPROVED_THEME_KEYS.has(`${rootKey}:${leafKey}`)
+      )
+    );
+    if (!hasApprovedThemes) delete themes[rootKey];
+  }
+  return removedUnapprovedThemes;
 }
 
 function migrateOptimizedAveryScreenAssets(target = themes) {

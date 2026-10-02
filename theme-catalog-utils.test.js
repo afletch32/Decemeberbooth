@@ -26,3 +26,18 @@ test("theme catalog keeps only approved complete theme packs", async () => {
     general: { name: "General", themes: { summer: {} } },
   });
 });
+
+test("theme catalog removes empty roots left by stale unapproved packs", async () => {
+  const { pruneUnapprovedThemes } = await loadThemeCatalogUtils();
+  const catalog = {
+    general: { name: "General", themes: { summer: {} } },
+    expo: { name: "Expo", themes: { brandStudio: {}, leadCapture: {} } },
+    "legacy-general": { name: "Basic", themes: { basic: {} } },
+  };
+
+  pruneUnapprovedThemes(catalog, new Set(["general:summer"]));
+
+  assert.deepEqual(catalog, {
+    general: { name: "General", themes: { summer: {} } },
+  });
+});
