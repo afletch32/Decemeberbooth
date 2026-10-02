@@ -957,7 +957,6 @@ test("asset library explains saved, filtered, and removal actions", () => {
 
   assert.ok(
     html.includes('id="assetLibraryClearFilters"') &&
-      appScript.includes("function getActiveAssetLibraryFilterLabels()") &&
       appScript.includes("function clearAssetLibraryFilters()") &&
       appScript.includes("Filters active: ${filterLabels.join(\", \")}"),
     "the library should show filter-aware counts and provide a clear filters action"

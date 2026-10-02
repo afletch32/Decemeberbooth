@@ -15708,43 +15708,6 @@ function loadAssetLibraryLocal() {
   }
 }
 
-function getVisibleLibraryAssets(category = "") {
-  const normalizedCategory = normalizeUploadedAssetCategory(category);
-  return getCanonicalAssetCollection(category).filter((asset) => {
-    if (!asset || asset.hidden || asset.archived) return false;
-    if (normalizedCategory && asset.category !== normalizedCategory) return false;
-    return true;
-  });
-}
-
-function getLibraryBackgroundUrls() {
-  return getVisibleLibraryAssets("background").map((asset) => asset.url);
-}
-
-function getLibraryOverlayEntries() {
-  return getVisibleLibraryAssets("overlay").map((asset) => ({
-    src: asset.url,
-    name: asset.name,
-    category: asset.category,
-    tags: asset.tags,
-    textFields: asset.textFields,
-    photoSlots: asset.photoSlots,
-    __library: true,
-  }));
-}
-
-function getLibraryTemplateEntries() {
-  return getVisibleLibraryAssets("template").map((asset) => ({
-    src: asset.url,
-    name: asset.name,
-    tags: asset.tags,
-    textFields: asset.textFields,
-    layout: "double_column",
-    photoSlots: asset.photoSlots,
-    __library: true,
-  }));
-}
-
 function mergeLibraryAsset(asset) {
   const normalized = normalizeAssetLibraryPayload({ assets: [asset] }).assets[0];
   if (!normalized) return false;
@@ -15953,27 +15916,6 @@ async function deleteAssetLibraryItem(id, fallbackAsset = null) {
   }
 }
 
-function archiveLibraryAssetByUrl(url) {
-  const asset = (assetLibrary.assets || []).find(
-    (item) =>
-      item &&
-      (item.url === url ||
-        getAssetLibraryUrlKey(item.url) === getAssetLibraryUrlKey(url))
-  );
-  const fallback = getCanonicalAssetCollection().find(
-    (item) =>
-      item &&
-      (item.url === url ||
-        getAssetLibraryUrlKey(item.url) === getAssetLibraryUrlKey(url))
-  );
-  if (!asset && !fallback) return;
-  updateAssetLibraryItem(
-    (asset && asset.id) || (fallback && fallback.id),
-    { hidden: true, archived: true },
-    fallback
-  );
-}
-
 function getAssetDisplayName(asset) {
   if (asset && asset.name) return String(asset.name);
   const url = String((asset && asset.url) || "");
@@ -15988,15 +15930,6 @@ function getAssetCreatedAtLabel(asset) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString();
-}
-
-function getAssetBadgeLabels(asset) {
-  const labels = [];
-  if (asset && asset.customizable) labels.push("Customizable");
-  normalizeEditableFields(asset && asset.editableFields).forEach((field) => {
-    labels.push(getAssetEditableFieldLabel(field));
-  });
-  return labels;
 }
 
 function createCanonicalAssetRow(entry, category, themeName, themeKey) {
@@ -16249,17 +16182,6 @@ function getFilteredAssetLibraryRows() {
       getTrackingKey: getAssetLibraryTrackingKey,
     }
   );
-}
-
-function getActiveAssetLibraryFilterLabels() {
-  const labels = [];
-  if (DOM.assetLibraryCategory && DOM.assetLibraryCategory.value)
-    labels.push("Category");
-  if (DOM.assetLibrarySearch && DOM.assetLibrarySearch.value.trim())
-    labels.push("Search");
-  if (assetLibraryState.selectedCategory && assetLibraryState.selectedCategory !== "all")
-    labels.push("Asset type");
-  return labels;
 }
 
 function clearAssetLibraryFilters() {

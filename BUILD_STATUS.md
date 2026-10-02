@@ -8,6 +8,14 @@
 - Known bugs/blockers: None.
 - Important decisions: Theme choices are limited to the approved complete pack allowlist; unapproved saved theme entries are removed during normalization.
 
+- Current goal: Prune stale Asset Library code and continue splitting `scripts/app.js` by responsibility.
+- Done: Removed unused library background/overlay/template adapters, their unused visibility wrapper, the unused archive-by-URL helper, unused asset badge-label helper, and unused filter-label helper. Updated tests to assert active canonical collection and deletion paths.
+- Verification: `npm test` passes (253 tests, 0 failures).
+- In progress: None.
+- Next steps: Extract a small active Asset Library storage or sync responsibility into a module with focused tests.
+- Known bugs/blockers: The checked-in UI and tests still wire Asset Library favorites and recents; kept them because this checkout marks them as active.
+- Important decisions: Remove only helpers with no runtime or markup call sites; keep visible/admin behavior unchanged.
+
 - Current goal: Use shared asset normalization rules in the browser, local API, and Cloudflare Pages API.
 - Done: Both APIs now call `scripts/asset-library-utils.mjs` for asset payload normalization; endpoint-specific category policies remain explicit. Added regression coverage for shared normalization and removed assertions that depended on duplicated helper implementations.
 - Verification: `npm test` passes (253 tests, 0 failures); server and shared module load successfully under the installed Node runtime.
