@@ -1,5 +1,13 @@
 # Build status
 
+- Current fix: Keep only the nine approved complete theme packs in the app catalog.
+- Done: Pruned incomplete built-in packs and unapproved saved themes during catalog setup and storage normalization, removed user-created theme roots from selection, updated theme creation to use a current complete pack as its base, and bumped app/service-worker caches.
+- Verification: `npm test` passes (254 tests, 0 failures); focused rendered selector check passes in Playwright.
+- In progress: None.
+- Next steps: None.
+- Known bugs/blockers: None.
+- Important decisions: Theme choices are limited to the approved complete pack allowlist; unapproved saved theme entries are removed during normalization.
+
 - Current goal: Use shared asset normalization rules in the browser, local API, and Cloudflare Pages API.
 - Done: Both APIs now call `scripts/asset-library-utils.mjs` for asset payload normalization; endpoint-specific category policies remain explicit. Added regression coverage for shared normalization and removed assertions that depended on duplicated helper implementations.
 - Verification: `npm test` passes (253 tests, 0 failures); server and shared module load successfully under the installed Node runtime.

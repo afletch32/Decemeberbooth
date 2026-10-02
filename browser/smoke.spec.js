@@ -141,6 +141,18 @@ async function getViewportOverflow(page) {
   }));
 }
 
+test("only complete approved theme packs appear in theme selectors", async ({ page }) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  const visibleThemeChoices = await page.locator(
+    "#createPathThemeSelect option, .setup-combobox-option, .theme-quick-card-copy strong"
+  ).allTextContents();
+  expect(visibleThemeChoices).not.toEqual(
+    expect.arrayContaining([expect.stringMatching(/^\s*(basic|lead capture|brand studio)\s*$/i)])
+  );
+});
+
 async function expectCreatePathValidation(page, options) {
   const {
     themePattern,

@@ -26,6 +26,7 @@ import { formatRecordingTime } from "./recording-utils.mjs";
 import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
 import { getGuestVisibleBeautyPresets } from "./beauty/presets.mjs";
 import { createThemeAdminState } from "./theme-admin-state.mjs";
+import { pruneUnapprovedThemes } from "./theme-catalog-utils.mjs";
 import {
   detectEditableFieldsFromText,
   getAssetEditableFieldLabel,
@@ -191,41 +192,22 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+const APPROVED_THEME_KEYS = new Set([
+  "general:averyBirthday",
+  "general:backToSchool",
+  "general:summer",
+  "fall:halloween",
+  "fall:cuteHalloween",
+  "school:hawks",
+  "school:hawksCheer",
+  "school:ane",
+  "school:streamNight",
+]);
+
 let themes = {
   general: {
     name: "General",
     themes: {
-      basic: {
-        name: "Basic",
-        eventTypes: ["general", "wedding", "expo", "community"],
-        fontPairingStyle: "general",
-        accent: "#3f51b5",
-        accent2: "#ffffff",
-        font: "'Comic Neue', cursive",
-        logo: "",
-        backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788380/photobooth/events/assets/basic-background-1_pzpqmv.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788381/photobooth/events/assets/basic-background-sparkles_hanvy5.png",
-        ],
-        overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788382/photobooth/events/assets/basic-overlay-blue-smoke-frame_j11vpo.png", name: "basic-overlay-blue-smoke-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788383/photobooth/events/assets/basic-overlay-flowers-frame_aqcurj.png", name: "basic-overlay-flowers-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788385/photobooth/events/assets/basic-overlay-general-frame-black_cnp5qj.png", name: "basic-overlay-general-frame-black" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788388/photobooth/events/assets/basic-overlay-general-frame-blue-flowers_bkt18l.png", name: "basic-overlay-general-frame-blue-flowers" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788391/photobooth/events/assets/basic-overlay-shes-a-good-man-overlay_pzn5td.png", name: "basic-overlay-shes-a-good-man-overlay" },
-        ],
-        templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788392/photobooth/events/assets/basic-template-guide-single-photo-landscape_zjmllk.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788394/photobooth/events/assets/basic-template-guide-single-photo-portrait_jzgbkc.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788395/photobooth/events/assets/basic-template-guide-strip-double-column_iouo3d.svg", layout: "double_column" },
-        ],
-        welcome: {
-          title: "Welcome!",
-          portrait: "",
-          landscape: "",
-          prompt: "Touch to start",
-        },
-      },
       backToSchool: {
         name: "Back to School",
         eventTypes: ["general", "community"],
@@ -1320,6 +1302,7 @@ themes.general.themes.averyBirthday = {
   ],
 };
 
+pruneUnapprovedThemes(themes, APPROVED_THEME_KEYS);
 const BUILTIN_THEMES = JSON.parse(JSON.stringify(themes));
 const DEFAULT_THEME_KEY = "general:summer";
 const BUILTIN_THEME_LOCATIONS = (() => {
@@ -3013,12 +2996,7 @@ const THEME_SETUP_GROUP_ORDER = [
 
 const THEME_SETUP_GROUP_ITEM_ORDER = {
   General: [
-    "Basic",
     "Back to School",
-    "Birthday",
-    "Expo",
-    "Brand Studio",
-    "Lead Capture",
   ],
   Seasonal: [
     "Summer",
@@ -3046,7 +3024,6 @@ const THEME_SETUP_GROUP_ITEM_ORDER = {
 };
 
 const THEME_SETUP_LABEL_OVERRIDES = {
-  basic: "Basic",
   "back to school": "Back to School",
   birthday: "Birthday",
   summer: "Summer",
@@ -3054,8 +3031,6 @@ const THEME_SETUP_LABEL_OVERRIDES = {
   winter: "Winter",
   spring: "Spring",
   expo: "Expo",
-  "brand studio": "Brand Studio",
-  "lead capture": "Lead Capture",
   "4th of july": "Fourth of July",
   "fourth of july": "Fourth of July",
   fourthofjuly: "Fourth of July",
@@ -3141,18 +3116,6 @@ function getThemeSetupGroupIndex(group) {
   const index = THEME_SETUP_GROUP_ORDER.indexOf(group);
   return index === -1 ? THEME_SETUP_GROUP_ORDER.length : index;
 }
-
-const APPROVED_THEME_KEYS = new Set([
-  "general:averyBirthday",
-  "general:backToSchool",
-  "general:summer",
-  "fall:halloween",
-  "fall:cuteHalloween",
-  "school:hawks",
-  "school:hawksCheer",
-  "school:ane",
-  "school:streamNight",
-]);
 
 function getThemeSetupItemIndex(group, label) {
   const items = THEME_SETUP_GROUP_ITEM_ORDER[group] || [];
@@ -16646,42 +16609,8 @@ function getThemeDefaultsDisplayGroup(rootKey, leafKey, groupName) {
   return groupName || "Other";
 }
 
-function isLegacyBuiltinSelectableRoot(rootKey, group) {
-  const rawKey = String(rootKey || "").trim();
-  const normalizedKey = rawKey.toLowerCase();
-  if (!rawKey) return false;
-  if (BUILTIN_THEMES[rawKey]) return true;
-  if (
-    Object.keys(BUILTIN_THEMES || {}).some(
-      (key) => key.toLowerCase() === normalizedKey
-    )
-  )
-    return true;
-  if (
-    Object.keys(BUILTIN_THEME_LOCATIONS || {}).some(
-      (key) => key.toLowerCase() === normalizedKey
-    )
-  )
-    return true;
-  const normalizedName = normalizeThemeName(
-    (group && group.name) || rawKey
-  ).toLowerCase();
-  return Object.keys(BUILTIN_THEME_LOCATIONS || {}).some((key) => {
-    const loc = BUILTIN_THEME_LOCATIONS[key];
-    const builtinGroup = loc && BUILTIN_THEMES[loc.root];
-    const bucket = builtinGroup && builtinGroup[loc.bucket];
-    const builtinTheme = bucket && bucket[key];
-    const builtinName = normalizeThemeName(
-      (builtinTheme && builtinTheme.name) || key
-    ).toLowerCase();
-    return builtinName && builtinName === normalizedName;
-  });
-}
-
 function getSelectableThemeEntries() {
-  // Keep the operator-facing catalog limited to the approved complete packs.
-  // Older built-ins and incomplete seasonal entries remain available to the
-  // migration/asset code, but cannot be selected for a new event.
+  // Keep the catalog and new-event picker limited to approved complete packs.
   const entries = [];
   const seenKeys = new Set();
   const addEntry = (entry) => {
@@ -16715,21 +16644,6 @@ function getSelectableThemeEntries() {
           theme,
         });
       }
-    }
-    const builtinGroup = BUILTIN_THEMES[rootKey];
-    const isBuiltinCategory = !!(
-      builtinGroup &&
-      (builtinGroup.themes || builtinGroup.holidays)
-    );
-    if (
-      !isBuiltinCategory &&
-      !group.themes &&
-      !group.holidays &&
-      group.name &&
-      !isLegacyBuiltinSelectableRoot(rootKey, group)
-    ) {
-      if (!isCompletedTheme(group)) continue;
-      addEntry({ key: rootKey, group: "Other", label: groupName, theme: group });
     }
   }
   return entries.sort((a, b) =>
@@ -17891,23 +17805,7 @@ function pruneMisplacedBuiltinThemes(target) {
 }
 
 function pruneUnapprovedBuiltinThemes(target) {
-  if (!target || typeof target !== "object") return false;
-  let removed = false;
-  Object.keys(target).forEach((rootKey) => {
-    const group = target[rootKey];
-    if (!group || typeof group !== "object") return;
-    ["themes", "holidays"].forEach((bucket) => {
-      const children = group[bucket];
-      if (!children || typeof children !== "object") return;
-      Object.keys(children).forEach((leafKey) => {
-        if (!APPROVED_THEME_KEYS.has(`${rootKey}:${leafKey}`)) {
-          delete children[leafKey];
-          removed = true;
-        }
-      });
-    });
-  });
-  return removed;
+  return pruneUnapprovedThemes(target, APPROVED_THEME_KEYS);
 }
 
 function ensureBuiltinThemes() {
@@ -20015,7 +19913,7 @@ async function confirmCreateTheme() {
     const proceed = confirm("No assets were detected. Create an empty theme?");
     if (!proceed) return;
   }
-  const baseTheme = cloneThemeValue(BUILTIN_THEMES.general.themes.basic || {});
+  const baseTheme = cloneThemeValue(BUILTIN_THEMES.general.themes.summer || {});
   const newTheme = mergePlainObject(baseTheme, {});
   newTheme.name = name;
   newTheme.background = "";

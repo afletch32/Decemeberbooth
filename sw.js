@@ -1,5 +1,5 @@
 // Bump these to force one-time invalidation when changing strategies.
-const APP_SHELL_CACHE = "pb-app-shell-v5";
+const APP_SHELL_CACHE = "pb-app-shell-v6";
 const RUNTIME_CACHE = "pb-runtime-v5";
 const SHARE_CACHE = "pb-share-v1";
 const OFFLINE_ASSETS_CACHE = "pb-offline-assets-v1";
@@ -22,6 +22,7 @@ const APP_SHELL_ASSETS = [
   "scripts/template-text-utils.mjs",
   "scripts/remote-sync-utils.mjs",
   "scripts/theme-admin-state.mjs",
+  "scripts/theme-catalog-utils.mjs",
   "scripts/asset-library-utils.mjs",
   "scripts/asset-library-view.mjs",
   "scripts/external-library-loader.mjs",

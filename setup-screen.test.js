@@ -402,6 +402,11 @@ test("setup theme dropdown groups themes by user-facing category", () => {
     "grouped theme options should dedupe by key and render non-selectable section headers"
   );
   assert.ok(
+    appScript.includes("pruneUnapprovedThemes(themes, APPROVED_THEME_KEYS)") &&
+      appScript.includes("pruneUnapprovedThemes(target, APPROVED_THEME_KEYS)"),
+    "both bundled and saved theme catalogs should be pruned to the complete-theme allowlist"
+  );
+  assert.ok(
     appScript.includes("item.dataset.themeKey = entry.key;") &&
       appScript.includes("activateThemeFromSetupKey(entry.key)") &&
       appScript.includes("item.textContent = entry.label;"),
@@ -1125,8 +1130,9 @@ test("theme selection normalizes corrupted built-in category selections", () => 
   assert.ok(
     appScript.includes("function migrateLegacyBuiltinRootThemeDefaults()") &&
       appScript.includes("migrateLegacyBuiltinRootThemeDefaults();") &&
-      appScript.includes("const isBuiltinCategory = !!("),
-    "legacy root defaults should be migrated and category roots excluded from selectable themes"
+      appScript.includes("function getSelectableThemeEntries()") &&
+      appScript.includes("if (!APPROVED_THEME_KEYS.has(`${rootKey}:${leafKey}`)) continue;"),
+    "legacy defaults should be migrated while only approved theme keys remain selectable"
   );
 });
 
