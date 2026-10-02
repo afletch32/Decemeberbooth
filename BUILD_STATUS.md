@@ -1,5 +1,21 @@
 # Build status
 
+- Current goal: Use shared asset normalization rules in the browser, local API, and Cloudflare Pages API.
+- Done: Both APIs now call `scripts/asset-library-utils.mjs` for asset payload normalization; endpoint-specific category policies remain explicit. Added regression coverage for shared normalization and removed assertions that depended on duplicated helper implementations.
+- Verification: `npm test` passes (253 tests, 0 failures); server and shared module load successfully under the installed Node runtime.
+- In progress: None.
+- Next steps: None for this change.
+- Known bugs/blockers: Cloudflare Pages deployment/build was not run in this review.
+- Important decisions: Keep endpoint category allowlists as policy options; use dynamic import in the CommonJS local server to preserve the declared Node 18 compatibility.
+
+- Current fix: Remove the mismatched generic title box from the Spring Hill Hawks guest viewer.
+- Done: The regular Hawks pack now relies on its own full-screen artwork; its generic floating “Spring Hill Hawks” header is hidden while other themes retain their headers.
+- Verification: `npm test` passes (252 tests, 0 failures). Chromium rendered the Spring Hill Hawks guest idle screen with its full-screen artwork and no generic floating title box.
+
+- Current fix: Place the frame picker controls on the live viewer instead of beneath it.
+- Done: Frame navigation remains tied to the existing visibility and mode logic; previous/next buttons are now vertically centered on the viewer's left/right edges, while the selected-frame label is compactly placed at the bottom of the viewer.
+- Verification: `npm test` passes (252 tests, 0 failures). Chromium rendered checks confirm the standard photo viewer in landscape and 430×900 portrait: both arrows sit at the viewer edges, and the narrow portrait label remains readable.
+
 - Current fix: Force deployed booths to load the nine-pack approved theme catalog.
 - Done: Bumped the app module URL and service-worker caches after approving the two Hawks packs; existing browser caches can no longer retain the preceding seven-pack catalog.
 - Verification: `npm test` passes (252 tests, 0 failures); the nine-pack Playwright release gate passes (2 tests, 18 portrait/landscape guest flows). Publishing the refreshed branch preview now.

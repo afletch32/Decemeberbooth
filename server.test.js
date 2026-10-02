@@ -417,6 +417,7 @@ test("asset library stores uploaded Cloudinary asset metadata", withTempEnv(asyn
     assert.deepEqual(archivedJson.assets[0].editableFields, [
       "title",
       "buttonText",
+      "schoolName",
     ]);
 
     const deleteResp = await fetch(`http://127.0.0.1:${port}/api/assets`, {

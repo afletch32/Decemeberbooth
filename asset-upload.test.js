@@ -294,8 +294,8 @@ test("asset uploads show an in-progress state and repair legacy Hawks paths", ()
     appScript.includes("normalizeLegacyAssetUrl") &&
       assetLibraryUtils.includes("function normalizeLegacyAssetUrl(value)") &&
       assetLibraryUtils.includes('"assets/school/hawks/"') &&
-      assetsFn.includes("function normalizeLegacyAssetUrl(value)") &&
-      assetsFn.includes('"assets/school/hawks/"'),
+      assetsFn.includes('from "../../scripts/asset-library-utils.mjs"') &&
+      assetsFn.includes("normalizeAssetLibraryPayload"),
     "saved records using the former Hawks folder should resolve to the current assets"
   );
   assert.ok(
