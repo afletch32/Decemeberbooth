@@ -32,6 +32,13 @@ test("getBuiltinAssetManifest returns cloned objects", async () => {
   assert.equal(second[0].src, "birthday-banner.png");
 });
 
+test("retired Basic assets are absent from the built-in manifest", async () => {
+  const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
+  assert.deepEqual(getBuiltinAssetManifest("assets/general/basic/backgrounds/"), []);
+  assert.deepEqual(getBuiltinAssetManifest("assets/general/basic/overlays/"), []);
+  assert.deepEqual(getBuiltinAssetManifest("assets/general/basic/templates/"), []);
+});
+
 test("wedding overlays remain available in built-in asset manifests", async () => {
   const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
   const timelessEntries = getBuiltinAssetManifest(

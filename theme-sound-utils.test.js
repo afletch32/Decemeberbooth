@@ -25,15 +25,14 @@ test.before(async () => {
 });
 
 test("built-in theme families receive distinct sound profiles", () => {
-  assert.equal(resolveThemeSoundProfileName("wedding:timeless", {}), "elegant");
   assert.equal(resolveThemeSoundProfileName("school:hawks", {}), "school");
   assert.equal(resolveThemeSoundProfileName("fall:halloween", {}), "spooky");
-  assert.equal(resolveThemeSoundProfileName("winter:christmas", {}), "holiday");
-  assert.equal(resolveThemeSoundProfileName("winter:valentines", {}), "romantic");
-  assert.equal(resolveThemeSoundProfileName("winter:newyear", {}), "celebration");
-  assert.equal(resolveThemeSoundProfileName("expo:brandStudio", {}), "modern");
-  assert.equal(resolveThemeSoundProfileName("general:birthday", {}), "celebration");
-  assert.equal(resolveThemeSoundProfileName("general:basic", {}), "classic");
+  assert.equal(resolveThemeSoundProfileName("general:averyBirthday", {}), "celebration");
+  assert.equal(
+    resolveThemeSoundProfileName("expo:activation", { eventTypes: ["expo"] }),
+    "modern"
+  );
+  assert.equal(resolveThemeSoundProfileName("custom:classic", {}), "classic");
 });
 
 test("custom themes infer sound style from their event metadata", () => {

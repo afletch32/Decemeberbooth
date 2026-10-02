@@ -7173,9 +7173,8 @@ function getEventTypeCopy(selectedType) {
     },
     expo: {
       label: "Expo",
-      note: "Fast-to-read, branded setups for vendor booths, conferences, and lead capture.",
-      themeNote:
-        "Showing themes that fit expo booths, branded activations, and lead capture.",
+      note: "Fast-to-read setups for vendor booths and conferences.",
+      themeNote: "Showing themes that fit vendor booths and conferences.",
     },
     birthday: {
       label: "Party",

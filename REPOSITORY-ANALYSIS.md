@@ -12,7 +12,7 @@ They were designed as two separate systems that never converged.
 
 ```
 Theme definition (app.js:136-466)
-  → folder path like "assets/general/basic/overlays/"
+  → folder path like "assets/holidays/fall/halloween/overlays/"
   → getBuiltinAssetManifest(folder) (builtin-asset-manifests.mjs:274)
      reads BUILTIN_ASSET_MANIFESTS (hardcoded JS object, line 2)
   → returns array of {src, layout, slots, ...} or strings
@@ -178,22 +178,22 @@ const json = await resp.json();
 
 ```
 resolveBackgroundListFromFolder(theme)
-  → fetch("assets/general/basic/backgrounds/backgrounds.json")    // HTTP
-  → if 404: getBuiltinFolderStrings("assets/general/basic/backgrounds/")
-    → getBuiltinAssetManifest("assets/general/basic/backgrounds/")
-      → BUILTIN_ASSET_MANIFESTS["assets/general/basic/backgrounds/"]  // JS object
+  → fetch("assets/holidays/fall/halloween/backgrounds/backgrounds.json")    // HTTP
+  → if 404: getBuiltinFolderStrings("assets/holidays/fall/halloween/backgrounds/")
+    → getBuiltinAssetManifest("assets/holidays/fall/halloween/backgrounds/")
+      → BUILTIN_ASSET_MANIFESTS["assets/holidays/fall/halloween/backgrounds/"]  // JS object
 
 resolveOverlaysFromFolder(theme)
-  → fetch("assets/general/basic/overlays/overlays.json")          // HTTP
-  → if 404: getBuiltinOverlayEntries("assets/general/basic/overlays/")
-    → getBuiltinAssetManifest("assets/general/basic/overlays/")
-      → BUILTIN_ASSET_MANIFESTS["assets/general/basic/overlays/"]  // JS object
+  → fetch("assets/holidays/fall/halloween/overlays/overlays.json")          // HTTP
+  → if 404: getBuiltinOverlayEntries("assets/holidays/fall/halloween/overlays/")
+    → getBuiltinAssetManifest("assets/holidays/fall/halloween/overlays/")
+      → BUILTIN_ASSET_MANIFESTS["assets/holidays/fall/halloween/overlays/"]  // JS object
 
 resolveTemplatesFromFolder(theme)
-  → fetch("assets/general/basic/templates/templates.json")       // HTTP
-  → if 404: getBuiltinTemplateEntries("assets/general/basic/templates/")
-    → getBuiltinAssetManifest("assets/general/basic/templates/")
-      → BUILTIN_ASSET_MANIFESTS["assets/general/basic/templates/"]  // JS object
+  → fetch("assets/holidays/fall/halloween/templates/templates.json")       // HTTP
+  → if 404: getBuiltinTemplateEntries("assets/holidays/fall/halloween/templates/")
+    → getBuiltinAssetManifest("assets/holidays/fall/halloween/templates/")
+      → BUILTIN_ASSET_MANIFESTS["assets/holidays/fall/halloween/templates/"]  // JS object
 ```
 
 ---

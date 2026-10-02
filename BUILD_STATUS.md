@@ -1,8 +1,8 @@
 # Build status
 
-- Current fix: Deploy the retired-theme cleanup to Cloudflare Pages.
-- Done: Removed all 13 unapproved entries from the live Cloudflare theme store, preserving the nine approved packs. Removed Brand Studio and Lead Capture built-ins and added saved-catalog cleanup. Bumped app and service-worker caches. Reduced five oversized booth-screen videos while preserving dimensions, durations, and available audio so Pages accepts the full app directory.
-- Verification: Live `/api/themes` returns only the nine approved packs. `npm test` passes (255 tests, 0 failures); the rendered approved-theme picker check passes. Pages deployment pending.
+- Current fix: Permanently remove retired theme packs from catalogs, generators, and production.
+- Done: Removed all 13 unapproved entries from the live Cloudflare theme store, preserving the nine approved packs. Removed Brand Studio and Lead Capture built-ins and upload mappings, deleted Basic source assets/manifests/mappings, and kept storage cleanup so stale browser catalogs are purged. Bumped app and service-worker caches. Reduced five oversized booth-screen videos while preserving dimensions, durations, and available audio for Pages.
+- Verification: Production picker shows only approved packs; live `/api/themes` returns nine approved packs. `npm test` passes (256 tests, 0 failures); local rendered picker check passes. Production deployment of this final source cleanup pending.
 - In progress: None.
 - Next steps: None.
 - Known bugs/blockers: None.

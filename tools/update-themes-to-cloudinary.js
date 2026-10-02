@@ -51,7 +51,6 @@ async function main() {
 
   // Special handling for shared/template themes mapped by the folder names
   const themeMap = {
-    "basic": { key: "general:basic", root: "general", subRoot: "themes", themeKey: "basic" },
     "birthday": { key: "general:birthday", root: "general", subRoot: "themes", themeKey: "birthday" },
     "summer": { key: "general:summer", root: "general", subRoot: "themes", themeKey: "summer" },
     "hawks": { key: "school:hawks", root: "school", subRoot: "themes", themeKey: "hawks" },
@@ -63,8 +62,6 @@ async function main() {
     "winter-valentines": { key: "winter:valentines", root: "winter", subRoot: "holidays", themeKey: "valentines" },
     "spring-st-patricks-day": { key: "spring:stpatricksday", root: "spring", subRoot: "holidays", themeKey: "stpatricksday" },
     "summer-4th-of-july": { key: undefined, root: "summer", subRoot: "holidays", themeKey: "fourthofjuly" },
-    "brandstudio": { key: "expo:brandStudio", root: "expo", subRoot: "themes", themeKey: "brandStudio" },
-    "leadcapture": { key: "expo:leadCapture", root: "expo", subRoot: "themes", themeKey: "leadCapture" },
     "santas-workshop": { key: "winter:santasWorkshop", root: "winter", subRoot: "holidays", themeKey: "santasWorkshop" },
     "winter-wonderland": { key: "winter:winterWonderland", root: "winter", subRoot: "holidays", themeKey: "winterWonderland" },
   };

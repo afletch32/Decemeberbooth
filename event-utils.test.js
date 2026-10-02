@@ -165,9 +165,9 @@ test("normalizeEventStyle collapses aliases to supported setup styles", async ()
 test("inferThemeEventStyle prefers saved style and otherwise infers from theme data", async () => {
   const { inferThemeEventStyle } = await loadFontStyleHelpers();
 
-  assert.equal(inferThemeEventStyle("general:basic", { fontPairingStyle: "expo" }), "expo");
+  assert.equal(inferThemeEventStyle("custom:expo-event", { fontPairingStyle: "expo" }), "expo");
   assert.equal(inferThemeEventStyle("winter:christmas", { name: "Winter Wonderland" }), "christmas");
-  assert.equal(inferThemeEventStyle("general:basic", { name: "Neighborhood Expo Booth" }), "expo");
+  assert.equal(inferThemeEventStyle("custom:expo-event", { name: "Neighborhood Expo Booth" }), "expo");
 });
 
 test("pairingSupportsEventStyle matches explicit style tags and general fallbacks", async () => {
