@@ -3031,6 +3031,10 @@
 
     #boothHeader img { max-height: 54px; }
 
+    #boothHeader.theme-header-hidden {
+      display: none !important;
+    }
+
     #eventTitle {
       margin: 0;
       font-family: var(--font-heading);
@@ -5609,11 +5613,10 @@
     }
 
     .frame-carousel {
-      display: grid;
-      grid-template-columns: 52px minmax(160px, 240px) 52px;
-      align-items: stretch;
-      gap: 8px;
-      margin: 0 auto;
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      pointer-events: none;
     }
 
     .frame-carousel.hidden {
@@ -5640,14 +5643,20 @@
       color: #2f2922;
       box-shadow: 0 8px 24px rgba(39, 33, 25, 0.16);
       cursor: pointer;
+      pointer-events: auto;
     }
 
     #frameCarouselChoice {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
       display: grid;
+      width: min(240px, calc(100% - 144px));
       place-content: center;
       gap: 2px;
       padding: 8px 20px;
       font-family: var(--font-label);
+      transform: translateX(-50%);
     }
 
     .frame-carousel-label {
@@ -5667,8 +5676,52 @@
     }
 
     .frame-arrow {
+      position: absolute;
+      top: 50%;
+      width: 52px;
       font-size: 1rem;
       font-weight: 900;
+      transform: translateY(-50%);
+    }
+
+    #framePrevBtn {
+      left: 16px;
+    }
+
+    #frameNextBtn {
+      right: 16px;
+    }
+
+    @media (max-width: 520px) {
+      #frameCarouselChoice {
+        bottom: 10px;
+        width: auto;
+        max-width: 88px;
+        min-height: 44px;
+        padding: 8px 12px;
+      }
+
+      .frame-carousel-label {
+        display: none;
+      }
+
+      #frameCarouselName {
+        max-width: 64px;
+        font-size: 0.76rem;
+      }
+
+      .frame-arrow {
+        width: 44px;
+        min-height: 44px;
+      }
+
+      #framePrevBtn {
+        left: 8px;
+      }
+
+      #frameNextBtn {
+        right: 8px;
+      }
     }
 
     #boothScreen.booth-ready #captureBtn.primary {
@@ -7442,18 +7495,18 @@
             <span class="rec-dot"></span>
             <span id="recordingTimer">REC 00:00</span>
           </div>
+          <div id="frameCarousel" class="frame-carousel hidden" aria-label="Choose a frame">
+            <button id="framePrevBtn" type="button" class="frame-arrow" aria-label="Previous frame">◀</button>
+            <button id="frameCarouselChoice" type="button" aria-haspopup="dialog">
+              <span class="frame-carousel-label">Frame</span>
+              <strong id="frameCarouselName">No Frame</strong>
+            </button>
+            <button id="frameNextBtn" type="button" class="frame-arrow" aria-label="Next frame">▶</button>
+          </div>
         </div>
         <div id="captureStatusBar" aria-live="polite">
           <span id="livePhotoStatus" class="capture-status-pill hidden">Live Photo</span>
           <span id="instantCaptureStatus" class="capture-status-pill hidden">Instant Capture</span>
-        </div>
-        <div id="frameCarousel" class="frame-carousel hidden" aria-label="Choose a frame">
-          <button id="framePrevBtn" type="button" class="frame-arrow" aria-label="Previous frame">◀</button>
-          <button id="frameCarouselChoice" type="button" aria-haspopup="dialog">
-            <span class="frame-carousel-label">Frame</span>
-            <strong id="frameCarouselName">No Frame</strong>
-          </button>
-          <button id="frameNextBtn" type="button" class="frame-arrow" aria-label="Next frame">▶</button>
         </div>
         <div id="filterCarousel" class="filter-carousel hidden">
           <button id="filterPrevBtn" type="button" class="filter-arrow filter-arrow-prev" aria-label="Previous filter" onclick="prevFilter()">◀</button>

@@ -7850,6 +7850,10 @@ function buildActionPalette(theme) {
 }
 
 function applyThemeBasics(theme) {
+  const usesArtworkOwnedHeader = theme && theme.name === "Spring Hill Hawks";
+  if (DOM.boothHeader) {
+    DOM.boothHeader.classList.toggle("theme-header-hidden", usesArtworkOwnedHeader);
+  }
   document.documentElement.style.setProperty(
     "--accent",
     theme.accent || "orange"
