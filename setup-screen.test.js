@@ -385,7 +385,10 @@ test("setup theme dropdown groups themes by user-facing category", () => {
   assert.ok(
     appScript.includes("const THEME_SETUP_GROUP_ORDER = [") &&
       appScript.includes('"General",') &&
+      appScript.includes('"Sports",') &&
       appScript.includes('"Youth",') &&
+      appScript.includes('if (/(spring hill hawks|hawks cheer)/.test(normalized)) return "Sports";') &&
+      appScript.includes('if (/(amanda north|ane|stream night)/.test(normalized)) return "Youth";') &&
       appScript.includes('const THEME_SETUP_LABEL_OVERRIDES = {') &&
       appScript.includes('hawks: "Spring Hill Hawks"') &&
       appScript.includes('hawkscheer: "Spring Hill Hawks Cheer"') &&

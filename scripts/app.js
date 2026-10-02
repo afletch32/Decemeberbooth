@@ -2920,6 +2920,7 @@ const THEME_SETUP_GROUP_ORDER = [
   "Seasonal",
   "Holidays",
   "Wedding",
+  "Sports",
   "Youth",
 ];
 
@@ -3028,7 +3029,8 @@ function getThemeSetupDisplayGroup(themeKey, theme) {
   ]
     .filter(Boolean)
     .join(" ");
-  if (/(hawks|amanda north|ane|stream night)/.test(normalized)) return "Youth";
+  if (/(spring hill hawks|hawks cheer)/.test(normalized)) return "Sports";
+  if (/(amanda north|ane|stream night)/.test(normalized)) return "Youth";
   if (/(garden vows|timeless romance|wedding)/.test(normalized)) return "Wedding";
   if (/(fourth of july|4th of july|halloween|christmas|valentine|st patrick)/.test(normalized)) return "Holidays";
   if (
@@ -3168,13 +3170,14 @@ function syncSessionThemeSearch() {
 
 let activeThemeQuickFilter = "All";
 
-const THEME_QUICK_FILTERS = ["All", "Celebrations", "Weddings", "Schools", "Seasons", "Holidays"];
+const THEME_QUICK_FILTERS = ["All", "Celebrations", "Weddings", "Sports", "Schools", "Seasons", "Holidays"];
 
 function themeMatchesQuickFilter(entry, filter) {
   if (filter === "All") return true;
   const group = entry.group;
   if (filter === "Celebrations") return group === "General";
   if (filter === "Weddings") return group === "Wedding";
+  if (filter === "Sports") return group === "Sports";
   if (filter === "Schools") return group === "Youth";
   if (filter === "Seasons") return group === "Seasonal";
   return group === "Holidays";
