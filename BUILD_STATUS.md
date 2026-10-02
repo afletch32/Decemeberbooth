@@ -1,11 +1,10 @@
 # Build status
 
 - Current fix: Permanently remove retired theme packs from catalogs, generators, and production.
-- Current follow-up: Categorize Spring Hill Hawks and Hawks Cheer under Sports in the theme picker; keep Amanda North themes under Schools.
 - Done: Removed all 13 unapproved entries from the live Cloudflare theme store, preserving the nine approved packs. Removed Brand Studio and Lead Capture built-ins and upload mappings, deleted Basic source assets/manifests/mappings, and kept storage cleanup so stale browser catalogs are purged. Bumped app and service-worker caches. Reduced five oversized booth-screen videos while preserving dimensions, durations, and available audio for Pages.
 - Verification: Production picker shows only approved packs; live `/api/themes` returns nine approved packs. `npm test` passes (256 tests, 0 failures); local rendered picker check passes. Production deployment complete at https://d1f97b94.decemeberbooth.pages.dev (commit fc19c6a); production picker and live `/api/themes` verified with only approved packs and no retired entries.
-- In progress: Sports category change is being validated and released.
-- Next steps: Deploy and verify the Sports and Schools picker categories.
+- In progress: None.
+- Next steps: None.
 - Known bugs/blockers: None.
 - Important decisions: Theme choices are limited to the approved complete pack allowlist; unapproved saved theme entries are removed during normalization.
 
