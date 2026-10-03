@@ -1,30 +1,16 @@
 [
   {
-    "src": "garden-vows-single-template.svg",
-    "layout": "single_photo"
-  },
-  {
-    "src": "garden-vows-strip-template.svg",
+    "src": "garden-vows-three-photo-strip.png",
+    "name": "Garden Vows Three-Photo Strip",
     "layout": "photo_strip_3",
     "slots": [
-      {
-        "x": 90,
-        "y": 440,
-        "w": 540,
-        "h": 382
-      },
-      {
-        "x": 90,
-        "y": 890,
-        "w": 540,
-        "h": 382
-      },
-      {
-        "x": 90,
-        "y": 1340,
-        "w": 540,
-        "h": 382
-      }
+      { "x": 130, "y": 148, "w": 468, "h": 459 },
+      { "x": 129, "y": 693, "w": 474, "h": 455 },
+      { "x": 130, "y": 1234, "w": 470, "h": 452 }
+    ],
+    "textFields": [
+      { "key": "couple_names", "xPct": 0.15, "yPct": 0.835, "wPct": 0.7, "hPct": 0.055, "fontFamily": "'Great Vibes', cursive", "fontWeight": "400", "fontSize": 50, "minFontSize": 26, "color": "#38584a", "align": "center" },
+      { "key": "event_date", "xPct": 0.2, "yPct": 0.895, "wPct": 0.6, "hPct": 0.03, "fontFamily": "'Lora', serif", "fontWeight": "400", "fontSize": 25, "minFontSize": 16, "color": "#65766b", "align": "center" }
     ]
   }
 ]

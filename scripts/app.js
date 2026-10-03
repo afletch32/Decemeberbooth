@@ -202,6 +202,7 @@ const APPROVED_THEME_KEYS = new Set([
   "school:hawksCheer",
   "school:ane",
   "school:streamNight",
+  "wedding:romantic",
 ]);
 
 let themes = {
@@ -446,12 +447,54 @@ let themes = {
           "https://res.cloudinary.com/afletch32/image/upload/v1783788540/photobooth/events/assets/garden-vows-background-garden-vows-bg-7_cib79o.png",
         ],
         overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788540/photobooth/events/assets/garden-vows-overlay-garden-vows-single-overlay_priznl.svg", name: "garden-vows-overlay-single" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788542/photobooth/events/assets/garden-vows-overlay-garden-vows-strip-overlay_jeuhvh.svg", name: "garden-vows-overlay-strip" },
+          {
+            id: "garden-vows-single-portrait",
+            name: "Garden Vows Single Photo · Portrait",
+            src: "/assets/wedding/garden-vows/overlays/garden-vows-single-portrait.png",
+            type: "overlay",
+            category: "wedding",
+            orientation: "portrait",
+            aspectRatio: "2:3",
+            photoSlots: [
+              { x: 0.1572, y: 0.095, width: 0.6875, height: 0.68, objectFit: "cover" },
+            ],
+            textFields: [
+              { key: "couple_names", xPct: 0.14, yPct: 0.80, wPct: 0.72, hPct: 0.065, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 78, minFontSize: 34, color: "#38584a", align: "center" },
+              { key: "event_date", xPct: 0.2, yPct: 0.88, wPct: 0.6, hPct: 0.035, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 34, minFontSize: 20, color: "#65766b", align: "center" },
+            ],
+          },
+          {
+            id: "garden-vows-single-landscape",
+            name: "Garden Vows Single Photo · Landscape",
+            src: "/assets/wedding/garden-vows/overlays/garden-vows-single-landscape.png",
+            type: "overlay",
+            category: "wedding",
+            orientation: "landscape",
+            aspectRatio: "3:2",
+            photoSlots: [
+              { x: 0.118, y: 0.128, width: 0.765, height: 0.617, objectFit: "cover" },
+            ],
+            textFields: [
+              { key: "couple_names", xPct: 0.15, yPct: 0.77, wPct: 0.7, hPct: 0.075, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 72, minFontSize: 32, color: "#38584a", align: "center" },
+              { key: "event_date", xPct: 0.2, yPct: 0.87, wPct: 0.6, hPct: 0.04, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 30, minFontSize: 18, color: "#65766b", align: "center" },
+            ],
+          },
         ],
         templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788544/photobooth/events/assets/garden-vows-template-garden-vows-single-template_lxysxx.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788546/photobooth/events/assets/garden-vows-template-garden-vows-strip-template_iozpue.svg", layout: "double_column" },
+          {
+            src: "/assets/wedding/garden-vows/templates/garden-vows-three-photo-strip.png",
+            name: "Garden Vows Three-Photo Strip",
+            layout: "photo_strip_3",
+            slots: [
+              { x: 130, y: 148, w: 468, h: 459 },
+              { x: 129, y: 693, w: 474, h: 455 },
+              { x: 130, y: 1234, w: 470, h: 452 },
+            ],
+            textFields: [
+              { key: "couple_names", xPct: 0.15, yPct: 0.835, wPct: 0.7, hPct: 0.055, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 50, minFontSize: 26, color: "#38584a", align: "center" },
+              { key: "event_date", xPct: 0.2, yPct: 0.895, wPct: 0.6, hPct: 0.03, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 25, minFontSize: 16, color: "#65766b", align: "center" },
+            ],
+          },
         ],
         welcome: {
           title: "Love Looks Good Here",
@@ -16509,6 +16552,12 @@ function getSelectableThemeEntries() {
 function isCompletedTheme(theme) {
   if (!theme || typeof theme !== "object") return false;
   const entries = (value) => (Array.isArray(value) ? value : []);
+  const hasCoupleAndDateFields = (entry) => {
+    const keys = new Set(
+      normalizeTemplateTextFields(entry && entry.textFields).map((field) => field.key)
+    );
+    return keys.has("couple_names") && keys.has("event_date");
+  };
   const hasScreen = (value, role = "") => {
     const screens = entries(value);
     return ["portrait", "landscape"].every((orientation) =>
@@ -16535,6 +16584,24 @@ function isCompletedTheme(theme) {
       const entryOrientation = normalizePhotoOverlayOrientation(entry.orientation);
       return !entryOrientation || entryOrientation === orientation;
     });
+  const weddingLayoutOrientations = new Set(
+    overlays
+      .filter((entry) => entry && hasCoupleAndDateFields(entry))
+      .map((entry) => normalizePhotoOverlayOrientation(entry.orientation))
+      .filter(Boolean)
+  );
+  const hasReusableWeddingLayouts =
+    entries(theme.eventTypes).includes("wedding") &&
+    weddingLayoutOrientations.has("portrait") &&
+    weddingLayoutOrientations.has("landscape") &&
+    entries(theme.templates).some(
+      (template) =>
+        normalizeTemplateLayout(template && template.layout) === "photo_strip_3" &&
+        hasCoupleAndDateFields(template)
+    );
+  // Wedding layouts can reuse the app's shared guest screens; each event only
+  // supplies names and a date, while the printable artwork stays reusable.
+  if (hasReusableWeddingLayouts) return true;
   return (
     hasScreen(idleScreens, "idle") &&
     hasScreen(photoChoiceScreens, "photo-choice") &&
@@ -21924,9 +21991,12 @@ Object.assign(window, {
     composeStrip,
     finalizeToPrint,
     getActiveEvent: () => getActiveEvent(),
+    getEventById: (id) => getStoredEvents().find((event) => event && event.id === id) || null,
+    getThemeByKey: (themeKey) => resolveThemeByKey(themeKey),
     getThemes: () => themes,
     getBaseBackgroundList: (theme = activeTheme) => getBaseBackgroundList(theme),
     getBaseTemplateList: (theme = activeTheme) => getBaseTemplateList(theme),
+    getBaseOverlayList: (theme = activeTheme) => getBaseOverlayList(theme),
     getAllThemeBackgroundCatalogList,
     getAllAssetLibraryRows,
     getAssetThemeDefaultCount,
@@ -21973,7 +22043,7 @@ Object.assign(window, {
       syncOverlayPreviewSurface({ mode: "live" });
       return overlayList;
     },
-    probeOverlayAutofill: (overlaySrc, width = 1800, height = 1350) => {
+    probeOverlayAutofill: (overlaySrc, width = 1800, height = 1350, eventOverride = null) => {
       const overlayDefinition = getOverlayList(activeTheme).find(
         (item) => item && item.src === overlaySrc
       );
@@ -21992,12 +22062,12 @@ Object.assign(window, {
         width,
         height,
         overlayDefinition && overlayDefinition.textFields,
-        getActiveEvent(),
+        eventOverride || getActiveEvent(),
         activeTheme
       );
       return calls;
     },
-    probeTemplateAutofill: (template, width = 1200, height = 1800) => {
+    probeTemplateAutofill: (template, width = 1200, height = 1800, eventOverride = null) => {
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
@@ -22013,7 +22083,7 @@ Object.assign(window, {
         width,
         height,
         template && template.textFields,
-        getActiveEvent(),
+        eventOverride || getActiveEvent(),
         activeTheme
       );
       return calls;

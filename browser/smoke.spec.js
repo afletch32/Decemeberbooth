@@ -181,7 +181,8 @@ async function expectCreatePathValidation(page, options) {
   );
   await expect(themeValue).not.toBe("");
 
-  await page.selectOption("#createPathThemeSelect", themeValue);
+  await page.locator(".theme-quick-card").filter({ hasText: /Garden Vows/ }).click();
+  await expect(page.locator("#themeQuickSelectionName")).toHaveText("Garden Vows");
 
   for (const selector of visibleFieldSelectors || []) {
     await expect(page.locator(selector)).not.toHaveClass(/hidden/);
@@ -220,23 +221,20 @@ async function createWeddingEvent(page, options = {}) {
   if (await page.locator("#createPathEventName").count()) {
     await page.fill("#createPathEventName", eventName);
   }
-  await page.selectOption("#createPathThemeSelect", themeValue);
-  await page.fill("#createPathPartner1", partner1);
-  await page.fill("#createPathPartner2", partner2);
-  await page.evaluate((value) => {
-    const dateFields = document.querySelector("#createPathDateFields");
-    if (dateFields) dateFields.classList.remove("hidden");
-    const input = document.querySelector("#createPathEventDate");
-    if (!input) return;
-    input.value = value;
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-  }, date);
-  await page.locator("#createEventBtn").click();
-  await expect(page.locator("#createPathValidationMessage")).toHaveClass(
-    /hidden/
-  );
+  await page.locator(".theme-quick-card").filter({ hasText: /Garden Vows/ }).click();
+  await page.fill("#eventNameInput", eventName);
+  await page.locator(".setup-session-save-btn").click();
   await expect(page.locator("#eventProfileSelect")).toHaveValue(/.+/);
+  await page.evaluate(({ partner1, partner2, date }) => {
+    const activeId = document.querySelector("#eventProfileSelect").value;
+    const key = "photoboothEvents";
+    const events = JSON.parse(localStorage.getItem(key) || "[]");
+    const event = events.find((item) => item.id === activeId);
+    Object.assign(event, { partner1, partner2, date });
+    localStorage.setItem(key, JSON.stringify(events));
+    window.location.reload();
+  }, { partner1, partner2, date });
+  await page.waitForFunction(() => window.__photoboothTest?.getActiveEvent()?.partner1);
 }
 
 test("overlay builder emits reusable text metadata when autofill fields are selected", async ({
@@ -252,6 +250,47 @@ test("overlay builder emits reusable text metadata when autofill fields are sele
   await expect(manifestEntry).toContainText("\"textFields\"");
   await expect(manifestEntry).toContainText("\"couple_names\"");
   await expect(manifestEntry).toContainText("\"event_date\"");
+});
+
+test("Garden Vows reuses one wedding theme and fills names and date per event", async ({
+  page,
+}) => {
+  await createWeddingEvent(page, {
+    eventName: "Maya and Noah",
+    partner1: "Maya",
+    partner2: "Noah",
+    date: "September 19, 2027",
+  });
+
+  const result = await page.evaluate(async () => {
+    const api = window.__photoboothTest;
+    const theme = api.getThemeByKey("wedding:romantic");
+    const overlays = theme.overlays;
+    const landscape = overlays.find((item) => item.id === "garden-vows-single-landscape");
+    const template = theme.templates[0];
+    const sources = [...overlays.map((item) => item.src), template.src];
+    const responses = await Promise.all(
+      sources.map(async (src) => ({ src, ok: (await fetch(src)).ok }))
+    );
+    return {
+      themeName: theme.name,
+      themeKey: api.getActiveEvent().themeKey,
+      event: api.getActiveEvent(),
+      overlayText: api.probeOverlayAutofill(landscape.src, 1800, 1200, api.getActiveEvent()),
+      templateText: api.probeTemplateAutofill(template, 720, 2160, api.getActiveEvent()),
+      responses,
+    };
+  });
+
+  expect(result.themeName).toBe("Garden Vows");
+  expect(result.themeKey).toBe("wedding:romantic");
+  expect(result.event.partner1).toBe("Maya");
+  expect(result.event.partner2).toBe("Noah");
+  expect(result.overlayText).toContain("Maya & Noah");
+  expect(result.overlayText).toContain("September 19, 2027");
+  expect(result.templateText).toContain("Maya & Noah");
+  expect(result.templateText).toContain("September 19, 2027");
+  expect(result.responses.every((response) => response.ok)).toBe(true);
 });
 
 test("blemish correction heals local skin spots", async ({ page }) => {

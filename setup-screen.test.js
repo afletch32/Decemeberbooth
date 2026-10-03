@@ -427,6 +427,27 @@ test("setup theme dropdown groups themes by user-facing category", () => {
   );
 });
 
+test("one reusable Garden Vows theme holds event-specific names and dates", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const overlays = JSON.parse(
+    readProjectFile("assets", "wedding", "garden-vows", "overlays", "overlays.json")
+  );
+  const templates = JSON.parse(
+    readProjectFile("assets", "wedding", "garden-vows", "templates", "templates.json")
+  );
+
+  assert.ok(appScript.includes('"wedding:romantic"'));
+  assert.deepEqual(
+    overlays.map((item) => item.src),
+    ["garden-vows-single-portrait.png", "garden-vows-single-landscape.png"]
+  );
+  assert.deepEqual(
+    templates[0].textFields.map((field) => field.key),
+    ["couple_names", "event_date"]
+  );
+  assert.ok(!appScript.includes("Olivia and Nicolas"));
+});
+
 test("fourth of july theme includes Cloudinary overlay entries", () => {
   const appScript = readProjectFile("scripts", "app.js");
 

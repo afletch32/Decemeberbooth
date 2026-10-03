@@ -119,7 +119,9 @@ test("wedding overlay manifests define explicit photo windows", () => {
   assert.ok(timeless.includes('"background"'));
   assert.ok(garden.includes('"photoSlots"'));
   assert.ok(garden.includes('"foreground"'));
-  assert.ok(garden.includes('"background"'));
+  assert.ok(garden.includes('"textFields"'));
+  assert.ok(garden.includes('"couple_names"'));
+  assert.ok(garden.includes('"event_date"'));
 });
 
 test("imported overlays can save a draggable photo window without using the legacy builder", () => {

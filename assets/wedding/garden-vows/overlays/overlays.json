@@ -1,74 +1,36 @@
 [
   {
-    "src": "garden-vows-strip-overlay.svg",
-    "id": "garden-vows-strip",
-    "name": "Garden Vows Strip",
-    "type": "photo-strip-layout",
+    "src": "garden-vows-single-portrait.png",
+    "id": "garden-vows-single-portrait",
+    "name": "Garden Vows Single Photo · Portrait",
+    "type": "overlay",
     "category": "wedding",
-    "aspectRatio": "1:3",
-    "background": {
-      "type": "color",
-      "value": "#fffdf9"
-    },
-    "foreground": {
-      "type": "image",
-      "src": "garden-vows-strip-overlay.svg"
-    },
+    "orientation": "portrait",
+    "aspectRatio": "2:3",
+    "foreground": { "type": "image", "src": "garden-vows-single-portrait.png" },
     "photoSlots": [
-      {
-        "x": 0.1139,
-        "y": 0.2,
-        "width": 0.7722,
-        "height": 0.1843,
-        "borderRadius": 0.02,
-        "objectFit": "cover",
-        "objectPosition": "center"
-      },
-      {
-        "x": 0.1139,
-        "y": 0.4083,
-        "width": 0.7722,
-        "height": 0.1843,
-        "borderRadius": 0.02,
-        "objectFit": "cover",
-        "objectPosition": "center"
-      },
-      {
-        "x": 0.1139,
-        "y": 0.6167,
-        "width": 0.7722,
-        "height": 0.1843,
-        "borderRadius": 0.02,
-        "objectFit": "cover",
-        "objectPosition": "center"
-      }
+      { "x": 0.1572, "y": 0.095, "width": 0.6875, "height": 0.68, "objectFit": "cover" }
+    ],
+    "textFields": [
+      { "key": "couple_names", "xPct": 0.14, "yPct": 0.8, "wPct": 0.72, "hPct": 0.065, "fontFamily": "'Great Vibes', cursive", "fontWeight": "400", "fontSize": 78, "minFontSize": 34, "color": "#38584a", "align": "center" },
+      { "key": "event_date", "xPct": 0.2, "yPct": 0.88, "wPct": 0.6, "hPct": 0.035, "fontFamily": "'Lora', serif", "fontWeight": "400", "fontSize": 34, "minFontSize": 20, "color": "#65766b", "align": "center" }
     ]
   },
   {
-    "src": "garden-vows-single-overlay.svg",
-    "id": "garden-vows-single",
-    "name": "Garden Vows Single",
+    "src": "garden-vows-single-landscape.png",
+    "id": "garden-vows-single-landscape",
+    "name": "Garden Vows Single Photo · Landscape",
     "type": "overlay",
     "category": "wedding",
+    "orientation": "landscape",
     "aspectRatio": "3:2",
-    "background": {
-      "type": "color",
-      "value": "#fffdf9"
-    },
-    "foreground": {
-      "type": "image",
-      "src": "garden-vows-single-overlay.svg"
-    },
+    "foreground": { "type": "image", "src": "garden-vows-single-landscape.png" },
     "photoSlots": [
-      {
-        "x": 0.0811,
-        "y": 0.3583,
-        "width": 0.8378,
-        "height": 0.4883,
-        "borderRadius": 0.02,
-        "objectFit": "cover",
-        "objectPosition": "center"
-      }
+      { "x": 0.118, "y": 0.128, "width": 0.765, "height": 0.617, "objectFit": "cover" }
+    ],
+    "textFields": [
+      { "key": "couple_names", "xPct": 0.15, "yPct": 0.77, "wPct": 0.7, "hPct": 0.075, "fontFamily": "'Great Vibes', cursive", "fontWeight": "400", "fontSize": 72, "minFontSize": 32, "color": "#38584a", "align": "center" },
+      { "key": "event_date", "xPct": 0.2, "yPct": 0.87, "wPct": 0.6, "hPct": 0.04, "fontFamily": "'Lora', serif", "fontWeight": "400", "fontSize": 30, "minFontSize": 18, "color": "#65766b", "align": "center" }
     ]
   }
 ]

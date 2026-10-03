@@ -1,5 +1,13 @@
 # Build status
 
+- Current goal: Provide one reusable Garden Vows wedding design with event-specific names and date.
+- Done: Added transparent single-photo portrait/landscape overlays and a three-photo strip template with editable couple-name/date fields; removed fixed sample-name wedding SVGs; made the wedding layout pack selectable with shared guest screens.
+- Verification: `npm test` passes (257 tests, 0 failures); focused Chromium check confirms Garden Vows can be selected once, uses event-specific names/date in overlay and strip text, and serves all artwork files. Full Chromium release gate passes for all approved themes in portrait and landscape (2 tests, 20 guest-flow runs); deployed commit `acd31cc` to `https://aaaa88c3.decemeberbooth.pages.dev`, and verified the live app bundle and all three image assets return successfully.
+- In progress: None.
+- Next steps: None.
+- Known bugs/blockers: None known.
+- Important decisions: Keep couple-specific names/dates on the saved event record, not in unique theme artwork; use the same reusable wedding preset for all couples.
+
 - Current fix: Permanently remove retired theme packs from catalogs, generators, and production.
 - Done: Removed all 13 unapproved entries from the live Cloudflare theme store, preserving the nine approved packs. Removed Brand Studio and Lead Capture built-ins and upload mappings, deleted Basic source assets/manifests/mappings, and kept storage cleanup so stale browser catalogs are purged. Bumped app and service-worker caches. Reduced five oversized booth-screen videos while preserving dimensions, durations, and available audio for Pages.
 - Verification: Production picker shows only approved packs; live `/api/themes` returns nine approved packs. `npm test` passes (256 tests, 0 failures); local rendered picker check passes. Production deployment complete at https://d1f97b94.decemeberbooth.pages.dev (commit fc19c6a); production picker and live `/api/themes` verified with only approved packs and no retired entries.
