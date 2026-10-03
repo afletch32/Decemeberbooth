@@ -1,5 +1,7 @@
 # Build Status
 
+- Fixed guest artwork loading so slow downloads keep the selected idle/photo-choice screen instead of switching to the generic screen after eight seconds. Cached images complete immediately, and late callbacks from a previous screen cannot clear a newer selection. Added behavioral regression tests; physical iPad verification is still needed.
+
 ## Current goal
 
 - Keep the guest-facing booth animation lifecycle explicit and modular while preserving the existing capture and upload pipeline.
