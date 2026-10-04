@@ -2,9 +2,10 @@
 
 - Current goal: Keep wedding layouts reusable and keep theme fonts out of the admin interface.
 - Done: Renamed the Garden Vows preset and its layout labels to Wedding. Scoped theme typography to the booth and welcome screens; admin interface fonts remain application-wide defaults.
-- Verification: `npm test` passes (257 tests, 0 failures); Chromium confirms Wedding selection, event-specific names/date, and stable Montserrat admin heading/Inter page body while booth fonts use the wedding pairing.
-- In progress: Commit, push, and production deployment.
-- Next steps: Verify the deployed picker label and app bundle.
+- Verification: `npm test` passes (257 tests, 0 failures); Chromium confirms Wedding selection, event-specific names/date, and stable Montserrat admin heading/Inter page body while booth fonts use the wedding pairing. Production page and app bundle return 200 and include the renamed preset/font scoping.
+- In progress: None.
+- Next steps: None.
+- Deployment: `https://decemeberbooth.pages.dev` updated from commit `4e30fd5` (Pages deployment `https://3d31acc0.decemeberbooth.pages.dev`).
 - Known bugs/blockers: None known.
 - Important decisions: Keep couple-specific names/dates on the saved event record, not in unique theme artwork; use the same reusable wedding preset for all couples.
 
