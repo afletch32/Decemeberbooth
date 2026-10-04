@@ -60,3 +60,49 @@ test("operator saves one PayPal print price on a saved event", async ({ page }) 
   await expect(page.locator("#paypalPrintConfigStatus"))
     .toHaveText("PayPal live checkout ready · 5.50 USD per print.");
 });
+
+test("guest sees the event print price before checkout", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const event = { id: "wedding", name: "Wedding", themeKey: "wedding", printPrice: 5.5 };
+  await page.addInitScript(() => {
+    localStorage.setItem("photoboothEvents", JSON.stringify([
+      { id: "wedding", name: "Wedding", themeKey: "wedding", printPrice: 5.5 },
+    ]));
+    localStorage.setItem("photoboothActiveEventId", "wedding");
+    localStorage.setItem("photoboothPrintSettings", JSON.stringify({ mode: "paid", eventId: "wedding" }));
+  });
+  await page.route("**/api/events**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ events: [event], activeEventId: event.id }),
+  }));
+  await page.route("**/api/paypal/config**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      ok: true,
+      configured: true,
+      environment: "live",
+      amount: "5.50",
+      currency: "USD",
+      clientId: "public-client-id",
+    }),
+  }));
+
+  await page.goto("/index.html?testMode=booth&testPaidPrint=true", { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      window.__photoboothQA.enterState("final");
+      requestAnimationFrame(resolve);
+    });
+  }));
+
+  await expect(page.locator("#finalPreview")).toHaveClass(/show/, { timeout: 15000 });
+  await expect(page.locator("#printPriceNotice"))
+    .toHaveText("Print price: $5.50");
+  await expect(page.locator("#requestPrintBtn")).toBeEnabled();
+  await expect(page.locator("#paypalPrintCheckout")).toHaveClass(/hidden/);
+  const noticeBounds = await page.locator("#printPriceNotice").boundingBox();
+  expect(noticeBounds.x).toBeGreaterThanOrEqual(0);
+  expect(noticeBounds.x + noticeBounds.width).toBeLessThanOrEqual(390);
+});

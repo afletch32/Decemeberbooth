@@ -199,6 +199,7 @@ const APPROVED_THEME_KEYS = new Set([
   "fall:halloween",
   "fall:cuteHalloween",
   "school:hawks",
+  "school:hawksTitansStadium",
   "school:hawksCheer",
   "school:ane",
   "school:streamNight",
@@ -601,6 +602,104 @@ let themes = {
           prompt: "Tap to start",
         },
         vibeSummary: "Youth football, sideline spirit, family pride, and Hawks game-day energy",
+      },
+      hawksTitansStadium: {
+        name: "Spring Hill Hawks at Nissan Stadium",
+        eventTypes: ["community", "sports"],
+        fontPairingStyle: "community",
+        accent: "#041E42",
+        accent2: "#16A34A",
+        font: "'Anton', sans-serif",
+        background: "",
+        logo: "/assets/themes/spring-hill-hawks/spring-hill-hawks-logo.png",
+        backgrounds: [
+          "/assets/themes/spring-hill-hawks/nissan-stadium-aerial-day.jpg",
+          "/assets/themes/spring-hill-hawks/spring-hill-hawks-background-landscape.webp",
+          "/assets/themes/spring-hill-hawks/spring-hill-hawks-background-portrait.webp",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788496/photobooth/events/assets/hawks-background-football_bclba6.png",
+        ],
+        idleScreens: [
+          {
+            src: "/assets/themes/spring-hill-hawks/nissan-stadium-river-day.jpg",
+            name: "Nissan Stadium river view daytime start screen",
+            role: "idle",
+            orientation: "portrait",
+            buttonZones: { start: { x: 50, y: 78, width: 68, height: 16 } },
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-idle-landscape.webp",
+            name: "Hawks at Nissan Stadium idle landscape",
+            role: "idle",
+            orientation: "landscape",
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/nissan-stadium-aerial-day.jpg",
+            name: "Nissan Stadium aerial field photo choice screen",
+            role: "photo-choice",
+            orientation: "portrait",
+            buttonZones: {
+              singlePhoto: { x: 50, y: 48, width: 64, height: 26 },
+              photoStrip: { x: 50, y: 74, width: 64, height: 24 },
+            },
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-photo-choice-landscape.webp",
+            name: "Hawks at Nissan Stadium photo choice landscape",
+            role: "photo-choice",
+            orientation: "landscape",
+          },
+        ],
+        thankYouScreens: [
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-thank-you-portrait.webp",
+            name: "Hawks at Nissan Stadium thank you portrait",
+            orientation: "portrait",
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-thank-you-landscape.webp",
+            name: "Hawks at Nissan Stadium thank you landscape",
+            orientation: "landscape",
+          },
+        ],
+        overlays: [
+          {
+            src: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg",
+            renderSrc: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg",
+            name: "Nissan Stadium day game with date",
+            orientation: "portrait",
+            aspectRatio: "4:5",
+            background: { type: "image", src: "/assets/themes/spring-hill-hawks/nissan-stadium-aerial-day.jpg" },
+            foreground: { type: "image", src: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg" },
+            photoSlots: [{ x: 0.116, y: 0.405, width: 0.768, height: 0.379, objectFit: "cover", objectPosition: "center" }],
+            textFields: [
+              { key: "event_date", xPct: 0.2, yPct: 0.93, wPct: 0.6, hPct: 0.04, fontFamily: "'Anton', sans-serif", fontWeight: "700", fontSize: 30, minFontSize: 18, color: "#ffffff", align: "center" },
+            ],
+          },
+          { src: "/assets/school/hawks/overlays/hawks-frame-go-hawks.png", name: "Hawks stadium game day", orientation: "portrait" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-fan.png", name: "Hawks stadium fan", orientation: "landscape" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-players.png", name: "Hawks stadium players", orientation: "portrait" },
+        ],
+        templates: [
+          {
+            src: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg",
+            renderSrc: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg",
+            name: "Nissan Stadium day game photo print",
+            layout: "single_photo",
+            background: { type: "image", src: "/assets/themes/spring-hill-hawks/nissan-stadium-aerial-day.jpg" },
+            foreground: { type: "image", src: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg" },
+            photoSlots: [{ x: 0.116, y: 0.405, width: 0.768, height: 0.379, objectFit: "cover", objectPosition: "center" }],
+            textFields: [
+              { key: "event_date", xPct: 0.2, yPct: 0.93, wPct: 0.6, hPct: 0.04, fontFamily: "'Anton', sans-serif", fontWeight: "700", fontSize: 30, minFontSize: 18, color: "#ffffff", align: "center" },
+            ],
+          },
+        ],
+        welcome: {
+          title: "Hawks Take Nissan Stadium",
+          portrait: "",
+          landscape: "",
+          prompt: "Tap to start",
+        },
+        vibeSummary: "Spring Hill Hawks game day at Titans Stadium, with team colors and sideline spirit",
       },
       hawksCheer: {
         name: "Spring Hill Hawks Cheer",
@@ -1418,6 +1517,7 @@ const DOM = {
   reviewRetakeBtn: document.getElementById("reviewRetakeBtn"),
   finishBoothBtn: document.getElementById("finishBoothBtn"),
   finalPrintActions: document.getElementById("finalPrintActions"),
+  printPriceNotice: document.getElementById("printPriceNotice"),
   requestPrintBtn: document.getElementById("requestPrintBtn"),
   paypalPrintCheckout: document.getElementById("paypalPrintCheckout"),
   lastShot: document.getElementById("lastShot"),
@@ -2993,6 +3093,7 @@ const THEME_SETUP_GROUP_ITEM_ORDER = {
   Wedding: ["Wedding", "Timeless Romance"],
   Youth: [
     "Spring Hill Hawks",
+    "Spring Hill Hawks at Titans Stadium",
     "Spring Hill Hawks Cheer",
     "Amanda North Back to School",
     "Amanda North STREAM Night",
@@ -3215,6 +3316,7 @@ function syncSessionThemeSearch() {
 }
 
 let activeThemeQuickFilter = "All";
+let themeQuickRenderSignature = "";
 
 const THEME_QUICK_FILTERS = ["All", "Celebrations", "Weddings", "Sports", "Schools", "Seasons", "Holidays"];
 
@@ -3253,59 +3355,80 @@ function getThemeQuickMeta(theme) {
 function renderThemeQuickPicker() {
   if (!DOM.themeQuickFilters || !DOM.themeQuickGrid) return;
   const selectedKey = (DOM.createPathThemeSelect && DOM.createPathThemeSelect.value) || getSelectedThemeKey() || "";
-  DOM.themeQuickFilters.innerHTML = "";
-  THEME_QUICK_FILTERS.forEach((filter) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "theme-quick-filter";
-    button.textContent = filter;
-    button.classList.toggle("active", filter === activeThemeQuickFilter);
-    button.setAttribute("aria-pressed", filter === activeThemeQuickFilter ? "true" : "false");
-    button.addEventListener("click", () => {
-      activeThemeQuickFilter = filter;
-      renderThemeQuickPicker();
+  if (DOM.themeQuickFilters.dataset.bound !== "true") {
+    THEME_QUICK_FILTERS.forEach((filter) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "theme-quick-filter";
+      button.dataset.themeFilter = filter;
+      button.textContent = filter;
+      button.addEventListener("click", () => {
+        activeThemeQuickFilter = filter;
+        renderThemeQuickPicker();
+      });
+      DOM.themeQuickFilters.appendChild(button);
     });
-    DOM.themeQuickFilters.appendChild(button);
+    DOM.themeQuickFilters.dataset.bound = "true";
+  }
+  DOM.themeQuickFilters.querySelectorAll("[data-theme-filter]").forEach((button) => {
+    const active = button.dataset.themeFilter === activeThemeQuickFilter;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
   });
   const entries = getSetupThemeEntries().filter((entry) => themeMatchesQuickFilter(entry, activeThemeQuickFilter));
-  DOM.themeQuickGrid.innerHTML = "";
-  entries.slice(0, 8).forEach((entry) => {
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = "theme-quick-card";
-    card.classList.toggle("active", entry.key === selectedKey);
-    card.setAttribute("aria-pressed", entry.key === selectedKey ? "true" : "false");
-    const preview = document.createElement("div");
-    preview.className = "theme-quick-card-art";
-    const previewUrl = getThemeQuickPreview(entry.theme);
-    if (previewUrl) preview.dataset.previewSrc = getAssetPreviewSrc(previewUrl);
-    const copy = document.createElement("span");
-    copy.className = "theme-quick-card-copy";
-    const label = document.createElement("strong");
-    label.textContent = entry.label;
-    const group = document.createElement("span");
-    group.textContent = entry.group;
-    copy.append(label, group);
-    card.append(preview, copy);
-    card.addEventListener("click", () => activateThemeFromSetupKey(entry.key));
-    DOM.themeQuickGrid.appendChild(card);
-  });
-  const applyPreview = (node) => {
-    const src = node.dataset.previewSrc;
-    if (src && !node.style.backgroundImage) node.style.backgroundImage = `url("${src}")`;
-  };
-  if ("IntersectionObserver" in window) {
-    const observer = new IntersectionObserver((items, currentObserver) => {
-      items.forEach((item) => {
-        if (!item.isIntersecting) return;
-        applyPreview(item.target);
-        currentObserver.unobserve(item.target);
-      });
-    }, { rootMargin: "160px" });
-    DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach((node) => observer.observe(node));
-  } else {
-    DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach(applyPreview);
+  const visibleEntries = entries.slice(0, 8);
+  const renderSignature = JSON.stringify(visibleEntries.map((entry) => [
+    entry.key,
+    entry.label,
+    entry.group,
+    getThemeQuickPreview(entry.theme),
+  ]));
+  if (renderSignature !== themeQuickRenderSignature) {
+    const cards = document.createDocumentFragment();
+    visibleEntries.forEach((entry) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "theme-quick-card";
+      card.dataset.themeKey = entry.key;
+      const preview = document.createElement("div");
+      preview.className = "theme-quick-card-art";
+      const previewUrl = getThemeQuickPreview(entry.theme);
+      if (previewUrl) preview.dataset.previewSrc = getAssetPreviewSrc(previewUrl);
+      const copy = document.createElement("span");
+      copy.className = "theme-quick-card-copy";
+      const label = document.createElement("strong");
+      label.textContent = entry.label;
+      const group = document.createElement("span");
+      group.textContent = entry.group;
+      copy.append(label, group);
+      card.append(preview, copy);
+      card.addEventListener("click", () => activateThemeFromSetupKey(entry.key));
+      cards.appendChild(card);
+    });
+    DOM.themeQuickGrid.replaceChildren(cards);
+    themeQuickRenderSignature = renderSignature;
+    const applyPreview = (node) => {
+      const src = node.dataset.previewSrc;
+      if (src && !node.style.backgroundImage) node.style.backgroundImage = `url("${src}")`;
+    };
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver((items, currentObserver) => {
+        items.forEach((item) => {
+          if (!item.isIntersecting) return;
+          applyPreview(item.target);
+          currentObserver.unobserve(item.target);
+        });
+      }, { rootMargin: "160px" });
+      DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach((node) => observer.observe(node));
+    } else {
+      DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach(applyPreview);
+    }
   }
+  DOM.themeQuickGrid.querySelectorAll("[data-theme-key]").forEach((card) => {
+    const active = card.dataset.themeKey === selectedKey;
+    card.classList.toggle("active", active);
+    card.setAttribute("aria-pressed", active ? "true" : "false");
+  });
   const selectedEntry = getSetupThemeEntries().find((entry) => entry.key === selectedKey);
   if (DOM.themeQuickSelectionName) DOM.themeQuickSelectionName.textContent = selectedEntry ? selectedEntry.label : "Choose a theme";
   if (DOM.themeQuickSelectionMeta) DOM.themeQuickSelectionMeta.textContent = selectedEntry ? `${selectedEntry.group} · ${getThemeQuickMeta(selectedEntry.theme)}` : "Choose a look to see the included guest screens and photo styling.";
@@ -6504,6 +6627,8 @@ async function loadThemesRemote() {
     const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
     const migratedSummerAssets = migrateSummerThemeAssets(themes);
     const migratedSpringHillHawks = migrateSpringHillHawksAssets(themes);
+    const migratedSpringHillHawksStadium =
+      migrateSpringHillHawksStadiumAssets(themes);
     const migratedSpringHillHawksCheer =
       migrateSpringHillHawksCheerAssets(themes);
     const repairedBackgroundDefaults = repairCorruptedBackgroundDefaults();
@@ -6519,6 +6644,7 @@ async function loadThemesRemote() {
       migratedAmandaNorthScreens ||
       migratedSummerAssets ||
       migratedSpringHillHawks ||
+      migratedSpringHillHawksStadium ||
       migratedSpringHillHawksCheer
     )
       scheduleThemesRemoteSync();
@@ -6527,6 +6653,7 @@ async function loadThemesRemote() {
     if (selected) {
       loadTheme(selected);
     }
+    renderThemeQuickPicker();
     updateSyncStatus("Synced from server");
   } catch (_) {}
 }
@@ -7167,11 +7294,8 @@ function loadPayPalPrintSdk(clientId, currency) {
 
 async function showPayPalPrintCheckout(item) {
   if (!item || !DOM.paypalPrintCheckout) throw new Error("The print request could not be loaded.");
-  const configResponse = await fetch(`/api/paypal/config?eventId=${encodeURIComponent(item.eventId)}`, { cache: "no-store" });
-  const config = await configResponse.json();
-  if (!configResponse.ok || !config.configured || !config.clientId) {
-    throw new Error("PayPal checkout is not connected. Ask the attendant to check the payment setup.");
-  }
+  const config = await fetchPayPalPrintConfig(item.eventId);
+  if (DOM.printPriceNotice) DOM.printPriceNotice.textContent = `Print price: ${formatPayPalPrintPrice(config.amount, config.currency)}`;
   const paypal = await loadPayPalPrintSdk(config.clientId, config.currency);
   const checkout = DOM.paypalPrintCheckout;
   checkout.innerHTML = "";
@@ -10429,7 +10553,7 @@ function enterBoothQaState(state = "capture") {
       const finalImage = buildBoothTestFinalImage();
       showFinal(finalImage, {
         shareUrl: BOOTH_TEST_SHARE_URL,
-        printEligible: false,
+        printEligible: getUrlParam("testPaidPrint") === "true",
       });
       updateOutputSurfaceTrace({
         localFinalUrl: finalImage,
@@ -12924,6 +13048,44 @@ function setupFinalExperienceActions() {
 }
 
 let pendingFinalPrintImageUrl = "";
+let finalPrintPriceRequestId = 0;
+
+async function fetchPayPalPrintConfig(eventId) {
+  const response = await fetch(`/api/paypal/config?eventId=${encodeURIComponent(eventId || "default")}`, { cache: "no-store" });
+  const config = await response.json();
+  if (!response.ok || !config.configured || !config.clientId) {
+    throw new Error("PayPal checkout is not connected. Ask the attendant to check the payment setup.");
+  }
+  return config;
+}
+
+function formatPayPalPrintPrice(amount, currency) {
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(Number(amount));
+  } catch (_) {
+    return `${currency} ${amount}`;
+  }
+}
+
+async function showFinalPrintPrice(eventId) {
+  const requestId = ++finalPrintPriceRequestId;
+  if (DOM.printPriceNotice) {
+    DOM.printPriceNotice.classList.remove("hidden");
+    DOM.printPriceNotice.textContent = "Checking event print price…";
+  }
+  if (DOM.requestPrintBtn) DOM.requestPrintBtn.disabled = true;
+  try {
+    const config = await fetchPayPalPrintConfig(eventId);
+    if (requestId !== finalPrintPriceRequestId) return;
+    if (DOM.printPriceNotice) {
+      DOM.printPriceNotice.textContent = `Print price: ${formatPayPalPrintPrice(config.amount, config.currency)}`;
+    }
+    if (DOM.requestPrintBtn) DOM.requestPrintBtn.disabled = false;
+  } catch (_) {
+    if (requestId !== finalPrintPriceRequestId) return;
+    if (DOM.printPriceNotice) DOM.printPriceNotice.textContent = "Print price unavailable. Please ask the attendant.";
+  }
+}
 
 function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
@@ -13069,14 +13231,22 @@ function showFinal(url, options = {}) {
         DOM.qrHint.style.display = "block";
       }
     }
-    const printEnabled = getPrintSettings().mode !== "off" && printEligible;
+    const printSettings = getPrintSettings();
+    const printEnabled = printSettings.mode !== "off" && printEligible;
+    const paidPrintEnabled = printEnabled && printSettings.mode === "paid";
     pendingFinalPrintImageUrl = printEnabled ? printImageUrl : "";
     if (DOM.finalPrintActions)
       DOM.finalPrintActions.classList.toggle("hidden", !printEnabled);
     if (DOM.requestPrintBtn) {
-      DOM.requestPrintBtn.disabled = false;
+      DOM.requestPrintBtn.disabled = paidPrintEnabled;
       DOM.requestPrintBtn.textContent = "Print";
     }
+    if (DOM.printPriceNotice) {
+      DOM.printPriceNotice.textContent = "";
+      DOM.printPriceNotice.classList.toggle("hidden", !paidPrintEnabled);
+    }
+    if (paidPrintEnabled) showFinalPrintPrice(getPrintQueueEventId());
+    else finalPrintPriceRequestId += 1;
     if (DOM.paypalPrintCheckout) {
       DOM.paypalPrintCheckout.innerHTML = "";
       DOM.paypalPrintCheckout.classList.add("hidden");
@@ -14699,6 +14869,11 @@ function hideFinal(options = {}) {
     DOM.qrCodeContainer.dataset.error = "false";
   }
   if (DOM.finalPrintActions) DOM.finalPrintActions.classList.add("hidden");
+  finalPrintPriceRequestId += 1;
+  if (DOM.printPriceNotice) {
+    DOM.printPriceNotice.textContent = "";
+    DOM.printPriceNotice.classList.add("hidden");
+  }
   if (DOM.paypalPrintCheckout) {
     DOM.paypalPrintCheckout.innerHTML = "";
     DOM.paypalPrintCheckout.classList.add("hidden");
@@ -18251,6 +18426,87 @@ function migrateSpringHillHawksAssets(target = themes) {
   return migrated;
 }
 
+function migrateSpringHillHawksStadiumAssets(target = themes) {
+  const theme = target?.school?.themes?.hawksTitansStadium;
+  const defaults = BUILTIN_THEMES.school?.themes?.hawksTitansStadium;
+  if (!theme || !defaults) return false;
+  let migrated = false;
+
+  if (theme.name === "Spring Hill Hawks at Titans Stadium") {
+    theme.name = defaults.name;
+    migrated = true;
+  }
+  if (theme.welcome?.title === "Hawks Take Titans Stadium") {
+    theme.welcome.title = defaults.welcome.title;
+    migrated = true;
+  }
+
+  const defaultBackgrounds = Array.isArray(defaults.backgrounds)
+    ? defaults.backgrounds
+    : [];
+  const currentBackgrounds = Array.isArray(theme.backgrounds)
+    ? theme.backgrounds
+    : [];
+  const missingBackgrounds = defaultBackgrounds.filter(
+    (entry) => !currentBackgrounds.some((item) => getAssetEntrySrc(item) === getAssetEntrySrc(entry))
+  );
+  if (missingBackgrounds.length) {
+    theme.backgrounds = [...missingBackgrounds.map(cloneThemeValue), ...currentBackgrounds];
+    migrated = true;
+  }
+
+  const mergeScreens = (field) => {
+    const current = Array.isArray(theme[field]) ? theme[field].slice() : [];
+    const screens = Array.isArray(defaults[field]) ? defaults[field] : [];
+    screens.forEach((screen) => {
+      const matchIndex = current.findIndex((entry) =>
+        entry &&
+        entry.role === screen.role &&
+        normalizeIdleScreenOrientation(entry.orientation) ===
+          normalizeIdleScreenOrientation(screen.orientation)
+      );
+      if (matchIndex === -1) {
+        current.push(cloneThemeValue(screen));
+        migrated = true;
+      } else if (
+        normalizeIdleScreenOrientation(screen.orientation) === "portrait" &&
+        current[matchIndex].src !== screen.src
+      ) {
+        current[matchIndex] = {
+          ...current[matchIndex],
+          ...cloneThemeValue(screen),
+        };
+        migrated = true;
+      }
+    });
+    if (current.length !== (theme[field] || []).length) theme[field] = current;
+  };
+  mergeScreens("idleScreens");
+
+  const mergeAssets = (field) => {
+    const current = Array.isArray(theme[field]) ? theme[field].slice() : [];
+    const assets = Array.isArray(defaults[field]) ? defaults[field] : [];
+    assets.forEach((asset) => {
+      const src = getAssetEntrySrc(asset);
+      const matchIndex = current.findIndex((entry) => getAssetEntrySrc(entry) === src);
+      if (matchIndex === -1) {
+        current.push(cloneThemeValue(asset));
+        migrated = true;
+      } else if (
+        src === "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg" &&
+        JSON.stringify(current[matchIndex]) !== JSON.stringify(asset)
+      ) {
+        current[matchIndex] = cloneThemeValue(asset);
+        migrated = true;
+      }
+    });
+    theme[field] = current;
+  };
+  mergeAssets("overlays");
+  mergeAssets("templates");
+  return migrated;
+}
+
 function migrateSpringHillHawksCheerAssets(target = themes) {
   const themeGroup = target?.school?.themes;
   const defaults = BUILTIN_THEMES.school?.themes?.hawksCheer;
@@ -18609,6 +18865,8 @@ function loadThemesFromStorage() {
       const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
       const migratedSummerAssets = migrateSummerThemeAssets(themes);
       const migratedSpringHillHawks = migrateSpringHillHawksAssets(themes);
+      const migratedSpringHillHawksStadium =
+        migrateSpringHillHawksStadiumAssets(themes);
       const migratedSpringHillHawksCheer =
         migrateSpringHillHawksCheerAssets(themes);
       try {
@@ -18622,6 +18880,7 @@ function loadThemesFromStorage() {
         migratedAmandaNorthScreens ||
         migratedSummerAssets ||
         migratedSpringHillHawks ||
+        migratedSpringHillHawksStadium ||
         migratedSpringHillHawksCheer ||
         removedUnapprovedBuiltinThemes
       )

@@ -5090,6 +5090,24 @@
       box-shadow: 0 8px 18px rgba(58, 88, 78, 0.1);
     }
 
+    #printPriceNotice {
+      grid-column: 1 / -1;
+      margin: 0;
+      padding: 12px 16px;
+      border: 1px solid rgba(23, 73, 68, 0.16);
+      border-radius: 16px;
+      background: #e8f6f2;
+      color: #173f3b;
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    #printPriceNotice.hidden {
+      display: none;
+    }
+
     #paypalPrintCheckout {
       grid-column: 1 / -1;
       width: min(100%, 340px);
@@ -7582,6 +7600,7 @@
             </div>
             <canvas id="qrCode"></canvas>
             <div id="finalPrintActions" class="final-print-actions hidden">
+              <p id="printPriceNotice" class="hidden" role="status" aria-live="polite"></p>
               <button id="requestPrintBtn" type="button">Print</button>
               <div id="paypalPrintCheckout" class="hidden" aria-live="polite"></div>
             </div>
@@ -7852,7 +7871,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261004-event-print-pricing"></script>
+  <script type="module" src="scripts/app.js?v=20261004-nissan-stadium-theme"></script>
 </body>
 
 </html>

@@ -231,6 +231,32 @@ test("Spring Hill Hawks includes its complete navy green and white screen pack",
   assert.ok(app.includes("function migrateSpringHillHawksAssets"));
 });
 
+test("Nissan Stadium Hawks theme uses two distinct daytime scenes and a date-ready print frame", () => {
+  const assetDirectory = join(process.cwd(), "assets/themes/spring-hill-hawks");
+  const riverView = readFileSync(join(assetDirectory, "nissan-stadium-river-day.jpg"));
+  const aerialView = readFileSync(join(assetDirectory, "nissan-stadium-aerial-day.jpg"));
+  const riverThumbnail = readFileSync(join(assetDirectory, "nissan-stadium-river-day.thumb.webp"));
+  const aerialThumbnail = readFileSync(join(assetDirectory, "nissan-stadium-aerial-day.thumb.webp"));
+  const frame = readFileSync(join(assetDirectory, "nissan-stadium-frame.svg"), "utf8");
+  assert.ok(riverView.length > 0);
+  assert.ok(aerialView.length > 0);
+  assert.ok(riverThumbnail.length > 0);
+  assert.ok(aerialThumbnail.length > 0);
+  assert.notDeepEqual(riverView, aerialView);
+  assert.ok(frame.includes("NISSAN STADIUM"));
+  assert.ok(frame.includes("nissan-stadium-aerial-day.jpg"));
+
+  const themeSource = app.slice(app.indexOf("hawksTitansStadium:"), app.indexOf("hawksCheer:"));
+  assert.ok(app.includes('"school:hawksTitansStadium"'));
+  assert.ok(themeSource.includes('name: "Spring Hill Hawks at Nissan Stadium"'));
+  assert.ok(themeSource.includes('name: "Nissan Stadium river view daytime start screen"'));
+  assert.ok(themeSource.includes('name: "Nissan Stadium aerial field photo choice screen"'));
+  assert.ok(themeSource.includes('name: "Nissan Stadium day game with date"'));
+  assert.ok(themeSource.includes('name: "Nissan Stadium day game photo print"'));
+  assert.ok(themeSource.includes('{ key: "event_date"'));
+  assert.ok(app.includes("function migrateSpringHillHawksStadiumAssets"));
+});
+
 test("Spring Hill Hawks Cheer stays separate with its complete cartoon screen pack", () => {
   const assetDirectory = join(
     process.cwd(),
