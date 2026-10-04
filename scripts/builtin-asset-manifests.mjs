@@ -104,7 +104,7 @@ const BUILTIN_ASSET_MANIFESTS = {
     {
       src: "garden-vows-single-portrait.png",
       id: "garden-vows-single-portrait",
-      name: "Garden Vows Single Photo · Portrait",
+      name: "Wedding Photo · Portrait",
       type: "overlay",
       category: "wedding",
       orientation: "portrait",
@@ -117,7 +117,7 @@ const BUILTIN_ASSET_MANIFESTS = {
     {
       src: "garden-vows-single-landscape.png",
       id: "garden-vows-single-landscape",
-      name: "Garden Vows Single Photo · Landscape",
+      name: "Wedding Photo · Landscape",
       type: "overlay",
       category: "wedding",
       orientation: "landscape",
@@ -131,7 +131,7 @@ const BUILTIN_ASSET_MANIFESTS = {
   "assets/wedding/garden-vows/templates/": [
     {
       src: "garden-vows-three-photo-strip.png",
-      name: "Garden Vows Three-Photo Strip",
+      name: "Wedding Three-Photo Strip",
       layout: "photo_strip_3",
       slots: [
         { x: 130, y: 148, w: 468, h: 459 },

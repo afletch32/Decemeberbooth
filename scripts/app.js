@@ -431,7 +431,7 @@ let themes = {
         vibeSummary: "Classic, polished, formal",
       },
       romantic: {
-        name: "Garden Vows",
+        name: "Wedding",
         eventTypes: ["wedding"],
         fontPairingStyle: "wedding",
         accent: "#93b29b",
@@ -449,7 +449,7 @@ let themes = {
         overlays: [
           {
             id: "garden-vows-single-portrait",
-            name: "Garden Vows Single Photo · Portrait",
+            name: "Wedding Photo · Portrait",
             src: "/assets/wedding/garden-vows/overlays/garden-vows-single-portrait.png",
             type: "overlay",
             category: "wedding",
@@ -465,7 +465,7 @@ let themes = {
           },
           {
             id: "garden-vows-single-landscape",
-            name: "Garden Vows Single Photo · Landscape",
+            name: "Wedding Photo · Landscape",
             src: "/assets/wedding/garden-vows/overlays/garden-vows-single-landscape.png",
             type: "overlay",
             category: "wedding",
@@ -483,7 +483,7 @@ let themes = {
         templates: [
           {
             src: "/assets/wedding/garden-vows/templates/garden-vows-three-photo-strip.png",
-            name: "Garden Vows Three-Photo Strip",
+            name: "Wedding Three-Photo Strip",
             layout: "photo_strip_3",
             slots: [
               { x: 130, y: 148, w: 468, h: 459 },
@@ -2987,7 +2987,7 @@ const THEME_SETUP_GROUP_ITEM_ORDER = {
     "Valentine's Day",
     "St. Patrick's Day",
   ],
-  Wedding: ["Garden Vows", "Timeless Romance"],
+  Wedding: ["Wedding", "Timeless Romance"],
   Youth: [
     "Spring Hill Hawks",
     "Spring Hill Hawks Cheer",
@@ -3016,7 +3016,7 @@ const THEME_SETUP_LABEL_OVERRIDES = {
   "st patrick's day": "St. Patrick's Day",
   "st patricks": "St. Patrick's Day",
   "st patrick's": "St. Patrick's Day",
-  "garden vows": "Garden Vows",
+  "garden vows": "Wedding",
   "timeless romance": "Timeless Romance",
   hawks: "Spring Hill Hawks",
   hawkscheer: "Spring Hill Hawks Cheer",
@@ -7732,10 +7732,13 @@ function applyThemeFontStyles(theme) {
     (theme && (theme.fontHeading || theme.font)) || "'Comic Neue', cursive";
   const bodyCss =
     (theme && (theme.fontBody || theme.font)) || "'Comic Neue', cursive";
-  document.documentElement.style.setProperty("--font-heading", headingCss);
-  document.documentElement.style.setProperty("--font-body", bodyCss);
-  document.documentElement.style.setProperty("--font", bodyCss);
-  document.body.style.fontFamily = bodyCss || "montserrat, sans-serif";
+  [DOM.boothScreen, DOM.welcomeScreen].forEach((screen) => {
+    if (!screen) return;
+    screen.style.setProperty("--font-heading", headingCss);
+    screen.style.setProperty("--font-body", bodyCss);
+    screen.style.setProperty("--font", bodyCss);
+    screen.style.setProperty("--font-label", bodyCss);
+  });
   if (DOM.eventTitle) DOM.eventTitle.style.fontFamily = headingCss || bodyCss;
   if (DOM.welcomeTitle)
     DOM.welcomeTitle.style.fontFamily = headingCss || bodyCss;

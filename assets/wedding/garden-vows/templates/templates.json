@@ -1,7 +1,7 @@
 [
   {
     "src": "garden-vows-three-photo-strip.png",
-    "name": "Garden Vows Three-Photo Strip",
+    "name": "Wedding Three-Photo Strip",
     "layout": "photo_strip_3",
     "slots": [
       { "x": 130, "y": 148, "w": 468, "h": 459 },

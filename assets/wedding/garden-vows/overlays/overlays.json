@@ -2,7 +2,7 @@
   {
     "src": "garden-vows-single-portrait.png",
     "id": "garden-vows-single-portrait",
-    "name": "Garden Vows Single Photo · Portrait",
+    "name": "Wedding Photo · Portrait",
     "type": "overlay",
     "category": "wedding",
     "orientation": "portrait",
@@ -19,7 +19,7 @@
   {
     "src": "garden-vows-single-landscape.png",
     "id": "garden-vows-single-landscape",
-    "name": "Garden Vows Single Photo · Landscape",
+    "name": "Wedding Photo · Landscape",
     "type": "overlay",
     "category": "wedding",
     "orientation": "landscape",

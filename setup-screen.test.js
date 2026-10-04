@@ -427,7 +427,7 @@ test("setup theme dropdown groups themes by user-facing category", () => {
   );
 });
 
-test("one reusable Garden Vows theme holds event-specific names and dates", () => {
+test("one reusable Wedding theme holds event-specific names and dates", () => {
   const appScript = readProjectFile("scripts", "app.js");
   const overlays = JSON.parse(
     readProjectFile("assets", "wedding", "garden-vows", "overlays", "overlays.json")
@@ -437,6 +437,8 @@ test("one reusable Garden Vows theme holds event-specific names and dates", () =
   );
 
   assert.ok(appScript.includes('"wedding:romantic"'));
+  assert.ok(appScript.includes('name: "Wedding"'));
+  assert.ok(!appScript.includes('name: "Garden Vows"'));
   assert.deepEqual(
     overlays.map((item) => item.src),
     ["garden-vows-single-portrait.png", "garden-vows-single-landscape.png"]

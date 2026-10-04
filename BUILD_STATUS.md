@@ -1,10 +1,10 @@
 # Build status
 
-- Current goal: Provide one reusable Garden Vows wedding design with event-specific names and date.
-- Done: Added transparent single-photo portrait/landscape overlays and a three-photo strip template with editable couple-name/date fields; removed fixed sample-name wedding SVGs; made the wedding layout pack selectable with shared guest screens.
-- Verification: `npm test` passes (257 tests, 0 failures); focused Chromium check confirms Garden Vows can be selected once, uses event-specific names/date in overlay and strip text, and serves all artwork files. Full Chromium release gate passes for all approved themes in portrait and landscape (2 tests, 20 guest-flow runs); deployed commit `acd31cc` to `https://aaaa88c3.decemeberbooth.pages.dev`, and verified the live app bundle and all three image assets return successfully.
-- In progress: None.
-- Next steps: None.
+- Current goal: Keep wedding layouts reusable and keep theme fonts out of the admin interface.
+- Done: Renamed the Garden Vows preset and its layout labels to Wedding. Scoped theme typography to the booth and welcome screens; admin interface fonts remain application-wide defaults.
+- Verification: `npm test` passes (257 tests, 0 failures); Chromium confirms Wedding selection, event-specific names/date, and stable Montserrat admin heading/Inter page body while booth fonts use the wedding pairing.
+- In progress: Commit, push, and production deployment.
+- Next steps: Verify the deployed picker label and app bundle.
 - Known bugs/blockers: None known.
 - Important decisions: Keep couple-specific names/dates on the saved event record, not in unique theme artwork; use the same reusable wedding preset for all couples.
 

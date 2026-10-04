@@ -181,8 +181,8 @@ async function expectCreatePathValidation(page, options) {
   );
   await expect(themeValue).not.toBe("");
 
-  await page.locator(".theme-quick-card").filter({ hasText: /Garden Vows/ }).click();
-  await expect(page.locator("#themeQuickSelectionName")).toHaveText("Garden Vows");
+  await page.locator(".theme-quick-card").filter({ hasText: /^Wedding/ }).click();
+  await expect(page.locator("#themeQuickSelectionName")).toHaveText("Wedding");
 
   for (const selector of visibleFieldSelectors || []) {
     await expect(page.locator(selector)).not.toHaveClass(/hidden/);
@@ -221,7 +221,7 @@ async function createWeddingEvent(page, options = {}) {
   if (await page.locator("#createPathEventName").count()) {
     await page.fill("#createPathEventName", eventName);
   }
-  await page.locator(".theme-quick-card").filter({ hasText: /Garden Vows/ }).click();
+  await page.locator(".theme-quick-card").filter({ hasText: /^Wedding/ }).click();
   await page.fill("#eventNameInput", eventName);
   await page.locator(".setup-session-save-btn").click();
   await expect(page.locator("#eventProfileSelect")).toHaveValue(/.+/);
@@ -252,7 +252,7 @@ test("overlay builder emits reusable text metadata when autofill fields are sele
   await expect(manifestEntry).toContainText("\"event_date\"");
 });
 
-test("Garden Vows reuses one wedding theme and fills names and date per event", async ({
+test("Wedding preset reuses one theme and fills names and date per event", async ({
   page,
 }) => {
   await createWeddingEvent(page, {
@@ -278,11 +278,16 @@ test("Garden Vows reuses one wedding theme and fills names and date per event", 
       event: api.getActiveEvent(),
       overlayText: api.probeOverlayAutofill(landscape.src, 1800, 1200, api.getActiveEvent()),
       templateText: api.probeTemplateAutofill(template, 720, 2160, api.getActiveEvent()),
+      fonts: {
+        adminHeading: getComputedStyle(document.querySelector(".admin-title")).fontFamily,
+        pageBody: getComputedStyle(document.body).fontFamily,
+        boothBody: getComputedStyle(document.querySelector("#boothScreen")).getPropertyValue("--font-body"),
+      },
       responses,
     };
   });
 
-  expect(result.themeName).toBe("Garden Vows");
+  expect(result.themeName).toBe("Wedding");
   expect(result.themeKey).toBe("wedding:romantic");
   expect(result.event.partner1).toBe("Maya");
   expect(result.event.partner2).toBe("Noah");
@@ -290,6 +295,9 @@ test("Garden Vows reuses one wedding theme and fills names and date per event", 
   expect(result.overlayText).toContain("September 19, 2027");
   expect(result.templateText).toContain("Maya & Noah");
   expect(result.templateText).toContain("September 19, 2027");
+  expect(result.fonts.adminHeading).toMatch(/Montserrat/i);
+  expect(result.fonts.pageBody).toMatch(/Inter/i);
+  expect(result.fonts.boothBody).toMatch(/Lora/i);
   expect(result.responses.every((response) => response.ok)).toBe(true);
 });
 
@@ -1534,7 +1542,7 @@ test.skip("setup screen shows assigned asset counts and font summary", async ({
     window.__photoboothTest.patchActiveTheme({
       fontHeading: "Fraunces",
       fontBody: "Inter",
-      name: "Garden Vows",
+      name: "Wedding",
       overlays: [
         { id: "smoke-overlay-1", name: "Overlay One", src: "data:test/overlay-one" },
         { id: "smoke-overlay-2", name: "Overlay Two", src: "data:test/overlay-two" },
