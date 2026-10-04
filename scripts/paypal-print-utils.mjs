@@ -26,9 +26,30 @@ export function resolvePayPalPrintConfig(env = {}) {
   };
 }
 
+export function resolvePayPalEventPrintPrice(events, eventIdValue, fallback = "3.00") {
+  const normalizeId = (value) => String(value || "default")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 100) || "default";
+  const eventId = normalizeId(eventIdValue);
+  const event = (Array.isArray(events) ? events : []).find((entry) =>
+    entry && normalizeId(entry.id) === eventId
+  );
+  const amount = Number(event && event.printPrice);
+  const fallbackAmount = Number(fallback);
+  return Number.isFinite(amount) && amount >= 0.01 && amount <= 999.99
+    ? amount.toFixed(2)
+    : Number.isFinite(fallbackAmount) && fallbackAmount >= 0.01 && fallbackAmount <= 999.99
+      ? fallbackAmount.toFixed(2)
+      : "3.00";
+}
+
 export function buildPayPalPrintOrder({ eventId, item, config }) {
   const quantity = Math.max(1, Math.min(99, Number.parseInt(item.quantity, 10) || 1));
-  const total = (Number(config.amount) * quantity).toFixed(2);
+  const unitAmount = Number(item.paypalUnitAmount || config.amount);
+  const total = (unitAmount * quantity).toFixed(2);
   return {
     intent: "CAPTURE",
     purchase_units: [{

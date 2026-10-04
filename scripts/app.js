@@ -1322,6 +1322,8 @@ const DOM = {
   logo: document.getElementById("logo"),
   eventTitle: document.getElementById("eventTitle"),
   eventProfileSelect: document.getElementById("eventProfileSelect"),
+  eventPrintPriceInput: document.getElementById("eventPrintPriceInput"),
+  saveEventPrintPriceBtn: document.getElementById("saveEventPrintPriceBtn"),
   createPathThemeSelect: document.getElementById("createPathThemeSelect"),
   sessionThemeToggle: document.getElementById("sessionThemeToggle"),
   sessionThemeValue: document.getElementById("sessionThemeValue"),
@@ -1502,7 +1504,6 @@ const DOM = {
   cloudUseToggle: document.getElementById("cloudUseToggle"),
   printModeInput: document.getElementById("printModeInput"),
   printNoPaymentRequiredInput: document.getElementById("printNoPaymentRequiredInput"),
-  printPriceLabelInput: document.getElementById("printPriceLabelInput"),
   printPanelTitleInput: document.getElementById("printPanelTitleInput"),
   printPanelBodyInput: document.getElementById("printPanelBodyInput"),
   printInstructionsInput: document.getElementById("printInstructionsInput"),
@@ -3683,12 +3684,23 @@ function setupEventProfileControls() {
       const id = event.target.value || "";
       setActiveEventId(id);
       syncEventInputsFromActive();
+      syncEventPrintPriceInput();
+      loadPayPalPrintConfigStatus();
       const active = getActiveEvent();
       if (active && active.themeKey) {
         setEventSelection(active.themeKey);
         loadTheme(active.themeKey);
       }
       updateStylePreview();
+    });
+  }
+  if (DOM.saveEventPrintPriceBtn) {
+    DOM.saveEventPrintPriceBtn.addEventListener("click", saveActiveEventPrintPrice);
+  }
+  if (DOM.eventPrintPriceInput) {
+    DOM.eventPrintPriceInput.addEventListener("input", () => {
+      DOM.eventPrintPriceInput.dataset.dirty = "true";
+      DOM.eventPrintPriceInput.dataset.eventId = getActiveEvent()?.id || "";
     });
   }
 }
@@ -6565,6 +6577,8 @@ async function loadEventsRemote() {
     setActiveEventId(resolvedActiveId, { skipRemoteSync: true });
     populateEventProfileSelect(resolvedActiveId);
     const activeEvent = getActiveEvent();
+    syncEventPrintPriceInput();
+    loadPayPalPrintConfigStatus();
     if (activeEvent && activeEvent.themeKey) {
       setEventSelection(activeEvent.themeKey);
       loadTheme(activeEvent.themeKey);
@@ -6597,14 +6611,17 @@ function scheduleThemesRemoteSync() {
   }, REMOTE_SYNC_DEBOUNCE_MS);
 }
 async function syncEventsRemote() {
-  if (!canSyncRemote()) return;
+  if (!canSyncRemote()) return false;
   try {
-    await fetch("/api/events", {
+    const response = await fetch("/api/events", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(getStoredEventsPayload()),
     });
-  } catch (_) {}
+    return response.ok;
+  } catch (_) {
+    return false;
+  }
 }
 function scheduleEventsRemoteSync() {
   if (!canSyncRemote()) return;
@@ -6908,7 +6925,6 @@ function cloudinaryConfigured() {
 const PRINT_SETTINGS_STORAGE_KEY = "photoboothPrintSettings";
 const DEFAULT_PRINT_SETTINGS = {
   mode: "off",
-  priceLabel: "$3",
   panelTitle: "Printed Photo Upgrade",
   panelBody: "Take home a 4x6 keepsake print for $3.",
   instructions: "Scan the payment code below to complete your purchase. Your print will be prepared after payment is confirmed.",
@@ -6979,7 +6995,6 @@ function loadPrintSettings() {
   const settings = getPrintSettings();
   if (DOM.printModeInput) DOM.printModeInput.value = settings.mode;
   if (DOM.printNoPaymentRequiredInput) DOM.printNoPaymentRequiredInput.checked = settings.noPaymentRequired === true;
-  if (DOM.printPriceLabelInput) DOM.printPriceLabelInput.value = settings.priceLabel;
   if (DOM.printPanelTitleInput) DOM.printPanelTitleInput.value = settings.panelTitle;
   if (DOM.printPanelBodyInput) DOM.printPanelBodyInput.value = settings.panelBody;
   if (DOM.printInstructionsInput) DOM.printInstructionsInput.value = settings.instructions;
@@ -6990,13 +7005,65 @@ function loadPrintSettings() {
     DOM.printEventIdInput.addEventListener("input", updateStaffPrintQueueUrl);
   }
   updateStaffPrintQueueUrl();
+  syncEventPrintPriceInput();
   loadPayPalPrintConfigStatus();
+}
+
+function syncEventPrintPriceInput(force = false) {
+  const active = getActiveEvent();
+  if (!DOM.eventPrintPriceInput) return;
+  if (
+    !force &&
+    DOM.eventPrintPriceInput.dataset.dirty === "true" &&
+    DOM.eventPrintPriceInput.dataset.eventId === (active && active.id || "")
+  ) return;
+  const storedPrice = active ? Number(active.printPrice) : NaN;
+  const price = Number.isFinite(storedPrice) && storedPrice >= 0.01 && storedPrice <= 999.99
+    ? storedPrice
+    : 3;
+  DOM.eventPrintPriceInput.value = price.toFixed(2);
+  DOM.eventPrintPriceInput.dataset.dirty = "false";
+  DOM.eventPrintPriceInput.dataset.eventId = active && active.id || "";
+  DOM.eventPrintPriceInput.disabled = !active;
+  if (DOM.saveEventPrintPriceBtn) DOM.saveEventPrintPriceBtn.disabled = !active;
+}
+
+async function saveActiveEventPrintPrice() {
+  const active = getActiveEvent();
+  if (!active || !DOM.eventPrintPriceInput) {
+    showToast("Select or create a saved event before setting its print price.");
+    return;
+  }
+  const price = Number(DOM.eventPrintPriceInput.value);
+  if (!Number.isFinite(price) || price < 0.01 || price > 999.99) {
+    showToast("Enter an event print price from $0.01 to $999.99.");
+    return;
+  }
+  const events = getStoredEvents();
+  const event = events.find((entry) => entry && entry.id === active.id);
+  if (!event) {
+    showToast("This saved event could not be found.");
+    return;
+  }
+  event.printPrice = Number(price.toFixed(2));
+  setStoredEvents(events);
+  if (pendingEventsSyncTimer) {
+    clearTimeout(pendingEventsSyncTimer);
+    pendingEventsSyncTimer = null;
+  }
+  const synced = await syncEventsRemote();
+  syncEventPrintPriceInput(true);
+  loadPayPalPrintConfigStatus();
+  showToast(synced
+    ? `Event print price saved: $${event.printPrice.toFixed(2)} per print.`
+    : `Price is $${event.printPrice.toFixed(2)} on this device; reconnect to sync it for checkout.`);
 }
 
 async function loadPayPalPrintConfigStatus() {
   if (!DOM.paypalPrintConfigStatus) return;
   try {
-    const response = await fetch("/api/paypal/config", { cache: "no-store" });
+    const eventId = getPrintQueueEventId();
+    const response = await fetch(`/api/paypal/config?eventId=${encodeURIComponent(eventId)}`, { cache: "no-store" });
     const config = await response.json();
     if (!response.ok || !config.ok) throw new Error("PayPal status is unavailable.");
     DOM.paypalPrintConfigStatus.textContent = config.configured
@@ -7011,7 +7078,6 @@ function savePrintSettings() {
   const settings = {
     mode: DOM.printModeInput && ["free", "paid"].includes(DOM.printModeInput.value) ? DOM.printModeInput.value : "off",
     noPaymentRequired: DOM.printModeInput && DOM.printModeInput.value === "free",
-    priceLabel: (DOM.printPriceLabelInput && DOM.printPriceLabelInput.value.trim()) || DEFAULT_PRINT_SETTINGS.priceLabel,
     panelTitle: (DOM.printPanelTitleInput && DOM.printPanelTitleInput.value.trim()) || DEFAULT_PRINT_SETTINGS.panelTitle,
     panelBody: (DOM.printPanelBodyInput && DOM.printPanelBodyInput.value.trim()) || DEFAULT_PRINT_SETTINGS.panelBody,
     instructions: (DOM.printInstructionsInput && DOM.printInstructionsInput.value.trim()) || DEFAULT_PRINT_SETTINGS.instructions,
@@ -7101,7 +7167,7 @@ function loadPayPalPrintSdk(clientId, currency) {
 
 async function showPayPalPrintCheckout(item) {
   if (!item || !DOM.paypalPrintCheckout) throw new Error("The print request could not be loaded.");
-  const configResponse = await fetch("/api/paypal/config", { cache: "no-store" });
+  const configResponse = await fetch(`/api/paypal/config?eventId=${encodeURIComponent(item.eventId)}`, { cache: "no-store" });
   const config = await configResponse.json();
   if (!configResponse.ok || !config.configured || !config.clientId) {
     throw new Error("PayPal checkout is not connected. Ask the attendant to check the payment setup.");
@@ -13711,6 +13777,7 @@ function createNewEventFromSelection() {
     name,
     date,
     themeKey,
+    printPrice: 3,
     createdAt: new Date().toISOString(),
     overrides: {
       backgrounds: [],
@@ -13723,6 +13790,7 @@ function createNewEventFromSelection() {
   setStoredEvents(events);
   setActiveEventId(id);
   populateEventProfileSelect(id);
+  syncEventPrintPriceInput();
   syncEventInputsFromActive();
   updateStylePreview();
   showToast(`Event "${name}" created`);

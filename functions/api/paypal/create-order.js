@@ -2,7 +2,7 @@ import {
   buildPayPalPrintOrder,
   findPrintItem,
   getPayPalAccessToken,
-  getPayPalConfig,
+  getPayPalEventConfig,
   jsonResponse,
   paypalRequest,
   savePrintItem,
@@ -23,13 +23,18 @@ export async function onRequest({ request, env }) {
       return jsonResponse({ ok: false, error: "This print has already been cleared for printing." }, 409);
     }
 
-    const config = getPayPalConfig(env);
+    const config = await getPayPalEventConfig(env, eventId);
     if (!config.configured) return jsonResponse({ ok: false, error: "PayPal checkout is not configured yet." }, 503);
     const accessToken = await getPayPalAccessToken(config);
     let order;
-    if (item.paypalEnvironment && item.paypalEnvironment !== config.environment) {
+    if (item.paypalOrderId && (
+      item.paypalEnvironment !== config.environment ||
+      item.paypalUnitAmount !== config.amount ||
+      item.paypalCurrency !== config.currency
+    )) {
       delete item.paypalOrderId;
       delete item.paypalAmount;
+      delete item.paypalUnitAmount;
       delete item.paypalCurrency;
       delete item.paypalEnvironment;
     }
@@ -42,7 +47,8 @@ export async function onRequest({ request, env }) {
         return jsonResponse({ ok: false, error: "The previous checkout expired. Ask the attendant to retry." }, 409);
       }
     } else {
-      const idempotencyKey = String(item.id).slice(0, 38);
+      const priceKey = config.amount.replace(".", "");
+      const idempotencyKey = `${String(item.id).slice(0, 28)}-${priceKey}`;
       order = await paypalRequest(config, accessToken, "/v2/checkout/orders", {
         method: "POST",
         headers: { "PayPal-Request-Id": idempotencyKey },
@@ -50,6 +56,7 @@ export async function onRequest({ request, env }) {
       });
       if (!order.id) throw new Error("PayPal did not return an order ID.");
       item.paypalOrderId = order.id;
+      item.paypalUnitAmount = config.amount;
       item.paypalAmount = (Number(config.amount) * Math.max(1, Number.parseInt(item.quantity, 10) || 1)).toFixed(2);
       item.paypalCurrency = config.currency;
       item.paypalEnvironment = config.environment;

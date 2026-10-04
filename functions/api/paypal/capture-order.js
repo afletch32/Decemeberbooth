@@ -1,7 +1,7 @@
 import {
   findPrintItem,
   getPayPalAccessToken,
-  getPayPalConfig,
+  getPayPalEventConfig,
   jsonResponse,
   paypalRequest,
   savePrintItem,
@@ -25,7 +25,7 @@ export async function onRequest({ request, env }) {
       return jsonResponse({ ok: false, error: "This print is no longer payable." }, 409);
     }
 
-    const config = getPayPalConfig(env);
+    const config = await getPayPalEventConfig(env, eventId);
     if (!config.configured) return jsonResponse({ ok: false, error: "PayPal checkout is not configured yet." }, 503);
     const accessToken = await getPayPalAccessToken(config);
     const capture = await paypalRequest(

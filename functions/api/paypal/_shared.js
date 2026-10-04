@@ -1,6 +1,7 @@
 import { queueKey, readQueue, normalizeEventId } from "../print-queue.js";
 import {
   buildPayPalPrintOrder,
+  resolvePayPalEventPrintPrice,
   resolvePayPalPrintConfig,
   verifyPayPalCapture,
 } from "../../../scripts/paypal-print-utils.mjs";
@@ -20,6 +21,24 @@ export function jsonResponse(body, status = 200) {
 
 export function getPayPalConfig(env) {
   return resolvePayPalPrintConfig(env);
+}
+
+export async function getPayPalEventConfig(env, eventIdValue) {
+  const config = getPayPalConfig(env || {});
+  const eventId = normalizeEventId(eventIdValue);
+  if (!env || !env.THEMES_KV || eventId === "default") return config;
+  try {
+    const raw = await env.THEMES_KV.get("events");
+    const payload = raw ? JSON.parse(raw) : null;
+    const events = Array.isArray(payload) ? payload : payload && Array.isArray(payload.events) ? payload.events : [];
+    return {
+      ...config,
+      amount: resolvePayPalEventPrintPrice(events, eventId, config.amount),
+    };
+  } catch (error) {
+    console.error("Could not load event print price", error && error.message);
+  }
+  return config;
 }
 
 export async function getPayPalAccessToken(config) {
@@ -71,4 +90,4 @@ export async function savePrintItem(env, eventId, items, index, item) {
   await env.THEMES_KV.put(queueKey(eventId), JSON.stringify(items.slice(0, 500)));
 }
 
-export { buildPayPalPrintOrder, verifyPayPalCapture };
+export { buildPayPalPrintOrder, resolvePayPalEventPrintPrice, verifyPayPalCapture };
