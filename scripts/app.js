@@ -1417,6 +1417,7 @@ const DOM = {
   finishBoothBtn: document.getElementById("finishBoothBtn"),
   finalPrintActions: document.getElementById("finalPrintActions"),
   requestPrintBtn: document.getElementById("requestPrintBtn"),
+  paypalPrintCheckout: document.getElementById("paypalPrintCheckout"),
   lastShot: document.getElementById("lastShot"),
   qrHint: document.getElementById("qrHint"),
   shareStatus: document.getElementById("shareStatus"),
@@ -1506,6 +1507,7 @@ const DOM = {
   printPanelBodyInput: document.getElementById("printPanelBodyInput"),
   printInstructionsInput: document.getElementById("printInstructionsInput"),
   printPaymentQrInput: document.getElementById("printPaymentQrInput"),
+  paypalPrintConfigStatus: document.getElementById("paypalPrintConfigStatus"),
   printEventIdInput: document.getElementById("printEventIdInput"),
   staffPrintQueueUrl: document.getElementById("staffPrintQueueUrl"),
   staffPrintQueueOpen: document.getElementById("staffPrintQueueOpen"),
@@ -6988,6 +6990,21 @@ function loadPrintSettings() {
     DOM.printEventIdInput.addEventListener("input", updateStaffPrintQueueUrl);
   }
   updateStaffPrintQueueUrl();
+  loadPayPalPrintConfigStatus();
+}
+
+async function loadPayPalPrintConfigStatus() {
+  if (!DOM.paypalPrintConfigStatus) return;
+  try {
+    const response = await fetch("/api/paypal/config", { cache: "no-store" });
+    const config = await response.json();
+    if (!response.ok || !config.ok) throw new Error("PayPal status is unavailable.");
+    DOM.paypalPrintConfigStatus.textContent = config.configured
+      ? `PayPal ${config.environment} checkout ready · ${config.amount} ${config.currency} per print.`
+      : "PayPal checkout is not connected. Add the PayPal API credentials in Cloudflare Pages to enable automatic checkout.";
+  } catch (_) {
+    DOM.paypalPrintConfigStatus.textContent = "PayPal checkout status could not be loaded.";
+  }
 }
 
 function savePrintSettings() {
@@ -7018,14 +7035,14 @@ async function copyStaffPrintQueueUrl() {
 
 async function enqueueFinalPrintIfNeeded(imageUrl, printEligible = true) {
   const settings = getPrintSettings();
-  if (settings.mode === "off" || !printEligible) return;
+  if (settings.mode === "off" || !printEligible) return null;
   if (!/^https?:\/\//i.test(String(imageUrl || ""))) {
     if (DOM.shareStatus) {
       DOM.shareStatus.textContent = "Print queue waiting for shared upload";
       DOM.shareStatus.style.display = "inline-flex";
     }
     showToast("Print queue needs an uploaded image before staff can print.");
-    return;
+    return null;
   }
   try {
     const response = await fetch("/api/print-queue", {
@@ -7039,13 +7056,12 @@ async function enqueueFinalPrintIfNeeded(imageUrl, printEligible = true) {
         paymentRequired: settings.mode === "paid",
       }),
     });
-    if (!response.ok) {
-      const message = await response.text();
-      throw new Error(message || "Print queue request failed.");
-    }
+    const result = await response.json();
+    if (!response.ok || !result.ok) throw new Error(result.error || "Print queue request failed.");
     if (DOM.shareStatus && DOM.shareStatus.textContent === "Print queue waiting for shared upload") {
       DOM.shareStatus.style.display = "none";
     }
+    return result.item || null;
   } catch (error) {
     console.warn("Print queue enqueue failed", error);
     if (DOM.shareStatus) {
@@ -7053,7 +7069,96 @@ async function enqueueFinalPrintIfNeeded(imageUrl, printEligible = true) {
       DOM.shareStatus.style.display = "inline-flex";
     }
     showToast("Print queue failed. Staff may need to refresh and retry.");
+    return null;
   }
+}
+
+let paypalPrintSdkPromise = null;
+
+function loadPayPalPrintSdk(clientId, currency) {
+  if (window.paypal && typeof window.paypal.Buttons === "function") return Promise.resolve(window.paypal);
+  if (paypalPrintSdkPromise) return paypalPrintSdkPromise;
+  paypalPrintSdkPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    const url = new URL("https://www.paypal.com/sdk/js");
+    url.searchParams.set("client-id", clientId);
+    url.searchParams.set("currency", currency);
+    url.searchParams.set("intent", "capture");
+    url.searchParams.set("components", "buttons");
+    script.src = url.toString();
+    script.async = true;
+    script.onload = () => window.paypal && window.paypal.Buttons
+      ? resolve(window.paypal)
+      : reject(new Error("PayPal checkout did not load."));
+    script.onerror = () => reject(new Error("PayPal checkout could not load. Check the booth internet connection."));
+    document.head.appendChild(script);
+  }).catch((error) => {
+    paypalPrintSdkPromise = null;
+    throw error;
+  });
+  return paypalPrintSdkPromise;
+}
+
+async function showPayPalPrintCheckout(item) {
+  if (!item || !DOM.paypalPrintCheckout) throw new Error("The print request could not be loaded.");
+  const configResponse = await fetch("/api/paypal/config", { cache: "no-store" });
+  const config = await configResponse.json();
+  if (!configResponse.ok || !config.configured || !config.clientId) {
+    throw new Error("PayPal checkout is not connected. Ask the attendant to check the payment setup.");
+  }
+  const paypal = await loadPayPalPrintSdk(config.clientId, config.currency);
+  const checkout = DOM.paypalPrintCheckout;
+  checkout.innerHTML = "";
+  checkout.classList.remove("hidden");
+  if (DOM.shareStatus) {
+    DOM.shareStatus.textContent = `Pay ${config.amount} ${config.currency} to request this print.`;
+    DOM.shareStatus.style.display = "inline-flex";
+  }
+  await paypal.Buttons({
+    style: { layout: "vertical", shape: "pill", label: "paypal" },
+    createOrder: async () => {
+      const response = await fetch("/api/paypal/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: item.eventId, printItemId: item.id }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.orderId) throw new Error(result.error || "Could not start PayPal checkout.");
+      return result.orderId;
+    },
+    onApprove: async (data) => {
+      if (DOM.shareStatus) DOM.shareStatus.textContent = "Confirming payment…";
+      const response = await fetch("/api/paypal/capture-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: item.eventId, printItemId: item.id, orderId: data.orderID }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.paid !== true) throw new Error(result.error || "PayPal has not confirmed payment yet.");
+      checkout.classList.add("hidden");
+      if (DOM.shareStatus) {
+        DOM.shareStatus.textContent = "Payment confirmed. Your print is ready with the attendant.";
+        DOM.shareStatus.style.display = "inline-flex";
+      }
+      if (DOM.requestPrintBtn) DOM.requestPrintBtn.textContent = "Payment Complete";
+      playThemeCue("success", "success");
+    },
+    onCancel: () => {
+      if (DOM.shareStatus) {
+        DOM.shareStatus.textContent = "Checkout canceled. Your print is still waiting for payment.";
+        DOM.shareStatus.style.display = "inline-flex";
+      }
+    },
+    onError: (error) => {
+      console.warn("PayPal print checkout error", error);
+      if (DOM.shareStatus) {
+        DOM.shareStatus.textContent = error && error.message
+          ? error.message
+          : "PayPal checkout failed. Ask the attendant for help.";
+        DOM.shareStatus.style.display = "inline-flex";
+      }
+    },
+  }).render(checkout);
 }
 
 // --- Overlay Spot-Color Mask (optional) ---
@@ -12728,9 +12833,26 @@ function setupFinalExperienceActions() {
     DOM.requestPrintBtn.addEventListener("click", async () => {
       if (!pendingFinalPrintImageUrl) return;
       DOM.requestPrintBtn.disabled = true;
-      DOM.requestPrintBtn.textContent = "Requesting…";
-      await enqueueFinalPrintIfNeeded(pendingFinalPrintImageUrl, true);
-      DOM.requestPrintBtn.textContent = "Print Requested";
+      DOM.requestPrintBtn.textContent = "Preparing…";
+      try {
+        const settings = getPrintSettings();
+        const item = await enqueueFinalPrintIfNeeded(pendingFinalPrintImageUrl, true);
+        if (!item) throw new Error("Your print request could not be queued. Please ask the attendant.");
+        if (settings.mode === "paid") {
+          await showPayPalPrintCheckout(item);
+          DOM.requestPrintBtn.textContent = "Checkout Below";
+          return;
+        }
+        DOM.requestPrintBtn.textContent = "Print Requested";
+      } catch (error) {
+        console.warn("Print checkout setup failed", error);
+        if (DOM.shareStatus) {
+          DOM.shareStatus.textContent = error.message || "Print checkout could not start.";
+          DOM.shareStatus.style.display = "inline-flex";
+        }
+        DOM.requestPrintBtn.disabled = false;
+        DOM.requestPrintBtn.textContent = "Try Again";
+      }
     });
   }
 }
@@ -12888,6 +13010,10 @@ function showFinal(url, options = {}) {
     if (DOM.requestPrintBtn) {
       DOM.requestPrintBtn.disabled = false;
       DOM.requestPrintBtn.textContent = "Print";
+    }
+    if (DOM.paypalPrintCheckout) {
+      DOM.paypalPrintCheckout.innerHTML = "";
+      DOM.paypalPrintCheckout.classList.add("hidden");
     }
     updateOutputSurfaceTrace({
       surfaces: {
@@ -14505,6 +14631,10 @@ function hideFinal(options = {}) {
     DOM.qrCodeContainer.dataset.error = "false";
   }
   if (DOM.finalPrintActions) DOM.finalPrintActions.classList.add("hidden");
+  if (DOM.paypalPrintCheckout) {
+    DOM.paypalPrintCheckout.innerHTML = "";
+    DOM.paypalPrintCheckout.classList.add("hidden");
+  }
   pendingFinalPrintImageUrl = "";
   setFinalPreviewSharePanelVisible(false);
   if (DOM.shareStatus) DOM.shareStatus.style.display = "none";

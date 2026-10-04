@@ -5090,6 +5090,16 @@
       box-shadow: 0 8px 18px rgba(58, 88, 78, 0.1);
     }
 
+    #paypalPrintCheckout {
+      grid-column: 1 / -1;
+      width: min(100%, 340px);
+      margin: 0 auto;
+    }
+
+    #paypalPrintCheckout.hidden {
+      display: none;
+    }
+
     #requestPrintBtn {
       background: #173f3b;
       color: #ffffff;
@@ -7147,7 +7157,7 @@
               <label class="legacy-print-setting" hidden aria-hidden="true">
                 <input type="checkbox" id="printNoPaymentRequiredInput"> No payment required for prints
               </label>
-              <small style="display:block; color:#5d6c69;">Free Printing queues sponsor/included prints immediately. Paid Printing requires staff payment confirmation before printing.</small>
+              <small style="display:block; color:#5d6c69;">Free Printing queues sponsor/included prints immediately. Paid Printing offers PayPal checkout and keeps staff payment confirmation available.</small>
               <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
                 <button type="button" onclick="savePrintSettings()">Save Print Settings</button>
               </div>
@@ -7164,6 +7174,7 @@
                   <textarea id="printInstructionsInput" rows="3">Scan the payment code below to complete your purchase. Your print will be prepared after payment is confirmed.</textarea>
                   <label for="printPaymentQrInput">Payment QR image URL or payment link</label>
                   <input type="url" id="printPaymentQrInput" placeholder="https://...">
+                  <p id="paypalPrintConfigStatus" role="status" style="margin:12px 0 0; color:#5d6c69;">Checking PayPal checkout…</p>
                 </div>
               </details>
             </section>
@@ -7568,6 +7579,7 @@
             <canvas id="qrCode"></canvas>
             <div id="finalPrintActions" class="final-print-actions hidden">
               <button id="requestPrintBtn" type="button">Print</button>
+              <div id="paypalPrintCheckout" class="hidden" aria-live="polite"></div>
             </div>
             <div id="qrHint" style="display:none; font-size:0.9em; color:#ccc; margin-top:8px;"></div>
             <button type="button" id="openEventGalleryFromShare" class="button-ghost" onclick="openEventGalleryLink()">View full event gallery</button>
@@ -7836,7 +7848,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261004-wedding-admin-fonts"></script>
+  <script type="module" src="scripts/app.js?v=20261004-paypal-print-checkout"></script>
 </body>
 
 </html>
