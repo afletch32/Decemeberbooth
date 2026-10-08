@@ -22,6 +22,8 @@ test("resolveTemplateTextValue supports event autofill aliases", async () => {
   };
 
   assert.equal(resolveTemplateTextValue("couple_names", event), "Alex & Jordan");
+  assert.equal(resolveTemplateTextValue("partner1", event), "Alex");
+  assert.equal(resolveTemplateTextValue("partner2", event), "Jordan");
   assert.equal(resolveTemplateTextValue("birthdayName", event), "Maddie");
   assert.equal(resolveTemplateTextValue("expo_company", event), "Acme Booths");
   assert.equal(resolveTemplateTextValue("event_name", event), "Launch Party");

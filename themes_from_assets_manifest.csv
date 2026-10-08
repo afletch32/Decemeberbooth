@@ -1,11 +1,4 @@
 theme_id,category,theme_name,field,src,dest,public_url,bytes
-general-basic,general,basic,backgrounds,assets/general/basic/backgrounds/basic-background-1.png,public/themes/general/basic/backgrounds/basic-background-1.png,/themes/general/basic/backgrounds/basic-background-1.png,111708
-general-basic,general,basic,backgrounds,assets/general/basic/backgrounds/sparkles.png,public/themes/general/basic/backgrounds/sparkles.png,/themes/general/basic/backgrounds/sparkles.png,107689
-general-basic,general,basic,overlays,assets/general/basic/overlays/blue-smoke-frame.png,public/themes/general/basic/overlays/blue-smoke-frame.png,/themes/general/basic/overlays/blue-smoke-frame.png,1487335
-general-basic,general,basic,overlays,assets/general/basic/overlays/flowers-frame.png,public/themes/general/basic/overlays/flowers-frame.png,/themes/general/basic/overlays/flowers-frame.png,187617
-general-basic,general,basic,overlays,assets/general/basic/overlays/general-frame-black.png,public/themes/general/basic/overlays/general-frame-black.png,/themes/general/basic/overlays/general-frame-black.png,1554206
-general-basic,general,basic,overlays,assets/general/basic/overlays/general-frame-blue-flowers.png,public/themes/general/basic/overlays/general-frame-blue-flowers.png,/themes/general/basic/overlays/general-frame-blue-flowers.png,1759501
-general-basic,general,basic,overlays,assets/general/basic/overlays/shes-a-good-man-overlay.png,public/themes/general/basic/overlays/shes-a-good-man-overlay.png,/themes/general/basic/overlays/shes-a-good-man-overlay.png,2955706
 general-birthday,general,birthday,backgrounds,assets/general/birthday/backgrounds/birthday-background-1.png,public/themes/general/birthday/backgrounds/birthday-background-1.png,/themes/general/birthday/backgrounds/birthday-background-1.png,579487
 general-birthday,general,birthday,overlays,assets/general/birthday/overlays/7.png,public/themes/general/birthday/overlays/7.png,/themes/general/birthday/overlays/7.png,68197
 general-birthday,general,birthday,overlays,assets/general/birthday/overlays/banner-frame.png,public/themes/general/birthday/overlays/banner-frame.png,/themes/general/birthday/overlays/banner-frame.png,93069

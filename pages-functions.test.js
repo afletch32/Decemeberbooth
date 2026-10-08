@@ -62,16 +62,20 @@ test("pages functions provide live sync endpoints for themes, events, and fonts"
     "asset library endpoint should persist uploaded asset metadata in KV"
   );
   assert.ok(
-    assetsFn.includes("function getAssetLibraryUrlKey(value)") &&
-      assetsFn.includes("function getAssetLibraryId(category, url)"),
-    "asset library endpoint should deduplicate URL variants before storing"
+    assetsFn.includes('from "../../scripts/asset-library-utils.mjs"') &&
+      assetsFn.includes("normalizeAssetLibraryPayload(payload"),
+    "asset library endpoint should use the shared normalizer for deduplication"
+  );
+  assert.ok(
+    !assetsFn.includes("function getAssetLibraryUrlKey(value)"),
+    "asset library endpoint should not keep a duplicate URL normalization implementation"
   );
   assert.ok(
     assetsFn.includes('"Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS"'),
     "asset library endpoint should allow listing, upsert, archive, and delete"
   );
   assert.ok(
-    assetsFn.includes('"idle-screen"'),
+    assetsFn.includes("normalizePagesAssetCategory"),
     "asset library endpoint should constrain uploaded asset categories"
   );
   assert.ok(

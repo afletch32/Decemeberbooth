@@ -258,7 +258,7 @@ test("events payloads are stored and loaded via /api/events", withTempEnv(async 
   try {
     const { port } = server.address();
     const payload = {
-      events: [{ id: "spring-fair-1", name: "Spring Fair", themeKey: "general:basic" }],
+      events: [{ id: "spring-fair-1", name: "Spring Fair", themeKey: "general:summer" }],
       activeEventId: "spring-fair-1",
     };
 
@@ -417,6 +417,7 @@ test("asset library stores uploaded Cloudinary asset metadata", withTempEnv(asyn
     assert.deepEqual(archivedJson.assets[0].editableFields, [
       "title",
       "buttonText",
+      "schoolName",
     ]);
 
     const deleteResp = await fetch(`http://127.0.0.1:${port}/api/assets`, {
@@ -432,9 +433,9 @@ test("asset library stores uploaded Cloudinary asset metadata", withTempEnv(asyn
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        id: "background:assets/general/basic/backgrounds/background.png",
+        id: "background:assets/holidays/fall/halloween/backgrounds/background.png",
         category: "background",
-        url: "assets/general/basic/backgrounds/background.png",
+        url: "assets/holidays/fall/halloween/backgrounds/background.png",
         name: "Renamed Default Background",
         hidden: true,
         archived: true,
@@ -442,7 +443,7 @@ test("asset library stores uploaded Cloudinary asset metadata", withTempEnv(asyn
     });
     assert.equal(relativeResp.status, 200);
     const relativeJson = await (await fetch(`http://127.0.0.1:${port}/api/assets`)).json();
-    assert.equal(relativeJson.assets[0].url, "assets/general/basic/backgrounds/background.png");
+    assert.equal(relativeJson.assets[0].url, "assets/holidays/fall/halloween/backgrounds/background.png");
     assert.equal(relativeJson.assets[0].hidden, true);
     assert.equal(relativeJson.assets[0].name, "Renamed Default Background");
   } finally {

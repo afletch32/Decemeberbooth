@@ -98,6 +98,48 @@ test("theme selection uses one booth screen shape for every themed guest screen"
   assert.ok(!choiceResolver.includes("choiceEntries[0]"));
 });
 
+test("incomplete themes cannot bypass the selector through a stale saved key", () => {
+  assert.ok(app.includes("function isSelectableThemeKey(themeKey)"));
+  assert.ok(app.includes("if (!isSelectableThemeKey(themeKey))"));
+  assert.ok(app.includes('console.warn("Theme is incomplete; loading fallback instead:"'));
+});
+
+test("selectable themes need usable portrait and landscape photo overlays", () => {
+  const completionCheck = extractFunctionFromEither(app, "", "isCompletedTheme");
+  assert.ok(completionCheck.includes("const hasPhotoOverlay = (orientation) =>"));
+  assert.ok(completionCheck.includes('hasPhotoOverlay("portrait")'));
+  assert.ok(completionCheck.includes('hasPhotoOverlay("landscape")'));
+});
+
+test("complete Spring Hill Hawks packs are approved for Event Setup", () => {
+  assert.ok(app.includes('"school:hawks"'));
+  assert.ok(app.includes('"school:hawksCheer"'));
+});
+
+test("Halloween has dedicated portrait and landscape single-photo overlays", () => {
+  assert.ok(app.includes('src: "/assets/themes/halloween/overlays/halloween-single-photo-portrait.svg"'));
+  assert.ok(app.includes('src: "/assets/themes/halloween/overlays/halloween-single-photo-landscape.svg"'));
+  assert.ok(app.includes('name: "Halloween single photo portrait"'));
+  assert.ok(app.includes('name: "Halloween single photo landscape"'));
+});
+
+test("theme storage refresh uses the canonical application storage key", () => {
+  assert.ok(app.includes("event.key !== APP_CONFIG.STORAGE_KEYS.THEMES"));
+  assert.ok(!app.includes("event.key !== STORAGE_KEYS.THEMES"));
+});
+
+test("stored and remote theme cleanup persists removed legacy built-ins", () => {
+  const remoteLoad = extractFunctionFromEither(app, "", "loadThemesRemote");
+  const storedLoad = extractFunctionFromEither(app, "", "loadThemesFromStorage");
+  const ensureBuiltins = extractFunctionFromEither(app, "", "ensureBuiltinThemes");
+  assert.ok(ensureBuiltins.includes("const removedUnapprovedThemes = pruneUnapprovedBuiltinThemes(themes);"));
+  assert.ok(ensureBuiltins.includes("if (!hasApprovedThemes) delete themes[rootKey];"));
+  assert.ok(remoteLoad.includes("const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();"));
+  assert.ok(remoteLoad.includes("removedUnapprovedBuiltinThemes ||"));
+  assert.ok(storedLoad.includes("const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();"));
+  assert.ok(storedLoad.includes("removedUnapprovedBuiltinThemes"));
+});
+
 test("Amanda North STREAM Night includes the complete six-screen foundation pack", () => {
   [
     "stream-night-background-portrait.png",
@@ -120,7 +162,7 @@ test("General Back to School stays separate from Amanda North artwork", () => {
   [
     "back-to-school-background-portrait.png",
     "back-to-school-background-landscape.png",
-    "back-to-school-idle-portrait.png",
+    "back-to-school-idle-portrait.webp",
     "back-to-school-idle-landscape.png",
     "back-to-school-photo-choice-portrait.png",
     "back-to-school-photo-choice-landscape.png",
@@ -137,13 +179,13 @@ test("General Back to School stays separate from Amanda North artwork", () => {
   assert.ok(app.includes('backToSchool: {'));
   assert.ok(app.includes('name: "Back to School"'));
   assert.ok(
-    app.includes('src: "/assets/themes/general-back-to-school/back-to-school-idle-portrait.png"')
+    app.includes('src: "/assets/themes/general-back-to-school/back-to-school-idle-portrait.webp"')
   );
   assert.ok(app.includes('name: "Back to School photo choice portrait"'));
   assert.ok(app.includes('name: "Back to School photo choice landscape"'));
   assert.ok(app.includes('name: "Back to School Thank You screen portrait"'));
   assert.ok(app.includes('name: "Back to School Thank You screen landscape"'));
-  assert.ok(!app.includes('src: "/assets/themes/back-to-school/back-to-school-idle-portrait.png",\n            name: "Back to School idle screen portrait"'));
+  assert.ok(!app.includes('src: "/assets/themes/back-to-school/back-to-school-idle-portrait.webp",\n            name: "Back to School idle screen portrait"'));
 });
 
 test("Spring Hill Hawks includes its complete navy green and white screen pack", () => {
@@ -187,6 +229,32 @@ test("Spring Hill Hawks includes its complete navy green and white screen pack",
   assert.ok(app.includes("singlePhoto: { x: 31, y: 57, width: 34, height: 45 }"));
   assert.ok(app.includes("photoStrip: { x: 69, y: 57, width: 34, height: 45 }"));
   assert.ok(app.includes("function migrateSpringHillHawksAssets"));
+});
+
+test("Nissan Stadium Hawks theme uses two distinct daytime scenes and a date-ready print frame", () => {
+  const assetDirectory = join(process.cwd(), "assets/themes/spring-hill-hawks");
+  const riverView = readFileSync(join(assetDirectory, "nissan-stadium-river-day.jpg"));
+  const aerialView = readFileSync(join(assetDirectory, "nissan-stadium-aerial-day.jpg"));
+  const riverThumbnail = readFileSync(join(assetDirectory, "nissan-stadium-river-day.thumb.webp"));
+  const aerialThumbnail = readFileSync(join(assetDirectory, "nissan-stadium-aerial-day.thumb.webp"));
+  const frame = readFileSync(join(assetDirectory, "nissan-stadium-frame.svg"), "utf8");
+  assert.ok(riverView.length > 0);
+  assert.ok(aerialView.length > 0);
+  assert.ok(riverThumbnail.length > 0);
+  assert.ok(aerialThumbnail.length > 0);
+  assert.notDeepEqual(riverView, aerialView);
+  assert.ok(frame.includes("NISSAN STADIUM"));
+  assert.ok(frame.includes("nissan-stadium-aerial-day.jpg"));
+
+  const themeSource = app.slice(app.indexOf("hawksTitansStadium:"), app.indexOf("hawksCheer:"));
+  assert.ok(app.includes('"school:hawksTitansStadium"'));
+  assert.ok(themeSource.includes('name: "Spring Hill Hawks at Nissan Stadium"'));
+  assert.ok(themeSource.includes('name: "Nissan Stadium river view daytime start screen"'));
+  assert.ok(themeSource.includes('name: "Nissan Stadium aerial field photo choice screen"'));
+  assert.ok(themeSource.includes('name: "Nissan Stadium day game with date"'));
+  assert.ok(themeSource.includes('name: "Nissan Stadium day game photo print"'));
+  assert.ok(themeSource.includes('{ key: "event_date"'));
+  assert.ok(app.includes("function migrateSpringHillHawksStadiumAssets"));
 });
 
 test("Spring Hill Hawks Cheer stays separate with its complete cartoon screen pack", () => {
@@ -241,7 +309,7 @@ test("Avery's guest screens use bundled WebP artwork", () => {
   assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp"'));
   assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp"'));
   assert.ok(app.includes("function migrateOptimizedAveryScreenAssets"));
-  assert.ok(app.includes("avery-birthday-idle-landscape.png\": \"/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp"));
+  assert.ok(app.includes("avery-birthday-idle-landscape.webp\": \"/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp"));
   assert.ok(app.includes('"/assets/themes/avery-birthday/avery-birthday-background-landscape.webp"'));
   assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp"'));
   assert.ok(app.includes('src: "/assets/themes/avery-birthday/avery-birthday-share-portrait.webp"'));
@@ -355,7 +423,7 @@ test("Amanda North has a built-in portrait looping idle screen", () => {
   assert.ok(app.includes('orientation: "portrait"'));
   assert.ok(
     app.includes(
-      'poster: "/assets/themes/back-to-school/back-to-school-idle-portrait.png"'
+      'poster: "/assets/themes/back-to-school/back-to-school-idle-portrait.webp"'
     )
   );
   assert.ok(app.includes("start: { x: 50, y: 88, width: 84, height: 14 }"));
@@ -381,21 +449,21 @@ test("Amanda North uses its custom photo-choice artwork after Tap to Start", () 
 
 test("Amanda North provides portrait and landscape share-screen artwork", () => {
   assert.ok(
-    app.includes('src: "/assets/themes/back-to-school/back-to-school-share-portrait.png"')
+    app.includes('src: "/assets/themes/back-to-school/back-to-school-share-portrait.webp"')
   );
   assert.ok(
-    app.includes('src: "/assets/themes/back-to-school/back-to-school-share-landscape.png"')
+    app.includes('src: "/assets/themes/back-to-school/back-to-school-share-landscape.webp"')
   );
   assert.ok(app.includes("function applyThemeShareScreen(theme)"));
   assert.ok(html.includes("#boothScreen.has-theme-share-screen.share-mode #finalPreview"));
   assert.ok(
     readFileSync(
-      join(process.cwd(), "assets/themes/back-to-school/back-to-school-share-portrait.png")
+      join(process.cwd(), "assets/themes/back-to-school/back-to-school-share-portrait.webp")
     ).length > 0
   );
   assert.ok(
     readFileSync(
-      join(process.cwd(), "assets/themes/back-to-school/back-to-school-share-landscape.png")
+      join(process.cwd(), "assets/themes/back-to-school/back-to-school-share-landscape.webp")
     ).length > 0
   );
 });
@@ -485,16 +553,16 @@ test("Avery includes dedicated portrait and landscape carnival overlays", () => 
 
 test("Avery includes infernal-town background and overlay pairs", () => {
   const assets = [
-    "assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.png",
-    "assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.png",
+    "assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.webp",
+    "assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.webp",
     "assets/themes/avery-birthday/avery-birthday-infernal-town-overlay-portrait.png",
     "assets/themes/avery-birthday/avery-birthday-infernal-town-overlay-landscape.png",
   ];
 
   assert.ok(app.includes("Avery infernal town overlay portrait"));
   assert.ok(app.includes("Avery infernal town overlay landscape"));
-  assert.ok(app.includes("avery-birthday-infernal-town-background-portrait.png"));
-  assert.ok(app.includes("avery-birthday-infernal-town-background-landscape.png"));
+  assert.ok(app.includes("avery-birthday-infernal-town-background-portrait.webp"));
+  assert.ok(app.includes("avery-birthday-infernal-town-background-landscape.webp"));
   assert.ok(app.includes("greenBackgrounds: ["));
   assets.forEach((asset) => {
     assert.ok(readFileSync(join(process.cwd(), asset)).length > 0);

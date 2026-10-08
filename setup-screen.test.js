@@ -385,7 +385,10 @@ test("setup theme dropdown groups themes by user-facing category", () => {
   assert.ok(
     appScript.includes("const THEME_SETUP_GROUP_ORDER = [") &&
       appScript.includes('"General",') &&
+      appScript.includes('"Sports",') &&
       appScript.includes('"Youth",') &&
+      appScript.includes('if (/(spring hill hawks|hawks cheer)/.test(normalized)) return "Sports";') &&
+      appScript.includes('if (/(amanda north|ane|stream night)/.test(normalized)) return "Youth";') &&
       appScript.includes('const THEME_SETUP_LABEL_OVERRIDES = {') &&
       appScript.includes('hawks: "Spring Hill Hawks"') &&
       appScript.includes('hawkscheer: "Spring Hill Hawks Cheer"') &&
@@ -400,6 +403,11 @@ test("setup theme dropdown groups themes by user-facing category", () => {
       appScript.includes('title.setAttribute("role", "presentation");') &&
       appScript.includes('title.setAttribute("aria-hidden", "true");'),
     "grouped theme options should dedupe by key and render non-selectable section headers"
+  );
+  assert.ok(
+    appScript.includes("pruneUnapprovedThemes(themes, APPROVED_THEME_KEYS)") &&
+      appScript.includes("pruneUnapprovedThemes(target, APPROVED_THEME_KEYS)"),
+    "both bundled and saved theme catalogs should be pruned to the complete-theme allowlist"
   );
   assert.ok(
     appScript.includes("item.dataset.themeKey = entry.key;") &&
@@ -417,6 +425,29 @@ test("setup theme dropdown groups themes by user-facing category", () => {
       appScript.includes('function normalizeThemeName(value = "")'),
     "legacy flat built-in copies and emoji-prefixed theme names should be normalized"
   );
+});
+
+test("one reusable Wedding theme holds event-specific names and dates", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const overlays = JSON.parse(
+    readProjectFile("assets", "wedding", "garden-vows", "overlays", "overlays.json")
+  );
+  const templates = JSON.parse(
+    readProjectFile("assets", "wedding", "garden-vows", "templates", "templates.json")
+  );
+
+  assert.ok(appScript.includes('"wedding:romantic"'));
+  assert.ok(appScript.includes('name: "Wedding"'));
+  assert.ok(!appScript.includes('name: "Garden Vows"'));
+  assert.deepEqual(
+    overlays.map((item) => item.src),
+    ["garden-vows-single-portrait.png", "garden-vows-single-landscape.png"]
+  );
+  assert.deepEqual(
+    templates[0].textFields.map((field) => field.key),
+    ["couple_names", "event_date"]
+  );
+  assert.ok(!appScript.includes("Olivia and Nicolas"));
 });
 
 test("fourth of july theme includes Cloudinary overlay entries", () => {
@@ -952,7 +983,6 @@ test("asset library explains saved, filtered, and removal actions", () => {
 
   assert.ok(
     html.includes('id="assetLibraryClearFilters"') &&
-      appScript.includes("function getActiveAssetLibraryFilterLabels()") &&
       appScript.includes("function clearAssetLibraryFilters()") &&
       appScript.includes("Filters active: ${filterLabels.join(\", \")}"),
     "the library should show filter-aware counts and provide a clear filters action"
@@ -1125,8 +1155,9 @@ test("theme selection normalizes corrupted built-in category selections", () => 
   assert.ok(
     appScript.includes("function migrateLegacyBuiltinRootThemeDefaults()") &&
       appScript.includes("migrateLegacyBuiltinRootThemeDefaults();") &&
-      appScript.includes("const isBuiltinCategory = !!("),
-    "legacy root defaults should be migrated and category roots excluded from selectable themes"
+      appScript.includes("function getSelectableThemeEntries()") &&
+      appScript.includes("if (!APPROVED_THEME_KEYS.has(`${rootKey}:${leafKey}`)) continue;"),
+    "legacy defaults should be migrated while only approved theme keys remain selectable"
   );
 });
 

@@ -4,6 +4,7 @@ local-data/
 uploads/
 *.log
 .env
+.dev.vars*
 .wrangler/
 dist/
 playwright-report/

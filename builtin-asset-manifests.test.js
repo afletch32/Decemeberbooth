@@ -32,6 +32,13 @@ test("getBuiltinAssetManifest returns cloned objects", async () => {
   assert.equal(second[0].src, "birthday-banner.png");
 });
 
+test("retired Basic assets are absent from the built-in manifest", async () => {
+  const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
+  assert.deepEqual(getBuiltinAssetManifest("assets/general/basic/backgrounds/"), []);
+  assert.deepEqual(getBuiltinAssetManifest("assets/general/basic/overlays/"), []);
+  assert.deepEqual(getBuiltinAssetManifest("assets/general/basic/templates/"), []);
+});
+
 test("wedding overlays remain available in built-in asset manifests", async () => {
   const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
   const timelessEntries = getBuiltinAssetManifest(
@@ -45,10 +52,17 @@ test("wedding overlays remain available in built-in asset manifests", async () =
   assert.equal(timelessEntries[0].photoSlots.length, 3);
   assert.equal(timelessEntries[1].src, "timeless-romance-single-overlay.svg");
   assert.equal(timelessEntries[1].photoSlots.length, 1);
-  assert.equal(gardenEntries[0].src, "garden-vows-strip-overlay.svg");
-  assert.equal(gardenEntries[0].photoSlots.length, 3);
-  assert.equal(gardenEntries[1].src, "garden-vows-single-overlay.svg");
+  assert.equal(gardenEntries[0].src, "garden-vows-single-portrait.png");
+  assert.equal(gardenEntries[0].photoSlots.length, 1);
+  assert.equal(gardenEntries[1].src, "garden-vows-single-landscape.png");
   assert.equal(gardenEntries[1].photoSlots.length, 1);
+
+  const gardenTemplates = getBuiltinAssetManifest(
+    "assets/wedding/garden-vows/templates/"
+  );
+  assert.equal(gardenTemplates.length, 1);
+  assert.equal(gardenTemplates[0].src, "garden-vows-three-photo-strip.png");
+  assert.equal(gardenTemplates[0].slots.length, 3);
 });
 
 test("summer overlays remain available in built-in asset manifests", async () => {

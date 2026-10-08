@@ -1,4 +1,10 @@
+const fs = require("node:fs");
 const { defineConfig, devices } = require("@playwright/test");
+
+const systemChromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const chromiumExecutablePath =
+  process.env.PLAYWRIGHT_EXECUTABLE_PATH ||
+  (fs.existsSync(systemChromePath) ? systemChromePath : undefined);
 
 module.exports = defineConfig({
   testDir: "./browser",
@@ -16,7 +22,12 @@ module.exports = defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        ...(chromiumExecutablePath
+          ? { launchOptions: { executablePath: chromiumExecutablePath } }
+          : {}),
+      },
     },
   ],
   webServer: {

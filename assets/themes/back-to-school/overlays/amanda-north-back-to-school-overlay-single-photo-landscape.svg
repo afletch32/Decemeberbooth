@@ -2,8 +2,8 @@
   <defs><mask id="photo-window-landscape"><rect width="1800" height="1200" fill="white"/><rect x="256" y="186" width="1288" height="828" rx="18" fill="black"/></mask></defs>
   <rect width="1800" height="1200" fill="#041E42" mask="url(#photo-window-landscape)"/>
   <rect x="238" y="168" width="1324" height="864" rx="32" stroke="#FFB81C" stroke-width="6"/>
-  <text x="900" y="76" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="42" font-weight="700" text-anchor="middle" letter-spacing="2">Amanda North Elementary</text>
-  <text x="900" y="1155" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="38" font-weight="700" text-anchor="middle" letter-spacing="2">Back to School 2026</text>
+  <text x="900" y="76" fill="#FFFFFF" stroke="#041E42" stroke-width="3" paint-order="stroke" font-family="Arial, sans-serif" font-size="42" font-weight="800" text-anchor="middle" letter-spacing="2">Amanda North Elementary</text>
+  <text x="900" y="1155" fill="#FFB81C" stroke="#041E42" stroke-width="3" paint-order="stroke" font-family="Arial, sans-serif" font-size="38" font-weight="800" text-anchor="middle" letter-spacing="2">Back to School 2026</text>
   <g stroke="#FFB81C" stroke-width="12" stroke-linecap="round"><path d="M35 110h92M80 64v92M47 77l66 66M113 77l-66 66"/><path d="M1672 110h92M1717 64v92M1686 77l62 62M1748 77l-62 62"/><path d="M35 1090h92M80 1044v92M47 1057l66 66M113 1057l-66 66"/><path d="M1672 1090h92M1717 1044v92M1686 1057l62 62M1748 1057l-62 62"/></g>
   <g fill="#1677D2" stroke="#041E42" stroke-width="5"><path d="M185 180l10 30 31 2-24 20 8 30-25-17-26 17 9-30-24-20 31-2z"/><path d="M1590 930l10 30 31 2-24 20 8 30-25-17-26 17 9-30-24-20 31-2z"/></g>
   <g stroke="#FFB81C" stroke-width="12" stroke-linecap="round"><path d="M150 360l120-72"/><path d="M1530 900l120-72"/></g>

@@ -1,20 +1,4 @@
 const BUILTIN_ASSET_MANIFESTS = {
-  "assets/general/basic/backgrounds/": [
-    "basic-background-1.png",
-    "sparkles.png"
-  ],
-  "assets/general/basic/overlays/": [
-    "blue-smoke-frame.png",
-    "flowers-frame.png",
-    "general-frame-black.png",
-    "general-frame-blue-flowers.png",
-    "shes-a-good-man-overlay.png"
-  ],
-  "assets/general/basic/templates/": [
-    { src: "guide-single-photo-landscape.svg", layout: "single_photo" },
-    { src: "guide-single-photo-portrait.svg", layout: "single_photo" },
-    { src: "guide-strip-double-column.svg", layout: "double_column" }
-  ],
   "assets/general/birthday/backgrounds/": [
     "birthday-background-1.png"
   ],
@@ -118,45 +102,43 @@ const BUILTIN_ASSET_MANIFESTS = {
   ],
   "assets/wedding/garden-vows/overlays/": [
     {
-      src: "garden-vows-strip-overlay.svg",
-      id: "garden-vows-strip",
-      name: "Garden Vows Strip",
-      type: "photo-strip-layout",
+      src: "garden-vows-single-portrait.png",
+      id: "garden-vows-single-portrait",
+      name: "Wedding Photo · Portrait",
+      type: "overlay",
       category: "wedding",
-      aspectRatio: "1:3",
-      background: { type: "color", value: "#fffdf9" },
-      foreground: { type: "image", src: "garden-vows-strip-overlay.svg" },
+      orientation: "portrait",
+      aspectRatio: "2:3",
+      foreground: { type: "image", src: "garden-vows-single-portrait.png" },
       photoSlots: [
-        { x: 0.1139, y: 0.2, width: 0.7722, height: 0.1843, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" },
-        { x: 0.1139, y: 0.4083, width: 0.7722, height: 0.1843, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" },
-        { x: 0.1139, y: 0.6167, width: 0.7722, height: 0.1843, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" }
+        { x: 0.1572, y: 0.095, width: 0.6875, height: 0.68, objectFit: "cover" },
       ]
     },
     {
-      src: "garden-vows-single-overlay.svg",
-      id: "garden-vows-single",
-      name: "Garden Vows Single",
+      src: "garden-vows-single-landscape.png",
+      id: "garden-vows-single-landscape",
+      name: "Wedding Photo · Landscape",
       type: "overlay",
       category: "wedding",
+      orientation: "landscape",
       aspectRatio: "3:2",
-      background: { type: "color", value: "#fffdf9" },
-      foreground: { type: "image", src: "garden-vows-single-overlay.svg" },
+      foreground: { type: "image", src: "garden-vows-single-landscape.png" },
       photoSlots: [
-        { x: 0.0811, y: 0.3583, width: 0.8378, height: 0.4883, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" }
+        { x: 0.118, y: 0.128, width: 0.765, height: 0.617, objectFit: "cover" },
       ]
     }
   ],
   "assets/wedding/garden-vows/templates/": [
     {
-      src: "garden-vows-strip-template.svg",
+      src: "garden-vows-three-photo-strip.png",
+      name: "Wedding Three-Photo Strip",
       layout: "photo_strip_3",
       slots: [
-        { x: 90, y: 440, w: 540, h: 382 },
-        { x: 90, y: 890, w: 540, h: 382 },
-        { x: 90, y: 1340, w: 540, h: 382 }
+        { x: 130, y: 148, w: 468, h: 459 },
+        { x: 129, y: 693, w: 474, h: 455 },
+        { x: 130, y: 1234, w: 470, h: 452 }
       ]
-    },
-    { src: "garden-vows-single-template.svg", layout: "single_photo" }
+    }
   ],
   "assets/school/hawks/overlays/": [
     "1.png",

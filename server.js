@@ -13,6 +13,15 @@ const path = require('path');
 const os = require('os');
 
 const app = express();
+let assetLibraryUtils;
+const assetLibraryUtilsReady = import('./scripts/asset-library-utils.mjs').then((utils) => {
+  assetLibraryUtils = utils;
+});
+const getAssetLibraryId = (...args) => assetLibraryUtils.getAssetLibraryId(...args);
+const getAssetLibraryUrlKey = (...args) => assetLibraryUtils.getAssetLibraryUrlKey(...args);
+const normalizeAssetLibraryRecords = (...args) => assetLibraryUtils.normalizeAssetLibraryPayload(...args);
+const normalizeServerAssetCategory = (...args) => assetLibraryUtils.normalizeServerAssetCategory(...args);
+const normalizeAssetTags = (...args) => assetLibraryUtils.normalizeAssetTags(...args);
 const PORT = process.env.PORT || 8000;
 const HOST = process.env.HOST || "0.0.0.0";
 const DATA_ROOT = process.env.DATA_ROOT || __dirname;
@@ -38,6 +47,9 @@ const UPLOADS_DIR = path.join(DATA_ROOT, 'uploads');
 
 // Middleware
 app.use(cors());
+app.use((req, res, next) => {
+  assetLibraryUtilsReady.then(() => next(), next);
+});
 app.use(express.json());
 app.use(express.text());
 
@@ -221,60 +233,7 @@ function requirePrintQueueStaff(req, res, next) {
   return res.status(401).json({ ok: false, error: "Staff authorization required." });
 }
 
-const VALID_ASSET_CATEGORIES = new Set(["background", "overlay", "template"]);
-
-function normalizeAssetCategory(value) {
-  const raw = String(value || "").trim().toLowerCase();
-  if (raw === "backgrounds" || raw === "greenbackgrounds") return "background";
-  if (raw === "overlays") return "overlay";
-  if (raw === "templates") return "template";
-  return VALID_ASSET_CATEGORIES.has(raw) ? raw : "";
-}
-
-function getAssetLibraryUrlKey(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "";
-  if (/^(data:|blob:)/i.test(raw)) return raw;
-  const withoutCache = raw.split("#")[0].split("?")[0].trim();
-  if (!withoutCache) return "";
-  if (/^https?:\/\//i.test(withoutCache)) {
-    try {
-      const parsed = new URL(withoutCache);
-      parsed.hash = "";
-      parsed.search = "";
-      return parsed.toString().replace(/\/+$/g, "").toLowerCase();
-    } catch (_) {
-      return withoutCache.replace(/\/+$/g, "").toLowerCase();
-    }
-  }
-  return withoutCache.replace(/^\/+/, "").replace(/\/+$/g, "").toLowerCase();
-}
-
-function getAssetLibraryId(category, url) {
-  const normalizedCategory = normalizeAssetCategory(category);
-  const key = getAssetLibraryUrlKey(url);
-  return normalizedCategory && key ? `${normalizedCategory}:${key}` : "";
-}
-
-function normalizeAssetLibraryRecordId(category, url, id = "") {
-  const canonicalId = getAssetLibraryId(category, url);
-  const rawId = String(id || "").trim();
-  if (!rawId) return canonicalId;
-  const normalizedCategory = normalizeAssetCategory(category);
-  const prefix = normalizedCategory ? `${normalizedCategory}:` : "";
-  const suffix = prefix && rawId.startsWith(prefix) ? rawId.slice(prefix.length) : rawId;
-  const suffixKey = getAssetLibraryUrlKey(suffix);
-  const urlKey = getAssetLibraryUrlKey(url);
-  if (
-    canonicalId &&
-    suffixKey &&
-    urlKey &&
-    (suffixKey === urlKey || /[/?#]/.test(suffix) || /^https?:\/\//i.test(suffix))
-  ) {
-    return canonicalId;
-  }
-  return rawId;
-}
+const normalizeAssetCategory = normalizeServerAssetCategory;
 
 function assetMatchesLookup(asset, id = "", url = "") {
   if (!asset) return false;
@@ -289,144 +248,26 @@ function assetMatchesLookup(asset, id = "", url = "") {
   );
 }
 
-function isManageableAssetUrl(value) {
-  const url = String(value || "").trim();
-  if (!url) return false;
-  if (/^(javascript|vbscript):/i.test(url)) return false;
-  return true;
-}
-
-function normalizeAssetTags(value) {
-  const source = Array.isArray(value)
-    ? value
-    : String(value || "")
-        .split(",")
-        .map((tag) => tag.trim());
-  const seen = new Set();
-  const out = [];
-  source.forEach((tag) => {
-    const clean = String(tag || "").trim().toLowerCase();
-    if (!clean || seen.has(clean)) return;
-    seen.add(clean);
-    out.push(clean);
-  });
-  return out;
-}
-
-const VALID_ASSET_EDITABLE_FIELDS = new Set([
-  "eventName",
-  "date",
-  "schoolName",
-  "title",
-  "subtitle",
-  "buttonText",
-  "bannerText",
-]);
-
-const ASSET_EDITABLE_FIELD_ALIASES = {
-  event: "eventName",
-  eventname: "eventName",
-  name: "eventName",
-  date: "date",
-  school: "schoolName",
-  schoolname: "schoolName",
-  title: "title",
-  subtitle: "subtitle",
-  button: "buttonText",
-  buttonlabel: "buttonText",
-  buttontext: "buttonText",
-  banner: "bannerText",
-  bannertext: "bannerText",
-};
-
-function normalizeEditableFields(value) {
-  const source = Array.isArray(value)
-    ? value
-    : String(value || "")
-        .split(",")
-        .map((field) => field.trim());
-  const seen = new Set();
-  const out = [];
-  source.forEach((field) => {
-    const raw = String(field || "").trim();
-    const compact = raw.replace(/[\s_-]+/g, "").toLowerCase();
-    const clean = VALID_ASSET_EDITABLE_FIELDS.has(raw)
-      ? raw
-      : ASSET_EDITABLE_FIELD_ALIASES[compact] || "";
-    if (!clean || seen.has(clean)) return;
-    seen.add(clean);
-    out.push(clean);
-  });
-  return out;
-}
-
 function normalizeAssetRecord(item) {
   if (!item || typeof item !== "object") return null;
-  const url = String(item.url || item.secure_url || item.src || "").trim();
-  if (!isManageableAssetUrl(url)) return null;
   const category = normalizeAssetCategory(item.category || item.kind);
   if (!category) return null;
-  const id = normalizeAssetLibraryRecordId(category, url, item.id);
-  if (!id) return null;
-  const editableFields = normalizeEditableFields(item.editableFields);
+  const normalized = normalizeAssetLibraryRecords([item], {
+    normalizeCategory: normalizeServerAssetCategory,
+    includeExtendedMetadata: false,
+  }).assets[0];
+  if (!normalized) return null;
   return {
-    id,
-    category,
-    url,
-    secure_url: url,
-    name: String(item.name || item.originalName || path.basename(url) || category).trim(),
-    tags: normalizeAssetTags(item.tags),
-    folder: String(item.folder || "").trim(),
-    hash: String(item.hash || "").trim(),
-    contentType: String(item.contentType || item.type || "").trim(),
-    createdAt: String(item.createdAt || item.created_at || new Date().toISOString()),
-    updatedAt: String(item.updatedAt || item.updated_at || new Date().toISOString()),
-    customizable:
-      item.customizable === true ||
-      (item.customizable !== false && editableFields.length > 0),
-    editableFields,
-    archived: item.archived === true,
-    hidden: item.hidden === true || item.archived === true,
+    ...normalized,
+    name: String(item.name || item.originalName || path.basename(normalized.url) || category).trim(),
   };
 }
 
 function normalizeAssetLibraryPayload(payload) {
-  const assets = Array.isArray(payload && payload.assets)
-    ? payload.assets
-    : Array.isArray(payload)
-      ? payload
-      : [];
-  const byId = new Map();
-  assets.map(normalizeAssetRecord).filter(Boolean).forEach((asset) => {
-    const mergeKey = getAssetLibraryId(asset.category, asset.url) || asset.id;
-    const existing = byId.get(mergeKey);
-    if (existing) {
-      byId.set(mergeKey, {
-        ...existing,
-        ...asset,
-        tags: normalizeAssetTags([...(existing.tags || []), ...(asset.tags || [])]),
-        editableFields: normalizeEditableFields([
-          ...(existing.editableFields || []),
-          ...(asset.editableFields || []),
-        ]),
-        createdAt: existing.createdAt || asset.createdAt,
-        customizable: existing.customizable === true || asset.customizable === true,
-        archived: existing.archived === true || asset.archived === true,
-        hidden:
-          existing.hidden === true ||
-          existing.archived === true ||
-          asset.hidden === true ||
-          asset.archived === true,
-      });
-    } else {
-      byId.set(mergeKey, asset);
-    }
+  return normalizeAssetLibraryRecords(payload, {
+    normalizeCategory: normalizeServerAssetCategory,
+    includeExtendedMetadata: false,
   });
-  return {
-    assets: Array.from(byId.values()).sort((a, b) =>
-      String(b.createdAt).localeCompare(String(a.createdAt))
-    ),
-  };
 }
 
 function readGalleryIndex() {

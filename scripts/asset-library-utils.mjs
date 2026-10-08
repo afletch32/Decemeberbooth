@@ -51,6 +51,16 @@ export function normalizeUploadedAssetCategory(value) {
     : "";
 }
 
+export function normalizeServerAssetCategory(value) {
+  const category = normalizeUploadedAssetCategory(value);
+  return category === "idle-screen" || category === "thank-you-screen" ? "" : category;
+}
+
+export function normalizePagesAssetCategory(value) {
+  const category = normalizeUploadedAssetCategory(value);
+  return category === "thank-you-screen" ? "" : category;
+}
+
 export function normalizeIdleScreenOrientation(value) {
   const normalized = String(value || "").trim().toLowerCase();
   if (normalized === "portrait" || normalized === "landscape") return normalized;
@@ -194,6 +204,8 @@ function isManageableAssetUrl(url) {
 }
 
 export function normalizeAssetLibraryPayload(payload, options = {}) {
+  const normalizeCategory = options.normalizeCategory || normalizeUploadedAssetCategory;
+  const includeExtendedMetadata = options.includeExtendedMetadata !== false;
   const photoChoiceZones =
     options.photoChoiceZones && typeof options.photoChoiceZones === "object"
       ? options.photoChoiceZones
@@ -208,7 +220,7 @@ export function normalizeAssetLibraryPayload(payload, options = {}) {
     if (!item || typeof item !== "object") return;
     const url = getAssetUrlValue(item);
     if (!isManageableAssetUrl(url)) return;
-    const category = normalizeUploadedAssetCategory(item.category || item.kind);
+    const category = normalizeCategory(item.category || item.kind);
     if (!category) return;
     const id = normalizeAssetLibraryRecordId(category, url, item.id);
     if (!id) return;
@@ -232,7 +244,7 @@ export function normalizeAssetLibraryPayload(payload, options = {}) {
       folder: String(item.folder || "").trim(),
       hash: String(item.hash || "").trim(),
       contentType: String(item.contentType || item.type || "").trim(),
-      originalSrc: String(item.originalSrc || "").trim(),
+      originalSrc: includeExtendedMetadata ? String(item.originalSrc || "").trim() : "",
       createdAt: String(item.createdAt || item.created_at || new Date().toISOString()),
       updatedAt: String(item.updatedAt || item.updated_at || new Date().toISOString()),
       customizable:
@@ -242,12 +254,16 @@ export function normalizeAssetLibraryPayload(payload, options = {}) {
       archived: item.archived === true,
       hidden: item.hidden === true || item.archived === true,
       orientation:
-        category === "idle-screen" || category === "thank-you-screen"
+        includeExtendedMetadata &&
+        (category === "idle-screen" || category === "thank-you-screen")
           ? normalizeIdleScreenOrientation(item.orientation)
           : undefined,
-      role: category === "idle-screen" ? (isPhotoChoice ? "photo-choice" : "idle") : undefined,
+      role:
+        includeExtendedMetadata && category === "idle-screen"
+          ? isPhotoChoice ? "photo-choice" : "idle"
+          : undefined,
       buttonZones:
-        category !== "idle-screen"
+        !includeExtendedMetadata || category !== "idle-screen"
           ? undefined
           : isPhotoChoice
           ? {
@@ -260,7 +276,8 @@ export function normalizeAssetLibraryPayload(payload, options = {}) {
             }
           : { start: normalizeIdleButtonZone(item.buttonZones?.start) },
       photoSlots:
-        category === "overlay" || category === "template"
+        includeExtendedMetadata &&
+        (category === "overlay" || category === "template")
           ? Array.isArray(item.photoSlots)
             ? item.photoSlots
                 .map((slot, index) => normalizePhotoSlot(slot, index))

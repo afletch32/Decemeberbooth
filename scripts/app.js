@@ -26,6 +26,7 @@ import { formatRecordingTime } from "./recording-utils.mjs";
 import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
 import { getGuestVisibleBeautyPresets } from "./beauty/presets.mjs";
 import { createThemeAdminState } from "./theme-admin-state.mjs";
+import { pruneUnapprovedThemes } from "./theme-catalog-utils.mjs";
 import {
   detectEditableFieldsFromText,
   getAssetEditableFieldLabel,
@@ -88,6 +89,16 @@ const RESERVED_PHOTO_MARKER = {
   minAreaRatio: 0.001,
 };
 const reservedPhotoMarkerCache = new Map();
+const decodedImageCache = new Map();
+const DECODED_IMAGE_CACHE_LIMIT = 40;
+
+function deferNonCriticalTask(task) {
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(() => task(), { timeout: 2000 });
+  } else {
+    window.setTimeout(task, 250);
+  }
+}
 
 // --- USB Relay Automation (Web Serial) ---
 let relayPort = null;
@@ -181,41 +192,24 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+const APPROVED_THEME_KEYS = new Set([
+  "general:averyBirthday",
+  "general:backToSchool",
+  "general:summer",
+  "fall:halloween",
+  "fall:cuteHalloween",
+  "school:hawks",
+  "school:hawksTitansStadium",
+  "school:hawksCheer",
+  "school:ane",
+  "school:streamNight",
+  "wedding:romantic",
+]);
+
 let themes = {
   general: {
     name: "General",
     themes: {
-      basic: {
-        name: "Basic",
-        eventTypes: ["general", "wedding", "expo", "community"],
-        fontPairingStyle: "general",
-        accent: "#3f51b5",
-        accent2: "#ffffff",
-        font: "'Comic Neue', cursive",
-        logo: "",
-        backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788380/photobooth/events/assets/basic-background-1_pzpqmv.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788381/photobooth/events/assets/basic-background-sparkles_hanvy5.png",
-        ],
-        overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788382/photobooth/events/assets/basic-overlay-blue-smoke-frame_j11vpo.png", name: "basic-overlay-blue-smoke-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788383/photobooth/events/assets/basic-overlay-flowers-frame_aqcurj.png", name: "basic-overlay-flowers-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788385/photobooth/events/assets/basic-overlay-general-frame-black_cnp5qj.png", name: "basic-overlay-general-frame-black" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788388/photobooth/events/assets/basic-overlay-general-frame-blue-flowers_bkt18l.png", name: "basic-overlay-general-frame-blue-flowers" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788391/photobooth/events/assets/basic-overlay-shes-a-good-man-overlay_pzn5td.png", name: "basic-overlay-shes-a-good-man-overlay" },
-        ],
-        templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788392/photobooth/events/assets/basic-template-guide-single-photo-landscape_zjmllk.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788394/photobooth/events/assets/basic-template-guide-single-photo-portrait_jzgbkc.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788395/photobooth/events/assets/basic-template-guide-strip-double-column_iouo3d.svg", layout: "double_column" },
-        ],
-        welcome: {
-          title: "Welcome!",
-          portrait: "",
-          landscape: "",
-          prompt: "Touch to start",
-        },
-      },
       backToSchool: {
         name: "Back to School",
         eventTypes: ["general", "community"],
@@ -225,12 +219,12 @@ let themes = {
         font: "'Bree Serif', serif",
         logo: "",
         backgrounds: [
-          "/assets/themes/general-back-to-school/back-to-school-background-landscape.png",
-          "/assets/themes/general-back-to-school/back-to-school-background-portrait.png",
+          "/assets/themes/general-back-to-school/back-to-school-background-landscape.webp",
+          "/assets/themes/general-back-to-school/back-to-school-background-portrait.webp",
         ],
         idleScreens: [
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-idle-portrait.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-idle-portrait.webp",
             name: "Back to School idle screen portrait",
             role: "idle",
             orientation: "portrait",
@@ -239,7 +233,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-idle-landscape.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-idle-landscape.webp",
             name: "Back to School idle screen landscape",
             role: "idle",
             orientation: "landscape",
@@ -248,7 +242,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-photo-choice-portrait.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-photo-choice-portrait.webp",
             name: "Back to School photo choice portrait",
             role: "photo-choice",
             orientation: "portrait",
@@ -258,7 +252,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-photo-choice-landscape.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-photo-choice-landscape.webp",
             name: "Back to School photo choice landscape",
             role: "photo-choice",
             orientation: "landscape",
@@ -270,12 +264,12 @@ let themes = {
         ],
         thankYouScreens: [
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-thank-you-portrait.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-thank-you-portrait.webp",
             name: "Back to School Thank You screen portrait",
             orientation: "portrait",
           },
           {
-            src: "/assets/themes/general-back-to-school/back-to-school-thank-you-landscape.png",
+            src: "/assets/themes/general-back-to-school/back-to-school-thank-you-landscape.webp",
             name: "Back to School Thank You screen landscape",
             orientation: "landscape",
           },
@@ -341,6 +335,58 @@ let themes = {
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788420/photobooth/events/assets/summer-overlay-tropical-border-with-frame_lne3ia.png", name: "summer-overlay-tropical-border-with-frame" },
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788423/photobooth/events/assets/summer-overlay-tropical-border_twuynr.png", name: "summer-overlay-tropical-border" },
         ],
+        backgrounds: [
+          "/assets/themes/summer/summer-background-landscape.mp4",
+          "/assets/themes/summer/summer-background-portrait.mp4",
+        ],
+        idleScreens: [
+          {
+            src: "/assets/themes/summer/summer-idle-portrait.webp",
+            name: "Summer idle portrait",
+            role: "idle",
+            orientation: "portrait",
+            buttonZones: { start: { x: 50, y: 74, width: 48, height: 24 } },
+          },
+          {
+            src: "/assets/themes/summer/summer-idle-landscape.webp",
+            name: "Summer idle landscape",
+            role: "idle",
+            orientation: "landscape",
+            buttonZones: { start: { x: 50, y: 78, width: 36, height: 28 } },
+          },
+          {
+            src: "/assets/themes/summer/summer-photo-choice-portrait.mp4",
+            name: "Summer photo choice portrait",
+            role: "photo-choice",
+            orientation: "portrait",
+            buttonZones: {
+              singlePhoto: { x: 50, y: 42, width: 74, height: 22 },
+              photoStrip: { x: 50, y: 72, width: 74, height: 22 },
+            },
+          },
+          {
+            src: "/assets/themes/summer/summer-photo-choice-landscape.mp4",
+            name: "Summer photo choice landscape",
+            role: "photo-choice",
+            orientation: "landscape",
+            buttonZones: {
+              singlePhoto: { x: 32, y: 58, width: 34, height: 48 },
+              photoStrip: { x: 68, y: 58, width: 34, height: 48 },
+            },
+          },
+        ],
+        thankYouScreens: [
+          {
+            src: "/assets/themes/summer/summer-thank-you-portrait.webp",
+            name: "Summer Thank You portrait",
+            orientation: "portrait",
+          },
+          {
+            src: "/assets/themes/summer/summer-thank-you-landscape.webp",
+            name: "Summer Thank You landscape",
+            orientation: "landscape",
+          },
+        ],
         welcome: {
           title: "Hello Summer!",
           portrait: "",
@@ -386,7 +432,7 @@ let themes = {
         vibeSummary: "Classic, polished, formal",
       },
       romantic: {
-        name: "Garden Vows",
+        name: "Wedding",
         eventTypes: ["wedding"],
         fontPairingStyle: "wedding",
         accent: "#93b29b",
@@ -402,12 +448,54 @@ let themes = {
           "https://res.cloudinary.com/afletch32/image/upload/v1783788540/photobooth/events/assets/garden-vows-background-garden-vows-bg-7_cib79o.png",
         ],
         overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788540/photobooth/events/assets/garden-vows-overlay-garden-vows-single-overlay_priznl.svg", name: "garden-vows-overlay-single" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788542/photobooth/events/assets/garden-vows-overlay-garden-vows-strip-overlay_jeuhvh.svg", name: "garden-vows-overlay-strip" },
+          {
+            id: "garden-vows-single-portrait",
+            name: "Wedding Photo · Portrait",
+            src: "/assets/wedding/garden-vows/overlays/garden-vows-single-portrait.png",
+            type: "overlay",
+            category: "wedding",
+            orientation: "portrait",
+            aspectRatio: "2:3",
+            photoSlots: [
+              { x: 0.1572, y: 0.095, width: 0.6875, height: 0.68, objectFit: "cover" },
+            ],
+            textFields: [
+              { key: "couple_names", xPct: 0.14, yPct: 0.80, wPct: 0.72, hPct: 0.065, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 78, minFontSize: 34, color: "#38584a", align: "center" },
+              { key: "event_date", xPct: 0.2, yPct: 0.88, wPct: 0.6, hPct: 0.035, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 34, minFontSize: 20, color: "#65766b", align: "center" },
+            ],
+          },
+          {
+            id: "garden-vows-single-landscape",
+            name: "Wedding Photo · Landscape",
+            src: "/assets/wedding/garden-vows/overlays/garden-vows-single-landscape.png",
+            type: "overlay",
+            category: "wedding",
+            orientation: "landscape",
+            aspectRatio: "3:2",
+            photoSlots: [
+              { x: 0.118, y: 0.128, width: 0.765, height: 0.617, objectFit: "cover" },
+            ],
+            textFields: [
+              { key: "couple_names", xPct: 0.15, yPct: 0.77, wPct: 0.7, hPct: 0.075, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 72, minFontSize: 32, color: "#38584a", align: "center" },
+              { key: "event_date", xPct: 0.2, yPct: 0.87, wPct: 0.6, hPct: 0.04, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 30, minFontSize: 18, color: "#65766b", align: "center" },
+            ],
+          },
         ],
         templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788544/photobooth/events/assets/garden-vows-template-garden-vows-single-template_lxysxx.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788546/photobooth/events/assets/garden-vows-template-garden-vows-strip-template_iozpue.svg", layout: "double_column" },
+          {
+            src: "/assets/wedding/garden-vows/templates/garden-vows-three-photo-strip.png",
+            name: "Wedding Three-Photo Strip",
+            layout: "photo_strip_3",
+            slots: [
+              { x: 130, y: 148, w: 468, h: 459 },
+              { x: 129, y: 693, w: 474, h: 455 },
+              { x: 130, y: 1234, w: 470, h: 452 },
+            ],
+            textFields: [
+              { key: "couple_names", xPct: 0.15, yPct: 0.835, wPct: 0.7, hPct: 0.055, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 50, minFontSize: 26, color: "#38584a", align: "center" },
+              { key: "event_date", xPct: 0.2, yPct: 0.895, wPct: 0.6, hPct: 0.03, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 25, minFontSize: 16, color: "#65766b", align: "center" },
+            ],
+          },
         ],
         welcome: {
           title: "Love Looks Good Here",
@@ -416,77 +504,6 @@ let themes = {
           prompt: "Touch to start",
         },
         vibeSummary: "Soft, romantic, photo-forward",
-      },
-    },
-  },
-  expo: {
-    name: "Expo",
-    themes: {
-      brandStudio: {
-        name: "Brand Studio",
-        eventTypes: ["expo"],
-        fontPairingStyle: "expo",
-        accent: "#1f5eff",
-        accent2: "#f4f7ff",
-        fontHeading: "'Montserrat', sans-serif",
-        fontBody: "'Inter', sans-serif",
-        logo: "",
-        backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788380/photobooth/events/assets/basic-background-1_pzpqmv.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788381/photobooth/events/assets/basic-background-sparkles_hanvy5.png",
-        ],
-        overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788382/photobooth/events/assets/basic-overlay-blue-smoke-frame_j11vpo.png", name: "basic-overlay-blue-smoke-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788383/photobooth/events/assets/basic-overlay-flowers-frame_aqcurj.png", name: "basic-overlay-flowers-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788385/photobooth/events/assets/basic-overlay-general-frame-black_cnp5qj.png", name: "basic-overlay-general-frame-black" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788388/photobooth/events/assets/basic-overlay-general-frame-blue-flowers_bkt18l.png", name: "basic-overlay-general-frame-blue-flowers" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788391/photobooth/events/assets/basic-overlay-shes-a-good-man-overlay_pzn5td.png", name: "basic-overlay-shes-a-good-man-overlay" },
-        ],
-        templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788392/photobooth/events/assets/basic-template-guide-single-photo-landscape_zjmllk.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788394/photobooth/events/assets/basic-template-guide-single-photo-portrait_jzgbkc.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788395/photobooth/events/assets/basic-template-guide-strip-double-column_iouo3d.svg", layout: "double_column" },
-        ],
-        welcome: {
-          title: "Step In + Share",
-          portrait: "",
-          landscape: "",
-          prompt: "Tap to begin",
-        },
-        vibeSummary: "Clean, branded, high traffic",
-      },
-      leadCapture: {
-        name: "Lead Capture",
-        eventTypes: ["expo"],
-        fontPairingStyle: "expo",
-        accent: "#0f766e",
-        accent2: "#f5fffd",
-        fontHeading: "'Raleway', sans-serif",
-        fontBody: "'Open Sans', sans-serif",
-        logo: "",
-        backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788380/photobooth/events/assets/basic-background-1_pzpqmv.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788381/photobooth/events/assets/basic-background-sparkles_hanvy5.png",
-        ],
-        overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788382/photobooth/events/assets/basic-overlay-blue-smoke-frame_j11vpo.png", name: "basic-overlay-blue-smoke-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788383/photobooth/events/assets/basic-overlay-flowers-frame_aqcurj.png", name: "basic-overlay-flowers-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788385/photobooth/events/assets/basic-overlay-general-frame-black_cnp5qj.png", name: "basic-overlay-general-frame-black" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788388/photobooth/events/assets/basic-overlay-general-frame-blue-flowers_bkt18l.png", name: "basic-overlay-general-frame-blue-flowers" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788391/photobooth/events/assets/basic-overlay-shes-a-good-man-overlay_pzn5td.png", name: "basic-overlay-shes-a-good-man-overlay" },
-        ],
-        templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788392/photobooth/events/assets/basic-template-guide-single-photo-landscape_zjmllk.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788394/photobooth/events/assets/basic-template-guide-single-photo-portrait_jzgbkc.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788395/photobooth/events/assets/basic-template-guide-strip-double-column_iouo3d.svg", layout: "double_column" },
-        ],
-        welcome: {
-          title: "Fast Photos, Fast Follow-Up",
-          portrait: "",
-          landscape: "",
-          prompt: "Touch to start",
-        },
-        vibeSummary: "Readable, efficient, promo-ready",
       },
     },
   },
@@ -565,15 +582,15 @@ let themes = {
           },
         ],
         overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788500/photobooth/events/assets/hawks-overlay-1_scvljp.png", name: "hawks-overlay-1" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788501/photobooth/events/assets/hawks-overlay-2_tqwxej.png", name: "hawks-overlay-2" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788502/photobooth/events/assets/hawks-overlay-3_m10caq.png", name: "hawks-overlay-3" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788502/photobooth/events/assets/hawks-overlay-hawks-frame-cheerleader_y050rk.png", name: "hawks-overlay-cheerleader" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788504/photobooth/events/assets/hawks-overlay-hawks-frame-fan_r0a1xo.png", name: "hawks-overlay-fan" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788505/photobooth/events/assets/hawks-overlay-hawks-frame-go-hawks_b7hl8z.png", name: "hawks-overlay-go-hawks" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788506/photobooth/events/assets/hawks-overlay-hawks-frame-grass_ggw2wk.png", name: "hawks-overlay-grass" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788507/photobooth/events/assets/hawks-overlay-hawks-frame-helmets_gdhcav.png", name: "hawks-overlay-helmets" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788507/photobooth/events/assets/hawks-overlay-hawks-frame-players_xpdnfs.png", name: "hawks-overlay-players" },
+          { src: "/assets/school/hawks/overlays/1.png", name: "hawks-overlay-1" },
+          { src: "/assets/school/hawks/overlays/2.png", name: "hawks-overlay-2" },
+          { src: "/assets/school/hawks/overlays/3.png", name: "hawks-overlay-3" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-cheerleader.png", name: "hawks-overlay-cheerleader" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-fan.png", name: "hawks-overlay-fan" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-go-hawks.png", name: "hawks-overlay-go-hawks" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-grass.png", name: "hawks-overlay-grass" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-helmets.png", name: "hawks-overlay-helmets" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-players.png", name: "hawks-overlay-players" },
         ],
         templates: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788508/photobooth/events/assets/hawks-template-go-hawks_avfpzg.png", layout: "single_photo" },
@@ -585,6 +602,104 @@ let themes = {
           prompt: "Tap to start",
         },
         vibeSummary: "Youth football, sideline spirit, family pride, and Hawks game-day energy",
+      },
+      hawksTitansStadium: {
+        name: "Spring Hill Hawks at Nissan Stadium",
+        eventTypes: ["community", "sports"],
+        fontPairingStyle: "community",
+        accent: "#041E42",
+        accent2: "#16A34A",
+        font: "'Anton', sans-serif",
+        background: "",
+        logo: "/assets/themes/spring-hill-hawks/spring-hill-hawks-logo.png",
+        backgrounds: [
+          "/assets/themes/spring-hill-hawks/nissan-stadium-aerial-day.jpg",
+          "/assets/themes/spring-hill-hawks/spring-hill-hawks-background-landscape.webp",
+          "/assets/themes/spring-hill-hawks/spring-hill-hawks-background-portrait.webp",
+          "https://res.cloudinary.com/afletch32/image/upload/v1783788496/photobooth/events/assets/hawks-background-football_bclba6.png",
+        ],
+        idleScreens: [
+          {
+            src: "/assets/themes/spring-hill-hawks/nissan-stadium-river-day.jpg",
+            name: "Nissan Stadium river view daytime start screen",
+            role: "idle",
+            orientation: "portrait",
+            buttonZones: { start: { x: 50, y: 78, width: 68, height: 16 } },
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-idle-landscape.webp",
+            name: "Hawks at Nissan Stadium idle landscape",
+            role: "idle",
+            orientation: "landscape",
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/nissan-stadium-aerial-day.jpg",
+            name: "Nissan Stadium aerial field photo choice screen",
+            role: "photo-choice",
+            orientation: "portrait",
+            buttonZones: {
+              singlePhoto: { x: 50, y: 48, width: 64, height: 26 },
+              photoStrip: { x: 50, y: 74, width: 64, height: 24 },
+            },
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-photo-choice-landscape.webp",
+            name: "Hawks at Nissan Stadium photo choice landscape",
+            role: "photo-choice",
+            orientation: "landscape",
+          },
+        ],
+        thankYouScreens: [
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-thank-you-portrait.webp",
+            name: "Hawks at Nissan Stadium thank you portrait",
+            orientation: "portrait",
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/spring-hill-hawks-thank-you-landscape.webp",
+            name: "Hawks at Nissan Stadium thank you landscape",
+            orientation: "landscape",
+          },
+        ],
+        overlays: [
+          {
+            src: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg",
+            renderSrc: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg",
+            name: "Nissan Stadium day game with date",
+            orientation: "portrait",
+            aspectRatio: "4:5",
+            background: { type: "image", src: "/assets/themes/spring-hill-hawks/nissan-stadium-aerial-day.jpg" },
+            foreground: { type: "image", src: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg" },
+            photoSlots: [{ x: 0.116, y: 0.405, width: 0.768, height: 0.379, objectFit: "cover", objectPosition: "center" }],
+            textFields: [
+              { key: "event_date", xPct: 0.2, yPct: 0.93, wPct: 0.6, hPct: 0.04, fontFamily: "'Anton', sans-serif", fontWeight: "700", fontSize: 30, minFontSize: 18, color: "#ffffff", align: "center" },
+            ],
+          },
+          { src: "/assets/school/hawks/overlays/hawks-frame-go-hawks.png", name: "Hawks stadium game day", orientation: "portrait" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-fan.png", name: "Hawks stadium fan", orientation: "landscape" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-players.png", name: "Hawks stadium players", orientation: "portrait" },
+        ],
+        templates: [
+          {
+            src: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg",
+            renderSrc: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg",
+            name: "Nissan Stadium day game photo print",
+            layout: "single_photo",
+            background: { type: "image", src: "/assets/themes/spring-hill-hawks/nissan-stadium-aerial-day.jpg" },
+            foreground: { type: "image", src: "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg" },
+            photoSlots: [{ x: 0.116, y: 0.405, width: 0.768, height: 0.379, objectFit: "cover", objectPosition: "center" }],
+            textFields: [
+              { key: "event_date", xPct: 0.2, yPct: 0.93, wPct: 0.6, hPct: 0.04, fontFamily: "'Anton', sans-serif", fontWeight: "700", fontSize: 30, minFontSize: 18, color: "#ffffff", align: "center" },
+            ],
+          },
+        ],
+        welcome: {
+          title: "Hawks Take Nissan Stadium",
+          portrait: "",
+          landscape: "",
+          prompt: "Tap to start",
+        },
+        vibeSummary: "Spring Hill Hawks game day at Titans Stadium, with team colors and sideline spirit",
       },
       hawksCheer: {
         name: "Spring Hill Hawks Cheer",
@@ -652,10 +767,10 @@ let themes = {
           },
         ],
         overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788500/photobooth/events/assets/hawks-overlay-1_scvljp.png", name: "hawks-overlay-1" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788502/photobooth/events/assets/hawks-overlay-hawks-frame-cheerleader_y050rk.png", name: "hawks-overlay-cheerleader" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788504/photobooth/events/assets/hawks-overlay-hawks-frame-fan_r0a1xo.png", name: "hawks-overlay-fan" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788505/photobooth/events/assets/hawks-overlay-hawks-frame-go-hawks_b7hl8z.png", name: "hawks-overlay-go-hawks" },
+          { src: "/assets/school/hawks/overlays/1.png", name: "hawks-overlay-1" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-cheerleader.png", name: "hawks-overlay-cheerleader" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-fan.png", name: "hawks-overlay-fan" },
+          { src: "/assets/school/hawks/overlays/hawks-frame-go-hawks.png", name: "hawks-overlay-go-hawks" },
         ],
         templates: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788508/photobooth/events/assets/hawks-template-go-hawks_avfpzg.png", layout: "single_photo" },
@@ -677,13 +792,13 @@ let themes = {
         font: "'Comic Neue', cursive",
         logo: "",
         backgrounds: [
-          "/assets/themes/back-to-school/back-to-school-background-landscape.png",
-          "/assets/themes/back-to-school/back-to-school-background-portrait.png",
+          "/assets/themes/back-to-school/back-to-school-background-landscape.webp",
+          "/assets/themes/back-to-school/back-to-school-background-portrait.webp",
         ],
         idleScreens: [
           {
             src: "/assets/themes/back-to-school/amanda-north-coyotes-idle-wave-portrait.mp4",
-            poster: "/assets/themes/back-to-school/back-to-school-idle-portrait.png",
+            poster: "/assets/themes/back-to-school/back-to-school-idle-portrait.webp",
             name: "Amanda North Coyote waving idle screen",
             role: "idle",
             orientation: "portrait",
@@ -692,7 +807,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/back-to-school/back-to-school-idle-landscape.png",
+            src: "/assets/themes/back-to-school/back-to-school-idle-landscape.webp",
             name: "Amanda North Coyote idle screen landscape",
             role: "idle",
             orientation: "landscape",
@@ -701,7 +816,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/back-to-school/back-to-school-photo-choice-portrait.png",
+            src: "/assets/themes/back-to-school/back-to-school-photo-choice-portrait.webp",
             name: "Amanda North Coyote photo choice portrait",
             role: "photo-choice",
             orientation: "portrait",
@@ -711,7 +826,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/back-to-school/back-to-school-photo-choice-landscape.png",
+            src: "/assets/themes/back-to-school/back-to-school-photo-choice-landscape.webp",
             name: "Amanda North Coyote photo choice landscape",
             role: "photo-choice",
             orientation: "landscape",
@@ -723,30 +838,32 @@ let themes = {
         ],
         shareScreens: [
           {
-            src: "/assets/themes/back-to-school/back-to-school-share-portrait.png",
+            src: "/assets/themes/back-to-school/back-to-school-share-portrait.webp",
             orientation: "portrait",
             name: "Amanda North Coyote share screen portrait",
           },
           {
-            src: "/assets/themes/back-to-school/back-to-school-share-landscape.png",
+            src: "/assets/themes/back-to-school/back-to-school-share-landscape.webp",
             orientation: "landscape",
             name: "Amanda North Coyote share screen landscape",
           },
         ],
         thankYouScreens: [
           {
-            src: "/assets/themes/back-to-school/back-to-school-thank-you-portrait.png",
+            src: "/assets/themes/back-to-school/back-to-school-thank-you-portrait.webp",
             name: "Amanda North Coyote Thank You screen portrait",
             orientation: "portrait",
           },
           {
-            src: "/assets/themes/back-to-school/back-to-school-thank-you-landscape.png",
+            src: "/assets/themes/back-to-school/back-to-school-thank-you-landscape.webp",
             name: "Amanda North Coyote Thank You screen landscape",
             orientation: "landscape",
           },
         ],
         overlays: [
           { src: "/assets/themes/back-to-school/overlays/amanda-north-back-to-school-overlay-single-photo-portrait.png", orientation: "portrait", name: "Amanda North Back to School single photo portrait" },
+          { src: "/assets/themes/back-to-school/overlays/amanda-north-back-to-school-overlay-school-supply-portrait.png", orientation: "portrait", name: "Amanda North Back to School school supply portrait" },
+          { src: "/assets/themes/back-to-school/overlays/amanda-north-back-to-school-overlay-primary-portrait.png", orientation: "portrait", name: "Amanda North Back to School primary portrait frame" },
           { src: "/assets/themes/back-to-school/overlays/amanda-north-back-to-school-overlay-single-photo-landscape.png", orientation: "landscape", name: "Amanda North Back to School single photo landscape" },
         ],
         templates: [],
@@ -766,12 +883,12 @@ let themes = {
         font: "'Comic Neue', cursive",
         logo: "",
         backgrounds: [
-          "/assets/themes/stream-night/stream-night-background-landscape.png",
-          "/assets/themes/stream-night/stream-night-background-portrait.png",
+          "/assets/themes/stream-night/stream-night-background-landscape.webp",
+          "/assets/themes/stream-night/stream-night-background-portrait.webp",
         ],
         idleScreens: [
           {
-            src: "/assets/themes/stream-night/stream-night-idle-portrait.png",
+            src: "/assets/themes/stream-night/stream-night-idle-portrait.webp",
             name: "Amanda North STREAM Night idle portrait",
             role: "idle",
             orientation: "portrait",
@@ -780,7 +897,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/stream-night/stream-night-idle-landscape.png",
+            src: "/assets/themes/stream-night/stream-night-idle-landscape.webp",
             name: "Amanda North STREAM Night idle landscape",
             role: "idle",
             orientation: "landscape",
@@ -789,7 +906,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/stream-night/stream-night-photo-choice-portrait.png",
+            src: "/assets/themes/stream-night/stream-night-photo-choice-portrait.webp",
             name: "Amanda North STREAM Night photo choice portrait",
             role: "photo-choice",
             orientation: "portrait",
@@ -799,7 +916,7 @@ let themes = {
             },
           },
           {
-            src: "/assets/themes/stream-night/stream-night-photo-choice-landscape.png",
+            src: "/assets/themes/stream-night/stream-night-photo-choice-landscape.webp",
             name: "Amanda North STREAM Night photo choice landscape",
             role: "photo-choice",
             orientation: "landscape",
@@ -811,12 +928,12 @@ let themes = {
         ],
         thankYouScreens: [
           {
-            src: "/assets/themes/stream-night/stream-night-thank-you-portrait.png",
+            src: "/assets/themes/stream-night/stream-night-thank-you-portrait.webp",
             name: "Amanda North STREAM Night Thank You screen portrait",
             orientation: "portrait",
           },
           {
-            src: "/assets/themes/stream-night/stream-night-thank-you-landscape.png",
+            src: "/assets/themes/stream-night/stream-night-thank-you-landscape.webp",
             name: "Amanda North STREAM Night Thank You screen landscape",
             orientation: "landscape",
           },
@@ -848,35 +965,36 @@ let themes = {
         font: "'Creepster', cursive",
         logo: "",
         backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788425/photobooth/events/assets/fall-halloween-background-halloween-background-grey-1_bfrn8g.jpg",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788425/photobooth/events/assets/fall-halloween-background-halloween-background-pink_dcgv0o.png",
+          "/assets/themes/halloween/halloween-background-portrait.webp",
+          "/assets/themes/halloween/halloween-background-landscape.webp",
+        ],
+        idleScreens: [
+          { src: "/assets/themes/halloween/halloween-idle-portrait.webp", name: "Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
+          { src: "/assets/themes/halloween/halloween-idle-landscape.webp", name: "Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 50, y: 82, width: 38, height: 20 } } },
+          { src: "/assets/themes/halloween/halloween-photo-choice-portrait.webp", name: "Halloween photo choice portrait", role: "photo-choice", orientation: "portrait", buttonZones: { singlePhoto: { x: 50, y: 43, width: 76, height: 22 }, photoStrip: { x: 50, y: 72, width: 76, height: 22 } } },
+          { src: "/assets/themes/halloween/halloween-photo-choice-landscape.webp", name: "Halloween photo choice landscape", role: "photo-choice", orientation: "landscape", buttonZones: { singlePhoto: { x: 30, y: 55, width: 34, height: 48 }, photoStrip: { x: 70, y: 55, width: 34, height: 48 } } },
+        ],
+        thankYouScreens: [
+          { src: "/assets/themes/halloween/halloween-thank-you-portrait.webp", name: "Halloween Thank You portrait", orientation: "portrait" },
+          { src: "/assets/themes/halloween/halloween-thank-you-landscape.webp", name: "Halloween Thank You landscape", orientation: "landscape" },
         ],
         overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788426/photobooth/events/assets/fall-halloween-overlay-1_o52jc3.png", name: "fall-halloween-overlay-1" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788427/photobooth/events/assets/fall-halloween-overlay-11_hrnih0.png", name: "fall-halloween-overlay-11" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788428/photobooth/events/assets/fall-halloween-overlay-12_awh07v.png", name: "fall-halloween-overlay-12" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788429/photobooth/events/assets/fall-halloween-overlay-13_x2m6fk.png", name: "fall-halloween-overlay-13" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788431/photobooth/events/assets/fall-halloween-overlay-2_tsiq9i.png", name: "fall-halloween-overlay-2" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788432/photobooth/events/assets/fall-halloween-overlay-3_jjw6jy.png", name: "fall-halloween-overlay-3" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788433/photobooth/events/assets/fall-halloween-overlay-4_ckrgab.png", name: "fall-halloween-overlay-4" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788434/photobooth/events/assets/fall-halloween-overlay-5_tcmqpc.png", name: "fall-halloween-overlay-5" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788437/photobooth/events/assets/fall-halloween-overlay-6_bxgvts.png", name: "fall-halloween-overlay-6" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788438/photobooth/events/assets/fall-halloween-overlay-fall-leaves-frame_t9nior.png", name: "fall-halloween-overlay-leaves-frame" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788440/photobooth/events/assets/fall-halloween-overlay-graveyard-transparent-frame_dlx0jh.png", name: "fall-halloween-overlay-graveyard" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788441/photobooth/events/assets/fall-halloween-overlay-halloween-frame-boo_qgmzt4.png", name: "fall-halloween-overlay-boo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788443/photobooth/events/assets/fall-halloween-overlay-halloween-frame-fog_sgsrd0.png", name: "fall-halloween-overlay-fog" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788444/photobooth/events/assets/fall-halloween-overlay-halloween-frame-groovy-ghosties_pjzxai.png", name: "fall-halloween-overlay-groovy-ghosties" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788445/photobooth/events/assets/fall-halloween-overlay-halloween-frame-groovy_djftw2.png", name: "fall-halloween-overlay-groovy" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788445/photobooth/events/assets/fall-halloween-overlay-halloween-frame-haunted-house_cowlp9.png", name: "fall-halloween-overlay-haunted-house" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788455/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-10_akzyqr.png", name: "fall-halloween-overlay-landscape-10" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788457/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-3_m3qy5z.png", name: "fall-halloween-overlay-landscape-3" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788459/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-5_kutf13.png", name: "fall-halloween-overlay-landscape-5" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788460/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-6_u3ie2u.png", name: "fall-halloween-overlay-landscape-6" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788460/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-7_axskxp.png", name: "fall-halloween-overlay-landscape-7" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788461/photobooth/events/assets/fall-halloween-overlay-halloween-frame-landscape-9_vzpql3.png", name: "fall-halloween-overlay-landscape-9" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788462/photobooth/events/assets/fall-halloween-overlay-halloween-frame-skeletons_zbfq6v.png", name: "fall-halloween-overlay-skeletons" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788463/photobooth/events/assets/fall-halloween-overlay-halloween-overlay-ghosts_oenchv.png", name: "fall-halloween-overlay-ghosts" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788464/photobooth/events/assets/fall-halloween-overlay-smoke-corner-frame_txmhij.png", name: "fall-halloween-overlay-smoke-corner" },
+          {
+            src: "/assets/themes/halloween/overlays/halloween-single-photo-portrait.svg",
+            name: "Halloween single photo portrait",
+            type: "photo",
+            orientation: "portrait",
+            aspectRatio: "2:3",
+            photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
+          },
+          {
+            src: "/assets/themes/halloween/overlays/halloween-single-photo-landscape.svg",
+            name: "Halloween single photo landscape",
+            type: "photo",
+            orientation: "landscape",
+            aspectRatio: "3:2",
+            photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
+          },
         ],
         templates: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788465/photobooth/events/assets/fall-halloween-template-halloween-template-2_kww0ma.png", layout: "single_photo" },
@@ -1090,6 +1208,46 @@ themes.spring = {
   },
 };
 
+themes.fall.holidays.cuteHalloween = {
+  name: "Happy Halloween",
+  eventTypes: ["party", "community", "general"],
+  fontPairingStyle: "party",
+  accent: "#d946ef",
+  accent2: "#f5b4ff",
+  font: "'Comic Neue', cursive",
+  logo: "",
+  backgrounds: [
+    "/assets/themes/cute-halloween/cute-halloween-background-portrait.webp",
+    "/assets/themes/cute-halloween/cute-halloween-background-landscape.webp",
+  ],
+  idleScreens: [
+    { src: "/assets/themes/cute-halloween/cute-halloween-idle-portrait.webp", name: "Happy Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
+    { src: "/assets/themes/cute-halloween/cute-halloween-idle-landscape.webp", name: "Happy Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 50, y: 82, width: 38, height: 20 } } },
+    { src: "/assets/themes/cute-halloween/cute-halloween-photo-choice-portrait.webp", name: "Happy Halloween photo choice portrait", role: "photo-choice", orientation: "portrait", buttonZones: { singlePhoto: { x: 50, y: 43, width: 76, height: 22 }, photoStrip: { x: 50, y: 72, width: 76, height: 22 } } },
+    { src: "/assets/themes/cute-halloween/cute-halloween-photo-choice-landscape.webp", name: "Happy Halloween photo choice landscape", role: "photo-choice", orientation: "landscape", buttonZones: { singlePhoto: { x: 30, y: 55, width: 34, height: 48 }, photoStrip: { x: 70, y: 55, width: 34, height: 48 } } },
+  ],
+  thankYouScreens: [
+    { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-portrait.webp", name: "Happy Halloween Thank You portrait", orientation: "portrait" },
+    { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-landscape.webp", name: "Happy Halloween Thank You landscape", orientation: "landscape" },
+  ],
+  overlays: [
+    {
+      src: "/assets/themes/cute-halloween/overlays/happy-halloween-single-photo-portrait.png",
+      name: "Happy Halloween single photo portrait",
+      type: "photo",
+      orientation: "portrait",
+    },
+    {
+      src: "/assets/themes/cute-halloween/overlays/happy-halloween-single-photo-landscape.png",
+      name: "Happy Halloween single photo landscape",
+      type: "photo",
+      orientation: "landscape",
+    },
+  ],
+  templates: [],
+  welcome: { title: "Happy Halloween", portrait: "", landscape: "", prompt: "Tap to Start" },
+};
+
 themes.general.themes.averyBirthday = {
   ...JSON.parse(JSON.stringify(themes.general.themes.birthday)),
   name: "Avery's Birthday",
@@ -1128,7 +1286,7 @@ themes.general.themes.averyBirthday = {
       type: "photo",
       background: {
         type: "image",
-        src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.png",
+        src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.webp",
       },
     },
     {
@@ -1137,7 +1295,7 @@ themes.general.themes.averyBirthday = {
       type: "photo",
       background: {
         type: "image",
-        src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.png",
+        src: "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.webp",
       },
     },
     ...themes.general.themes.birthday.overlays,
@@ -1146,8 +1304,8 @@ themes.general.themes.averyBirthday = {
     "/assets/themes/avery-birthday/avery-birthday-background-landscape.webp",
   ],
   greenBackgrounds: [
-    "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.png",
-    "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.png",
+    "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-portrait.webp",
+    "/assets/themes/avery-birthday/avery-birthday-infernal-town-background-landscape.webp",
   ],
   shareScreens: [
     {
@@ -1215,8 +1373,9 @@ themes.general.themes.averyBirthday = {
   ],
 };
 
+pruneUnapprovedThemes(themes, APPROVED_THEME_KEYS);
 const BUILTIN_THEMES = JSON.parse(JSON.stringify(themes));
-const DEFAULT_THEME_KEY = "general:basic";
+const DEFAULT_THEME_KEY = "general:summer";
 const BUILTIN_THEME_LOCATIONS = (() => {
   const map = {};
   for (const rootKey of Object.keys(BUILTIN_THEMES)) {
@@ -1262,6 +1421,8 @@ const DOM = {
   logo: document.getElementById("logo"),
   eventTitle: document.getElementById("eventTitle"),
   eventProfileSelect: document.getElementById("eventProfileSelect"),
+  eventPrintPriceInput: document.getElementById("eventPrintPriceInput"),
+  saveEventPrintPriceBtn: document.getElementById("saveEventPrintPriceBtn"),
   createPathThemeSelect: document.getElementById("createPathThemeSelect"),
   sessionThemeToggle: document.getElementById("sessionThemeToggle"),
   sessionThemeValue: document.getElementById("sessionThemeValue"),
@@ -1354,8 +1515,11 @@ const DOM = {
   qrCode: document.getElementById("qrCode"),
   qrSaveCopy: document.getElementById("qrSaveCopy"),
   reviewRetakeBtn: document.getElementById("reviewRetakeBtn"),
+  finishBoothBtn: document.getElementById("finishBoothBtn"),
   finalPrintActions: document.getElementById("finalPrintActions"),
+  printPriceNotice: document.getElementById("printPriceNotice"),
   requestPrintBtn: document.getElementById("requestPrintBtn"),
+  paypalPrintCheckout: document.getElementById("paypalPrintCheckout"),
   lastShot: document.getElementById("lastShot"),
   qrHint: document.getElementById("qrHint"),
   shareStatus: document.getElementById("shareStatus"),
@@ -1440,11 +1604,11 @@ const DOM = {
   cloudUseToggle: document.getElementById("cloudUseToggle"),
   printModeInput: document.getElementById("printModeInput"),
   printNoPaymentRequiredInput: document.getElementById("printNoPaymentRequiredInput"),
-  printPriceLabelInput: document.getElementById("printPriceLabelInput"),
   printPanelTitleInput: document.getElementById("printPanelTitleInput"),
   printPanelBodyInput: document.getElementById("printPanelBodyInput"),
   printInstructionsInput: document.getElementById("printInstructionsInput"),
   printPaymentQrInput: document.getElementById("printPaymentQrInput"),
+  paypalPrintConfigStatus: document.getElementById("paypalPrintConfigStatus"),
   printEventIdInput: document.getElementById("printEventIdInput"),
   staffPrintQueueUrl: document.getElementById("staffPrintQueueUrl"),
   staffPrintQueueOpen: document.getElementById("staffPrintQueueOpen"),
@@ -2015,6 +2179,7 @@ let currentMode = "photo";
 let stream;
 let torchEnabled = false;
 let selectedOverlay = null;
+let captureFlashArmed = false;
 let lastPhotoOverlay = null;
 let selectedFilter = "natural";
 let photoOverlayOrientation =
@@ -2181,6 +2346,11 @@ let boothAudioContext = null;
 let boothAudioEnabled = false;
 let boothThemeAudio = null;
 const themeSoundEffectIndexes = new WeakMap();
+const GLOBAL_BUTTON_SOUND_CHOICES = [
+  "/assets/sounds/button-ui-sound-effect-395762.mp3",
+  "/assets/sounds/magic-button-click-453258.mp3",
+  "/assets/sounds/old-radio-button-click-97549.mp3",
+];
 const THEME_SOUND_STORAGE_KEY = "photoboothThemeSounds";
 const ACCENT_PRESET_COLORS = [
   "#ffffff",
@@ -2225,7 +2395,7 @@ const QUICK_START_SESSION_DATE_KEY = "photoboothQuickStartDate";
 const SHOWCASE_DEMO_THEME_CANDIDATES = {
   wedding: ["wedding:timeless", "wedding:romantic"],
   birthday: ["general:birthday"],
-  general: ["general:basic", DEFAULT_THEME_KEY],
+  general: ["general:summer", DEFAULT_THEME_KEY],
 };
 
 function getLocalIsoDate() {
@@ -2594,7 +2764,7 @@ function isVideoAsset(entry) {
 }
 
 function createAssetPreviewMedia(entry, alt = "") {
-  const src = getAssetEntrySrc(entry);
+  const src = getAssetPreviewSrc(getAssetEntrySrc(entry));
   const img = document.createElement("img");
   img.src = withBust(
     isVideoAsset(entry) ? getVideoPreviewPosterSrc(entry, src) : src
@@ -2603,6 +2773,12 @@ function createAssetPreviewMedia(entry, alt = "") {
   img.loading = "lazy";
   img.decoding = "async";
   return img;
+}
+
+function getAssetPreviewSrc(src) {
+  const value = String(src || "");
+  if (!/^\/assets\//.test(value) || /\.svg(?:$|[?#])/i.test(value)) return value;
+  return value.replace(/\.(png|jpe?g|webp)(?=($|[?#]))/i, ".thumb.webp");
 }
 
 function createAssetSelectionSet(value) {
@@ -2667,15 +2843,9 @@ function discardStaleSessionLibraryAssets() {
   activeSessionAssets.templates = (Array.isArray(activeSessionAssets.templates)
     ? activeSessionAssets.templates
     : []).filter((entry) => canonicalSources.template.has(getAssetEntrySrc(entry)));
-  sessionRemovedBackgrounds = sessionRemovedBackgrounds.filter((src) =>
-    canonicalSources.background.has(getAssetEntrySrc(src))
-  );
-  sessionRemovedOverlays = sessionRemovedOverlays.filter((src) =>
-    canonicalSources.overlay.has(getAssetEntrySrc(src))
-  );
-  sessionRemovedTemplates = sessionRemovedTemplates.filter((src) =>
-    canonicalSources.template.has(getAssetEntrySrc(src))
-  );
+  // Keep removal tombstones even after an asset is deleted from the library.
+  // Event/theme assignments can still reference the old source and would
+  // otherwise reappear in the selected count on the next render.
 }
 
 /**
@@ -2789,6 +2959,9 @@ function setAssetPanelOpen(kind, open, options = {}) {
     state[resolved] = !!open;
     writeAssetPanelState(state);
   }
+  if (open && activeTheme) {
+    renderCurrentAssets(activeTheme);
+  }
 }
 
 function restoreAssetPanelState() {
@@ -2812,6 +2985,25 @@ function setupAssetPanelControls() {
   bind("overlay");
   bind("template");
   restoreAssetPanelState();
+
+  const assetLibraryPanel = document.getElementById(
+    "uploaded" + "AssetLibraryPanel"
+  );
+  if (assetLibraryPanel) {
+    assetLibraryPanel.addEventListener("toggle", () => {
+      if (assetLibraryPanel.open) renderAssetLibrary();
+    });
+  }
+  const advancedAssetsPanel = DOM.currentAssets
+    ? DOM.currentAssets.closest("details")
+    : null;
+  if (advancedAssetsPanel) {
+    advancedAssetsPanel.addEventListener("toggle", () => {
+      if (advancedAssetsPanel.open) {
+        renderCurrentAssets(activeTheme || getSelectedThemeTarget());
+      }
+    });
+  }
 }
 
 // --- Idle Timeout ---
@@ -2874,17 +3066,13 @@ const THEME_SETUP_GROUP_ORDER = [
   "Seasonal",
   "Holidays",
   "Wedding",
+  "Sports",
   "Youth",
 ];
 
 const THEME_SETUP_GROUP_ITEM_ORDER = {
   General: [
-    "Basic",
     "Back to School",
-    "Birthday",
-    "Expo",
-    "Brand Studio",
-    "Lead Capture",
   ],
   Seasonal: [
     "Summer",
@@ -2902,9 +3090,10 @@ const THEME_SETUP_GROUP_ITEM_ORDER = {
     "Valentine's Day",
     "St. Patrick's Day",
   ],
-  Wedding: ["Garden Vows", "Timeless Romance"],
+  Wedding: ["Wedding", "Timeless Romance"],
   Youth: [
     "Spring Hill Hawks",
+    "Spring Hill Hawks at Titans Stadium",
     "Spring Hill Hawks Cheer",
     "Amanda North Back to School",
     "Amanda North STREAM Night",
@@ -2912,7 +3101,6 @@ const THEME_SETUP_GROUP_ITEM_ORDER = {
 };
 
 const THEME_SETUP_LABEL_OVERRIDES = {
-  basic: "Basic",
   "back to school": "Back to School",
   birthday: "Birthday",
   summer: "Summer",
@@ -2920,8 +3108,6 @@ const THEME_SETUP_LABEL_OVERRIDES = {
   winter: "Winter",
   spring: "Spring",
   expo: "Expo",
-  "brand studio": "Brand Studio",
-  "lead capture": "Lead Capture",
   "4th of july": "Fourth of July",
   "fourth of july": "Fourth of July",
   fourthofjuly: "Fourth of July",
@@ -2934,7 +3120,7 @@ const THEME_SETUP_LABEL_OVERRIDES = {
   "st patrick's day": "St. Patrick's Day",
   "st patricks": "St. Patrick's Day",
   "st patrick's": "St. Patrick's Day",
-  "garden vows": "Garden Vows",
+  "garden vows": "Wedding",
   "timeless romance": "Timeless Romance",
   hawks: "Spring Hill Hawks",
   hawkscheer: "Spring Hill Hawks Cheer",
@@ -2990,7 +3176,8 @@ function getThemeSetupDisplayGroup(themeKey, theme) {
   ]
     .filter(Boolean)
     .join(" ");
-  if (/(hawks|amanda north|ane|stream night)/.test(normalized)) return "Youth";
+  if (/(spring hill hawks|hawks cheer)/.test(normalized)) return "Sports";
+  if (/(amanda north|ane|stream night)/.test(normalized)) return "Youth";
   if (/(garden vows|timeless romance|wedding)/.test(normalized)) return "Wedding";
   if (/(fourth of july|4th of july|halloween|christmas|valentine|st patrick)/.test(normalized)) return "Holidays";
   if (
@@ -3023,6 +3210,7 @@ function getSetupThemeEntries(filter = "") {
       return { ...entry, label, group };
     })
     .filter((entry) => {
+      if (!APPROVED_THEME_KEYS.has(entry.key)) return false;
       if (!needle) return true;
       return normalizeThemeSetupText([entry.group, entry.label, entry.key].join(" "))
         .includes(needle);
@@ -3128,14 +3316,16 @@ function syncSessionThemeSearch() {
 }
 
 let activeThemeQuickFilter = "All";
+let themeQuickRenderSignature = "";
 
-const THEME_QUICK_FILTERS = ["All", "Celebrations", "Weddings", "Schools", "Seasons", "Holidays"];
+const THEME_QUICK_FILTERS = ["All", "Celebrations", "Weddings", "Sports", "Schools", "Seasons", "Holidays"];
 
 function themeMatchesQuickFilter(entry, filter) {
   if (filter === "All") return true;
   const group = entry.group;
   if (filter === "Celebrations") return group === "General";
   if (filter === "Weddings") return group === "Wedding";
+  if (filter === "Sports") return group === "Sports";
   if (filter === "Schools") return group === "Youth";
   if (filter === "Seasons") return group === "Seasonal";
   return group === "Holidays";
@@ -3165,42 +3355,79 @@ function getThemeQuickMeta(theme) {
 function renderThemeQuickPicker() {
   if (!DOM.themeQuickFilters || !DOM.themeQuickGrid) return;
   const selectedKey = (DOM.createPathThemeSelect && DOM.createPathThemeSelect.value) || getSelectedThemeKey() || "";
-  DOM.themeQuickFilters.innerHTML = "";
-  THEME_QUICK_FILTERS.forEach((filter) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "theme-quick-filter";
-    button.textContent = filter;
-    button.classList.toggle("active", filter === activeThemeQuickFilter);
-    button.setAttribute("aria-pressed", filter === activeThemeQuickFilter ? "true" : "false");
-    button.addEventListener("click", () => {
-      activeThemeQuickFilter = filter;
-      renderThemeQuickPicker();
+  if (DOM.themeQuickFilters.dataset.bound !== "true") {
+    THEME_QUICK_FILTERS.forEach((filter) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "theme-quick-filter";
+      button.dataset.themeFilter = filter;
+      button.textContent = filter;
+      button.addEventListener("click", () => {
+        activeThemeQuickFilter = filter;
+        renderThemeQuickPicker();
+      });
+      DOM.themeQuickFilters.appendChild(button);
     });
-    DOM.themeQuickFilters.appendChild(button);
+    DOM.themeQuickFilters.dataset.bound = "true";
+  }
+  DOM.themeQuickFilters.querySelectorAll("[data-theme-filter]").forEach((button) => {
+    const active = button.dataset.themeFilter === activeThemeQuickFilter;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
   });
   const entries = getSetupThemeEntries().filter((entry) => themeMatchesQuickFilter(entry, activeThemeQuickFilter));
-  DOM.themeQuickGrid.innerHTML = "";
-  entries.slice(0, 8).forEach((entry) => {
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = "theme-quick-card";
-    card.classList.toggle("active", entry.key === selectedKey);
-    card.setAttribute("aria-pressed", entry.key === selectedKey ? "true" : "false");
-    const preview = document.createElement("div");
-    preview.className = "theme-quick-card-art";
-    const previewUrl = getThemeQuickPreview(entry.theme);
-    if (previewUrl) preview.style.backgroundImage = `url("${previewUrl}")`;
-    const copy = document.createElement("span");
-    copy.className = "theme-quick-card-copy";
-    const label = document.createElement("strong");
-    label.textContent = entry.label;
-    const group = document.createElement("span");
-    group.textContent = entry.group;
-    copy.append(label, group);
-    card.append(preview, copy);
-    card.addEventListener("click", () => activateThemeFromSetupKey(entry.key));
-    DOM.themeQuickGrid.appendChild(card);
+  const visibleEntries = entries.slice(0, 8);
+  const renderSignature = JSON.stringify(visibleEntries.map((entry) => [
+    entry.key,
+    entry.label,
+    entry.group,
+    getThemeQuickPreview(entry.theme),
+  ]));
+  if (renderSignature !== themeQuickRenderSignature) {
+    const cards = document.createDocumentFragment();
+    visibleEntries.forEach((entry) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "theme-quick-card";
+      card.dataset.themeKey = entry.key;
+      const preview = document.createElement("div");
+      preview.className = "theme-quick-card-art";
+      const previewUrl = getThemeQuickPreview(entry.theme);
+      if (previewUrl) preview.dataset.previewSrc = getAssetPreviewSrc(previewUrl);
+      const copy = document.createElement("span");
+      copy.className = "theme-quick-card-copy";
+      const label = document.createElement("strong");
+      label.textContent = entry.label;
+      const group = document.createElement("span");
+      group.textContent = entry.group;
+      copy.append(label, group);
+      card.append(preview, copy);
+      card.addEventListener("click", () => activateThemeFromSetupKey(entry.key));
+      cards.appendChild(card);
+    });
+    DOM.themeQuickGrid.replaceChildren(cards);
+    themeQuickRenderSignature = renderSignature;
+    const applyPreview = (node) => {
+      const src = node.dataset.previewSrc;
+      if (src && !node.style.backgroundImage) node.style.backgroundImage = `url("${src}")`;
+    };
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver((items, currentObserver) => {
+        items.forEach((item) => {
+          if (!item.isIntersecting) return;
+          applyPreview(item.target);
+          currentObserver.unobserve(item.target);
+        });
+      }, { rootMargin: "160px" });
+      DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach((node) => observer.observe(node));
+    } else {
+      DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach(applyPreview);
+    }
+  }
+  DOM.themeQuickGrid.querySelectorAll("[data-theme-key]").forEach((card) => {
+    const active = card.dataset.themeKey === selectedKey;
+    card.classList.toggle("active", active);
+    card.setAttribute("aria-pressed", active ? "true" : "false");
   });
   const selectedEntry = getSetupThemeEntries().find((entry) => entry.key === selectedKey);
   if (DOM.themeQuickSelectionName) DOM.themeQuickSelectionName.textContent = selectedEntry ? selectedEntry.label : "Choose a theme";
@@ -3580,12 +3807,23 @@ function setupEventProfileControls() {
       const id = event.target.value || "";
       setActiveEventId(id);
       syncEventInputsFromActive();
+      syncEventPrintPriceInput();
+      loadPayPalPrintConfigStatus();
       const active = getActiveEvent();
       if (active && active.themeKey) {
         setEventSelection(active.themeKey);
         loadTheme(active.themeKey);
       }
       updateStylePreview();
+    });
+  }
+  if (DOM.saveEventPrintPriceBtn) {
+    DOM.saveEventPrintPriceBtn.addEventListener("click", saveActiveEventPrintPrice);
+  }
+  if (DOM.eventPrintPriceInput) {
+    DOM.eventPrintPriceInput.addEventListener("input", () => {
+      DOM.eventPrintPriceInput.dataset.dirty = "true";
+      DOM.eventPrintPriceInput.dataset.eventId = getActiveEvent()?.id || "";
     });
   }
 }
@@ -4915,6 +5153,18 @@ function renderThemeSoundEditor(themeKey = "", theme = null) {
     reset.textContent = "Use Default";
     reset.disabled = !state.custom;
     actions.append(preview, upload, reset);
+    if (slot.key === "start" || slot.key === "tap") {
+      GLOBAL_BUTTON_SOUND_CHOICES.forEach((url) => {
+        const choose = document.createElement("button");
+        choose.type = "button";
+        choose.dataset.themeSoundAction = "choose";
+        choose.dataset.soundKind = slot.key;
+        choose.dataset.soundUrl = url;
+        choose.dataset.soundName = getThemeSoundFilename(url);
+        choose.textContent = `Use ${getThemeSoundFilename(url).replace(/\.mp3$/i, "")}`;
+        actions.appendChild(choose);
+      });
+    }
     row.append(copy, actions);
     DOM.themeSoundSlots.appendChild(row);
   });
@@ -5087,7 +5337,12 @@ function setupThemeSoundControls() {
       if (!button) return;
       const kind = button.dataset.soundKind || "";
       const action = button.dataset.themeSoundAction || "";
-      if (action === "preview") previewThemeSound(kind);
+  if (action === "preview") previewThemeSound(kind);
+      if (action === "choose") {
+        const { key, theme } = getThemeSoundEditorTarget();
+        assignThemeSound(key, theme, kind, button.dataset.soundUrl, button.dataset.soundName);
+        setThemeSoundStatus(`${button.dataset.soundName} assigned to ${theme.name}.`);
+      }
       if (action === "upload" && DOM.themeSoundInput) {
         DOM.themeSoundInput.dataset.soundKind = kind;
         DOM.themeSoundInput.value = "";
@@ -6252,7 +6507,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadFontsFromStorage();
   loadAssetLibraryLocal();
   if (repairCorruptedBackgroundDefaults()) saveThemesToStorage();
-  loadAssetLibraryRemote().catch(() => renderAssetLibrary());
+  deferNonCriticalTask(() => loadAssetLibraryRemote().catch(() => renderAssetLibrary()));
   try {
     await setupFontPicker();
   } catch (e) {
@@ -6359,7 +6614,7 @@ async function loadThemesRemote() {
     // Merge server themes over built-ins/local
     mergeStoredThemes(themes, remote);
     fixBuiltinThemePlacements(themes);
-    ensureBuiltinThemes();
+    const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();
     refreshBeautyPresetEffects();
     if (!hasCoreBuiltins(themes)) {
       resetThemesToBuiltins("remote themes missing core entries");
@@ -6370,7 +6625,10 @@ async function loadThemesRemote() {
     const removedLegacyThemes = removeLegacyFlatBuiltinThemes();
     const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
     const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
+    const migratedSummerAssets = migrateSummerThemeAssets(themes);
     const migratedSpringHillHawks = migrateSpringHillHawksAssets(themes);
+    const migratedSpringHillHawksStadium =
+      migrateSpringHillHawksStadiumAssets(themes);
     const migratedSpringHillHawksCheer =
       migrateSpringHillHawksCheerAssets(themes);
     const repairedBackgroundDefaults = repairCorruptedBackgroundDefaults();
@@ -6380,10 +6638,13 @@ async function loadThemesRemote() {
     if (
       repairedBackgroundDefaults ||
       repairedOverlayDefaults ||
+      removedUnapprovedBuiltinThemes ||
       removedLegacyThemes ||
       migratedAveryScreens ||
       migratedAmandaNorthScreens ||
+      migratedSummerAssets ||
       migratedSpringHillHawks ||
+      migratedSpringHillHawksStadium ||
       migratedSpringHillHawksCheer
     )
       scheduleThemesRemoteSync();
@@ -6392,6 +6653,7 @@ async function loadThemesRemote() {
     if (selected) {
       loadTheme(selected);
     }
+    renderThemeQuickPicker();
     updateSyncStatus("Synced from server");
   } catch (_) {}
 }
@@ -6442,6 +6704,8 @@ async function loadEventsRemote() {
     setActiveEventId(resolvedActiveId, { skipRemoteSync: true });
     populateEventProfileSelect(resolvedActiveId);
     const activeEvent = getActiveEvent();
+    syncEventPrintPriceInput();
+    loadPayPalPrintConfigStatus();
     if (activeEvent && activeEvent.themeKey) {
       setEventSelection(activeEvent.themeKey);
       loadTheme(activeEvent.themeKey);
@@ -6474,14 +6738,17 @@ function scheduleThemesRemoteSync() {
   }, REMOTE_SYNC_DEBOUNCE_MS);
 }
 async function syncEventsRemote() {
-  if (!canSyncRemote()) return;
+  if (!canSyncRemote()) return false;
   try {
-    await fetch("/api/events", {
+    const response = await fetch("/api/events", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(getStoredEventsPayload()),
     });
-  } catch (_) {}
+    return response.ok;
+  } catch (_) {
+    return false;
+  }
 }
 function scheduleEventsRemoteSync() {
   if (!canSyncRemote()) return;
@@ -6785,7 +7052,6 @@ function cloudinaryConfigured() {
 const PRINT_SETTINGS_STORAGE_KEY = "photoboothPrintSettings";
 const DEFAULT_PRINT_SETTINGS = {
   mode: "off",
-  priceLabel: "$3",
   panelTitle: "Printed Photo Upgrade",
   panelBody: "Take home a 4x6 keepsake print for $3.",
   instructions: "Scan the payment code below to complete your purchase. Your print will be prepared after payment is confirmed.",
@@ -6856,7 +7122,6 @@ function loadPrintSettings() {
   const settings = getPrintSettings();
   if (DOM.printModeInput) DOM.printModeInput.value = settings.mode;
   if (DOM.printNoPaymentRequiredInput) DOM.printNoPaymentRequiredInput.checked = settings.noPaymentRequired === true;
-  if (DOM.printPriceLabelInput) DOM.printPriceLabelInput.value = settings.priceLabel;
   if (DOM.printPanelTitleInput) DOM.printPanelTitleInput.value = settings.panelTitle;
   if (DOM.printPanelBodyInput) DOM.printPanelBodyInput.value = settings.panelBody;
   if (DOM.printInstructionsInput) DOM.printInstructionsInput.value = settings.instructions;
@@ -6867,13 +7132,79 @@ function loadPrintSettings() {
     DOM.printEventIdInput.addEventListener("input", updateStaffPrintQueueUrl);
   }
   updateStaffPrintQueueUrl();
+  syncEventPrintPriceInput();
+  loadPayPalPrintConfigStatus();
+}
+
+function syncEventPrintPriceInput(force = false) {
+  const active = getActiveEvent();
+  if (!DOM.eventPrintPriceInput) return;
+  if (
+    !force &&
+    DOM.eventPrintPriceInput.dataset.dirty === "true" &&
+    DOM.eventPrintPriceInput.dataset.eventId === (active && active.id || "")
+  ) return;
+  const storedPrice = active ? Number(active.printPrice) : NaN;
+  const price = Number.isFinite(storedPrice) && storedPrice >= 0.01 && storedPrice <= 999.99
+    ? storedPrice
+    : 3;
+  DOM.eventPrintPriceInput.value = price.toFixed(2);
+  DOM.eventPrintPriceInput.dataset.dirty = "false";
+  DOM.eventPrintPriceInput.dataset.eventId = active && active.id || "";
+  DOM.eventPrintPriceInput.disabled = !active;
+  if (DOM.saveEventPrintPriceBtn) DOM.saveEventPrintPriceBtn.disabled = !active;
+}
+
+async function saveActiveEventPrintPrice() {
+  const active = getActiveEvent();
+  if (!active || !DOM.eventPrintPriceInput) {
+    showToast("Select or create a saved event before setting its print price.");
+    return;
+  }
+  const price = Number(DOM.eventPrintPriceInput.value);
+  if (!Number.isFinite(price) || price < 0.01 || price > 999.99) {
+    showToast("Enter an event print price from $0.01 to $999.99.");
+    return;
+  }
+  const events = getStoredEvents();
+  const event = events.find((entry) => entry && entry.id === active.id);
+  if (!event) {
+    showToast("This saved event could not be found.");
+    return;
+  }
+  event.printPrice = Number(price.toFixed(2));
+  setStoredEvents(events);
+  if (pendingEventsSyncTimer) {
+    clearTimeout(pendingEventsSyncTimer);
+    pendingEventsSyncTimer = null;
+  }
+  const synced = await syncEventsRemote();
+  syncEventPrintPriceInput(true);
+  loadPayPalPrintConfigStatus();
+  showToast(synced
+    ? `Event print price saved: $${event.printPrice.toFixed(2)} per print.`
+    : `Price is $${event.printPrice.toFixed(2)} on this device; reconnect to sync it for checkout.`);
+}
+
+async function loadPayPalPrintConfigStatus() {
+  if (!DOM.paypalPrintConfigStatus) return;
+  try {
+    const eventId = getPrintQueueEventId();
+    const response = await fetch(`/api/paypal/config?eventId=${encodeURIComponent(eventId)}`, { cache: "no-store" });
+    const config = await response.json();
+    if (!response.ok || !config.ok) throw new Error("PayPal status is unavailable.");
+    DOM.paypalPrintConfigStatus.textContent = config.configured
+      ? `PayPal ${config.environment} checkout ready · ${config.amount} ${config.currency} per print.`
+      : "PayPal checkout is not connected. Add the PayPal API credentials in Cloudflare Pages to enable automatic checkout.";
+  } catch (_) {
+    DOM.paypalPrintConfigStatus.textContent = "PayPal checkout status could not be loaded.";
+  }
 }
 
 function savePrintSettings() {
   const settings = {
     mode: DOM.printModeInput && ["free", "paid"].includes(DOM.printModeInput.value) ? DOM.printModeInput.value : "off",
     noPaymentRequired: DOM.printModeInput && DOM.printModeInput.value === "free",
-    priceLabel: (DOM.printPriceLabelInput && DOM.printPriceLabelInput.value.trim()) || DEFAULT_PRINT_SETTINGS.priceLabel,
     panelTitle: (DOM.printPanelTitleInput && DOM.printPanelTitleInput.value.trim()) || DEFAULT_PRINT_SETTINGS.panelTitle,
     panelBody: (DOM.printPanelBodyInput && DOM.printPanelBodyInput.value.trim()) || DEFAULT_PRINT_SETTINGS.panelBody,
     instructions: (DOM.printInstructionsInput && DOM.printInstructionsInput.value.trim()) || DEFAULT_PRINT_SETTINGS.instructions,
@@ -6897,14 +7228,14 @@ async function copyStaffPrintQueueUrl() {
 
 async function enqueueFinalPrintIfNeeded(imageUrl, printEligible = true) {
   const settings = getPrintSettings();
-  if (settings.mode === "off" || !printEligible) return;
+  if (settings.mode === "off" || !printEligible) return null;
   if (!/^https?:\/\//i.test(String(imageUrl || ""))) {
     if (DOM.shareStatus) {
       DOM.shareStatus.textContent = "Print queue waiting for shared upload";
       DOM.shareStatus.style.display = "inline-flex";
     }
     showToast("Print queue needs an uploaded image before staff can print.");
-    return;
+    return null;
   }
   try {
     const response = await fetch("/api/print-queue", {
@@ -6918,13 +7249,12 @@ async function enqueueFinalPrintIfNeeded(imageUrl, printEligible = true) {
         paymentRequired: settings.mode === "paid",
       }),
     });
-    if (!response.ok) {
-      const message = await response.text();
-      throw new Error(message || "Print queue request failed.");
-    }
+    const result = await response.json();
+    if (!response.ok || !result.ok) throw new Error(result.error || "Print queue request failed.");
     if (DOM.shareStatus && DOM.shareStatus.textContent === "Print queue waiting for shared upload") {
       DOM.shareStatus.style.display = "none";
     }
+    return result.item || null;
   } catch (error) {
     console.warn("Print queue enqueue failed", error);
     if (DOM.shareStatus) {
@@ -6932,7 +7262,93 @@ async function enqueueFinalPrintIfNeeded(imageUrl, printEligible = true) {
       DOM.shareStatus.style.display = "inline-flex";
     }
     showToast("Print queue failed. Staff may need to refresh and retry.");
+    return null;
   }
+}
+
+let paypalPrintSdkPromise = null;
+
+function loadPayPalPrintSdk(clientId, currency) {
+  if (window.paypal && typeof window.paypal.Buttons === "function") return Promise.resolve(window.paypal);
+  if (paypalPrintSdkPromise) return paypalPrintSdkPromise;
+  paypalPrintSdkPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    const url = new URL("https://www.paypal.com/sdk/js");
+    url.searchParams.set("client-id", clientId);
+    url.searchParams.set("currency", currency);
+    url.searchParams.set("intent", "capture");
+    url.searchParams.set("components", "buttons");
+    script.src = url.toString();
+    script.async = true;
+    script.onload = () => window.paypal && window.paypal.Buttons
+      ? resolve(window.paypal)
+      : reject(new Error("PayPal checkout did not load."));
+    script.onerror = () => reject(new Error("PayPal checkout could not load. Check the booth internet connection."));
+    document.head.appendChild(script);
+  }).catch((error) => {
+    paypalPrintSdkPromise = null;
+    throw error;
+  });
+  return paypalPrintSdkPromise;
+}
+
+async function showPayPalPrintCheckout(item) {
+  if (!item || !DOM.paypalPrintCheckout) throw new Error("The print request could not be loaded.");
+  const config = await fetchPayPalPrintConfig(item.eventId);
+  if (DOM.printPriceNotice) DOM.printPriceNotice.textContent = `Print price: ${formatPayPalPrintPrice(config.amount, config.currency)}`;
+  const paypal = await loadPayPalPrintSdk(config.clientId, config.currency);
+  const checkout = DOM.paypalPrintCheckout;
+  checkout.innerHTML = "";
+  checkout.classList.remove("hidden");
+  if (DOM.shareStatus) {
+    DOM.shareStatus.textContent = `Pay ${config.amount} ${config.currency} to request this print.`;
+    DOM.shareStatus.style.display = "inline-flex";
+  }
+  await paypal.Buttons({
+    style: { layout: "vertical", shape: "pill", label: "paypal" },
+    createOrder: async () => {
+      const response = await fetch("/api/paypal/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: item.eventId, printItemId: item.id }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.orderId) throw new Error(result.error || "Could not start PayPal checkout.");
+      return result.orderId;
+    },
+    onApprove: async (data) => {
+      if (DOM.shareStatus) DOM.shareStatus.textContent = "Confirming payment…";
+      const response = await fetch("/api/paypal/capture-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: item.eventId, printItemId: item.id, orderId: data.orderID }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.paid !== true) throw new Error(result.error || "PayPal has not confirmed payment yet.");
+      checkout.classList.add("hidden");
+      if (DOM.shareStatus) {
+        DOM.shareStatus.textContent = "Payment confirmed. Your print is ready with the attendant.";
+        DOM.shareStatus.style.display = "inline-flex";
+      }
+      if (DOM.requestPrintBtn) DOM.requestPrintBtn.textContent = "Payment Complete";
+      playThemeCue("success", "success");
+    },
+    onCancel: () => {
+      if (DOM.shareStatus) {
+        DOM.shareStatus.textContent = "Checkout canceled. Your print is still waiting for payment.";
+        DOM.shareStatus.style.display = "inline-flex";
+      }
+    },
+    onError: (error) => {
+      console.warn("PayPal print checkout error", error);
+      if (DOM.shareStatus) {
+        DOM.shareStatus.textContent = error && error.message
+          ? error.message
+          : "PayPal checkout failed. Ask the attendant for help.";
+        DOM.shareStatus.style.display = "inline-flex";
+      }
+    },
+  }).render(checkout);
 }
 
 // --- Overlay Spot-Color Mask (optional) ---
@@ -7098,9 +7514,8 @@ function getEventTypeCopy(selectedType) {
     },
     expo: {
       label: "Expo",
-      note: "Fast-to-read, branded setups for vendor booths, conferences, and lead capture.",
-      themeNote:
-        "Showing themes that fit expo booths, branded activations, and lead capture.",
+      note: "Fast-to-read setups for vendor booths and conferences.",
+      themeNote: "Showing themes that fit vendor booths and conferences.",
     },
     birthday: {
       label: "Party",
@@ -7555,6 +7970,11 @@ function resolvePreferredThemeKey(preferredKey) {
   return options.length ? options[0].value : null;
 }
 
+function isSelectableThemeKey(themeKey) {
+  const normalizedKey = normalizeThemeSelectionKey(themeKey);
+  return getSelectableThemeEntries().some((entry) => entry.key === normalizedKey);
+}
+
 function resolveThemeByKey(themeKey) {
   themeKey = normalizeThemeSelectionKey(themeKey);
   if (!themeKey) return null;
@@ -7607,10 +8027,13 @@ function applyThemeFontStyles(theme) {
     (theme && (theme.fontHeading || theme.font)) || "'Comic Neue', cursive";
   const bodyCss =
     (theme && (theme.fontBody || theme.font)) || "'Comic Neue', cursive";
-  document.documentElement.style.setProperty("--font-heading", headingCss);
-  document.documentElement.style.setProperty("--font-body", bodyCss);
-  document.documentElement.style.setProperty("--font", bodyCss);
-  document.body.style.fontFamily = bodyCss || "montserrat, sans-serif";
+  [DOM.boothScreen, DOM.welcomeScreen].forEach((screen) => {
+    if (!screen) return;
+    screen.style.setProperty("--font-heading", headingCss);
+    screen.style.setProperty("--font-body", bodyCss);
+    screen.style.setProperty("--font", bodyCss);
+    screen.style.setProperty("--font-label", bodyCss);
+  });
   if (DOM.eventTitle) DOM.eventTitle.style.fontFamily = headingCss || bodyCss;
   if (DOM.welcomeTitle)
     DOM.welcomeTitle.style.fontFamily = headingCss || bodyCss;
@@ -7662,6 +8085,10 @@ function buildActionPalette(theme) {
 }
 
 function applyThemeBasics(theme) {
+  const usesArtworkOwnedHeader = theme && theme.name === "Spring Hill Hawks";
+  if (DOM.boothHeader) {
+    DOM.boothHeader.classList.toggle("theme-header-hidden", usesArtworkOwnedHeader);
+  }
   document.documentElement.style.setProperty(
     "--accent",
     theme.accent || "orange"
@@ -7780,11 +8207,21 @@ function loadTheme(themeKey) {
     console.warn("No theme key provided to loadTheme");
     return;
   }
+  if (!isSelectableThemeKey(themeKey)) {
+    const fallbackKey = resolvePreferredThemeKey(DEFAULT_THEME_KEY);
+    if (!fallbackKey || fallbackKey === themeKey) {
+      console.warn("Theme is incomplete and cannot be loaded:", themeKey);
+      return;
+    }
+    console.warn("Theme is incomplete; loading fallback instead:", themeKey, fallbackKey);
+    themeKey = fallbackKey;
+  }
   const theme = resolveThemeByKey(themeKey);
   if (!theme) {
     console.warn("Theme not found for key:", themeKey);
     return;
   }
+  if (themeKey === "general:summer") resetActiveSessionAssets();
   setEventSelection(themeKey);
   if (activeSessionThemeKey && activeSessionThemeKey !== themeKey) {
     resetActiveSessionAssets();
@@ -7795,13 +8232,15 @@ function loadTheme(themeKey) {
   if (globalLogo !== null) applyGlobalLogoToTheme(activeTheme, globalLogo);
 
   applyThemeBasics(theme);
+  preloadThemeOrientationAssets(theme);
+  cacheActiveThemeOrientation(theme);
   logEffectiveAssetState(theme, "loadTheme");
   syncAdminUiWithTheme(themeKey, theme);
   renderAssetLibrary();
   updateLaunchSummary();
   syncSessionThemeSearch();
   syncSessionFontSearch();
-  loadAssetLibraryRemote().catch(() => renderAssetLibrary());
+  deferNonCriticalTask(() => loadAssetLibraryRemote().catch(() => renderAssetLibrary()));
 }
 
 // Convert any CSS color string to hex (#rrggbb); returns '' on failure
@@ -8001,6 +8440,10 @@ function applyAiMaskToCanvas(sourceCanvas, maskCanvas) {
 
 function renderCurrentAssets(theme) {
   // Helpers
+  const advancedAssetsPanel = DOM.currentAssets
+    ? DOM.currentAssets.closest("details")
+    : null;
+  const advancedAssetsOpen = !advancedAssetsPanel || advancedAssetsPanel.open;
   const active = getActiveEvent();
   const lockBaseThemeAssets = !!active;
   const removedBackgrounds = new Set(
@@ -8070,6 +8513,13 @@ function renderCurrentAssets(theme) {
     options = {}
   ) => {
     if (!wrap) return;
+    if (
+      ["background", "overlay", "template"].includes(kind) &&
+      !getAssetPanelControls(kind).panel?.classList.contains("open")
+    ) {
+      wrap.replaceChildren();
+      return;
+    }
     if (kind === "background" || kind === "overlay" || kind === "template") {
       setAssetPanelMessage(kind, null);
     }
@@ -8164,7 +8614,7 @@ function renderCurrentAssets(theme) {
     }
   };
   // Green screen backgrounds grid
-  if (DOM.currentGreenBackgrounds) {
+  if (DOM.currentGreenBackgrounds && advancedAssetsOpen) {
     const wrap = DOM.currentGreenBackgrounds;
     wrap.innerHTML = "";
     if (greenBgList.length === 0) {
@@ -8919,6 +9369,14 @@ function startLiveImagingPipeline() {
         drawProcessedFrameToLivePreview(processed);
       } catch (error) {
         console.warn("Live imaging frame failed", error);
+        // Keep the deterministic booth fixture usable when a browser cannot
+        // initialize the optional processing pipeline. Production camera
+        // frames continue to use the normal error path.
+        if (isBoothTestMode()) {
+          try {
+            drawProcessedFrameToLivePreview(drawToCanvasFromVideo());
+          } catch (_) {}
+        }
       } finally {
         liveImagingFramePending = false;
       }
@@ -9274,7 +9732,12 @@ function applyPreviewOrientation() {
       pendingTemplate ||
       templates.find((item) => getAssetCaptureType(item) === captureMode) ||
       (Array.isArray(templates) ? templates[0] : null);
-    DOM.videoWrap.className = orientationFromTemplate(template);
+    // The booth screen shape is the operator's source of truth for the live
+    // preview. A strip template can have portrait-oriented artwork, but it
+    // must not force a portrait camera window after landscape is selected.
+    const screenOrientation = getGuestScreenOrientation();
+    DOM.videoWrap.className =
+      screenOrientation === "portrait" ? "view-portrait" : "view-landscape";
     applyLiveCameraSizing();
     if (!template || !template.src) {
       setCaptureAspect(null);
@@ -9365,8 +9828,12 @@ async function getStripTemplateMetrics(template) {
 async function prepareStripCapture(template) {
   const state = capturePreviewState();
   clearOverlayPreviewSurface();
-  if (DOM.videoWrap)
-    DOM.videoWrap.className = orientationFromTemplate(template);
+  if (DOM.videoWrap) {
+    const screenOrientation = getGuestScreenOrientation();
+    DOM.videoWrap.className =
+      screenOrientation === "portrait" ? "view-portrait" : "view-landscape";
+  }
+  applyLiveCameraSizing();
   const prevAspect = captureAspectRatio;
   try {
     const metrics = await getStripTemplateMetrics(template);
@@ -9905,6 +10372,13 @@ function setBoothTestCameraStream() {
     }
   }
   startLiveImagingPipeline();
+  // Seed the preview immediately so browser fixtures do not depend on video
+  // metadata timing before the first animation-frame pass.
+  if (DOM.livePreviewCanvas) {
+    try {
+      drawProcessedFrameToLivePreview(drawToCanvasFromVideo());
+    } catch (_) {}
+  }
   syncOverlayPreviewSurface({ mode: "live" });
   return true;
 }
@@ -10093,9 +10567,20 @@ function enterBoothQaState(state = "capture") {
     if (target === "welcome") return;
     beginModeSelection("still-photo");
     if (target === "final") {
-      showFinal(buildBoothTestFinalImage(), {
+      const finalImage = buildBoothTestFinalImage();
+      showFinal(finalImage, {
         shareUrl: BOOTH_TEST_SHARE_URL,
-        printEligible: false,
+        printEligible: getUrlParam("testPaidPrint") === "true",
+      });
+      updateOutputSurfaceTrace({
+        localFinalUrl: finalImage,
+        remoteFinalUrl: BOOTH_TEST_SHARE_URL,
+        surfaces: {
+          uploadPreview: finalImage,
+          galleryLocal: finalImage,
+          print: BOOTH_TEST_SHARE_URL,
+          download: BOOTH_TEST_SHARE_URL,
+        },
       });
     }
   });
@@ -10432,6 +10917,13 @@ function handlePrimaryAction() {
   playThemeCue("tap", "tap");
   if (DOM.boothScreen && DOM.boothScreen.classList.contains("welcome-active"))
     return;
+  if (isBoothTestMode() && mode !== "message") {
+    showFinal(buildBoothTestFinalImage(), {
+      shareUrl: BOOTH_TEST_SHARE_URL,
+      printEligible: false,
+    });
+    return;
+  }
   if (mode === "message") {
     if (isMessageRecording && typeof messageStopper === "function") {
       messageStopper();
@@ -10901,7 +11393,10 @@ function updateCountdownFontSize() {
   document.documentElement.style.setProperty("--countdown-size", `${size}px`);
 }
 function loadImage(url) {
-  return new Promise((resolve, reject) => {
+  if (!url) return Promise.reject(new Error("Image URL is empty"));
+  const cached = decodedImageCache.get(url);
+  if (cached) return cached;
+  const promise = new Promise((resolve, reject) => {
     const img = new Image();
     try {
       if (location.protocol.startsWith("http")) img.crossOrigin = "anonymous";
@@ -10909,6 +11404,56 @@ function loadImage(url) {
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = url;
+  });
+  decodedImageCache.set(url, promise);
+  if (decodedImageCache.size > DECODED_IMAGE_CACHE_LIMIT) {
+    decodedImageCache.delete(decodedImageCache.keys().next().value);
+  }
+  promise.catch(() => decodedImageCache.delete(url));
+  return promise;
+}
+
+function preloadThemeOrientationAssets(theme) {
+  if (!theme) return;
+  const orientation = getGuestScreenOrientation();
+  const sources = [];
+  const add = (value) => {
+    const src = getAssetEntrySrc(value);
+    if (src && !sources.includes(src)) sources.push(src);
+  };
+  ["idleScreens", "thankYouScreens"].forEach((field) => {
+    (Array.isArray(theme[field]) ? theme[field] : [])
+      .filter((entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation)
+      .forEach(add);
+  });
+  const backgrounds = Array.isArray(theme.backgrounds) ? theme.backgrounds : [];
+  add(backgrounds.find((entry) => String(getAssetEntrySrc(entry)).toLowerCase().includes(orientation)) || backgrounds[0]);
+  sources.forEach((src) => loadImage(src).catch(() => {}));
+}
+
+function cacheActiveThemeOrientation(theme) {
+  if (!theme || !("caches" in window) || !location.protocol.startsWith("http")) return;
+  const orientation = getGuestScreenOrientation();
+  const urls = [];
+  const add = (value) => {
+    const src = getAssetEntrySrc(value);
+    if (src && !urls.includes(src)) urls.push(src);
+  };
+  ["idleScreens", "thankYouScreens"].forEach((field) => {
+    (Array.isArray(theme[field]) ? theme[field] : [])
+      .filter((entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation)
+      .forEach(add);
+  });
+  const backgrounds = Array.isArray(theme.backgrounds) ? theme.backgrounds : [];
+  add(backgrounds.find((entry) => String(getAssetEntrySrc(entry)).toLowerCase().includes(orientation)) || backgrounds[0]);
+  deferNonCriticalTask(async () => {
+    try {
+      const cache = await caches.open("pb-offline-assets-v1");
+      await Promise.all(urls.map(async (url) => {
+        const response = await fetch(url, { cache: "force-cache" });
+        if (response.ok) await cache.put(new Request(url), response.clone());
+      }));
+    } catch (_) {}
   });
 }
 
@@ -11742,6 +12287,7 @@ async function countdownAndSnap(options = {}) {
     DOM.countdownOverlay.classList.remove("show");
     if (DOM.boothScreen) DOM.boothScreen.classList.remove("countdown-mode");
   }
+  captureFlashArmed = true;
   if (!live || (lowLightEnabled && !torchUsed)) triggerFlash();
   await delay(50);
   if (!live) setRecordingHighlight(false);
@@ -11759,6 +12305,7 @@ async function countdownAndSnap(options = {}) {
     setRecordingHighlight(false);
   }
   if (guide) guide.style.display = "";
+  captureFlashArmed = false;
   return shot;
 }
 
@@ -11774,6 +12321,7 @@ function freezeCapturePreview(photoCanvas) {
 }
 
 function triggerFlash() {
+  if (!captureFlashArmed) return;
   const fo = DOM.flashOverlay;
   if (!fo) return;
   // Restart animation by toggling class
@@ -12479,19 +13027,82 @@ function setupFinalExperienceActions() {
       retakePhoto();
     });
   }
+  if (DOM.finishBoothBtn && !DOM.finishBoothBtn.dataset.bound) {
+    DOM.finishBoothBtn.dataset.bound = "true";
+    DOM.finishBoothBtn.addEventListener("click", () => {
+      unlockBoothAudio();
+      playThemeCue("tap", "tap");
+      finishBoothFlow();
+    });
+  }
   if (DOM.requestPrintBtn && !DOM.requestPrintBtn.dataset.bound) {
     DOM.requestPrintBtn.dataset.bound = "true";
     DOM.requestPrintBtn.addEventListener("click", async () => {
       if (!pendingFinalPrintImageUrl) return;
       DOM.requestPrintBtn.disabled = true;
-      DOM.requestPrintBtn.textContent = "Requesting…";
-      await enqueueFinalPrintIfNeeded(pendingFinalPrintImageUrl, true);
-      DOM.requestPrintBtn.textContent = "Print Requested";
+      DOM.requestPrintBtn.textContent = "Preparing…";
+      try {
+        const settings = getPrintSettings();
+        const item = await enqueueFinalPrintIfNeeded(pendingFinalPrintImageUrl, true);
+        if (!item) throw new Error("Your print request could not be queued. Please ask the attendant.");
+        if (settings.mode === "paid") {
+          await showPayPalPrintCheckout(item);
+          DOM.requestPrintBtn.textContent = "Checkout Below";
+          return;
+        }
+        DOM.requestPrintBtn.textContent = "Print Requested";
+      } catch (error) {
+        console.warn("Print checkout setup failed", error);
+        if (DOM.shareStatus) {
+          DOM.shareStatus.textContent = error.message || "Print checkout could not start.";
+          DOM.shareStatus.style.display = "inline-flex";
+        }
+        DOM.requestPrintBtn.disabled = false;
+        DOM.requestPrintBtn.textContent = "Try Again";
+      }
     });
   }
 }
 
 let pendingFinalPrintImageUrl = "";
+let finalPrintPriceRequestId = 0;
+
+async function fetchPayPalPrintConfig(eventId) {
+  const response = await fetch(`/api/paypal/config?eventId=${encodeURIComponent(eventId || "default")}`, { cache: "no-store" });
+  const config = await response.json();
+  if (!response.ok || !config.configured || !config.clientId) {
+    throw new Error("PayPal checkout is not connected. Ask the attendant to check the payment setup.");
+  }
+  return config;
+}
+
+function formatPayPalPrintPrice(amount, currency) {
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(Number(amount));
+  } catch (_) {
+    return `${currency} ${amount}`;
+  }
+}
+
+async function showFinalPrintPrice(eventId) {
+  const requestId = ++finalPrintPriceRequestId;
+  if (DOM.printPriceNotice) {
+    DOM.printPriceNotice.classList.remove("hidden");
+    DOM.printPriceNotice.textContent = "Checking event print price…";
+  }
+  if (DOM.requestPrintBtn) DOM.requestPrintBtn.disabled = true;
+  try {
+    const config = await fetchPayPalPrintConfig(eventId);
+    if (requestId !== finalPrintPriceRequestId) return;
+    if (DOM.printPriceNotice) {
+      DOM.printPriceNotice.textContent = `Print price: ${formatPayPalPrintPrice(config.amount, config.currency)}`;
+    }
+    if (DOM.requestPrintBtn) DOM.requestPrintBtn.disabled = false;
+  } catch (_) {
+    if (requestId !== finalPrintPriceRequestId) return;
+    if (DOM.printPriceNotice) DOM.printPriceNotice.textContent = "Print price unavailable. Please ask the attendant.";
+  }
+}
 
 function showFinal(url, options = {}) {
   clearTimeout(hidePreviewTimer); // Clear any existing timer
@@ -12637,13 +13248,25 @@ function showFinal(url, options = {}) {
         DOM.qrHint.style.display = "block";
       }
     }
-    const printEnabled = getPrintSettings().mode !== "off" && printEligible;
+    const printSettings = getPrintSettings();
+    const printEnabled = printSettings.mode !== "off" && printEligible;
+    const paidPrintEnabled = printEnabled && printSettings.mode === "paid";
     pendingFinalPrintImageUrl = printEnabled ? printImageUrl : "";
     if (DOM.finalPrintActions)
       DOM.finalPrintActions.classList.toggle("hidden", !printEnabled);
     if (DOM.requestPrintBtn) {
-      DOM.requestPrintBtn.disabled = false;
+      DOM.requestPrintBtn.disabled = paidPrintEnabled;
       DOM.requestPrintBtn.textContent = "Print";
+    }
+    if (DOM.printPriceNotice) {
+      DOM.printPriceNotice.textContent = "";
+      DOM.printPriceNotice.classList.toggle("hidden", !paidPrintEnabled);
+    }
+    if (paidPrintEnabled) showFinalPrintPrice(getPrintQueueEventId());
+    else finalPrintPriceRequestId += 1;
+    if (DOM.paypalPrintCheckout) {
+      DOM.paypalPrintCheckout.innerHTML = "";
+      DOM.paypalPrintCheckout.classList.add("hidden");
     }
     updateOutputSurfaceTrace({
       surfaces: {
@@ -12666,6 +13289,12 @@ function showFinal(url, options = {}) {
       if (DOM.finalLive) {
         DOM.finalLive.dataset.orientation = img.dataset.orientation || "";
       }
+      revealFinalPreview();
+    };
+    img.onerror = () => {
+      // Do not strand the guest on the finalizing screen when the delivered
+      // preview URL is unavailable. Share/QR status still reports the remote
+      // delivery failure separately.
       revealFinalPreview();
     };
     img.src = url;
@@ -12718,7 +13347,6 @@ function copyEventGalleryLink() {
     return;
   }
   copyText(link);
-  showToast("Event gallery link copied");
 }
 
 function openEventGalleryLink() {
@@ -13298,6 +13926,11 @@ function getQuickStartFolderLabel() {
 }
 
 function getEventUploadSlug() {
+  const active = getActiveEvent();
+  if (active && active.id) {
+    const eventKey = slugifyEventText(active.id);
+    if (eventKey) return `event-${eventKey}`;
+  }
   const sessionName = slugifyEventText(getSessionUploadName());
   if (sessionName) return sessionName;
   const quickStartDate = getQuickStartFolderDate();
@@ -13331,6 +13964,7 @@ function createNewEventFromSelection() {
     name,
     date,
     themeKey,
+    printPrice: 3,
     createdAt: new Date().toISOString(),
     overrides: {
       backgrounds: [],
@@ -13343,6 +13977,7 @@ function createNewEventFromSelection() {
   setStoredEvents(events);
   setActiveEventId(id);
   populateEventProfileSelect(id);
+  syncEventPrintPriceInput();
   syncEventInputsFromActive();
   updateStylePreview();
   showToast(`Event "${name}" created`);
@@ -13536,7 +14171,21 @@ function getEventGalleryUrl() {
   const cloud = encodeURIComponent(cfg.cloud);
   return `${
     location.origin
-  }/gallery.html?cloud=${cloud}&tag=${encodeURIComponent(tag)}&title=${title}`;
+  }/gallery.html?cloud=${cloud}&tag=${encodeURIComponent(tag)}&legacyTag=${encodeURIComponent(getLegacyEventGalleryTag())}&title=${title}&event=${encodeURIComponent(getActiveEventId())}&theme=${encodeURIComponent(getEventGalleryThemeKey())}`;
+}
+
+function getLegacyEventGalleryTag() {
+  const sessionName = slugifyEventText(getSessionUploadName());
+  if (sessionName) return sessionName;
+  const quickStartDate = getQuickStartFolderDate();
+  if (quickStartDate) return quickStartDate;
+  const name = slugifyEventText(getEventNameForUploads());
+  const date = slugifyEventText(getEventDateForUploads());
+  return name && date ? `${name}-${date}` : name || date || "";
+}
+
+function getEventGalleryThemeKey() {
+  return getActiveEvent()?.themeKey || getSelectedThemeKey() || "";
 }
 
 function getEventGalleryStatusText() {
@@ -13863,6 +14512,7 @@ function getCaptureUploadMeta(options = {}) {
     slug,
     folder: options.folder || getEventUploadFolderPath(),
     title: options.title || getEventGalleryTitle(),
+    galleryUrl: options.galleryUrl || getEventGalleryUrl(),
   };
 }
 
@@ -13904,6 +14554,7 @@ async function queueCaptureForRetry(options = {}) {
     title: meta.title,
     email: meta.email || "",
     createdAt: meta.createdAt || new Date().toISOString(),
+    galleryUrl: meta.galleryUrl || getEventGalleryUrl(),
   };
   if (mediaBlob && offlineQueueSupported()) {
     try {
@@ -13948,6 +14599,7 @@ async function queueCaptureForRetry(options = {}) {
       resourceType: "image",
       modeName,
       title: meta.title,
+      galleryUrl: meta.galleryUrl,
     });
   }
   return queued;
@@ -14083,6 +14735,7 @@ async function uploadCaptureOnce(options = {}) {
     title: meta.title,
     resourceType,
     modeName,
+    galleryUrl: meta.galleryUrl,
   });
   if (!galleryOk) {
     const queued = queuePendingGalleryRecord({
@@ -14090,6 +14743,7 @@ async function uploadCaptureOnce(options = {}) {
       slug: meta.slug,
       url: publicUrl,
       title: meta.title,
+      galleryUrl: meta.galleryUrl,
       resourceType,
       modeName,
     });
@@ -14132,6 +14786,7 @@ async function recordGalleryPhoto(tag, url, options = {}) {
     resource_type: resourceType,
     type: resourceType,
     mode: options.modeName || "",
+    gallery_url: options.galleryUrl || getEventGalleryUrl(),
   };
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
@@ -14231,6 +14886,15 @@ function hideFinal(options = {}) {
     DOM.qrCodeContainer.dataset.error = "false";
   }
   if (DOM.finalPrintActions) DOM.finalPrintActions.classList.add("hidden");
+  finalPrintPriceRequestId += 1;
+  if (DOM.printPriceNotice) {
+    DOM.printPriceNotice.textContent = "";
+    DOM.printPriceNotice.classList.add("hidden");
+  }
+  if (DOM.paypalPrintCheckout) {
+    DOM.paypalPrintCheckout.innerHTML = "";
+    DOM.paypalPrintCheckout.classList.add("hidden");
+  }
   pendingFinalPrintImageUrl = "";
   setFinalPreviewSharePanelVisible(false);
   if (DOM.shareStatus) DOM.shareStatus.style.display = "none";
@@ -14409,6 +15073,7 @@ function queuePendingUpload(dataUrl, meta = {}) {
       title: meta.title || getEventGalleryTitle(),
       resourceType: meta.resourceType === "video" ? "video" : "image",
       modeName: meta.modeName || "pending",
+      galleryUrl: meta.galleryUrl || getEventGalleryUrl(),
       attempts: Number(meta.attempts || 0),
     };
     const existingIndex = q.findIndex(
@@ -14461,6 +15126,7 @@ function queuePendingGalleryRecord(record = {}) {
       createdAt: record.createdAt || new Date().toISOString(),
       resourceType: record.resourceType === "video" ? "video" : "image",
       modeName: record.modeName || "",
+      galleryUrl: record.galleryUrl || getEventGalleryUrl(),
       attempts: Number(record.attempts || 0),
     };
     const existingIndex = q.findIndex(
@@ -14502,7 +15168,8 @@ async function flushPendingUploads() {
           folder: item.folder,
           title: item.title,
           resourceType: item.resourceType || "image",
-          modeName: item.modeName || "pending",
+      modeName: item.modeName || "pending",
+          galleryUrl: item.galleryUrl,
         });
         sent++;
         const cur = getPendingUploads();
@@ -14578,6 +15245,7 @@ async function flushPendingUploadsIndexedDB() {
         resourceType,
         modeName: metadata.modeName,
         createdAt: metadata.createdAt,
+        galleryUrl: metadata.galleryUrl,
       });
       if (!galleryOk) {
         queuePendingGalleryRecord({
@@ -14588,6 +15256,7 @@ async function flushPendingUploadsIndexedDB() {
           resourceType,
           modeName: metadata.modeName,
           createdAt: metadata.createdAt,
+          galleryUrl: metadata.galleryUrl,
         });
       }
     }
@@ -14618,6 +15287,7 @@ async function flushPendingGalleryRecords() {
           resourceType: item.resourceType,
           modeName: item.modeName,
           createdAt: item.createdAt,
+          galleryUrl: item.galleryUrl,
         });
         if (!ok) throw new Error("Gallery API rejected retry");
         sent++;
@@ -15405,43 +16075,6 @@ function loadAssetLibraryLocal() {
   }
 }
 
-function getVisibleLibraryAssets(category = "") {
-  const normalizedCategory = normalizeUploadedAssetCategory(category);
-  return getCanonicalAssetCollection(category).filter((asset) => {
-    if (!asset || asset.hidden || asset.archived) return false;
-    if (normalizedCategory && asset.category !== normalizedCategory) return false;
-    return true;
-  });
-}
-
-function getLibraryBackgroundUrls() {
-  return getVisibleLibraryAssets("background").map((asset) => asset.url);
-}
-
-function getLibraryOverlayEntries() {
-  return getVisibleLibraryAssets("overlay").map((asset) => ({
-    src: asset.url,
-    name: asset.name,
-    category: asset.category,
-    tags: asset.tags,
-    textFields: asset.textFields,
-    photoSlots: asset.photoSlots,
-    __library: true,
-  }));
-}
-
-function getLibraryTemplateEntries() {
-  return getVisibleLibraryAssets("template").map((asset) => ({
-    src: asset.url,
-    name: asset.name,
-    tags: asset.tags,
-    textFields: asset.textFields,
-    layout: "double_column",
-    photoSlots: asset.photoSlots,
-    __library: true,
-  }));
-}
-
 function mergeLibraryAsset(asset) {
   const normalized = normalizeAssetLibraryPayload({ assets: [asset] }).assets[0];
   if (!normalized) return false;
@@ -15606,55 +16239,48 @@ async function deleteAssetLibraryItem(id, fallbackAsset = null) {
       },
       fallbackAsset
     );
-    return;
-  }
-  const library = normalizeAssetLibraryPayload(assetLibrary);
-  const index = library.assets.findIndex(
-    (asset) =>
-      asset &&
-      (asset.id === id || getAssetLibraryId(asset.category, asset.url) === id)
-  );
-  if (index !== -1) {
-    library.assets.splice(index, 1);
-  }
-  assetLibrary = normalizeAssetLibraryPayload(library);
-  saveAssetLibraryLocal();
-  scheduleAssetLibraryRender();
-  if (canSyncRemote()) {
-    try {
-      await fetch("/api/assets", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
-          url: fallbackUrl,
-        }),
-      });
-    } catch (err) {
-      console.warn("Asset library delete failed", err);
+  } else {
+    const library = normalizeAssetLibraryPayload(assetLibrary);
+    const index = library.assets.findIndex(
+      (asset) =>
+        asset &&
+        (asset.id === id || getAssetLibraryId(asset.category, asset.url) === id)
+    );
+    if (index !== -1) {
+      library.assets.splice(index, 1);
+    }
+    assetLibrary = normalizeAssetLibraryPayload(library);
+    saveAssetLibraryLocal();
+    scheduleAssetLibraryRender();
+    if (canSyncRemote()) {
+      try {
+        await fetch("/api/assets", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id,
+            url: fallbackUrl,
+          }),
+        });
+      } catch (err) {
+        console.warn("Asset library delete failed", err);
+      }
     }
   }
-}
 
-function archiveLibraryAssetByUrl(url) {
-  const asset = (assetLibrary.assets || []).find(
-    (item) =>
-      item &&
-      (item.url === url ||
-        getAssetLibraryUrlKey(item.url) === getAssetLibraryUrlKey(url))
-  );
-  const fallback = getCanonicalAssetCollection().find(
-    (item) =>
-      item &&
-      (item.url === url ||
-        getAssetLibraryUrlKey(item.url) === getAssetLibraryUrlKey(url))
-  );
-  if (!asset && !fallback) return;
-  updateAssetLibraryItem(
-    (asset && asset.id) || (fallback && fallback.id),
-    { hidden: true, archived: true },
-    fallback
-  );
+  if (fallbackUrl) {
+    const category = normalizeUploadedAssetCategory(
+      fallbackAsset && fallbackAsset.category
+    );
+    if (category) {
+      removeSessionAssetBySrc(category, fallbackUrl);
+      if (category === "background") applyThemeBackground(activeTheme);
+      if (DOM.options) renderOptions();
+      renderCurrentAssets(activeTheme || getSelectedThemeTarget());
+      renderAssetLibrary();
+      updateLaunchSummary();
+    }
+  }
 }
 
 function getAssetDisplayName(asset) {
@@ -15671,15 +16297,6 @@ function getAssetCreatedAtLabel(asset) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString();
-}
-
-function getAssetBadgeLabels(asset) {
-  const labels = [];
-  if (asset && asset.customizable) labels.push("Customizable");
-  normalizeEditableFields(asset && asset.editableFields).forEach((field) => {
-    labels.push(getAssetEditableFieldLabel(field));
-  });
-  return labels;
 }
 
 function createCanonicalAssetRow(entry, category, themeName, themeKey) {
@@ -15932,17 +16549,6 @@ function getFilteredAssetLibraryRows() {
       getTrackingKey: getAssetLibraryTrackingKey,
     }
   );
-}
-
-function getActiveAssetLibraryFilterLabels() {
-  const labels = [];
-  if (DOM.assetLibraryCategory && DOM.assetLibraryCategory.value)
-    labels.push("Category");
-  if (DOM.assetLibrarySearch && DOM.assetLibrarySearch.value.trim())
-    labels.push("Search");
-  if (assetLibraryState.selectedCategory && assetLibraryState.selectedCategory !== "all")
-    labels.push("Asset type");
-  return labels;
 }
 
 function clearAssetLibraryFilters() {
@@ -16292,39 +16898,8 @@ function getThemeDefaultsDisplayGroup(rootKey, leafKey, groupName) {
   return groupName || "Other";
 }
 
-function isLegacyBuiltinSelectableRoot(rootKey, group) {
-  const rawKey = String(rootKey || "").trim();
-  const normalizedKey = rawKey.toLowerCase();
-  if (!rawKey) return false;
-  if (BUILTIN_THEMES[rawKey]) return true;
-  if (
-    Object.keys(BUILTIN_THEMES || {}).some(
-      (key) => key.toLowerCase() === normalizedKey
-    )
-  )
-    return true;
-  if (
-    Object.keys(BUILTIN_THEME_LOCATIONS || {}).some(
-      (key) => key.toLowerCase() === normalizedKey
-    )
-  )
-    return true;
-  const normalizedName = normalizeThemeName(
-    (group && group.name) || rawKey
-  ).toLowerCase();
-  return Object.keys(BUILTIN_THEME_LOCATIONS || {}).some((key) => {
-    const loc = BUILTIN_THEME_LOCATIONS[key];
-    const builtinGroup = loc && BUILTIN_THEMES[loc.root];
-    const bucket = builtinGroup && builtinGroup[loc.bucket];
-    const builtinTheme = bucket && bucket[key];
-    const builtinName = normalizeThemeName(
-      (builtinTheme && builtinTheme.name) || key
-    ).toLowerCase();
-    return builtinName && builtinName === normalizedName;
-  });
-}
-
 function getSelectableThemeEntries() {
+  // Keep the catalog and new-event picker limited to approved complete packs.
   const entries = [];
   const seenKeys = new Set();
   const addEntry = (entry) => {
@@ -16341,6 +16916,7 @@ function getSelectableThemeEntries() {
       const children = group[bucket];
       if (!children || typeof children !== "object") continue;
       for (const leafKey of Object.keys(children)) {
+        if (!APPROVED_THEME_KEYS.has(`${rootKey}:${leafKey}`)) continue;
         const theme = children[leafKey];
         if (!theme || typeof theme !== "object") continue;
         if (!isCompletedTheme(theme)) continue;
@@ -16358,21 +16934,6 @@ function getSelectableThemeEntries() {
         });
       }
     }
-    const builtinGroup = BUILTIN_THEMES[rootKey];
-    const isBuiltinCategory = !!(
-      builtinGroup &&
-      (builtinGroup.themes || builtinGroup.holidays)
-    );
-    if (
-      !isBuiltinCategory &&
-      !group.themes &&
-      !group.holidays &&
-      group.name &&
-      !isLegacyBuiltinSelectableRoot(rootKey, group)
-    ) {
-      if (!isCompletedTheme(group)) continue;
-      addEntry({ key: rootKey, group: "Other", label: groupName, theme: group });
-    }
   }
   return entries.sort((a, b) =>
     getThemeDefaultsGroupRank(a.group) - getThemeDefaultsGroupRank(b.group) ||
@@ -16383,19 +16944,64 @@ function getSelectableThemeEntries() {
 
 function isCompletedTheme(theme) {
   if (!theme || typeof theme !== "object") return false;
-  const hasEntries = (value) =>
-    Array.isArray(value) &&
-    value.some((entry) => {
-      if (typeof entry === "string") return entry.trim().length > 0;
-      return !!(entry && typeof entry === "object" && getAssetEntrySrc(entry));
+  const entries = (value) => (Array.isArray(value) ? value : []);
+  const hasCoupleAndDateFields = (entry) => {
+    const keys = new Set(
+      normalizeTemplateTextFields(entry && entry.textFields).map((field) => field.key)
+    );
+    return keys.has("couple_names") && keys.has("event_date");
+  };
+  const hasScreen = (value, role = "") => {
+    const screens = entries(value);
+    return ["portrait", "landscape"].every((orientation) =>
+      screens.some((entry) => {
+        if (!entry || typeof entry !== "object") return false;
+        if (role && entry.role && entry.role !== role) return false;
+        return (
+          normalizeIdleScreenOrientation(entry.orientation) === orientation &&
+          !!getAssetEntrySrc(entry)
+        );
+      })
+    );
+  };
+  const idleScreens = entries(theme.idleScreens);
+  const photoChoiceScreens = entries(theme.photoChoiceScreens).length
+    ? theme.photoChoiceScreens
+    : idleScreens;
+  const overlays = entries(theme.overlays);
+  const hasPhotoOverlay = (orientation) =>
+    overlays.some((entry) => {
+      if (!entry || typeof entry !== "object" || !getAssetEntrySrc(entry)) {
+        return false;
+      }
+      const entryOrientation = normalizePhotoOverlayOrientation(entry.orientation);
+      return !entryOrientation || entryOrientation === orientation;
     });
-  return [
-    theme.idleScreens,
-    theme.photoChoiceScreens,
-    theme.shareScreens,
-    theme.thankYouScreens,
-    theme.presets,
-  ].some(hasEntries);
+  const weddingLayoutOrientations = new Set(
+    overlays
+      .filter((entry) => entry && hasCoupleAndDateFields(entry))
+      .map((entry) => normalizePhotoOverlayOrientation(entry.orientation))
+      .filter(Boolean)
+  );
+  const hasReusableWeddingLayouts =
+    entries(theme.eventTypes).includes("wedding") &&
+    weddingLayoutOrientations.has("portrait") &&
+    weddingLayoutOrientations.has("landscape") &&
+    entries(theme.templates).some(
+      (template) =>
+        normalizeTemplateLayout(template && template.layout) === "photo_strip_3" &&
+        hasCoupleAndDateFields(template)
+    );
+  // Wedding layouts can reuse the app's shared guest screens; each event only
+  // supplies names and a date, while the printable artwork stays reusable.
+  if (hasReusableWeddingLayouts) return true;
+  return (
+    hasScreen(idleScreens, "idle") &&
+    hasScreen(photoChoiceScreens, "photo-choice") &&
+    hasScreen(theme.thankYouScreens) &&
+    hasPhotoOverlay("portrait") &&
+    hasPhotoOverlay("landscape")
+  );
 }
 
 function getSelectableThemeGroups() {
@@ -16848,6 +17454,8 @@ function renderAssetLibrary() {
   const grid = DOM.assetLibraryGrid;
   const status = DOM.assetLibraryStatus;
   if (!grid && !status) return;
+  const panel = document.getElementById("uploaded" + "AssetLibraryPanel");
+  if (panel && !panel.open) return;
   renderAssetLibraryPills();
   
   // Update search query from DOM
@@ -17509,6 +18117,10 @@ function pruneMisplacedBuiltinThemes(target) {
   }
 }
 
+function pruneUnapprovedBuiltinThemes(target) {
+  return pruneUnapprovedThemes(target, APPROVED_THEME_KEYS);
+}
+
 function ensureBuiltinThemes() {
   if (!themes || typeof themes !== "object") themes = {};
   migrateLegacyBuiltinRootThemeDefaults();
@@ -17530,6 +18142,7 @@ function ensureBuiltinThemes() {
       }
       const targetBucket = targetGroup[bucket];
       for (const subKey of Object.keys(builtinGroup[bucket])) {
+        if (!APPROVED_THEME_KEYS.has(`${rootKey}:${subKey}`)) continue;
         const builtinTheme = builtinGroup[bucket][subKey];
         if (!targetBucket[subKey] || typeof targetBucket[subKey] !== "object") {
           targetBucket[subKey] = cloneThemeValue(builtinTheme);
@@ -17540,6 +18153,19 @@ function ensureBuiltinThemes() {
     }
   }
   pruneMisplacedBuiltinThemes(themes);
+  const removedUnapprovedThemes = pruneUnapprovedBuiltinThemes(themes);
+  for (const rootKey of Object.keys(themes)) {
+    if (rootKey === "_meta") continue;
+    const group = themes[rootKey];
+    if (!group || typeof group !== "object") continue;
+    const hasApprovedThemes = ["themes", "holidays"].some((bucket) =>
+      Object.keys(group[bucket] || {}).some((leafKey) =>
+        APPROVED_THEME_KEYS.has(`${rootKey}:${leafKey}`)
+      )
+    );
+    if (!hasApprovedThemes) delete themes[rootKey];
+  }
+  return removedUnapprovedThemes;
 }
 
 function migrateOptimizedAveryScreenAssets(target = themes) {
@@ -17547,10 +18173,10 @@ function migrateOptimizedAveryScreenAssets(target = themes) {
   if (!theme || typeof theme !== "object") return false;
   const screens = Array.isArray(theme.idleScreens) ? theme.idleScreens : [];
   const replacements = {
-    "/assets/themes/avery-birthday/avery-birthday-idle-portrait.png": "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp",
-    "/assets/themes/avery-birthday/avery-birthday-idle-landscape.png": "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp",
-    "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.png": "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.webp",
-    "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.png": "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp",
+    "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp": "/assets/themes/avery-birthday/avery-birthday-idle-portrait.webp",
+    "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp": "/assets/themes/avery-birthday/avery-birthday-idle-landscape.webp",
+    "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.webp": "/assets/themes/avery-birthday/avery-birthday-photo-choice-portrait.webp",
+    "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp": "/assets/themes/avery-birthday/avery-birthday-photo-choice-landscape.webp",
   };
   let migrated = false;
   screens.forEach((screen) => {
@@ -17683,6 +18309,36 @@ function migrateAmandaNorthScreenAssets(target = themes) {
   return migrated;
 }
 
+function migrateSummerThemeAssets(target = themes) {
+  const theme = target?.general?.themes?.summer;
+  const defaults = BUILTIN_THEMES.general?.themes?.summer;
+  if (!theme || !defaults) return false;
+  const canonicalFields = ["backgrounds", "idleScreens", "thankYouScreens"];
+  let migrated = false;
+  canonicalFields.forEach((field) => {
+    const expected = Array.isArray(defaults[field]) ? defaults[field] : [];
+    const current = Array.isArray(theme[field]) ? theme[field] : [];
+    const same =
+      current.length === expected.length &&
+      current.every(
+        (entry, index) =>
+          getAssetEntrySrc(entry) === getAssetEntrySrc(expected[index])
+      );
+    if (same) return;
+    theme[field] = cloneThemeValue(expected);
+    migrated = true;
+  });
+  if (Array.isArray(theme.overlays) && theme.overlays.length) {
+    theme.overlays = [];
+    migrated = true;
+  }
+  if (Array.isArray(theme.templates) && theme.templates.length) {
+    theme.templates = [];
+    migrated = true;
+  }
+  return migrated;
+}
+
 function migrateSpringHillHawksAssets(target = themes) {
   const theme = target?.school?.themes?.hawks;
   const defaults = BUILTIN_THEMES.school?.themes?.hawks;
@@ -17787,6 +18443,87 @@ function migrateSpringHillHawksAssets(target = themes) {
   return migrated;
 }
 
+function migrateSpringHillHawksStadiumAssets(target = themes) {
+  const theme = target?.school?.themes?.hawksTitansStadium;
+  const defaults = BUILTIN_THEMES.school?.themes?.hawksTitansStadium;
+  if (!theme || !defaults) return false;
+  let migrated = false;
+
+  if (theme.name === "Spring Hill Hawks at Titans Stadium") {
+    theme.name = defaults.name;
+    migrated = true;
+  }
+  if (theme.welcome?.title === "Hawks Take Titans Stadium") {
+    theme.welcome.title = defaults.welcome.title;
+    migrated = true;
+  }
+
+  const defaultBackgrounds = Array.isArray(defaults.backgrounds)
+    ? defaults.backgrounds
+    : [];
+  const currentBackgrounds = Array.isArray(theme.backgrounds)
+    ? theme.backgrounds
+    : [];
+  const missingBackgrounds = defaultBackgrounds.filter(
+    (entry) => !currentBackgrounds.some((item) => getAssetEntrySrc(item) === getAssetEntrySrc(entry))
+  );
+  if (missingBackgrounds.length) {
+    theme.backgrounds = [...missingBackgrounds.map(cloneThemeValue), ...currentBackgrounds];
+    migrated = true;
+  }
+
+  const mergeScreens = (field) => {
+    const current = Array.isArray(theme[field]) ? theme[field].slice() : [];
+    const screens = Array.isArray(defaults[field]) ? defaults[field] : [];
+    screens.forEach((screen) => {
+      const matchIndex = current.findIndex((entry) =>
+        entry &&
+        entry.role === screen.role &&
+        normalizeIdleScreenOrientation(entry.orientation) ===
+          normalizeIdleScreenOrientation(screen.orientation)
+      );
+      if (matchIndex === -1) {
+        current.push(cloneThemeValue(screen));
+        migrated = true;
+      } else if (
+        normalizeIdleScreenOrientation(screen.orientation) === "portrait" &&
+        current[matchIndex].src !== screen.src
+      ) {
+        current[matchIndex] = {
+          ...current[matchIndex],
+          ...cloneThemeValue(screen),
+        };
+        migrated = true;
+      }
+    });
+    if (current.length !== (theme[field] || []).length) theme[field] = current;
+  };
+  mergeScreens("idleScreens");
+
+  const mergeAssets = (field) => {
+    const current = Array.isArray(theme[field]) ? theme[field].slice() : [];
+    const assets = Array.isArray(defaults[field]) ? defaults[field] : [];
+    assets.forEach((asset) => {
+      const src = getAssetEntrySrc(asset);
+      const matchIndex = current.findIndex((entry) => getAssetEntrySrc(entry) === src);
+      if (matchIndex === -1) {
+        current.push(cloneThemeValue(asset));
+        migrated = true;
+      } else if (
+        src === "/assets/themes/spring-hill-hawks/nissan-stadium-frame.svg" &&
+        JSON.stringify(current[matchIndex]) !== JSON.stringify(asset)
+      ) {
+        current[matchIndex] = cloneThemeValue(asset);
+        migrated = true;
+      }
+    });
+    theme[field] = current;
+  };
+  mergeAssets("overlays");
+  mergeAssets("templates");
+  return migrated;
+}
+
 function migrateSpringHillHawksCheerAssets(target = themes) {
   const themeGroup = target?.school?.themes;
   const defaults = BUILTIN_THEMES.school?.themes?.hawksCheer;
@@ -17876,7 +18613,8 @@ function hasCoreBuiltins(obj) {
       obj &&
       obj.general &&
       obj.general.themes &&
-      obj.general.themes.birthday &&
+      obj.general.themes.averyBirthday &&
+      obj.general.themes.summer &&
       obj.fall &&
       obj.fall.holidays &&
       obj.fall.holidays.halloween
@@ -18138,11 +18876,14 @@ function loadThemesFromStorage() {
       const parsed = JSON.parse(storedThemes);
       mergeStoredThemes(themes, parsed);
       fixBuiltinThemePlacements(themes);
-      ensureBuiltinThemes();
+      const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();
       refreshBeautyPresetEffects();
       const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
       const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
+      const migratedSummerAssets = migrateSummerThemeAssets(themes);
       const migratedSpringHillHawks = migrateSpringHillHawksAssets(themes);
+      const migratedSpringHillHawksStadium =
+        migrateSpringHillHawksStadiumAssets(themes);
       const migratedSpringHillHawksCheer =
         migrateSpringHillHawksCheerAssets(themes);
       try {
@@ -18154,8 +18895,11 @@ function loadThemesFromStorage() {
       if (
         migratedAveryScreens ||
         migratedAmandaNorthScreens ||
+        migratedSummerAssets ||
         migratedSpringHillHawks ||
-        migratedSpringHillHawksCheer
+        migratedSpringHillHawksStadium ||
+        migratedSpringHillHawksCheer ||
+        removedUnapprovedBuiltinThemes
       )
         saveThemesToStorage();
     } catch (err) {
@@ -18165,7 +18909,7 @@ function loadThemesFromStorage() {
   const globalLogo = getGlobalLogo();
   if (globalLogo !== null) applyGlobalLogoToAllThemes(globalLogo);
   // Attempt remote load and prefer remote if available
-  loadThemesRemote().catch(() => {});
+  deferNonCriticalTask(() => loadThemesRemote().catch(() => {}));
 }
 
 function openLayoutBuilder() {
@@ -18177,7 +18921,7 @@ function openLayoutBuilder() {
 
 function loadEventsFromStorage() {
   populateEventProfileSelect(getActiveEventId());
-  loadEventsRemote().catch(() => {});
+  deferNonCriticalTask(() => loadEventsRemote().catch(() => {}));
 }
 
 // Folder import (device-only) helpers
@@ -18260,14 +19004,16 @@ function getStoredFonts() {
     // Fire-and-forget remote merge so new fonts sync to other devices
     if (!fontsRemoteRequested) {
       fontsRemoteRequested = true;
-      loadFontsRemote()
-        .then((remote) => {
-          if (Array.isArray(remote) && remote.length) {
-            const merged = mergeFonts(local, remote);
-            localStorage.setItem("photoboothFonts", JSON.stringify(merged));
-          }
-        })
-        .catch(() => {});
+      deferNonCriticalTask(() =>
+        loadFontsRemote()
+          .then((remote) => {
+            if (Array.isArray(remote) && remote.length) {
+              const merged = mergeFonts(local, remote);
+              localStorage.setItem("photoboothFonts", JSON.stringify(merged));
+            }
+          })
+          .catch(() => {})
+      );
     }
     return local;
   } catch (e) {
@@ -19576,7 +20322,7 @@ async function confirmCreateTheme() {
     const proceed = confirm("No assets were detected. Create an empty theme?");
     if (!proceed) return;
   }
-  const baseTheme = cloneThemeValue(BUILTIN_THEMES.general.themes.basic || {});
+  const baseTheme = cloneThemeValue(BUILTIN_THEMES.general.themes.summer || {});
   const newTheme = mergePlainObject(baseTheme, {});
   newTheme.name = name;
   newTheme.background = "";
@@ -21685,7 +22431,7 @@ function setupInstallPrompt() {
 }
 
 window.addEventListener("storage", (event) => {
-  if (!event || event.key !== STORAGE_KEYS.THEMES) return;
+  if (!event || event.key !== APP_CONFIG.STORAGE_KEYS.THEMES) return;
   loadThemesFromStorage();
   const selectedKey = getSelectedThemeKey();
   const preferredKey = selectedKey || DEFAULT_THEME_KEY;
@@ -21722,9 +22468,12 @@ Object.assign(window, {
     composeStrip,
     finalizeToPrint,
     getActiveEvent: () => getActiveEvent(),
+    getEventById: (id) => getStoredEvents().find((event) => event && event.id === id) || null,
+    getThemeByKey: (themeKey) => resolveThemeByKey(themeKey),
     getThemes: () => themes,
     getBaseBackgroundList: (theme = activeTheme) => getBaseBackgroundList(theme),
     getBaseTemplateList: (theme = activeTheme) => getBaseTemplateList(theme),
+    getBaseOverlayList: (theme = activeTheme) => getBaseOverlayList(theme),
     getAllThemeBackgroundCatalogList,
     getAllAssetLibraryRows,
     getAssetThemeDefaultCount,
@@ -21771,7 +22520,7 @@ Object.assign(window, {
       syncOverlayPreviewSurface({ mode: "live" });
       return overlayList;
     },
-    probeOverlayAutofill: (overlaySrc, width = 1800, height = 1350) => {
+    probeOverlayAutofill: (overlaySrc, width = 1800, height = 1350, eventOverride = null) => {
       const overlayDefinition = getOverlayList(activeTheme).find(
         (item) => item && item.src === overlaySrc
       );
@@ -21790,12 +22539,12 @@ Object.assign(window, {
         width,
         height,
         overlayDefinition && overlayDefinition.textFields,
-        getActiveEvent(),
+        eventOverride || getActiveEvent(),
         activeTheme
       );
       return calls;
     },
-    probeTemplateAutofill: (template, width = 1200, height = 1800) => {
+    probeTemplateAutofill: (template, width = 1200, height = 1800, eventOverride = null) => {
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
@@ -21811,7 +22560,7 @@ Object.assign(window, {
         width,
         height,
         template && template.textFields,
-        getActiveEvent(),
+        eventOverride || getActiveEvent(),
         activeTheme
       );
       return calls;

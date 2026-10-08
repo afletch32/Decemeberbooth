@@ -10,7 +10,7 @@ async function loadAssetLibraryUtils() {
 }
 
 test("asset categories share one canonical classification", async () => {
-  const { normalizeUploadedAssetCategory } = await loadAssetLibraryUtils();
+  const { normalizeUploadedAssetCategory, normalizeServerAssetCategory, normalizePagesAssetCategory } = await loadAssetLibraryUtils();
 
   assert.equal(normalizeUploadedAssetCategory("backgrounds"), "background");
   assert.equal(normalizeUploadedAssetCategory("overlays"), "overlay");
@@ -24,6 +24,44 @@ test("asset categories share one canonical classification", async () => {
     "thank-you-screen"
   );
   assert.equal(normalizeUploadedAssetCategory("unsupported"), "");
+  assert.equal(normalizeServerAssetCategory("idle-screen"), "");
+  assert.equal(normalizeServerAssetCategory("backgrounds"), "background");
+  assert.equal(normalizePagesAssetCategory("idle-screen"), "idle-screen");
+  assert.equal(normalizePagesAssetCategory("thank-you-screen"), "");
+});
+
+test("server and Pages policies share normalized asset records", async () => {
+  const {
+    normalizeAssetLibraryPayload,
+    normalizeServerAssetCategory,
+    normalizePagesAssetCategory,
+  } = await loadAssetLibraryUtils();
+  const payload = [
+    {
+      category: "overlays",
+      url: "/assets/Hawks/frame.png?v=2",
+      name: "School Photo Frame",
+      tags: ["School", "school"],
+      editableFields: ["event name"],
+      photoSlots: [{ x: 0.1, y: 0.1, width: 0.8, height: 0.8 }],
+      createdAt: "2026-10-01T00:00:00.000Z",
+      updatedAt: "2026-10-01T00:00:00.000Z",
+    },
+  ];
+  const local = normalizeAssetLibraryPayload(payload, {
+    normalizeCategory: normalizeServerAssetCategory,
+    includeExtendedMetadata: false,
+  });
+  const pages = normalizeAssetLibraryPayload(payload, {
+    normalizeCategory: normalizePagesAssetCategory,
+    includeExtendedMetadata: false,
+  });
+
+  assert.deepEqual(local, pages);
+  assert.equal(local.assets[0].url, "assets/school/hawks/frame.png?v=2");
+  assert.deepEqual(local.assets[0].tags, ["school"]);
+  assert.ok(local.assets[0].editableFields.includes("eventName"));
+  assert.equal(local.assets[0].photoSlots, undefined);
 });
 
 test("asset URL keys repair legacy paths and ignore cache variants", async () => {

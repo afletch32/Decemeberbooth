@@ -34,7 +34,7 @@ const IMG_EXT = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
 function parsePath(relativePath) {
   const parts = relativePath.split("/").filter(Boolean);
   // parts[0] = themeGroup (general, wedding, holidays, school)
-  // parts[1] = themeName (basic, birthday, timeless-romance, christmas, hawks, etc)
+  // parts[1] = themeName (birthday, timeless-romance, christmas, hawks, etc)
   // parts[2] = category (backgrounds, overlays, templates, welcome) or sub-theme
   // parts[3] = category if parts[2] is a sub-theme
 

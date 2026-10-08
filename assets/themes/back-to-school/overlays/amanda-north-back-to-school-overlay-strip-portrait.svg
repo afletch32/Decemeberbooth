@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1800" viewBox="0 0 1200 1800">
+  <defs>
+    <mask id="strip-photo-windows"><rect width="1200" height="1800" fill="white"/><rect x="132" y="92" width="936" height="350" rx="8" fill="black"/><rect x="132" y="480" width="936" height="350" rx="8" fill="black"/><rect x="132" y="868" width="936" height="350" rx="8" fill="black"/></mask>
+  </defs>
+  <rect width="1200" height="1800" fill="#16191D" mask="url(#strip-photo-windows)"/>
+  <g fill="none" stroke="#F2F0E7" stroke-opacity=".75" stroke-width="5" stroke-dasharray="3 18"><rect x="116" y="76" width="968" height="382" rx="12"/><rect x="116" y="464" width="968" height="382" rx="12"/><rect x="116" y="852" width="968" height="382" rx="12"/></g>
+  <g fill="none" stroke-linecap="round" stroke-width="10"><path stroke="#F5B51B" d="M40 45l55 35M94 36l-50 54M1080 32l55 45M1138 40l-52 42M38 1270l56-42M104 1268l-50-48"/><path stroke="#55C7E8" d="M145 40q30-30 60 0t60 0M930 40q30-30 60 0t60 0M70 1320q30-30 60 0t60 0"/><path stroke="#EE6FA8" d="M310 38c22-30 44 20 66-10M820 1300c22-30 44 20 66-10"/></g>
+  <g fill="#F5B51B" font-family="Arial, sans-serif" font-size="30" font-weight="700"><text x="42" y="540">✎</text><text x="1080" y="700">★</text><text x="40" y="1020">✿</text><text x="1080" y="1100">✎</text></g>
+  <g font-family="Arial, sans-serif" font-weight="900" text-anchor="middle"><text x="600" y="1390" fill="#F5B51B" font-size="78" letter-spacing="2">BACK TO</text><text x="600" y="1480" fill="#55C7E8" font-size="88" letter-spacing="2">SCHOOL</text><text x="600" y="1542" fill="#EE6FA8" font-size="28" letter-spacing="5">AMANDA NORTH ELEMENTARY • 2026</text></g>
+  <g fill="#55C7E8"><circle cx="70" cy="1450" r="13"/><circle cx="1130" cy="1420" r="13"/></g><g fill="#EE6FA8"><path d="M170 1500l12 24 27 4-20 19 5 27-24-13-24 13 5-27-20-19 27-4z"/><path d="M1030 1500l12 24 27 4-20 19 5 27-24-13-24 13 5-27-20-19 27-4z"/></g>
+</svg>

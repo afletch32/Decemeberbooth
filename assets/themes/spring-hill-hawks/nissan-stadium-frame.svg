@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1122 1402" fill="none">
+  <defs>
+    <linearGradient id="navy" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#041E42"/>
+      <stop offset="1" stop-color="#0A315E"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#00142E" flood-opacity=".35"/>
+    </filter>
+  </defs>
+  <path d="M20 150V28Q20 12 38 12H1084Q1102 12 1102 28V150" stroke="#16A34A" stroke-width="18"/>
+  <path d="M42 150V42H1080V150" stroke="#FFFFFF" stroke-opacity=".9" stroke-width="5"/>
+  <path d="M0 126H1122V163H0Z" fill="url(#navy)" filter="url(#shadow)"/>
+  <text x="561" y="113" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="55" font-weight="900" letter-spacing="3">SPRING HILL HAWKS</text>
+  <image href="/assets/themes/spring-hill-hawks/nissan-stadium-aerial-day.jpg" x="20" y="168" width="1082" height="390" preserveAspectRatio="xMidYMid slice"/>
+  <path d="M20 168H1102V558H20Z" stroke="#FFFFFF" stroke-width="12"/>
+  <path d="M34 180H1088V546H34Z" stroke="#16A34A" stroke-width="6"/>
+  <path d="M130 568H992V1100H130Z" stroke="#FFFFFF" stroke-width="16"/>
+  <path d="M142 580H980V1088H142Z" stroke="#16A34A" stroke-width="8"/>
+  <path d="M0 1114H1122V1402H0Z" fill="url(#navy)"/>
+  <path d="M0 1114H1122V1131H0Z" fill="#16A34A"/>
+  <path d="M100 1170H1022" stroke="#FFFFFF" stroke-opacity=".38" stroke-width="3"/>
+  <text x="561" y="1220" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="68" font-weight="900" letter-spacing="5">NISSAN STADIUM</text>
+  <text x="561" y="1274" text-anchor="middle" fill="#9DE6B0" font-family="Arial, sans-serif" font-size="25" font-weight="700" letter-spacing="7">HAWKS GAME DAY</text>
+</svg>

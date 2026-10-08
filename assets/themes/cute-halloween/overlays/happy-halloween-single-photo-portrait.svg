@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1800" viewBox="0 0 1200 1800">
+  <defs>
+    <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff9edb"/><stop offset="1" stop-color="#c86bff"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <path d="M92 238 Q92 155 175 155 H1025 Q1108 155 1108 238 V1562 Q1108 1645 1025 1645 H175 Q92 1645 92 1562 Z" fill="none" stroke="#35134e" stroke-width="44"/>
+  <path d="M92 238 Q92 155 175 155 H1025 Q1108 155 1108 238 V1562 Q1108 1645 1025 1645 H175 Q92 1645 92 1562 Z" fill="none" stroke="url(#pink)" stroke-width="12" filter="url(#glow)"/>
+  <g fill="#ff9edb" stroke="#35134e" stroke-width="8">
+    <path d="M92 310 Q34 260 62 188 Q132 204 151 278 Z"/><path d="M1108 310 Q1166 260 1138 188 Q1068 204 1049 278 Z"/>
+    <path d="M92 1490 Q35 1540 62 1612 Q132 1596 151 1522 Z"/><path d="M1108 1490 Q1165 1540 1138 1612 Q1068 1596 1049 1522 Z"/>
+  </g>
+  <g fill="none" stroke="#ffb8e8" stroke-width="8" opacity=".9">
+    <path d="M145 420 q-42 35 0 70 q42 35 0 70"/><path d="M1055 420 q42 35 0 70 q-42 35 0 70"/>
+    <path d="M145 1260 q-42 35 0 70 q42 35 0 70"/><path d="M1055 1260 q42 35 0 70 q-42 35 0 70"/>
+  </g>
+  <g fill="#ff9edb" stroke="#35134e" stroke-width="7">
+    <path d="M155 540 l24 48 53 7-38 37 9 53-48-25-48 25 9-53-38-37 53-7z"/>
+    <path d="M1045 540 l24 48 53 7-38 37 9 53-48-25-48 25 9-53-38-37 53-7z"/>
+    <path d="M155 1110 l24 48 53 7-38 37 9 53-48-25-48 25 9-53-38-37 53-7z"/>
+    <path d="M1045 1110 l24 48 53 7-38 37 9 53-48-25-48 25 9-53-38-37 53-7z"/>
+  </g>
+  <g transform="translate(600 92)" stroke="#35134e" stroke-width="7">
+    <path d="M-2 0 C-104-62-174 42-77 62 C-42 69-16 46 0 25 C16 46 42 69 77 62 C174 42 104-62 2 0Z" fill="url(#pink)"/>
+    <circle cx="0" cy="26" r="20" fill="#ffb8e8"/>
+  </g>
+  <g transform="translate(600 1710)">
+    <path d="M-160 8 Q-125-34-90 8 Q-55 50-20 8 Q15-34 50 8 Q85 50 120 8" fill="none" stroke="#ff9edb" stroke-width="12"/>
+    <path d="M0-10 C-44-60-88-5 0 72 C88-5 44-60 0-10Z" fill="#ff6dbd" stroke="#35134e" stroke-width="8"/>
+  </g>
+</svg>

@@ -65,13 +65,22 @@ test("template rendering logic preserves photo overlays across strip mode and su
 });
 
 test("wedding templates use transparent photo windows", () => {
-  const gardenStrip = readProjectFile("assets", "wedding", "garden-vows", "templates", "garden-vows-strip-template.svg");
-  const gardenSingle = readProjectFile("assets", "wedding", "garden-vows", "templates", "garden-vows-single-template.svg");
+  const gardenOverlays = JSON.parse(readProjectFile("assets", "wedding", "garden-vows", "overlays", "overlays.json"));
+  const gardenTemplates = JSON.parse(readProjectFile("assets", "wedding", "garden-vows", "templates", "templates.json"));
   const timelessStrip = readProjectFile("assets", "wedding", "timeless-romance", "templates", "timeless-romance-strip-template.svg");
   const timelessSingle = readProjectFile("assets", "wedding", "timeless-romance", "templates", "timeless-romance-single-template.svg");
 
-  assert.ok(gardenStrip.includes('width="540" height="382" rx="6" fill="none"'));
-  assert.ok(gardenSingle.includes('width="1492" height="570" rx="8" fill="none"'));
+  assert.deepEqual(gardenOverlays.map(({ src }) => src), [
+    "garden-vows-single-portrait.png",
+    "garden-vows-single-landscape.png",
+  ]);
+  assert.deepEqual(gardenTemplates[0].slots.length, 3);
+  for (const item of [...gardenOverlays, ...gardenTemplates]) {
+    assert.deepEqual(
+      item.textFields.map((field) => field.key),
+      ["couple_names", "event_date"]
+    );
+  }
   assert.ok(timelessStrip.includes('width="548" height="380" rx="4" fill="none"'));
   assert.ok(timelessSingle.includes('width="1504" height="558" rx="6" fill="none"'));
 });
@@ -113,6 +122,17 @@ test("strip capture keeps the template preview cleared until the completed strip
         stripFlow.indexOf("const uploadResult = await uploadCaptureOnce"),
     "strip flow should not restore an empty template preview while its final image is uploading"
   );
+});
+
+test("strip capture keeps the live preview in the selected booth orientation", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const start = appScript.indexOf("async function prepareStripCapture(template)");
+  const end = appScript.indexOf("function openConfirm", start);
+  const stripPreparation = appScript.slice(start, end);
+
+  assert.ok(stripPreparation.includes("const screenOrientation = getGuestScreenOrientation();"));
+  assert.ok(stripPreparation.includes('screenOrientation === "portrait" ? "view-portrait" : "view-landscape"'));
+  assert.ok(!stripPreparation.includes("orientationFromTemplate(template)"));
 });
 
 test("photo capture freezes the completed print while upload is prepared", () => {

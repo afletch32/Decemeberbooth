@@ -1,24 +1,5 @@
 [
   {
-    "id": "general-basic",
-    "name": "basic",
-    "category": "general",
-    "background": "/themes/general/basic/backgrounds/basic-background-1.png",
-    "overlay": "/themes/general/basic/overlays/blue-smoke-frame.png",
-    "backgrounds": [
-      "/themes/general/basic/backgrounds/basic-background-1.png",
-      "/themes/general/basic/backgrounds/sparkles.png"
-    ],
-    "overlays": [
-      "/themes/general/basic/overlays/blue-smoke-frame.png",
-      "/themes/general/basic/overlays/flowers-frame.png",
-      "/themes/general/basic/overlays/general-frame-black.png",
-      "/themes/general/basic/overlays/general-frame-blue-flowers.png",
-      "/themes/general/basic/overlays/shes-a-good-man-overlay.png"
-    ],
-    "templates": []
-  },
-  {
     "id": "general-birthday",
     "name": "birthday",
     "category": "general",

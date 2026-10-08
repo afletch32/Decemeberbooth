@@ -290,8 +290,6 @@ export function resolveThemeSoundProfileName(themeKey = "", theme = {}) {
   if (
     includesAny(searchable, [
       "expo",
-      "brand studio",
-      "lead capture",
       "corporate",
     ])
   ) {

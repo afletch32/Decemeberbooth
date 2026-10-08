@@ -12,15 +12,15 @@ test("theme admin state owns theme options and selection without DOM fields", as
   const state = createThemeAdminState();
 
   state.setThemeOptions([
-    { value: "general:basic", textContent: "Basic" },
+    { value: "general:summer", textContent: "Summer" },
     { value: "summer:summer", textContent: "Summer" },
   ]);
 
   assert.deepEqual(state.getThemeOptions(), [
-    { value: "general:basic", textContent: "Basic" },
+    { value: "general:summer", textContent: "Summer" },
     { value: "summer:summer", textContent: "Summer" },
   ]);
-  assert.equal(state.getSelectedThemeKey(), "general:basic");
+  assert.equal(state.getSelectedThemeKey(), "general:summer");
   assert.equal(state.setSelectedThemeKey("summer:summer"), true);
   assert.equal(state.getSelectedThemeKey(), "summer:summer");
   assert.equal(state.setSelectedThemeKey("missing"), false);
