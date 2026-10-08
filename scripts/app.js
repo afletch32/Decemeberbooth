@@ -10017,21 +10017,24 @@ function positionIdleStartHotspot(entry) {
 }
 
 let customArtworkLoadTimer = null;
+let welcomeArtworkLoadId = 0;
 
 function clearCustomArtworkLoadTimer() {
   clearTimeout(customArtworkLoadTimer);
   customArtworkLoadTimer = null;
 }
 
-function startCustomArtworkLoadFallback() {
+function startCustomArtworkLoadFallback(onTimeout) {
   clearCustomArtworkLoadTimer();
   customArtworkLoadTimer = setTimeout(() => {
-    clearCustomIdleScreen();
-    showToast("Custom booth artwork could not load. Showing the standard screen.");
+    // Give slow connections a grace period, but keep stalled requests bounded.
+    showToast("Theme artwork is still loading. Check your connection.");
+    customArtworkLoadTimer = setTimeout(onTimeout, 22000);
   }, 8000);
 }
 
 function clearCustomIdleScreen() {
+  welcomeArtworkLoadId += 1;
   clearCustomArtworkLoadTimer();
   if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("custom-idle-screen", "custom-photo-choice-screen");
   if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("custom-artwork-loading");
@@ -10076,30 +10079,44 @@ function loadWelcomeArtwork(entry, onReady) {
   const src = getAssetEntrySrc(entry);
   const media = getWelcomeArtworkMedia(entry);
   if (!src || !media) return false;
+  const loadId = ++welcomeArtworkLoadId;
+  let ready = false;
+  const finish = () => {
+    if (loadId !== welcomeArtworkLoadId || ready) return;
+    ready = true;
+    clearCustomArtworkLoadTimer();
+    DOM.welcomeScreen.classList.remove("custom-artwork-loading");
+    media.classList.remove("hidden");
+    if (isVideoAsset(entry)) media.play().catch(() => {});
+    onReady();
+  };
+  const fail = () => {
+    if (loadId !== welcomeArtworkLoadId) return;
+    clearCustomIdleScreen();
+    showToast("Theme artwork could not load. Showing the standard screen.");
+  };
   if (DOM.welcomeImg) DOM.welcomeImg.classList.add("hidden");
   if (DOM.welcomeVideo) DOM.welcomeVideo.classList.add("hidden");
-  startCustomArtworkLoadFallback();
+  startCustomArtworkLoadFallback(fail);
   if (isVideoAsset(entry)) {
-    media.onloadedmetadata = () => {
-      clearCustomArtworkLoadTimer();
-      DOM.welcomeScreen.classList.remove("custom-artwork-loading");
-      media.classList.remove("hidden");
-      media.play().catch(() => {});
-      onReady();
-    };
-    media.onerror = clearCustomIdleScreen;
+    media.onloadedmetadata = finish;
+    media.onerror = fail;
     media.crossOrigin = "anonymous";
-    media.src = src;
-    media.load();
+    if (media.getAttribute("src") !== src) {
+      media.src = src;
+      media.load();
+    } else if (media.readyState >= 1) {
+      finish();
+    }
   } else {
-    media.onload = () => {
-      clearCustomArtworkLoadTimer();
-      DOM.welcomeScreen.classList.remove("custom-artwork-loading");
-      media.classList.remove("hidden");
-      onReady();
-    };
-    media.onerror = clearCustomIdleScreen;
-    media.src = src;
+    media.onload = finish;
+    media.onerror = fail;
+    if (media.getAttribute("src") !== src) {
+      media.src = src;
+    } else if (media.currentSrc === media.src && media.complete && media.naturalWidth > 0) {
+      // Safari may not emit another load event for an already displayed image.
+      finish();
+    }
   }
   return true;
 }

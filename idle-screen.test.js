@@ -318,7 +318,7 @@ test("Avery's guest screens use bundled WebP artwork", () => {
 test("legacy welcome remains the fallback when custom artwork is unavailable", () => {
   assert.ok(app.includes("else clearCustomIdleScreen();"));
   assert.ok(app.includes("DOM.welcomeScreen.classList.remove(\"custom-idle-screen\")"));
-  assert.ok(app.includes("media.onerror = clearCustomIdleScreen"));
+  assert.ok(app.includes("media.onerror = fail"));
 });
 
 test("custom artwork hides legacy chrome only in custom idle mode", () => {
@@ -387,7 +387,7 @@ test("custom welcome artwork hides legacy UI before its image finishes loading",
       idle.indexOf("loadWelcomeArtwork(")
   );
   assert.ok(html.includes("#welcomeScreen.custom-artwork-loading::after"));
-  assert.ok(app.includes("startCustomArtworkLoadFallback();"));
+  assert.ok(app.includes("startCustomArtworkLoadFallback(fail);"));
   assert.ok(app.includes("}, 8000);"));
 });
 
@@ -773,3 +773,123 @@ test("idle screen delivery does not introduce local asset paths", () => {
   assert.ok(!implementation.includes("/assets/"));
   assert.ok(!implementation.includes("res.cloudinary.com"));
 });
+
+test("cached idle artwork completes without another load event", () => {
+  const h = artworkHarness();
+  h.image.src = "idle.webp";
+  h.image.currentSrc = "idle.webp";
+  h.image.complete = true;
+  h.image.naturalWidth = 1800;
+  h.load({ src: "idle.webp" }, () => h.ready.push("idle"));
+  assert.deepEqual(h.ready, ["idle"]);
+  assert.equal(h.image.classList.contains("hidden"), false);
+});
+
+test("late artwork callbacks cannot clear a newer theme", () => {
+  const h = artworkHarness();
+  h.load({ src: "first.webp" }, () => h.ready.push("first"));
+  const oldLoad = h.image.onload;
+  const oldError = h.image.onerror;
+  h.load({ src: "second.webp" }, () => h.ready.push("second"));
+  oldLoad(); oldError();
+  assert.equal(h.image.src, "second.webp");
+  assert.deepEqual(h.ready, []);
+  h.image.onload();
+  assert.deepEqual(h.ready, ["second"]);
+});
+
+test("slow artwork remains selected after eight seconds; failed artwork falls back", () => {
+  const h = artworkHarness();
+  h.load({ src: "slow.webp" }, () => h.ready.push("slow"));
+  h.fireTimer();
+  assert.equal(h.image.src, "slow.webp");
+  assert.equal(h.screen.classList.contains("custom-idle-screen"), true);
+  h.image.onload();
+  assert.deepEqual(h.ready, ["slow"]);
+  h.load({ src: "missing.webp" }, () => {});
+  h.image.onerror();
+  assert.equal(h.screen.classList.contains("custom-idle-screen"), false);
+});
+
+test("stalled image and video requests fall back after the grace period", () => {
+  for (const video of [false, true]) {
+    const h = artworkHarness(video);
+    h.load({ src: video ? "stalled.mp4" : "stalled.webp" }, () => h.ready.push("ready"));
+    const lateLoad = video ? h.image.onloadedmetadata : h.image.onload;
+    assert.equal(h.timerDelay(), 8000);
+    h.fireTimer();
+    assert.equal(h.screen.classList.contains("custom-artwork-loading"), true);
+    assert.equal(h.timerDelay(), 22000);
+    h.fireTimer();
+    assert.equal(h.screen.classList.contains("custom-artwork-loading"), false);
+    assert.equal(h.screen.classList.contains("custom-idle-screen"), false);
+    lateLoad();
+    assert.deepEqual(h.ready, []);
+  }
+});
+
+test("artwork success and replacement clear the later fallback", () => {
+  const h = artworkHarness();
+  h.load({ src: "slow.webp" }, () => {});
+  h.fireTimer();
+  h.image.onload();
+  assert.equal(h.hasTimer(), false);
+  h.load({ src: "first.webp" }, () => {});
+  h.fireTimer();
+  h.load({ src: "second.webp" }, () => {});
+  assert.equal(h.timerDelay(), 8000);
+});
+
+test("replacement image waits for its own dimensions even while old data is complete", () => {
+  const h = artworkHarness();
+  h.image.src = "old.webp";
+  h.image.currentSrc = "old.webp";
+  h.image.complete = true;
+  h.image.naturalWidth = 1800;
+  h.load({ src: "new.webp" }, () => h.ready.push(h.image.naturalWidth));
+  assert.deepEqual(h.ready, []);
+  // Reapplying the pending source must also ignore the previous image data.
+  h.load({ src: "new.webp" }, () => h.ready.push(h.image.naturalWidth));
+  assert.deepEqual(h.ready, []);
+  h.image.currentSrc = "new.webp";
+  h.image.naturalWidth = 1200;
+  h.image.onload();
+  assert.deepEqual(h.ready, [1200]);
+});
+
+test("cached video artwork completes without restarting the video", () => {
+  const h = artworkHarness(true);
+  h.image.src = "idle.mp4";
+  h.image.readyState = 1;
+  h.load({ src: "idle.mp4" }, () => h.ready.push("video"));
+  assert.deepEqual(h.ready, ["video"]);
+  assert.equal(h.image.loads, 0);
+});
+
+function artworkHarness(video = false) {
+  const vm = require("node:vm");
+  const classes = (...initial) => {
+    const values = new Set(initial);
+    return { add: (...names) => names.forEach((n) => values.add(n)),
+      remove: (...names) => names.forEach((n) => values.delete(n)),
+      contains: (n) => values.has(n) };
+  };
+  const image = { src: "", complete: false, naturalWidth: 0,
+    currentSrc: "", readyState: 0, loads: 0,
+    load() { this.loads += 1; }, play: () => Promise.resolve(),
+    pause() {}, removeAttribute(name) { delete this[name]; },
+    classList: classes("hidden"), getAttribute(name) { return this[name]; } };
+  const screen = { classList: classes("custom-idle-screen", "custom-artwork-loading") };
+  let timer;
+  let timerDelay;
+  const context = vm.createContext({
+    DOM: { welcomeImg: video ? null : image, welcomeVideo: video ? image : null, welcomeScreen: screen },
+    getAssetEntrySrc: (entry) => entry.src, getWelcomeArtworkMedia: () => image,
+    isVideoAsset: () => video, showToast: () => {},
+    setTimeout: (callback, delay) => { timer = callback; timerDelay = delay; return 1; },
+    clearTimeout: () => { timer = null; },
+  });
+  vm.runInContext(`let customArtworkLoadTimer = null; let welcomeArtworkLoadId = 0;
+    ${["clearCustomArtworkLoadTimer", "startCustomArtworkLoadFallback", "clearCustomIdleScreen", "loadWelcomeArtwork"].map((name) => extractFunctionFromEither(app, "", name)).join("\n")}`, context);
+  return { image, screen, ready: [], load: context.loadWelcomeArtwork, fireTimer: () => { const callback = timer; timer = null; callback(); }, hasTimer: () => !!timer, timerDelay: () => timerDelay };
+}
