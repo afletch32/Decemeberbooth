@@ -9557,11 +9557,12 @@ function clearCustomArtworkLoadTimer() {
   customArtworkLoadTimer = null;
 }
 
-function startCustomArtworkLoadFallback() {
+function startCustomArtworkLoadFallback(onTimeout) {
   clearCustomArtworkLoadTimer();
   customArtworkLoadTimer = setTimeout(() => {
-    // Slow iPad connections must not cancel artwork that is still downloading.
+    // Give slow connections a grace period, but keep stalled requests bounded.
     showToast("Theme artwork is still loading. Check your connection.");
+    customArtworkLoadTimer = setTimeout(onTimeout, 22000);
   }, 8000);
 }
 
@@ -9629,7 +9630,7 @@ function loadWelcomeArtwork(entry, onReady) {
   };
   if (DOM.welcomeImg) DOM.welcomeImg.classList.add("hidden");
   if (DOM.welcomeVideo) DOM.welcomeVideo.classList.add("hidden");
-  startCustomArtworkLoadFallback();
+  startCustomArtworkLoadFallback(fail);
   if (isVideoAsset(entry)) {
     media.onloadedmetadata = finish;
     media.onerror = fail;
@@ -9643,9 +9644,12 @@ function loadWelcomeArtwork(entry, onReady) {
   } else {
     media.onload = finish;
     media.onerror = fail;
-    if (media.getAttribute("src") !== src) media.src = src;
-    // Safari may not emit another load event for an already displayed image.
-    if (media.complete && media.naturalWidth > 0) finish();
+    if (media.getAttribute("src") !== src) {
+      media.src = src;
+    } else if (media.currentSrc === media.src && media.complete && media.naturalWidth > 0) {
+      // Safari may not emit another load event for an already displayed image.
+      finish();
+    }
   }
   return true;
 }

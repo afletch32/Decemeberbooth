@@ -1,6 +1,14 @@
 # Build Status
 
-- Fixed guest artwork loading so slow downloads keep the selected idle/photo-choice screen instead of switching to the generic screen after eight seconds. Cached images complete immediately, and late callbacks from a previous screen cannot clear a newer selection. Added behavioral regression tests; physical iPad verification is still needed.
+## PR #20 review repair
+
+- Current goal: Bound stalled guest artwork requests and prevent stale cached-image completion.
+- Done: Preserve the eight-second warning and restore the standard screen after 30 seconds for stalled images/videos. Cached completion requires the unchanged requested source to match `currentSrc`; replacement artwork waits for its load event and new hotspot dimensions.
+- In progress: None; repairs are ready in the isolated `fix/ipad-idle-artwork-loading` checkout.
+- Next steps: Commit/push the reviewed repair when requested; verify on a physical iPad.
+- Known bugs/blockers: Physical iPad behavior is not verified.
+- Important decisions: Keep the existing stack and guest flow; success, failure, and replacement cancel pending fallback timers.
+- Verification: `npm test` passes 248/248. Focused Chromium rendering at 820 × 1180 confirmed the loading grace period and visible, clickable standard Start after 30 seconds with a stalled request. Browser check used the production functions/CSS in a focused fixture and a simulated clock; it does not establish real-device behavior.
 
 ## Current goal
 
