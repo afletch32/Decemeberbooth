@@ -7050,10 +7050,9 @@
             </button>
             <div id="sessionThemeMenu" class="setup-combobox-menu hidden">
               <input type="search" id="sessionThemeSearch" class="setup-combobox-search" placeholder="Search themes" autocomplete="off">
-              <div id="sessionThemeOptions" class="setup-combobox-options" role="listbox" aria-label="Theme options"></div>
+            <div id="sessionThemeOptions" class="setup-combobox-options" role="listbox" aria-label="Theme options"></div>
             </div>
             <select id="createPathThemeSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
-          </button>
           </div>
           <div class="setup-session-item">
             <span class="setup-session-item-label">Booth screen shape</span>
@@ -7076,11 +7075,22 @@
             <label for="eventProfileSelect">Saved Event</label>
             <select id="eventProfileSelect"></select>
           </div>
-          <div class="setup-session-item">
+          <div class="setup-session-item" id="eventPrintPriceSettings" hidden>
             <label for="eventPrintPriceInput">Print price for this event (USD)</label>
             <input type="number" id="eventPrintPriceInput" min="0.01" max="999.99" step="0.01" value="3.00" inputmode="decimal">
             <button type="button" class="setup-session-save-btn" id="saveEventPrintPriceBtn">Save Event Price</button>
-            <small>Guests see and pay this event’s price automatically. Select a saved event to set its price.</small>
+          </div>
+          <div class="setup-session-item">
+            <label for="printModeInput">Print Mode</label>
+            <select id="printModeInput">
+              <option value="off">Digital Only</option>
+              <option value="free">Free Printing</option>
+              <option value="paid">Paid Printing</option>
+            </select>
+            <label class="legacy-print-setting" hidden aria-hidden="true">
+              <input type="checkbox" id="printNoPaymentRequiredInput"> No payment required for prints
+            </label>
+            <button type="button" class="setup-session-save-btn" onclick="savePrintSettings()">Save Print Settings</button>
           </div>
           <div class="setup-session-item">
             <label for="eventNameInput">Session Name</label>
@@ -7268,23 +7278,10 @@
 
             <section class="share-settings-group share-settings-group-priority" id="printSettings" aria-labelledby="printSettingsTitle">
               <div class="share-settings-heading">
-                <h3 id="printSettingsTitle">Print Settings</h3>
-              </div>
-              <label for="printModeInput">Print Mode</label>
-              <select id="printModeInput">
-                <option value="off">Off</option>
-                <option value="free">Free Printing</option>
-                <option value="paid">Paid Printing</option>
-              </select>
-              <label class="legacy-print-setting" hidden aria-hidden="true">
-                <input type="checkbox" id="printNoPaymentRequiredInput"> No payment required for prints
-              </label>
-              <small style="display:block; color:#5d6c69;">Free Printing queues sponsor/included prints immediately. Paid Printing offers PayPal checkout and keeps staff payment confirmation available.</small>
-              <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
-                <button type="button" onclick="savePrintSettings()">Save Print Settings</button>
+                <h3 id="printSettingsTitle">Checkout Details</h3>
               </div>
               <details class="share-settings-subgroup">
-                <summary>Paid print checkout</summary>
+                <summary>Paid print checkout details</summary>
                 <div class="share-settings-subgroup-content">
                   <label for="printPanelTitleInput">Payment panel title</label>
                   <input type="text" id="printPanelTitleInput" value="Printed Photo Upgrade">
@@ -7568,10 +7565,10 @@
       <div class="mobile-settings-sheet-header">
         <div class="mobile-settings-sheet-copy">
           <p class="mobile-settings-sheet-eyebrow">Step 3</p>
-        <button id="mobileSettingsClose" type="button" class="button-ghost">Done</button>
-      </div>
           <p class="mobile-settings-sheet-title">Choose an overlay</p>
         </div>
+        <button id="mobileSettingsClose" type="button" class="button-ghost">Done</button>
+      </div>
       <div id="options"></div>
     </div>
     <div id="boothMain">
@@ -7657,10 +7654,10 @@
           <div id="airdropZone" class="airdrop-zone" tabindex="0" role="button" aria-label="AirDrop or tap to upload a video">
             <p>📲 AirDrop or Tap to Upload<span>Drop a 360 video here or choose it from Files. Processing starts automatically.</span></p>
           </div>
-      </div>
-    </div>
           <div id="videoImportStatus" class="video-import-status">Ready for video import.</div>
         </div>
+      </div>
+    </div>
     <button id="overlayPickerButton" class="overlay-picker-control hidden" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="mobileSettingsSheet" aria-label="Choose an overlay">
       <span aria-hidden="true">▧</span>
     </button>
@@ -7672,7 +7669,7 @@
         <p>Enjoy your photos!</p>
       </div>
     </div>
-      <div id="finalPreview">
+    <div id="finalPreview">
       <div id="finalPreviewContent">
         <video id="finalLive" class="hidden" autoplay muted loop playsinline></video>
         <img id="finalStrip" />

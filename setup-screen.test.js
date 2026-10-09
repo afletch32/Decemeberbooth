@@ -1036,6 +1036,29 @@ test("theme screens stay preset and out of the Asset Library", () => {
   );
 });
 
+test("digital-only, free, and paid print modes are available in main event setup", () => {
+  const html = readProjectFile("index.html");
+  const eventSettings = html.slice(
+    html.indexOf('<div class="setup-session-secondary">'),
+    html.indexOf('<div class="capture-mode-bar"')
+  );
+  const shareSettings = html.slice(
+    html.indexOf('id="printSettings"'),
+    html.indexOf('id="cloudShareSettings"')
+  );
+
+  assert.ok(
+    eventSettings.includes('id="eventPrintPriceInput"') &&
+      eventSettings.includes('id="printModeInput"') &&
+      eventSettings.includes('value="off">Digital Only</option>') &&
+      eventSettings.includes('value="free">Free Printing</option>') &&
+      eventSettings.includes('value="paid">Paid Printing</option>') &&
+      eventSettings.includes('onclick="savePrintSettings()"') &&
+      !shareSettings.includes('id="printModeInput"'),
+    "event setup should expose the event price and all print modes together"
+  );
+});
+
 test("booth screen shape scopes effective theme overlays by orientation", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
@@ -1043,6 +1066,7 @@ test("booth screen shape scopes effective theme overlays by orientation", () => 
     appScript.includes(
       "return filterPhotoOverlaysByOrientation(\n    getAssignedOverlayList(theme),\n    getGuestScreenOrientation()\n  );"
     ) &&
+      appScript.includes("function getAssignedOverlayList(theme)") &&
       appScript.includes("renderCurrentAssets(activeTheme || getSelectedThemeTarget());") &&
       appScript.includes("renderAssetLibrary();") &&
       appScript.includes("updateLaunchSummary();"),
@@ -1066,7 +1090,6 @@ test("setup exposes selected assets in individually expandable groups", () => {
       html.includes('id="launchTemplateAssets"') &&
       html.includes('<summary class="setup-session-assets-summary-chip">Overlays') &&
       html.includes('<summary class="setup-session-assets-summary-chip">Templates'),
-      appScript.includes("function getAssignedOverlayList(theme)") &&
     "setup should let each selected asset category expand directly to its full asset list"
   );
   assert.ok(
@@ -1527,9 +1550,12 @@ test("guest photo filters run through the unified live imaging pipeline", () => 
   assert.ok(
     html.includes('id="livePreviewCanvas"') &&
       appScript.includes("function startLiveImagingPipeline()") &&
-      appScript.includes("async function processCanvasThroughImagingPipeline(sourceCanvas)") &&
+      appScript.includes("async function processCanvasThroughImagingPipeline(sourceCanvas, options = {})") &&
       appScript.includes("drawProcessedFrameToLivePreview(processed)") &&
-      appScript.includes("getLivePreviewStream()"),
+      appScript.includes("getLivePreviewStream()") &&
+      appScript.includes("const LIVE_PREVIEW_MAX_DIMENSION = 640;") &&
+      appScript.includes("const LIVE_PREVIEW_FRAME_INTERVAL_MS = 50;") &&
+      appScript.includes('processCanvasThroughImagingPipeline(raw, { preview: true })'),
     "the live preview should render through a processed canvas that can feed slotted overlays"
   );
   assert.ok(
@@ -1542,9 +1568,11 @@ test("guest photo filters run through the unified live imaging pipeline", () => 
   );
   assert.ok(
     appScript.includes("const shot = await getCurrentProcessedFrameCanvas()") &&
-      appScript.includes("__processedByLiveImagingPipeline") &&
+      appScript.includes("async function getCurrentProcessedFrameCanvas()") &&
+      appScript.includes("const raw = drawToCanvasFromVideo();") &&
+      appScript.includes("processed.__processedByLiveImagingPipeline = true;") &&
       appScript.includes("? photoCanvas\n      : ensureEnhancedCanvas(photoCanvas)"),
-    "capture and final print output should reuse the currently displayed processed frame"
+    "capture should process a full-resolution source and avoid repeating enhancement downstream"
   );
   assert.ok(
     !appScript.includes("DOM.video.style.filter = filterValue") &&

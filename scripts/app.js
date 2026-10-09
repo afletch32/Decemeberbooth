@@ -1731,8 +1731,8 @@ function setBoothControlsVisible(show) {
   }
   syncOverlayPickerUi();
   syncMobileSettingsUi();
-}
   requestAnimationFrame(() => logBoothViewportOverflow());
+}
 
 function logBoothViewportOverflow() {
   try {
@@ -2193,6 +2193,9 @@ let isStartingCamera = false;
 let capturePreviewFrozen = false;
 let liveImagingLoopStarted = false;
 let liveImagingFramePending = false;
+let liveImagingLastFrameAt = 0;
+const LIVE_PREVIEW_MAX_DIMENSION = 640;
+const LIVE_PREVIEW_FRAME_INTERVAL_MS = 50;
 let livePreviewStream = null;
 let latestProcessedFrameCanvas = null;
 let beautyEngineModulePromise = null;
@@ -3753,14 +3756,14 @@ function setupEventProfileControls() {
     DOM.sessionThemeToggle.addEventListener("click", () =>
       toggleSetupCombobox("theme")
     );
-    );
-    DOM.sessionThemeSearch.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
   }
   if (DOM.sessionThemeSearch) {
     DOM.sessionThemeSearch.addEventListener("input", () =>
       renderSessionThemeOptions(DOM.sessionThemeSearch.value)
+    );
+    DOM.sessionThemeSearch.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
         disableShowcaseDemo();
         selectFirstVisibleComboboxOption("theme");
       } else if (event.key === "Escape") {
@@ -5873,14 +5876,14 @@ function getLaunchSummaryThumbnailSrc(kind) {
   if (kind === "background") {
     const list = getBackgroundList(activeTheme);
     if (!list.length) return "";
-    return getAssetEntrySrc(list[index]);
-  }
-  if (kind === "overlay") {
-    return getAssetEntrySrc(
     const index = Math.min(
       Math.max(activeSessionAssets.backgroundIndex || 0, 0),
       list.length - 1
     );
+    return getAssetEntrySrc(list[index]);
+  }
+  if (kind === "overlay") {
+    return getAssetEntrySrc(
       getOverlayList(activeTheme)[0] || ""
     );
   }
@@ -7179,7 +7182,14 @@ function updateStaffPrintQueueUrl() {
 
 function loadPrintSettings() {
   const settings = getPrintSettings();
-  if (DOM.printModeInput) DOM.printModeInput.value = settings.mode;
+  if (DOM.printModeInput) {
+    DOM.printModeInput.value = settings.mode;
+    syncEventPrintPriceVisibility();
+    if (DOM.printModeInput.dataset.priceVisibilityBound !== "true") {
+      DOM.printModeInput.dataset.priceVisibilityBound = "true";
+      DOM.printModeInput.addEventListener("change", syncEventPrintPriceVisibility);
+    }
+  }
   if (DOM.printNoPaymentRequiredInput) DOM.printNoPaymentRequiredInput.checked = settings.noPaymentRequired === true;
   if (DOM.printPanelTitleInput) DOM.printPanelTitleInput.value = settings.panelTitle;
   if (DOM.printPanelBodyInput) DOM.printPanelBodyInput.value = settings.panelBody;
@@ -7193,6 +7203,11 @@ function loadPrintSettings() {
   updateStaffPrintQueueUrl();
   syncEventPrintPriceInput();
   loadPayPalPrintConfigStatus();
+}
+
+function syncEventPrintPriceVisibility() {
+  if (!DOM.eventPrintPriceSettings || !DOM.printModeInput) return;
+  DOM.eventPrintPriceSettings.hidden = DOM.printModeInput.value !== "paid";
 }
 
 function syncEventPrintPriceInput(force = false) {
@@ -7271,6 +7286,7 @@ function savePrintSettings() {
     eventId: (DOM.printEventIdInput && DOM.printEventIdInput.value.trim()) || "",
   };
   localStorage.setItem(PRINT_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  syncEventPrintPriceVisibility();
   updateStaffPrintQueueUrl();
   showToast("Print settings saved");
 }
@@ -9054,6 +9070,7 @@ function setMode(m) {
   syncBoothModeButtons();
   syncCaptureStatusIndicators();
   setMobileSettingsOpen(false);
+  syncOverlayPickerUi();
   requestAnimationFrame(syncFrameSizeVars);
 }
 
@@ -9071,7 +9088,6 @@ function photoOverlayMatchesOrientation(src, orientation = photoOverlayOrientati
   return !resolved || resolved === orientation;
 }
 
-  syncOverlayPickerUi();
 function getFirstPhotoOverlayForOrientation(orientation = photoOverlayOrientation) {
   const overlays = filterPhotoOverlaysByOrientation(
     getOverlayList(activeTheme),
@@ -9230,11 +9246,14 @@ async function applySelectedBeautyToCanvas(canvas) {
   }
 }
 
-async function processCanvasThroughImagingPipeline(sourceCanvas) {
+async function processCanvasThroughImagingPipeline(sourceCanvas, options = {}) {
+  const { preview = false } = options;
   if (!sourceCanvas) return sourceCanvas;
   let processed = applySelectedFilterToCanvas(sourceCanvas);
-  processed = await applySelectedBeautyToCanvas(processed);
-  processed = applyAutoEnhanceCanvas(processed);
+  if (!preview) {
+    processed = await applySelectedBeautyToCanvas(processed);
+    processed = applyAutoEnhanceCanvas(processed);
+  }
   if (getAiBackgroundEnabled()) {
     const mask = await getAiSegmentationMask(processed);
     if (mask) {
@@ -9289,17 +9308,10 @@ function cloneCanvas(source, bufferName = "processed-capture") {
 }
 
 async function getCurrentProcessedFrameCanvas() {
-  if (
-    latestProcessedFrameCanvas &&
-    latestProcessedFrameCanvas.dataset.ready === "true"
-  ) {
-    return cloneCanvas(latestProcessedFrameCanvas, "processed-capture");
-  }
   const raw = drawToCanvasFromVideo();
-  return cloneCanvas(
-    await processCanvasThroughImagingPipeline(raw),
-    "processed-capture"
-  );
+  const processed = await processCanvasThroughImagingPipeline(raw);
+  processed.__processedByLiveImagingPipeline = true;
+  return cloneCanvas(processed, "processed-capture");
 }
 
 function getLivePreviewStream() {
@@ -9320,27 +9332,28 @@ function startLiveImagingPipeline() {
   if (liveImagingLoopStarted) return;
   liveImagingLoopStarted = true;
   const renderFrame = async () => {
-    if (!capturePreviewFrozen && !liveImagingFramePending) {
+    const now = performance.now();
+    const canvasPreviewVisible = DOM.livePreviewCanvas && DOM.livePreviewCanvas.style.display !== "none" && !DOM.livePreviewCanvas.classList.contains("hidden");
+    const slottedLivePreviewVisible = !!DOM.photoSlotLayer?.querySelector(".photo-slot-media.is-live");
+    const previewVisible = DOM.boothScreen && !DOM.boothScreen.classList.contains("hidden") && (canvasPreviewVisible || slottedLivePreviewVisible);
+    if (previewVisible && !capturePreviewFrozen && !liveImagingFramePending && now - liveImagingLastFrameAt >= LIVE_PREVIEW_FRAME_INTERVAL_MS) {
       liveImagingFramePending = true;
+      liveImagingLastFrameAt = now;
       try {
-        const raw = drawToCanvasFromVideo();
-        const processed = await processCanvasThroughImagingPipeline(raw);
+        const raw = drawToLivePreviewCanvasFromVideo();
+        const processed = await processCanvasThroughImagingPipeline(raw, { preview: true });
         drawProcessedFrameToLivePreview(processed);
       } catch (error) {
         console.warn("Live imaging frame failed", error);
-        // Keep the deterministic booth fixture usable when a browser cannot
-        // initialize the optional processing pipeline. Production camera
-        // frames continue to use the normal error path.
         if (isBoothTestMode()) {
-          try {
-            drawProcessedFrameToLivePreview(drawToCanvasFromVideo());
-          } catch (_) {}
+          try { drawProcessedFrameToLivePreview(drawToCanvasFromVideo()); } catch (_) {}
         }
       } finally {
         liveImagingFramePending = false;
       }
     }
-    requestAnimationFrame(renderFrame);
+    if (previewVisible) requestAnimationFrame(renderFrame);
+    else window.setTimeout(renderFrame, 250);
   };
   requestAnimationFrame(renderFrame);
 }
@@ -9844,6 +9857,13 @@ function syncGuestScreenOrientationControl() {
     activeTheme ||
     getSelectedThemeTarget()
   );
+  DOM.guestScreenOrientation.value = orientation;
+  DOM.guestScreenOrientation.disabled = disabled;
+  DOM.screenOrientationButtons.forEach((button) => {
+    const selected = button.dataset.screenOrientation === orientation;
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+    button.disabled = disabled;
+  });
 }
 
 function setGuestScreenOrientation(value) {
@@ -9921,13 +9941,6 @@ function getCoverImageRect(img, container) {
   const naturalHeight = img.naturalHeight || img.videoHeight || height;
   const scale = Math.max(width / naturalWidth, height / naturalHeight);
   const renderedWidth = naturalWidth * scale;
-  DOM.guestScreenOrientation.value = orientation;
-  DOM.guestScreenOrientation.disabled = disabled;
-  DOM.screenOrientationButtons.forEach((button) => {
-    const selected = button.dataset.screenOrientation === orientation;
-    button.setAttribute("aria-pressed", selected ? "true" : "false");
-    button.disabled = disabled;
-  });
   const renderedHeight = naturalHeight * scale;
   return {
     left: (width - renderedWidth) / 2,
@@ -22259,6 +22272,13 @@ function logEffectiveAssetState(theme, reason = "effective-assets") {
 }
 
 function getOverlayList(theme) {
+  return filterPhotoOverlaysByOrientation(
+    getAssignedOverlayList(theme),
+    getGuestScreenOrientation()
+  );
+}
+
+function getAssignedOverlayList(theme) {
   if (!theme || typeof theme !== "object") return [];
   const overrides = getActiveEventOverrides();
   const removed = getSessionRemovedAssetSourceSet("overlay");
@@ -22336,13 +22356,6 @@ function getTemplateList(theme) {
         )
     : [];
   const effective = getEffectiveTemplateList(theme);
-  return filterPhotoOverlaysByOrientation(
-    getAssignedOverlayList(theme),
-    getGuestScreenOrientation()
-  );
-}
-
-function getAssignedOverlayList(theme) {
   const seen = new Set();
   const out = [];
   for (const item of [...effective, ...eventArr]) {
