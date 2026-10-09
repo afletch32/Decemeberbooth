@@ -3100,6 +3100,7 @@ const THEME_SETUP_GROUP_ITEM_ORDER = {
   Holidays: [
     "Fourth of July",
     "Halloween",
+    "Happy Halloween",
     "Christmas",
     "Valentine's Day",
     "St. Patrick's Day",
@@ -3401,7 +3402,7 @@ function renderThemeQuickPicker() {
     (a, b) => themeQuickOrderByKey.get(a.key) - themeQuickOrderByKey.get(b.key)
   );
   const entries = allEntries.filter((entry) => themeMatchesQuickFilter(entry, activeThemeQuickFilter));
-  const visibleEntries = entries.slice(0, 8);
+  const visibleEntries = entries;
   const visibleKeys = new Set(visibleEntries.map((entry) => entry.key));
   themeQuickCardsByKey.forEach((card, key) => {
     if (!visibleKeys.has(key)) card.remove();
@@ -18707,12 +18708,14 @@ function applyTemplatesFallback(baseLeaf, merged, storedLeaf) {
 function applyOverlaysFallback(baseLeaf, merged, storedLeaf) {
   const storedArrayExists = Array.isArray(storedLeaf && storedLeaf.overlays);
   const storedOverlays = storedArrayExists ? storedLeaf.overlays : [];
-  const storedOverlaysCorrupted =
-    storedOverlays.length > 0 &&
-    !storedOverlays.some((entry) => getAssetEntrySrc(entry));
   const baseOverlays = Array.isArray(baseLeaf.overlays)
     ? baseLeaf.overlays
     : null;
+  const storedOverlaysCorrupted =
+    storedOverlays.length > 0 &&
+    (!storedOverlays.some((entry) => getAssetEntrySrc(entry)) ||
+      (hasOverlayDefinitionSource(baseOverlays) &&
+        !hasOverlayDefinitionSource(storedOverlays)));
   const mergedOverlays = Array.isArray(merged.overlays)
     ? merged.overlays
     : null;
@@ -18727,17 +18730,30 @@ function applyOverlaysFallback(baseLeaf, merged, storedLeaf) {
   }
 }
 
-function hasCorruptedThemeOverlayEntries(value) {
+function hasOverlayDefinitionSource(entries) {
+  return (
+    Array.isArray(entries) &&
+    entries.some(
+      (entry) =>
+        entry && typeof entry === "object" && !!getAssetEntrySrc(entry)
+    )
+  );
+}
+
+function hasCorruptedThemeOverlayEntries(value, path = []) {
   if (!value || typeof value !== "object") return false;
-  if (
-    Array.isArray(value.overlays) &&
-    value.overlays.length > 0 &&
-    !value.overlays.some((entry) => getAssetEntrySrc(entry))
-  ) {
-    return true;
+  if (Array.isArray(value.overlays) && value.overlays.length > 0) {
+    const [rootKey, bucketKey, themeKey] = path;
+    const baseTheme = BUILTIN_THEMES[rootKey]?.[bucketKey]?.[themeKey];
+    const storedSources = value.overlays.some((entry) => getAssetEntrySrc(entry));
+    const lostBuiltinOverlayDefinitions =
+      baseTheme &&
+      hasOverlayDefinitionSource(baseTheme.overlays) &&
+      !hasOverlayDefinitionSource(value.overlays);
+    if (!storedSources || lostBuiltinOverlayDefinitions) return true;
   }
-  return Object.values(value).some((entry) =>
-    hasCorruptedThemeOverlayEntries(entry)
+  return Object.entries(value).some(([key, entry]) =>
+    hasCorruptedThemeOverlayEntries(entry, [...path, key])
   );
 }
 
@@ -18861,6 +18877,7 @@ function loadThemesFromStorage() {
   if (storedThemes) {
     try {
       const parsed = JSON.parse(storedThemes);
+      const repairedOverlayDefaults = hasCorruptedThemeOverlayEntries(parsed);
       mergeStoredThemes(themes, parsed);
       fixBuiltinThemePlacements(themes);
       const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();
@@ -18880,6 +18897,7 @@ function loadThemesFromStorage() {
         resetThemesToBuiltins("stored themes missing core entries");
       }
       if (
+        repairedOverlayDefaults ||
         migratedAveryScreens ||
         migratedAmandaNorthScreens ||
         migratedSummerAssets ||

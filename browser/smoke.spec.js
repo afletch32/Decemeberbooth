@@ -159,6 +159,14 @@ test("only complete approved theme packs appear in theme selectors", async ({ pa
   expect(visibleThemeChoices).not.toEqual(
     expect.arrayContaining([expect.stringMatching(/^\s*(basic|lead capture|brand studio)\s*$/i)])
   );
+
+  const halloweenThemeKeys = await page.locator(
+    ".theme-quick-card[data-theme-key]"
+  ).evaluateAll((cards) => cards.map((card) => card.dataset.themeKey).filter((key) => key.includes("halloween")));
+  expect(halloweenThemeKeys).toEqual(
+    expect.arrayContaining(["fall:halloween", "fall:cuteHalloween"])
+  );
+  expect(await page.locator(".theme-quick-card[data-theme-key]").count()).toBeGreaterThan(8);
 });
 
 async function expectCreatePathValidation(page, options) {
