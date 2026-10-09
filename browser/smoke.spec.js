@@ -93,7 +93,7 @@ async function getOptionTexts(page, selector) {
 }
 
 async function openBoothSettings(page) {
-  await page.locator("#mobileSettingsToggle").click({ force: true });
+  await page.locator("#overlayPickerButton").click({ force: true });
   await expect(page.locator("#boothScreen")).toHaveClass(/mobile-settings-open/);
 }
 
@@ -129,6 +129,14 @@ async function launchStillPhotoBooth(page) {
   await page.locator("#startBoothButton").click({ force: true });
   await page.locator("#startButton").click({ force: true });
   await page.locator(".welcome-mode-btn[data-welcome-mode=\"still-photo\"]").click({ force: true });
+  await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
+  await expect(page.locator("#captureBtn")).toBeVisible();
+}
+
+async function enterStillPhotoCapture(page) {
+  await launchStillPhotoBooth(page);
+  await page.locator("#startButton").click({ force: true });
+  await page.locator('.welcome-mode-btn[data-welcome-mode="still-photo"]').click({ force: true });
   await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
   await expect(page.locator("#captureBtn")).toBeVisible();
 }
@@ -1590,11 +1598,11 @@ test.skip("setup screen shows assigned asset counts and font summary", async ({
   await expect(page.locator("#boothScreen")).not.toHaveClass(/hidden/);
   await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
-  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
+  await expect(page.locator("#overlayPickerButton")).toBeHidden();
   await page.locator("#startButton").click({ force: true });
   await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
-  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
+  await expect(page.locator("#overlayPickerButton")).toBeHidden();
   await page.locator(".welcome-mode-btn[data-welcome-mode=\"strip\"]").click({ force: true });
   await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
   await page.evaluate(() => setMode("strip"));
@@ -1895,20 +1903,20 @@ test.skip("frame picker stays hidden until the welcome flow reaches capture", as
   await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
   await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
-  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
+  await expect(page.locator("#overlayPickerButton")).toBeHidden();
 
   await page.locator("#startButton").click({ force: true });
   await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
   await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
-  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
+  await expect(page.locator("#overlayPickerButton")).toBeHidden();
 
   await page.locator(".welcome-mode-btn[data-welcome-mode=\"still-photo\"]").click({ force: true });
   await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
   await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#captureBtn")).toBeVisible();
   await expect(page.locator("#captureBtn")).not.toHaveText("");
-  await expect(page.locator("#mobileSettingsToggle")).toBeVisible();
+  await expect(page.locator("#overlayPickerButton")).toBeVisible();
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
   await expect(page.locator("#options .asset-picker-search")).toHaveCount(0);
   await expect(page.locator("#options .asset-picker-favorite")).toHaveCount(0);
@@ -1927,7 +1935,21 @@ test("frame picker hides during finalizing on desktop and mobile", async ({
       width: viewport.width,
       height: viewport.height,
     });
-    await launchStillPhotoBooth(page);
+    await enterStillPhotoCapture(page);
+    await expect(page.locator("#overlayPickerButton"), viewport.label).toBeVisible();
+    await page.locator("#overlayPickerButton").click();
+    await expect(page.locator("#mobileSettingsSheet"), viewport.label).toBeVisible();
+    const chooser = await page.locator("#mobileSettingsSheet").boundingBox();
+    expect(chooser).not.toBeNull();
+    expect(chooser.x, `${viewport.label} chooser left edge`).toBeCloseTo(0, 0);
+    expect(chooser.y, `${viewport.label} chooser top edge`).toBeCloseTo(0, 0);
+    expect(chooser.width, `${viewport.label} chooser width`).toBe(viewport.width);
+    expect(chooser.height, `${viewport.label} chooser height`).toBe(viewport.height);
+    await expect(page.locator("#mobileSettingsSheet .options-section-title")).toContainText("Overlays");
+    await expect(page.locator("#mobileSettingsSheet .filter-choice")).toHaveCount(0);
+    await expect(page.locator("#frameCarouselName, #filterCarouselName, #framePrevBtn, #frameNextBtn, #filterPrevBtn, #filterNextBtn")).toHaveCount(0);
+    await page.locator("#mobileSettingsClose").click();
+    await expect(page.locator("#mobileSettingsSheet")).toHaveAttribute("aria-hidden", "true");
     await page.evaluate(() => {
       const booth = document.getElementById("boothScreen");
       if (!booth) return;
@@ -1935,7 +1957,7 @@ test("frame picker hides during finalizing on desktop and mobile", async ({
       booth.classList.remove("mobile-settings-open");
     });
     await expect(page.locator("#mobileSettingsSheet"), viewport.label).toBeHidden();
-    await expect(page.locator("#mobileSettingsToggle"), viewport.label).toBeHidden();
+    await expect(page.locator("#overlayPickerButton"), viewport.label).toBeHidden();
   }
 });
 
@@ -2011,7 +2033,7 @@ test.skip("live camera remains dominant and collision-free across kiosk viewport
         cameraStyle: { width: cameraStyle.width, height: cameraStyle.height, maxHeight: cameraStyle.maxHeight, transform: cameraStyle.transform, liveWidth: cameraStyle.getPropertyValue("--live-camera-width"), wrapWidth: wrapStyle.width, wrapHeight: wrapStyle.height, wrapMaxWidth: wrapStyle.maxWidth, wrapRows: wrapStyle.gridTemplateRows, mainColumns: mainStyle.gridTemplateColumns, mainHeight: mainStyle.height },
         capture,
         header,
-        toggle: box("#mobileSettingsToggle"),
+        toggle: box("#overlayPickerButton"),
         cameraCaptureOverlap: overlaps(camera, capture),
         cameraHeaderOverlap: overlaps(camera, header),
         viewportWidth: innerWidth,
@@ -2035,7 +2057,7 @@ test.skip("live camera remains dominant and collision-free across kiosk viewport
     expect(layout.documentHeight).toBeLessThanOrEqual(layout.viewportHeight);
 
     if (viewport.width === 1024 && viewport.height === 768) {
-      await page.locator("#mobileSettingsToggle").click({ force: true });
+      await page.locator("#overlayPickerButton").click({ force: true });
       await expect(page.locator("#mobileSettingsSheet")).toBeVisible();
       const sheet = await page.locator("#mobileSettingsSheet").boundingBox();
       expect(sheet).not.toBeNull();

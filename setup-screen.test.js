@@ -764,10 +764,10 @@ test("asset library is the only setup asset state surface", () => {
 
   assert.ok(
     appScript.includes("function getLaunchBackgroundCountLabel()") &&
-      appScript.includes("getSessionEffectiveAssetSourceSet(\"background\")") &&
-      appScript.includes("getSessionEffectiveAssetSourceSet(\"overlay\")") &&
+      appScript.includes("const backgroundCount = getBackgroundList(activeTheme).length;") &&
+      appScript.includes("const overlayCount = getAssignedOverlayList(activeTheme).length;") &&
       appScript.includes("getSessionEffectiveAssetSourceSet(\"template\")"),
-    "visible setup counts should use effective asset collections"
+    "visible setup counts should use full assigned lists, independent of active orientation"
   );
   assert.ok(
     appScript.includes("renderAssetLibrary();") &&
@@ -1004,10 +1004,11 @@ test("theme screens stay preset and out of the Asset Library", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    html.includes('id="guestScreenOrientation"') &&
+      html.includes('id="guestScreenOrientation"') &&
       html.includes('value="portrait">Portrait</option>') &&
       html.includes('value="landscape">Landscape</option>') &&
-      html.includes("Loads the theme’s preset Start, Photo Choice, Share, and Thank You screens."),
+      !html.includes("Loads the theme’s preset Start, Photo Choice, Share, and Thank You screens.") &&
+      !html.includes("Guests see and pay this event’s price automatically."),
     "setup should make screen shape the only theme-screen choice"
   );
   assert.ok(
@@ -1040,16 +1041,16 @@ test("booth screen shape scopes effective theme overlays by orientation", () => 
 
   assert.ok(
     appScript.includes(
-      "return filterPhotoOverlaysByOrientation(out, getGuestScreenOrientation());"
+      "return filterPhotoOverlaysByOrientation(\n    getAssignedOverlayList(theme),\n    getGuestScreenOrientation()\n  );"
     ) &&
       appScript.includes("renderCurrentAssets(activeTheme || getSelectedThemeTarget());") &&
       appScript.includes("renderAssetLibrary();") &&
       appScript.includes("updateLaunchSummary();"),
-    "orientation changes and image probes should keep overlay choices, cards, and counts in sync"
+    "orientation changes should filter booth choices while setup counts all assigned overlays"
   );
 });
 
-test("setup exposes selected assets in a collapsible summary", () => {
+test("setup exposes selected assets in individually expandable groups", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts/app.js");
 
@@ -1060,11 +1061,16 @@ test("setup exposes selected assets in a collapsible summary", () => {
       html.includes('id="launchOverlayThumb"') &&
       html.includes('id="launchOverlaySummary"') &&
       html.includes('id="launchTemplateThumb"') &&
-      html.includes('id="launchTemplateSummary"'),
-    "setup should show selected backgrounds, overlays, and templates in a collapsible toggle"
+      html.includes('id="launchTemplateSummary"') &&
+      html.includes('id="launchOverlayAssets"') &&
+      html.includes('id="launchTemplateAssets"') &&
+      html.includes('<summary class="setup-session-assets-summary-chip">Overlays') &&
+      html.includes('<summary class="setup-session-assets-summary-chip">Templates'),
+    "setup should let each selected asset category expand directly to its full asset list"
   );
   assert.ok(
     appScript.includes(
+      appScript.includes("function getAssignedOverlayList(theme)") &&
       'launchBackgroundSummary: document.getElementById("launchBackgroundSummary")'
     ) &&
       appScript.includes(
@@ -1348,39 +1354,36 @@ test("booth setup includes a five second countdown option", () => {
   );
 });
 
-test("booth filter carousel has touch-sized global controls", () => {
+test("guest booths use the filter preset selected by the admin", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");
 
   assert.ok(
-    html.includes('onclick="prevFilter()"') &&
-      html.includes('onclick="nextFilter()"') &&
-      appScript.includes("nextFilter,") &&
-      appScript.includes("prevFilter,"),
-    "filter carousel arrow buttons should call globally exposed handlers"
-  );
-  assert.ok(
-    html.includes("width: 62px;") &&
-      html.includes("height: 62px;") &&
-      html.includes("font-size: 1.9rem;"),
-    "filter carousel arrows should be large enough for touch use"
+    !html.includes("filterCarousel") &&
+      !appScript.includes("function nextFilter()") &&
+      html.includes('id="beautyPresetSelect"') &&
+      appScript.includes('themes._meta.guestFilterId = selectedFilter;'),
+    "filter controls should stay in the admin settings and set the guest preset"
   );
 });
 
-test("booth frame selection starts plain and keeps a mobile frame-menu trigger", () => {
+test("booth overlay chooser uses a single full-screen panel trigger", () => {
   const html = readProjectFile("index.html");
   const app = readProjectFile("scripts/app.js");
-  assert.ok(html.includes('id="frameCarousel"'));
-  assert.ok(html.includes('id="frameCarouselName">No Frame'));
-  assert.ok(app.includes("function moveBoothFrame(direction)"));
-  assert.ok(app.includes("const entries = getFrameCarouselEntries();"));
+  assert.ok(html.includes('id="overlayPickerButton"'));
+  assert.ok(html.includes('id="mobileSettingsSheet"'));
+  assert.ok(html.includes("Choose an overlay"));
+  assert.ok(!html.includes("frameCarouselName"));
+  assert.ok(!html.includes("framePrevBtn") && !html.includes("frameNextBtn"));
+  assert.ok(app.includes("function syncOverlayPickerUi()"));
+  assert.ok(!app.includes("function moveBoothFrame(direction)"));
   assert.ok(!app.includes("const first = getFirstPhotoOverlayForOrientation(next);"));
   assert.ok(!app.includes("selectFirstPhotoOverlayAfterWelcome"));
   assert.ok(
-    app.includes("requestAnimationFrame(() => {\n    syncFrameCarouselUi();") &&
-      html.includes("#boothScreen.booth-ready #mobileSettingsToggle {\n        display: inline-flex !important;") &&
-      app.includes('"hidden",\n      !canShowFrameSettings() || !isMobileBoothViewport()'),
-    "ready state should keep the frame menu reachable on a phone while hiding it elsewhere"
+    html.includes("#boothScreen #mobileSettingsSheet {") &&
+      html.includes("inset: 0;") &&
+      app.includes('DOM.overlayPickerButton.addEventListener("click"'),
+    "the overlay button should open one full-screen panel at every viewport size"
   );
 });
 
@@ -1396,13 +1399,12 @@ test("the no-frame live preview remains mirrored without changing capture output
   assert.ok(app.includes("ctx.drawImage(processedCanvas, 0, 0, target.width, target.height);"));
 });
 
-test("filter controls are hidden during countdown and non-interactive booth states", () => {
+test("guest filter controls are removed from the booth UI", () => {
   const html = readProjectFile("index.html");
 
-  assert.ok(html.includes("#boothScreen.countdown-mode .filter-carousel,"));
-  assert.ok(html.includes("#boothScreen.finalizing-mode .filter-carousel,"));
-  assert.ok(html.includes("#boothScreen.share-mode .filter-carousel,"));
-  assert.ok(html.includes("#boothScreen.welcome-active .filter-carousel {"));
+  assert.ok(!html.includes("filterCarousel"));
+  assert.ok(!html.includes("filterPrevBtn") && !html.includes("filterNextBtn"));
+  assert.ok(html.includes('id="beautyPresetSelect"'));
 });
 
 test("completed guest flows return directly to the idle screen", () => {

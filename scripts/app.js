@@ -1410,15 +1410,10 @@ const DOM = {
   boothBackgroundVideo: document.getElementById("boothBackgroundVideo"),
   boothHeader: document.getElementById("boothHeader"),
   boothControls: document.getElementById("controls"),
-  mobileSettingsToggle: document.getElementById("mobileSettingsToggle"),
   mobileSettingsClose: document.getElementById("mobileSettingsClose"),
   mobileSettingsBackdrop: document.getElementById("mobileSettingsBackdrop"),
   mobileSettingsSheet: document.getElementById("mobileSettingsSheet"),
-  frameCarousel: document.getElementById("frameCarousel"),
-  frameCarouselChoice: document.getElementById("frameCarouselChoice"),
-  frameCarouselName: document.getElementById("frameCarouselName"),
-  framePrevBtn: document.getElementById("framePrevBtn"),
-  frameNextBtn: document.getElementById("frameNextBtn"),
+  overlayPickerButton: document.getElementById("overlayPickerButton"),
   allowRetakes: document.getElementById("allowRetakes"),
   analyticsData: document.getElementById("analyticsData"),
   logo: document.getElementById("logo"),
@@ -1434,6 +1429,9 @@ const DOM = {
   sessionThemeOptions: document.getElementById("sessionThemeOptions"),
   guestScreenOrientation: document.getElementById("guestScreenOrientation"),
   themeQuickFilters: document.getElementById("themeQuickFilters"),
+  screenOrientationButtons: Array.from(
+    document.querySelectorAll("[data-screen-orientation]")
+  ),
   themeQuickGrid: document.getElementById("themeQuickGrid"),
   themeQuickSelectionName: document.getElementById("themeQuickSelectionName"),
   themeQuickSelectionMeta: document.getElementById("themeQuickSelectionMeta"),
@@ -1458,6 +1456,9 @@ const DOM = {
   launchTemplateThumb: document.getElementById("launchTemplateThumb"),
   launchTemplateSummary: document.getElementById("launchTemplateSummary"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
+  launchBackgroundAssets: document.getElementById("launchBackgroundAssets"),
+  launchOverlayAssets: document.getElementById("launchOverlayAssets"),
+  launchTemplateAssets: document.getElementById("launchTemplateAssets"),
   recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
   countdownFiveToggle: document.getElementById("countdownFiveToggle"),
@@ -1729,6 +1730,7 @@ function setBoothControlsVisible(show) {
     setMobileSettingsOpen(false);
   }
   syncMobileSettingsUi();
+  syncOverlayPickerUi();
   requestAnimationFrame(() => logBoothViewportOverflow());
 }
 
@@ -2083,8 +2085,8 @@ function setMobileSettingsOpen(open) {
       shouldOpen ? "false" : "true"
     );
   }
-  if (DOM.mobileSettingsToggle) {
-    DOM.mobileSettingsToggle.setAttribute(
+  if (DOM.overlayPickerButton) {
+    DOM.overlayPickerButton.setAttribute(
       "aria-expanded",
       shouldOpen ? "true" : "false"
     );
@@ -2092,12 +2094,6 @@ function setMobileSettingsOpen(open) {
 }
 
 function syncMobileSettingsUi() {
-  if (DOM.mobileSettingsToggle) {
-    DOM.mobileSettingsToggle.classList.toggle(
-      "hidden",
-      !canShowFrameSettings() || !isMobileBoothViewport()
-    );
-  }
   if (!canShowFrameSettings()) setMobileSettingsOpen(false);
 }
 
@@ -3748,6 +3744,15 @@ function setupEventProfileControls() {
     DOM.sessionThemeToggle.addEventListener("click", () =>
       toggleSetupCombobox("theme")
     );
+  DOM.screenOrientationButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!DOM.guestScreenOrientation || button.disabled) return;
+      DOM.guestScreenOrientation.value = button.dataset.screenOrientation;
+      DOM.guestScreenOrientation.dispatchEvent(
+        new Event("change", { bubbles: true })
+      );
+    });
+  });
   }
   if (DOM.sessionThemeSearch) {
     DOM.sessionThemeSearch.addEventListener("input", () =>
@@ -3861,15 +3866,6 @@ function setupBoothButtons() {
 }
 
 function setupMobileSettingsControls() {
-  if (DOM.mobileSettingsToggle) {
-    DOM.mobileSettingsToggle.addEventListener("click", () => {
-      const isOpen = !!(
-        DOM.boothScreen &&
-        DOM.boothScreen.classList.contains("mobile-settings-open")
-      );
-      setMobileSettingsOpen(!isOpen);
-    });
-  }
   if (DOM.mobileSettingsClose) {
     DOM.mobileSettingsClose.addEventListener("click", () =>
       setMobileSettingsOpen(false)
@@ -3880,14 +3876,8 @@ function setupMobileSettingsControls() {
       setMobileSettingsOpen(false)
     );
   }
-  if (DOM.framePrevBtn) {
-    DOM.framePrevBtn.addEventListener("click", () => moveBoothFrame(-1));
-  }
-  if (DOM.frameNextBtn) {
-    DOM.frameNextBtn.addEventListener("click", () => moveBoothFrame(1));
-  }
-  if (DOM.frameCarouselChoice) {
-    DOM.frameCarouselChoice.addEventListener("click", () =>
+  if (DOM.overlayPickerButton) {
+    DOM.overlayPickerButton.addEventListener("click", () =>
       setMobileSettingsOpen(true)
     );
   }
@@ -5522,10 +5512,12 @@ function refreshBeautyPresetEffects() {
       lighting: { ...preset.lighting, ...(override.lighting || {}) },
     };
   });
-  if (!FILTER_EFFECTS.some((preset) => preset.id === selectedFilter)) {
+  const configuredGuestFilter = themes?._meta?.guestFilterId;
+  if (FILTER_EFFECTS.some((preset) => preset.id === configuredGuestFilter)) {
+    selectedFilter = configuredGuestFilter;
+  } else if (!FILTER_EFFECTS.some((preset) => preset.id === selectedFilter)) {
     selectedFilter = FILTER_EFFECTS[0] ? FILTER_EFFECTS[0].id : "natural";
   }
-  updateFilterCarouselUI();
 }
 
 function getEditableBeautyPreset() {
@@ -5604,7 +5596,13 @@ function setupBeautyPresetEditor() {
   if (!DOM.beautyPresetSelect || !DOM.beautyPresetControls) return;
   refreshBeautyPresetEffects();
   renderBeautyPresetEditor();
-  DOM.beautyPresetSelect.addEventListener("change", renderBeautyPresetEditor);
+  DOM.beautyPresetSelect.addEventListener("change", () => {
+    selectedFilter = DOM.beautyPresetSelect.value;
+    if (!themes._meta) themes._meta = {};
+    themes._meta.guestFilterId = selectedFilter;
+    renderBeautyPresetEditor();
+    persistBeautyPresetEdits();
+  });
   if (DOM.resetBeautyPresetButton) {
     DOM.resetBeautyPresetButton.addEventListener("click", () => {
       resetBeautyPreset(DOM.beautyPresetSelect.value);
@@ -5790,21 +5788,18 @@ function syncSetupLaunchModeUi() {
 }
 
 function getLaunchBackgroundCountLabel() {
-  const backgroundCount = getSessionEffectiveAssetSourceSet("background").size;
-  if (!backgroundCount) return "No backgrounds selected";
-  return `${backgroundCount} background${backgroundCount === 1 ? "" : "s"} selected`;
+  const backgroundCount = getBackgroundList(activeTheme).length;
+  return `${backgroundCount} selected`;
 }
 
 function getLaunchOverlayCountLabel() {
-  const overlayCount = getSessionEffectiveAssetSourceSet("overlay").size;
-  if (!overlayCount) return "No overlays selected";
-  return `${overlayCount} overlay${overlayCount === 1 ? "" : "s"} selected`;
+  const overlayCount = getAssignedOverlayList(activeTheme).length;
+  return `${overlayCount} selected`;
 }
 
 function getLaunchTemplateCountLabel() {
   const templateCount = getSessionEffectiveAssetSourceSet("template").size;
-  if (!templateCount) return "No templates selected";
-  return `${templateCount} template${templateCount === 1 ? "" : "s"} selected`;
+  return `${templateCount} selected`;
 }
 
 function setLaunchSummaryText(targetIds, value) {
@@ -5838,6 +5833,46 @@ function getLaunchSummaryThumbnailSrc(kind) {
   if (kind === "background") {
     const list = getBackgroundList(activeTheme);
     if (!list.length) return "";
+function renderLaunchAssetList(container, entries = [], categoryLabel = "asset") {
+  if (!container) return;
+  const visibleEntries = Array.isArray(entries) ? entries : [];
+  const signature = JSON.stringify(
+    visibleEntries.map((entry) => [
+      getAssetEntrySrc(entry),
+      getAssetDisplayName(entry),
+    ])
+  );
+  if (container.dataset.assetSignature === signature) return;
+  container.dataset.assetSignature = signature;
+  container.replaceChildren();
+
+  if (!visibleEntries.length) {
+    const empty = document.createElement("p");
+    empty.className = "setup-session-asset-empty";
+    empty.textContent = `No ${categoryLabel}s selected.`;
+    container.appendChild(empty);
+    return;
+  }
+
+  visibleEntries.forEach((entry) => {
+    const src = getAssetEntrySrc(entry);
+    if (!src) return;
+    const card = document.createElement("div");
+    card.className = "setup-session-asset-card";
+    const preview = createAssetTile(src);
+    const media = preview.querySelector("img, video");
+    if (media) {
+      media.alt = getAssetDisplayName(entry);
+      media.loading = "lazy";
+    }
+    const label = document.createElement("span");
+    label.textContent = getAssetDisplayName(entry);
+    label.title = label.textContent;
+    card.append(preview, label);
+    container.appendChild(card);
+  });
+}
+
     const index = Math.min(
       Math.max(activeSessionAssets.backgroundIndex || 0, 0),
       list.length - 1
@@ -5922,6 +5957,21 @@ function updateLaunchSummary() {
 
 const EDIT_SCALE_CONFIG = [
   {
+  renderLaunchAssetList(
+    DOM.launchBackgroundAssets,
+    getBackgroundList(activeTheme),
+    "background"
+  );
+  renderLaunchAssetList(
+    DOM.launchOverlayAssets,
+    getAssignedOverlayList(activeTheme),
+    "overlay"
+  );
+  renderLaunchAssetList(
+    DOM.launchTemplateAssets,
+    getTemplateList(activeTheme),
+    "template"
+  );
     id: "header",
     label: "Header",
     cssVar: "--edit-header-scale",
@@ -9021,6 +9071,7 @@ function photoOverlayMatchesOrientation(src, orientation = photoOverlayOrientati
   return !resolved || resolved === orientation;
 }
 
+  syncOverlayPickerUi();
 function getFirstPhotoOverlayForOrientation(orientation = photoOverlayOrientation) {
   const overlays = filterPhotoOverlaysByOrientation(
     getOverlayList(activeTheme),
@@ -9059,120 +9110,19 @@ function syncPhotoOverlayOrientationWithAssets() {
   }
 }
 
-function getFrameCarouselEntries() {
-  return [
-    null,
-    ...filterPhotoOverlaysByOrientation(
-      getOverlayList(activeTheme),
-      photoOverlayOrientation
-    ),
-  ];
-}
-
-function syncFrameCarouselUi() {
-  if (!DOM.frameCarousel) return;
-  const show = canShowFrameSettings() && getSelectedCaptureMode() === "photo";
-  DOM.frameCarousel.classList.toggle("hidden", !show);
-  const selected = getPhotoOverlayBySrc(selectedOverlay);
-  if (DOM.frameCarouselName) {
-    DOM.frameCarouselName.textContent = selected
-      ? normalizeAssetDisplayName(selected, "Selected Frame")
-      : "No Frame";
-  }
-}
-
-function selectBoothFrame(entry) {
-  const src = entry && entry.src ? entry.src : null;
-  if (src && src !== selectedOverlay) {
-    const img = new window.Image();
-    img.onload = () => {
-      selectedOverlay = src;
-      lastPhotoOverlay = src;
-      lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
-      syncOverlayPreviewSurface({ mode: "live" });
-      applyPreviewOrientation();
-      renderOptionsForMode(mode);
-      syncFrameCarouselUi();
-      logBoothFrameState("overlay-selected", mode);
-    };
-    img.onerror = () => {
-      console.warn("Frame image failed to load:", src);
-      selectedOverlay = src;
-      lastPhotoOverlay = src;
-      lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
-      syncOverlayPreviewSurface({ mode: "live" });
-      applyPreviewOrientation();
-      renderOptionsForMode(mode);
-      syncFrameCarouselUi();
-      logBoothFrameState("overlay-selected-error", mode);
-    };
-    img.src = src;
-  } else {
-    selectedOverlay = src;
-    lastPhotoOverlay = src;
-    lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
-    if (src) syncOverlayPreviewSurface({ mode: "live" });
-    else clearOverlayPreviewSurface();
-    applyPreviewOrientation();
-    renderOptionsForMode(mode);
-    syncFrameCarouselUi();
-    logBoothFrameState("overlay-selected", mode);
-  }
-}
-
-function moveBoothFrame(direction) {
-  const entries = getFrameCarouselEntries();
-  if (!entries.length) return;
-  const currentIndex = entries.findIndex(
-    (entry) => (entry && entry.src ? entry.src : null) === selectedOverlay
+function syncOverlayPickerUi() {
+  if (!DOM.overlayPickerButton) return;
+  const show = !!(
+    DOM.boothScreen &&
+    !DOM.boothScreen.classList.contains("hidden") &&
+    DOM.boothScreen.classList.contains("booth-ready") &&
+    !DOM.boothScreen.classList.contains("welcome-active") &&
+    !DOM.boothScreen.classList.contains("share-mode") &&
+    !DOM.boothScreen.classList.contains("countdown-mode") &&
+    !DOM.boothScreen.classList.contains("finalizing-mode") &&
+    getSelectedCaptureMode() === "photo"
   );
-  const nextIndex =
-    ((currentIndex < 0 ? 0 : currentIndex) + direction + entries.length) %
-    entries.length;
-  selectBoothFrame(entries[nextIndex]);
-}
-
-function setFilter(filterId) {
-  selectedFilter = filterId;
-  applyFilterToVideo();
-  updateFilterCarouselUI();
-}
-
-function updateFilterCarouselUI() {
-  const filterDef = FILTER_EFFECTS.find((f) => f.id === selectedFilter);
-  const nameEl = document.getElementById("filterCarouselName");
-  if (nameEl) {
-    nameEl.textContent = (filterDef && filterDef.icon ? filterDef.icon + " " : "") + (filterDef ? filterDef.name : "Natural");
-  }
-  const prevBtn = document.getElementById("filterPrevBtn");
-  const nextBtn = document.getElementById("filterNextBtn");
-  if (prevBtn) prevBtn.style.opacity = "";
-  if (nextBtn) nextBtn.style.opacity = "";
-}
-
-function updateFilterCarouselVisibility() {
-  const carousel = document.getElementById("filterCarousel");
-  if (!carousel) return;
-  const captureMode = getSelectedCaptureMode();
-  const isPhotoMode = captureMode === "photo";
-  const isBoothReady = DOM.boothScreen && DOM.boothScreen.classList.contains("booth-ready");
-  const isShareMode = DOM.boothScreen && DOM.boothScreen.classList.contains("share-mode");
-  const isCountdownMode = DOM.boothScreen && DOM.boothScreen.classList.contains("countdown-mode");
-  const shouldShow = isPhotoMode && isBoothReady && !isShareMode && !isCountdownMode;
-  carousel.classList.toggle("hidden", !shouldShow);
-}
-
-function nextFilter() {
-  const idx = FILTER_EFFECTS.findIndex((f) => f.id === selectedFilter);
-  const nextIdx = (Math.max(idx, 0) + 1) % FILTER_EFFECTS.length;
-  setFilter(FILTER_EFFECTS[nextIdx].id);
-}
-
-function prevFilter() {
-  const idx = FILTER_EFFECTS.findIndex((f) => f.id === selectedFilter);
-  const currentIdx = idx >= 0 ? idx : 0;
-  const prevIdx = (currentIdx - 1 + FILTER_EFFECTS.length) % FILTER_EFFECTS.length;
-  setFilter(FILTER_EFFECTS[prevIdx].id);
+  DOM.overlayPickerButton.classList.toggle("hidden", !show);
 }
 
 function getSelectedFilterDef() {
@@ -9220,7 +9170,7 @@ function setPhotoOverlayOrientation(nextOrientation) {
   applyPreviewOrientation();
   logBoothFrameState("overlay-orientation-change", mode);
   setMobileSettingsOpen(false);
-  syncFrameCarouselUi();
+  syncOverlayPickerUi();
 }
 
 function applyFilterToVideo() {
@@ -9527,7 +9477,7 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
 
   if (captureMode === "photo") {
     syncPhotoOverlayOrientationWithAssets();
-    const overlayGrid = addSection("Choose Your Frame");
+    const overlayGrid = addSection("Overlays");
     const noOverlay = document.createElement("div");
     noOverlay.className = "thumb";
     noOverlay.dataset.overlayNone = "true";
@@ -9548,7 +9498,6 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
       lastPhotoOverlayByOrientation[photoOverlayOrientation] = null;
       clearOverlayPreviewSurface();
       applyPreviewOrientation();
-      syncFrameCarouselUi();
       setMobileSettingsOpen(false);
     };
     if (!selectedOverlay) noOverlay.classList.add("selected");
@@ -9598,7 +9547,6 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
           syncOverlayPreviewSurface({ mode: "live" });
           applyPreviewOrientation();
           logBoothFrameState("overlay-selected", mode);
-          syncFrameCarouselUi();
           setMobileSettingsOpen(false);
         };
         overlayGrid.appendChild(wrap);
@@ -9890,8 +9838,8 @@ function getGuestScreenOrientation() {
 
 function syncGuestScreenOrientationControl() {
   if (!DOM.guestScreenOrientation) return;
-  DOM.guestScreenOrientation.value = getGuestScreenOrientation();
-  DOM.guestScreenOrientation.disabled = !(
+  const orientation = getGuestScreenOrientation();
+  const disabled = !(
     getActiveEvent() ||
     activeTheme ||
     getSelectedThemeTarget()
@@ -9973,6 +9921,13 @@ function getCoverImageRect(img, container) {
   const naturalHeight = img.naturalHeight || img.videoHeight || height;
   const scale = Math.max(width / naturalWidth, height / naturalHeight);
   const renderedWidth = naturalWidth * scale;
+  DOM.guestScreenOrientation.value = orientation;
+  DOM.guestScreenOrientation.disabled = disabled;
+  DOM.screenOrientationButtons.forEach((button) => {
+    const selected = button.dataset.screenOrientation === orientation;
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+    button.disabled = disabled;
+  });
   const renderedHeight = naturalHeight * scale;
   return {
     left: (width - renderedWidth) / 2,
@@ -10273,11 +10228,11 @@ function hideWelcome() {
   if (currentMode !== "360") {
     setMode(resolveBoothLaunchMode());
   }
-  updateFilterCarouselVisibility();
+  syncOverlayPickerUi();
   updateCaptureModeUi();
   setBoothControlsVisible(true);
   requestAnimationFrame(() => {
-    syncFrameCarouselUi();
+    syncOverlayPickerUi();
     syncMobileSettingsUi();
   });
   // show the video smoothly
@@ -10682,10 +10637,9 @@ function auditBoothLayout() {
     "#boothHeader",
     "#boothBackBtn",
     "#adminBtn",
-    "#mobileSettingsToggle",
     "#mobileSettingsSheet",
     "#videoContainer",
-    "#filterCarousel",
+    "#overlayPickerButton",
     "#boothHostPrompt",
     "#captureBtn",
     "#qrCodeContainer",
@@ -14863,9 +14817,6 @@ async function downloadShareImage() {
 }
 
 function hideFinal(options = {}) {
-  selectedFilter = "natural";
-  applyFilterToVideo();
-  updateFilterCarouselUI();
   clearPreviewFreezeFrame();
   DOM.finalPreview.classList.remove("show");
   if (options.showGoodbye) showGoodbyeMoment();
@@ -14904,7 +14855,7 @@ function finishBoothFlow() {
   lastPhotoOverlay = null;
   lastPhotoOverlayByOrientation = { portrait: null, landscape: null };
   renderOptionsForMode(mode, { preserveScroll: false });
-  syncFrameCarouselUi();
+  syncOverlayPickerUi();
   setTimeout(() => {
     if (DOM.goodbyeOverlay) DOM.goodbyeOverlay.classList.remove("show");
     cycleShowcaseDemoTheme();
@@ -22327,7 +22278,7 @@ function getOverlayList(theme) {
     seen.add(src);
     out.push(item);
   }
-  return filterPhotoOverlaysByOrientation(out, getGuestScreenOrientation());
+  return out;
 }
 
 function getAllThemeOverlayCatalogList(theme) {
@@ -22385,6 +22336,13 @@ function getTemplateList(theme) {
         )
     : [];
   const effective = getEffectiveTemplateList(theme);
+  return filterPhotoOverlaysByOrientation(
+    getAssignedOverlayList(theme),
+    getGuestScreenOrientation()
+  );
+}
+
+function getAssignedOverlayList(theme) {
   const seen = new Set();
   const out = [];
   for (const item of [...effective, ...eventArr]) {
@@ -22580,8 +22538,6 @@ Object.assign(window, {
   startBooth: startBoothFromAdmin,
   startCamera: startCameraFlow,
   handlePrimaryAction,
-  nextFilter,
-  prevFilter,
   makeAvailableOffline,
   migrateAllManagedLocalAssets,
   openShareLink,

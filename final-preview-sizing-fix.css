@@ -62,48 +62,6 @@
   font-size: clamp(1rem, 1.6vw, 1.45rem);
 }
 
-#boothScreen.booth-ready:not(.mode-360) #mobileSettingsToggle {
-  display: inline-flex !important;
-  top: max(8px, env(safe-area-inset-top, 0px));
-  right: max(64px, calc(env(safe-area-inset-right, 0px) + 64px));
-  min-height: 48px;
-  padding: 8px 16px;
-}
-
-#boothScreen.booth-ready:not(.mode-360) #mobileSettingsSheet {
-  position: fixed;
-  top: max(64px, calc(env(safe-area-inset-top, 0px) + 64px));
-  right: max(12px, env(safe-area-inset-right, 0px));
-  left: auto;
-  grid-column: auto;
-  width: min(430px, calc(100vw - 24px));
-  max-height: calc(100dvh - 80px - env(safe-area-inset-bottom, 0px));
-  transform: translateY(-8px) scale(0.985);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-#boothScreen.booth-ready:not(.mode-360).mobile-settings-open #mobileSettingsSheet {
-  transform: translateY(0) scale(1);
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-
-#boothScreen.booth-ready:not(.mode-360).mobile-settings-open #mobileSettingsBackdrop {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-#boothScreen.booth-ready:not(.mode-360) .mobile-settings-sheet-header {
-  display: flex !important;
-}
-
-#boothScreen.booth-ready:not(.mode-360) #mobileSettingsClose {
-  display: inline-flex;
-}
-
 #boothScreen.booth-ready:not(.mode-360) #videoWrap {
   grid-column: 1;
   display: grid;
@@ -247,17 +205,6 @@
     min-height: 64px;
   }
 
-  #boothScreen.booth-ready #filterCarousel {
-    gap: 8px;
-    padding-block: 0;
-  }
-
-  #boothScreen.booth-ready #filterCarousel .filter-arrow {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    min-height: 48px;
-  }
 }
 
 #startButton.start-button {
@@ -282,13 +229,6 @@
 #boothScreen.booth-ready:not(.mode-360) #countdownOverlay {
   top: var(--booth-ready-top-space);
   bottom: calc(var(--booth-action-height) + var(--booth-ready-bottom-space) + 16px);
-}
-
-#boothScreen.booth-ready:not(.mode-360).welcome-active #mobileSettingsToggle,
-#boothScreen.booth-ready:not(.mode-360).countdown-mode #mobileSettingsToggle,
-#boothScreen.booth-ready:not(.mode-360).finalizing-mode #mobileSettingsToggle,
-#boothScreen.booth-ready:not(.mode-360).share-mode #mobileSettingsToggle {
-  display: none !important;
 }
 
 #video,

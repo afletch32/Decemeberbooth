@@ -13,11 +13,12 @@ test("admin filter editor saves shared preset overrides and stays out of the gue
     "Capture setup should contain the admin-only guest filter editor"
   );
   assert.ok(
-    app.includes("function setupBeautyPresetEditor()") &&
+      app.includes("function setupBeautyPresetEditor()") &&
       app.includes("function persistBeautyPresetEdits()") &&
       app.includes("themes._meta.beautyPresetOverrides") &&
+      app.includes("themes._meta.guestFilterId = selectedFilter;") &&
       app.includes("await syncThemesRemote()"),
-    "Preset edits should be kept in the shared theme payload and synced remotely"
+    "The admin-selected guest filter and preset edits should sync remotely"
   );
   assert.ok(
     !html.includes('id="boothBeautyPresetEditor"'),

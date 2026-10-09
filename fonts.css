@@ -429,12 +429,6 @@
 
 /* Mobile guest booth fixes: portrait camera, no overlapping header, no leaked live-capture choices. */
 @media (max-width: 760px) {
-  #boothScreen #mobileSettingsToggle,
-  #boothScreen #mobileSettingsBackdrop,
-  #boothScreen #mobileSettingsSheet {
-    display: none !important;
-  }
-
   .welcome-mode-btn[data-welcome-mode="live-photo"],
   .mode-btn[data-mode="live-photo"],
   #livePhotoStatus {

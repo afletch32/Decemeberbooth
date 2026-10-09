@@ -300,10 +300,20 @@
       grid-column: 1 / -1;
       grid-template-columns: minmax(0, 1fr) minmax(260px, 0.32fr);
       gap: 18px;
-      padding: 18px;
+      align-items: start;
+      padding: 12px;
       border: 1px solid rgba(127, 219, 207, 0.62);
       border-radius: 22px;
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(233, 255, 249, 0.9));
+    }
+
+    .theme-quick-picker > *,
+    .theme-quick-selection,
+    .theme-quick-selection .btn-row,
+    .theme-quick-selection .btn-row > button {
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
     }
 
     .theme-quick-picker-heading {
@@ -315,7 +325,7 @@
     }
 
     .theme-quick-picker-note {
-      margin: 4px 0 14px;
+      margin: 4px 0 8px;
       color: var(--text-muted);
       font-size: 0.92rem;
     }
@@ -324,7 +334,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 8px;
     }
 
     .theme-quick-filter {
@@ -347,13 +357,18 @@
     }
 
     .theme-quick-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      display: flex;
       gap: 10px;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      padding: 2px 2px 8px;
+      scroll-snap-type: x proximity;
+      scrollbar-width: thin;
     }
 
     .theme-quick-card {
-      min-height: 154px;
+      flex: 0 0 clamp(150px, 19vw, 200px);
+      min-height: 126px;
       overflow: hidden;
       border: 1px solid rgba(127, 219, 207, 0.48);
       border-radius: 16px;
@@ -361,6 +376,7 @@
       color: #173b34;
       text-align: left;
       cursor: pointer;
+      scroll-snap-align: start;
       box-shadow: 0 8px 20px rgba(41, 70, 64, 0.06);
       transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
     }
@@ -379,7 +395,7 @@
     }
 
     .theme-quick-card-art {
-      height: 82px;
+      height: 64px;
       background: linear-gradient(135deg, #c2eee5, #f8ffff);
       background-position: center;
       background-size: cover;
@@ -388,7 +404,7 @@
     .theme-quick-card-copy {
       display: grid;
       gap: 2px;
-      padding: 10px 11px 12px;
+      padding: 8px 10px 9px;
     }
 
     .theme-quick-card-copy strong { font-size: 0.94rem; }
@@ -415,7 +431,22 @@
 
     .theme-quick-selection h3 { margin: 0; font-family: var(--font-heading); font-size: 1.55rem; letter-spacing: -0.03em; }
     .theme-quick-selection p:last-child { margin: 7px 0 0; color: #d5f5ee; font-size: 0.86rem; line-height: 1.45; }
-    .theme-quick-selection button { width: 100%; background: #ffffff; color: #173b34; }
+    .theme-quick-selection .btn-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+      width: 100%;
+    }
+
+    .theme-quick-selection button {
+      width: 100%;
+      padding-inline: 12px;
+      background: #ffffff;
+      color: #173b34;
+      line-height: 1.25;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
 
     .setup-session-secondary {
       display: grid;
@@ -426,14 +457,80 @@
 
     .setup-session-secondary .setup-session-item { min-width: 0; }
 
+    .setup-session-item-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .orientation-quick-pick {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .orientation-quick-pick-option {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #294640;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .orientation-quick-pick-option[aria-pressed="true"] {
+      border-color: #39b9a5;
+      background: #e7faf5;
+      box-shadow: inset 0 0 0 1px #39b9a5;
+    }
+
+    .orientation-quick-pick-option:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .orientation-shape {
+      flex: 0 0 auto;
+      display: inline-block;
+      border: 2px solid currentColor;
+      border-radius: 3px;
+    }
+
+    .orientation-shape-portrait {
+      width: 15px;
+      height: 24px;
+    }
+
+    .orientation-shape-landscape {
+      width: 25px;
+      height: 16px;
+    }
+
+    .orientation-quick-pick-option > span:last-child {
+      display: inline;
+      color: inherit;
+      font-size: 0.78rem;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
     @media (max-width: 900px) {
-      .theme-quick-picker { grid-template-columns: 1fr; }
-      .theme-quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .theme-quick-picker { grid-template-columns: minmax(0, 1fr); }
     }
 
     @media (max-width: 560px) {
-      .theme-quick-picker { padding: 12px; }
-      .theme-quick-grid { grid-template-columns: 1fr 1fr; }
+      .theme-quick-picker { padding: 10px; }
+      .theme-quick-card { flex-basis: 154px; }
       .setup-session-secondary { grid-template-columns: 1fr; }
     }
 
@@ -497,23 +594,20 @@
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 255, 251, 0.92));
       box-shadow: 0 14px 28px rgba(17, 17, 17, 0.05);
-      overflow: hidden;
-    }
-
-    .setup-session-assets-toggle > summary {
-      list-style: none;
-      cursor: pointer;
-      display: grid;
-      gap: 6px;
       padding: 12px 16px;
     }
 
-    .setup-session-assets-toggle > summary::-webkit-details-marker {
-      display: none;
+    .setup-session-assets-summary-row {
+      margin-top: 8px;
     }
 
-    .setup-session-assets-toggle[open] > summary {
-      border-bottom: 1px solid rgba(127, 219, 207, 0.35);
+    .setup-session-asset-detail {
+      flex: 1 1 180px;
+      min-width: 0;
+      border: 1px solid rgba(127, 219, 207, 0.45);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.82);
+      overflow: hidden;
     }
 
     .setup-session-assets-summary-label {
@@ -537,15 +631,69 @@
     }
 
     .setup-session-assets-summary-chip {
-      display: inline-flex;
+      display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 8px;
       padding: 8px 12px;
-      border-radius: 999px;
+      border-radius: 12px;
       background: rgba(255, 255, 255, 0.82);
       border: 1px solid rgba(127, 219, 207, 0.45);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
       white-space: nowrap;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .setup-session-assets-summary-chip::-webkit-details-marker {
+      display: none;
+    }
+
+    .setup-session-assets-summary-chip::after {
+      content: "+";
+      color: #52736b;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .setup-session-asset-detail[open] .setup-session-assets-summary-chip::after {
+      content: "−";
+    }
+
+    .setup-session-asset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .setup-session-asset-card {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+      color: #294640;
+      font-size: 0.82rem;
+      overflow: hidden;
+    }
+
+    .setup-session-asset-card .asset-item {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .setup-session-asset-card > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .setup-session-asset-empty {
+      grid-column: 1 / -1;
+      margin: 0;
+      padding: 14px;
+      color: var(--text-muted);
     }
 
     .setup-session-assets-thumb {
@@ -2886,23 +3034,6 @@
       z-index: 0;
     }
 
-    #mobileSettingsToggle {
-      position: fixed;
-      top: 14px;
-      right: 70px;
-      z-index: 36;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 42px;
-      padding: 16px 24px;
-      border-radius: 999px;
-      border: 1px solid #c8efe7;
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(14px);
-      box-shadow: 0 14px 28px rgba(17, 17, 17, 0.08);
-    }
-
     #mobileSettingsBackdrop {
       display: block;
       position: fixed;
@@ -2986,7 +3117,6 @@
       margin-top: 16px;
     }
 
-    body:not(.viewport-phone) #mobileSettingsToggle,
     body:not(.viewport-phone) #mobileSettingsBackdrop,
     body:not(.viewport-phone) .mobile-settings-sheet-header {
       display: none !important;
@@ -4493,7 +4623,6 @@
     }
 
     #boothScreen.finalizing-mode #boothHeader,
-    #boothScreen.finalizing-mode #mobileSettingsToggle,
     #boothScreen.finalizing-mode #mobileSettingsBackdrop,
     #boothScreen.finalizing-mode #mobileSettingsSheet,
     #boothScreen.finalizing-mode #options,
@@ -5640,118 +5769,6 @@
       display: none;
     }
 
-    .frame-carousel {
-      position: absolute;
-      inset: 0;
-      z-index: 8;
-      pointer-events: none;
-    }
-
-    .frame-carousel.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #boothScreen.countdown-mode .frame-carousel,
-    #boothScreen.finalizing-mode .frame-carousel,
-    #boothScreen.share-mode .frame-carousel,
-    #boothScreen.welcome-active .frame-carousel,
-    #boothScreen.countdown-mode .filter-carousel,
-    #boothScreen.finalizing-mode .filter-carousel,
-    #boothScreen.share-mode .filter-carousel,
-    #boothScreen.welcome-active .filter-carousel {
-      display: none !important;
-    }
-
-    .frame-carousel button {
-      min-height: 52px;
-      border: 2px solid rgba(255, 255, 255, 0.78);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.9);
-      color: #2f2922;
-      box-shadow: 0 8px 24px rgba(39, 33, 25, 0.16);
-      cursor: pointer;
-      pointer-events: auto;
-    }
-
-    #frameCarouselChoice {
-      position: absolute;
-      bottom: 16px;
-      left: 50%;
-      display: grid;
-      width: min(240px, calc(100% - 144px));
-      place-content: center;
-      gap: 2px;
-      padding: 8px 20px;
-      font-family: var(--font-label);
-      transform: translateX(-50%);
-    }
-
-    .frame-carousel-label {
-      font-size: 0.62rem;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #6d5f4f;
-    }
-
-    #frameCarouselName {
-      max-width: 210px;
-      overflow: hidden;
-      font-size: 0.9rem;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .frame-arrow {
-      position: absolute;
-      top: 50%;
-      width: 52px;
-      font-size: 1rem;
-      font-weight: 900;
-      transform: translateY(-50%);
-    }
-
-    #framePrevBtn {
-      left: 16px;
-    }
-
-    #frameNextBtn {
-      right: 16px;
-    }
-
-    @media (max-width: 520px) {
-      #frameCarouselChoice {
-        bottom: 10px;
-        width: auto;
-        max-width: 88px;
-        min-height: 44px;
-        padding: 8px 12px;
-      }
-
-      .frame-carousel-label {
-        display: none;
-      }
-
-      #frameCarouselName {
-        max-width: 64px;
-        font-size: 0.76rem;
-      }
-
-      .frame-arrow {
-        width: 44px;
-        min-height: 44px;
-      }
-
-      #framePrevBtn {
-        left: 8px;
-      }
-
-      #frameNextBtn {
-        right: 8px;
-      }
-    }
-
     #boothScreen.booth-ready #captureBtn.primary {
       width: clamp(128px, 13vw, 166px);
       height: clamp(86px, 9vw, 112px);
@@ -5795,10 +5812,6 @@
         transform: translateY(0);
         opacity: 1;
         pointer-events: auto;
-      }
-
-      #boothScreen.booth-ready #mobileSettingsToggle {
-        display: inline-flex !important;
       }
 
       #boothScreen.booth-ready #videoWrap {
@@ -6553,11 +6566,6 @@
         pointer-events: auto;
       }
 
-      #boothScreen.mobile-settings-open #mobileSettingsToggle {
-        opacity: 0;
-        pointer-events: none;
-        transform: translateY(-6px);
-      }
 
       #boothMain {
         padding-top: clamp(64px, 11vh, 64px);
@@ -6734,16 +6742,12 @@
       }
     }
 
-    #boothScreen.countdown-mode #mobileSettingsToggle,
     #boothScreen.countdown-mode #mobileSettingsBackdrop,
     #boothScreen.countdown-mode #mobileSettingsSheet,
-    #boothScreen.finalizing-mode #mobileSettingsToggle,
     #boothScreen.finalizing-mode #mobileSettingsBackdrop,
     #boothScreen.finalizing-mode #mobileSettingsSheet,
-    #boothScreen.welcome-active #mobileSettingsToggle,
     #boothScreen.welcome-active #mobileSettingsBackdrop,
     #boothScreen.welcome-active #mobileSettingsSheet,
-    #boothScreen.share-mode #mobileSettingsToggle,
     #boothScreen.share-mode #mobileSettingsBackdrop,
     #boothScreen.share-mode #mobileSettingsSheet {
       display: none !important;
@@ -6786,94 +6790,198 @@
       max-height: none;
     }
 
-    /* Filter Carousel — Liquid Glass Arrows */
-    #filterCarousel {
-      display: flex;
+    /* Full-screen guest chooser keeps overlay previews off the camera view. */
+
+    #boothScreen #mobileSettingsBackdrop {
+      z-index: 79;
+      background: rgba(11, 25, 35, 0.58);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    #boothScreen #mobileSettingsSheet {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: clamp(18px, 3vh, 32px);
+      width: 100%;
+      height: 100svh;
+      max-height: none;
+      padding: max(24px, env(safe-area-inset-top, 0px) + 20px) clamp(20px, 5vw, 72px) max(24px, env(safe-area-inset-bottom, 0px) + 20px);
+      border: 0;
+      border-radius: 0;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(113, 225, 210, 0.16), transparent 32%),
+        linear-gradient(150deg, #f7fbfa 0%, #eaf3f2 54%, #e2ecec 100%);
+      box-shadow: none;
+      backdrop-filter: none;
+      overflow: hidden;
+      transform: translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 220ms ease, opacity 180ms ease;
+    }
+
+    #boothScreen.mobile-settings-open #mobileSettingsSheet {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #boothScreen .mobile-settings-sheet-header {
+      display: flex !important;
       align-items: center;
+      max-width: 1500px;
+      width: 100%;
+      margin-inline: auto;
+    }
+
+    #boothScreen .mobile-settings-sheet-title {
+      font-size: clamp(1.6rem, 3vw, 2.6rem);
+    }
+
+    #boothScreen #mobileSettingsClose {
+      display: inline-flex !important;
+      min-width: 92px;
+      min-height: 48px;
       justify-content: center;
-      gap: 16px;
-      padding: 8px 0;
-      z-index: 15;
-      position: relative;
-    }
-
-    #filterCarousel.hidden {
-      opacity: 0 !important;
-      pointer-events: none !important;
-    }
-
-    #filterCarouselName {
-      font-family: var(--font-label);
-      font-size: 0.82rem;
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #2d3a38;
-      background: rgba(255, 255, 255, 0.48);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.62);
       border-radius: 999px;
-      padding: 8px 16px;
-      box-shadow: 0 8px 22px rgba(17, 17, 17, 0.08);
-      text-align: center;
-      min-width: 112px;
+      border: 1px solid rgba(24, 56, 72, 0.18);
+      background: #17334f;
+      color: #fff;
+      font-weight: 800;
     }
 
-    .filter-arrow {
+    #boothScreen #mobileSettingsSheet #options {
+      display: grid;
+      align-content: start;
+      gap: clamp(22px, 4vh, 40px);
+      width: min(100%, 1500px);
+      max-width: 1500px;
+      max-height: none;
+      min-height: 0;
+      margin: 0 auto;
+      padding: 0 4px 16px;
+      overflow: auto;
+      overscroll-behavior: contain;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    #boothScreen.booth-ready #mobileSettingsSheet #options .options-section:first-child {
+      display: none;
+    }
+
+    #boothScreen #mobileSettingsSheet #options .options-section {
+      display: grid;
+      gap: 14px;
+    }
+
+    #boothScreen #mobileSettingsSheet #options .options-section-title {
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+    }
+
+    #boothScreen #mobileSettingsSheet #options .options-section-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(190px, 42vw), 1fr));
+      align-items: stretch;
+      justify-items: stretch;
+      gap: clamp(12px, 2vw, 24px);
+    }
+
+    #boothScreen #mobileSettingsSheet #options .thumb {
+      width: 100%;
+      max-width: none;
+      min-height: 150px;
+      margin: 0;
+      padding: 10px;
+      border: 2px solid rgba(72, 118, 131, 0.2);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 12px 28px rgba(31, 69, 83, 0.08);
+      cursor: pointer;
+    }
+
+    #boothScreen #mobileSettingsSheet #options .thumb img,
+    #boothScreen #mobileSettingsSheet #options .thumb video {
+      width: 100%;
+      height: 100%;
+      min-height: 126px;
+      object-fit: contain;
+      border-radius: 12px;
+    }
+
+    #boothScreen #mobileSettingsSheet #options .thumb.selected {
+      border-color: #17334f;
+      box-shadow: 0 0 0 3px rgba(23, 51, 79, 0.14), 0 14px 30px rgba(31, 69, 83, 0.14);
+    }
+
+    #boothScreen #overlayPickerButton {
+      position: fixed;
+      top: 50%;
+      right: max(10px, env(safe-area-inset-right, 0px));
+      z-index: 40;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 62px;
-      height: 62px;
-      min-width: 62px;
-      min-height: 62px;
+      width: 48px;
+      min-width: 48px;
+      height: 48px;
+      min-height: 48px;
       padding: 0;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.55);
-      background: rgba(255, 255, 255, 0.42);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      box-shadow: 0 8px 22px rgba(17, 17, 17, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.65);
-      color: #2d3a38;
-      font-size: 1.9rem;
-      font-weight: 900;
+      border: 1px solid rgba(255, 255, 255, 0.76);
+      border-radius: 16px;
+      background: rgba(16, 43, 65, 0.88);
+      color: #fff;
+      box-shadow: 0 8px 22px rgba(11, 25, 35, 0.22);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transform: translateY(-50%);
+    }
+
+    #boothScreen #overlayPickerButton.hidden {
+      display: none !important;
+    }
+
+    #boothScreen #overlayPickerButton > span {
+      font-size: 1.45rem;
       line-height: 1;
-      cursor: pointer;
-      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
     }
 
-    .filter-arrow:hover,
-    .filter-arrow:focus-visible {
-      transform: scale(1.05);
-      background: rgba(255, 255, 255, 0.6);
-      border-color: rgba(255, 255, 255, 0.72);
-      box-shadow: 0 12px 28px rgba(17, 17, 17, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.78);
-      outline: none;
+    #boothScreen.countdown-mode .overlay-picker-control,
+    #boothScreen.finalizing-mode .overlay-picker-control,
+    #boothScreen.share-mode .overlay-picker-control,
+    #boothScreen.welcome-active .overlay-picker-control {
+      display: none;
     }
 
-    .filter-arrow:active {
-      transform: scale(0.95);
-      background: rgba(255, 255, 255, 0.55);
-      box-shadow: 0 4px 12px rgba(17, 17, 17, 0.08);
-    }
-
-    @media (max-width: 900px) {
-      .filter-arrow {
-        width: 56px;
-        height: 56px;
-        min-width: 56px;
-        min-height: 56px;
-        font-size: 1.65rem;
+    @media (max-width: 640px) {
+      #boothScreen #mobileSettingsSheet {
+        padding-right: 16px;
+        padding-left: 16px;
       }
 
-      #filterCarouselName {
-        font-size: 0.72rem;
-        padding: 8px 16px;
+      #boothScreen #mobileSettingsSheet #options .options-section-grid {
+        grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+        gap: 12px;
       }
+
+      #boothScreen #mobileSettingsSheet #options .thumb {
+        min-height: 116px;
+        padding: 7px;
+        border-radius: 15px;
+      }
+
+      #boothScreen #mobileSettingsSheet #options .thumb img,
+      #boothScreen #mobileSettingsSheet #options .thumb video {
+        min-height: 98px;
+      }
+
     }
   </style>
   <link rel="stylesheet" href="final-preview-sizing-fix.css">
@@ -6917,7 +7025,7 @@
         <section class="theme-quick-picker setup-session-theme" aria-labelledby="themeQuickPickerHeading">
           <div>
             <h2 id="themeQuickPickerHeading" class="theme-quick-picker-heading">Choose a look</h2>
-            <p class="theme-quick-picker-note">Pick a theme first. You can change the details after the booth is ready.</p>
+            <p class="theme-quick-picker-note">Choose a theme. Scroll sideways to see more.</p>
             <div id="themeQuickFilters" class="theme-quick-filters" aria-label="Theme categories"></div>
             <div id="themeQuickGrid" class="theme-quick-grid" aria-live="polite"></div>
           </div>
@@ -6933,7 +7041,7 @@
             </div>
           </aside>
         </section>
-        <div class="setup-session-secondary">
+      <div class="setup-session-secondary">
           <div class="setup-session-item setup-combobox" data-setup-combobox="theme">
             <label for="sessionThemeSearch">Browse all themes</label>
             <button type="button" id="sessionThemeToggle" class="setup-combobox-button" aria-expanded="false" aria-controls="sessionThemeMenu">
@@ -6948,12 +7056,21 @@
           </button>
           </div>
           <div class="setup-session-item">
-            <label for="guestScreenOrientation">Booth screen shape</label>
-            <select id="guestScreenOrientation">
+            <span class="setup-session-item-label">Booth screen shape</span>
+            <div class="orientation-quick-pick" role="group" aria-label="Booth screen shape">
+              <button type="button" class="orientation-quick-pick-option" data-screen-orientation="portrait" aria-pressed="false">
+                <span class="orientation-shape orientation-shape-portrait" aria-hidden="true"></span>
+                <span>Vertical</span>
+              </button>
+              <button type="button" class="orientation-quick-pick-option" data-screen-orientation="landscape" aria-pressed="false">
+                <span class="orientation-shape orientation-shape-landscape" aria-hidden="true"></span>
+                <span>Landscape</span>
+              </button>
+            </div>
+            <select id="guestScreenOrientation" class="hidden" aria-hidden="true" tabindex="-1">
               <option value="portrait">Portrait</option>
               <option value="landscape">Landscape</option>
             </select>
-            <small>Loads the theme’s preset Start, Photo Choice, Share, and Thank You screens.</small>
           </div>
           <div class="setup-session-item">
             <label for="eventProfileSelect">Saved Event</label>
@@ -6972,50 +7089,31 @@
           </div>
         </div>
       </div>
-      <details class="setup-session-assets-toggle" id="setupSessionAssetsToggle">
-        <summary aria-label="Selected backgrounds, overlays, and templates">
-          <div class="setup-session-assets-summary-label">Selected assets</div>
-          <div class="setup-session-assets-summary-row">
-            <span class="setup-session-assets-summary-chip">
-              <strong id="launchBackgroundSummary">0 selected</strong>
-            </span>
-            <span class="setup-session-assets-summary-chip">
-              <strong id="launchOverlaySummary">0 selected</strong>
-            </span>
-            <span class="setup-session-assets-summary-chip">
-              <strong id="launchTemplateSummary">0 selected</strong>
-            </span>
-          </div>
-        </summary>
-        <div class="setup-session-assets" aria-label="Selected asset counts">
-          <div class="setup-session-preview-strip" aria-label="Selected asset thumbnails">
-            <div class="setup-session-preview-tile">
-              <div class="setup-session-preview-label">Background</div>
-              <div id="launchBackgroundThumb"></div>
-            </div>
-            <div class="setup-session-preview-tile">
-              <div class="setup-session-preview-label">Overlay</div>
-              <div id="launchOverlayThumb"></div>
-            </div>
-            <div class="setup-session-preview-tile">
-              <div class="setup-session-preview-label">Template</div>
-              <div id="launchTemplateThumb"></div>
-            </div>
-          </div>
-          <div class="session-asset-count">
-            <span>Backgrounds</span>
-            <strong id="launchBackgroundCount">0 selected</strong>
-          </div>
-          <div class="session-asset-count">
-            <span>Overlays</span>
-            <strong id="launchOverlayCount">0 selected</strong>
-          </div>
-          <div class="session-asset-count">
-            <span>Templates</span>
-            <strong id="launchStripStatus">0 selected</strong>
-          </div>
+      <section class="setup-session-assets-toggle" id="setupSessionAssetsToggle" aria-labelledby="selectedAssetsHeading">
+        <div class="setup-session-assets-summary-label" id="selectedAssetsHeading">Selected assets</div>
+        <div class="setup-session-assets-summary-row">
+          <details class="setup-session-asset-detail">
+            <summary class="setup-session-assets-summary-chip">Backgrounds <strong id="launchBackgroundSummary">0 selected</strong></summary>
+            <div id="launchBackgroundAssets" class="setup-session-asset-grid"></div>
+          </details>
+          <details class="setup-session-asset-detail">
+            <summary class="setup-session-assets-summary-chip">Overlays <strong id="launchOverlaySummary">0 selected</strong></summary>
+            <div id="launchOverlayAssets" class="setup-session-asset-grid"></div>
+          </details>
+          <details class="setup-session-asset-detail">
+            <summary class="setup-session-assets-summary-chip">Templates <strong id="launchTemplateSummary">0 selected</strong></summary>
+            <div id="launchTemplateAssets" class="setup-session-asset-grid"></div>
+          </details>
         </div>
-      </details>
+        <div class="hidden" aria-hidden="true">
+          <div id="launchBackgroundThumb"></div>
+          <div id="launchOverlayThumb"></div>
+          <div id="launchTemplateThumb"></div>
+          <strong id="launchBackgroundCount"></strong>
+          <strong id="launchOverlayCount"></strong>
+          <strong id="launchStripStatus"></strong>
+        </div>
+      </section>
     </div>
     <div class="capture-mode-bar" data-setup-section="capture">
       <div class="capture-mode-copy">
@@ -7100,7 +7198,7 @@
               </select>
               <details class="beauty-preset-editor" id="beautyPresetEditor">
                 <summary>Guest Filter Editor</summary>
-                <p>Adjust the selected guest filter. Changes are saved to the shared booth settings and never appear in the guest flow.</p>
+                <p>Choose the guest filter and adjust its look here. Guests cannot change it. Changes are saved to the shared booth settings.</p>
                 <label for="beautyPresetSelect">Guest Filter</label>
                 <select id="beautyPresetSelect"></select>
                 <div id="beautyPresetControls" class="beauty-preset-controls"></div>
