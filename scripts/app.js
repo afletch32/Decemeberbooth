@@ -1431,9 +1431,9 @@ const DOM = {
   screenOrientationButtons: Array.from(
     document.querySelectorAll("[data-screen-orientation]")
   ),
-  themeQuickGrid: document.getElementById("themeQuickGrid"),
   themeQuickFilters: document.getElementById("themeQuickFilters"),
   themeQuickSelectionName: document.getElementById("themeQuickSelectionName"),
+  themeQuickGrid: document.getElementById("themeQuickGrid"),
   themeQuickSelectionMeta: document.getElementById("themeQuickSelectionMeta"),
   sessionFontToggle: document.getElementById("sessionFontToggle"),
   sessionFontValue: document.getElementById("sessionFontValue"),
@@ -1458,9 +1458,9 @@ const DOM = {
   launchBackgroundAssets: document.getElementById("launchBackgroundAssets"),
   launchOverlayAssets: document.getElementById("launchOverlayAssets"),
   launchTemplateAssets: document.getElementById("launchTemplateAssets"),
-  recordingModeToggle: document.getElementById("recordingModeToggle"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
+  recordingModeToggle: document.getElementById("recordingModeToggle"),
   countdownFiveToggle: document.getElementById("countdownFiveToggle"),
   themeSoundToggle: document.getElementById("themeSoundToggle"),
   themeSoundEditor: document.getElementById("themeSoundEditor"),
@@ -1730,9 +1730,9 @@ function setBoothControlsVisible(show) {
     setMobileSettingsOpen(false);
   }
   syncOverlayPickerUi();
-  requestAnimationFrame(() => logBoothViewportOverflow());
   syncMobileSettingsUi();
 }
+  requestAnimationFrame(() => logBoothViewportOverflow());
 
 function logBoothViewportOverflow() {
   try {
@@ -3749,10 +3749,6 @@ function setupEventProfileControls() {
       );
     });
   });
-  }
-  if (DOM.sessionThemeSearch) {
-    DOM.sessionThemeSearch.addEventListener("input", () =>
-      renderSessionThemeOptions(DOM.sessionThemeSearch.value)
   if (DOM.sessionThemeToggle) {
     DOM.sessionThemeToggle.addEventListener("click", () =>
       toggleSetupCombobox("theme")
@@ -3761,6 +3757,10 @@ function setupEventProfileControls() {
     DOM.sessionThemeSearch.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
+  }
+  if (DOM.sessionThemeSearch) {
+    DOM.sessionThemeSearch.addEventListener("input", () =>
+      renderSessionThemeOptions(DOM.sessionThemeSearch.value)
         disableShowcaseDemo();
         selectFirstVisibleComboboxOption("theme");
       } else if (event.key === "Escape") {
@@ -5869,10 +5869,6 @@ function renderLaunchAssetList(container, entries = [], categoryLabel = "asset")
   });
 }
 
-    const index = Math.min(
-      Math.max(activeSessionAssets.backgroundIndex || 0, 0),
-      list.length - 1
-    );
 function getLaunchSummaryThumbnailSrc(kind) {
   if (kind === "background") {
     const list = getBackgroundList(activeTheme);
@@ -5881,6 +5877,10 @@ function getLaunchSummaryThumbnailSrc(kind) {
   }
   if (kind === "overlay") {
     return getAssetEntrySrc(
+    const index = Math.min(
+      Math.max(activeSessionAssets.backgroundIndex || 0, 0),
+      list.length - 1
+    );
       getOverlayList(activeTheme)[0] || ""
     );
   }
@@ -5968,10 +5968,6 @@ function updateLaunchSummary() {
     getTemplateList(activeTheme),
     "template"
   );
-    id: "header",
-    label: "Header",
-    cssVar: "--edit-header-scale",
-    storageKey: "editScaleHeader",
 }
 
 const EDIT_SCALE_CONFIG = [
@@ -5980,6 +5976,10 @@ const EDIT_SCALE_CONFIG = [
     max: 1.4,
     posVar: "--edit-header-y",
     posKey: "editPosHeader",
+    id: "header",
+    label: "Header",
+    cssVar: "--edit-header-scale",
+    storageKey: "editScaleHeader",
     posMin: -200,
     posMax: 200,
   },
