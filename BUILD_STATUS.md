@@ -1,10 +1,10 @@
 # Build status
 
-- Current goal: Release the completed Halloween theme, setup, print, and camera-preview updates in meaningful segments.
-- Done: Bundled animated Halloween backgrounds; fixed local media previews; restored the compact theme picker, orientation quick picks, expandable selected assets, overlay sheet, and selected-theme bounds; moved print mode and paid price visibility into Event Setup; reduced live-preview work to 640px at up to 20 fps while retaining full-resolution capture; assigned five Halloween sound effects to guest-flow events.
-- In progress: Verify and deploy the Halloween sound segment.
-- Next steps: Check sound playback on booth hardware; consider promoting the branch preview after review.
+- Current goal: Keep guest booth controls usable after launching a selected theme.
+- Done: The overlay chooser stays hidden until requested, opens as a full-screen panel, closes with Done, and stays hidden on welcome screens.
+- In progress: Prepare the focused fix for branch preview release.
+- Next steps: Verify the branch preview after release; check theme sound playback on booth hardware.
 - Known bugs/blockers: Booth hardware camera/audio behavior is not verified. Three earlier intermediate commits contain malformed snapshots; the forward repair commit restores valid source at branch head.
 - Important decisions: Use existing theme sound slots; Halloween start, button tap, countdown, capture, and thank-you moments use bundled effects. QR-ready retains the existing spooky synthesized cue.
-- Verification: `node --input-type=module --check < scripts/app.js` passes; `npm test` passes (267/267); focused Chromium live-preview/capture check passed (1/1). Each Halloween MP3 probes as valid audio, with durations from 1.071 to 8.040 seconds.
+- Verification: `npm test` passes (267/267). A local browser flow confirmed the chooser opens, Done closes it, and the capture button remains clickable. One existing Chromium picker test still uses a hidden launch step and is not a valid check of this flow.
 - Release: UI/preview branch deployment: `https://agent-booth-asset-and-previe.decemeberbooth.pages.dev`. Sound segment pending deployment; production alias remains unchanged.

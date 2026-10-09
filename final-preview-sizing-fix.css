@@ -160,6 +160,37 @@
   opacity: 0.58;
 }
 
+/* The overlay chooser is an explicit guest action, not part of the booth layout. */
+#boothScreen.booth-ready:not(.welcome-active):not(.share-mode):not(.countdown-mode):not(.finalizing-mode):not(.mobile-settings-open) #mobileSettingsSheet {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: none;
+  width: 100%;
+  height: 100dvh;
+  max-height: none;
+  transform: translateY(20px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#boothScreen.booth-ready.mobile-settings-open #mobileSettingsSheet {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  width: 100%;
+  height: 100dvh;
+  max-height: none;
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#boothScreen.welcome-active #overlayPickerButton {
+  display: none !important;
+}
+
 #boothScreen.booth-ready #captureBtn.primary.message-mode {
   width: clamp(132px, 18vw, 184px);
   min-height: clamp(76px, 11dvh, 104px);
