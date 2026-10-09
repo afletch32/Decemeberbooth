@@ -1066,11 +1066,11 @@ test("setup exposes selected assets in individually expandable groups", () => {
       html.includes('id="launchTemplateAssets"') &&
       html.includes('<summary class="setup-session-assets-summary-chip">Overlays') &&
       html.includes('<summary class="setup-session-assets-summary-chip">Templates'),
+      appScript.includes("function getAssignedOverlayList(theme)") &&
     "setup should let each selected asset category expand directly to its full asset list"
   );
   assert.ok(
     appScript.includes(
-      appScript.includes("function getAssignedOverlayList(theme)") &&
       'launchBackgroundSummary: document.getElementById("launchBackgroundSummary")'
     ) &&
       appScript.includes(

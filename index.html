@@ -7563,18 +7563,17 @@
     </div>
     <button id="boothBackBtn" type="button" class="button-ghost welcome-back-button" onclick="goBackFromBooth(event)">Go Back</button>
     <button id="adminBtn" onclick="goAdmin()">⚙️</button>
-    <button id="mobileSettingsToggle" type="button" aria-expanded="false" aria-controls="mobileSettingsSheet">Choose Frame</button>
     <div id="mobileSettingsBackdrop" aria-hidden="true"></div>
-    <div id="boothMain">
-      <div id="mobileSettingsSheet" aria-hidden="true">
-        <div class="mobile-settings-sheet-header">
-          <div class="mobile-settings-sheet-copy">
-            <p class="mobile-settings-sheet-eyebrow">Step 3</p>
-            <p class="mobile-settings-sheet-title">Choose your frame</p>
-          </div>
-          <button id="mobileSettingsClose" type="button" class="button-ghost">Done</button>
+    <div id="mobileSettingsSheet" aria-hidden="true">
+      <div class="mobile-settings-sheet-header">
+        <div class="mobile-settings-sheet-copy">
+          <p class="mobile-settings-sheet-eyebrow">Step 3</p>
+          <p class="mobile-settings-sheet-title">Choose an overlay</p>
         </div>
-        <div id="options"></div>
+      <div id="options"></div>
+    </div>
+    <div id="boothMain">
+        <button id="mobileSettingsClose" type="button" class="button-ghost">Done</button>
       </div>
       <div id="boothModeBar">
         <div id="controls">
@@ -7626,23 +7625,10 @@
             <span class="rec-dot"></span>
             <span id="recordingTimer">REC 00:00</span>
           </div>
-          <div id="frameCarousel" class="frame-carousel hidden" aria-label="Choose a frame">
-            <button id="framePrevBtn" type="button" class="frame-arrow" aria-label="Previous frame">◀</button>
-            <button id="frameCarouselChoice" type="button" aria-haspopup="dialog">
-              <span class="frame-carousel-label">Frame</span>
-              <strong id="frameCarouselName">No Frame</strong>
-            </button>
-            <button id="frameNextBtn" type="button" class="frame-arrow" aria-label="Next frame">▶</button>
-          </div>
         </div>
         <div id="captureStatusBar" aria-live="polite">
           <span id="livePhotoStatus" class="capture-status-pill hidden">Live Photo</span>
           <span id="instantCaptureStatus" class="capture-status-pill hidden">Instant Capture</span>
-        </div>
-        <div id="filterCarousel" class="filter-carousel hidden">
-          <button id="filterPrevBtn" type="button" class="filter-arrow filter-arrow-prev" aria-label="Previous filter" onclick="prevFilter()">◀</button>
-          <span id="filterCarouselName">✨ Natural</span>
-          <button id="filterNextBtn" type="button" class="filter-arrow filter-arrow-next" aria-label="Next filter" onclick="nextFilter()">▶</button>
         </div>
         <div id="boothHostPrompt" aria-live="polite">
           Use the arrows to choose a look.
@@ -7673,6 +7659,9 @@
           </div>
           <div id="videoImportStatus" class="video-import-status">Ready for video import.</div>
         </div>
+    <button id="overlayPickerButton" class="overlay-picker-control hidden" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="mobileSettingsSheet" aria-label="Choose an overlay">
+      <span aria-hidden="true">▧</span>
+    </button>
       </div>
     </div>
     <div id="countdownOverlay"></div>

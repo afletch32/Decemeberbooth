@@ -1428,11 +1428,11 @@ const DOM = {
   sessionThemeSearch: document.getElementById("sessionThemeSearch"),
   sessionThemeOptions: document.getElementById("sessionThemeOptions"),
   guestScreenOrientation: document.getElementById("guestScreenOrientation"),
-  themeQuickFilters: document.getElementById("themeQuickFilters"),
   screenOrientationButtons: Array.from(
     document.querySelectorAll("[data-screen-orientation]")
   ),
   themeQuickGrid: document.getElementById("themeQuickGrid"),
+  themeQuickFilters: document.getElementById("themeQuickFilters"),
   themeQuickSelectionName: document.getElementById("themeQuickSelectionName"),
   themeQuickSelectionMeta: document.getElementById("themeQuickSelectionMeta"),
   sessionFontToggle: document.getElementById("sessionFontToggle"),
@@ -1455,11 +1455,11 @@ const DOM = {
   launchStripStatus: document.getElementById("launchStripStatus"),
   launchTemplateThumb: document.getElementById("launchTemplateThumb"),
   launchTemplateSummary: document.getElementById("launchTemplateSummary"),
-  livePhotoToggle: document.getElementById("livePhotoToggle"),
   launchBackgroundAssets: document.getElementById("launchBackgroundAssets"),
   launchOverlayAssets: document.getElementById("launchOverlayAssets"),
   launchTemplateAssets: document.getElementById("launchTemplateAssets"),
   recordingModeToggle: document.getElementById("recordingModeToggle"),
+  livePhotoToggle: document.getElementById("livePhotoToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
   countdownFiveToggle: document.getElementById("countdownFiveToggle"),
   themeSoundToggle: document.getElementById("themeSoundToggle"),
@@ -1729,9 +1729,9 @@ function setBoothControlsVisible(show) {
   if (!show) {
     setMobileSettingsOpen(false);
   }
-  syncMobileSettingsUi();
   syncOverlayPickerUi();
   requestAnimationFrame(() => logBoothViewportOverflow());
+  syncMobileSettingsUi();
 }
 
 function logBoothViewportOverflow() {
@@ -3740,10 +3740,6 @@ function setupEventProfileControls() {
       setGuestScreenOrientation(DOM.guestScreenOrientation.value);
     });
   }
-  if (DOM.sessionThemeToggle) {
-    DOM.sessionThemeToggle.addEventListener("click", () =>
-      toggleSetupCombobox("theme")
-    );
   DOM.screenOrientationButtons.forEach((button) => {
     button.addEventListener("click", () => {
       if (!DOM.guestScreenOrientation || button.disabled) return;
@@ -3757,6 +3753,10 @@ function setupEventProfileControls() {
   if (DOM.sessionThemeSearch) {
     DOM.sessionThemeSearch.addEventListener("input", () =>
       renderSessionThemeOptions(DOM.sessionThemeSearch.value)
+  if (DOM.sessionThemeToggle) {
+    DOM.sessionThemeToggle.addEventListener("click", () =>
+      toggleSetupCombobox("theme")
+    );
     );
     DOM.sessionThemeSearch.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
@@ -5829,10 +5829,6 @@ function setLaunchSummaryThumbnail(nodeId, src, label) {
   node.appendChild(createAssetTile(src));
 }
 
-function getLaunchSummaryThumbnailSrc(kind) {
-  if (kind === "background") {
-    const list = getBackgroundList(activeTheme);
-    if (!list.length) return "";
 function renderLaunchAssetList(container, entries = [], categoryLabel = "asset") {
   if (!container) return;
   const visibleEntries = Array.isArray(entries) ? entries : [];
@@ -5877,6 +5873,10 @@ function renderLaunchAssetList(container, entries = [], categoryLabel = "asset")
       Math.max(activeSessionAssets.backgroundIndex || 0, 0),
       list.length - 1
     );
+function getLaunchSummaryThumbnailSrc(kind) {
+  if (kind === "background") {
+    const list = getBackgroundList(activeTheme);
+    if (!list.length) return "";
     return getAssetEntrySrc(list[index]);
   }
   if (kind === "overlay") {
@@ -5953,10 +5953,6 @@ function updateLaunchSummary() {
     getLaunchSummaryThumbnailSrc("template"),
     getLaunchSummaryThumbnailLabel("template") || "Template"
   );
-}
-
-const EDIT_SCALE_CONFIG = [
-  {
   renderLaunchAssetList(
     DOM.launchBackgroundAssets,
     getBackgroundList(activeTheme),
@@ -5976,6 +5972,10 @@ const EDIT_SCALE_CONFIG = [
     label: "Header",
     cssVar: "--edit-header-scale",
     storageKey: "editScaleHeader",
+}
+
+const EDIT_SCALE_CONFIG = [
+  {
     min: 0.6,
     max: 1.4,
     posVar: "--edit-header-y",
