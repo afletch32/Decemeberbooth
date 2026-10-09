@@ -7,7 +7,23 @@ const VIDEO_PREVIEW_PLACEHOLDER =
 const BUNDLED_VIDEO_POSTERS = {
   "/assets/themes/back-to-school/amanda-north-coyotes-idle-wave-portrait.mp4":
     "/assets/themes/back-to-school/back-to-school-idle-portrait.png",
+  "/assets/themes/halloween/halloween-background-portrait.mp4":
+    "/assets/themes/halloween/halloween-background-portrait.thumb.webp",
+  "/assets/themes/halloween/halloween-background-landscape.mp4":
+    "/assets/themes/halloween/halloween-background-landscape.thumb.webp",
 };
+
+export function resolvePreviewAssetSrc(src, baseHref = "") {
+  const value = String(src || "").trim();
+  if (!value.startsWith("/assets/")) return value;
+  try {
+    const base = new URL(baseHref);
+    if (base.protocol !== "file:") return value;
+    return new URL(value.slice(1), base).href;
+  } catch (_) {
+    return value;
+  }
+}
 
 export function getVideoPreviewPosterSrc(entry, videoSrc = "") {
   const source = entry && typeof entry === "object" ? entry : {};

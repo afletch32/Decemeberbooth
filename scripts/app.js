@@ -50,7 +50,10 @@ import {
   loadQrCodeLibrary,
   loadSelfieSegmentationLibrary,
 } from "./external-library-loader.mjs";
-import { getVideoPreviewPosterSrc } from "./media-preview-utils.mjs";
+import {
+  getVideoPreviewPosterSrc,
+  resolvePreviewAssetSrc,
+} from "./media-preview-utils.mjs";
 import {
   getThemeSoundCue,
   resolveThemeSoundProfileName,
@@ -965,8 +968,8 @@ let themes = {
         font: "'Creepster', cursive",
         logo: "",
         backgrounds: [
-          "/assets/themes/halloween/halloween-background-portrait.webp",
-          "/assets/themes/halloween/halloween-background-landscape.webp",
+          "/assets/themes/halloween/halloween-background-portrait.mp4",
+          "/assets/themes/halloween/halloween-background-landscape.mp4",
         ],
         idleScreens: [
           { src: "/assets/themes/halloween/halloween-idle-portrait.webp", name: "Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
@@ -2764,11 +2767,12 @@ function isVideoAsset(entry) {
 }
 
 function createAssetPreviewMedia(entry, alt = "") {
-  const src = getAssetPreviewSrc(getAssetEntrySrc(entry));
+  const source = getAssetEntrySrc(entry);
+  const previewSrc = isVideoAsset(entry)
+    ? getVideoPreviewPosterSrc(entry, source)
+    : getAssetPreviewSrc(source);
   const img = document.createElement("img");
-  img.src = withBust(
-    isVideoAsset(entry) ? getVideoPreviewPosterSrc(entry, src) : src
-  );
+  img.src = withBust(resolvePreviewAssetSrc(previewSrc, window.location.href));
   img.alt = alt;
   img.loading = "lazy";
   img.decoding = "async";
@@ -2777,8 +2781,13 @@ function createAssetPreviewMedia(entry, alt = "") {
 
 function getAssetPreviewSrc(src) {
   const value = String(src || "");
-  if (!/^\/assets\//.test(value) || /\.svg(?:$|[?#])/i.test(value)) return value;
-  return value.replace(/\.(png|jpe?g|webp)(?=($|[?#]))/i, ".thumb.webp");
+  if (!/^\/assets\//.test(value) || /\.svg(?:$|[?#])/i.test(value)) {
+    return resolvePreviewAssetSrc(value, window.location.href);
+  }
+  return resolvePreviewAssetSrc(
+    value.replace(/\.(png|jpe?g|webp)(?=($|[?#]))/i, ".thumb.webp"),
+    window.location.href
+  );
 }
 
 function createAssetSelectionSet(value) {

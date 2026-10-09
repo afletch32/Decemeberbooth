@@ -46,3 +46,41 @@ test("bundled videos keep their poster when legacy theme state lacks metadata", 
     "/assets/themes/back-to-school/back-to-school-idle-portrait.png"
   );
 });
+
+test("Halloween background videos use their bundled thumbnail posters", async () => {
+  const { getVideoPreviewPosterSrc } = await loadMediaPreviewUtils();
+  assert.equal(
+    getVideoPreviewPosterSrc(
+      {},
+      "/assets/themes/halloween/halloween-background-portrait.mp4"
+    ),
+    "/assets/themes/halloween/halloween-background-portrait.thumb.webp"
+  );
+  assert.equal(
+    getVideoPreviewPosterSrc(
+      {},
+      "/assets/themes/halloween/halloween-background-landscape.mp4"
+    ),
+    "/assets/themes/halloween/halloween-background-landscape.thumb.webp"
+  );
+});
+
+test("file-based previews resolve from the app folder and hosted paths stay root-relative", async () => {
+  const { resolvePreviewAssetSrc } = await loadMediaPreviewUtils();
+  const filePage =
+    "file:///Users/example/Decemberbooth/index.html";
+  assert.equal(
+    resolvePreviewAssetSrc(
+      "/assets/themes/halloween/halloween-idle-portrait.thumb.webp",
+      filePage
+    ),
+    "file:///Users/example/Decemberbooth/assets/themes/halloween/halloween-idle-portrait.thumb.webp"
+  );
+  assert.equal(
+    resolvePreviewAssetSrc(
+      "/assets/themes/halloween/halloween-idle-portrait.thumb.webp",
+      "https://booth.example/index.html"
+    ),
+    "/assets/themes/halloween/halloween-idle-portrait.thumb.webp"
+  );
+});

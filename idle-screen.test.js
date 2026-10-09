@@ -596,7 +596,8 @@ test("custom guest artwork keeps lightweight ambient motion without blocking hot
 test("admin video previews use still images without downloading or autoplaying MP4s", () => {
   const preview = extractFunction(app, "createAssetPreviewMedia");
   assert.ok(preview.includes('document.createElement("img")'));
-  assert.ok(preview.includes("getVideoPreviewPosterSrc(entry, src)"));
+  assert.ok(preview.includes("getVideoPreviewPosterSrc(entry, source)"));
+  assert.ok(preview.includes("resolvePreviewAssetSrc(previewSrc, window.location.href)"));
   assert.ok(!preview.includes('document.createElement("video")'));
   assert.ok(!preview.includes(".play()"));
 });
