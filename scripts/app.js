@@ -3330,7 +3330,8 @@ function syncSessionThemeSearch() {
 }
 
 let activeThemeQuickFilter = "All";
-let themeQuickRenderSignature = "";
+const themeQuickCardsByKey = new Map();
+let themeQuickPreviewObserver = null;
 
 const THEME_QUICK_FILTERS = ["All", "Celebrations", "Weddings", "Sports", "Schools", "Seasons", "Holidays"];
 
@@ -3391,53 +3392,67 @@ function renderThemeQuickPicker() {
   });
   const entries = getSetupThemeEntries().filter((entry) => themeMatchesQuickFilter(entry, activeThemeQuickFilter));
   const visibleEntries = entries.slice(0, 8);
-  const renderSignature = JSON.stringify(visibleEntries.map((entry) => [
-    entry.key,
-    entry.label,
-    entry.group,
-    getThemeQuickPreview(entry.theme),
-  ]));
-  if (renderSignature !== themeQuickRenderSignature) {
-    const cards = document.createDocumentFragment();
-    visibleEntries.forEach((entry) => {
-      const card = document.createElement("button");
+  const visibleKeys = new Set(visibleEntries.map((entry) => entry.key));
+  themeQuickCardsByKey.forEach((card, key) => {
+    if (!visibleKeys.has(key)) card.remove();
+  });
+  const observePreview = (node) => {
+    if (!node.dataset.previewSrc) return;
+    if ("IntersectionObserver" in window) {
+      if (!themeQuickPreviewObserver) {
+        themeQuickPreviewObserver = new IntersectionObserver((items, observer) => {
+          items.forEach((item) => {
+            if (!item.isIntersecting) return;
+            const preview = item.target;
+            const src = preview.dataset.previewSrc;
+            if (src) preview.style.backgroundImage = `url("${src}")`;
+            observer.unobserve(preview);
+          });
+        }, { rootMargin: "160px" });
+      }
+      themeQuickPreviewObserver.observe(node);
+    } else {
+      node.style.backgroundImage = `url("${node.dataset.previewSrc}")`;
+    }
+  };
+  visibleEntries.forEach((entry, index) => {
+    let card = themeQuickCardsByKey.get(entry.key);
+    if (!card) {
+      card = document.createElement("button");
       card.type = "button";
       card.className = "theme-quick-card";
       card.dataset.themeKey = entry.key;
       const preview = document.createElement("div");
       preview.className = "theme-quick-card-art";
-      const previewUrl = getThemeQuickPreview(entry.theme);
-      if (previewUrl) preview.dataset.previewSrc = getAssetPreviewSrc(previewUrl);
       const copy = document.createElement("span");
       copy.className = "theme-quick-card-copy";
       const label = document.createElement("strong");
-      label.textContent = entry.label;
       const group = document.createElement("span");
-      group.textContent = entry.group;
       copy.append(label, group);
       card.append(preview, copy);
       card.addEventListener("click", () => activateThemeFromSetupKey(entry.key));
-      cards.appendChild(card);
-    });
-    DOM.themeQuickGrid.replaceChildren(cards);
-    themeQuickRenderSignature = renderSignature;
-    const applyPreview = (node) => {
-      const src = node.dataset.previewSrc;
-      if (src && !node.style.backgroundImage) node.style.backgroundImage = `url("${src}")`;
-    };
-    if ("IntersectionObserver" in window) {
-      const observer = new IntersectionObserver((items, currentObserver) => {
-        items.forEach((item) => {
-          if (!item.isIntersecting) return;
-          applyPreview(item.target);
-          currentObserver.unobserve(item.target);
-        });
-      }, { rootMargin: "160px" });
-      DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach((node) => observer.observe(node));
-    } else {
-      DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach(applyPreview);
+      themeQuickCardsByKey.set(entry.key, card);
     }
-  }
+    const preview = card.querySelector(".theme-quick-card-art");
+    const copy = card.querySelector(".theme-quick-card-copy");
+    const label = copy.querySelector("strong");
+    const group = copy.querySelector("span");
+    if (label.textContent !== entry.label) label.textContent = entry.label;
+    if (group.textContent !== entry.group) group.textContent = entry.group;
+    const previewUrl = getThemeQuickPreview(entry.theme);
+    const previewSrc = previewUrl ? getAssetPreviewSrc(previewUrl) : "";
+    if (preview.dataset.previewSrc !== previewSrc) {
+      preview.dataset.previewSrc = previewSrc;
+      if (!previewSrc) {
+        preview.style.backgroundImage = "";
+        if (themeQuickPreviewObserver) themeQuickPreviewObserver.unobserve(preview);
+      } else {
+        observePreview(preview);
+      }
+    }
+    const cardAtIndex = DOM.themeQuickGrid.children[index];
+    if (cardAtIndex !== card) DOM.themeQuickGrid.insertBefore(card, cardAtIndex || null);
+  });
   DOM.themeQuickGrid.querySelectorAll("[data-theme-key]").forEach((card) => {
     const active = card.dataset.themeKey === selectedKey;
     card.classList.toggle("active", active);
