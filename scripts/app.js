@@ -3331,6 +3331,7 @@ function syncSessionThemeSearch() {
 
 let activeThemeQuickFilter = "All";
 const themeQuickCardsByKey = new Map();
+const themeQuickOrderByKey = new Map();
 let themeQuickPreviewObserver = null;
 
 const THEME_QUICK_FILTERS = ["All", "Celebrations", "Weddings", "Sports", "Schools", "Seasons", "Holidays"];
@@ -3390,7 +3391,16 @@ function renderThemeQuickPicker() {
     button.classList.toggle("active", active);
     button.setAttribute("aria-pressed", active ? "true" : "false");
   });
-  const entries = getSetupThemeEntries().filter((entry) => themeMatchesQuickFilter(entry, activeThemeQuickFilter));
+  const allEntries = getSetupThemeEntries();
+  allEntries.forEach((entry) => {
+    if (!themeQuickOrderByKey.has(entry.key)) {
+      themeQuickOrderByKey.set(entry.key, themeQuickOrderByKey.size);
+    }
+  });
+  allEntries.sort(
+    (a, b) => themeQuickOrderByKey.get(a.key) - themeQuickOrderByKey.get(b.key)
+  );
+  const entries = allEntries.filter((entry) => themeMatchesQuickFilter(entry, activeThemeQuickFilter));
   const visibleEntries = entries.slice(0, 8);
   const visibleKeys = new Set(visibleEntries.map((entry) => entry.key));
   themeQuickCardsByKey.forEach((card, key) => {

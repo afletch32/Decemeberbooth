@@ -368,8 +368,10 @@
 
     .theme-quick-card {
       flex: 0 0 clamp(150px, 19vw, 200px);
-      min-height: 126px;
+      height: 156px;
       overflow: hidden;
+      display: grid;
+      grid-template-rows: 64px minmax(0, 1fr);
       border: 1px solid rgba(127, 219, 207, 0.48);
       border-radius: 16px;
       background: #effaf7;
@@ -378,12 +380,12 @@
       cursor: pointer;
       scroll-snap-align: start;
       box-shadow: 0 8px 20px rgba(41, 70, 64, 0.06);
-      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+      transition: box-shadow 160ms ease, border-color 160ms ease;
     }
 
     .theme-quick-card:hover,
     .theme-quick-card:focus-visible {
-      transform: translateY(-2px);
+      transform: none;
       border-color: #55cdbb;
       box-shadow: 0 14px 26px rgba(41, 70, 64, 0.13);
       outline: none;
@@ -407,8 +409,21 @@
       padding: 8px 10px 9px;
     }
 
-    .theme-quick-card-copy strong { font-size: 0.94rem; }
-    .theme-quick-card-copy span { color: var(--text-muted); font-size: 0.74rem; }
+    .theme-quick-card-copy strong {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      font-size: 0.94rem;
+      line-height: 1.2;
+    }
+    .theme-quick-card-copy span {
+      overflow: hidden;
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     .theme-quick-selection {
       display: grid;
@@ -7955,7 +7970,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261009-theme-card-reconcile"></script>
+  <script type="module" src="scripts/app.js?v=20261009-theme-card-stability"></script>
 </body>
 
 </html>
