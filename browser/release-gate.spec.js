@@ -10,7 +10,6 @@ const APPROVED_THEMES = [
   "school:hawksCheer",
   "school:ane",
   "school:streamNight",
-  "wedding:romantic",
 ];
 
 for (const orientation of ["portrait", "landscape"]) {

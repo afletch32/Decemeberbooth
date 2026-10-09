@@ -206,7 +206,6 @@ const APPROVED_THEME_KEYS = new Set([
   "school:hawksCheer",
   "school:ane",
   "school:streamNight",
-  "wedding:romantic",
 ]);
 
 let themes = {
@@ -396,117 +395,6 @@ let themes = {
           landscape: "",
           prompt: "Touch to start",
         },
-      },
-    },
-  },
-  wedding: {
-    name: "Wedding",
-    themes: {
-      timeless: {
-        name: "Timeless Romance",
-        eventTypes: ["wedding"],
-        fontPairingStyle: "wedding",
-        accent: "#d7b48a",
-        accent2: "#fffaf4",
-        fontHeading: "'Playfair Display', serif",
-        fontBody: "'Source Sans 3', sans-serif",
-        logo: "",
-        backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788547/photobooth/events/assets/timeless-romance-background-background_tu1nzg.svg",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788553/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-4_gw2edi.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788562/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-5_bpyzlq.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788565/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-6_mjo2fm.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788566/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-8_ykyj6y.png",
-        ],
-        overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788567/photobooth/events/assets/timeless-romance-overlay-timeless-romance-single-overlay_nvjk2b.svg", name: "timeless-romance-overlay-single" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788569/photobooth/events/assets/timeless-romance-overlay-timeless-romance-strip-overlay_datpdy.svg", name: "timeless-romance-overlay-strip" },
-        ],
-        templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788571/photobooth/events/assets/timeless-romance-template-timeless-romance-single-template_mpuao5.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788572/photobooth/events/assets/timeless-romance-template-timeless-romance-strip-template_dqymgy.svg", layout: "double_column" },
-        ],
-        welcome: {
-          title: "Celebrate the Moment",
-          portrait: "",
-          landscape: "",
-          prompt: "Touch to begin",
-        },
-        vibeSummary: "Classic, polished, formal",
-      },
-      romantic: {
-        name: "Wedding",
-        eventTypes: ["wedding"],
-        fontPairingStyle: "wedding",
-        accent: "#93b29b",
-        accent2: "#fffdf8",
-        fontHeading: "'Great Vibes', cursive",
-        fontBody: "'Lora', serif",
-        logo: "",
-        backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788516/photobooth/events/assets/garden-vows-background-background_avnelo.svg",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788518/photobooth/events/assets/garden-vows-background-garden-vows-bg-1_i8bl4r.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788519/photobooth/events/assets/garden-vows-background-garden-vows-bg-2_de6ex9.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788523/photobooth/events/assets/garden-vows-background-garden-vows-bg-3_vxgwzc.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788540/photobooth/events/assets/garden-vows-background-garden-vows-bg-7_cib79o.png",
-        ],
-        overlays: [
-          {
-            id: "garden-vows-single-portrait",
-            name: "Wedding Photo · Portrait",
-            src: "/assets/wedding/garden-vows/overlays/garden-vows-single-portrait.png",
-            type: "overlay",
-            category: "wedding",
-            orientation: "portrait",
-            aspectRatio: "2:3",
-            photoSlots: [
-              { x: 0.1572, y: 0.095, width: 0.6875, height: 0.68, objectFit: "cover" },
-            ],
-            textFields: [
-              { key: "couple_names", xPct: 0.14, yPct: 0.80, wPct: 0.72, hPct: 0.065, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 78, minFontSize: 34, color: "#38584a", align: "center" },
-              { key: "event_date", xPct: 0.2, yPct: 0.88, wPct: 0.6, hPct: 0.035, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 34, minFontSize: 20, color: "#65766b", align: "center" },
-            ],
-          },
-          {
-            id: "garden-vows-single-landscape",
-            name: "Wedding Photo · Landscape",
-            src: "/assets/wedding/garden-vows/overlays/garden-vows-single-landscape.png",
-            type: "overlay",
-            category: "wedding",
-            orientation: "landscape",
-            aspectRatio: "3:2",
-            photoSlots: [
-              { x: 0.118, y: 0.128, width: 0.765, height: 0.617, objectFit: "cover" },
-            ],
-            textFields: [
-              { key: "couple_names", xPct: 0.15, yPct: 0.77, wPct: 0.7, hPct: 0.075, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 72, minFontSize: 32, color: "#38584a", align: "center" },
-              { key: "event_date", xPct: 0.2, yPct: 0.87, wPct: 0.6, hPct: 0.04, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 30, minFontSize: 18, color: "#65766b", align: "center" },
-            ],
-          },
-        ],
-        templates: [
-          {
-            src: "/assets/wedding/garden-vows/templates/garden-vows-three-photo-strip.png",
-            name: "Wedding Three-Photo Strip",
-            layout: "photo_strip_3",
-            slots: [
-              { x: 130, y: 148, w: 468, h: 459 },
-              { x: 129, y: 693, w: 474, h: 455 },
-              { x: 130, y: 1234, w: 470, h: 452 },
-            ],
-            textFields: [
-              { key: "couple_names", xPct: 0.15, yPct: 0.835, wPct: 0.7, hPct: 0.055, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 50, minFontSize: 26, color: "#38584a", align: "center" },
-              { key: "event_date", xPct: 0.2, yPct: 0.895, wPct: 0.6, hPct: 0.03, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 25, minFontSize: 16, color: "#65766b", align: "center" },
-            ],
-          },
-        ],
-        welcome: {
-          title: "Love Looks Good Here",
-          portrait: "",
-          landscape: "",
-          prompt: "Touch to start",
-        },
-        vibeSummary: "Soft, romantic, photo-forward",
       },
     },
   },
@@ -1425,6 +1313,7 @@ const DOM = {
   logo: document.getElementById("logo"),
   eventTitle: document.getElementById("eventTitle"),
   eventProfileSelect: document.getElementById("eventProfileSelect"),
+  eventTypeInput: document.getElementById("eventTypeInput"),
   eventPrintPriceInput: document.getElementById("eventPrintPriceInput"),
   saveEventPrintPriceBtn: document.getElementById("saveEventPrintPriceBtn"),
   createPathThemeSelect: document.getElementById("createPathThemeSelect"),
@@ -2401,7 +2290,6 @@ const ASSET_LIBRARY_RECENT_LIMIT = 80;
 const LAST_THEME_KEY_STORAGE = "photoboothLastThemeKey";
 const QUICK_START_SESSION_DATE_KEY = "photoboothQuickStartDate";
 const SHOWCASE_DEMO_THEME_CANDIDATES = {
-  wedding: ["wedding:timeless", "wedding:romantic"],
   birthday: ["general:birthday"],
   general: ["general:summer", DEFAULT_THEME_KEY],
 };
@@ -2509,7 +2397,7 @@ function updateShowcaseDemoUi() {
 }
 
 function hasShowcaseDemoChoices() {
-  return ["wedding", "birthday", "general"].some((kind) =>
+  return ["birthday", "general"].some((kind) =>
     !!getShowcaseDemoThemeKey(kind)
   );
 }
@@ -2566,7 +2454,7 @@ function applyShowcaseDemoTheme(kind) {
 }
 
 function startShowcaseDemo() {
-  const order = ["wedding", "birthday", "general"];
+  const order = ["birthday", "general"];
   const kind = order.find((entry) => !!getShowcaseDemoThemeKey(entry));
   if (!kind) return;
   if (!applyShowcaseDemoTheme(kind)) return;
@@ -2576,7 +2464,7 @@ function startShowcaseDemo() {
 
 function cycleShowcaseDemoTheme() {
   if (!showcaseDemoActive) return false;
-  const order = ["wedding", "birthday", "general"];
+  const order = ["birthday", "general"];
   const currentKind = inferThemeEventStyle(
     showcaseDemoCurrentKey,
     resolveThemeByKey(showcaseDemoCurrentKey)
@@ -3105,7 +2993,7 @@ const THEME_SETUP_GROUP_ITEM_ORDER = {
     "Valentine's Day",
     "St. Patrick's Day",
   ],
-  Wedding: ["Wedding", "Timeless Romance"],
+  Wedding: ["Wedding"],
   Youth: [
     "Spring Hill Hawks",
     "Spring Hill Hawks at Titans Stadium",
@@ -3136,7 +3024,6 @@ const THEME_SETUP_LABEL_OVERRIDES = {
   "st patricks": "St. Patrick's Day",
   "st patrick's": "St. Patrick's Day",
   "garden vows": "Wedding",
-  "timeless romance": "Timeless Romance",
   hawks: "Spring Hill Hawks",
   hawkscheer: "Spring Hill Hawks Cheer",
   "hawks cheer": "Spring Hill Hawks Cheer",
@@ -3193,7 +3080,7 @@ function getThemeSetupDisplayGroup(themeKey, theme) {
     .join(" ");
   if (/(spring hill hawks|hawks cheer)/.test(normalized)) return "Sports";
   if (/(amanda north|ane|stream night)/.test(normalized)) return "Youth";
-  if (/(garden vows|timeless romance|wedding)/.test(normalized)) return "Wedding";
+  if (/(garden vows|wedding)/.test(normalized)) return "Wedding";
   if (/(fourth of july|4th of july|halloween|christmas|valentine|st patrick)/.test(normalized)) return "Holidays";
   if (
     /(summer|fall|winter|spring|winter wonderland|santa s workshop|new year)/.test(
@@ -6462,6 +6349,14 @@ function setupEventVisualEditorControls() {
   bindTextInput(DOM.eventPartner2Input, "partner2");
   bindTextInput(DOM.eventBirthdayNameInput, "birthdayName");
   bindTextInput(DOM.eventExpoCompanyInput, "expoCompany");
+  if (DOM.eventTypeInput) {
+    DOM.eventTypeInput.addEventListener("change", () => {
+      const eventType = normalizeEventStyle(DOM.eventTypeInput.value) || "general";
+      if (getActiveEvent()) updateActiveEventDetails({ eventType });
+      else updateActiveSessionTextDetails({ eventType });
+      syncEventSetupEditor(getEventEditorTheme());
+    });
+  }
 
   if (DOM.eventBannerSizeInput) {
     DOM.eventBannerSizeInput.addEventListener("input", () => {
@@ -13543,6 +13438,12 @@ function getEventEditorThemeKey() {
 }
 
 function isWeddingEventTheme(themeObj = null) {
+  const active = getActiveEvent();
+  const savedType = getSavedEventTextValue(
+    active || activeSessionTextDetails,
+    "eventType"
+  );
+  if (savedType) return normalizeEventStyle(savedType) === "wedding";
   const themeKey = getEventEditorThemeKey();
   const theme = themeObj || resolveThemeByKey(themeKey);
   return (
@@ -13551,6 +13452,12 @@ function isWeddingEventTheme(themeObj = null) {
 }
 
 function isBirthdayEventTheme(themeObj = null) {
+  const active = getActiveEvent();
+  const savedType = getSavedEventTextValue(
+    active || activeSessionTextDetails,
+    "eventType"
+  );
+  if (savedType) return normalizeEventStyle(savedType) === "birthday";
   const themeKey = getEventEditorThemeKey();
   const theme = themeObj || resolveThemeByKey(themeKey);
   return (
@@ -13585,6 +13492,19 @@ function syncEventSetupEditor(theme = null) {
   const textSource = hasActiveEvent ? active : activeSessionTextDetails;
   syncWeddingOnlyEventFields(themeObj);
   syncBirthdayOnlyEventFields(themeObj);
+  if (DOM.eventTypeInput) {
+    const savedType = getSavedEventTextValue(textSource, "eventType");
+    const themeType = inferThemeEventStyle(
+      hasActiveEvent ? active.themeKey : getSelectedThemeKey(),
+      themeObj
+    );
+    const requestedType = normalizeEventStyle(savedType || themeType);
+    DOM.eventTypeInput.value = Array.from(DOM.eventTypeInput.options).some(
+      (option) => option.value === requestedType
+    )
+      ? requestedType
+      : "general";
+  }
   const setDisabled = (node) => {
     if (!node) return;
     node.disabled = !hasEditableTarget;
@@ -13729,6 +13649,7 @@ function updateActiveEventDetails({
   name,
   date,
   themeKey,
+  eventType,
   overrides,
   bannerText,
   welcomeTitle,
@@ -13752,6 +13673,7 @@ function updateActiveEventDetails({
   if (typeof name === "string") target.name = name;
   if (typeof date === "string") target.date = date;
   if (typeof themeKey === "string") target.themeKey = themeKey;
+  if (typeof eventType === "string") target.eventType = normalizeEventStyle(eventType);
   if (typeof partner1 === "string") target.partner1 = partner1;
   if (typeof partner2 === "string") target.partner2 = partner2;
   if (typeof birthdayName === "string") target.birthdayName = birthdayName;
@@ -13942,6 +13864,9 @@ function createNewEventFromSelection() {
   const name = inputName || prompt("New event name:");
   if (!name) return;
   const date = DOM.eventDateInput ? DOM.eventDateInput.value.trim() : "";
+  const eventType =
+    normalizeEventStyle(DOM.eventTypeInput && DOM.eventTypeInput.value) ||
+    inferThemeEventStyle(themeKey, resolveThemeByKey(themeKey));
   const slug = slugifyEventText(name);
   if (!slug) {
     alert("Enter a valid event name.");
@@ -13955,6 +13880,11 @@ function createNewEventFromSelection() {
     name,
     date,
     themeKey,
+    eventType,
+    partner1: valueFromInput(DOM.eventPartner1Input),
+    partner2: valueFromInput(DOM.eventPartner2Input),
+    birthdayName: valueFromInput(DOM.eventBirthdayNameInput),
+    expoCompany: valueFromInput(DOM.eventExpoCompanyInput),
     printPrice: 3,
     createdAt: new Date().toISOString(),
     overrides: {
@@ -14306,6 +14236,7 @@ function updateActiveSessionTextDetails(changes = {}) {
   [
     "name",
     "date",
+    "eventType",
     "bannerText",
     "welcomeTitle",
     "startButtonText",

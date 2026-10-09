@@ -427,27 +427,17 @@ test("setup theme dropdown groups themes by user-facing category", () => {
   );
 });
 
-test("one reusable Wedding theme holds event-specific names and dates", () => {
+test("built-in Wedding theme is retired while wedding event setup remains", () => {
   const appScript = readProjectFile("scripts", "app.js");
-  const overlays = JSON.parse(
-    readProjectFile("assets", "wedding", "garden-vows", "overlays", "overlays.json")
-  );
-  const templates = JSON.parse(
-    readProjectFile("assets", "wedding", "garden-vows", "templates", "templates.json")
-  );
+  const html = readProjectFile("index.html");
 
-  assert.ok(appScript.includes('"wedding:romantic"'));
-  assert.ok(appScript.includes('name: "Wedding"'));
-  assert.ok(!appScript.includes('name: "Garden Vows"'));
-  assert.deepEqual(
-    overlays.map((item) => item.src),
-    ["garden-vows-single-portrait.png", "garden-vows-single-landscape.png"]
-  );
-  assert.deepEqual(
-    templates[0].textFields.map((field) => field.key),
-    ["couple_names", "event_date"]
-  );
-  assert.ok(!appScript.includes("Olivia and Nicolas"));
+  assert.ok(!appScript.includes('"wedding:romantic"'));
+  assert.ok(!appScript.includes('name: "Timeless Romance"'));
+  assert.ok(!html.includes('data-demo-theme="wedding"'));
+  assert.ok(html.includes('id="eventTypeInput"'));
+  assert.ok(html.includes('<option value="wedding">Wedding</option>'));
+  assert.ok(appScript.includes('target.eventType = normalizeEventStyle(eventType)'));
+  assert.ok(appScript.includes('classList.toggle("hidden", !showWeddingFields)'));
 });
 
 test("fourth of july theme includes Cloudinary overlay entries", () => {
@@ -538,7 +528,7 @@ test("asset library state uses the concise variable name", () => {
   );
 });
 
-test("demo booth mode showcases wedding, birthday, and general looks", () => {
+test("demo booth mode showcases birthday and general looks", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");
 
@@ -546,10 +536,7 @@ test("demo booth mode showcases wedding, birthday, and general looks", () => {
     html.includes('id="demoThemeBar" class="demo-theme-bar"'),
     "welcome screen should expose a dedicated demo theme switcher"
   );
-  assert.ok(
-    html.includes('data-demo-theme="wedding"'),
-    "demo theme switcher should include a wedding showcase"
-  );
+  assert.ok(!html.includes('data-demo-theme="wedding"'));
   assert.ok(
     html.includes('data-demo-theme="birthday"'),
     "demo theme switcher should include a birthday showcase"

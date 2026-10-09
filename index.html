@@ -7383,6 +7383,8 @@
               </div>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:16px;">
                 <div class="theme-field">
+                  <label for="eventTypeInput">Event Type</label>
+                  <select id="eventTypeInput"><option value="general">General</option><option value="wedding">Wedding</option><option value="birthday">Birthday</option><option value="community">Community</option><option value="expo">Expo</option></select>
                   <label for="eventDateInput">Session Date (optional)</label>
                   <input type="text" id="eventDateInput" placeholder="e.g., April 2026" autocomplete="off" spellcheck="false">
                 </div>
@@ -7757,7 +7759,6 @@
         <div id="welcomeDemoStep" class="welcome-flow-section">
           <h1 class="welcome-flow-title">Choose a Demo</h1>
           <div id="demoThemeBar" class="demo-theme-bar">
-            <button type="button" class="demo-theme-chip" data-demo-theme="wedding">Wedding Demo</button>
             <button type="button" class="demo-theme-chip" data-demo-theme="birthday">Birthday Demo</button>
             <button type="button" class="demo-theme-chip" data-demo-theme="general">General Demo</button>
           </div>
@@ -7970,7 +7971,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261009-halloween-theme-repair"></script>
+  <script type="module" src="scripts/app.js?v=20261009-wedding-preset-removal"></script>
 </body>
 
 </html>

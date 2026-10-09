@@ -225,29 +225,18 @@ async function createWeddingEvent(page, options = {}) {
     date = "June 14, 2026",
   } = options;
   await gotoApp(page, "/index.html");
-  const themeValue = await getOptionValue(
-    page,
-    "#createPathThemeSelect",
-    /wedding/
-  );
-  await expect(themeValue).not.toBe("");
-  if (await page.locator("#createPathEventName").count()) {
-    await page.fill("#createPathEventName", eventName);
+  const eventDetails = page.locator("#eventDetailsPanel");
+  if (!(await eventDetails.getAttribute("open"))) {
+    await eventDetails.locator(":scope > summary").click();
   }
-  await page.locator(".theme-quick-card").filter({ hasText: /^Wedding/ }).click();
+  await page.selectOption("#eventTypeInput", "wedding");
   await page.fill("#eventNameInput", eventName);
-  await page.locator(".setup-session-save-btn").click();
+  await page.fill("#eventDateInput", date);
+  await page.fill("#eventPartner1Input", partner1);
+  await page.fill("#eventPartner2Input", partner2);
+  await page.getByRole("button", { name: "Save as New Event" }).click();
   await expect(page.locator("#eventProfileSelect")).toHaveValue(/.+/);
-  await page.evaluate(({ partner1, partner2, date }) => {
-    const activeId = document.querySelector("#eventProfileSelect").value;
-    const key = "photoboothEvents";
-    const events = JSON.parse(localStorage.getItem(key) || "[]");
-    const event = events.find((item) => item.id === activeId);
-    Object.assign(event, { partner1, partner2, date });
-    localStorage.setItem(key, JSON.stringify(events));
-    window.location.reload();
-  }, { partner1, partner2, date });
-  await page.waitForFunction(() => window.__photoboothTest?.getActiveEvent()?.partner1);
+  await page.waitForFunction(() => window.__photoboothTest?.getActiveEvent()?.eventType === "wedding");
 }
 
 test("overlay builder emits reusable text metadata when autofill fields are selected", async ({
@@ -265,7 +254,7 @@ test("overlay builder emits reusable text metadata when autofill fields are sele
   await expect(manifestEntry).toContainText("\"event_date\"");
 });
 
-test("Wedding preset reuses one theme and fills names and date per event", async ({
+test("Wedding events can be set up without a built-in Wedding theme", async ({
   page,
 }) => {
   await createWeddingEvent(page, {
@@ -275,43 +264,26 @@ test("Wedding preset reuses one theme and fills names and date per event", async
     date: "September 19, 2027",
   });
 
-  const result = await page.evaluate(async () => {
+  const result = await page.evaluate(() => {
     const api = window.__photoboothTest;
-    const theme = api.getThemeByKey("wedding:romantic");
-    const overlays = theme.overlays;
-    const landscape = overlays.find((item) => item.id === "garden-vows-single-landscape");
-    const template = theme.templates[0];
-    const sources = [...overlays.map((item) => item.src), template.src];
-    const responses = await Promise.all(
-      sources.map(async (src) => ({ src, ok: (await fetch(src)).ok }))
-    );
+    const event = api.getActiveEvent();
     return {
-      themeName: theme.name,
-      themeKey: api.getActiveEvent().themeKey,
-      event: api.getActiveEvent(),
-      overlayText: api.probeOverlayAutofill(landscape.src, 1800, 1200, api.getActiveEvent()),
-      templateText: api.probeTemplateAutofill(template, 720, 2160, api.getActiveEvent()),
-      fonts: {
-        adminHeading: getComputedStyle(document.querySelector(".admin-title")).fontFamily,
-        pageBody: getComputedStyle(document.body).fontFamily,
-        boothBody: getComputedStyle(document.querySelector("#boothScreen")).getPropertyValue("--font-body"),
-      },
-      responses,
+      event,
+      weddingCardCount: document.querySelectorAll(
+        '.theme-quick-card[data-theme-key^="wedding:"]'
+      ).length,
+      partnerFieldsVisible: [...document.querySelectorAll(".wedding-only-event-field")]
+        .every((field) => !field.classList.contains("hidden")),
     };
   });
 
-  expect(result.themeName).toBe("Wedding");
-  expect(result.themeKey).toBe("wedding:romantic");
+  expect(result.weddingCardCount).toBe(0);
+  expect(result.event.eventType).toBe("wedding");
+  expect(result.event.themeKey).not.toMatch(/^wedding:/);
   expect(result.event.partner1).toBe("Maya");
   expect(result.event.partner2).toBe("Noah");
-  expect(result.overlayText).toContain("Maya & Noah");
-  expect(result.overlayText).toContain("September 19, 2027");
-  expect(result.templateText).toContain("Maya & Noah");
-  expect(result.templateText).toContain("September 19, 2027");
-  expect(result.fonts.adminHeading).toMatch(/Montserrat/i);
-  expect(result.fonts.pageBody).toMatch(/Inter/i);
-  expect(result.fonts.boothBody).toMatch(/Lora/i);
-  expect(result.responses.every((response) => response.ok)).toBe(true);
+  expect(result.event.date).toBe("September 19, 2027");
+  expect(result.partnerFieldsVisible).toBe(true);
 });
 
 test("blemish correction heals local skin spots", async ({ page }) => {
