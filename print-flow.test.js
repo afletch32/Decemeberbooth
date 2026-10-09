@@ -7,11 +7,20 @@ function read(...parts) {
   return readFileSync(join(process.cwd(), ...parts), "utf8");
 }
 
-test("admin exposes explicit off free and paid print modes", () => {
+test("admin exposes digital-only, free, and paid print modes", () => {
   const html = read("index.html");
-  assert.ok(html.includes('<option value="off">Off</option>'));
+  assert.ok(html.includes('<option value="off">Digital Only</option>'));
   assert.ok(html.includes('<option value="free">Free Printing</option>'));
   assert.ok(html.includes('<option value="paid">Paid Printing</option>'));
+});
+
+test("event print price appears only when paid printing is selected", () => {
+  const html = read("index.html");
+  const app = read("scripts", "app.js");
+  assert.ok(html.includes('id="eventPrintPriceSettings" hidden'));
+  assert.ok(app.includes("function syncEventPrintPriceVisibility()"));
+  assert.ok(app.includes('DOM.eventPrintPriceSettings.hidden = DOM.printModeInput.value !== "paid";'));
+  assert.ok(app.includes('addEventListener("change", syncEventPrintPriceVisibility)'));
 });
 
 test("legacy paid queue settings migrate to explicit print modes", () => {
