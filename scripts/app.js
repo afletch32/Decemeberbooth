@@ -1011,6 +1011,13 @@ let themes = {
           landscape: "",
           prompt: "Touch to start",
         },
+        soundEffects: {
+          start: "/assets/sounds/witchcomein.mp3",
+          tap: "/assets/sounds/cartoonghost.mp3",
+          countdown: "/assets/sounds/firemagic.mp3",
+          photoCaptured: "/assets/sounds/healingmagic.mp3",
+          goodbye: "/assets/sounds/witchlaugh.mp3",
+        },
       },
     },
   },
