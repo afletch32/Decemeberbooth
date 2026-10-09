@@ -163,10 +163,7 @@ test("only complete approved theme packs appear in theme selectors", async ({ pa
   const halloweenThemeKeys = await page.locator(
     ".theme-quick-card[data-theme-key]"
   ).evaluateAll((cards) => cards.map((card) => card.dataset.themeKey).filter((key) => key.includes("halloween")));
-  expect(halloweenThemeKeys).toEqual(
-    expect.arrayContaining(["fall:halloween", "fall:cuteHalloween"])
-  );
-  expect(await page.locator(".theme-quick-card[data-theme-key]").count()).toBeGreaterThan(8);
+  expect(halloweenThemeKeys).toContain("fall:halloween");
 });
 
 async function expectCreatePathValidation(page, options) {

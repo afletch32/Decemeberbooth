@@ -999,6 +999,21 @@ test("asset library explains saved, filtered, and removal actions", () => {
   );
 });
 
+test("quick theme picker shows the full catalog and repairs saved Halloween frames", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+
+  assert.ok(
+    appScript.includes("const visibleEntries = entries;") &&
+      !appScript.includes("entries.slice(0, 8)"),
+    "quick picker should render every available theme card"
+  );
+  assert.ok(
+    appScript.includes("hasOverlayDefinitionSource(baseOverlays)") &&
+      appScript.includes("hasCorruptedThemeOverlayEntries(parsed)"),
+    "saved built-in overlays should restore their structured frame definitions"
+  );
+});
+
 test("theme screens stay preset and out of the Asset Library", () => {
   const html = readProjectFile("index.html");
   const appScript = readProjectFile("scripts", "app.js");
