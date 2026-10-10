@@ -3,11 +3,11 @@
 - Current goal: Restore the live camera preview while retaining the selected filter and lightweight preview processing.
 - Done: The camera preview frame is transparent so the animated Halloween backdrop remains visible while the camera is unavailable or starting. Added the missing low-resolution source-frame renderer used by the live imaging loop; it crops to the active orientation and camera zoom before processing.
 - In progress: None.
-- Next steps: Deploy and confirm the live preview renderer is served from production.
+- Next steps: Reload the booth page; test the real camera on the HTTPS production URL with camera permission granted.
 - Known bugs/blockers: Real guest camera/audio, physical printing, sharing delivery, and a real PayPal capture remain unverified.
 - Important decisions: Remove only references to retired Halloween assets. Keep Cloudflare `main` as the production source.
-- Verification: Static diff review confirms the previously missing live preview renderer now supplies the live imaging loop. `git diff --check` is clean.
-- Release: Pending.
+- Verification: Module syntax check and `git diff --check` pass. The live production HTML, app module, and service worker return HTTP 200 and include the new renderer/cache versions. Real camera hardware was not exercised here.
+- Release: Fix commit `f357c35` is live on Cloudflare Pages production deployment `bc3a7a2b-b651-4e33-9d12-b9b7dbcccb86` (2026-10-10).
 
 ## Existing production records
 
