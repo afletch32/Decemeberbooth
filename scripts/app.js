@@ -1,3 +1,5 @@
+import { STANDARD_DOUBLE_COLUMN_STRIP_SLOTS } from "./strip-layout-utils.mjs";
+import { migrateHalloweenEventAssets, migrateHalloweenThemeAssets } from "./halloween-assets.mjs";
 import { CanvasBuffer, offscreenToDataURL } from "./canvas-utils.mjs";
 import {
   buildBoothVideoUrl,
@@ -50,7 +52,10 @@ import {
   loadQrCodeLibrary,
   loadSelfieSegmentationLibrary,
 } from "./external-library-loader.mjs";
-import { getVideoPreviewPosterSrc } from "./media-preview-utils.mjs";
+import {
+  getVideoPreviewPosterSrc,
+  resolvePreviewAssetSrc,
+} from "./media-preview-utils.mjs";
 import {
   getThemeSoundCue,
   resolveThemeSoundProfileName,
@@ -203,7 +208,6 @@ const APPROVED_THEME_KEYS = new Set([
   "school:hawksCheer",
   "school:ane",
   "school:streamNight",
-  "wedding:romantic",
 ]);
 
 let themes = {
@@ -393,117 +397,6 @@ let themes = {
           landscape: "",
           prompt: "Touch to start",
         },
-      },
-    },
-  },
-  wedding: {
-    name: "Wedding",
-    themes: {
-      timeless: {
-        name: "Timeless Romance",
-        eventTypes: ["wedding"],
-        fontPairingStyle: "wedding",
-        accent: "#d7b48a",
-        accent2: "#fffaf4",
-        fontHeading: "'Playfair Display', serif",
-        fontBody: "'Source Sans 3', sans-serif",
-        logo: "",
-        backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788547/photobooth/events/assets/timeless-romance-background-background_tu1nzg.svg",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788553/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-4_gw2edi.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788562/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-5_bpyzlq.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788565/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-6_mjo2fm.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788566/photobooth/events/assets/timeless-romance-background-timeless-romance-bg-8_ykyj6y.png",
-        ],
-        overlays: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788567/photobooth/events/assets/timeless-romance-overlay-timeless-romance-single-overlay_nvjk2b.svg", name: "timeless-romance-overlay-single" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788569/photobooth/events/assets/timeless-romance-overlay-timeless-romance-strip-overlay_datpdy.svg", name: "timeless-romance-overlay-strip" },
-        ],
-        templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788571/photobooth/events/assets/timeless-romance-template-timeless-romance-single-template_mpuao5.svg", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788572/photobooth/events/assets/timeless-romance-template-timeless-romance-strip-template_dqymgy.svg", layout: "double_column" },
-        ],
-        welcome: {
-          title: "Celebrate the Moment",
-          portrait: "",
-          landscape: "",
-          prompt: "Touch to begin",
-        },
-        vibeSummary: "Classic, polished, formal",
-      },
-      romantic: {
-        name: "Wedding",
-        eventTypes: ["wedding"],
-        fontPairingStyle: "wedding",
-        accent: "#93b29b",
-        accent2: "#fffdf8",
-        fontHeading: "'Great Vibes', cursive",
-        fontBody: "'Lora', serif",
-        logo: "",
-        backgrounds: [
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788516/photobooth/events/assets/garden-vows-background-background_avnelo.svg",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788518/photobooth/events/assets/garden-vows-background-garden-vows-bg-1_i8bl4r.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788519/photobooth/events/assets/garden-vows-background-garden-vows-bg-2_de6ex9.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788523/photobooth/events/assets/garden-vows-background-garden-vows-bg-3_vxgwzc.png",
-          "https://res.cloudinary.com/afletch32/image/upload/v1783788540/photobooth/events/assets/garden-vows-background-garden-vows-bg-7_cib79o.png",
-        ],
-        overlays: [
-          {
-            id: "garden-vows-single-portrait",
-            name: "Wedding Photo · Portrait",
-            src: "/assets/wedding/garden-vows/overlays/garden-vows-single-portrait.png",
-            type: "overlay",
-            category: "wedding",
-            orientation: "portrait",
-            aspectRatio: "2:3",
-            photoSlots: [
-              { x: 0.1572, y: 0.095, width: 0.6875, height: 0.68, objectFit: "cover" },
-            ],
-            textFields: [
-              { key: "couple_names", xPct: 0.14, yPct: 0.80, wPct: 0.72, hPct: 0.065, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 78, minFontSize: 34, color: "#38584a", align: "center" },
-              { key: "event_date", xPct: 0.2, yPct: 0.88, wPct: 0.6, hPct: 0.035, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 34, minFontSize: 20, color: "#65766b", align: "center" },
-            ],
-          },
-          {
-            id: "garden-vows-single-landscape",
-            name: "Wedding Photo · Landscape",
-            src: "/assets/wedding/garden-vows/overlays/garden-vows-single-landscape.png",
-            type: "overlay",
-            category: "wedding",
-            orientation: "landscape",
-            aspectRatio: "3:2",
-            photoSlots: [
-              { x: 0.118, y: 0.128, width: 0.765, height: 0.617, objectFit: "cover" },
-            ],
-            textFields: [
-              { key: "couple_names", xPct: 0.15, yPct: 0.77, wPct: 0.7, hPct: 0.075, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 72, minFontSize: 32, color: "#38584a", align: "center" },
-              { key: "event_date", xPct: 0.2, yPct: 0.87, wPct: 0.6, hPct: 0.04, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 30, minFontSize: 18, color: "#65766b", align: "center" },
-            ],
-          },
-        ],
-        templates: [
-          {
-            src: "/assets/wedding/garden-vows/templates/garden-vows-three-photo-strip.png",
-            name: "Wedding Three-Photo Strip",
-            layout: "photo_strip_3",
-            slots: [
-              { x: 130, y: 148, w: 468, h: 459 },
-              { x: 129, y: 693, w: 474, h: 455 },
-              { x: 130, y: 1234, w: 470, h: 452 },
-            ],
-            textFields: [
-              { key: "couple_names", xPct: 0.15, yPct: 0.835, wPct: 0.7, hPct: 0.055, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 50, minFontSize: 26, color: "#38584a", align: "center" },
-              { key: "event_date", xPct: 0.2, yPct: 0.895, wPct: 0.6, hPct: 0.03, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 25, minFontSize: 16, color: "#65766b", align: "center" },
-            ],
-          },
-        ],
-        welcome: {
-          title: "Love Looks Good Here",
-          portrait: "",
-          landscape: "",
-          prompt: "Touch to start",
-        },
-        vibeSummary: "Soft, romantic, photo-forward",
       },
     },
   },
@@ -965,8 +858,8 @@ let themes = {
         font: "'Creepster', cursive",
         logo: "",
         backgrounds: [
-          "/assets/themes/halloween/halloween-background-portrait.webp",
-          "/assets/themes/halloween/halloween-background-landscape.webp",
+          "/assets/themes/halloween/halloween-background-portrait.mp4",
+          "/assets/themes/halloween/halloween-background-landscape.mp4",
         ],
         idleScreens: [
           { src: "/assets/themes/halloween/halloween-idle-portrait.webp", name: "Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
@@ -978,35 +871,19 @@ let themes = {
           { src: "/assets/themes/halloween/halloween-thank-you-portrait.webp", name: "Halloween Thank You portrait", orientation: "portrait" },
           { src: "/assets/themes/halloween/halloween-thank-you-landscape.webp", name: "Halloween Thank You landscape", orientation: "landscape" },
         ],
-        overlays: [
-          {
-            src: "/assets/themes/halloween/overlays/halloween-single-photo-portrait.svg",
-            name: "Halloween single photo portrait",
-            type: "photo",
-            orientation: "portrait",
-            aspectRatio: "2:3",
-            photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
-          },
-          {
-            src: "/assets/themes/halloween/overlays/halloween-single-photo-landscape.svg",
-            name: "Halloween single photo landscape",
-            type: "photo",
-            orientation: "landscape",
-            aspectRatio: "3:2",
-            photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
-          },
-        ],
-        templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788465/photobooth/events/assets/fall-halloween-template-halloween-template-2_kww0ma.png", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788465/photobooth/events/assets/fall-halloween-template-halloween-template-3_ndtob9.png", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788466/photobooth/events/assets/fall-halloween-template-halloween-template-4_os0gxj.png", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788467/photobooth/events/assets/fall-halloween-template-halloween-template-maddies_c9rx4y.png", layout: "single_photo" },
-        ],
+        overlays: [],
+        templates: [],
         welcome: {
           title: "Happy Halloween!",
           portrait: "",
           landscape: "",
           prompt: "Touch to start",
+        },
+        soundEffects: {
+          start: "/assets/sounds/witchcomein.mp3",
+          tap: "/assets/sounds/firemagic.mp3",
+          photoCaptured: "/assets/sounds/healingmagic.mp3",
+          goodbye: "/assets/sounds/witchlaugh.mp3",
         },
       },
     },
@@ -1230,23 +1107,12 @@ themes.fall.holidays.cuteHalloween = {
     { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-portrait.webp", name: "Happy Halloween Thank You portrait", orientation: "portrait" },
     { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-landscape.webp", name: "Happy Halloween Thank You landscape", orientation: "landscape" },
   ],
-  overlays: [
-    {
-      src: "/assets/themes/cute-halloween/overlays/happy-halloween-single-photo-portrait.png",
-      name: "Happy Halloween single photo portrait",
-      type: "photo",
-      orientation: "portrait",
-    },
-    {
-      src: "/assets/themes/cute-halloween/overlays/happy-halloween-single-photo-landscape.png",
-      name: "Happy Halloween single photo landscape",
-      type: "photo",
-      orientation: "landscape",
-    },
-  ],
+  overlays: [],
   templates: [],
   welcome: { title: "Happy Halloween", portrait: "", landscape: "", prompt: "Tap to Start" },
 };
+
+migrateHalloweenThemeAssets(themes);
 
 themes.general.themes.averyBirthday = {
   ...JSON.parse(JSON.stringify(themes.general.themes.birthday)),
@@ -1407,20 +1273,16 @@ const DOM = {
   boothBackgroundVideo: document.getElementById("boothBackgroundVideo"),
   boothHeader: document.getElementById("boothHeader"),
   boothControls: document.getElementById("controls"),
-  mobileSettingsToggle: document.getElementById("mobileSettingsToggle"),
   mobileSettingsClose: document.getElementById("mobileSettingsClose"),
   mobileSettingsBackdrop: document.getElementById("mobileSettingsBackdrop"),
   mobileSettingsSheet: document.getElementById("mobileSettingsSheet"),
-  frameCarousel: document.getElementById("frameCarousel"),
-  frameCarouselChoice: document.getElementById("frameCarouselChoice"),
-  frameCarouselName: document.getElementById("frameCarouselName"),
-  framePrevBtn: document.getElementById("framePrevBtn"),
-  frameNextBtn: document.getElementById("frameNextBtn"),
+  overlayPickerButton: document.getElementById("overlayPickerButton"),
   allowRetakes: document.getElementById("allowRetakes"),
   analyticsData: document.getElementById("analyticsData"),
   logo: document.getElementById("logo"),
   eventTitle: document.getElementById("eventTitle"),
   eventProfileSelect: document.getElementById("eventProfileSelect"),
+  eventTypeInput: document.getElementById("eventTypeInput"),
   eventPrintPriceInput: document.getElementById("eventPrintPriceInput"),
   saveEventPrintPriceBtn: document.getElementById("saveEventPrintPriceBtn"),
   createPathThemeSelect: document.getElementById("createPathThemeSelect"),
@@ -1430,9 +1292,12 @@ const DOM = {
   sessionThemeSearch: document.getElementById("sessionThemeSearch"),
   sessionThemeOptions: document.getElementById("sessionThemeOptions"),
   guestScreenOrientation: document.getElementById("guestScreenOrientation"),
+  screenOrientationButtons: Array.from(
+    document.querySelectorAll("[data-screen-orientation]")
+  ),
   themeQuickFilters: document.getElementById("themeQuickFilters"),
-  themeQuickGrid: document.getElementById("themeQuickGrid"),
   themeQuickSelectionName: document.getElementById("themeQuickSelectionName"),
+  themeQuickGrid: document.getElementById("themeQuickGrid"),
   themeQuickSelectionMeta: document.getElementById("themeQuickSelectionMeta"),
   sessionFontToggle: document.getElementById("sessionFontToggle"),
   sessionFontValue: document.getElementById("sessionFontValue"),
@@ -1454,9 +1319,12 @@ const DOM = {
   launchStripStatus: document.getElementById("launchStripStatus"),
   launchTemplateThumb: document.getElementById("launchTemplateThumb"),
   launchTemplateSummary: document.getElementById("launchTemplateSummary"),
+  launchBackgroundAssets: document.getElementById("launchBackgroundAssets"),
+  launchOverlayAssets: document.getElementById("launchOverlayAssets"),
+  launchTemplateAssets: document.getElementById("launchTemplateAssets"),
   livePhotoToggle: document.getElementById("livePhotoToggle"),
-  recordingModeToggle: document.getElementById("recordingModeToggle"),
   instantCaptureToggle: document.getElementById("instantCaptureToggle"),
+  recordingModeToggle: document.getElementById("recordingModeToggle"),
   countdownFiveToggle: document.getElementById("countdownFiveToggle"),
   themeSoundToggle: document.getElementById("themeSoundToggle"),
   themeSoundEditor: document.getElementById("themeSoundEditor"),
@@ -1725,6 +1593,7 @@ function setBoothControlsVisible(show) {
   if (!show) {
     setMobileSettingsOpen(false);
   }
+  syncOverlayPickerUi();
   syncMobileSettingsUi();
   requestAnimationFrame(() => logBoothViewportOverflow());
 }
@@ -2080,8 +1949,8 @@ function setMobileSettingsOpen(open) {
       shouldOpen ? "false" : "true"
     );
   }
-  if (DOM.mobileSettingsToggle) {
-    DOM.mobileSettingsToggle.setAttribute(
+  if (DOM.overlayPickerButton) {
+    DOM.overlayPickerButton.setAttribute(
       "aria-expanded",
       shouldOpen ? "true" : "false"
     );
@@ -2089,12 +1958,6 @@ function setMobileSettingsOpen(open) {
 }
 
 function syncMobileSettingsUi() {
-  if (DOM.mobileSettingsToggle) {
-    DOM.mobileSettingsToggle.classList.toggle(
-      "hidden",
-      !canShowFrameSettings() || !isMobileBoothViewport()
-    );
-  }
   if (!canShowFrameSettings()) setMobileSettingsOpen(false);
 }
 
@@ -2194,6 +2057,9 @@ let isStartingCamera = false;
 let capturePreviewFrozen = false;
 let liveImagingLoopStarted = false;
 let liveImagingFramePending = false;
+let liveImagingLastFrameAt = 0;
+const LIVE_PREVIEW_MAX_DIMENSION = 640;
+const LIVE_PREVIEW_FRAME_INTERVAL_MS = 50;
 let livePreviewStream = null;
 let latestProcessedFrameCanvas = null;
 let beautyEngineModulePromise = null;
@@ -2393,7 +2259,6 @@ const ASSET_LIBRARY_RECENT_LIMIT = 80;
 const LAST_THEME_KEY_STORAGE = "photoboothLastThemeKey";
 const QUICK_START_SESSION_DATE_KEY = "photoboothQuickStartDate";
 const SHOWCASE_DEMO_THEME_CANDIDATES = {
-  wedding: ["wedding:timeless", "wedding:romantic"],
   birthday: ["general:birthday"],
   general: ["general:summer", DEFAULT_THEME_KEY],
 };
@@ -2501,7 +2366,7 @@ function updateShowcaseDemoUi() {
 }
 
 function hasShowcaseDemoChoices() {
-  return ["wedding", "birthday", "general"].some((kind) =>
+  return ["birthday", "general"].some((kind) =>
     !!getShowcaseDemoThemeKey(kind)
   );
 }
@@ -2558,7 +2423,7 @@ function applyShowcaseDemoTheme(kind) {
 }
 
 function startShowcaseDemo() {
-  const order = ["wedding", "birthday", "general"];
+  const order = ["birthday", "general"];
   const kind = order.find((entry) => !!getShowcaseDemoThemeKey(entry));
   if (!kind) return;
   if (!applyShowcaseDemoTheme(kind)) return;
@@ -2568,7 +2433,7 @@ function startShowcaseDemo() {
 
 function cycleShowcaseDemoTheme() {
   if (!showcaseDemoActive) return false;
-  const order = ["wedding", "birthday", "general"];
+  const order = ["birthday", "general"];
   const currentKind = inferThemeEventStyle(
     showcaseDemoCurrentKey,
     resolveThemeByKey(showcaseDemoCurrentKey)
@@ -2764,11 +2629,12 @@ function isVideoAsset(entry) {
 }
 
 function createAssetPreviewMedia(entry, alt = "") {
-  const src = getAssetPreviewSrc(getAssetEntrySrc(entry));
+  const source = getAssetEntrySrc(entry);
+  const previewSrc = isVideoAsset(entry)
+    ? getVideoPreviewPosterSrc(entry, source)
+    : getAssetPreviewSrc(source);
   const img = document.createElement("img");
-  img.src = withBust(
-    isVideoAsset(entry) ? getVideoPreviewPosterSrc(entry, src) : src
-  );
+  img.src = withBust(resolvePreviewAssetSrc(previewSrc, window.location.href));
   img.alt = alt;
   img.loading = "lazy";
   img.decoding = "async";
@@ -2777,8 +2643,13 @@ function createAssetPreviewMedia(entry, alt = "") {
 
 function getAssetPreviewSrc(src) {
   const value = String(src || "");
-  if (!/^\/assets\//.test(value) || /\.svg(?:$|[?#])/i.test(value)) return value;
-  return value.replace(/\.(png|jpe?g|webp)(?=($|[?#]))/i, ".thumb.webp");
+  if (!/^\/assets\//.test(value) || /\.svg(?:$|[?#])/i.test(value)) {
+    return resolvePreviewAssetSrc(value, window.location.href);
+  }
+  return resolvePreviewAssetSrc(
+    value.replace(/\.(png|jpe?g|webp)(?=($|[?#]))/i, ".thumb.webp"),
+    window.location.href
+  );
 }
 
 function createAssetSelectionSet(value) {
@@ -3086,11 +2957,12 @@ const THEME_SETUP_GROUP_ITEM_ORDER = {
   Holidays: [
     "Fourth of July",
     "Halloween",
+    "Happy Halloween",
     "Christmas",
     "Valentine's Day",
     "St. Patrick's Day",
   ],
-  Wedding: ["Wedding", "Timeless Romance"],
+  Wedding: ["Wedding"],
   Youth: [
     "Spring Hill Hawks",
     "Spring Hill Hawks at Titans Stadium",
@@ -3121,7 +2993,6 @@ const THEME_SETUP_LABEL_OVERRIDES = {
   "st patricks": "St. Patrick's Day",
   "st patrick's": "St. Patrick's Day",
   "garden vows": "Wedding",
-  "timeless romance": "Timeless Romance",
   hawks: "Spring Hill Hawks",
   hawkscheer: "Spring Hill Hawks Cheer",
   "hawks cheer": "Spring Hill Hawks Cheer",
@@ -3178,7 +3049,7 @@ function getThemeSetupDisplayGroup(themeKey, theme) {
     .join(" ");
   if (/(spring hill hawks|hawks cheer)/.test(normalized)) return "Sports";
   if (/(amanda north|ane|stream night)/.test(normalized)) return "Youth";
-  if (/(garden vows|timeless romance|wedding)/.test(normalized)) return "Wedding";
+  if (/(garden vows|wedding)/.test(normalized)) return "Wedding";
   if (/(fourth of july|4th of july|halloween|christmas|valentine|st patrick)/.test(normalized)) return "Holidays";
   if (
     /(summer|fall|winter|spring|winter wonderland|santa s workshop|new year)/.test(
@@ -3316,7 +3187,9 @@ function syncSessionThemeSearch() {
 }
 
 let activeThemeQuickFilter = "All";
-let themeQuickRenderSignature = "";
+const themeQuickCardsByKey = new Map();
+const themeQuickOrderByKey = new Map();
+let themeQuickPreviewObserver = null;
 
 const THEME_QUICK_FILTERS = ["All", "Celebrations", "Weddings", "Sports", "Schools", "Seasons", "Holidays"];
 
@@ -3375,55 +3248,78 @@ function renderThemeQuickPicker() {
     button.classList.toggle("active", active);
     button.setAttribute("aria-pressed", active ? "true" : "false");
   });
-  const entries = getSetupThemeEntries().filter((entry) => themeMatchesQuickFilter(entry, activeThemeQuickFilter));
-  const visibleEntries = entries.slice(0, 8);
-  const renderSignature = JSON.stringify(visibleEntries.map((entry) => [
-    entry.key,
-    entry.label,
-    entry.group,
-    getThemeQuickPreview(entry.theme),
-  ]));
-  if (renderSignature !== themeQuickRenderSignature) {
-    const cards = document.createDocumentFragment();
-    visibleEntries.forEach((entry) => {
-      const card = document.createElement("button");
+  const allEntries = getSetupThemeEntries();
+  allEntries.forEach((entry) => {
+    if (!themeQuickOrderByKey.has(entry.key)) {
+      themeQuickOrderByKey.set(entry.key, themeQuickOrderByKey.size);
+    }
+  });
+  allEntries.sort(
+    (a, b) => themeQuickOrderByKey.get(a.key) - themeQuickOrderByKey.get(b.key)
+  );
+  const entries = allEntries.filter((entry) => themeMatchesQuickFilter(entry, activeThemeQuickFilter));
+  const visibleEntries = entries;
+  const visibleKeys = new Set(visibleEntries.map((entry) => entry.key));
+  themeQuickCardsByKey.forEach((card, key) => {
+    if (!visibleKeys.has(key)) card.remove();
+  });
+  const observePreview = (node) => {
+    if (!node.dataset.previewSrc) return;
+    if ("IntersectionObserver" in window) {
+      if (!themeQuickPreviewObserver) {
+        themeQuickPreviewObserver = new IntersectionObserver((items, observer) => {
+          items.forEach((item) => {
+            if (!item.isIntersecting) return;
+            const preview = item.target;
+            const src = preview.dataset.previewSrc;
+            if (src) preview.style.backgroundImage = `url("${src}")`;
+            observer.unobserve(preview);
+          });
+        }, { rootMargin: "160px" });
+      }
+      themeQuickPreviewObserver.observe(node);
+    } else {
+      node.style.backgroundImage = `url("${node.dataset.previewSrc}")`;
+    }
+  };
+  visibleEntries.forEach((entry, index) => {
+    let card = themeQuickCardsByKey.get(entry.key);
+    if (!card) {
+      card = document.createElement("button");
       card.type = "button";
       card.className = "theme-quick-card";
       card.dataset.themeKey = entry.key;
       const preview = document.createElement("div");
       preview.className = "theme-quick-card-art";
-      const previewUrl = getThemeQuickPreview(entry.theme);
-      if (previewUrl) preview.dataset.previewSrc = getAssetPreviewSrc(previewUrl);
       const copy = document.createElement("span");
       copy.className = "theme-quick-card-copy";
       const label = document.createElement("strong");
-      label.textContent = entry.label;
       const group = document.createElement("span");
-      group.textContent = entry.group;
       copy.append(label, group);
       card.append(preview, copy);
       card.addEventListener("click", () => activateThemeFromSetupKey(entry.key));
-      cards.appendChild(card);
-    });
-    DOM.themeQuickGrid.replaceChildren(cards);
-    themeQuickRenderSignature = renderSignature;
-    const applyPreview = (node) => {
-      const src = node.dataset.previewSrc;
-      if (src && !node.style.backgroundImage) node.style.backgroundImage = `url("${src}")`;
-    };
-    if ("IntersectionObserver" in window) {
-      const observer = new IntersectionObserver((items, currentObserver) => {
-        items.forEach((item) => {
-          if (!item.isIntersecting) return;
-          applyPreview(item.target);
-          currentObserver.unobserve(item.target);
-        });
-      }, { rootMargin: "160px" });
-      DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach((node) => observer.observe(node));
-    } else {
-      DOM.themeQuickGrid.querySelectorAll("[data-preview-src]").forEach(applyPreview);
+      themeQuickCardsByKey.set(entry.key, card);
     }
-  }
+    const preview = card.querySelector(".theme-quick-card-art");
+    const copy = card.querySelector(".theme-quick-card-copy");
+    const label = copy.querySelector("strong");
+    const group = copy.querySelector("span");
+    if (label.textContent !== entry.label) label.textContent = entry.label;
+    if (group.textContent !== entry.group) group.textContent = entry.group;
+    const previewUrl = getThemeQuickPreview(entry.theme);
+    const previewSrc = previewUrl ? getAssetPreviewSrc(previewUrl) : "";
+    if (preview.dataset.previewSrc !== previewSrc) {
+      preview.dataset.previewSrc = previewSrc;
+      if (!previewSrc) {
+        preview.style.backgroundImage = "";
+        if (themeQuickPreviewObserver) themeQuickPreviewObserver.unobserve(preview);
+      } else {
+        observePreview(preview);
+      }
+    }
+    const cardAtIndex = DOM.themeQuickGrid.children[index];
+    if (cardAtIndex !== card) DOM.themeQuickGrid.insertBefore(card, cardAtIndex || null);
+  });
   DOM.themeQuickGrid.querySelectorAll("[data-theme-key]").forEach((card) => {
     const active = card.dataset.themeKey === selectedKey;
     card.classList.toggle("active", active);
@@ -3735,6 +3631,15 @@ function setupEventProfileControls() {
       setGuestScreenOrientation(DOM.guestScreenOrientation.value);
     });
   }
+  DOM.screenOrientationButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!DOM.guestScreenOrientation || button.disabled) return;
+      DOM.guestScreenOrientation.value = button.dataset.screenOrientation;
+      DOM.guestScreenOrientation.dispatchEvent(
+        new Event("change", { bubbles: true })
+      );
+    });
+  });
   if (DOM.sessionThemeToggle) {
     DOM.sessionThemeToggle.addEventListener("click", () =>
       toggleSetupCombobox("theme")
@@ -3852,15 +3757,6 @@ function setupBoothButtons() {
 }
 
 function setupMobileSettingsControls() {
-  if (DOM.mobileSettingsToggle) {
-    DOM.mobileSettingsToggle.addEventListener("click", () => {
-      const isOpen = !!(
-        DOM.boothScreen &&
-        DOM.boothScreen.classList.contains("mobile-settings-open")
-      );
-      setMobileSettingsOpen(!isOpen);
-    });
-  }
   if (DOM.mobileSettingsClose) {
     DOM.mobileSettingsClose.addEventListener("click", () =>
       setMobileSettingsOpen(false)
@@ -3871,14 +3767,8 @@ function setupMobileSettingsControls() {
       setMobileSettingsOpen(false)
     );
   }
-  if (DOM.framePrevBtn) {
-    DOM.framePrevBtn.addEventListener("click", () => moveBoothFrame(-1));
-  }
-  if (DOM.frameNextBtn) {
-    DOM.frameNextBtn.addEventListener("click", () => moveBoothFrame(1));
-  }
-  if (DOM.frameCarouselChoice) {
-    DOM.frameCarouselChoice.addEventListener("click", () =>
+  if (DOM.overlayPickerButton) {
+    DOM.overlayPickerButton.addEventListener("click", () =>
       setMobileSettingsOpen(true)
     );
   }
@@ -5513,10 +5403,12 @@ function refreshBeautyPresetEffects() {
       lighting: { ...preset.lighting, ...(override.lighting || {}) },
     };
   });
-  if (!FILTER_EFFECTS.some((preset) => preset.id === selectedFilter)) {
+  const configuredGuestFilter = themes?._meta?.guestFilterId;
+  if (FILTER_EFFECTS.some((preset) => preset.id === configuredGuestFilter)) {
+    selectedFilter = configuredGuestFilter;
+  } else if (!FILTER_EFFECTS.some((preset) => preset.id === selectedFilter)) {
     selectedFilter = FILTER_EFFECTS[0] ? FILTER_EFFECTS[0].id : "natural";
   }
-  updateFilterCarouselUI();
 }
 
 function getEditableBeautyPreset() {
@@ -5595,7 +5487,13 @@ function setupBeautyPresetEditor() {
   if (!DOM.beautyPresetSelect || !DOM.beautyPresetControls) return;
   refreshBeautyPresetEffects();
   renderBeautyPresetEditor();
-  DOM.beautyPresetSelect.addEventListener("change", renderBeautyPresetEditor);
+  DOM.beautyPresetSelect.addEventListener("change", () => {
+    selectedFilter = DOM.beautyPresetSelect.value;
+    if (!themes._meta) themes._meta = {};
+    themes._meta.guestFilterId = selectedFilter;
+    renderBeautyPresetEditor();
+    persistBeautyPresetEdits();
+  });
   if (DOM.resetBeautyPresetButton) {
     DOM.resetBeautyPresetButton.addEventListener("click", () => {
       resetBeautyPreset(DOM.beautyPresetSelect.value);
@@ -5781,21 +5679,18 @@ function syncSetupLaunchModeUi() {
 }
 
 function getLaunchBackgroundCountLabel() {
-  const backgroundCount = getSessionEffectiveAssetSourceSet("background").size;
-  if (!backgroundCount) return "No backgrounds selected";
-  return `${backgroundCount} background${backgroundCount === 1 ? "" : "s"} selected`;
+  const backgroundCount = getBackgroundList(activeTheme).length;
+  return `${backgroundCount} selected`;
 }
 
 function getLaunchOverlayCountLabel() {
-  const overlayCount = getSessionEffectiveAssetSourceSet("overlay").size;
-  if (!overlayCount) return "No overlays selected";
-  return `${overlayCount} overlay${overlayCount === 1 ? "" : "s"} selected`;
+  const overlayCount = getAssignedOverlayList(activeTheme).length;
+  return `${overlayCount} selected`;
 }
 
 function getLaunchTemplateCountLabel() {
   const templateCount = getSessionEffectiveAssetSourceSet("template").size;
-  if (!templateCount) return "No templates selected";
-  return `${templateCount} template${templateCount === 1 ? "" : "s"} selected`;
+  return `${templateCount} selected`;
 }
 
 function setLaunchSummaryText(targetIds, value) {
@@ -5823,6 +5718,46 @@ function setLaunchSummaryThumbnail(nodeId, src, label) {
     return;
   }
   node.appendChild(createAssetTile(src));
+}
+
+function renderLaunchAssetList(container, entries = [], categoryLabel = "asset") {
+  if (!container) return;
+  const visibleEntries = Array.isArray(entries) ? entries : [];
+  const signature = JSON.stringify(
+    visibleEntries.map((entry) => [
+      getAssetEntrySrc(entry),
+      getAssetDisplayName(entry),
+    ])
+  );
+  if (container.dataset.assetSignature === signature) return;
+  container.dataset.assetSignature = signature;
+  container.replaceChildren();
+
+  if (!visibleEntries.length) {
+    const empty = document.createElement("p");
+    empty.className = "setup-session-asset-empty";
+    empty.textContent = `No ${categoryLabel}s selected.`;
+    container.appendChild(empty);
+    return;
+  }
+
+  visibleEntries.forEach((entry) => {
+    const src = getAssetEntrySrc(entry);
+    if (!src) return;
+    const card = document.createElement("div");
+    card.className = "setup-session-asset-card";
+    const preview = createAssetTile(src);
+    const media = preview.querySelector("img, video");
+    if (media) {
+      media.alt = getAssetDisplayName(entry);
+      media.loading = "lazy";
+    }
+    const label = document.createElement("span");
+    label.textContent = getAssetDisplayName(entry);
+    label.title = label.textContent;
+    card.append(preview, label);
+    container.appendChild(card);
+  });
 }
 
 function getLaunchSummaryThumbnailSrc(kind) {
@@ -5909,18 +5844,33 @@ function updateLaunchSummary() {
     getLaunchSummaryThumbnailSrc("template"),
     getLaunchSummaryThumbnailLabel("template") || "Template"
   );
+  renderLaunchAssetList(
+    DOM.launchBackgroundAssets,
+    getBackgroundList(activeTheme),
+    "background"
+  );
+  renderLaunchAssetList(
+    DOM.launchOverlayAssets,
+    getAssignedOverlayList(activeTheme),
+    "overlay"
+  );
+  renderLaunchAssetList(
+    DOM.launchTemplateAssets,
+    getTemplateList(activeTheme),
+    "template"
+  );
 }
 
 const EDIT_SCALE_CONFIG = [
   {
-    id: "header",
-    label: "Header",
-    cssVar: "--edit-header-scale",
-    storageKey: "editScaleHeader",
     min: 0.6,
     max: 1.4,
     posVar: "--edit-header-y",
     posKey: "editPosHeader",
+    id: "header",
+    label: "Header",
+    cssVar: "--edit-header-scale",
+    storageKey: "editScaleHeader",
     posMin: -200,
     posMax: 200,
   },
@@ -6368,6 +6318,14 @@ function setupEventVisualEditorControls() {
   bindTextInput(DOM.eventPartner2Input, "partner2");
   bindTextInput(DOM.eventBirthdayNameInput, "birthdayName");
   bindTextInput(DOM.eventExpoCompanyInput, "expoCompany");
+  if (DOM.eventTypeInput) {
+    DOM.eventTypeInput.addEventListener("change", () => {
+      const eventType = normalizeEventStyle(DOM.eventTypeInput.value) || "general";
+      if (getActiveEvent()) updateActiveEventDetails({ eventType });
+      else updateActiveSessionTextDetails({ eventType });
+      syncEventSetupEditor(getEventEditorTheme());
+    });
+  }
 
   if (DOM.eventBannerSizeInput) {
     DOM.eventBannerSizeInput.addEventListener("input", () => {
@@ -6626,6 +6584,7 @@ async function loadThemesRemote() {
     const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
     const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
     const migratedSummerAssets = migrateSummerThemeAssets(themes);
+    const migratedHalloweenAssets = migrateHalloweenThemeAssets(themes);
     const migratedSpringHillHawks = migrateSpringHillHawksAssets(themes);
     const migratedSpringHillHawksStadium =
       migrateSpringHillHawksStadiumAssets(themes);
@@ -6643,6 +6602,7 @@ async function loadThemesRemote() {
       migratedAveryScreens ||
       migratedAmandaNorthScreens ||
       migratedSummerAssets ||
+      migratedHalloweenAssets ||
       migratedSpringHillHawks ||
       migratedSpringHillHawksStadium ||
       migratedSpringHillHawksCheer
@@ -7120,7 +7080,14 @@ function updateStaffPrintQueueUrl() {
 
 function loadPrintSettings() {
   const settings = getPrintSettings();
-  if (DOM.printModeInput) DOM.printModeInput.value = settings.mode;
+  if (DOM.printModeInput) {
+    DOM.printModeInput.value = settings.mode;
+    syncEventPrintPriceVisibility();
+    if (DOM.printModeInput.dataset.priceVisibilityBound !== "true") {
+      DOM.printModeInput.dataset.priceVisibilityBound = "true";
+      DOM.printModeInput.addEventListener("change", syncEventPrintPriceVisibility);
+    }
+  }
   if (DOM.printNoPaymentRequiredInput) DOM.printNoPaymentRequiredInput.checked = settings.noPaymentRequired === true;
   if (DOM.printPanelTitleInput) DOM.printPanelTitleInput.value = settings.panelTitle;
   if (DOM.printPanelBodyInput) DOM.printPanelBodyInput.value = settings.panelBody;
@@ -7134,6 +7101,11 @@ function loadPrintSettings() {
   updateStaffPrintQueueUrl();
   syncEventPrintPriceInput();
   loadPayPalPrintConfigStatus();
+}
+
+function syncEventPrintPriceVisibility() {
+  if (!DOM.eventPrintPriceSettings || !DOM.printModeInput) return;
+  DOM.eventPrintPriceSettings.hidden = DOM.printModeInput.value !== "paid";
 }
 
 function syncEventPrintPriceInput(force = false) {
@@ -7212,6 +7184,7 @@ function savePrintSettings() {
     eventId: (DOM.printEventIdInput && DOM.printEventIdInput.value.trim()) || "",
   };
   localStorage.setItem(PRINT_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  syncEventPrintPriceVisibility();
   updateStaffPrintQueueUrl();
   showToast("Print settings saved");
 }
@@ -8995,6 +8968,7 @@ function setMode(m) {
   syncBoothModeButtons();
   syncCaptureStatusIndicators();
   setMobileSettingsOpen(false);
+  syncOverlayPickerUi();
   requestAnimationFrame(syncFrameSizeVars);
 }
 
@@ -9050,120 +9024,19 @@ function syncPhotoOverlayOrientationWithAssets() {
   }
 }
 
-function getFrameCarouselEntries() {
-  return [
-    null,
-    ...filterPhotoOverlaysByOrientation(
-      getOverlayList(activeTheme),
-      photoOverlayOrientation
-    ),
-  ];
-}
-
-function syncFrameCarouselUi() {
-  if (!DOM.frameCarousel) return;
-  const show = canShowFrameSettings() && getSelectedCaptureMode() === "photo";
-  DOM.frameCarousel.classList.toggle("hidden", !show);
-  const selected = getPhotoOverlayBySrc(selectedOverlay);
-  if (DOM.frameCarouselName) {
-    DOM.frameCarouselName.textContent = selected
-      ? normalizeAssetDisplayName(selected, "Selected Frame")
-      : "No Frame";
-  }
-}
-
-function selectBoothFrame(entry) {
-  const src = entry && entry.src ? entry.src : null;
-  if (src && src !== selectedOverlay) {
-    const img = new window.Image();
-    img.onload = () => {
-      selectedOverlay = src;
-      lastPhotoOverlay = src;
-      lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
-      syncOverlayPreviewSurface({ mode: "live" });
-      applyPreviewOrientation();
-      renderOptionsForMode(mode);
-      syncFrameCarouselUi();
-      logBoothFrameState("overlay-selected", mode);
-    };
-    img.onerror = () => {
-      console.warn("Frame image failed to load:", src);
-      selectedOverlay = src;
-      lastPhotoOverlay = src;
-      lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
-      syncOverlayPreviewSurface({ mode: "live" });
-      applyPreviewOrientation();
-      renderOptionsForMode(mode);
-      syncFrameCarouselUi();
-      logBoothFrameState("overlay-selected-error", mode);
-    };
-    img.src = src;
-  } else {
-    selectedOverlay = src;
-    lastPhotoOverlay = src;
-    lastPhotoOverlayByOrientation[photoOverlayOrientation] = src;
-    if (src) syncOverlayPreviewSurface({ mode: "live" });
-    else clearOverlayPreviewSurface();
-    applyPreviewOrientation();
-    renderOptionsForMode(mode);
-    syncFrameCarouselUi();
-    logBoothFrameState("overlay-selected", mode);
-  }
-}
-
-function moveBoothFrame(direction) {
-  const entries = getFrameCarouselEntries();
-  if (!entries.length) return;
-  const currentIndex = entries.findIndex(
-    (entry) => (entry && entry.src ? entry.src : null) === selectedOverlay
+function syncOverlayPickerUi() {
+  if (!DOM.overlayPickerButton) return;
+  const show = !!(
+    DOM.boothScreen &&
+    !DOM.boothScreen.classList.contains("hidden") &&
+    DOM.boothScreen.classList.contains("booth-ready") &&
+    !DOM.boothScreen.classList.contains("welcome-active") &&
+    !DOM.boothScreen.classList.contains("share-mode") &&
+    !DOM.boothScreen.classList.contains("countdown-mode") &&
+    !DOM.boothScreen.classList.contains("finalizing-mode") &&
+    getSelectedCaptureMode() === "photo"
   );
-  const nextIndex =
-    ((currentIndex < 0 ? 0 : currentIndex) + direction + entries.length) %
-    entries.length;
-  selectBoothFrame(entries[nextIndex]);
-}
-
-function setFilter(filterId) {
-  selectedFilter = filterId;
-  applyFilterToVideo();
-  updateFilterCarouselUI();
-}
-
-function updateFilterCarouselUI() {
-  const filterDef = FILTER_EFFECTS.find((f) => f.id === selectedFilter);
-  const nameEl = document.getElementById("filterCarouselName");
-  if (nameEl) {
-    nameEl.textContent = (filterDef && filterDef.icon ? filterDef.icon + " " : "") + (filterDef ? filterDef.name : "Natural");
-  }
-  const prevBtn = document.getElementById("filterPrevBtn");
-  const nextBtn = document.getElementById("filterNextBtn");
-  if (prevBtn) prevBtn.style.opacity = "";
-  if (nextBtn) nextBtn.style.opacity = "";
-}
-
-function updateFilterCarouselVisibility() {
-  const carousel = document.getElementById("filterCarousel");
-  if (!carousel) return;
-  const captureMode = getSelectedCaptureMode();
-  const isPhotoMode = captureMode === "photo";
-  const isBoothReady = DOM.boothScreen && DOM.boothScreen.classList.contains("booth-ready");
-  const isShareMode = DOM.boothScreen && DOM.boothScreen.classList.contains("share-mode");
-  const isCountdownMode = DOM.boothScreen && DOM.boothScreen.classList.contains("countdown-mode");
-  const shouldShow = isPhotoMode && isBoothReady && !isShareMode && !isCountdownMode;
-  carousel.classList.toggle("hidden", !shouldShow);
-}
-
-function nextFilter() {
-  const idx = FILTER_EFFECTS.findIndex((f) => f.id === selectedFilter);
-  const nextIdx = (Math.max(idx, 0) + 1) % FILTER_EFFECTS.length;
-  setFilter(FILTER_EFFECTS[nextIdx].id);
-}
-
-function prevFilter() {
-  const idx = FILTER_EFFECTS.findIndex((f) => f.id === selectedFilter);
-  const currentIdx = idx >= 0 ? idx : 0;
-  const prevIdx = (currentIdx - 1 + FILTER_EFFECTS.length) % FILTER_EFFECTS.length;
-  setFilter(FILTER_EFFECTS[prevIdx].id);
+  DOM.overlayPickerButton.classList.toggle("hidden", !show);
 }
 
 function getSelectedFilterDef() {
@@ -9211,7 +9084,7 @@ function setPhotoOverlayOrientation(nextOrientation) {
   applyPreviewOrientation();
   logBoothFrameState("overlay-orientation-change", mode);
   setMobileSettingsOpen(false);
-  syncFrameCarouselUi();
+  syncOverlayPickerUi();
 }
 
 function applyFilterToVideo() {
@@ -9271,11 +9144,14 @@ async function applySelectedBeautyToCanvas(canvas) {
   }
 }
 
-async function processCanvasThroughImagingPipeline(sourceCanvas) {
+async function processCanvasThroughImagingPipeline(sourceCanvas, options = {}) {
+  const { preview = false } = options;
   if (!sourceCanvas) return sourceCanvas;
   let processed = applySelectedFilterToCanvas(sourceCanvas);
-  processed = await applySelectedBeautyToCanvas(processed);
-  processed = applyAutoEnhanceCanvas(processed);
+  if (!preview) {
+    processed = await applySelectedBeautyToCanvas(processed);
+    processed = applyAutoEnhanceCanvas(processed);
+  }
   if (getAiBackgroundEnabled()) {
     const mask = await getAiSegmentationMask(processed);
     if (mask) {
@@ -9330,17 +9206,10 @@ function cloneCanvas(source, bufferName = "processed-capture") {
 }
 
 async function getCurrentProcessedFrameCanvas() {
-  if (
-    latestProcessedFrameCanvas &&
-    latestProcessedFrameCanvas.dataset.ready === "true"
-  ) {
-    return cloneCanvas(latestProcessedFrameCanvas, "processed-capture");
-  }
   const raw = drawToCanvasFromVideo();
-  return cloneCanvas(
-    await processCanvasThroughImagingPipeline(raw),
-    "processed-capture"
-  );
+  const processed = await processCanvasThroughImagingPipeline(raw);
+  processed.__processedByLiveImagingPipeline = true;
+  return cloneCanvas(processed, "processed-capture");
 }
 
 function getLivePreviewStream() {
@@ -9361,27 +9230,28 @@ function startLiveImagingPipeline() {
   if (liveImagingLoopStarted) return;
   liveImagingLoopStarted = true;
   const renderFrame = async () => {
-    if (!capturePreviewFrozen && !liveImagingFramePending) {
+    const now = performance.now();
+    const canvasPreviewVisible = DOM.livePreviewCanvas && DOM.livePreviewCanvas.style.display !== "none" && !DOM.livePreviewCanvas.classList.contains("hidden");
+    const slottedLivePreviewVisible = !!DOM.photoSlotLayer?.querySelector(".photo-slot-media.is-live");
+    const previewVisible = DOM.boothScreen && !DOM.boothScreen.classList.contains("hidden") && (canvasPreviewVisible || slottedLivePreviewVisible);
+    if (previewVisible && !capturePreviewFrozen && !liveImagingFramePending && now - liveImagingLastFrameAt >= LIVE_PREVIEW_FRAME_INTERVAL_MS) {
       liveImagingFramePending = true;
+      liveImagingLastFrameAt = now;
       try {
-        const raw = drawToCanvasFromVideo();
-        const processed = await processCanvasThroughImagingPipeline(raw);
+        const raw = drawToLivePreviewCanvasFromVideo();
+        const processed = await processCanvasThroughImagingPipeline(raw, { preview: true });
         drawProcessedFrameToLivePreview(processed);
       } catch (error) {
         console.warn("Live imaging frame failed", error);
-        // Keep the deterministic booth fixture usable when a browser cannot
-        // initialize the optional processing pipeline. Production camera
-        // frames continue to use the normal error path.
         if (isBoothTestMode()) {
-          try {
-            drawProcessedFrameToLivePreview(drawToCanvasFromVideo());
-          } catch (_) {}
+          try { drawProcessedFrameToLivePreview(drawToCanvasFromVideo()); } catch (_) {}
         }
       } finally {
         liveImagingFramePending = false;
       }
     }
-    requestAnimationFrame(renderFrame);
+    if (previewVisible) requestAnimationFrame(renderFrame);
+    else window.setTimeout(renderFrame, 250);
   };
   requestAnimationFrame(renderFrame);
 }
@@ -9518,7 +9388,7 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
 
   if (captureMode === "photo") {
     syncPhotoOverlayOrientationWithAssets();
-    const overlayGrid = addSection("Choose Your Frame");
+    const overlayGrid = addSection("Overlays");
     const noOverlay = document.createElement("div");
     noOverlay.className = "thumb";
     noOverlay.dataset.overlayNone = "true";
@@ -9539,7 +9409,6 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
       lastPhotoOverlayByOrientation[photoOverlayOrientation] = null;
       clearOverlayPreviewSurface();
       applyPreviewOrientation();
-      syncFrameCarouselUi();
       setMobileSettingsOpen(false);
     };
     if (!selectedOverlay) noOverlay.classList.add("selected");
@@ -9589,7 +9458,6 @@ function renderOptionsForMode(targetMode = mode, options = {}) {
           syncOverlayPreviewSurface({ mode: "live" });
           applyPreviewOrientation();
           logBoothFrameState("overlay-selected", mode);
-          syncFrameCarouselUi();
           setMobileSettingsOpen(false);
         };
         overlayGrid.appendChild(wrap);
@@ -9881,12 +9749,19 @@ function getGuestScreenOrientation() {
 
 function syncGuestScreenOrientationControl() {
   if (!DOM.guestScreenOrientation) return;
-  DOM.guestScreenOrientation.value = getGuestScreenOrientation();
-  DOM.guestScreenOrientation.disabled = !(
+  const orientation = getGuestScreenOrientation();
+  const disabled = !(
     getActiveEvent() ||
     activeTheme ||
     getSelectedThemeTarget()
   );
+  DOM.guestScreenOrientation.value = orientation;
+  DOM.guestScreenOrientation.disabled = disabled;
+  DOM.screenOrientationButtons.forEach((button) => {
+    const selected = button.dataset.screenOrientation === orientation;
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+    button.disabled = disabled;
+  });
 }
 
 function setGuestScreenOrientation(value) {
@@ -10281,11 +10156,11 @@ function hideWelcome() {
   if (currentMode !== "360") {
     setMode(resolveBoothLaunchMode());
   }
-  updateFilterCarouselVisibility();
+  syncOverlayPickerUi();
   updateCaptureModeUi();
   setBoothControlsVisible(true);
   requestAnimationFrame(() => {
-    syncFrameCarouselUi();
+    syncOverlayPickerUi();
     syncMobileSettingsUi();
   });
   // show the video smoothly
@@ -10690,10 +10565,9 @@ function auditBoothLayout() {
     "#boothHeader",
     "#boothBackBtn",
     "#adminBtn",
-    "#mobileSettingsToggle",
     "#mobileSettingsSheet",
     "#videoContainer",
-    "#filterCarousel",
+    "#overlayPickerButton",
     "#boothHostPrompt",
     "#captureBtn",
     "#qrCodeContainer",
@@ -11835,14 +11709,7 @@ function getTemplateRowCount(layout, slots) {
   return 3;
 }
 
-const STANDARD_DOUBLE_COLUMN_STRIP_SLOTS = [
-  { x: 50, y: 357, w: 500, h: 414 },
-  { x: 50, y: 823, w: 500, h: 414 },
-  { x: 50, y: 1288, w: 500, h: 413 },
-  { x: 650, y: 357, w: 500, h: 414 },
-  { x: 650, y: 823, w: 500, h: 414 },
-  { x: 650, y: 1288, w: 500, h: 413 },
-];
+
 
 function getStandardDoubleColumnStripSlots() {
   return STANDARD_DOUBLE_COLUMN_STRIP_SLOTS.map((slot) => ({ ...slot }));
@@ -13401,6 +13268,7 @@ function getStoredEvents() {
 
 function setStoredEvents(events, options = {}) {
   const list = Array.isArray(events) ? events.slice() : [];
+  const migratedHalloweenBackgrounds = migrateHalloweenEventAssets(list);
   list.sort((a, b) => {
     const ad = a && a.date ? new Date(a.date).getTime() : 0;
     const bd = b && b.date ? new Date(b.date).getTime() : 0;
@@ -13410,7 +13278,8 @@ function setStoredEvents(events, options = {}) {
     return an.localeCompare(bn);
   });
   localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(list));
-  if (!options.skipRemoteSync) scheduleEventsRemoteSync();
+  if (!options.skipRemoteSync || migratedHalloweenBackgrounds)
+    scheduleEventsRemoteSync();
 }
 
 function getActiveEventId() {
@@ -13552,6 +13421,12 @@ function getEventEditorThemeKey() {
 }
 
 function isWeddingEventTheme(themeObj = null) {
+  const active = getActiveEvent();
+  const savedType = getSavedEventTextValue(
+    active || activeSessionTextDetails,
+    "eventType"
+  );
+  if (savedType) return normalizeEventStyle(savedType) === "wedding";
   const themeKey = getEventEditorThemeKey();
   const theme = themeObj || resolveThemeByKey(themeKey);
   return (
@@ -13560,6 +13435,12 @@ function isWeddingEventTheme(themeObj = null) {
 }
 
 function isBirthdayEventTheme(themeObj = null) {
+  const active = getActiveEvent();
+  const savedType = getSavedEventTextValue(
+    active || activeSessionTextDetails,
+    "eventType"
+  );
+  if (savedType) return normalizeEventStyle(savedType) === "birthday";
   const themeKey = getEventEditorThemeKey();
   const theme = themeObj || resolveThemeByKey(themeKey);
   return (
@@ -13594,6 +13475,19 @@ function syncEventSetupEditor(theme = null) {
   const textSource = hasActiveEvent ? active : activeSessionTextDetails;
   syncWeddingOnlyEventFields(themeObj);
   syncBirthdayOnlyEventFields(themeObj);
+  if (DOM.eventTypeInput) {
+    const savedType = getSavedEventTextValue(textSource, "eventType");
+    const themeType = inferThemeEventStyle(
+      hasActiveEvent ? active.themeKey : getSelectedThemeKey(),
+      themeObj
+    );
+    const requestedType = normalizeEventStyle(savedType || themeType);
+    DOM.eventTypeInput.value = Array.from(DOM.eventTypeInput.options).some(
+      (option) => option.value === requestedType
+    )
+      ? requestedType
+      : "general";
+  }
   const setDisabled = (node) => {
     if (!node) return;
     node.disabled = !hasEditableTarget;
@@ -13738,6 +13632,7 @@ function updateActiveEventDetails({
   name,
   date,
   themeKey,
+  eventType,
   overrides,
   bannerText,
   welcomeTitle,
@@ -13761,6 +13656,7 @@ function updateActiveEventDetails({
   if (typeof name === "string") target.name = name;
   if (typeof date === "string") target.date = date;
   if (typeof themeKey === "string") target.themeKey = themeKey;
+  if (typeof eventType === "string") target.eventType = normalizeEventStyle(eventType);
   if (typeof partner1 === "string") target.partner1 = partner1;
   if (typeof partner2 === "string") target.partner2 = partner2;
   if (typeof birthdayName === "string") target.birthdayName = birthdayName;
@@ -13951,6 +13847,9 @@ function createNewEventFromSelection() {
   const name = inputName || prompt("New event name:");
   if (!name) return;
   const date = DOM.eventDateInput ? DOM.eventDateInput.value.trim() : "";
+  const eventType =
+    normalizeEventStyle(DOM.eventTypeInput && DOM.eventTypeInput.value) ||
+    inferThemeEventStyle(themeKey, resolveThemeByKey(themeKey));
   const slug = slugifyEventText(name);
   if (!slug) {
     alert("Enter a valid event name.");
@@ -13964,6 +13863,11 @@ function createNewEventFromSelection() {
     name,
     date,
     themeKey,
+    eventType,
+    partner1: valueFromInput(DOM.eventPartner1Input),
+    partner2: valueFromInput(DOM.eventPartner2Input),
+    birthdayName: valueFromInput(DOM.eventBirthdayNameInput),
+    expoCompany: valueFromInput(DOM.eventExpoCompanyInput),
     printPrice: 3,
     createdAt: new Date().toISOString(),
     overrides: {
@@ -14315,6 +14219,7 @@ function updateActiveSessionTextDetails(changes = {}) {
   [
     "name",
     "date",
+    "eventType",
     "bannerText",
     "welcomeTitle",
     "startButtonText",
@@ -14871,9 +14776,6 @@ async function downloadShareImage() {
 }
 
 function hideFinal(options = {}) {
-  selectedFilter = "natural";
-  applyFilterToVideo();
-  updateFilterCarouselUI();
   clearPreviewFreezeFrame();
   DOM.finalPreview.classList.remove("show");
   if (options.showGoodbye) showGoodbyeMoment();
@@ -14912,7 +14814,7 @@ function finishBoothFlow() {
   lastPhotoOverlay = null;
   lastPhotoOverlayByOrientation = { portrait: null, landscape: null };
   renderOptionsForMode(mode, { preserveScroll: false });
-  syncFrameCarouselUi();
+  syncOverlayPickerUi();
   setTimeout(() => {
     if (DOM.goodbyeOverlay) DOM.goodbyeOverlay.classList.remove("show");
     cycleShowcaseDemoTheme();
@@ -18720,12 +18622,14 @@ function applyTemplatesFallback(baseLeaf, merged, storedLeaf) {
 function applyOverlaysFallback(baseLeaf, merged, storedLeaf) {
   const storedArrayExists = Array.isArray(storedLeaf && storedLeaf.overlays);
   const storedOverlays = storedArrayExists ? storedLeaf.overlays : [];
-  const storedOverlaysCorrupted =
-    storedOverlays.length > 0 &&
-    !storedOverlays.some((entry) => getAssetEntrySrc(entry));
   const baseOverlays = Array.isArray(baseLeaf.overlays)
     ? baseLeaf.overlays
     : null;
+  const storedOverlaysCorrupted =
+    storedOverlays.length > 0 &&
+    (!storedOverlays.some((entry) => getAssetEntrySrc(entry)) ||
+      (hasOverlayDefinitionSource(baseOverlays) &&
+        !hasOverlayDefinitionSource(storedOverlays)));
   const mergedOverlays = Array.isArray(merged.overlays)
     ? merged.overlays
     : null;
@@ -18740,17 +18644,30 @@ function applyOverlaysFallback(baseLeaf, merged, storedLeaf) {
   }
 }
 
-function hasCorruptedThemeOverlayEntries(value) {
+function hasOverlayDefinitionSource(entries) {
+  return (
+    Array.isArray(entries) &&
+    entries.some(
+      (entry) =>
+        entry && typeof entry === "object" && !!getAssetEntrySrc(entry)
+    )
+  );
+}
+
+function hasCorruptedThemeOverlayEntries(value, path = []) {
   if (!value || typeof value !== "object") return false;
-  if (
-    Array.isArray(value.overlays) &&
-    value.overlays.length > 0 &&
-    !value.overlays.some((entry) => getAssetEntrySrc(entry))
-  ) {
-    return true;
+  if (Array.isArray(value.overlays) && value.overlays.length > 0) {
+    const [rootKey, bucketKey, themeKey] = path;
+    const baseTheme = BUILTIN_THEMES[rootKey]?.[bucketKey]?.[themeKey];
+    const storedSources = value.overlays.some((entry) => getAssetEntrySrc(entry));
+    const lostBuiltinOverlayDefinitions =
+      baseTheme &&
+      hasOverlayDefinitionSource(baseTheme.overlays) &&
+      !hasOverlayDefinitionSource(value.overlays);
+    if (!storedSources || lostBuiltinOverlayDefinitions) return true;
   }
-  return Object.values(value).some((entry) =>
-    hasCorruptedThemeOverlayEntries(entry)
+  return Object.entries(value).some(([key, entry]) =>
+    hasCorruptedThemeOverlayEntries(entry, [...path, key])
   );
 }
 
@@ -18874,6 +18791,7 @@ function loadThemesFromStorage() {
   if (storedThemes) {
     try {
       const parsed = JSON.parse(storedThemes);
+      const repairedOverlayDefaults = hasCorruptedThemeOverlayEntries(parsed);
       mergeStoredThemes(themes, parsed);
       fixBuiltinThemePlacements(themes);
       const removedUnapprovedBuiltinThemes = ensureBuiltinThemes();
@@ -18881,6 +18799,7 @@ function loadThemesFromStorage() {
       const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
       const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
       const migratedSummerAssets = migrateSummerThemeAssets(themes);
+      const migratedHalloweenAssets = migrateHalloweenThemeAssets(themes);
       const migratedSpringHillHawks = migrateSpringHillHawksAssets(themes);
       const migratedSpringHillHawksStadium =
         migrateSpringHillHawksStadiumAssets(themes);
@@ -18893,9 +18812,11 @@ function loadThemesFromStorage() {
         resetThemesToBuiltins("stored themes missing core entries");
       }
       if (
+        repairedOverlayDefaults ||
         migratedAveryScreens ||
         migratedAmandaNorthScreens ||
         migratedSummerAssets ||
+        migratedHalloweenAssets ||
         migratedSpringHillHawks ||
         migratedSpringHillHawksStadium ||
         migratedSpringHillHawksCheer ||
@@ -18920,6 +18841,8 @@ function openLayoutBuilder() {
 }
 
 function loadEventsFromStorage() {
+  const events = getStoredEvents();
+  if (migrateHalloweenEventAssets(events)) setStoredEvents(events);
   populateEventProfileSelect(getActiveEventId());
   deferNonCriticalTask(() => loadEventsRemote().catch(() => {}));
 }
@@ -22316,6 +22239,13 @@ function logEffectiveAssetState(theme, reason = "effective-assets") {
 }
 
 function getOverlayList(theme) {
+  return filterPhotoOverlaysByOrientation(
+    getAssignedOverlayList(theme),
+    getGuestScreenOrientation()
+  );
+}
+
+function getAssignedOverlayList(theme) {
   if (!theme || typeof theme !== "object") return [];
   const overrides = getActiveEventOverrides();
   const removed = getSessionRemovedAssetSourceSet("overlay");
@@ -22335,7 +22265,7 @@ function getOverlayList(theme) {
     seen.add(src);
     out.push(item);
   }
-  return filterPhotoOverlaysByOrientation(out, getGuestScreenOrientation());
+  return out;
 }
 
 function getAllThemeOverlayCatalogList(theme) {
@@ -22588,8 +22518,6 @@ Object.assign(window, {
   startBooth: startBoothFromAdmin,
   startCamera: startCameraFlow,
   handlePrimaryAction,
-  nextFilter,
-  prevFilter,
   makeAvailableOffline,
   migrateAllManagedLocalAssets,
   openShareLink,

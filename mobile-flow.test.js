@@ -32,7 +32,7 @@ test("frame chooser is hidden during countdown and finalizing on desktop and mob
     "frame settings should close and stay unavailable while finalizing"
   );
   assert.ok(
-    html.includes("#boothScreen.finalizing-mode #mobileSettingsToggle,") &&
+    html.includes("#boothScreen.finalizing-mode .overlay-picker-control,") &&
       html.includes("#boothScreen.finalizing-mode #mobileSettingsBackdrop,") &&
       html.includes("#boothScreen.finalizing-mode #mobileSettingsSheet,"),
     "desktop and mobile frame settings UI should be hidden during finalizing"

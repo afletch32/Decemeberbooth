@@ -1,4 +1,7 @@
+import { HALLOWEEN_ASSET_MANIFESTS } from "./halloween-assets.mjs";
+
 const BUILTIN_ASSET_MANIFESTS = {
+  ...HALLOWEEN_ASSET_MANIFESTS,
   "assets/general/birthday/backgrounds/": [
     "birthday-background-1.png"
   ],
@@ -168,44 +171,6 @@ const BUILTIN_ASSET_MANIFESTS = {
   "assets/school/ane/overlays/": [
     "ane-frame-stream-night-landscape-2.png",
     "school-frame-landscape-1.png"
-  ],
-  "assets/holidays/fall/halloween/backgrounds/": [
-    "halloween-background-grey-1.jpg",
-    "halloween-background-pink.png"
-  ],
-  "assets/holidays/fall/halloween/overlays/": [
-    "1.png",
-    "11.png",
-    "12.png",
-    "13.png",
-    "2.png",
-    "3.png",
-    "4.png",
-    "5.png",
-    "6.png",
-    "fall-leaves-frame.png",
-    "graveyard-transparent-frame.png",
-    "halloween-overlay-ghosts.png",
-    "halloween-frame-boo.png",
-    "halloween-frame-fog.png",
-    "halloween-frame-groovy-ghosties.png",
-    "halloween-frame-groovy.png",
-    "halloween-frame-haunted-house.png",
-    "halloween-frame-landscape-3.png",
-    "halloween-frame-landscape-5.png",
-    "halloween-frame-landscape-6.png",
-    "halloween-frame-landscape-7.png",
-    "halloween-frame-landscape-6.png",
-    "halloween-frame-landscape-10.png",
-    "halloween-frame-landscape-9.png",
-    "halloween-frame-skeletons.png",
-    "smoke-corner-frame.png"
-  ],
-  "assets/holidays/fall/halloween/templates/": [
-    { src: "halloween-template-2.png", layout: "double_column", headerPct: 0.22, columnPadPct: 0.055, slotSpacingPct: 0.024, footerPct: 0.035 },
-    { src: "halloween-template-3.png", layout: "double_column", headerPct: 0.22, columnPadPct: 0.055, slotSpacingPct: 0.024, footerPct: 0.035 },
-    { src: "halloween-template-4.png", layout: "double_column", headerPct: 0.22, columnPadPct: 0.055, slotSpacingPct: 0.024, footerPct: 0.035 },
-    { src: "halloween-template-maddies.png", layout: "double_column", headerPct: 0.22, columnPadPct: 0.055, slotSpacingPct: 0.024, footerPct: 0.035 }
   ],
   "assets/holidays/winter/christmas/backgrounds/": [
     "christmas-background-1.png",

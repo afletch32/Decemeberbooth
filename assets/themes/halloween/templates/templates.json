@@ -1,0 +1,58 @@
+[
+  {
+    "src": "halloween-graphic-double-column-strip.png",
+    "name": "Halloween graphic identical double strips",
+    "layout": "double_column",
+    "orientation": "portrait",
+    "photoSlots": [
+      {
+        "x": 0.041666666666666664,
+        "y": 0.19833333333333333,
+        "width": 0.4166666666666667,
+        "height": 0.23,
+        "sourceIndex": 0,
+        "borderRadius": 0
+      },
+      {
+        "x": 0.041666666666666664,
+        "y": 0.4572222222222222,
+        "width": 0.4166666666666667,
+        "height": 0.23,
+        "sourceIndex": 1,
+        "borderRadius": 0
+      },
+      {
+        "x": 0.041666666666666664,
+        "y": 0.7155555555555555,
+        "width": 0.4166666666666667,
+        "height": 0.22944444444444445,
+        "sourceIndex": 2,
+        "borderRadius": 0
+      },
+      {
+        "x": 0.5416666666666666,
+        "y": 0.19833333333333333,
+        "width": 0.4166666666666667,
+        "height": 0.23,
+        "sourceIndex": 0,
+        "borderRadius": 0
+      },
+      {
+        "x": 0.5416666666666666,
+        "y": 0.4572222222222222,
+        "width": 0.4166666666666667,
+        "height": 0.23,
+        "sourceIndex": 1,
+        "borderRadius": 0
+      },
+      {
+        "x": 0.5416666666666666,
+        "y": 0.7155555555555555,
+        "width": 0.4166666666666667,
+        "height": 0.22944444444444445,
+        "sourceIndex": 2,
+        "borderRadius": 0
+      }
+    ]
+  }
+]

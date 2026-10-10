@@ -47,51 +47,6 @@
     "templates": []
   },
   {
-    "id": "holidays/fall-halloween",
-    "name": "halloween",
-    "category": "holidays/fall",
-    "background": "/themes/holidays/fall/halloween/backgrounds/halloween-background-grey-1.jpg",
-    "overlay": "/themes/holidays/fall/halloween/overlays/1.png",
-    "template": "/themes/holidays/fall/halloween/templates/halloween-template-2.png",
-    "backgrounds": [
-      "/themes/holidays/fall/halloween/backgrounds/halloween-background-grey-1.jpg",
-      "/themes/holidays/fall/halloween/backgrounds/halloween-background-pink.png"
-    ],
-    "overlays": [
-      "/themes/holidays/fall/halloween/overlays/1.png",
-      "/themes/holidays/fall/halloween/overlays/11.png",
-      "/themes/holidays/fall/halloween/overlays/12.png",
-      "/themes/holidays/fall/halloween/overlays/13.png",
-      "/themes/holidays/fall/halloween/overlays/2.png",
-      "/themes/holidays/fall/halloween/overlays/3.png",
-      "/themes/holidays/fall/halloween/overlays/4.png",
-      "/themes/holidays/fall/halloween/overlays/5.png",
-      "/themes/holidays/fall/halloween/overlays/6.png",
-      "/themes/holidays/fall/halloween/overlays/fall-leaves-frame.png",
-      "/themes/holidays/fall/halloween/overlays/graveyard-transparent-frame.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-boo.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-fog.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-groovy-ghosties.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-groovy.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-haunted-house.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-landscape-10.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-landscape-3.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-landscape-5.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-landscape-6.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-landscape-7.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-landscape-9.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-frame-skeletons.png",
-      "/themes/holidays/fall/halloween/overlays/halloween-overlay-ghosts.png",
-      "/themes/holidays/fall/halloween/overlays/smoke-corner-frame.png"
-    ],
-    "templates": [
-      "/themes/holidays/fall/halloween/templates/halloween-template-2.png",
-      "/themes/holidays/fall/halloween/templates/halloween-template-3.png",
-      "/themes/holidays/fall/halloween/templates/halloween-template-4.png",
-      "/themes/holidays/fall/halloween/templates/halloween-template-maddies.png"
-    ]
-  },
-  {
     "id": "holidays/spring-st-patricks-day",
     "name": "st-patricks-day",
     "category": "holidays/spring",

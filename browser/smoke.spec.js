@@ -93,7 +93,7 @@ async function getOptionTexts(page, selector) {
 }
 
 async function openBoothSettings(page) {
-  await page.locator("#mobileSettingsToggle").click({ force: true });
+  await page.locator("#overlayPickerButton").click({ force: true });
   await expect(page.locator("#boothScreen")).toHaveClass(/mobile-settings-open/);
 }
 
@@ -133,6 +133,14 @@ async function launchStillPhotoBooth(page) {
   await expect(page.locator("#captureBtn")).toBeVisible();
 }
 
+async function enterStillPhotoCapture(page) {
+  await launchStillPhotoBooth(page);
+  await page.locator("#startButton").click({ force: true });
+  await page.locator('.welcome-mode-btn[data-welcome-mode="still-photo"]').click({ force: true });
+  await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
+  await expect(page.locator("#captureBtn")).toBeVisible();
+}
+
 async function getViewportOverflow(page) {
   return page.evaluate(() => ({
     viewportHeight: window.innerHeight,
@@ -151,6 +159,40 @@ test("only complete approved theme packs appear in theme selectors", async ({ pa
   expect(visibleThemeChoices).not.toEqual(
     expect.arrayContaining([expect.stringMatching(/^\s*(basic|lead capture|brand studio)\s*$/i)])
   );
+
+  const halloweenThemeKeys = await page.locator(
+    ".theme-quick-card[data-theme-key]"
+  ).evaluateAll((cards) => cards.map((card) => card.dataset.themeKey).filter((key) => key.includes("halloween")));
+  expect(halloweenThemeKeys).toContain("fall:halloween");
+});
+
+test("saved Halloween event overrides drop retired backgrounds at startup", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("photoboothEvents", JSON.stringify([{
+      id: "legacy-halloween-event",
+      name: "Halloween Event",
+      themeKey: "fall:halloween",
+      overrides: {
+        backgrounds: [
+          "/themes/holidays/fall/halloween/backgrounds/halloween-background-grey-1.jpg",
+          "/uploads/custom-event-background.webp",
+          "/assets/holidays/fall/halloween/backgrounds/halloween-background-pink.png",
+        ],
+        backgroundIndex: 1,
+      },
+    }]));
+    localStorage.setItem("photoboothActiveEventId", "legacy-halloween-event");
+  });
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  const event = await page.evaluate(() =>
+    window.__photoboothTest.getEventById("legacy-halloween-event")
+  );
+  expect(event.overrides.backgrounds).toEqual([
+    "/uploads/custom-event-background.webp",
+  ]);
+  expect(event.overrides.backgroundIndex).toBe(0);
 });
 
 async function expectCreatePathValidation(page, options) {
@@ -212,29 +254,18 @@ async function createWeddingEvent(page, options = {}) {
     date = "June 14, 2026",
   } = options;
   await gotoApp(page, "/index.html");
-  const themeValue = await getOptionValue(
-    page,
-    "#createPathThemeSelect",
-    /wedding/
-  );
-  await expect(themeValue).not.toBe("");
-  if (await page.locator("#createPathEventName").count()) {
-    await page.fill("#createPathEventName", eventName);
+  const eventDetails = page.locator("#eventDetailsPanel");
+  if (!(await eventDetails.getAttribute("open"))) {
+    await eventDetails.locator(":scope > summary").click();
   }
-  await page.locator(".theme-quick-card").filter({ hasText: /^Wedding/ }).click();
+  await page.selectOption("#eventTypeInput", "wedding");
   await page.fill("#eventNameInput", eventName);
-  await page.locator(".setup-session-save-btn").click();
+  await page.fill("#eventDateInput", date);
+  await page.fill("#eventPartner1Input", partner1);
+  await page.fill("#eventPartner2Input", partner2);
+  await page.getByRole("button", { name: "Save as New Event" }).click();
   await expect(page.locator("#eventProfileSelect")).toHaveValue(/.+/);
-  await page.evaluate(({ partner1, partner2, date }) => {
-    const activeId = document.querySelector("#eventProfileSelect").value;
-    const key = "photoboothEvents";
-    const events = JSON.parse(localStorage.getItem(key) || "[]");
-    const event = events.find((item) => item.id === activeId);
-    Object.assign(event, { partner1, partner2, date });
-    localStorage.setItem(key, JSON.stringify(events));
-    window.location.reload();
-  }, { partner1, partner2, date });
-  await page.waitForFunction(() => window.__photoboothTest?.getActiveEvent()?.partner1);
+  await page.waitForFunction(() => window.__photoboothTest?.getActiveEvent()?.eventType === "wedding");
 }
 
 test("overlay builder emits reusable text metadata when autofill fields are selected", async ({
@@ -252,7 +283,7 @@ test("overlay builder emits reusable text metadata when autofill fields are sele
   await expect(manifestEntry).toContainText("\"event_date\"");
 });
 
-test("Wedding preset reuses one theme and fills names and date per event", async ({
+test("Wedding events can be set up without a built-in Wedding theme", async ({
   page,
 }) => {
   await createWeddingEvent(page, {
@@ -262,43 +293,26 @@ test("Wedding preset reuses one theme and fills names and date per event", async
     date: "September 19, 2027",
   });
 
-  const result = await page.evaluate(async () => {
+  const result = await page.evaluate(() => {
     const api = window.__photoboothTest;
-    const theme = api.getThemeByKey("wedding:romantic");
-    const overlays = theme.overlays;
-    const landscape = overlays.find((item) => item.id === "garden-vows-single-landscape");
-    const template = theme.templates[0];
-    const sources = [...overlays.map((item) => item.src), template.src];
-    const responses = await Promise.all(
-      sources.map(async (src) => ({ src, ok: (await fetch(src)).ok }))
-    );
+    const event = api.getActiveEvent();
     return {
-      themeName: theme.name,
-      themeKey: api.getActiveEvent().themeKey,
-      event: api.getActiveEvent(),
-      overlayText: api.probeOverlayAutofill(landscape.src, 1800, 1200, api.getActiveEvent()),
-      templateText: api.probeTemplateAutofill(template, 720, 2160, api.getActiveEvent()),
-      fonts: {
-        adminHeading: getComputedStyle(document.querySelector(".admin-title")).fontFamily,
-        pageBody: getComputedStyle(document.body).fontFamily,
-        boothBody: getComputedStyle(document.querySelector("#boothScreen")).getPropertyValue("--font-body"),
-      },
-      responses,
+      event,
+      weddingCardCount: document.querySelectorAll(
+        '.theme-quick-card[data-theme-key^="wedding:"]'
+      ).length,
+      partnerFieldsVisible: [...document.querySelectorAll(".wedding-only-event-field")]
+        .every((field) => !field.classList.contains("hidden")),
     };
   });
 
-  expect(result.themeName).toBe("Wedding");
-  expect(result.themeKey).toBe("wedding:romantic");
+  expect(result.weddingCardCount).toBe(0);
+  expect(result.event.eventType).toBe("wedding");
+  expect(result.event.themeKey).not.toMatch(/^wedding:/);
   expect(result.event.partner1).toBe("Maya");
   expect(result.event.partner2).toBe("Noah");
-  expect(result.overlayText).toContain("Maya & Noah");
-  expect(result.overlayText).toContain("September 19, 2027");
-  expect(result.templateText).toContain("Maya & Noah");
-  expect(result.templateText).toContain("September 19, 2027");
-  expect(result.fonts.adminHeading).toMatch(/Montserrat/i);
-  expect(result.fonts.pageBody).toMatch(/Inter/i);
-  expect(result.fonts.boothBody).toMatch(/Lora/i);
-  expect(result.responses.every((response) => response.ok)).toBe(true);
+  expect(result.event.date).toBe("September 19, 2027");
+  expect(result.partnerFieldsVisible).toBe(true);
 });
 
 test("blemish correction heals local skin spots", async ({ page }) => {
@@ -1590,11 +1604,11 @@ test.skip("setup screen shows assigned asset counts and font summary", async ({
   await expect(page.locator("#boothScreen")).not.toHaveClass(/hidden/);
   await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
-  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
+  await expect(page.locator("#overlayPickerButton")).toBeHidden();
   await page.locator("#startButton").click({ force: true });
   await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
-  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
+  await expect(page.locator("#overlayPickerButton")).toBeHidden();
   await page.locator(".welcome-mode-btn[data-welcome-mode=\"strip\"]").click({ force: true });
   await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
   await page.evaluate(() => setMode("strip"));
@@ -1895,20 +1909,20 @@ test.skip("frame picker stays hidden until the welcome flow reaches capture", as
   await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
   await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
-  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
+  await expect(page.locator("#overlayPickerButton")).toBeHidden();
 
   await page.locator("#startButton").click({ force: true });
   await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
   await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
-  await expect(page.locator("#mobileSettingsToggle")).toBeHidden();
+  await expect(page.locator("#overlayPickerButton")).toBeHidden();
 
   await page.locator(".welcome-mode-btn[data-welcome-mode=\"still-photo\"]").click({ force: true });
   await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
   await expect(page.locator("#boothModeBar")).toBeHidden();
   await expect(page.locator("#captureBtn")).toBeVisible();
   await expect(page.locator("#captureBtn")).not.toHaveText("");
-  await expect(page.locator("#mobileSettingsToggle")).toBeVisible();
+  await expect(page.locator("#overlayPickerButton")).toBeVisible();
   await expect(page.locator("#mobileSettingsSheet")).toBeHidden();
   await expect(page.locator("#options .asset-picker-search")).toHaveCount(0);
   await expect(page.locator("#options .asset-picker-favorite")).toHaveCount(0);
@@ -1927,7 +1941,21 @@ test("frame picker hides during finalizing on desktop and mobile", async ({
       width: viewport.width,
       height: viewport.height,
     });
-    await launchStillPhotoBooth(page);
+    await enterStillPhotoCapture(page);
+    await expect(page.locator("#overlayPickerButton"), viewport.label).toBeVisible();
+    await page.locator("#overlayPickerButton").click();
+    await expect(page.locator("#mobileSettingsSheet"), viewport.label).toBeVisible();
+    const chooser = await page.locator("#mobileSettingsSheet").boundingBox();
+    expect(chooser).not.toBeNull();
+    expect(chooser.x, `${viewport.label} chooser left edge`).toBeCloseTo(0, 0);
+    expect(chooser.y, `${viewport.label} chooser top edge`).toBeCloseTo(0, 0);
+    expect(chooser.width, `${viewport.label} chooser width`).toBe(viewport.width);
+    expect(chooser.height, `${viewport.label} chooser height`).toBe(viewport.height);
+    await expect(page.locator("#mobileSettingsSheet .options-section-title")).toContainText("Overlays");
+    await expect(page.locator("#mobileSettingsSheet .filter-choice")).toHaveCount(0);
+    await expect(page.locator("#frameCarouselName, #filterCarouselName, #framePrevBtn, #frameNextBtn, #filterPrevBtn, #filterNextBtn")).toHaveCount(0);
+    await page.locator("#mobileSettingsClose").click();
+    await expect(page.locator("#mobileSettingsSheet")).toHaveAttribute("aria-hidden", "true");
     await page.evaluate(() => {
       const booth = document.getElementById("boothScreen");
       if (!booth) return;
@@ -1935,7 +1963,7 @@ test("frame picker hides during finalizing on desktop and mobile", async ({
       booth.classList.remove("mobile-settings-open");
     });
     await expect(page.locator("#mobileSettingsSheet"), viewport.label).toBeHidden();
-    await expect(page.locator("#mobileSettingsToggle"), viewport.label).toBeHidden();
+    await expect(page.locator("#overlayPickerButton"), viewport.label).toBeHidden();
   }
 });
 
@@ -2011,7 +2039,7 @@ test.skip("live camera remains dominant and collision-free across kiosk viewport
         cameraStyle: { width: cameraStyle.width, height: cameraStyle.height, maxHeight: cameraStyle.maxHeight, transform: cameraStyle.transform, liveWidth: cameraStyle.getPropertyValue("--live-camera-width"), wrapWidth: wrapStyle.width, wrapHeight: wrapStyle.height, wrapMaxWidth: wrapStyle.maxWidth, wrapRows: wrapStyle.gridTemplateRows, mainColumns: mainStyle.gridTemplateColumns, mainHeight: mainStyle.height },
         capture,
         header,
-        toggle: box("#mobileSettingsToggle"),
+        toggle: box("#overlayPickerButton"),
         cameraCaptureOverlap: overlaps(camera, capture),
         cameraHeaderOverlap: overlaps(camera, header),
         viewportWidth: innerWidth,
@@ -2035,7 +2063,7 @@ test.skip("live camera remains dominant and collision-free across kiosk viewport
     expect(layout.documentHeight).toBeLessThanOrEqual(layout.viewportHeight);
 
     if (viewport.width === 1024 && viewport.height === 768) {
-      await page.locator("#mobileSettingsToggle").click({ force: true });
+      await page.locator("#overlayPickerButton").click({ force: true });
       await expect(page.locator("#mobileSettingsSheet")).toBeVisible();
       const sheet = await page.locator("#mobileSettingsSheet").boundingBox();
       expect(sheet).not.toBeNull();

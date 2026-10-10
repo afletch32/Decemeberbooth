@@ -116,11 +116,12 @@ test("complete Spring Hill Hawks packs are approved for Event Setup", () => {
   assert.ok(app.includes('"school:hawksCheer"'));
 });
 
-test("Halloween has dedicated portrait and landscape single-photo overlays", () => {
-  assert.ok(app.includes('src: "/assets/themes/halloween/overlays/halloween-single-photo-portrait.svg"'));
-  assert.ok(app.includes('src: "/assets/themes/halloween/overlays/halloween-single-photo-landscape.svg"'));
-  assert.ok(app.includes('name: "Halloween single photo portrait"'));
-  assert.ok(app.includes('name: "Halloween single photo landscape"'));
+test("Halloween has dedicated portrait and landscape single-photo overlays", async () => {
+  const { migrateHalloweenThemeAssets } = await import("./scripts/halloween-assets.mjs");
+  const target = { fall: { holidays: { halloween: {} } } };
+  migrateHalloweenThemeAssets(target);
+  assert.deepEqual(target.fall.holidays.halloween.overlays.map((asset) => asset.orientation), ["portrait", "landscape"]);
+  assert.ok(target.fall.holidays.halloween.overlays.every((asset) => asset.src.endsWith(".png")));
 });
 
 test("theme storage refresh uses the canonical application storage key", () => {
@@ -596,7 +597,8 @@ test("custom guest artwork keeps lightweight ambient motion without blocking hot
 test("admin video previews use still images without downloading or autoplaying MP4s", () => {
   const preview = extractFunction(app, "createAssetPreviewMedia");
   assert.ok(preview.includes('document.createElement("img")'));
-  assert.ok(preview.includes("getVideoPreviewPosterSrc(entry, src)"));
+  assert.ok(preview.includes("getVideoPreviewPosterSrc(entry, source)"));
+  assert.ok(preview.includes("resolvePreviewAssetSrc(previewSrc, window.location.href)"));
   assert.ok(!preview.includes('document.createElement("video")'));
   assert.ok(!preview.includes(".play()"));
 });
