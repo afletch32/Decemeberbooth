@@ -10341,6 +10341,9 @@ async function startCamera(autoStartBooth = false) {
           DOM.video.srcObject = s;
           DOM.video.style.transform = "";
           DOM.video.style.display = "none";
+          if (typeof DOM.video.play === "function") {
+            DOM.video.play().catch(() => {});
+          }
         }
         startLiveImagingPipeline();
         syncOverlayPreviewSurface({ mode: "live" });
@@ -10920,6 +10923,64 @@ function drawToCanvasFromVideo() {
     ctx.drawImage(v, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
     return buffer;
   }
+}
+
+function drawToLivePreviewCanvasFromVideo() {
+  const video = DOM.video;
+  const targetAspect = getResolvedCaptureAspectRatio();
+  const width = Math.max(
+    1,
+    Math.round(
+      targetAspect >= 1
+        ? LIVE_PREVIEW_MAX_DIMENSION
+        : LIVE_PREVIEW_MAX_DIMENSION * targetAspect
+    )
+  );
+  const height = Math.max(
+    1,
+    Math.round(
+      targetAspect >= 1
+        ? LIVE_PREVIEW_MAX_DIMENSION / targetAspect
+        : LIVE_PREVIEW_MAX_DIMENSION
+    )
+  );
+  const preview = CanvasBuffer.get("live-preview-source", width, height);
+  const ctx = preview.getContext("2d");
+  if (!ctx) return preview;
+
+  ctx.clearRect(0, 0, width, height);
+  if (demoMode || !video || !video.videoWidth || !video.videoHeight) {
+    const fallback = drawToCanvasFromVideo();
+    ctx.drawImage(fallback, 0, 0, width, height);
+    return preview;
+  }
+
+  const videoWidth = video.videoWidth;
+  const videoHeight = video.videoHeight;
+  let sourceWidth = videoWidth;
+  let sourceHeight = videoHeight;
+  if (videoWidth / videoHeight > targetAspect) {
+    sourceWidth = videoHeight * targetAspect;
+  } else {
+    sourceHeight = videoWidth / targetAspect;
+  }
+  const zoom = Math.max(1, getCameraZoom());
+  sourceWidth /= zoom;
+  sourceHeight /= zoom;
+  const sourceX = (videoWidth - sourceWidth) / 2;
+  const sourceY = (videoHeight - sourceHeight) / 2;
+  ctx.drawImage(
+    video,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    0,
+    0,
+    width,
+    height
+  );
+  return preview;
 }
 
 function applyAutoEnhanceCanvas(canvas) {

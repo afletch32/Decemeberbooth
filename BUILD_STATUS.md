@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Keep the Halloween booth backdrop visible when the camera preview has no frames.
-- Done: The camera preview frame is transparent so the animated Halloween backdrop remains visible while the camera is unavailable or starting. Existing live camera pixels stay above the backdrop. Retired Halloween references are migrated to the current portrait and landscape pair; custom backgrounds are preserved.
+- Current goal: Restore the live camera preview while retaining the selected filter and lightweight preview processing.
+- Done: The camera preview frame is transparent so the animated Halloween backdrop remains visible while the camera is unavailable or starting. Added the missing low-resolution source-frame renderer used by the live imaging loop; it crops to the active orientation and camera zoom before processing.
 - In progress: None.
-- Next steps: Observe the live booth flow for any remaining theme or event migration issues.
+- Next steps: Deploy and confirm the live preview renderer is served from production.
 - Known bugs/blockers: Real guest camera/audio, physical printing, sharing delivery, and a real PayPal capture remain unverified.
 - Important decisions: Remove only references to retired Halloween assets. Keep Cloudflare `main` as the production source.
-- Verification: `npm test` passes (281/281). The targeted Chromium backdrop and live-camera tests pass (2/2); `git diff --check` is clean.
-- Release: Commit `77a9b65` is live on Cloudflare Pages production as deployment `1a133d75` (2026-10-10). The production alias serves `#videoContainer { background: transparent; }` so the Halloween backdrop shows through when camera frames are absent.
+- Verification: Static diff review confirms the previously missing live preview renderer now supplies the live imaging loop. `git diff --check` is clean.
+- Release: Pending.
 
 ## Existing production records
 
