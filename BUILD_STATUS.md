@@ -7,7 +7,7 @@
 - Known bugs/blockers: Real guest camera/audio, physical printing, sharing delivery, and a real PayPal capture remain unverified.
 - Important decisions: Remove only references to retired Halloween assets. Keep Cloudflare `main` as the production source.
 - Verification: `npm test` passes (281/281). The targeted Chromium backdrop and live-camera tests pass (2/2); `git diff --check` is clean.
-- Release: Pending production verification for the camera-preview backdrop fix. The prior Halloween cleanup is live on `main` as of 2026-10-10.
+- Release: Commit `77a9b65` is live on Cloudflare Pages production as deployment `1a133d75` (2026-10-10). The production alias serves `#videoContainer { background: transparent; }` so the Halloween backdrop shows through when camera frames are absent.
 
 ## Existing production records
 
