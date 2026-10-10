@@ -619,6 +619,7 @@ test("background assets accept video and render through shared video surfaces", 
     html.includes('id="themeGreenBackgrounds" accept="image/*,video/*"')
   );
   assert.ok(html.includes('id="boothBackgroundVideo"'));
+  assert.match(html, /#videoContainer\s*\{[^}]*background:\s*transparent;/s);
   assert.ok(html.includes('id="photoBackgroundVideo"'));
   assert.ok(app.includes("setLoopingVideoSource(DOM.boothBackgroundVideo, bg)"));
   assert.ok(
