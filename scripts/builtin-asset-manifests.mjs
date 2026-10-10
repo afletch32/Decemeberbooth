@@ -1,4 +1,7 @@
+import { HALLOWEEN_ASSET_MANIFESTS } from "./halloween-assets.mjs";
+
 const BUILTIN_ASSET_MANIFESTS = {
+  ...HALLOWEEN_ASSET_MANIFESTS,
   "assets/general/birthday/backgrounds/": [
     "birthday-background-1.png"
   ],

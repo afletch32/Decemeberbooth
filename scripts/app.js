@@ -1,3 +1,5 @@
+import { STANDARD_DOUBLE_COLUMN_STRIP_SLOTS } from "./strip-layout-utils.mjs";
+import { migrateHalloweenThemeAssets } from "./halloween-assets.mjs";
 import { CanvasBuffer, offscreenToDataURL } from "./canvas-utils.mjs";
 import {
   buildBoothVideoUrl,
@@ -869,30 +871,8 @@ let themes = {
           { src: "/assets/themes/halloween/halloween-thank-you-portrait.webp", name: "Halloween Thank You portrait", orientation: "portrait" },
           { src: "/assets/themes/halloween/halloween-thank-you-landscape.webp", name: "Halloween Thank You landscape", orientation: "landscape" },
         ],
-        overlays: [
-          {
-            src: "/assets/themes/halloween/overlays/halloween-single-photo-portrait.svg",
-            name: "Halloween single photo portrait",
-            type: "photo",
-            orientation: "portrait",
-            aspectRatio: "2:3",
-            photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
-          },
-          {
-            src: "/assets/themes/halloween/overlays/halloween-single-photo-landscape.svg",
-            name: "Halloween single photo landscape",
-            type: "photo",
-            orientation: "landscape",
-            aspectRatio: "3:2",
-            photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
-          },
-        ],
-        templates: [
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788465/photobooth/events/assets/fall-halloween-template-halloween-template-2_kww0ma.png", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788465/photobooth/events/assets/fall-halloween-template-halloween-template-3_ndtob9.png", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788466/photobooth/events/assets/fall-halloween-template-halloween-template-4_os0gxj.png", layout: "single_photo" },
-          { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788467/photobooth/events/assets/fall-halloween-template-halloween-template-maddies_c9rx4y.png", layout: "single_photo" },
-        ],
+        overlays: [],
+        templates: [],
         welcome: {
           title: "Happy Halloween!",
           portrait: "",
@@ -1127,23 +1107,12 @@ themes.fall.holidays.cuteHalloween = {
     { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-portrait.webp", name: "Happy Halloween Thank You portrait", orientation: "portrait" },
     { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-landscape.webp", name: "Happy Halloween Thank You landscape", orientation: "landscape" },
   ],
-  overlays: [
-    {
-      src: "/assets/themes/cute-halloween/overlays/happy-halloween-single-photo-portrait.png",
-      name: "Happy Halloween single photo portrait",
-      type: "photo",
-      orientation: "portrait",
-    },
-    {
-      src: "/assets/themes/cute-halloween/overlays/happy-halloween-single-photo-landscape.png",
-      name: "Happy Halloween single photo landscape",
-      type: "photo",
-      orientation: "landscape",
-    },
-  ],
+  overlays: [],
   templates: [],
   welcome: { title: "Happy Halloween", portrait: "", landscape: "", prompt: "Tap to Start" },
 };
+
+migrateHalloweenThemeAssets(themes);
 
 themes.general.themes.averyBirthday = {
   ...JSON.parse(JSON.stringify(themes.general.themes.birthday)),
@@ -6615,6 +6584,7 @@ async function loadThemesRemote() {
     const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
     const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
     const migratedSummerAssets = migrateSummerThemeAssets(themes);
+    const migratedHalloweenAssets = migrateHalloweenThemeAssets(themes);
     const migratedSpringHillHawks = migrateSpringHillHawksAssets(themes);
     const migratedSpringHillHawksStadium =
       migrateSpringHillHawksStadiumAssets(themes);
@@ -6632,6 +6602,7 @@ async function loadThemesRemote() {
       migratedAveryScreens ||
       migratedAmandaNorthScreens ||
       migratedSummerAssets ||
+      migratedHalloweenAssets ||
       migratedSpringHillHawks ||
       migratedSpringHillHawksStadium ||
       migratedSpringHillHawksCheer
@@ -11721,14 +11692,7 @@ function getTemplateRowCount(layout, slots) {
   return 3;
 }
 
-const STANDARD_DOUBLE_COLUMN_STRIP_SLOTS = [
-  { x: 50, y: 357, w: 500, h: 414 },
-  { x: 50, y: 823, w: 500, h: 414 },
-  { x: 50, y: 1288, w: 500, h: 413 },
-  { x: 650, y: 357, w: 500, h: 414 },
-  { x: 650, y: 823, w: 500, h: 414 },
-  { x: 650, y: 1288, w: 500, h: 413 },
-];
+
 
 function getStandardDoubleColumnStripSlots() {
   return STANDARD_DOUBLE_COLUMN_STRIP_SLOTS.map((slot) => ({ ...slot }));
@@ -18816,6 +18780,7 @@ function loadThemesFromStorage() {
       const migratedAveryScreens = migrateOptimizedAveryScreenAssets(themes);
       const migratedAmandaNorthScreens = migrateAmandaNorthScreenAssets(themes);
       const migratedSummerAssets = migrateSummerThemeAssets(themes);
+      const migratedHalloweenAssets = migrateHalloweenThemeAssets(themes);
       const migratedSpringHillHawks = migrateSpringHillHawksAssets(themes);
       const migratedSpringHillHawksStadium =
         migrateSpringHillHawksStadiumAssets(themes);
@@ -18832,6 +18797,7 @@ function loadThemesFromStorage() {
         migratedAveryScreens ||
         migratedAmandaNorthScreens ||
         migratedSummerAssets ||
+        migratedHalloweenAssets ||
         migratedSpringHillHawks ||
         migratedSpringHillHawksStadium ||
         migratedSpringHillHawksCheer ||
