@@ -12,8 +12,24 @@ export const HALLOWEEN_PHOTO_SLOTS = {
 };
 
 const PACKS = [
-  { key: "halloween", folder: "halloween", name: "Halloween" },
-  { key: "cuteHalloween", folder: "cute-halloween", name: "Happy Halloween" },
+  {
+    key: "halloween",
+    folder: "halloween",
+    name: "Halloween",
+    backgrounds: [
+      "halloween-background-portrait.mp4",
+      "halloween-background-landscape.mp4",
+    ],
+  },
+  {
+    key: "cuteHalloween",
+    folder: "cute-halloween",
+    name: "Happy Halloween",
+    backgrounds: [
+      "cute-halloween-background-portrait.webp",
+      "cute-halloween-background-landscape.webp",
+    ],
+  },
 ];
 
 function createPack({ folder, name }, prefix = "") {
@@ -39,9 +55,12 @@ function createPack({ folder, name }, prefix = "") {
 export const HALLOWEEN_ASSET_MANIFESTS = Object.fromEntries(
   PACKS.flatMap((pack) => {
     const assets = createPack(pack);
-    return ["overlays", "templates"].map((field) => [
-      `assets/themes/${pack.folder}/${field}/`, assets[field],
-    ]);
+    return [
+      [`assets/themes/${pack.folder}/`, pack.backgrounds],
+      ...["overlays", "templates"].map((field) => [
+        `assets/themes/${pack.folder}/${field}/`, assets[field],
+      ]),
+    ];
   })
 );
 
@@ -53,6 +72,42 @@ function isRetiredHalloweenAsset(entry) {
     /\/(?:halloween|cute-halloween)-simple-(?:three-photo|double-column)-strip\.png$/.test(src);
 }
 
+function getAssetSource(entry) {
+  return typeof entry === "string" ? entry : entry?.src || "";
+}
+
+function isRetiredHalloweenBackground(entry) {
+  const src = getAssetSource(entry).toLowerCase();
+  return (
+    src.includes("/themes/holidays/fall/halloween/backgrounds/") ||
+    src.includes("/assets/holidays/fall/halloween/backgrounds/") ||
+    src.includes("halloween-background-grey-1") ||
+    src.includes("halloween-background-pink")
+  );
+}
+
+export function migrateHalloweenEventAssets(events) {
+  if (!Array.isArray(events)) return false;
+  let changed = false;
+  for (const event of events) {
+    const overrides = event && event.overrides;
+    if (!overrides || !Array.isArray(overrides.backgrounds)) continue;
+    const backgrounds = overrides.backgrounds;
+    const selectedBackground = backgrounds[overrides.backgroundIndex || 0];
+    const nextBackgrounds = backgrounds.filter(
+      (entry) => !isRetiredHalloweenBackground(entry)
+    );
+    if (nextBackgrounds.length === backgrounds.length) continue;
+    overrides.backgrounds = nextBackgrounds;
+    overrides.backgroundIndex = Math.max(
+      0,
+      nextBackgrounds.indexOf(selectedBackground)
+    );
+    changed = true;
+  }
+  return changed;
+}
+
 // Replace shipped legacy frames while keeping operator-added assets.
 export function migrateHalloweenThemeAssets(target) {
   let changed = false;
@@ -60,6 +115,41 @@ export function migrateHalloweenThemeAssets(target) {
     const theme = target?.fall?.holidays?.[pack.key];
     if (!theme) continue;
     const expected = createPack(pack);
+    const backgroundBase = `/assets/themes/${pack.folder}/`;
+    const defaultBackgrounds = pack.backgrounds.map(
+      (filename) => `${backgroundBase}${filename}`
+    );
+    const existingBackgrounds = Array.isArray(theme.backgrounds)
+      ? theme.backgrounds
+      : [];
+    const customBackgrounds = existingBackgrounds.filter(
+      (entry) => !isRetiredHalloweenBackground(entry)
+    );
+    const nextBackgrounds = [...defaultBackgrounds];
+    for (const entry of customBackgrounds) {
+      const src = getAssetSource(entry);
+      if (src && !nextBackgrounds.includes(src)) nextBackgrounds.push(src);
+    }
+    if (JSON.stringify(existingBackgrounds) !== JSON.stringify(nextBackgrounds)) {
+      theme.backgrounds = nextBackgrounds;
+      changed = true;
+    }
+    const backgroundIndex = Number.isInteger(theme.backgroundIndex)
+      ? Math.min(Math.max(theme.backgroundIndex, 0), nextBackgrounds.length - 1)
+      : 0;
+    if (theme.background !== nextBackgrounds[backgroundIndex]) {
+      theme.background = nextBackgrounds[backgroundIndex];
+      changed = true;
+    }
+    if (Array.isArray(theme.backgroundsRemoved)) {
+      const nextRemoved = theme.backgroundsRemoved.filter(
+        (entry) => !isRetiredHalloweenBackground(entry)
+      );
+      if (JSON.stringify(theme.backgroundsRemoved) !== JSON.stringify(nextRemoved)) {
+        theme.backgroundsRemoved = nextRemoved;
+        changed = true;
+      }
+    }
     for (const field of ["overlays", "templates"]) {
       const base = `/assets/themes/${pack.folder}/${field}/`;
       const defaults = expected[field].map((entry) => ({ ...entry, src: base + entry.src }));

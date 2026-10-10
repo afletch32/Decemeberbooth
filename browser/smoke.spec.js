@@ -166,6 +166,35 @@ test("only complete approved theme packs appear in theme selectors", async ({ pa
   expect(halloweenThemeKeys).toContain("fall:halloween");
 });
 
+test("saved Halloween event overrides drop retired backgrounds at startup", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("photoboothEvents", JSON.stringify([{
+      id: "legacy-halloween-event",
+      name: "Halloween Event",
+      themeKey: "fall:halloween",
+      overrides: {
+        backgrounds: [
+          "/themes/holidays/fall/halloween/backgrounds/halloween-background-grey-1.jpg",
+          "/uploads/custom-event-background.webp",
+          "/assets/holidays/fall/halloween/backgrounds/halloween-background-pink.png",
+        ],
+        backgroundIndex: 1,
+      },
+    }]));
+    localStorage.setItem("photoboothActiveEventId", "legacy-halloween-event");
+  });
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  const event = await page.evaluate(() =>
+    window.__photoboothTest.getEventById("legacy-halloween-event")
+  );
+  expect(event.overrides.backgrounds).toEqual([
+    "/uploads/custom-event-background.webp",
+  ]);
+  expect(event.overrides.backgroundIndex).toBe(0);
+});
+
 async function expectCreatePathValidation(page, options) {
   const {
     themePattern,

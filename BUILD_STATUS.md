@@ -1,10 +1,10 @@
 # Build status
 
-- Current goal: Remove four retired Halloween templates from saved/remote selections and release the correction.
-- Done: Fixed migration matching for four legacy local template paths, cleared their folder/fallback manifests, and deleted retired PNGs/thumbnails. Browser regression with the actual five-template remote payload shows exactly one selected template. Two 1200×1800 sheets, each with identical 600×1800 strips and repeated photos 0,1,2. New 600×330 illustrated headers match each theme. Shared canonical geometry places 500×414 photo windows (bottom row 500×413) at standard positions. All apertures are fully transparent. Removed the incorrect tall-box sheets; single-photo overlays remain. Added reproducible template export and refreshed manifests/cache identifiers.
-- In progress: Commit, push, and deploy the retired-template cleanup; verify production selection count.
-- Next steps: Verify production shows one approved Halloween template. Unrelated wedding edits and asset deletions remain outside this release.
-- Known bugs/blockers: Full suite has two unrelated missing-wedding-manifest failures. Real guest camera/audio, physical printing, and sharing delivery remain unverified.
-- Important decisions: Preserve the approved screen packs, simple borders, vanilla stack, and custom uploads. Template metadata and the existing renderer use one shared standard slot definition. New filenames avoid stale template cache hits. Both header artwork and photo order are identical across each sheet's two columns.
-- Verification: Isolated committed-baseline release: `npm test` 271/271 pass for the cleanup release. Shared checkout previously had 269 pass / 2 unrelated missing-wedding-manifest failures. Exact alpha-window crops and pixel-identical left/right halves checked for both files. Playwright verified theme/orientation selection and production composers with no page errors; outputs viewed at desktop/mobile sizes using synthetic colored photos. `git diff --check` clean.
-- Release: Feature commit `b52bc77` deployed to production as `13fb56d5` ([production](https://decemeberbooth.pages.dev/), [deployment](https://13fb56d5.decemeberbooth.pages.dev/)). Deployed an archive of the committed tree, excluding unrelated working-tree changes. Verified production bytes for HTML, service worker, application/modules, both templates, and four overlays. Live browser theme-card selection and production composers rendered all six assets with no page errors; external camera/CDN dependencies were stubbed. Feature and deployment verification commits pushed to `origin/agent/booth-asset-and-preview-fixes`; unrelated uncommitted changes remain local.
+- Current goal: Remove retired Halloween backgrounds from the saved theme and event data, then release the correction.
+- Done: Theme migration replaces retired Halloween background URLs with the current portrait and landscape assets while preserving custom backgrounds. Event migration removes retired references from local and remote event overrides. Built-in manifests list the current Halloween background pairs, and generated asset manifests no longer list the deleted legacy Halloween theme.
+- In progress: Commit, push, and deploy the focused repair.
+- Next steps: Verify the production bundle and the live theme data migration path.
+- Known bugs/blockers: Real guest camera/audio, physical printing, and sharing delivery remain unverified.
+- Important decisions: Preserve current themes and operator-added backgrounds; remove only references to the retired Halloween asset URLs.
+- Verification: `npm test` passes (274/274). Targeted Playwright startup test passes; `git diff --check` is clean.
+- Release: Pending.

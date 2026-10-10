@@ -1,5 +1,5 @@
 import { STANDARD_DOUBLE_COLUMN_STRIP_SLOTS } from "./strip-layout-utils.mjs";
-import { migrateHalloweenThemeAssets } from "./halloween-assets.mjs";
+import { migrateHalloweenEventAssets, migrateHalloweenThemeAssets } from "./halloween-assets.mjs";
 import { CanvasBuffer, offscreenToDataURL } from "./canvas-utils.mjs";
 import {
   buildBoothVideoUrl,
@@ -13251,6 +13251,7 @@ function getStoredEvents() {
 
 function setStoredEvents(events, options = {}) {
   const list = Array.isArray(events) ? events.slice() : [];
+  const migratedHalloweenBackgrounds = migrateHalloweenEventAssets(list);
   list.sort((a, b) => {
     const ad = a && a.date ? new Date(a.date).getTime() : 0;
     const bd = b && b.date ? new Date(b.date).getTime() : 0;
@@ -13260,7 +13261,8 @@ function setStoredEvents(events, options = {}) {
     return an.localeCompare(bn);
   });
   localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(list));
-  if (!options.skipRemoteSync) scheduleEventsRemoteSync();
+  if (!options.skipRemoteSync || migratedHalloweenBackgrounds)
+    scheduleEventsRemoteSync();
 }
 
 function getActiveEventId() {
@@ -18822,6 +18824,8 @@ function openLayoutBuilder() {
 }
 
 function loadEventsFromStorage() {
+  const events = getStoredEvents();
+  if (migrateHalloweenEventAssets(events)) setStoredEvents(events);
   populateEventProfileSelect(getActiveEventId());
   deferNonCriticalTask(() => loadEventsRemote().catch(() => {}));
 }

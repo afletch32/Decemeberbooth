@@ -25,9 +25,54 @@ test("Halloween migration replaces legacy defaults and preserves custom uploads"
   assert.equal(migrateHalloweenThemeAssets(target), false);
 });
 
+test("Halloween migration replaces deleted legacy backgrounds and keeps orientation pair", async () => {
+  const { migrateHalloweenThemeAssets } = await import("./scripts/halloween-assets.mjs");
+  const custom = "/uploads/added-background.webp";
+  const theme = {
+    background: "/themes/holidays/fall/halloween/backgrounds/halloween-background-pink.png",
+    backgrounds: [
+      "/themes/holidays/fall/halloween/backgrounds/halloween-background-grey-1.jpg",
+      "https://res.cloudinary.com/example/image/upload/fall-halloween-background-halloween-background-pink_old.png",
+      custom,
+    ],
+    backgroundIndex: 1,
+    backgroundsRemoved: ["/assets/holidays/fall/halloween/backgrounds/halloween-background-pink.png"],
+  };
+  const target = { fall: { holidays: { halloween: theme } } };
+
+  assert.equal(migrateHalloweenThemeAssets(target), true);
+  assert.deepEqual(theme.backgrounds, [
+    "/assets/themes/halloween/halloween-background-portrait.mp4",
+    "/assets/themes/halloween/halloween-background-landscape.mp4",
+    custom,
+  ]);
+  assert.equal(theme.background, theme.backgrounds[1]);
+  assert.deepEqual(theme.backgroundsRemoved, []);
+  assert.equal(migrateHalloweenThemeAssets(target), false);
+});
+
+test("event migration removes retired Halloween background overrides but keeps other event backgrounds", async () => {
+  const { migrateHalloweenEventAssets } = await import("./scripts/halloween-assets.mjs");
+  const event = {
+    overrides: {
+      backgrounds: [
+        "/themes/holidays/fall/halloween/backgrounds/halloween-background-grey-1.jpg",
+        "/uploads/custom-event-background.webp",
+        "/assets/holidays/fall/halloween/backgrounds/halloween-background-pink.png",
+      ],
+      backgroundIndex: 1,
+    },
+  };
+  assert.equal(migrateHalloweenEventAssets([event]), true);
+  assert.deepEqual(event.overrides.backgrounds, ["/uploads/custom-event-background.webp"]);
+  assert.equal(event.overrides.backgroundIndex, 0);
+  assert.equal(migrateHalloweenEventAssets([event]), false);
+});
+
 test("Halloween manifests use shared geometry and production-size alpha PNGs", async () => {
   const { HALLOWEEN_ASSET_MANIFESTS, HALLOWEEN_PHOTO_SLOTS } = await import("./scripts/halloween-assets.mjs");
   for (const [folder, assets] of Object.entries(HALLOWEEN_ASSET_MANIFESTS)) {
+    if (!folder.endsWith("/overlays/") && !folder.endsWith("/templates/")) continue;
     const file = folder.includes("overlays") ? "overlays.json" : "templates.json";
     assert.deepEqual(JSON.parse(readFileSync(folder + file, "utf8")), assets);
     for (const asset of assets) {
@@ -38,6 +83,19 @@ test("Halloween manifests use shared geometry and production-size alpha PNGs", a
       assert.deepEqual(asset.photoSlots, HALLOWEEN_PHOTO_SLOTS[asset.layout ? "strip" : asset.orientation]);
     }
   }
+});
+
+test("Halloween built-in asset manifest lists only the current orientation backgrounds", async () => {
+  const { getBuiltinAssetManifest } = await import("./scripts/builtin-asset-manifests.mjs");
+  assert.deepEqual(getBuiltinAssetManifest("assets/themes/halloween/"), [
+    "halloween-background-portrait.mp4",
+    "halloween-background-landscape.mp4",
+  ]);
+  assert.deepEqual(getBuiltinAssetManifest("assets/themes/cute-halloween/"), [
+    "cute-halloween-background-portrait.webp",
+    "cute-halloween-background-landscape.webp",
+  ]);
+  assert.deepEqual(getBuiltinAssetManifest("assets/holidays/fall/halloween/backgrounds/"), []);
 });
 
 
@@ -55,5 +113,7 @@ test("Halloween retires the four legacy local templates without removing uploads
   assert.ok(theme.templates[0].src.includes("graphic-double-column"));
   assert.equal(theme.templates[1], custom);
   assert.deepEqual(getBuiltinAssetManifest("assets/holidays/fall/halloween/templates/"), []);
+  assert.deepEqual(getBuiltinAssetManifest("assets/holidays/fall/halloween/backgrounds/"), []);
+  assert.deepEqual(getBuiltinAssetManifest("assets/holidays/fall/halloween/overlays/"), []);
   assert.deepEqual(JSON.parse(readFileSync("assets/holidays/fall/halloween/templates/templates.json", "utf8")), []);
 });
