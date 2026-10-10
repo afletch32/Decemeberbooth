@@ -49,6 +49,7 @@ function isRetiredHalloweenAsset(entry) {
   const src = typeof entry === "string" ? entry : entry?.src || "";
   return /\/overlays\/(?:halloween|happy-halloween)-single-photo-(?:portrait|landscape)\.(?:svg|png)$/.test(src) ||
     src.includes("/fall-halloween-template-") ||
+    /(?:^|\/)halloween-template-(?:2|3|4|maddies)\.png(?:[?#].*)?$/.test(src) ||
     /\/(?:halloween|cute-halloween)-simple-(?:three-photo|double-column)-strip\.png$/.test(src);
 }
 

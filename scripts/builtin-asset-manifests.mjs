@@ -204,12 +204,7 @@ const BUILTIN_ASSET_MANIFESTS = {
     "halloween-frame-skeletons.png",
     "smoke-corner-frame.png"
   ],
-  "assets/holidays/fall/halloween/templates/": [
-    { src: "halloween-template-2.png", layout: "double_column", headerPct: 0.22, columnPadPct: 0.055, slotSpacingPct: 0.024, footerPct: 0.035 },
-    { src: "halloween-template-3.png", layout: "double_column", headerPct: 0.22, columnPadPct: 0.055, slotSpacingPct: 0.024, footerPct: 0.035 },
-    { src: "halloween-template-4.png", layout: "double_column", headerPct: 0.22, columnPadPct: 0.055, slotSpacingPct: 0.024, footerPct: 0.035 },
-    { src: "halloween-template-maddies.png", layout: "double_column", headerPct: 0.22, columnPadPct: 0.055, slotSpacingPct: 0.024, footerPct: 0.035 }
-  ],
+  "assets/holidays/fall/halloween/templates/": [],
   "assets/holidays/winter/christmas/backgrounds/": [
     "christmas-background-1.png",
     "christmas-background-2.png",

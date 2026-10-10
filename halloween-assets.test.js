@@ -39,3 +39,21 @@ test("Halloween manifests use shared geometry and production-size alpha PNGs", a
     }
   }
 });
+
+
+test("Halloween retires the four legacy local templates without removing uploads", async () => {
+  const { migrateHalloweenThemeAssets } = await import("./scripts/halloween-assets.mjs");
+  const { getBuiltinAssetManifest } = await import("./scripts/builtin-asset-manifests.mjs");
+  const custom = { src: "/uploads/customer-template.png" };
+  const theme = { templates: [
+    ...["2", "3", "4", "maddies"].map((suffix) => ({
+      src: `/assets/holidays/fall/halloween/templates/halloween-template-${suffix}.png`,
+    })), custom,
+  ] };
+  migrateHalloweenThemeAssets({ fall: { holidays: { halloween: theme } } });
+  assert.equal(theme.templates.length, 2);
+  assert.ok(theme.templates[0].src.includes("graphic-double-column"));
+  assert.equal(theme.templates[1], custom);
+  assert.deepEqual(getBuiltinAssetManifest("assets/holidays/fall/halloween/templates/"), []);
+  assert.deepEqual(JSON.parse(readFileSync("assets/holidays/fall/halloween/templates/templates.json", "utf8")), []);
+});
