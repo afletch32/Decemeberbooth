@@ -440,6 +440,17 @@ test("built-in Wedding theme is retired while wedding event setup remains", () =
   assert.ok(appScript.includes('classList.toggle("hidden", !showWeddingFields)'));
 });
 
+test("theme catalog cards render even when the saved selection cannot load", () => {
+  const appScript = readProjectFile("scripts", "app.js");
+  const populate = extractFunction(appScript, "populateThemeSelector");
+
+  assert.ok(
+    populate.indexOf("renderThemeQuickPicker();") <
+      populate.indexOf("if (entries.length === 0)"),
+    "the available catalog should render before theme selection or fallback loading"
+  );
+});
+
 test("fourth of july theme includes Cloudinary overlay entries", () => {
   const appScript = readProjectFile("scripts", "app.js");
 
@@ -1155,7 +1166,8 @@ test("event name and date drive the session upload folder", () => {
 
   assert.ok(
     html.includes('<label for="eventNameInput">Session Name</label>') &&
-      html.includes('<label for="eventDateInput">Session Date (optional)</label>'),
+      html.includes('<label for="eventGeneralDateInput">Session Date (optional)</label>') &&
+      html.includes('<label for="eventDateInput">Wedding Date</label>'),
     "setup should present one session name and one session date field"
   );
   assert.ok(
@@ -1167,7 +1179,7 @@ test("event name and date drive the session upload folder", () => {
     appScript.includes("function getSessionUploadName()") &&
       appScript.includes("function getSessionUploadDate()") &&
       appScript.includes("valueFromInput(DOM.eventNameInput)") &&
-      appScript.includes("valueFromInput(DOM.eventDateInput)") &&
+      appScript.includes("valueFromInput(DOM.eventGeneralDateInput)") &&
       appScript.includes("getDateSessionSlug()") &&
       appScript.includes("slugifyEventText(getSessionUploadName())") &&
       appScript.includes("slugifyEventText(getSessionUploadDate())"),
@@ -1197,7 +1209,7 @@ test("advanced theme controls keep defaults as editable placeholders", () => {
   const appScript = readProjectFile("scripts/app.js");
   const advancedTextInputs = [
     "eventNameInput",
-    "eventDateInput",
+    "eventGeneralDateInput",
     "eventPartner1Input",
     "eventPartner2Input",
     "eventBirthdayNameInput",
@@ -1262,6 +1274,8 @@ test("birthday and wedding event fields stay theme-gated", () => {
       html.includes('class="theme-field birthday-only-event-field hidden"') &&
       html.includes('id="eventPartner1Input"') &&
       html.includes('id="eventPartner2Input"') &&
+      html.includes('id="weddingEventSetup"') &&
+      html.includes('id="createWeddingEventBtn"') &&
       html.includes('id="eventBirthdayNameInput"'),
     "wedding fields should stay visible only through the wedding wrapper and birthday name should start hidden"
   );
@@ -1270,6 +1284,9 @@ test("birthday and wedding event fields stay theme-gated", () => {
       appScript.includes("function isBirthdayEventTheme(themeObj = null)") &&
       appScript.includes("function syncWeddingOnlyEventFields(themeObj = null)") &&
       appScript.includes("function syncBirthdayOnlyEventFields(themeObj = null)") &&
+      appScript.includes("function syncWeddingSetupMode()") &&
+      appScript.includes("function createWeddingEventFromSetup()") &&
+      appScript.includes("createEucalyptusWeddingTheme(partner1, partner2, date)") &&
       appScript.includes('document.querySelectorAll(".wedding-only-event-field")') &&
       appScript.includes('document.querySelectorAll(".birthday-only-event-field")') &&
       appScript.includes('normalizeEventStyle(inferThemeEventStyle(themeKey, theme)) === "birthday"'),

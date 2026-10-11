@@ -55,8 +55,6 @@ async function main() {
     "summer": { key: "general:summer", root: "general", subRoot: "themes", themeKey: "summer" },
     "hawks": { key: "school:hawks", root: "school", subRoot: "themes", themeKey: "hawks" },
     "ane": { key: "school:ane", root: "school", subRoot: "themes", themeKey: "ane" },
-    "garden-vows": { key: "wedding:romantic", root: "wedding", subRoot: "themes", themeKey: "romantic" },
-    "timeless-romance": { key: "wedding:timeless", root: "wedding", subRoot: "themes", themeKey: "timeless" },
     "fall-halloween": { key: "fall:halloween", root: "fall", subRoot: "holidays", themeKey: "halloween" },
     "winter-christmas": { key: "winter:christmas", root: "winter", subRoot: "holidays", themeKey: "christmas" },
     "winter-valentines": { key: "winter:valentines", root: "winter", subRoot: "holidays", themeKey: "valentines" },

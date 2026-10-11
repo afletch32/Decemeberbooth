@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Restore the live camera preview while retaining the selected filter and lightweight preview processing.
-- Done: The camera preview frame is transparent so the animated Halloween backdrop remains visible while the camera is unavailable or starting. Added the missing low-resolution source-frame renderer used by the live imaging loop; it crops to the active orientation and camera zoom before processing.
-- In progress: None.
-- Next steps: Reload the booth page; test the real camera on the HTTPS production URL with camera permission granted.
-- Known bugs/blockers: Real guest camera/audio, physical printing, sharing delivery, and a real PayPal capture remain unverified.
-- Important decisions: Remove only references to retired Halloween assets. Keep Cloudflare `main` as the production source.
-- Verification: `npm test` passes (281/281) in the clean production snapshot. The targeted Chromium live-preview flow passes (1/1). Module syntax, production HTTP responses, renderer/cache version checks, and `git diff --check` pass. Real camera hardware was not exercised here.
-- Release: Fix commit `f357c35` is live on Cloudflare Pages production deployment `bc3a7a2b-b651-4e33-9d12-b9b7dbcccb86` (2026-10-10).
+- Current goal: Ship the intended theme cleanup and themed capture/share improvements on top of the current production camera-preview fixes.
+- Done: Capture previews reject late live redraws after freezing. Share views use orientation-matched Share art, Thank You art, or a still theme background; share chrome and QR panels follow the theme palette. Live booth header is hidden when frame artwork supplies branding, and guest controls use theme accents. Retired theme packs and legacy Halloween selections were removed from catalogs and asset manifests. The current production live-camera source-frame renderer is preserved.
+- In progress: Commit the production sync, push, deploy, and confirm the live app shell.
+- Next steps: Verify the production cache version and updated capture/share behavior.
+- Known bugs/blockers: Real guest camera/audio, physical printing, sharing delivery, and PayPal capture remain unverified. Eucalyptus artwork files are not present locally although wedding theme metadata references those asset paths.
+- Important decisions: Keep Cloudflare `main` as the production source. Remove only retired theme assets; retain custom uploads and theme-specific orientation variants.
+- Verification: `npm test` passes (283/283); Chromium live-preview capture and final-share viewport tests pass (2/2); the share viewport test covers eight kiosk sizes; `git diff --check` passes.
+- Release: Pending.
 
 ## Existing production records
 

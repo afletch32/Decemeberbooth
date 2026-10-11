@@ -47,99 +47,55 @@ const BUILTIN_ASSET_MANIFESTS = {
       { x: 650, y: 1288, w: 500, h: 413 }
     ] }
   ],
-  "assets/wedding/timeless-romance/backgrounds/": [
-    "background.svg",
-    "timeless-romance-bg-4.png",
-    "timeless-romance-bg-5.png",
-    "timeless-romance-bg-6.png",
-    "timeless-romance-bg-8.png"
+  "assets/wedding/eucalyptus/backgrounds/": [
+    "eucalyptus-wedding-background-portrait.webp",
+    "eucalyptus-wedding-background-landscape.webp"
   ],
-  "assets/wedding/timeless-romance/overlays/": [
+  "assets/wedding/eucalyptus/overlays/": [
     {
-      src: "timeless-romance-strip-overlay.svg",
-      id: "timeless-romance-strip",
-      name: "Timeless Romance Strip",
-      type: "photo-strip-layout",
-      category: "wedding",
-      aspectRatio: "1:3",
-      background: { type: "color", value: "#fffcf8" },
-      foreground: { type: "image", src: "timeless-romance-strip-overlay.svg" },
-      photoSlots: [
-        { x: 0.1083, y: 0.213, width: 0.7833, height: 0.1833, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" },
-        { x: 0.1083, y: 0.4185, width: 0.7833, height: 0.1833, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" },
-        { x: 0.1083, y: 0.6241, width: 0.7833, height: 0.1833, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" }
-      ]
-    },
-    {
-      src: "timeless-romance-single-overlay.svg",
-      id: "timeless-romance-single",
-      name: "Timeless Romance Single",
-      type: "overlay",
-      category: "wedding",
-      aspectRatio: "3:2",
-      background: { type: "color", value: "#fffcf8" },
-      foreground: { type: "image", src: "timeless-romance-single-overlay.svg" },
-      photoSlots: [
-        { x: 0.0811, y: 0.3583, width: 0.8378, height: 0.4883, borderRadius: 0.02, objectFit: "cover", objectPosition: "center" }
-      ]
-    }
-  ],
-  "assets/wedding/timeless-romance/templates/": [
-    {
-      src: "timeless-romance-strip-template.svg",
-      layout: "photo_strip_3",
-      slots: [
-        { x: 86, y: 468, w: 548, h: 380 },
-        { x: 86, y: 912, w: 548, h: 380 },
-        { x: 86, y: 1356, w: 548, h: 380 }
-      ]
-    },
-    { src: "timeless-romance-single-template.svg", layout: "single_photo" }
-  ],
-  "assets/wedding/garden-vows/backgrounds/": [
-    "background.svg",
-    "garden-vows-bg-1.png",
-    "garden-vows-bg-2.png",
-    "garden-vows-bg-3.png",
-    "garden-vows-bg-7.png"
-  ],
-  "assets/wedding/garden-vows/overlays/": [
-    {
-      src: "garden-vows-single-portrait.png",
-      id: "garden-vows-single-portrait",
-      name: "Wedding Photo · Portrait",
+      src: "eucalyptus-wedding-overlay-portrait.png",
+      id: "eucalyptus-wedding-portrait",
+      name: "Eucalyptus Wedding Portrait",
       type: "overlay",
       category: "wedding",
       orientation: "portrait",
       aspectRatio: "2:3",
-      foreground: { type: "image", src: "garden-vows-single-portrait.png" },
-      photoSlots: [
-        { x: 0.1572, y: 0.095, width: 0.6875, height: 0.68, objectFit: "cover" },
+      foreground: { type: "image", src: "eucalyptus-wedding-overlay-portrait.png" },
+      photoSlots: [{ x: 0.112, y: 0.072, width: 0.777, height: 0.777, objectFit: "cover" }],
+      textFields: [
+        { key: "couple_names", xPct: 0.16, yPct: 0.858, wPct: 0.68, hPct: 0.035, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 48, minFontSize: 24, color: "#405745", align: "center" },
+        { key: "event_date", xPct: 0.2, yPct: 0.908, wPct: 0.6, hPct: 0.026, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 25, minFontSize: 15, color: "#6e755f", align: "center" }
       ]
     },
     {
-      src: "garden-vows-single-landscape.png",
-      id: "garden-vows-single-landscape",
-      name: "Wedding Photo · Landscape",
+      src: "eucalyptus-wedding-overlay-landscape.png",
+      id: "eucalyptus-wedding-landscape",
+      name: "Eucalyptus Wedding Landscape",
       type: "overlay",
       category: "wedding",
       orientation: "landscape",
       aspectRatio: "3:2",
-      foreground: { type: "image", src: "garden-vows-single-landscape.png" },
-      photoSlots: [
-        { x: 0.118, y: 0.128, width: 0.765, height: 0.617, objectFit: "cover" },
+      foreground: { type: "image", src: "eucalyptus-wedding-overlay-landscape.png" },
+      photoSlots: [{ x: 0.05, y: 0.10, width: 0.90, height: 0.80, objectFit: "cover" }],
+      textFields: [
+        { key: "couple_names", xPct: 0.2, yPct: 0.905, wPct: 0.6, hPct: 0.032, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 43, minFontSize: 22, color: "#405745", align: "center" },
+        { key: "event_date", xPct: 0.25, yPct: 0.949, wPct: 0.5, hPct: 0.023, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 22, minFontSize: 14, color: "#6e755f", align: "center" }
       ]
     }
   ],
-  "assets/wedding/garden-vows/templates/": [
+  "assets/wedding/eucalyptus/templates/": [
     {
-      src: "garden-vows-three-photo-strip.png",
-      name: "Wedding Three-Photo Strip",
+      src: "eucalyptus-wedding-three-photo-strip.png",
+      name: "Eucalyptus Wedding Three-Photo Strip",
       layout: "photo_strip_3",
-      slots: [
-        { x: 130, y: 148, w: 468, h: 459 },
-        { x: 129, y: 693, w: 474, h: 455 },
-        { x: 130, y: 1234, w: 470, h: 452 }
+      photoSlots: [
+        { x: 0.125, y: 0.083, width: 0.75, height: 0.24, sourceIndex: 0 },
+        { x: 0.125, y: 0.354, width: 0.75, height: 0.248, sourceIndex: 1 },
+        { x: 0.125, y: 0.636, width: 0.75, height: 0.237, sourceIndex: 2 }
+      ],
+      textFields: [
+        { key: "couple_names", xPct: 0.17, yPct: 0.902, wPct: 0.66, hPct: 0.03, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 38, minFontSize: 20, color: "#405745", align: "center" },
+        { key: "event_date", xPct: 0.25, yPct: 0.94, wPct: 0.5, hPct: 0.02, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 21, minFontSize: 14, color: "#6e755f", align: "center" }
       ]
     }
   ],

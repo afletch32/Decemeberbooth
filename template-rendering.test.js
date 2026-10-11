@@ -64,25 +64,22 @@ test("template rendering logic preserves photo overlays across strip mode and su
   );
 });
 
-test("wedding templates use transparent photo windows", () => {
-  const gardenOverlays = JSON.parse(readProjectFile("assets", "wedding", "garden-vows", "overlays", "overlays.json"));
-  const gardenTemplates = JSON.parse(readProjectFile("assets", "wedding", "garden-vows", "templates", "templates.json"));
-  const timelessStrip = readProjectFile("assets", "wedding", "timeless-romance", "templates", "timeless-romance-strip-template.svg");
-  const timelessSingle = readProjectFile("assets", "wedding", "timeless-romance", "templates", "timeless-romance-single-template.svg");
+test("wedding templates use transparent photo windows", async () => {
+  const { getBuiltinAssetManifest } = await import("./scripts/builtin-asset-manifests.mjs");
+  const overlays = getBuiltinAssetManifest("assets/wedding/eucalyptus/overlays");
+  const templates = getBuiltinAssetManifest("assets/wedding/eucalyptus/templates");
 
-  assert.deepEqual(gardenOverlays.map(({ src }) => src), [
-    "garden-vows-single-portrait.png",
-    "garden-vows-single-landscape.png",
+  assert.deepEqual(overlays.map(({ src }) => src), [
+    "eucalyptus-wedding-overlay-portrait.png",
+    "eucalyptus-wedding-overlay-landscape.png",
   ]);
-  assert.deepEqual(gardenTemplates[0].slots.length, 3);
-  for (const item of [...gardenOverlays, ...gardenTemplates]) {
+  assert.deepEqual(templates[0].photoSlots.length, 3);
+  for (const item of [...overlays, ...templates]) {
     assert.deepEqual(
       item.textFields.map((field) => field.key),
       ["couple_names", "event_date"]
     );
   }
-  assert.ok(timelessStrip.includes('width="548" height="380" rx="4" fill="none"'));
-  assert.ok(timelessSingle.includes('width="1504" height="558" rx="6" fill="none"'));
 });
 
 test("final preview clears temporary capture overlays before display", () => {

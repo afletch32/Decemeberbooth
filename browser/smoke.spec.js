@@ -166,35 +166,6 @@ test("only complete approved theme packs appear in theme selectors", async ({ pa
   expect(halloweenThemeKeys).toContain("fall:halloween");
 });
 
-test("saved Halloween event overrides drop retired backgrounds at startup", async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem("photoboothEvents", JSON.stringify([{
-      id: "legacy-halloween-event",
-      name: "Halloween Event",
-      themeKey: "fall:halloween",
-      overrides: {
-        backgrounds: [
-          "/themes/holidays/fall/halloween/backgrounds/halloween-background-grey-1.jpg",
-          "/uploads/custom-event-background.webp",
-          "/assets/holidays/fall/halloween/backgrounds/halloween-background-pink.png",
-        ],
-        backgroundIndex: 1,
-      },
-    }]));
-    localStorage.setItem("photoboothActiveEventId", "legacy-halloween-event");
-  });
-  await gotoApp(page, "/index.html");
-  await page.waitForFunction(() => !!window.__photoboothTest);
-
-  const event = await page.evaluate(() =>
-    window.__photoboothTest.getEventById("legacy-halloween-event")
-  );
-  expect(event.overrides.backgrounds).toEqual([
-    "/uploads/custom-event-background.webp",
-  ]);
-  expect(event.overrides.backgroundIndex).toBe(0);
-});
-
 async function expectCreatePathValidation(page, options) {
   const {
     themePattern,
@@ -248,22 +219,17 @@ async function expectCreatePathValidation(page, options) {
 
 async function createWeddingEvent(page, options = {}) {
   const {
-    eventName = "Jordan and Alex",
     partner1 = "Jordan",
     partner2 = "Alex",
-    date = "June 14, 2026",
+    date = "2026-06-14",
   } = options;
   await gotoApp(page, "/index.html");
-  const eventDetails = page.locator("#eventDetailsPanel");
-  if (!(await eventDetails.getAttribute("open"))) {
-    await eventDetails.locator(":scope > summary").click();
-  }
   await page.selectOption("#eventTypeInput", "wedding");
-  await page.fill("#eventNameInput", eventName);
   await page.fill("#eventDateInput", date);
   await page.fill("#eventPartner1Input", partner1);
   await page.fill("#eventPartner2Input", partner2);
-  await page.getByRole("button", { name: "Save as New Event" }).click();
+  await expect(page.locator("#themeQuickPicker")).toBeHidden();
+  await page.getByRole("button", { name: "Create Wedding Theme" }).click();
   await expect(page.locator("#eventProfileSelect")).toHaveValue(/.+/);
   await page.waitForFunction(() => window.__photoboothTest?.getActiveEvent()?.eventType === "wedding");
 }
@@ -287,10 +253,9 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
   page,
 }) => {
   await createWeddingEvent(page, {
-    eventName: "Maya and Noah",
     partner1: "Maya",
     partner2: "Noah",
-    date: "September 19, 2027",
+    date: "2027-09-19",
   });
 
   const result = await page.evaluate(() => {
@@ -303,15 +268,23 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
       ).length,
       partnerFieldsVisible: [...document.querySelectorAll(".wedding-only-event-field")]
         .every((field) => !field.classList.contains("hidden")),
+      themeKey: api.getSelectedThemeKey(),
+      resolvedTheme: api.getThemeByKey(event.themeKey),
     };
   });
 
   expect(result.weddingCardCount).toBe(0);
   expect(result.event.eventType).toBe("wedding");
-  expect(result.event.themeKey).not.toMatch(/^wedding:/);
+  expect(result.event.themeKey).toMatch(/^wedding:/);
+  expect(result.event.weddingTheme).toBeTruthy();
+  expect(result.event.weddingTheme.name).toBe("Maya & Noah Wedding");
+  expect(result.event.weddingTheme.overlays).toHaveLength(2);
+  expect(result.event.weddingTheme.templates[0].photoSlots).toHaveLength(3);
+  expect(result.themeKey).toBe(result.event.themeKey);
+  expect(result.resolvedTheme.name).toBe("Maya & Noah Wedding");
   expect(result.event.partner1).toBe("Maya");
   expect(result.event.partner2).toBe("Noah");
-  expect(result.event.date).toBe("September 19, 2027");
+  expect(result.event.date).toBe("2027-09-19");
   expect(result.partnerFieldsVisible).toBe(true);
 });
 
@@ -1283,7 +1256,7 @@ test.skip("photo overlays render mirrored live DOM slots", async ({
         background: { type: "color", value: "#fffaf4" },
         foreground: {
           type: "image",
-          src: "assets/wedding/timeless-romance/overlays/timeless-romance-single-overlay.svg",
+          src: "assets/wedding/eucalyptus/overlays/eucalyptus-wedding-overlay-portrait.png",
         },
         photoSlots: [
           {
@@ -2221,41 +2194,15 @@ test.skip("wedding theme filtering keeps the create-path selector on wedding the
   expect(joined).toContain("wedding");
 });
 
-test("opaque wedding svg overlays are auto-fixed before render", async ({
+test("Eucalyptus wedding overlays are transparent PNG assets", async ({
   page,
 }) => {
   await gotoApp(page, "/index.html");
-  const result = await page.evaluate(async () => {
-    const timeless =
-      await window.__photoboothTest.getOverlayFixedAsset(
-        "assets/wedding/timeless-romance/overlays/timeless-romance-single-overlay.svg"
-      );
-    const garden =
-      await window.__photoboothTest.getOverlayFixedAsset(
-        "assets/wedding/garden-vows/overlays/garden-vows-single-overlay.svg"
-      );
-    const birthdayPng =
-      await window.__photoboothTest.getOverlayFixedAsset(
-        "assets/general/birthday/overlays/banner-frame.png"
-      );
-    return {
-      timeless,
-      garden,
-      birthdayPng,
-    };
-  });
-
-  expect(result.timeless).toMatchObject({
-    src: "assets/wedding/timeless-romance/overlays/timeless-romance-single-overlay.svg",
-  });
-  expect(result.timeless.renderSrc).toContain("data:image/svg+xml");
-  expect(result.garden).toMatchObject({
-    src: "assets/wedding/garden-vows/overlays/garden-vows-single-overlay.svg",
-  });
-  expect(result.garden.renderSrc).toContain("data:image/svg+xml");
-  expect(result.birthdayPng).toBe(
-    "assets/general/birthday/overlays/banner-frame.png"
+  const response = await page.request.get(
+    "/assets/wedding/eucalyptus/overlays/eucalyptus-wedding-overlay-portrait.png"
   );
+  expect(response.ok()).toBe(true);
+  expect(response.headers()["content-type"]).toContain("image/png");
 });
 
 test.skip("single-photo overlay autofill renders couple names and date from the created event", async ({

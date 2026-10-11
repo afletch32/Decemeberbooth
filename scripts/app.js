@@ -1,5 +1,8 @@
 import { STANDARD_DOUBLE_COLUMN_STRIP_SLOTS } from "./strip-layout-utils.mjs";
-import { migrateHalloweenEventAssets, migrateHalloweenThemeAssets } from "./halloween-assets.mjs";
+import {
+  migrateHalloweenEventAssets,
+  migrateHalloweenThemeAssets,
+} from "./halloween-assets.mjs";
 import { CanvasBuffer, offscreenToDataURL } from "./canvas-utils.mjs";
 import {
   buildBoothVideoUrl,
@@ -23,6 +26,7 @@ import {
   normalizeTemplateTextFields,
   resolveTemplateTextRect,
   resolveTemplateTextValue,
+  validateCreatePathEventDetails,
 } from "./template-text-utils.mjs";
 import { formatRecordingTime } from "./recording-utils.mjs";
 import { shouldEnableRemoteSync } from "./remote-sync-utils.mjs";
@@ -1283,6 +1287,12 @@ const DOM = {
   eventTitle: document.getElementById("eventTitle"),
   eventProfileSelect: document.getElementById("eventProfileSelect"),
   eventTypeInput: document.getElementById("eventTypeInput"),
+  weddingEventSetup: document.getElementById("weddingEventSetup"),
+  createWeddingEventBtn: document.getElementById("createWeddingEventBtn"),
+  themeQuickPicker: document.getElementById("themeQuickPicker"),
+  generalThemeBrowse: document.getElementById("generalThemeBrowse"),
+  eventNameSetupField: document.getElementById("eventNameSetupField"),
+  eventGeneralDateInput: document.getElementById("eventGeneralDateInput"),
   eventPrintPriceInput: document.getElementById("eventPrintPriceInput"),
   saveEventPrintPriceBtn: document.getElementById("saveEventPrintPriceBtn"),
   createPathThemeSelect: document.getElementById("createPathThemeSelect"),
@@ -2329,7 +2339,8 @@ function getSessionUploadDate() {
   if (active && active.date) return active.date;
   const sessionDate =
     getSavedEventTextValue(activeSessionTextDetails, "date") ||
-    valueFromInput(DOM.eventDateInput);
+    valueFromInput(DOM.eventDateInput) ||
+    valueFromInput(DOM.eventGeneralDateInput);
   if (sessionDate) return sessionDate;
   return getDateSessionSlug();
 }
@@ -3524,6 +3535,20 @@ async function uploadCreatePathSessionAssets(kind, fileList) {
 
 function prepareThemeSessionFromSetup() {
   disableShowcaseDemo();
+  const activeEvent = getActiveEvent();
+  if (
+    activeEvent &&
+    activeEvent.eventType === "wedding" &&
+    activeEvent.themeKey &&
+    activeEvent.weddingTheme
+  ) {
+    setEventSelection(activeEvent.themeKey);
+    loadTheme(activeEvent.themeKey);
+    syncEventInputsFromActive();
+    updateStylePreview();
+    updateLaunchSummary();
+    return true;
+  }
   setActiveEventId("");
   setQuickStartSessionDate(getLocalIsoDate());
   const key =
@@ -6395,18 +6420,19 @@ function setupWelcomeInteractions() {
 }
 
 function setupEventDateInput() {
-  if (!DOM.eventDateInput) return;
-  DOM.eventDateInput.addEventListener("input", () => {
-    const dateValue = DOM.eventDateInput.value.trim();
-    const active = getActiveEvent();
-    if (active) {
-      updateActiveEventDetails({ date: dateValue });
-    } else {
-      const key = getSelectedThemeKey();
-      updateActiveSessionTextDetails({ date: dateValue });
-      if (key) saveStoredEventDate(key, dateValue);
-    }
-    updateStylePreview();
+  [DOM.eventDateInput, DOM.eventGeneralDateInput].filter(Boolean).forEach((input) => {
+    input.addEventListener("input", () => {
+      const dateValue = input.value.trim();
+      const active = getActiveEvent();
+      if (active) {
+        updateActiveEventDetails({ date: dateValue });
+      } else {
+        const key = getSelectedThemeKey();
+        updateActiveSessionTextDetails({ date: dateValue });
+        if (key) saveStoredEventDate(key, dateValue);
+      }
+      updateStylePreview();
+    });
   });
 }
 
@@ -6466,11 +6492,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadAssetLibraryLocal();
   if (repairCorruptedBackgroundDefaults()) saveThemesToStorage();
   deferNonCriticalTask(() => loadAssetLibraryRemote().catch(() => renderAssetLibrary()));
-  try {
-    await setupFontPicker();
-  } catch (e) {
+  setupFontPicker().catch((e) => {
     console.warn("Font picker setup failed", e);
-  }
+  });
   const initialKey = populateThemeSelector(getStartupThemeKey());
   populateEventProfileSelect(getActiveEventId());
   if (initialKey) loadTheme(initialKey);
@@ -7335,6 +7359,24 @@ const SPOT_MASK = {
 
 function populateThemeSelector(preferredKey, attempt = 0) {
   console.log("Themes object:", themes);
+  const activeWedding = getActiveEvent();
+  if (
+    activeWedding &&
+    activeWedding.eventType === "wedding" &&
+    activeWedding.themeKey &&
+    activeWedding.weddingTheme
+  ) {
+    themeAdminState.setThemeOptions(
+      getSelectableThemeEntries().map((entry) => ({
+        value: entry.key,
+        textContent: entry.label,
+      }))
+    );
+    setEventSelection(activeWedding.themeKey);
+    syncWeddingSetupMode();
+    updateThemeEditorSummary();
+    return activeWedding.themeKey;
+  }
   const selectedType = getSelectedEventType();
   const entries = getSetupThemeEntries().filter((entry) =>
     shouldIncludeThemeForSelectedType(entry.key, entry.theme, selectedType)
@@ -7342,6 +7384,9 @@ function populateThemeSelector(preferredKey, attempt = 0) {
   themeAdminState.setThemeOptions(
     entries.map((entry) => ({ value: entry.key, textContent: entry.label }))
   );
+  // Populate cards directly from the catalog so a stale theme selection
+  // cannot leave the picker blank while loadTheme resolves its fallback.
+  renderThemeQuickPicker();
   if (entries.length === 0) {
     if (attempt === 0) {
       resetThemesToBuiltins("no selectable themes for dropdown");
@@ -7915,6 +7960,18 @@ function setup360ModeControls() {
 function setEventSelection(key) {
   if (!key) return false;
   key = normalizeThemeSelectionKey(key);
+  const active = getActiveEvent();
+  if (
+    active &&
+    active.eventType === "wedding" &&
+    active.themeKey === key &&
+    active.weddingTheme &&
+    key.startsWith("wedding:")
+  ) {
+    setLastThemeKey(key);
+    updateThemeEditorSummary();
+    return true;
+  }
   if (!themeAdminState.setSelectedThemeKey(key)) return false;
   setLastThemeKey(key);
   updateThemeEditorSummary();
@@ -7945,12 +8002,26 @@ function resolvePreferredThemeKey(preferredKey) {
 
 function isSelectableThemeKey(themeKey) {
   const normalizedKey = normalizeThemeSelectionKey(themeKey);
+  const active = getActiveEvent();
+  if (
+    active &&
+    active.eventType === "wedding" &&
+    active.themeKey === normalizedKey &&
+    active.weddingTheme
+  ) return true;
   return getSelectableThemeEntries().some((entry) => entry.key === normalizedKey);
 }
 
 function resolveThemeByKey(themeKey) {
   themeKey = normalizeThemeSelectionKey(themeKey);
   if (!themeKey) return null;
+  const active = getActiveEvent();
+  if (
+    active &&
+    active.eventType === "wedding" &&
+    active.themeKey === themeKey &&
+    active.weddingTheme
+  ) return active.weddingTheme;
   if (themeKey.includes(":")) {
     const [rootKey, leafKey] = themeKey.split(":");
     const root = themes[rootKey];
@@ -8097,10 +8168,6 @@ function applyThemeShareScreen(theme) {
     : [];
   const eventThankYouScreens = getActiveEventOverrides().thankYouScreens;
   const orientation = getGuestScreenOrientation();
-  const selected =
-    screens.find((entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation) ||
-    screens[0] ||
-    null;
   const selectedThankYou =
     eventThankYouScreens.find(
       (entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation
@@ -8111,7 +8178,19 @@ function applyThemeShareScreen(theme) {
     ) ||
     thankYouScreens[0] ||
     null;
-  const src = getAssetEntrySrc(selected);
+  const selected =
+    screens.find((entry) => normalizeIdleScreenOrientation(entry && entry.orientation) === orientation) ||
+    screens[0] ||
+    selectedThankYou;
+  const selectedBackground = getActiveBackground(theme);
+  const fallbackBackground = !isVideoAsset(selectedBackground)
+    ? selectedBackground
+    : getEffectiveBackgroundList(theme).find((entry) => {
+        if (isVideoAsset(entry)) return false;
+        const source = getAssetEntrySrc(entry).toLowerCase();
+        return source.includes(`-${orientation}.`) || source.includes(`-${orientation}-`);
+      }) || getEffectiveBackgroundList(theme).find((entry) => !isVideoAsset(entry));
+  const src = getAssetEntrySrc(selected) || getAssetEntrySrc(fallbackBackground);
   const goodbyeSrc =
     getAssetEntrySrc(selectedThankYou) ||
     src ||
@@ -8167,6 +8246,7 @@ function syncAdminUiWithTheme(themeKey, theme) {
   syncThemeEditorWithActiveTheme();
   if (DOM.eventNameInput) DOM.eventNameInput.value = storedName || "";
   if (DOM.eventDateInput) DOM.eventDateInput.value = storedDate || sessionDate || "";
+  if (DOM.eventGeneralDateInput) DOM.eventGeneralDateInput.value = storedDate || sessionDate || "";
   syncGuestScreenOrientationControl();
   syncEventSetupEditor(theme);
   renderThemeSoundEditor(currentKey, theme);
@@ -9169,7 +9249,7 @@ async function processCanvasThroughImagingPipeline(sourceCanvas, options = {}) {
 }
 
 function drawProcessedFrameToLivePreview(processedCanvas) {
-  if (!processedCanvas || !DOM.livePreviewCanvas) return null;
+  if (capturePreviewFrozen || !processedCanvas || !DOM.livePreviewCanvas) return null;
   const target = DOM.livePreviewCanvas;
   if (
     target.width !== processedCanvas.width ||
@@ -13316,6 +13396,80 @@ function slugifyEventText(value) {
 
 const EVENTS_STORAGE_KEY = "photoboothEvents";
 const ACTIVE_EVENT_KEY = "photoboothActiveEventId";
+const WEDDING_THEME_ASSETS = "/assets/wedding/eucalyptus";
+
+function createEucalyptusWeddingTheme(partner1, partner2, date) {
+  const coupleNames = `${partner1} & ${partner2}`;
+  return {
+    name: `${coupleNames} Wedding`,
+    eventTypes: ["wedding"],
+    fontPairingStyle: "wedding",
+    accent: "#55715e",
+    accent2: "#f7f3e8",
+    fontHeading: "'Great Vibes', cursive",
+    fontBody: "'Lora', serif",
+    bannerText: coupleNames,
+    captureLabel: "Take Photo",
+    backgrounds: [
+      `${WEDDING_THEME_ASSETS}/backgrounds/eucalyptus-wedding-background-portrait.webp`,
+      `${WEDDING_THEME_ASSETS}/backgrounds/eucalyptus-wedding-background-landscape.webp`,
+    ],
+    overlays: [
+      {
+        id: "eucalyptus-wedding-portrait",
+        name: "Eucalyptus Wedding Portrait",
+        src: `${WEDDING_THEME_ASSETS}/overlays/eucalyptus-wedding-overlay-portrait.png`,
+        type: "overlay",
+        category: "wedding",
+        orientation: "portrait",
+        aspectRatio: "2:3",
+        foreground: { type: "image", src: `${WEDDING_THEME_ASSETS}/overlays/eucalyptus-wedding-overlay-portrait.png` },
+        photoSlots: [{ x: 0.112, y: 0.072, width: 0.777, height: 0.777, objectFit: "cover" }],
+        textFields: [
+          { key: "couple_names", xPct: 0.16, yPct: 0.858, wPct: 0.68, hPct: 0.035, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 48, minFontSize: 24, color: "#405745", align: "center" },
+          { key: "event_date", xPct: 0.2, yPct: 0.908, wPct: 0.6, hPct: 0.026, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 25, minFontSize: 15, color: "#6e755f", align: "center" },
+        ],
+      },
+      {
+        id: "eucalyptus-wedding-landscape",
+        name: "Eucalyptus Wedding Landscape",
+        src: `${WEDDING_THEME_ASSETS}/overlays/eucalyptus-wedding-overlay-landscape.png`,
+        type: "overlay",
+        category: "wedding",
+        orientation: "landscape",
+        aspectRatio: "3:2",
+        foreground: { type: "image", src: `${WEDDING_THEME_ASSETS}/overlays/eucalyptus-wedding-overlay-landscape.png` },
+        photoSlots: [{ x: 0.05, y: 0.10, width: 0.90, height: 0.80, objectFit: "cover" }],
+        textFields: [
+          { key: "couple_names", xPct: 0.2, yPct: 0.905, wPct: 0.6, hPct: 0.032, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 43, minFontSize: 22, color: "#405745", align: "center" },
+          { key: "event_date", xPct: 0.25, yPct: 0.949, wPct: 0.5, hPct: 0.023, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 22, minFontSize: 14, color: "#6e755f", align: "center" },
+        ],
+      },
+    ],
+    templates: [
+      {
+        src: `${WEDDING_THEME_ASSETS}/templates/eucalyptus-wedding-three-photo-strip.png`,
+        name: "Eucalyptus Wedding Three-Photo Strip",
+        layout: "photo_strip_3",
+        photoSlots: [
+          { x: 0.125, y: 0.083, width: 0.75, height: 0.24, sourceIndex: 0 },
+          { x: 0.125, y: 0.354, width: 0.75, height: 0.248, sourceIndex: 1 },
+          { x: 0.125, y: 0.636, width: 0.75, height: 0.237, sourceIndex: 2 },
+        ],
+        textFields: [
+          { key: "couple_names", xPct: 0.17, yPct: 0.902, wPct: 0.66, hPct: 0.03, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 38, minFontSize: 20, color: "#405745", align: "center" },
+          { key: "event_date", xPct: 0.25, yPct: 0.94, wPct: 0.5, hPct: 0.02, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 21, minFontSize: 14, color: "#6e755f", align: "center" },
+        ],
+      },
+    ],
+    welcome: {
+      title: coupleNames,
+      prompt: "Touch to start",
+    },
+    eventDate: date,
+    vibeSummary: "Eucalyptus greenery, ivory, and warm gold",
+  };
+}
 
 function getStoredEvents() {
   try {
@@ -13516,6 +13670,24 @@ function syncWeddingOnlyEventFields(themeObj = null) {
   });
 }
 
+function syncWeddingSetupMode() {
+  const weddingSelected =
+    normalizeEventStyle(DOM.eventTypeInput && DOM.eventTypeInput.value) === "wedding";
+  if (DOM.weddingEventSetup) DOM.weddingEventSetup.hidden = !weddingSelected;
+  if (DOM.themeQuickPicker) DOM.themeQuickPicker.classList.toggle("hidden", weddingSelected);
+  if (DOM.generalThemeBrowse) DOM.generalThemeBrowse.classList.toggle("hidden", weddingSelected);
+  if (DOM.eventNameSetupField) DOM.eventNameSetupField.classList.toggle("hidden", weddingSelected);
+  if (DOM.createWeddingEventBtn) {
+    const active = getActiveEvent();
+    const editingWedding = !!(
+      active && active.eventType === "wedding" && active.weddingTheme
+    );
+    DOM.createWeddingEventBtn.textContent = editingWedding
+      ? "Save Wedding Theme"
+      : "Create Wedding Theme";
+  }
+}
+
 function syncBirthdayOnlyEventFields(themeObj = null) {
   const showBirthdayFields = isBirthdayEventTheme(themeObj);
   document.querySelectorAll(".birthday-only-event-field").forEach((node) => {
@@ -13549,6 +13721,7 @@ function syncEventSetupEditor(theme = null) {
       ? requestedType
       : "general";
   }
+  syncWeddingSetupMode();
   const setDisabled = (node) => {
     if (!node) return;
     node.disabled = !hasEditableTarget;
@@ -13592,6 +13765,13 @@ function syncEventSetupEditor(theme = null) {
   if (DOM.eventDateInput)
     setTextFieldValueAndPlaceholder(
       DOM.eventDateInput,
+      getSavedEventTextValue(textSource, "date"),
+      "Wedding date",
+      !hasEditableTarget
+    );
+  if (DOM.eventGeneralDateInput)
+    setTextFieldValueAndPlaceholder(
+      DOM.eventGeneralDateInput,
       getSavedEventTextValue(textSource, "date"),
       "e.g., April 2026",
       !hasEditableTarget
@@ -13858,7 +14038,10 @@ function getEventNameForUploads() {
 function getEventDateForUploads() {
   const active = getActiveEvent();
   if (active && active.date) return active.date;
-  const input = DOM.eventDateInput ? DOM.eventDateInput.value : "";
+  const input =
+    (DOM.eventDateInput && DOM.eventDateInput.value) ||
+    (DOM.eventGeneralDateInput && DOM.eventGeneralDateInput.value) ||
+    "";
   if (input) return input;
   const key = getSelectedThemeKey();
   return key ? getStoredEventDate(key) : "";
@@ -13899,6 +14082,11 @@ function getEventUploadSlug() {
 }
 
 function createNewEventFromSelection() {
+  const eventType =
+    normalizeEventStyle(DOM.eventTypeInput && DOM.eventTypeInput.value) ||
+    "general";
+  if (eventType === "wedding") return createWeddingEventFromSetup();
+
   const themeKey = getSelectedThemeKey();
   if (!themeKey) {
     alert("Select a theme before creating an event.");
@@ -13907,10 +14095,9 @@ function createNewEventFromSelection() {
   const inputName = valueFromInput(DOM.eventNameInput);
   const name = inputName || prompt("New event name:");
   if (!name) return;
-  const date = DOM.eventDateInput ? DOM.eventDateInput.value.trim() : "";
-  const eventType =
-    normalizeEventStyle(DOM.eventTypeInput && DOM.eventTypeInput.value) ||
-    inferThemeEventStyle(themeKey, resolveThemeByKey(themeKey));
+  const date = DOM.eventGeneralDateInput
+    ? DOM.eventGeneralDateInput.value.trim()
+    : "";
   const slug = slugifyEventText(name);
   if (!slug) {
     alert("Enter a valid event name.");
@@ -13946,6 +14133,85 @@ function createNewEventFromSelection() {
   syncEventInputsFromActive();
   updateStylePreview();
   showToast(`Event "${name}" created`);
+}
+
+function createWeddingEventFromSetup() {
+  const partner1 = valueFromInput(DOM.eventPartner1Input);
+  const partner2 = valueFromInput(DOM.eventPartner2Input);
+  const date = valueFromInput(DOM.eventDateInput);
+  const validation = validateCreatePathEventDetails("wedding", {
+    partner1,
+    partner2,
+    date,
+  });
+  if (!validation.ok) {
+    alert(validation.message);
+    const fieldIds = {
+      partner1: "eventPartner1Input",
+      partner2: "eventPartner2Input",
+      date: "eventDateInput",
+    };
+    document.getElementById(fieldIds[validation.fields[0]])?.focus();
+    return;
+  }
+
+  const name = `${partner1} & ${partner2} Wedding`;
+  const active = getActiveEvent();
+  if (active && active.eventType === "wedding" && active.weddingTheme) {
+    const events = getStoredEvents();
+    const index = events.findIndex((event) => event && event.id === active.id);
+    if (index < 0) return;
+    const themeKey = active.themeKey || `wedding:${active.id}`;
+    events[index] = {
+      ...events[index],
+      name,
+      date,
+      eventType: "wedding",
+      partner1,
+      partner2,
+      themeKey,
+      weddingTheme: createEucalyptusWeddingTheme(partner1, partner2, date),
+    };
+    setStoredEvents(events);
+    populateEventProfileSelect(active.id);
+    loadTheme(themeKey);
+    syncEventInputsFromActive();
+    showToast("Wedding theme updated");
+    return;
+  }
+
+  const slug = slugifyEventText(`${partner1}-${partner2}-wedding`);
+  const id = `${slug}-${Date.now().toString(36)}`;
+  const themeKey = `wedding:${id}`;
+  const newEvent = {
+    id,
+    name,
+    date,
+    themeKey,
+    eventType: "wedding",
+    partner1,
+    partner2,
+    printPrice: 3,
+    createdAt: new Date().toISOString(),
+    weddingTheme: createEucalyptusWeddingTheme(partner1, partner2, date),
+    overrides: {
+      backgrounds: [],
+      overlays: [],
+      templates: [],
+      backgroundIndex: 0,
+    },
+  };
+  const events = getStoredEvents();
+  events.push(newEvent);
+  setStoredEvents(events);
+  setActiveEventId(id);
+  populateEventProfileSelect(id);
+  setEventSelection(themeKey);
+  loadTheme(themeKey);
+  syncEventPrintPriceInput();
+  syncEventInputsFromActive();
+  updateStylePreview();
+  showToast(`Wedding theme for ${partner1} & ${partner2} created`);
 }
 
 function updateEventOverridesSummary() {
@@ -19390,6 +19656,13 @@ function buildGoogleFontsURL(fonts) {
 
 // --- Editing Existing Themes ---
 function getSelectedThemeKey() {
+  const active = getActiveEvent();
+  if (
+    active &&
+    active.eventType === "wedding" &&
+    active.themeKey &&
+    active.weddingTheme
+  ) return active.themeKey;
   return themeAdminState.getSelectedThemeKey();
 }
 
@@ -22460,6 +22733,8 @@ Object.assign(window, {
     finalizeToPrint,
     getActiveEvent: () => getActiveEvent(),
     getEventById: (id) => getStoredEvents().find((event) => event && event.id === id) || null,
+    getSelectedThemeKey: () => getSelectedThemeKey(),
+    createWeddingTheme: createEucalyptusWeddingTheme,
     getThemeByKey: (themeKey) => resolveThemeByKey(themeKey),
     getThemes: () => themes,
     getBaseBackgroundList: (theme = activeTheme) => getBaseBackgroundList(theme),

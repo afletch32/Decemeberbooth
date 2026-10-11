@@ -108,20 +108,16 @@ test("final strip rendering uses manifest photo slots before legacy strip geomet
   );
 });
 
-test("wedding overlay manifests define explicit photo windows", () => {
-  const timeless = readProjectFile(
-    "assets/wedding/timeless-romance/overlays/overlays.json"
-  );
-  const garden = readProjectFile("assets/wedding/garden-vows/overlays/overlays.json");
+test("wedding overlay manifests define explicit photo windows", async () => {
+  const { getBuiltinAssetManifest } = await import("./scripts/builtin-asset-manifests.mjs");
+  const overlays = getBuiltinAssetManifest("assets/wedding/eucalyptus/overlays");
 
-  assert.ok(timeless.includes('"photoSlots"'));
-  assert.ok(timeless.includes('"foreground"'));
-  assert.ok(timeless.includes('"background"'));
-  assert.ok(garden.includes('"photoSlots"'));
-  assert.ok(garden.includes('"foreground"'));
-  assert.ok(garden.includes('"textFields"'));
-  assert.ok(garden.includes('"couple_names"'));
-  assert.ok(garden.includes('"event_date"'));
+  assert.deepEqual(overlays.map((entry) => entry.orientation), ["portrait", "landscape"]);
+  overlays.forEach((entry) => {
+    assert.ok(entry.photoSlots.length > 0);
+    assert.equal(entry.foreground.type, "image");
+    assert.deepEqual(entry.textFields.map((field) => field.key), ["couple_names", "event_date"]);
+  });
 });
 
 test("imported overlays can save a draggable photo window without using the legacy builder", () => {
