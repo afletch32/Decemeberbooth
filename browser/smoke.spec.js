@@ -363,6 +363,26 @@ test("under-eye correction lifts and neutralizes cool shadows", async ({ page })
   expect(result.after[1]).toBeGreaterThan(result.before[1]);
 });
 
+test("empty camera preview shows the active booth backdrop through the frame", async ({ page }) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  const frameBackground = await page.locator("#videoContainer").evaluate((frame) => {
+    const booth = document.querySelector("#boothScreen");
+    booth.style.backgroundImage = "none";
+    booth.style.backgroundColor = "rgb(24, 12, 6)";
+    return {
+      frame: getComputedStyle(frame).backgroundColor,
+      booth: getComputedStyle(booth).backgroundColor,
+    };
+  });
+
+  expect(frameBackground).toEqual({
+    frame: "rgba(0, 0, 0, 0)",
+    booth: "rgb(24, 12, 6)",
+  });
+});
+
 test("booth test camera displays and captures the processed live preview canvas", async ({
   page,
 }) => {

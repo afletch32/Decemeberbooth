@@ -1,10 +1,16 @@
 # Build status
 
-- Current goal: Complete the saved theme and asset cleanup, and keep Halloween capture and share screens visually consistent.
-- Done: Frozen captures block late live-preview redraws. Share screens use orientation-matched Share art, Thank You art, or a still theme background, and the share shell and QR panel use the active palette. Live booth branding comes from frame artwork, and guest controls follow the theme accent. Retired theme assets were removed from generated catalogs and manifests.
-- In progress: Commit, push, deploy, and verify the intended worktree changes.
-- Next steps: Verify the production app shell and updated theme behavior after deployment.
-- Known bugs/blockers: Real guest camera/audio, physical printing, and sharing delivery remain unverified. Eucalyptus theme artwork files are not present locally; wedding theme metadata points to the expected asset paths.
-- Important decisions: Preserve the approved screen packs, simple borders, vanilla stack, and custom uploads. Template metadata and the existing renderer use one shared standard slot definition. New filenames avoid stale template cache hits. Both header artwork and photo order are identical across each sheet's two columns.
-- Verification: `npm test` passes (276/276); live-preview capture and final-share Chromium tests pass (2/2); final-share viewport test covers eight kiosk sizes; `git diff --check` is clean.
+- Current goal: Ship the intended theme cleanup and themed capture/share improvements on top of the current production camera-preview fixes.
+- Done: Capture previews reject late live redraws after freezing. Share views use orientation-matched Share art, Thank You art, or a still theme background; share chrome and QR panels follow the theme palette. Live booth header is hidden when frame artwork supplies branding, and guest controls use theme accents. Retired theme packs and legacy Halloween selections were removed from catalogs and asset manifests. The current production live-camera source-frame renderer is preserved.
+- In progress: Commit the production sync, push, deploy, and confirm the live app shell.
+- Next steps: Verify the production cache version and updated capture/share behavior.
+- Known bugs/blockers: Real guest camera/audio, physical printing, sharing delivery, and PayPal capture remain unverified. Eucalyptus artwork files are not present locally although wedding theme metadata references those asset paths.
+- Important decisions: Keep Cloudflare `main` as the production source. Remove only retired theme assets; retain custom uploads and theme-specific orientation variants.
+- Verification: `npm test` passes (283/283); Chromium live-preview capture and final-share viewport tests pass (2/2); the share viewport test covers eight kiosk sizes; `git diff --check` passes.
 - Release: Pending.
+
+## Existing production records
+
+- Cloudflare Pages project: `decemeberbooth`; production URL: `https://decemeberbooth.pages.dev/`.
+- Event print price uses the shared event record; default is $3.00 USD. No live purchase was made.
+- PR #20 artwork loading fallback was merged previously; physical iPad behavior remains unverified.
