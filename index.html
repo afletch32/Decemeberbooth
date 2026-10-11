@@ -279,6 +279,33 @@
       grid-column: span 2;
     }
 
+    .event-type-quick-pick {
+      grid-column: 1 / -1;
+      max-width: 280px;
+    }
+
+    .wedding-event-setup {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid rgba(127, 219, 207, 0.62);
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(248, 251, 246, 0.96), rgba(237, 244, 235, 0.92));
+    }
+
+    .wedding-event-setup[hidden] { display: none !important; }
+    .wedding-event-setup h2 { margin: 0 0 4px; color: #345c4b; font-family: 'Fraunces', serif; }
+    .wedding-event-setup p { margin: 0; color: #617268; }
+
+    .wedding-event-fields {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    #createWeddingEventBtn { justify-self: start; min-height: 48px; }
+
     .setup-session-theme #sessionThemeToggle {
       min-height: 58px;
       border-color: rgba(80, 191, 174, 0.68);
@@ -563,6 +590,9 @@
       .setup-session-grid {
         grid-template-columns: 1fr;
       }
+
+      .wedding-event-fields { grid-template-columns: 1fr; }
+      #createWeddingEventBtn { width: 100%; }
 
       .setup-session-theme {
         grid-column: auto;
@@ -3165,11 +3195,11 @@
       justify-content: center;
       gap: 16px;
       padding: 16px 24px;
-      border: 1px solid rgba(214, 188, 149, 0.48);
+      border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
       border-radius: var(--radius-lg);
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(249, 243, 233, 0.9)),
-        radial-gradient(circle at top, rgba(214, 188, 149, 0.16), rgba(255, 255, 255, 0) 56%);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), color-mix(in srgb, var(--accent) 10%, white)),
+        radial-gradient(circle at top, color-mix(in srgb, var(--accent) 16%, transparent), rgba(255, 255, 255, 0) 56%);
       backdrop-filter: blur(14px);
       box-shadow: 0 18px 40px rgba(81, 65, 47, 0.12);
     }
@@ -3183,7 +3213,7 @@
     #eventTitle {
       margin: 0;
       font-family: var(--font-heading);
-      color: #111111;
+      color: color-mix(in srgb, var(--accent) 68%, #111111);
       text-align: center;
       flex: 0 1 auto;
       font-size: clamp(1.28rem, 1.9vw, 1.92rem);
@@ -3501,9 +3531,7 @@
       overflow: hidden;
       border: 12px solid rgba(255, 255, 255, 0.98);
       border-radius: 34px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0)),
-        #f7f1e7;
+      background: transparent;
       box-shadow:
         0 34px 76px rgba(81, 65, 47, 0.18),
         0 0 0 1px rgba(214, 188, 149, 0.2);
@@ -4154,11 +4182,11 @@
       color: #6a5843;
     }
 
-    .welcome-back-button {
-      border: 1px solid rgba(214, 188, 149, 0.58);
-      background: rgba(255, 255, 255, 0.84);
-      color: #5a4d3f;
-      box-shadow: 0 10px 20px rgba(81, 65, 47, 0.08);
+    button.button-ghost.welcome-back-button {
+      border: 1px solid color-mix(in srgb, var(--accent) 36%, white);
+      background: color-mix(in srgb, var(--accent) 10%, white);
+      color: color-mix(in srgb, var(--accent) 68%, #111111);
+      box-shadow: 0 10px 20px color-mix(in srgb, var(--accent) 12%, transparent);
     }
 
     #boothBackBtn {
@@ -5064,7 +5092,7 @@
 
     #boothScreen.has-theme-share-screen.share-mode #finalPreview {
       background-image:
-        linear-gradient(180deg, rgba(3, 18, 45, 0.12), rgba(3, 18, 45, 0.24)),
+        linear-gradient(180deg, color-mix(in srgb, var(--accent) 14%, transparent), color-mix(in srgb, var(--accent) 34%, #080808 66%)),
         var(--theme-share-screen-image);
       background-position: center;
       background-size: cover;
@@ -5073,8 +5101,24 @@
 
     #boothScreen.has-theme-share-screen.share-mode #finalPreviewContent::before {
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(246, 251, 255, 0.76)),
-        linear-gradient(135deg, rgba(255, 203, 48, 0.18), rgba(17, 115, 221, 0.12));
+        linear-gradient(180deg, color-mix(in srgb, var(--accent) 22%, rgba(12, 12, 12, 0.88)), color-mix(in srgb, var(--accent) 34%, rgba(12, 12, 12, 0.92))),
+        linear-gradient(135deg, color-mix(in srgb, var(--accent2) 18%, transparent), color-mix(in srgb, var(--accent) 24%, transparent));
+      border-color: color-mix(in srgb, var(--accent) 48%, #111111);
+      box-shadow: 0 28px 80px color-mix(in srgb, var(--accent) 24%, transparent);
+      backdrop-filter: blur(18px) saturate(1.15);
+    }
+
+    #boothScreen.has-theme-share-screen.share-mode #qrCodeContainer {
+      color: #ffffff;
+      border-color: color-mix(in srgb, var(--accent2) 54%, var(--accent));
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent) 40%, #111111), color-mix(in srgb, var(--accent) 24%, #080808)),
+        radial-gradient(circle at 50% 100%, color-mix(in srgb, var(--accent2) 22%, transparent), transparent 52%);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 14px 30px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+    #boothScreen.has-theme-share-screen.share-mode #qrCodeContainer h2 {
+      color: color-mix(in srgb, var(--accent2) 58%, white);
     }
 
     #finalStrip {
@@ -5702,6 +5746,10 @@
       max-width: min(62vw, 720px);
       padding: 8px 24px;
       border-radius: 22px;
+    }
+
+    #boothScreen.booth-ready:not(.welcome-active) #boothHeader {
+      display: none;
     }
 
     #boothScreen.booth-ready #eventTitle {
@@ -7037,7 +7085,32 @@
         >
       </div>
       <div class="setup-session-grid">
-        <section class="theme-quick-picker setup-session-theme" aria-labelledby="themeQuickPickerHeading">
+        <div class="setup-session-item event-type-quick-pick">
+          <label for="eventTypeInput">Event Type</label>
+          <select id="eventTypeInput"><option value="general">General</option><option value="wedding">Wedding</option><option value="birthday">Birthday</option><option value="community">Community</option><option value="expo">Expo</option></select>
+        </div>
+        <section id="weddingEventSetup" class="wedding-event-setup" aria-labelledby="weddingEventSetupHeading" hidden>
+          <div>
+            <h2 id="weddingEventSetupHeading">Wedding Setup</h2>
+            <p>Enter the couple’s names and wedding date. This event gets its own Eucalyptus theme.</p>
+          </div>
+          <div class="wedding-event-fields">
+            <div class="theme-field wedding-only-event-field">
+              <label for="eventPartner1Input">Name 1</label>
+              <input type="text" id="eventPartner1Input" placeholder="First name" autocomplete="off" autocapitalize="words" spellcheck="false">
+            </div>
+            <div class="theme-field wedding-only-event-field">
+              <label for="eventPartner2Input">Name 2</label>
+              <input type="text" id="eventPartner2Input" placeholder="Second name" autocomplete="off" autocapitalize="words" spellcheck="false">
+            </div>
+            <div class="theme-field wedding-only-event-field">
+              <label for="eventDateInput">Wedding Date</label>
+              <input type="date" id="eventDateInput" autocomplete="off">
+            </div>
+          </div>
+          <button type="button" class="setup-session-save-btn" id="createWeddingEventBtn" onclick="createNewEventFromSelection()">Create Wedding Theme</button>
+        </section>
+        <section id="themeQuickPicker" class="theme-quick-picker setup-session-theme" aria-labelledby="themeQuickPickerHeading">
           <div>
             <h2 id="themeQuickPickerHeading" class="theme-quick-picker-heading">Choose a look</h2>
             <p class="theme-quick-picker-note">Choose a theme. Scroll sideways to see more.</p>
@@ -7057,7 +7130,7 @@
           </aside>
         </section>
       <div class="setup-session-secondary">
-          <div class="setup-session-item setup-combobox" data-setup-combobox="theme">
+          <div class="setup-session-item setup-combobox" id="generalThemeBrowse" data-setup-combobox="theme">
             <label for="sessionThemeSearch">Browse all themes</label>
             <button type="button" id="sessionThemeToggle" class="setup-combobox-button" aria-expanded="false" aria-controls="sessionThemeMenu">
               <span id="sessionThemeValue">Choose theme</span>
@@ -7107,7 +7180,7 @@
             </label>
             <button type="button" class="setup-session-save-btn" onclick="savePrintSettings()">Save Print Settings</button>
           </div>
-          <div class="setup-session-item">
+          <div class="setup-session-item" id="eventNameSetupField">
             <label for="eventNameInput">Session Name</label>
             <input type="text" id="eventNameInput" placeholder="Session name" autocomplete="off" autocapitalize="words" spellcheck="false">
             <button type="button" class="setup-session-save-btn" onclick="createNewEventFromSelection()">Save as New Event</button>
@@ -7383,18 +7456,8 @@
               </div>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:16px;">
                 <div class="theme-field">
-                  <label for="eventTypeInput">Event Type</label>
-                  <select id="eventTypeInput"><option value="general">General</option><option value="wedding">Wedding</option><option value="birthday">Birthday</option><option value="community">Community</option><option value="expo">Expo</option></select>
-                  <label for="eventDateInput">Session Date (optional)</label>
-                  <input type="text" id="eventDateInput" placeholder="e.g., April 2026" autocomplete="off" spellcheck="false">
-                </div>
-                <div class="theme-field wedding-only-event-field">
-                  <label for="eventPartner1Input">Partner 1</label>
-                  <input type="text" id="eventPartner1Input" placeholder="Name" autocomplete="off" autocapitalize="words" spellcheck="false">
-                </div>
-                <div class="theme-field wedding-only-event-field">
-                  <label for="eventPartner2Input">Partner 2</label>
-                  <input type="text" id="eventPartner2Input" placeholder="Name" autocomplete="off" autocapitalize="words" spellcheck="false">
+                  <label for="eventGeneralDateInput">Session Date (optional)</label>
+                  <input type="text" id="eventGeneralDateInput" placeholder="e.g., April 2026" autocomplete="off" spellcheck="false">
                 </div>
                 <div class="theme-field birthday-only-event-field hidden">
                   <label for="eventBirthdayNameInput">Birthday Name</label>
@@ -7971,7 +8034,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261010-halloween-background-cleanup"></script>
+  <script type="module" src="scripts/app.js?v=20261010-halloween-capture-share"></script>
 </body>
 
 </html>

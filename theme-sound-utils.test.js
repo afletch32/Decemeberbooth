@@ -68,9 +68,9 @@ test("every theme sound profile covers every key booth event", () => {
 });
 
 test("returned cues are isolated copies safe for runtime overrides", () => {
-  const first = getThemeSoundCue("wedding:timeless", {}, "success");
+  const first = getThemeSoundCue("wedding:sample-event", {}, "success");
   first.tones[0].frequency = 1;
-  const second = getThemeSoundCue("wedding:timeless", {}, "success");
+  const second = getThemeSoundCue("wedding:sample-event", {}, "success");
   assert.notEqual(second.tones[0].frequency, 1);
 });
 

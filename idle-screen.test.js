@@ -469,6 +469,16 @@ test("Amanda North provides portrait and landscape share-screen artwork", () => 
   );
 });
 
+test("share screens fall back to a theme image when dedicated screen art is missing", () => {
+  const shareScreenLogic = app.slice(
+    app.indexOf("function applyThemeShareScreen(theme)"),
+    app.indexOf("function refreshFontSelectForTheme", app.indexOf("function applyThemeShareScreen(theme)"))
+  );
+  assert.ok(shareScreenLogic.includes("const selectedBackground = getActiveBackground(theme)"));
+  assert.ok(shareScreenLogic.includes("!isVideoAsset(selectedBackground)"));
+  assert.ok(shareScreenLogic.includes("getAssetEntrySrc(selected) || getAssetEntrySrc(fallbackBackground)"));
+});
+
 test("Avery provides dedicated portrait and landscape thank-you screens", () => {
   assert.ok(
     app.includes(

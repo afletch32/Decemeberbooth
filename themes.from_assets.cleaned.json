@@ -138,33 +138,5 @@
     "templates": [
       "/themes/school/hawks/templates/go-hawks.png"
     ]
-  },
-  {
-    "id": "wedding-garden-vows",
-    "name": "garden-vows",
-    "category": "wedding",
-    "background": "/themes/wedding/garden-vows/backgrounds/garden-vows-bg-1.png",
-    "backgrounds": [
-      "/themes/wedding/garden-vows/backgrounds/garden-vows-bg-1.png",
-      "/themes/wedding/garden-vows/backgrounds/garden-vows-bg-2.png",
-      "/themes/wedding/garden-vows/backgrounds/garden-vows-bg-3.png",
-      "/themes/wedding/garden-vows/backgrounds/garden-vows-bg-7.png"
-    ],
-    "overlays": [],
-    "templates": []
-  },
-  {
-    "id": "wedding-timeless-romance",
-    "name": "timeless-romance",
-    "category": "wedding",
-    "background": "/themes/wedding/timeless-romance/backgrounds/timeless-romance-bg-4.png",
-    "backgrounds": [
-      "/themes/wedding/timeless-romance/backgrounds/timeless-romance-bg-4.png",
-      "/themes/wedding/timeless-romance/backgrounds/timeless-romance-bg-5.png",
-      "/themes/wedding/timeless-romance/backgrounds/timeless-romance-bg-6.png",
-      "/themes/wedding/timeless-romance/backgrounds/timeless-romance-bg-8.png"
-    ],
-    "overlays": [],
-    "templates": []
   }
 ]

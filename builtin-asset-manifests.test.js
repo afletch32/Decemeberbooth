@@ -11,15 +11,11 @@ async function loadGetBuiltinAssetManifest() {
 
 test("getBuiltinAssetManifest returns built-in entries for known folders", async () => {
   const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
-  const entries = getBuiltinAssetManifest("assets/wedding/timeless-romance/templates");
+  const entries = getBuiltinAssetManifest("assets/wedding/eucalyptus/templates");
 
-  assert.equal(entries[0].src, "timeless-romance-strip-template.svg");
+  assert.equal(entries[0].src, "eucalyptus-wedding-three-photo-strip.png");
   assert.equal(entries[0].layout, "photo_strip_3");
-  assert.equal(entries[0].slots.length, 3);
-  assert.deepEqual(entries[1], {
-    src: "timeless-romance-single-template.svg",
-    layout: "single_photo",
-  });
+  assert.equal(entries[0].photoSlots.length, 3);
 });
 
 test("getBuiltinAssetManifest returns cloned objects", async () => {
@@ -39,30 +35,20 @@ test("retired Basic assets are absent from the built-in manifest", async () => {
   assert.deepEqual(getBuiltinAssetManifest("assets/general/basic/templates/"), []);
 });
 
-test("wedding overlays remain available in built-in asset manifests", async () => {
+test("retired wedding packs are absent and Eucalyptus assets remain available", async () => {
   const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
-  const timelessEntries = getBuiltinAssetManifest(
-    "assets/wedding/timeless-romance/overlays/"
-  );
-  const gardenEntries = getBuiltinAssetManifest(
-    "assets/wedding/garden-vows/overlays/"
-  );
-
-  assert.equal(timelessEntries[0].src, "timeless-romance-strip-overlay.svg");
-  assert.equal(timelessEntries[0].photoSlots.length, 3);
-  assert.equal(timelessEntries[1].src, "timeless-romance-single-overlay.svg");
-  assert.equal(timelessEntries[1].photoSlots.length, 1);
-  assert.equal(gardenEntries[0].src, "garden-vows-single-portrait.png");
-  assert.equal(gardenEntries[0].photoSlots.length, 1);
-  assert.equal(gardenEntries[1].src, "garden-vows-single-landscape.png");
-  assert.equal(gardenEntries[1].photoSlots.length, 1);
-
-  const gardenTemplates = getBuiltinAssetManifest(
-    "assets/wedding/garden-vows/templates/"
-  );
-  assert.equal(gardenTemplates.length, 1);
-  assert.equal(gardenTemplates[0].src, "garden-vows-three-photo-strip.png");
-  assert.equal(gardenTemplates[0].slots.length, 3);
+  assert.deepEqual(getBuiltinAssetManifest("assets/wedding/timeless-romance/overlays/"), []);
+  assert.deepEqual(getBuiltinAssetManifest("assets/wedding/garden-vows/overlays/"), []);
+  const overlays = getBuiltinAssetManifest("assets/wedding/eucalyptus/overlays/");
+  assert.deepEqual(overlays.map((entry) => entry.orientation), ["portrait", "landscape"]);
+  assert.deepEqual(overlays.map((entry) => entry.textFields.map((field) => field.key)), [
+    ["couple_names", "event_date"],
+    ["couple_names", "event_date"],
+  ]);
+  const backgrounds = getBuiltinAssetManifest("assets/wedding/eucalyptus/backgrounds/");
+  assert.equal(backgrounds.length, 2);
+  assert.ok(backgrounds.some((src) => src.includes("portrait")));
+  assert.ok(backgrounds.some((src) => src.includes("landscape")));
 });
 
 test("summer overlays remain available in built-in asset manifests", async () => {

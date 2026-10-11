@@ -1,10 +1,10 @@
 # Build status
 
-- Current goal: Remove retired Halloween backgrounds from the saved theme and event data, then release the correction.
-- Done: Theme migration replaces retired Halloween background URLs with the current portrait and landscape assets while preserving custom backgrounds. Event migration removes retired references from local and remote event overrides. Built-in manifests list the current Halloween background pairs, and generated asset manifests no longer list the deleted legacy Halloween theme.
-- In progress: Commit, push, and deploy the focused repair.
-- Next steps: Verify the production bundle and the live theme data migration path.
-- Known bugs/blockers: Real guest camera/audio, physical printing, and sharing delivery remain unverified.
-- Important decisions: Preserve current themes and operator-added backgrounds; remove only references to the retired Halloween asset URLs.
-- Verification: `npm test` passes (274/274). Targeted Playwright startup test passes; `git diff --check` is clean.
+- Current goal: Complete the saved theme and asset cleanup, and keep Halloween capture and share screens visually consistent.
+- Done: Frozen captures block late live-preview redraws. Share screens use orientation-matched Share art, Thank You art, or a still theme background, and the share shell and QR panel use the active palette. Live booth branding comes from frame artwork, and guest controls follow the theme accent. Retired theme assets were removed from generated catalogs and manifests.
+- In progress: Commit, push, deploy, and verify the intended worktree changes.
+- Next steps: Verify the production app shell and updated theme behavior after deployment.
+- Known bugs/blockers: Real guest camera/audio, physical printing, and sharing delivery remain unverified. Eucalyptus theme artwork files are not present locally; wedding theme metadata points to the expected asset paths.
+- Important decisions: Preserve the approved screen packs, simple borders, vanilla stack, and custom uploads. Template metadata and the existing renderer use one shared standard slot definition. New filenames avoid stale template cache hits. Both header artwork and photo order are identical across each sheet's two columns.
+- Verification: `npm test` passes (276/276); live-preview capture and final-share Chromium tests pass (2/2); final-share viewport test covers eight kiosk sizes; `git diff --check` is clean.
 - Release: Pending.
