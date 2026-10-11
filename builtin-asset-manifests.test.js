@@ -1,5 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
+const { existsSync } = require("node:fs");
 const { join } = require("node:path");
 const { pathToFileURL } = require("node:url");
 
@@ -11,11 +12,12 @@ async function loadGetBuiltinAssetManifest() {
 
 test("getBuiltinAssetManifest returns built-in entries for known folders", async () => {
   const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
-  const entries = getBuiltinAssetManifest("assets/wedding/eucalyptus/templates");
+  const entries = getBuiltinAssetManifest("assets/themes/eucalyptus-wedding");
+  const template = entries.find((entry) => entry.category === "template");
 
-  assert.equal(entries[0].src, "eucalyptus-wedding-three-photo-strip.png");
-  assert.equal(entries[0].layout, "photo_strip_3");
-  assert.equal(entries[0].photoSlots.length, 3);
+  assert.equal(template.src, "eucalyptus-wedding-three-photo-strip.png");
+  assert.equal(template.layout, "photo_strip_3");
+  assert.equal(template.photoSlots.length, 3);
 });
 
 test("getBuiltinAssetManifest returns cloned objects", async () => {
@@ -37,18 +39,30 @@ test("retired Basic assets are absent from the built-in manifest", async () => {
 
 test("retired wedding packs are absent and Eucalyptus assets remain available", async () => {
   const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
-  assert.deepEqual(getBuiltinAssetManifest("assets/wedding/timeless-romance/overlays/"), []);
-  assert.deepEqual(getBuiltinAssetManifest("assets/wedding/garden-vows/overlays/"), []);
-  const overlays = getBuiltinAssetManifest("assets/wedding/eucalyptus/overlays/");
+  const entries = getBuiltinAssetManifest("assets/themes/eucalyptus-wedding/");
+  const overlays = entries.filter((entry) => entry.type === "overlay");
   assert.deepEqual(overlays.map((entry) => entry.orientation), ["portrait", "landscape"]);
   assert.deepEqual(overlays.map((entry) => entry.textFields.map((field) => field.key)), [
     ["couple_names", "event_date"],
     ["couple_names", "event_date"],
   ]);
-  const backgrounds = getBuiltinAssetManifest("assets/wedding/eucalyptus/backgrounds/");
+  const backgrounds = entries.filter((entry) => entry.category === "background");
   assert.equal(backgrounds.length, 2);
-  assert.ok(backgrounds.some((src) => src.includes("portrait")));
-  assert.ok(backgrounds.some((src) => src.includes("landscape")));
+  assert.ok(backgrounds.some((entry) => entry.orientation === "portrait"));
+  assert.ok(backgrounds.some((entry) => entry.orientation === "landscape"));
+  assert.equal(entries.filter((entry) => entry.category === "idle-screen").length, 4);
+  assert.equal(entries.filter((entry) => entry.category === "thank-you-screen").length, 2);
+});
+
+test("every Eucalyptus wedding manifest entry resolves to a checked-in asset", async () => {
+  const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
+  const root = join(process.cwd(), "assets/themes/eucalyptus-wedding");
+  const entries = getBuiltinAssetManifest("assets/themes/eucalyptus-wedding/");
+
+  assert.equal(entries.length, 11);
+  entries.forEach((entry) => {
+    assert.ok(existsSync(join(root, entry.src)), `${entry.src} should exist`);
+  });
 });
 
 test("summer overlays remain available in built-in asset manifests", async () => {

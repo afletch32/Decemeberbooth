@@ -13396,34 +13396,83 @@ function slugifyEventText(value) {
 
 const EVENTS_STORAGE_KEY = "photoboothEvents";
 const ACTIVE_EVENT_KEY = "photoboothActiveEventId";
-const WEDDING_THEME_ASSETS = "/assets/wedding/eucalyptus";
+const WEDDING_THEME_ASSETS = "/assets/themes/eucalyptus-wedding";
 
 function createEucalyptusWeddingTheme(partner1, partner2, date) {
   const coupleNames = `${partner1} & ${partner2}`;
+  const assetBase = `${WEDDING_THEME_ASSETS}/`;
   return {
     name: `${coupleNames} Wedding`,
     eventTypes: ["wedding"],
     fontPairingStyle: "wedding",
     accent: "#55715e",
-    accent2: "#f7f3e8",
+    accent2: "#e4d2a8",
     fontHeading: "'Great Vibes', cursive",
     fontBody: "'Lora', serif",
     bannerText: coupleNames,
     captureLabel: "Take Photo",
     backgrounds: [
-      `${WEDDING_THEME_ASSETS}/backgrounds/eucalyptus-wedding-background-portrait.webp`,
-      `${WEDDING_THEME_ASSETS}/backgrounds/eucalyptus-wedding-background-landscape.webp`,
+      `${assetBase}eucalyptus-wedding-background-portrait.webp`,
+      `${assetBase}eucalyptus-wedding-background-landscape.webp`,
+    ],
+    idleScreens: [
+      {
+        src: `${assetBase}eucalyptus-wedding-idle-portrait.webp`,
+        name: "Eucalyptus Wedding welcome portrait",
+        role: "idle",
+        orientation: "portrait",
+        buttonZones: { start: { x: 50, y: 82, width: 58, height: 20 } },
+      },
+      {
+        src: `${assetBase}eucalyptus-wedding-idle-landscape.webp`,
+        name: "Eucalyptus Wedding welcome landscape",
+        role: "idle",
+        orientation: "landscape",
+        buttonZones: { start: { x: 50, y: 82, width: 42, height: 20 } },
+      },
+      {
+        src: `${assetBase}eucalyptus-wedding-photo-choice-portrait.webp`,
+        name: "Eucalyptus Wedding photo choice portrait",
+        role: "photo-choice",
+        orientation: "portrait",
+        buttonZones: {
+          singlePhoto: { x: 33, y: 51, width: 36, height: 34 },
+          photoStrip: { x: 67, y: 51, width: 36, height: 34 },
+        },
+      },
+      {
+        src: `${assetBase}eucalyptus-wedding-photo-choice-landscape.webp`,
+        name: "Eucalyptus Wedding photo choice landscape",
+        role: "photo-choice",
+        orientation: "landscape",
+        buttonZones: {
+          singlePhoto: { x: 31, y: 52, width: 36, height: 42 },
+          photoStrip: { x: 69, y: 52, width: 36, height: 42 },
+        },
+      },
+    ],
+    thankYouScreens: [
+      {
+        src: `${assetBase}eucalyptus-wedding-thank-you-portrait.webp`,
+        name: "Eucalyptus Wedding Thank You portrait",
+        orientation: "portrait",
+      },
+      {
+        src: `${assetBase}eucalyptus-wedding-thank-you-landscape.webp`,
+        name: "Eucalyptus Wedding Thank You landscape",
+        orientation: "landscape",
+      },
     ],
     overlays: [
       {
         id: "eucalyptus-wedding-portrait",
         name: "Eucalyptus Wedding Portrait",
-        src: `${WEDDING_THEME_ASSETS}/overlays/eucalyptus-wedding-overlay-portrait.png`,
+        src: `${assetBase}eucalyptus-wedding-overlay-portrait.png`,
         type: "overlay",
         category: "wedding",
         orientation: "portrait",
         aspectRatio: "2:3",
-        foreground: { type: "image", src: `${WEDDING_THEME_ASSETS}/overlays/eucalyptus-wedding-overlay-portrait.png` },
+        foreground: { type: "image", src: `${assetBase}eucalyptus-wedding-overlay-portrait.png` },
         photoSlots: [{ x: 0.112, y: 0.072, width: 0.777, height: 0.777, objectFit: "cover" }],
         textFields: [
           { key: "couple_names", xPct: 0.16, yPct: 0.858, wPct: 0.68, hPct: 0.035, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 48, minFontSize: 24, color: "#405745", align: "center" },
@@ -13433,12 +13482,12 @@ function createEucalyptusWeddingTheme(partner1, partner2, date) {
       {
         id: "eucalyptus-wedding-landscape",
         name: "Eucalyptus Wedding Landscape",
-        src: `${WEDDING_THEME_ASSETS}/overlays/eucalyptus-wedding-overlay-landscape.png`,
+        src: `${assetBase}eucalyptus-wedding-overlay-landscape.png`,
         type: "overlay",
         category: "wedding",
         orientation: "landscape",
         aspectRatio: "3:2",
-        foreground: { type: "image", src: `${WEDDING_THEME_ASSETS}/overlays/eucalyptus-wedding-overlay-landscape.png` },
+        foreground: { type: "image", src: `${assetBase}eucalyptus-wedding-overlay-landscape.png` },
         photoSlots: [{ x: 0.05, y: 0.10, width: 0.90, height: 0.80, objectFit: "cover" }],
         textFields: [
           { key: "couple_names", xPct: 0.2, yPct: 0.905, wPct: 0.6, hPct: 0.032, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 43, minFontSize: 22, color: "#405745", align: "center" },
@@ -13448,7 +13497,7 @@ function createEucalyptusWeddingTheme(partner1, partner2, date) {
     ],
     templates: [
       {
-        src: `${WEDDING_THEME_ASSETS}/templates/eucalyptus-wedding-three-photo-strip.png`,
+        src: `${assetBase}eucalyptus-wedding-three-photo-strip.png`,
         name: "Eucalyptus Wedding Three-Photo Strip",
         layout: "photo_strip_3",
         photoSlots: [

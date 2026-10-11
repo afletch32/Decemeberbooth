@@ -47,11 +47,15 @@ const BUILTIN_ASSET_MANIFESTS = {
       { x: 650, y: 1288, w: 500, h: 413 }
     ] }
   ],
-  "assets/wedding/eucalyptus/backgrounds/": [
-    "eucalyptus-wedding-background-portrait.webp",
-    "eucalyptus-wedding-background-landscape.webp"
-  ],
-  "assets/wedding/eucalyptus/overlays/": [
+  "assets/themes/eucalyptus-wedding/": [
+    { src: "eucalyptus-wedding-background-portrait.webp", category: "background", orientation: "portrait" },
+    { src: "eucalyptus-wedding-background-landscape.webp", category: "background", orientation: "landscape" },
+    { src: "eucalyptus-wedding-idle-portrait.webp", category: "idle-screen", role: "idle", orientation: "portrait" },
+    { src: "eucalyptus-wedding-idle-landscape.webp", category: "idle-screen", role: "idle", orientation: "landscape" },
+    { src: "eucalyptus-wedding-photo-choice-portrait.webp", category: "idle-screen", role: "photo-choice", orientation: "portrait" },
+    { src: "eucalyptus-wedding-photo-choice-landscape.webp", category: "idle-screen", role: "photo-choice", orientation: "landscape" },
+    { src: "eucalyptus-wedding-thank-you-portrait.webp", category: "thank-you-screen", orientation: "portrait" },
+    { src: "eucalyptus-wedding-thank-you-landscape.webp", category: "thank-you-screen", orientation: "landscape" },
     {
       src: "eucalyptus-wedding-overlay-portrait.png",
       id: "eucalyptus-wedding-portrait",
@@ -81,11 +85,10 @@ const BUILTIN_ASSET_MANIFESTS = {
         { key: "couple_names", xPct: 0.2, yPct: 0.905, wPct: 0.6, hPct: 0.032, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 43, minFontSize: 22, color: "#405745", align: "center" },
         { key: "event_date", xPct: 0.25, yPct: 0.949, wPct: 0.5, hPct: 0.023, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 22, minFontSize: 14, color: "#6e755f", align: "center" }
       ]
-    }
-  ],
-  "assets/wedding/eucalyptus/templates/": [
+    },
     {
       src: "eucalyptus-wedding-three-photo-strip.png",
+      category: "template",
       name: "Eucalyptus Wedding Three-Photo Strip",
       layout: "photo_strip_3",
       photoSlots: [

@@ -270,6 +270,13 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
         .every((field) => !field.classList.contains("hidden")),
       themeKey: api.getSelectedThemeKey(),
       resolvedTheme: api.getThemeByKey(event.themeKey),
+      weddingArtwork: {
+        backgrounds: event.weddingTheme.backgrounds,
+        idleScreens: event.weddingTheme.idleScreens,
+        thankYouScreens: event.weddingTheme.thankYouScreens,
+        overlays: event.weddingTheme.overlays,
+        templates: event.weddingTheme.templates,
+      },
     };
   });
 
@@ -280,6 +287,25 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
   expect(result.event.weddingTheme.name).toBe("Maya & Noah Wedding");
   expect(result.event.weddingTheme.overlays).toHaveLength(2);
   expect(result.event.weddingTheme.templates[0].photoSlots).toHaveLength(3);
+  expect(result.event.weddingTheme.idleScreens).toHaveLength(4);
+  expect(result.event.weddingTheme.thankYouScreens).toHaveLength(2);
+  const artworkSources = [
+    ...result.weddingArtwork.backgrounds,
+    ...result.weddingArtwork.idleScreens.map((entry) => entry.src),
+    ...result.weddingArtwork.thankYouScreens.map((entry) => entry.src),
+    ...result.weddingArtwork.overlays.map((entry) => entry.src),
+    ...result.weddingArtwork.templates.map((entry) => entry.src),
+  ];
+  const artworkLoads = await page.evaluate(async (sources) => Promise.all(
+    sources.map((src) => new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => resolve({ src, width: image.naturalWidth, height: image.naturalHeight });
+      image.onerror = () => resolve({ src, error: true });
+      image.src = src;
+    }))
+  ), artworkSources);
+  expect(artworkLoads.filter((item) => item.error)).toEqual([]);
+  expect(artworkLoads.filter((item) => item.width !== (item.height === 1800 ? 1200 : 1800))).toEqual([]);
   expect(result.themeKey).toBe(result.event.themeKey);
   expect(result.resolvedTheme.name).toBe("Maya & Noah Wedding");
   expect(result.event.partner1).toBe("Maya");
@@ -1256,7 +1282,7 @@ test.skip("photo overlays render mirrored live DOM slots", async ({
         background: { type: "color", value: "#fffaf4" },
         foreground: {
           type: "image",
-          src: "assets/wedding/eucalyptus/overlays/eucalyptus-wedding-overlay-portrait.png",
+          src: "assets/themes/eucalyptus-wedding/eucalyptus-wedding-overlay-portrait.png",
         },
         photoSlots: [
           {
@@ -2199,7 +2225,7 @@ test("Eucalyptus wedding overlays are transparent PNG assets", async ({
 }) => {
   await gotoApp(page, "/index.html");
   const response = await page.request.get(
-    "/assets/wedding/eucalyptus/overlays/eucalyptus-wedding-overlay-portrait.png"
+    "/assets/themes/eucalyptus-wedding/eucalyptus-wedding-overlay-portrait.png"
   );
   expect(response.ok()).toBe(true);
   expect(response.headers()["content-type"]).toContain("image/png");

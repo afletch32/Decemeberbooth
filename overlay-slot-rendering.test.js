@@ -110,7 +110,8 @@ test("final strip rendering uses manifest photo slots before legacy strip geomet
 
 test("wedding overlay manifests define explicit photo windows", async () => {
   const { getBuiltinAssetManifest } = await import("./scripts/builtin-asset-manifests.mjs");
-  const overlays = getBuiltinAssetManifest("assets/wedding/eucalyptus/overlays");
+  const overlays = getBuiltinAssetManifest("assets/themes/eucalyptus-wedding")
+    .filter((entry) => entry.type === "overlay");
 
   assert.deepEqual(overlays.map((entry) => entry.orientation), ["portrait", "landscape"]);
   overlays.forEach((entry) => {
