@@ -66,8 +66,9 @@ test("template rendering logic preserves photo overlays across strip mode and su
 
 test("wedding templates use transparent photo windows", async () => {
   const { getBuiltinAssetManifest } = await import("./scripts/builtin-asset-manifests.mjs");
-  const overlays = getBuiltinAssetManifest("assets/wedding/eucalyptus/overlays");
-  const templates = getBuiltinAssetManifest("assets/wedding/eucalyptus/templates");
+  const entries = getBuiltinAssetManifest("assets/themes/eucalyptus-wedding");
+  const overlays = entries.filter((entry) => entry.type === "overlay");
+  const templates = entries.filter((entry) => entry.category === "template");
 
   assert.deepEqual(overlays.map(({ src }) => src), [
     "eucalyptus-wedding-overlay-portrait.png",
