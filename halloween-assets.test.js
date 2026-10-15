@@ -42,8 +42,8 @@ test("Halloween migration replaces deleted legacy backgrounds and keeps orientat
 
   assert.equal(migrateHalloweenThemeAssets(target), true);
   assert.deepEqual(theme.backgrounds, [
-    "/assets/themes/halloween/halloween-background-portrait.mp4",
-    "/assets/themes/halloween/halloween-background-landscape.mp4",
+    "/assets/themes/halloween/halloween-fog-background-portrait.mp4",
+    "/assets/themes/halloween/halloween-fog-background-landscape.mp4",
     custom,
   ]);
   assert.equal(theme.background, theme.backgrounds[1]);
@@ -88,8 +88,8 @@ test("Halloween manifests use shared geometry and production-size alpha PNGs", a
 test("Halloween built-in asset manifest lists only the current orientation backgrounds", async () => {
   const { getBuiltinAssetManifest } = await import("./scripts/builtin-asset-manifests.mjs");
   assert.deepEqual(getBuiltinAssetManifest("assets/themes/halloween/"), [
-    "halloween-background-portrait.mp4",
-    "halloween-background-landscape.mp4",
+    "halloween-fog-background-portrait.mp4",
+    "halloween-fog-background-landscape.mp4",
   ]);
   assert.deepEqual(getBuiltinAssetManifest("assets/themes/cute-halloween/"), [
     "cute-halloween-background-portrait.webp",
@@ -116,4 +116,25 @@ test("Halloween retires the four legacy local templates without removing uploads
   assert.deepEqual(getBuiltinAssetManifest("assets/holidays/fall/halloween/backgrounds/"), []);
   assert.deepEqual(getBuiltinAssetManifest("assets/holidays/fall/halloween/overlays/"), []);
   assert.deepEqual(JSON.parse(readFileSync("assets/holidays/fall/halloween/templates/templates.json", "utf8")), []);
+});
+
+
+test("Halloween replaces whole-frame motion backgrounds with fog loops", async () => {
+  const { migrateHalloweenThemeAssets, migrateHalloweenEventAssets } = await import("./scripts/halloween-assets.mjs");
+  const theme = { backgrounds: [
+    "/assets/themes/halloween/halloween-background-portrait.mp4",
+    "/assets/themes/halloween/halloween-background-landscape.mp4",
+    "/uploads/custom-background.mp4",
+  ] };
+  const target = { fall: { holidays: { halloween: theme } } };
+  migrateHalloweenThemeAssets(target);
+  assert.deepEqual(theme.backgrounds, [
+    "/assets/themes/halloween/halloween-fog-background-portrait.mp4",
+    "/assets/themes/halloween/halloween-fog-background-landscape.mp4",
+    "/uploads/custom-background.mp4",
+  ]);
+  assert.equal(migrateHalloweenThemeAssets(target), false);
+  const events = [{ overrides: { backgrounds: ["/assets/themes/halloween/halloween-background-portrait.mp4"], backgroundIndex: 0 } }];
+  assert.equal(migrateHalloweenEventAssets(events), true);
+  assert.deepEqual(events[0].overrides.backgrounds, []);
 });

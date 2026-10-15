@@ -862,8 +862,8 @@ let themes = {
         font: "'Creepster', cursive",
         logo: "",
         backgrounds: [
-          "/assets/themes/halloween/halloween-background-portrait.mp4",
-          "/assets/themes/halloween/halloween-background-landscape.mp4",
+          "/assets/themes/halloween/halloween-fog-background-portrait.mp4",
+          "/assets/themes/halloween/halloween-fog-background-landscape.mp4",
         ],
         idleScreens: [
           { src: "/assets/themes/halloween/halloween-idle-portrait.webp", name: "Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },

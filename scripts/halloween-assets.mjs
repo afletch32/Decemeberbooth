@@ -17,8 +17,8 @@ const PACKS = [
     folder: "halloween",
     name: "Halloween",
     backgrounds: [
-      "halloween-background-portrait.mp4",
-      "halloween-background-landscape.mp4",
+      "halloween-fog-background-portrait.mp4",
+      "halloween-fog-background-landscape.mp4",
     ],
   },
   {
@@ -81,6 +81,7 @@ function isRetiredHalloweenBackground(entry) {
   return (
     src.includes("/themes/holidays/fall/halloween/backgrounds/") ||
     src.includes("/assets/holidays/fall/halloween/backgrounds/") ||
+    /\/themes\/halloween\/halloween-background-(?:portrait|landscape)\.(?:mp4|webp|png)(?:[?#].*)?$/.test(src) ||
     src.includes("halloween-background-grey-1") ||
     src.includes("halloween-background-pink")
   );
