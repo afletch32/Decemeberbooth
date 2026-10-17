@@ -1569,19 +1569,19 @@ test("guest photo filters run through the unified live imaging pipeline", () => 
   assert.ok(
     html.includes('id="livePreviewCanvas"') &&
       appScript.includes("function startLiveImagingPipeline()") &&
-      appScript.includes("async function processCanvasThroughImagingPipeline(sourceCanvas, options = {})") &&
+      appScript.includes("async function processCanvasThroughImagingPipeline(sourceCanvas)") &&
       appScript.includes("drawProcessedFrameToLivePreview(processed)") &&
       appScript.includes("getLivePreviewStream()") &&
       appScript.includes("const LIVE_PREVIEW_MAX_DIMENSION = 640;") &&
       appScript.includes("const LIVE_PREVIEW_FRAME_INTERVAL_MS = 50;") &&
-      appScript.includes('processCanvasThroughImagingPipeline(raw, { preview: true })'),
+      appScript.includes('processCanvasThroughImagingPipeline(raw)'),
     "the live preview should render through a processed canvas that can feed slotted overlays"
   );
   assert.ok(
     appScript.includes("function applySelectedFilterToCanvas(canvas)") &&
       appScript.includes("processed = applySelectedFilterToCanvas(sourceCanvas)") &&
       appScript.includes("processed = await applySelectedBeautyToCanvas(processed)") &&
-      appScript.includes("processed = applyAutoEnhanceCanvas(processed)") &&
+      !appScript.includes("applyAutoEnhanceCanvas") &&
       !appScript.includes("applyFilterToCanvas(ctx, targetW, targetH);\n\n  return c.toDataURL"),
     "selected filters and beauty passes should be baked into the shared imaging pipeline"
   );
@@ -1590,7 +1590,7 @@ test("guest photo filters run through the unified live imaging pipeline", () => 
       appScript.includes("async function getCurrentProcessedFrameCanvas()") &&
       appScript.includes("const raw = drawToCanvasFromVideo();") &&
       appScript.includes("processed.__processedByLiveImagingPipeline = true;") &&
-      appScript.includes("? photoCanvas\n      : ensureEnhancedCanvas(photoCanvas)"),
+      appScript.includes("const enhancedPhotoCanvas = await ensureGuestPhotoProcessed(photoCanvas);"),
     "capture should process a full-resolution source and avoid repeating enhancement downstream"
   );
   assert.ok(

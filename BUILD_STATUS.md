@@ -1,27 +1,17 @@
 # Build status
 
-- Current goal: Replace whole-frame Halloween background motion with drifting fog over a stationary scene.
-- Done: Two 8-second H.264/yuv420p/30fps muted loops at 1200×1800 and 1800×1200. Only fog moves across the lower scene. Updated built-in paths, saved-theme/event migrations, and cache identifiers; custom uploads are preserved. Added a reproducible fog renderer.
-- In progress: None for the Halloween fog correction.
-- Next steps: Refresh the booth page to load the fog loops.
-- Known bugs/blockers: Physical guest-device camera/print/share flow remains unverified.
-- Important decisions: Keep approved artwork stationary and use new filenames to avoid replaying the old camera-motion clips. Existing idle/CTA artwork remains fixed.
-- Verification: `npm test` 285/285 pass; browser theme selection and playback of both full-size clips passed with no page errors (external CDNs stubbed). Frame differences: stationary upper half <0.04/255, fog >4/255, loop boundary <0.27/255. Both clips <0.6 MB. `git diff --check` clean.
-- Release: `0b3c2ea` committed and pushed to `codex/halloween-fog-motion`; deployed to production as `22d38325` at https://decemeberbooth.pages.dev/. Production HTML, migration module, service worker, and both MP4 hashes match the release. Live browser selected Halloween and played both orientations without page errors (external CDN dependencies stubbed).
-
-## Previous wedding work
-
-- Current goal: Create and release the Eucalyptus wedding theme for custom wedding events.
-- Done: Generated the portrait/landscape background, welcome, photo-choice, and Thank You art; created transparent portrait/landscape photo overlays and a three-photo strip. Connected the assets to the dynamic couple-name/date wedding theme and moved paths into one `assets/themes/eucalyptus-wedding/` folder. Updated the built-in asset manifest and app cache versions.
-- In progress: Run the test suite and rendered wedding setup flow, then publish.
-- Next steps: Confirm all art loads at production dimensions and transparent photo slots remain clear; release the completed theme.
-- Known bugs/blockers: A real guest-device camera/print/share run remains unverified.
-- Important decisions: Wedding events remain their own themes, use the event's couple names and date, and have portrait and landscape art. Art is grouped in the theme's single folder.
-- Verification: Pending this change's automated and rendered checks.
+- Current goal: Use one guest filter consistently in preview, captured photos, and strip/single outputs.
+- Done: Removed the separate enhancement selector, Bridal Glow defaults, legacy local setting reads, and output-only enhancement pass. Preview now runs the selected preset's beauty adjustments too. Finalizers process raw inputs once and preserve already-filtered captures. Added pipeline regression tests and a browser pixel-parity test; updated cache identifiers.
+- In progress: Commit, push, deploy, and verify production.
+- Next steps: Verify live output parity with an old Bridal Glow setting present.
+- Known bugs/blockers: A real guest-device face/camera/print/share run remains unverified. Browser tests use synthetic pixels and stub external face/CDN dependencies; Cloudinary delivery transformations are outside this check.
+- Important decisions: The shared admin-selected guest preset is the only local photo-look control. Existing preset definitions and custom preset overrides remain available. Already-processed photos retain their look during output composition.
+- Verification: `npm test` 288/288 pass. Playwright guest-filter parity test passes for all six presets: zero pixel differences between preview and capture, and no additional filtering in strip/single export. Legacy Bridal Glow storage has no effect. No page errors; `git diff --check` clean.
 - Release: Pending.
 
 ## Existing production records
 
 - Cloudflare Pages project: `decemeberbooth`; production URL: `https://decemeberbooth.pages.dev/`.
+- Halloween fog release: `0b3c2ea`, deployed as `22d38325`; stationary artwork with drifting fog in both orientations.
+- Eucalyptus wedding artwork and event-specific names/date remain part of the application.
 - Event print price uses the shared event record; default is $3.00 USD. No live purchase was made.
-- PR #20 artwork loading fallback was merged previously; physical iPad behavior remains unverified.

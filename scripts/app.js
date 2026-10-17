@@ -1347,7 +1347,6 @@ const DOM = {
   ),
   lowLightToggle: document.getElementById("lowLightToggle"),
   aiBackgroundToggle: document.getElementById("aiBackgroundToggle"),
-  enhancementModeSelect: document.getElementById("enhancementModeSelect"),
   beautyPresetSelect: document.getElementById("beautyPresetSelect"),
   beautyPresetControls: document.getElementById("beautyPresetControls"),
   resetBeautyPresetButton: document.getElementById("resetBeautyPresetButton"),
@@ -2110,33 +2109,6 @@ function isBoothTestMode() {
 function getBoothQaState() {
   return getUrlParam("qaState");
 }
-const AUTO_ENHANCE_ENABLED = true;
-const AUTO_ENHANCE_FILTER = "brightness(1.05) contrast(1.08) saturate(1.08)";
-const ENHANCEMENT_MODE_DEFAULT = "bridal-glow";
-const ENHANCEMENT_MODE_CONFIG = {
-  natural: {
-    baseFilter: "brightness(1.03) contrast(1.05) saturate(1.04)",
-    shadowLift: 10,
-    highlightRollOff: 8,
-    warmthRedBoost: 2,
-    warmthBlueCut: 1,
-  },
-  "bridal-glow": {
-    baseFilter: "brightness(1.06) contrast(1.08) saturate(1.07)",
-    shadowLift: 20,
-    highlightRollOff: 14,
-    warmthRedBoost: 4,
-    warmthBlueCut: 3,
-  },
-  "harsh-light-fix": {
-    baseFilter: "brightness(1.04) contrast(1.02) saturate(1.03)",
-    shadowLift: 28,
-    highlightRollOff: 24,
-    warmthRedBoost: 2,
-    warmthBlueCut: 2,
-  },
-};
-
 let FILTER_EFFECTS = getGuestVisibleBeautyPresets().map(cloneThemeValue);
 const BEAUTY_PRESET_CONTROL_DEFINITIONS = [
   ["beauty", "skinSmooth", "Skin smoothing", 0, 12],
@@ -5378,40 +5350,6 @@ function setupAiBackgroundToggle() {
   });
 }
 
-function getEnhancementMode() {
-  try {
-    const stored = localStorage.getItem("photoboothEnhancementMode");
-    if (stored && ENHANCEMENT_MODE_CONFIG[stored]) {
-      return stored;
-    }
-  } catch (_) {}
-  return ENHANCEMENT_MODE_DEFAULT;
-}
-
-function setEnhancementMode(mode) {
-  const nextMode = ENHANCEMENT_MODE_CONFIG[mode]
-    ? mode
-    : ENHANCEMENT_MODE_DEFAULT;
-  try {
-    localStorage.setItem("photoboothEnhancementMode", nextMode);
-  } catch (_) {}
-}
-
-function setupEnhancementModeSelect() {
-  if (!DOM.enhancementModeSelect) return;
-  DOM.enhancementModeSelect.value = getEnhancementMode();
-  DOM.enhancementModeSelect.addEventListener("change", () => {
-    setEnhancementMode(DOM.enhancementModeSelect.value);
-    showToast(
-      `Enhancement: ${
-        DOM.enhancementModeSelect.options[
-          DOM.enhancementModeSelect.selectedIndex
-        ].text
-      }`
-    );
-  });
-}
-
 function getBeautyPresetOverrides() {
   const overrides = themes && themes._meta && themes._meta.beautyPresetOverrides;
   return overrides && typeof overrides === "object" ? overrides : {};
@@ -6458,7 +6396,6 @@ function init() {
   setupLowLightToggle();
   setupGreenScreenToggle();
   setupAiBackgroundToggle();
-  setupEnhancementModeSelect();
   setupBeautyPresetEditor();
   setupCameraZoomControls();
   setupEditModeControls();
@@ -9224,14 +9161,10 @@ async function applySelectedBeautyToCanvas(canvas) {
   }
 }
 
-async function processCanvasThroughImagingPipeline(sourceCanvas, options = {}) {
-  const { preview = false } = options;
+async function processCanvasThroughImagingPipeline(sourceCanvas) {
   if (!sourceCanvas) return sourceCanvas;
   let processed = applySelectedFilterToCanvas(sourceCanvas);
-  if (!preview) {
-    processed = await applySelectedBeautyToCanvas(processed);
-    processed = applyAutoEnhanceCanvas(processed);
-  }
+  processed = await applySelectedBeautyToCanvas(processed);
   if (getAiBackgroundEnabled()) {
     const mask = await getAiSegmentationMask(processed);
     if (mask) {
@@ -9263,7 +9196,6 @@ function drawProcessedFrameToLivePreview(processedCanvas) {
   ctx.clearRect(0, 0, target.width, target.height);
   ctx.drawImage(processedCanvas, 0, 0, target.width, target.height);
   target.dataset.ready = "true";
-  target.__enhancedMode = processedCanvas.__enhancedMode;
   target.__aiMask = processedCanvas.__aiMask;
   target.__processedByLiveImagingPipeline = true;
   latestProcessedFrameCanvas = target;
@@ -9278,7 +9210,6 @@ function cloneCanvas(source, bufferName = "processed-capture") {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
   if (source.__aiMask) canvas.__aiMask = source.__aiMask;
-  if (source.__enhancedMode) canvas.__enhancedMode = source.__enhancedMode;
   if (source.__processedByLiveImagingPipeline) {
     canvas.__processedByLiveImagingPipeline = true;
   }
@@ -9319,7 +9250,7 @@ function startLiveImagingPipeline() {
       liveImagingLastFrameAt = now;
       try {
         const raw = drawToLivePreviewCanvasFromVideo();
-        const processed = await processCanvasThroughImagingPipeline(raw, { preview: true });
+        const processed = await processCanvasThroughImagingPipeline(raw);
         drawProcessedFrameToLivePreview(processed);
       } catch (error) {
         console.warn("Live imaging frame failed", error);
@@ -11063,26 +10994,12 @@ function drawToLivePreviewCanvasFromVideo() {
   return preview;
 }
 
-function applyAutoEnhanceCanvas(canvas) {
-  if (!AUTO_ENHANCE_ENABLED || !canvas) return canvas;
-  if (canvas.__enhancedMode === getEnhancementMode()) return canvas;
-  const enhancement =
-    ENHANCEMENT_MODE_CONFIG[getEnhancementMode()] ||
-    ENHANCEMENT_MODE_CONFIG[ENHANCEMENT_MODE_DEFAULT];
-  const out = CanvasBuffer.get("enhance", canvas.width, canvas.height);
-  const ctx = out.getContext("2d");
-  ctx.filter = enhancement.baseFilter || AUTO_ENHANCE_FILTER;
-  ctx.drawImage(canvas, 0, 0);
-  ctx.filter = "none";
-  applyBeautyLightingPass(ctx, out.width, out.height, enhancement);
-  out.__enhancedMode = getEnhancementMode();
-  if (canvas.__aiMask) out.__aiMask = canvas.__aiMask;
-  return out;
-}
-
-function ensureEnhancedCanvas(canvas) {
-  if (!canvas) return canvas;
-  return applyAutoEnhanceCanvas(canvas);
+// Finalizers accept raw images too, but never filter a captured frame twice.
+async function ensureGuestPhotoProcessed(canvas) {
+  if (!canvas || canvas.__processedByLiveImagingPipeline) return canvas;
+  const processed = await processCanvasThroughImagingPipeline(canvas);
+  processed.__processedByLiveImagingPipeline = true;
+  return processed;
 }
 
 function cloneCanvasForStrip(source) {
@@ -11097,50 +11014,6 @@ function cloneCanvasForStrip(source) {
   if (ctx) ctx.drawImage(source, 0, 0, width, height);
   if (source.__aiMask) canvas.__aiMask = source.__aiMask;
   return canvas;
-}
-
-function applyBeautyLightingPass(ctx, width, height, enhancement) {
-  if (!ctx || !width || !height) return;
-
-  try {
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-    const {
-      shadowLift,
-      highlightRollOff,
-      warmthRedBoost,
-      warmthBlueCut,
-    } = enhancement || ENHANCEMENT_MODE_CONFIG[ENHANCEMENT_MODE_DEFAULT];
-
-    for (let index = 0; index < data.length; index += 4) {
-      let red = data[index];
-      let green = data[index + 1];
-      let blue = data[index + 2];
-
-      const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
-      const shadowAmount = clampNumber((170 - luminance) / 170, 0, 1);
-      const highlightAmount = clampNumber((luminance - 180) / 75, 0, 1);
-
-      red += shadowLift * shadowAmount;
-      green += shadowLift * 0.92 * shadowAmount;
-      blue += shadowLift * 0.84 * shadowAmount;
-
-      red -= highlightRollOff * 0.55 * highlightAmount;
-      green -= highlightRollOff * 0.5 * highlightAmount;
-      blue -= highlightRollOff * 0.45 * highlightAmount;
-
-      red += warmthRedBoost * (0.35 + shadowAmount * 0.65);
-      blue -= warmthBlueCut * (0.3 + shadowAmount * 0.7);
-
-      data[index] = clampNumber(Math.round(red), 0, 255);
-      data[index + 1] = clampNumber(Math.round(green), 0, 255);
-      data[index + 2] = clampNumber(Math.round(blue), 0, 255);
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-  } catch (error) {
-    console.warn("Auto enhance pass failed", error);
-  }
 }
 
 function clampNumber(value, min, max) {
@@ -12490,9 +12363,10 @@ function drawDynamicEventText(
 // Compose photostrip
 async function composeStrip(template, photos) {
   const bg = await loadImage(template.src);
-  const enhancedPhotos = Array.isArray(photos)
-    ? photos.map((photo) => cloneCanvasForStrip(ensureEnhancedCanvas(photo)))
-    : [];
+  const enhancedPhotos = [];
+  for (const photo of Array.isArray(photos) ? photos : []) {
+    enhancedPhotos.push(cloneCanvasForStrip(await ensureGuestPhotoProcessed(photo)));
+  }
   const layout = normalizeTemplateLayout(template && template.layout);
   const explicitPhotoSlots = hasExplicitPhotoSlots(template);
   const normalizedPhotoSlots = explicitPhotoSlots
@@ -12623,10 +12497,7 @@ async function composeStrip(template, photos) {
 
 // Compose a single photo into a print-safe 4x6 canvas without cropping
 async function finalizeToPrint(photoCanvas, overlaySrc) {
-  const enhancedPhotoCanvas =
-    photoCanvas && photoCanvas.__processedByLiveImagingPipeline
-      ? photoCanvas
-      : ensureEnhancedCanvas(photoCanvas);
+  const enhancedPhotoCanvas = await ensureGuestPhotoProcessed(photoCanvas);
   const resolvedAspect = getResolvedCaptureAspectRatio();
   const orientation = resolvedAspect < 1 ? "portrait" : "landscape";
   const { canvas: c, ctx, size } = createPrintCanvas(orientation);
@@ -22780,6 +22651,8 @@ Object.assign(window, {
   __photoboothTest: {
     composeStrip,
     finalizeToPrint,
+    processCanvasThroughImagingPipeline,
+    ensureGuestPhotoProcessed,
     getActiveEvent: () => getActiveEvent(),
     getEventById: (id) => getStoredEvents().find((event) => event && event.id === id) || null,
     getSelectedThemeKey: () => getSelectedThemeKey(),
