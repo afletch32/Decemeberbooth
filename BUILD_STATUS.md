@@ -2,12 +2,12 @@
 
 - Current goal: Make the staff print queue easy to reach from booth setup.
 - Done: An always-visible Print Queue shortcut opens the event-scoped staff queue; the upload Queue count stays accurate and the existing settings link and QR remain available. Repo instructions now require scoped commit, push, production deploy, and live verification for every code change. Digital Only print mode remains fixed.
-- In progress: Commit, push, deploy, and verify the print-queue shortcut.
-- Next steps: Confirm the production setup page exposes the event-specific Print Queue link.
+- In progress: None.
+- Next steps: Confirm Digital Only behavior on the physical booth device when available.
 - Known bugs/blockers: Physical booth-device verification remains outstanding.
 - Important decisions: The top Print Queue shortcut opens the event-specific staff queue in a new tab; the adjacent Queue count continues to report pending uploads. Digital Only means no print controls or price notice in the guest flow; changing the dropdown saves the mode without requiring the separate settings button.
-- Verification: `npm test` 288/288 pass. `git diff --check` clean. The in-app browser blocks local `file://` reloads, so local rendered verification was unavailable.
-- Release: Commit `d15078a` pushed to `codex/unify-guest-photo-filter` and deployed to production as `5041c431` at https://decemeberbooth.pages.dev/. The live Playwright flow verified that Digital Only saves across reload and suppresses the guest print controls and price notice.
+- Verification: `npm test` 288/288 pass. `git diff --check` clean. Production responded HTTP 200; the rendered setup page shows the Print Queue shortcut linked to `staff-print.html?eventId=default`.
+- Release: Commit `d34a758` pushed to `codex/unify-guest-photo-filter` and deployed to production (deployment `d3e7969f`) at https://decemeberbooth.pages.dev/. The live setup page exposes the event-scoped staff queue shortcut.
 
 ## Existing production records
 
