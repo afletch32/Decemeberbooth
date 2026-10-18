@@ -2062,6 +2062,7 @@ let photoOverlayOrientationPending = {};
 let pendingTemplate = null;
 let hidePreviewTimer = null;
 let allowRetake = true;
+const ALLOW_RETAKES_STORAGE_KEY = "photoboothAllowRetakes";
 let isStartingCamera = false;
 let capturePreviewFrozen = false;
 let liveImagingLoopStarted = false;
@@ -4805,6 +4806,34 @@ function setupLivePhotoToggle() {
   });
 }
 
+function getAllowRetakes() {
+  try {
+    const stored = localStorage.getItem(ALLOW_RETAKES_STORAGE_KEY);
+    if (stored === "true") return true;
+    if (stored === "false") return false;
+  } catch (_) {}
+  return true;
+}
+
+function setAllowRetakes(enabled) {
+  allowRetake = !!enabled;
+  try {
+    localStorage.setItem(ALLOW_RETAKES_STORAGE_KEY, allowRetake ? "true" : "false");
+  } catch (_) {}
+  if (DOM.reviewRetakeBtn) {
+    DOM.reviewRetakeBtn.style.display = allowRetake ? "" : "none";
+  }
+}
+
+function setupAllowRetakesToggle() {
+  if (!DOM.allowRetakes) return;
+  DOM.allowRetakes.checked = getAllowRetakes();
+  allowRetake = DOM.allowRetakes.checked;
+  DOM.allowRetakes.addEventListener("change", () => {
+    setAllowRetakes(DOM.allowRetakes.checked);
+  });
+}
+
 function setupRecordingModeToggle() {
   if (!DOM.recordingModeToggle) return;
   DOM.recordingModeToggle.checked = getRecordingModeEnabled();
@@ -6387,6 +6416,7 @@ function init() {
   setupVideoImportControls();
   setup360ModeControls();
   setupOfflineControls();
+  setupAllowRetakesToggle();
   setupLivePhotoToggle();
   setupRecordingModeToggle();
   setupInstantCaptureToggle();
@@ -12993,6 +13023,9 @@ function showFinal(url, options = {}) {
     },
   });
   setupFinalExperienceActions();
+  if (DOM.reviewRetakeBtn) {
+    DOM.reviewRetakeBtn.style.display = allowRetake ? "" : "none";
+  }
   syncBoothPersonality();
   if (DOM.goodbyeOverlay) DOM.goodbyeOverlay.classList.remove("show");
   if (DOM.qrCodeContainer) {
@@ -22647,6 +22680,7 @@ Object.assign(window, {
     auditLayout: auditBoothLayout,
     enterState: enterBoothQaState,
     isTestMode: isBoothTestMode,
+    showFinal,
   },
   __photoboothTest: {
     composeStrip,
