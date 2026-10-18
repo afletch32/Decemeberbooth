@@ -6,8 +6,8 @@
 - Next steps: Confirm Digital Only behavior on the physical booth device when available.
 - Known bugs/blockers: Physical booth-device verification remains outstanding.
 - Important decisions: The top Print Queue shortcut opens the event-specific staff queue in a new tab; the adjacent Queue count continues to report pending uploads. Digital Only means no print controls or price notice in the guest flow; changing the dropdown saves the mode without requiring the separate settings button.
-- Verification: `npm test` 288/288 pass. `git diff --check` clean. Production responded HTTP 200; the rendered setup page showed the earlier Print Queue shortcut linked to `staff-print.html?eventId=default`. Verify the newly prominent button after deployment.
-- Release: Commit `d34a758` pushed to `codex/unify-guest-photo-filter` and deployed to production (deployment `d3e7969f`) at https://decemeberbooth.pages.dev/. The live setup page exposes the event-scoped staff queue shortcut.
+- Verification: `npm test` 288/288 pass. `git diff --check` clean. Production responded HTTP 200; the rendered setup page shows the prominent Open Print Queue button linked to `staff-print.html?eventId=default`.
+- Release: Commit `88aae96` pushed to `codex/unify-guest-photo-filter` and deployed to production (deployment `9f0d74ca`) at https://decemeberbooth.pages.dev/. Live browser verification confirmed the button is visible in the setup status row.
 
 ## Existing production records
 
