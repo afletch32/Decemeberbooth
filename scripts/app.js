@@ -7076,7 +7076,7 @@ function loadPrintSettings() {
     syncEventPrintPriceVisibility();
     if (DOM.printModeInput.dataset.priceVisibilityBound !== "true") {
       DOM.printModeInput.dataset.priceVisibilityBound = "true";
-      DOM.printModeInput.addEventListener("change", syncEventPrintPriceVisibility);
+      DOM.printModeInput.addEventListener("change", persistPrintModeSelection);
     }
   }
   if (DOM.printNoPaymentRequiredInput) DOM.printNoPaymentRequiredInput.checked = settings.noPaymentRequired === true;
@@ -7092,6 +7092,30 @@ function loadPrintSettings() {
   updateStaffPrintQueueUrl();
   syncEventPrintPriceInput();
   loadPayPalPrintConfigStatus();
+}
+
+function persistPrintModeSelection() {
+  if (!DOM.printModeInput) return;
+  const mode = ["off", "free", "paid"].includes(DOM.printModeInput.value)
+    ? DOM.printModeInput.value
+    : "off";
+  const settings = getPrintSettings();
+  settings.mode = mode;
+  settings.noPaymentRequired = mode === "free";
+  try {
+    localStorage.setItem(PRINT_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch (_) {}
+  syncEventPrintPriceVisibility();
+  if (mode !== "paid") {
+    finalPrintPriceRequestId += 1;
+    if (DOM.printPriceNotice) {
+      DOM.printPriceNotice.textContent = "";
+      DOM.printPriceNotice.classList.add("hidden");
+    }
+    if (mode === "off" && DOM.finalPrintActions) {
+      DOM.finalPrintActions.classList.add("hidden");
+    }
+  }
 }
 
 function syncEventPrintPriceVisibility() {
@@ -13002,13 +13026,13 @@ async function showFinalPrintPrice(eventId) {
   if (DOM.requestPrintBtn) DOM.requestPrintBtn.disabled = true;
   try {
     const config = await fetchPayPalPrintConfig(eventId);
-    if (requestId !== finalPrintPriceRequestId) return;
+    if (requestId !== finalPrintPriceRequestId || getPrintSettings().mode !== "paid") return;
     if (DOM.printPriceNotice) {
       DOM.printPriceNotice.textContent = `Print price: ${formatPayPalPrintPrice(config.amount, config.currency)}`;
     }
     if (DOM.requestPrintBtn) DOM.requestPrintBtn.disabled = false;
   } catch (_) {
-    if (requestId !== finalPrintPriceRequestId) return;
+    if (requestId !== finalPrintPriceRequestId || getPrintSettings().mode !== "paid") return;
     if (DOM.printPriceNotice) DOM.printPriceNotice.textContent = "Print price unavailable. Please ask the attendant.";
   }
 }

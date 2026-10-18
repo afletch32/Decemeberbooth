@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Remember the operator's Allow Retakes setting and apply it to the guest final screen.
-- Done: The retake preference now loads and saves locally and the final screen hides Retake when disabled. Added browser coverage for reload persistence and final-screen visibility.
-- In progress: None.
-- Next steps: Check the remembered setting on the physical booth device.
+- Current goal: Keep print pricing hidden when the booth is set to Digital Only.
+- Done: Print mode changes now persist immediately. In-flight paid-price lookups are ignored after changing away from Paid Printing.
+- In progress: Release the fix and verify it on production.
+- Next steps: Confirm the production dropdown selection persists and price stays hidden.
 - Known bugs/blockers: Physical booth-device verification remains outstanding.
-- Important decisions: Retakes default to enabled for existing installations with no saved preference. The operator's setting applies across browser reloads on the same booth device.
-- Verification: `npm test` 288/288 pass. Focused Playwright retake flow passes across reload and guest final screen. `git diff --check` clean.
-- Release: Commit `3a2e675` pushed to `codex/unify-guest-photo-filter` and deployed to production as `d6281a4f` at https://decemeberbooth.pages.dev/. The live Playwright retake preference flow passed across reload and guest final screen; production HTML, app module, and service worker hashes match the deployed commit.
+- Important decisions: Digital Only means no print controls or price notice in the guest flow; changing the dropdown saves the mode without requiring the separate settings button.
+- Verification: `npm test` 288/288 pass. Playwright covers changing from Paid Printing to Digital Only, persistence after reload, and hidden print controls and price notice on the guest screen. `git diff --check` clean.
+- Release: Pending.
 
 ## Existing production records
 

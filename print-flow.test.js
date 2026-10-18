@@ -20,7 +20,8 @@ test("event print price appears only when paid printing is selected", () => {
   assert.ok(html.includes('id="eventPrintPriceSettings" hidden'));
   assert.ok(app.includes("function syncEventPrintPriceVisibility()"));
   assert.ok(app.includes('DOM.eventPrintPriceSettings.hidden = DOM.printModeInput.value !== "paid";'));
-  assert.ok(app.includes('addEventListener("change", syncEventPrintPriceVisibility)'));
+  assert.ok(app.includes('addEventListener("change", persistPrintModeSelection)'));
+  assert.ok(app.includes('localStorage.setItem(PRINT_SETTINGS_STORAGE_KEY, JSON.stringify(settings))'));
 });
 
 test("legacy paid queue settings migrate to explicit print modes", () => {
