@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Use one guest filter consistently in preview, captured photos, and strip/single outputs.
-- Done: Removed the separate enhancement selector, Bridal Glow defaults, legacy local setting reads, and output-only enhancement pass. Preview now runs the selected preset's beauty adjustments too. Finalizers process raw inputs once and preserve already-filtered captures. Added pipeline regression tests and a browser pixel-parity test; updated cache identifiers.
-- In progress: None for the guest-filter correction.
-- Next steps: Refresh the booth page to load the single-preset rendering path.
-- Known bugs/blockers: A real guest-device face/camera/print/share run remains unverified. Browser tests use synthetic pixels and stub external face/CDN dependencies; Cloudinary delivery transformations are outside this check.
-- Important decisions: The shared admin-selected guest preset is the only local photo-look control. Existing preset definitions and custom preset overrides remain available. Already-processed photos retain their look during output composition.
-- Verification: `npm test` 288/288 pass. Playwright guest-filter parity test passes for all six presets: zero pixel differences between preview and capture, and no additional filtering in strip/single export. Legacy Bridal Glow storage has no effect. No page errors; `git diff --check` clean.
-- Release: Feature commit `16113b7` pushed to `codex/unify-guest-photo-filter` and deployed to production as `1af13df6` at https://decemeberbooth.pages.dev/. Production HTML, app module, and service worker match the committed files. Live browser parity passed for all six presets with the legacy Bridal Glow setting present, with zero pixel differences and no page errors. Shared production settings were not modified during the test.
+- Current goal: Keep the guest camera preview responsive while the beauty face tracker loads or is unavailable.
+- Done: CDN tracker import now loads only during background initialization. Preview and capture apply the selected preset immediately without waiting for face tracking; initialization is shared, bounded by a 10-second timeout, and retries after a 30-second cooldown.
+- In progress: Release the validated change.
+- Next steps: Confirm the new app-shell cache is served by production.
+- Known bugs/blockers: Real guest-device camera, face tracking, print, and share remain unverified.
+- Important decisions: No beauty mode or filter is silently changed while the tracker is loading. Preset corrections use the existing full-frame fallback mask until face landmarks are available.
+- Verification: `npm test` 288/288 pass. Playwright guest filter parity passes across all six presets. A browser test held the MediaPipe CDN request open and confirmed beauty processing returned in under one second. `git diff --check` clean.
+- Release: Pending.
 
 ## Existing production records
 

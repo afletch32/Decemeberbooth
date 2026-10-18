@@ -58,3 +58,23 @@ test("guest filter matches preview, single photo, and strip without Bridal Glow"
  await page.screenshot({ path: "/tmp/guest-filter-editor-fixed.png", fullPage: true });
  console.log(JSON.stringify({ results, errors, legacySettingIgnored: true }));
 });
+
+test("beauty processing does not wait for a stalled face-tracker CDN", async ({ page }) => {
+ await page.route("https://cdn.jsdelivr.net/**", () => new Promise(() => {}));
+ await page.goto("http://127.0.0.1:4321/?testMode=booth", { waitUntil: "domcontentloaded" });
+ const elapsed = await page.evaluate(async () => {
+  const { applyBeautyFrame } = await import("/scripts/beauty/engine.mjs");
+  const canvas = document.createElement("canvas");
+  canvas.width = 80; canvas.height = 60;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#a87860"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const startedAt = performance.now();
+  await applyBeautyFrame({
+   canvas,
+   video: document.createElement("video"),
+   settings: { beauty: { enabled: true, skinSmooth: 25, tone: 10 } }
+  });
+  return performance.now() - startedAt;
+ });
+ assert.ok(elapsed < 1000, `Beauty processing took ${elapsed}ms while tracker CDN was stalled`);
+});
