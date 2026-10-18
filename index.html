@@ -316,10 +316,12 @@
       grid-column: span 2;
     }
 
-    .event-type-quick-pick {
+    .wedding-setup-action {
       grid-column: 1 / -1;
       max-width: 280px;
     }
+
+    .wedding-setup-action button { width: 100%; min-height: 48px; }
 
     .wedding-event-setup {
       grid-column: 1 / -1;
@@ -7123,9 +7125,9 @@
         >
       </div>
       <div class="setup-session-grid">
-        <div class="setup-session-item event-type-quick-pick">
-          <label for="eventTypeInput">Event Type</label>
-          <select id="eventTypeInput"><option value="general">General</option><option value="wedding">Wedding</option><option value="birthday">Birthday</option><option value="community">Community</option><option value="expo">Expo</option></select>
+        <div class="setup-session-item wedding-setup-action" id="weddingSetupAction">
+          <span class="setup-session-item-label">Special event</span>
+          <button type="button" id="startWeddingSetupBtn">Set Up a Wedding</button>
         </div>
         <section id="weddingEventSetup" class="wedding-event-setup" aria-labelledby="weddingEventSetupHeading" hidden>
           <div>
@@ -7146,7 +7148,10 @@
               <input type="date" id="eventDateInput" autocomplete="off">
             </div>
           </div>
-          <button type="button" class="setup-session-save-btn" id="createWeddingEventBtn" onclick="createNewEventFromSelection()">Create Wedding Theme</button>
+          <div class="btn-row" style="margin:0; align-items:center;">
+            <button type="button" id="cancelWeddingSetupBtn">Back to Event Setup</button>
+            <button type="button" class="setup-session-save-btn" id="createWeddingEventBtn">Create Wedding Theme</button>
+          </div>
         </section>
         <section id="themeQuickPicker" class="theme-quick-picker setup-session-theme" aria-labelledby="themeQuickPickerHeading">
           <div>
@@ -8066,7 +8071,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261017-print-queue-quick-access-2"></script>
+  <script type="module" src="scripts/app.js?v=20261017-wedding-setup-action"></script>
 </body>
 
 </html>

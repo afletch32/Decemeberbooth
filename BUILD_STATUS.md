@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Make the staff print queue easy to reach from booth setup.
-- Done: A prominent “Open Print Queue” button in the setup status row opens the event-scoped staff queue; the upload Queue count stays accurate and the existing settings link and QR remain available. Repo instructions require scoped commit, push, production deploy, and live verification for every code change. Digital Only print mode remains fixed.
-- In progress: None.
-- Next steps: Confirm Digital Only behavior on the physical booth device when available.
+- Current goal: Remove the unused Event Type selector while keeping wedding setup available.
+- Done: Replaced Event Type with a dedicated “Set Up a Wedding” action; standard events default to general, saved wedding events remain editable, and the wedding flow has a cancel action. The top Print Queue shortcut and repo release instructions remain in place.
+- In progress: Commit, push, deploy, and verify the wedding setup action.
+- Next steps: Verify the deployed setup has no Event Type selector and the Wedding action still creates a wedding event.
 - Known bugs/blockers: Physical booth-device verification remains outstanding.
 - Important decisions: The top Print Queue shortcut opens the event-specific staff queue in a new tab; the adjacent Queue count continues to report pending uploads. Digital Only means no print controls or price notice in the guest flow; changing the dropdown saves the mode without requiring the separate settings button.
-- Verification: `npm test` 288/288 pass. `git diff --check` clean. Production responded HTTP 200; the rendered setup page shows the prominent Open Print Queue button linked to `staff-print.html?eventId=default`.
-- Release: Commit `88aae96` pushed to `codex/unify-guest-photo-filter` and deployed to production (deployment `9f0d74ca`) at https://decemeberbooth.pages.dev/. Live browser verification confirmed the button is visible in the setup status row.
+- Verification: `npm test` 288/288 pass. Wedding setup Playwright flow passes. `git diff --check` clean.
+- Release: The prominent Open Print Queue button is deployed at https://decemeberbooth.pages.dev/ (deployment `9f0d74ca`); wedding-action release is in progress.
 
 ## Existing production records
 

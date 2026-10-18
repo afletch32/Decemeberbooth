@@ -224,7 +224,8 @@ async function createWeddingEvent(page, options = {}) {
     date = "2026-06-14",
   } = options;
   await gotoApp(page, "/index.html");
-  await page.selectOption("#eventTypeInput", "wedding");
+  await page.getByRole("button", { name: "Set Up a Wedding" }).click();
+  await expect(page.locator("#weddingEventSetup")).toBeVisible();
   await page.fill("#eventDateInput", date);
   await page.fill("#eventPartner1Input", partner1);
   await page.fill("#eventPartner2Input", partner2);

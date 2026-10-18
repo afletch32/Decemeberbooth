@@ -434,8 +434,11 @@ test("built-in Wedding theme is retired while wedding event setup remains", () =
   assert.ok(!appScript.includes('"wedding:romantic"'));
   assert.ok(!appScript.includes('name: "Timeless Romance"'));
   assert.ok(!html.includes('data-demo-theme="wedding"'));
-  assert.ok(html.includes('id="eventTypeInput"'));
-  assert.ok(html.includes('<option value="wedding">Wedding</option>'));
+  assert.ok(!html.includes('id="eventTypeInput"'));
+  assert.ok(html.includes('id="startWeddingSetupBtn">Set Up a Wedding</button>'));
+  assert.ok(html.includes('id="createWeddingEventBtn">Create Wedding Theme</button>'));
+  assert.ok(appScript.includes("let weddingSetupRequested = false;"));
+  assert.ok(appScript.includes("function syncWeddingSetupMode()"));
   assert.ok(appScript.includes('target.eventType = normalizeEventStyle(eventType)'));
   assert.ok(appScript.includes('classList.toggle("hidden", !showWeddingFields)'));
 });

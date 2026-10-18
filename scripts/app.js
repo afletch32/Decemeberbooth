@@ -1286,7 +1286,9 @@ const DOM = {
   logo: document.getElementById("logo"),
   eventTitle: document.getElementById("eventTitle"),
   eventProfileSelect: document.getElementById("eventProfileSelect"),
-  eventTypeInput: document.getElementById("eventTypeInput"),
+  weddingSetupAction: document.getElementById("weddingSetupAction"),
+  startWeddingSetupBtn: document.getElementById("startWeddingSetupBtn"),
+  cancelWeddingSetupBtn: document.getElementById("cancelWeddingSetupBtn"),
   weddingEventSetup: document.getElementById("weddingEventSetup"),
   createWeddingEventBtn: document.getElementById("createWeddingEventBtn"),
   themeQuickPicker: document.getElementById("themeQuickPicker"),
@@ -2191,6 +2193,7 @@ let photoChoiceEditorZones = {
   photoStrip: { x: 66, y: 59, width: 27, height: 50 },
 };
 let activeSessionTextDetails = {};
+let weddingSetupRequested = false;
 let boothAudioContext = null;
 let boothAudioEnabled = false;
 let boothThemeAudio = null;
@@ -3708,6 +3711,7 @@ function setupEventProfileControls() {
     DOM.eventProfileSelect.addEventListener("change", (event) => {
       disableShowcaseDemo();
       const id = event.target.value || "";
+      weddingSetupRequested = false;
       setActiveEventId(id);
       syncEventInputsFromActive();
       syncEventPrintPriceInput();
@@ -6310,13 +6314,24 @@ function setupEventVisualEditorControls() {
   bindTextInput(DOM.eventPartner2Input, "partner2");
   bindTextInput(DOM.eventBirthdayNameInput, "birthdayName");
   bindTextInput(DOM.eventExpoCompanyInput, "expoCompany");
-  if (DOM.eventTypeInput) {
-    DOM.eventTypeInput.addEventListener("change", () => {
-      const eventType = normalizeEventStyle(DOM.eventTypeInput.value) || "general";
-      if (getActiveEvent()) updateActiveEventDetails({ eventType });
-      else updateActiveSessionTextDetails({ eventType });
-      syncEventSetupEditor(getEventEditorTheme());
+  if (DOM.startWeddingSetupBtn) {
+    DOM.startWeddingSetupBtn.addEventListener("click", () => {
+      weddingSetupRequested = true;
+      syncWeddingOnlyEventFields(getEventEditorTheme());
+      syncWeddingSetupMode();
+      DOM.eventPartner1Input?.focus();
     });
+  }
+  if (DOM.cancelWeddingSetupBtn) {
+    DOM.cancelWeddingSetupBtn.addEventListener("click", () => {
+      weddingSetupRequested = false;
+      syncWeddingOnlyEventFields(getEventEditorTheme());
+      syncWeddingSetupMode();
+      DOM.startWeddingSetupBtn?.focus();
+    });
+  }
+  if (DOM.createWeddingEventBtn) {
+    DOM.createWeddingEventBtn.addEventListener("click", createWeddingEventFromSetup);
   }
 
   if (DOM.eventBannerSizeInput) {
@@ -13643,28 +13658,30 @@ function isBirthdayEventTheme(themeObj = null) {
 }
 
 function syncWeddingOnlyEventFields(themeObj = null) {
-  const showWeddingFields = isWeddingEventTheme(themeObj);
+  const showWeddingFields =
+    weddingSetupRequested || isWeddingEventTheme(themeObj);
   document.querySelectorAll(".wedding-only-event-field").forEach((node) => {
     node.classList.toggle("hidden", !showWeddingFields);
   });
 }
 
 function syncWeddingSetupMode() {
-  const weddingSelected =
-    normalizeEventStyle(DOM.eventTypeInput && DOM.eventTypeInput.value) === "wedding";
+  const active = getActiveEvent();
+  const editingWedding = !!(
+    active && active.eventType === "wedding" && active.weddingTheme
+  );
+  const weddingSelected = weddingSetupRequested || editingWedding;
+  if (DOM.weddingSetupAction) DOM.weddingSetupAction.hidden = weddingSelected;
   if (DOM.weddingEventSetup) DOM.weddingEventSetup.hidden = !weddingSelected;
   if (DOM.themeQuickPicker) DOM.themeQuickPicker.classList.toggle("hidden", weddingSelected);
   if (DOM.generalThemeBrowse) DOM.generalThemeBrowse.classList.toggle("hidden", weddingSelected);
   if (DOM.eventNameSetupField) DOM.eventNameSetupField.classList.toggle("hidden", weddingSelected);
   if (DOM.createWeddingEventBtn) {
-    const active = getActiveEvent();
-    const editingWedding = !!(
-      active && active.eventType === "wedding" && active.weddingTheme
-    );
     DOM.createWeddingEventBtn.textContent = editingWedding
       ? "Save Wedding Theme"
       : "Create Wedding Theme";
   }
+  if (DOM.cancelWeddingSetupBtn) DOM.cancelWeddingSetupBtn.hidden = editingWedding;
 }
 
 function syncBirthdayOnlyEventFields(themeObj = null) {
@@ -13687,19 +13704,6 @@ function syncEventSetupEditor(theme = null) {
   const textSource = hasActiveEvent ? active : activeSessionTextDetails;
   syncWeddingOnlyEventFields(themeObj);
   syncBirthdayOnlyEventFields(themeObj);
-  if (DOM.eventTypeInput) {
-    const savedType = getSavedEventTextValue(textSource, "eventType");
-    const themeType = inferThemeEventStyle(
-      hasActiveEvent ? active.themeKey : getSelectedThemeKey(),
-      themeObj
-    );
-    const requestedType = normalizeEventStyle(savedType || themeType);
-    DOM.eventTypeInput.value = Array.from(DOM.eventTypeInput.options).some(
-      (option) => option.value === requestedType
-    )
-      ? requestedType
-      : "general";
-  }
   syncWeddingSetupMode();
   const setDisabled = (node) => {
     if (!node) return;
@@ -14061,11 +14065,6 @@ function getEventUploadSlug() {
 }
 
 function createNewEventFromSelection() {
-  const eventType =
-    normalizeEventStyle(DOM.eventTypeInput && DOM.eventTypeInput.value) ||
-    "general";
-  if (eventType === "wedding") return createWeddingEventFromSetup();
-
   const themeKey = getSelectedThemeKey();
   if (!themeKey) {
     alert("Select a theme before creating an event.");
@@ -14090,7 +14089,7 @@ function createNewEventFromSelection() {
     name,
     date,
     themeKey,
-    eventType,
+    eventType: "general",
     partner1: valueFromInput(DOM.eventPartner1Input),
     partner2: valueFromInput(DOM.eventPartner2Input),
     birthdayName: valueFromInput(DOM.eventBirthdayNameInput),
