@@ -261,6 +261,18 @@
       box-shadow: none;
     }
 
+    a.status-pill {
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    a.status-pill:hover,
+    a.status-pill:focus-visible {
+      background: #ffffff;
+      box-shadow: 0 0 0 2px rgba(53, 185, 111, 0.22);
+      outline: none;
+    }
+
     .setup-session-card {
       max-width: 1220px;
       width: min(1220px, 100%);
@@ -7059,6 +7071,7 @@
       <div class="status-pill"><span class="status-label">Uploads:</span> <strong id="statusUpload">Checking</strong></div>
       <div class="status-pill"><span class="status-label">Sync:</span> <strong id="statusSync">Idle</strong></div>
       <div class="status-pill"><span class="status-label">Queue:</span> <strong id="statusQueue">0 Pending</strong></div>
+      <a class="status-pill status-pill-action" id="statusQueueLink" href="staff-print.html" target="_blank" rel="noopener" aria-label="Open staff print queue in a new tab" title="Open staff print queue"><strong>Print Queue</strong></a>
     </div>
     <div class="setup-section-switcher" aria-label="Setup Sections">
       <div class="setup-section-switcher-label">Setup Flow</div>
@@ -8028,7 +8041,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261017-save-print-mode"></script>
+  <script type="module" src="scripts/app.js?v=20261017-print-queue-quick-access"></script>
 </body>
 
 </html>

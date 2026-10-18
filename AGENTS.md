@@ -10,3 +10,4 @@
 - Keep `/api/gallery` as the public gallery source and preserve stable `/share/{captureId}` links.
 - Keep guest pages mobile-first, bounded, and theme-aware; do not introduce a second photo store.
 - Validate UI changes with `npm test` plus a rendered browser check when available.
+- For every code change, run the relevant checks, commit the scoped files, push the active branch, deploy the committed release to production, and verify the live result. Preserve unrelated working-tree files; never stage them as part of the release.

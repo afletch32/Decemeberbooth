@@ -7054,6 +7054,8 @@ function updateStaffPrintQueueUrl() {
   const url = getStaffPrintQueueUrl();
   if (DOM.staffPrintQueueUrl) DOM.staffPrintQueueUrl.textContent = url;
   if (DOM.staffPrintQueueOpen) DOM.staffPrintQueueOpen.href = url;
+  const queueLink = document.getElementById("statusQueueLink");
+  if (queueLink) queueLink.href = url;
   if (!DOM.staffPrintQueueQr) return;
   DOM.staffPrintQueueQr.dataset.queueUrl = url;
   if (DOM.staffPrintQueueQrStatus) {

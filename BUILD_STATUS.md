@@ -1,12 +1,12 @@
 # Build status
 
-- Current goal: Keep print pricing hidden when the booth is set to Digital Only.
-- Done: Print mode changes now persist immediately. In-flight paid-price lookups are ignored after changing away from Paid Printing.
-- In progress: None.
-- Next steps: Confirm the setting on the physical booth device after selecting Digital Only once.
+- Current goal: Make the staff print queue easy to reach from booth setup.
+- Done: An always-visible Print Queue shortcut opens the event-scoped staff queue; the upload Queue count stays accurate and the existing settings link and QR remain available. Repo instructions now require scoped commit, push, production deploy, and live verification for every code change. Digital Only print mode remains fixed.
+- In progress: Commit, push, deploy, and verify the print-queue shortcut.
+- Next steps: Confirm the production setup page exposes the event-specific Print Queue link.
 - Known bugs/blockers: Physical booth-device verification remains outstanding.
-- Important decisions: Digital Only means no print controls or price notice in the guest flow; changing the dropdown saves the mode without requiring the separate settings button.
-- Verification: `npm test` 288/288 pass. Playwright covers changing from Paid Printing to Digital Only, persistence after reload, and hidden print controls and price notice on the guest screen. `git diff --check` clean.
+- Important decisions: The top Print Queue shortcut opens the event-specific staff queue in a new tab; the adjacent Queue count continues to report pending uploads. Digital Only means no print controls or price notice in the guest flow; changing the dropdown saves the mode without requiring the separate settings button.
+- Verification: `npm test` 288/288 pass. `git diff --check` clean. The in-app browser blocks local `file://` reloads, so local rendered verification was unavailable.
 - Release: Commit `d15078a` pushed to `codex/unify-guest-photo-filter` and deployed to production as `5041c431` at https://decemeberbooth.pages.dev/. The live Playwright flow verified that Digital Only saves across reload and suppresses the guest print controls and price notice.
 
 ## Existing production records
