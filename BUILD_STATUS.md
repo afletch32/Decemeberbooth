@@ -7,7 +7,7 @@
 - Known bugs/blockers: Physical booth-device verification remains outstanding.
 - Important decisions: Retakes default to enabled for existing installations with no saved preference. The operator's setting applies across browser reloads on the same booth device.
 - Verification: `npm test` 288/288 pass. Focused Playwright retake flow passes across reload and guest final screen. `git diff --check` clean.
-- Release: Pending deployment verification.
+- Release: Commit `3a2e675` pushed to `codex/unify-guest-photo-filter` and deployed to production as `d6281a4f` at https://decemeberbooth.pages.dev/. The live Playwright retake preference flow passed across reload and guest final screen; production HTML, app module, and service worker hashes match the deployed commit.
 
 ## Existing production records
 
