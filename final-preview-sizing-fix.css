@@ -167,6 +167,13 @@
   opacity: 0.58;
 }
 
+/* Show the entire camera sensor image in the enlarged live preview. */
+#boothScreen #video,
+#boothScreen #livePreviewCanvas {
+  object-fit: contain !important;
+  object-position: center;
+}
+
 /* The overlay chooser is an explicit guest action, not part of the booth layout. */
 #boothScreen.booth-ready:not(.welcome-active):not(.share-mode):not(.countdown-mode):not(.finalizing-mode):not(.mobile-settings-open) #mobileSettingsSheet {
   position: fixed;

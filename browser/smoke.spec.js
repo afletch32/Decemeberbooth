@@ -747,6 +747,8 @@ test("live camera preview uses the available short-screen space", async ({ page 
       return {
         frame: get("#videoContainer"),
         button: get("#captureBtn"),
+        videoFit: getComputedStyle(document.querySelector("#video")).objectFit,
+        processedPreviewFit: getComputedStyle(document.querySelector("#livePreviewCanvas")).objectFit,
         orientation: document.querySelector("#videoWrap").classList.contains("view-portrait")
           ? "portrait"
           : "landscape",
@@ -761,6 +763,8 @@ test("live camera preview uses the available short-screen space", async ({ page 
     expect(bounds.frame.bottom).toBeLessThanOrEqual(bounds.button.top + 1);
     expect(bounds.button.bottom).toBeLessThanOrEqual(bounds.viewportHeight + 1);
     expect(bounds.frame.width).toBeGreaterThanOrEqual(viewport.minPreviewWidth);
+    expect(bounds.videoFit).toBe("contain");
+    expect(bounds.processedPreviewFit).toBe("contain");
     const expectedRatio = bounds.orientation === "portrait" ? 2 / 3 : 3 / 2;
     expect(
       Math.abs(bounds.frame.width / bounds.frame.height - expectedRatio),
