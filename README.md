@@ -26,6 +26,12 @@ http://localhost:8000
 
 The server also exposes local network URLs for kiosk/iPad/phone testing on the same WiFi network.
 
+## Launch the production booth in macOS kiosk mode
+
+On the booth Mac, open `launch-booth-kiosk.command` to start the production booth in Chrome kiosk mode. The launcher uses a dedicated Chrome profile so its camera permission and booth settings stay separate from everyday browsing. Allow camera access the first time, select the booth event, and set the photo printer as the macOS default printer before operating. Chrome kiosk printing suppresses the print dialog for print actions initiated by the app; it does not automatically print new queue items on its own. Press `Command-Q` to exit kiosk mode.
+
+The launcher requires Google Chrome at `/Applications/Google Chrome.app`. macOS kiosk mode hides browser controls but does not lock the whole computer or prevent system-level shortcuts.
+
 ## Run tests
 
 ```bash

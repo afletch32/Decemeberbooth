@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Make the empty Session Print Defaults preview follow the selected paper orientation.
-- Done: The Print Queue shortcut and submissions use the selected saved event ID; the empty session preview reflects selected paper direction and layout. Production queue links use the clean route directly while local links retain the HTML filename.
-- In progress: None.
-- Next steps: Verify on the physical booth when it is next in service.
-- Known bugs/blockers: Physical booth-device verification remains outstanding.
-- Important decisions: The top Print Queue shortcut opens the selected event's staff queue in a new tab; the optional manual queue ID is used when no saved event is selected. The adjacent Queue count continues to report pending uploads.
-- Verification: `npm test` 288/288 pass. Browser regression and live Chromium check confirm the empty preview changes from portrait to landscape. The live booth link opens `/staff-print` with the selected event ID, and the clean queue route responds HTTP 200 directly. `git diff --check` clean.
-- Release: Preview orientation fix and direct production queue route pushed to `codex/unify-guest-photo-filter` and deployed to production at https://decemeberbooth.pages.dev/.
+- Current goal: Provide a one-click macOS Chrome kiosk launcher for the booth.
+- Done: Added a dedicated-profile Chrome launcher with kiosk and kiosk-printing flags; documented first-run camera setup, default printer setup, print behavior, and exit path.
+- In progress: Validate the launcher and production release.
+- Next steps: Run the launcher on the physical booth Mac, grant camera permission, and confirm its connected printer.
+- Known bugs/blockers: Physical booth-device verification remains outstanding. Kiosk printing suppresses dialogs only for app-initiated print actions; it does not auto-print newly queued photos or lock macOS system shortcuts.
+- Important decisions: Use the production booth URL and a separate Chrome profile to isolate camera permission and booth settings from personal browsing.
+- Verification: Pending.
+- Release: Pending.
 
 ## Existing production records
 
