@@ -101,8 +101,9 @@ test("staff print route links and popup printing handle reliable handoff", () =>
   const pagesPrintQueueFn = readProjectFile("functions", "api", "print-queue.js");
 
   assert.ok(
-    appScript.includes('new URL("staff-print.html", window.location.href)'),
-    "copied staff queue links should target the real static staff-print.html route"
+    appScript.includes('const queuePath = isLocalEnvironment ? "staff-print.html" : "staff-print"') &&
+      appScript.includes("new URL(queuePath, window.location.href)"),
+    "staff queue links should use the direct production route and support local files"
   );
   assert.ok(
     staffScript.includes("if (image.complete)") &&

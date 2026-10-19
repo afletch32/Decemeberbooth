@@ -1,9 +1,9 @@
 # Build status
 
 - Current goal: Make the empty Session Print Defaults preview follow the selected paper orientation.
-- Done: The Print Queue shortcut and submissions use the selected saved event ID; the empty session preview now reflects selected paper direction and layout.
-- In progress: Commit, push, deploy, and verify the production update.
-- Next steps: Confirm the live staff queue serves the updated preview.
+- Done: The Print Queue shortcut and submissions use the selected saved event ID; the empty session preview reflects selected paper direction and layout. Production queue links use the clean route directly while local links retain the HTML filename.
+- In progress: Rerun checks, commit, push, deploy, and verify the production update.
+- Next steps: Confirm the live queue preview changes orientation without a redirect.
 - Known bugs/blockers: Physical booth-device verification remains outstanding.
 - Important decisions: The top Print Queue shortcut opens the selected event's staff queue in a new tab; the optional manual queue ID is used when no saved event is selected. The adjacent Queue count continues to report pending uploads.
 - Verification: `npm test` 288/288 pass. Staff queue browser regression confirms the empty preview changes from portrait to landscape; `git diff --check` clean.

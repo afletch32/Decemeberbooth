@@ -330,7 +330,9 @@ test("print queue link follows the selected event instead of an old manual queue
 
   const eventId = await page.evaluate(() => window.__photoboothTest.getActiveEvent().id);
   const queueHref = await page.locator("#statusQueueLink").getAttribute("href");
-  expect(new URL(queueHref, page.url()).searchParams.get("eventId")).toBe(eventId);
+  const queueUrl = new URL(queueHref, page.url());
+  expect(queueUrl.searchParams.get("eventId")).toBe(eventId);
+  expect(queueUrl.pathname).toBe("/staff-print.html");
 });
 
 test("blemish correction heals local skin spots", async ({ page }) => {

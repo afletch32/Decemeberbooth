@@ -7051,7 +7051,11 @@ function getPrintQueueEventId() {
 }
 
 function getStaffPrintQueueUrl() {
-  const url = new URL("staff-print.html", window.location.href);
+  const isLocalEnvironment =
+    window.location.protocol === "file:" ||
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const queuePath = isLocalEnvironment ? "staff-print.html" : "staff-print";
+  const url = new URL(queuePath, window.location.href);
   const activeEvent = getActiveEvent();
   const draftEventId = DOM.printEventIdInput
     ? DOM.printEventIdInput.value.trim()
