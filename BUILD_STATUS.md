@@ -1,9 +1,9 @@
 # Build status
 
 - Current goal: Make the Print Queue shortcut and submissions use the selected event ID.
-- Done: Selected saved events now take precedence over an old manual queue ID, and changing the selected event refreshes the queue shortcut.
+- Done: Selected saved events now take precedence over an old manual queue ID, every active-event change refreshes the queue shortcut, and the app-shell cache versions are bumped for returning booths.
 - In progress: Commit, push, deploy, and verify production.
-- Next steps: Verify the live queue shortcut carries the selected event ID.
+- Next steps: Confirm production serves the new app script and service worker versions.
 - Known bugs/blockers: Physical booth-device verification remains outstanding.
 - Important decisions: The top Print Queue shortcut opens the selected event's staff queue in a new tab; the optional manual queue ID is used when no saved event is selected. The adjacent Queue count continues to report pending uploads.
 - Verification: `npm test` 288/288 pass. Playwright regression confirms the shortcut follows the selected event when an older manual ID is saved. `git diff --check` clean.
