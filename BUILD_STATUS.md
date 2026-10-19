@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Provide a one-click macOS Chrome kiosk launcher for the booth.
-- Done: Added a dedicated-profile Chrome launcher with kiosk and kiosk-printing flags; documented first-run camera setup, default printer setup, print behavior, and exit path.
-- In progress: Physical booth setup and device verification.
-- Next steps: On the booth Mac, open the launcher, grant camera permission, and confirm the connected printer.
-- Known bugs/blockers: Physical booth-device verification remains outstanding. Kiosk printing suppresses dialogs only for app-initiated print actions; it does not auto-print newly queued photos or lock macOS system shortcuts.
-- Important decisions: Use the production booth URL and a separate Chrome profile to isolate camera permission and booth settings from personal browsing.
-- Verification: `zsh -n launch-booth-kiosk.command`, `git diff --check`, and `npm test` (288/288) pass. Production booth and launcher both respond HTTP 200; deployed launcher SHA-256 matches the committed file.
-- Release: Launcher commit `05b859f` pushed to `codex/unify-guest-photo-filter` and deployed to Pages Production as `57f85f96` at https://decemeberbooth.pages.dev/.
+- Current goal: Make live camera previews and final share screens fit phone and iPad viewports.
+- Done: Removed hidden panel space from the live preview layout; resized the preview from available screen space; made short portrait share screens fit the photo, QR code, and actions.
+- In progress: Commit, push, and production verification.
+- Next steps: Confirm production CSS and app-shell cache update; physical iPad camera/print verification remains.
+- Known bugs/blockers: Physical booth-device camera and printer verification remains outstanding.
+- Important decisions: Preserve camera aspect ratio; on short phones, compact the share photo and QR card so the full action panel remains usable without clipping.
+- Verification: `npm test` passes (288/288); Playwright sizing checks pass (2/2) across short phone, kiosk, and iPad viewports; `git diff --check` passes.
+- Release: Changes will be pushed to `codex/unify-guest-photo-filter` and deployed to Pages Production at https://decemeberbooth.pages.dev/.
 
 ## Existing production records
 

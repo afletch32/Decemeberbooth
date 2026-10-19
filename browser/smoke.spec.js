@@ -655,6 +655,7 @@ test("final share photo and QR stay inside supported kiosk viewports", async ({ 
     { width: 1024, height: 768 },
     { width: 800, height: 600 },
     { width: 768, height: 1024 },
+    { width: 360, height: 640 },
   ];
 
   for (const viewport of viewports) {
@@ -696,6 +697,10 @@ test("final share photo and QR stay inside supported kiosk viewports", async ({ 
         viewportWidth: window.innerWidth,
         viewportHeight: window.innerHeight,
         documentWidth: document.documentElement.scrollWidth,
+        actionContentHeight: document.querySelector("#finalPreviewActions").scrollHeight,
+        actionClientHeight: document.querySelector("#finalPreviewActions").clientHeight,
+        qrContentHeight: document.querySelector("#qrCodeContainer").scrollHeight,
+        qrClientHeight: document.querySelector("#qrCodeContainer").clientHeight,
       };
     });
 
@@ -707,6 +712,60 @@ test("final share photo and QR stay inside supported kiosk viewports", async ({ 
     }
     expect(bounds.documentWidth).toBeLessThanOrEqual(bounds.viewportWidth);
     expect(Math.abs(bounds.boxes["#qrCode"].width - bounds.boxes["#qrCode"].height)).toBeLessThanOrEqual(1);
+    expect(
+      bounds.actionContentHeight,
+      `share actions fit at ${viewport.width}x${viewport.height}`
+    ).toBeLessThanOrEqual(bounds.actionClientHeight + 1);
+    expect(
+      bounds.qrContentHeight,
+      `QR panel fits at ${viewport.width}x${viewport.height}`
+    ).toBeLessThanOrEqual(bounds.qrClientHeight + 1);
+  }
+});
+
+test("live camera preview uses the available short-screen space", async ({ page }) => {
+  test.setTimeout(60_000);
+  const viewports = [
+    { width: 360, height: 640, minPreviewWidth: 160 },
+    { width: 390, height: 844, minPreviewWidth: 160 },
+    { width: 1024, height: 768, minPreviewWidth: 512 },
+    { width: 1194, height: 834, minPreviewWidth: 600 },
+    { width: 834, height: 1194, minPreviewWidth: 0 },
+  ];
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await gotoApp(page, "/index.html?testMode=booth&qaState=capture");
+    await expect(page.locator("#boothScreen")).toHaveClass(/booth-ready/);
+    await expect(page.locator("#captureBtn")).toBeVisible();
+
+    const bounds = await page.evaluate(() => {
+      const get = (selector) => {
+        const rect = document.querySelector(selector).getBoundingClientRect();
+        return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height };
+      };
+      return {
+        frame: get("#videoContainer"),
+        button: get("#captureBtn"),
+        orientation: document.querySelector("#videoWrap").classList.contains("view-portrait")
+          ? "portrait"
+          : "landscape",
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+      };
+    });
+
+    expect(bounds.frame.left).toBeGreaterThanOrEqual(-1);
+    expect(bounds.frame.right).toBeLessThanOrEqual(bounds.viewportWidth + 1);
+    expect(bounds.frame.top).toBeGreaterThanOrEqual(-1);
+    expect(bounds.frame.bottom).toBeLessThanOrEqual(bounds.button.top + 1);
+    expect(bounds.button.bottom).toBeLessThanOrEqual(bounds.viewportHeight + 1);
+    expect(bounds.frame.width).toBeGreaterThanOrEqual(viewport.minPreviewWidth);
+    const expectedRatio = bounds.orientation === "portrait" ? 2 / 3 : 3 / 2;
+    expect(
+      Math.abs(bounds.frame.width / bounds.frame.height - expectedRatio),
+      `preview aspect ratio at ${viewport.width}x${viewport.height}`
+    ).toBeLessThan(0.12);
   }
 });
 

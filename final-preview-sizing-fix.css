@@ -12,7 +12,10 @@
   --booth-ready-top-space: clamp(96px, 11dvh, 120px);
   --booth-ready-bottom-space: max(8px, env(safe-area-inset-bottom, 0px) + 8px);
   --booth-action-height: clamp(72px, 10dvh, 104px);
-  --booth-preview-max-height: min(76dvh, calc(100dvh - 204px));
+  --booth-preview-max-height: min(
+    76dvh,
+    calc(100dvh - var(--booth-ready-top-space) - var(--booth-ready-bottom-space) - var(--booth-action-height) - 32px)
+  );
   --booth-preview-max-width: calc(100vw - clamp(24px, 4vw, 64px));
 }
 
@@ -64,8 +67,8 @@
 
 #boothScreen.booth-ready:not(.mode-360) #videoWrap {
   grid-column: 1;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto auto;
+  display: flex;
+  flex-direction: column;
   place-items: center;
   align-self: stretch;
   flex: 1 1 auto;
@@ -73,10 +76,14 @@
   max-height: 100%;
   width: 100%;
   max-width: min(100%, calc(var(--live-camera-width, 1400px) + 32px));
-  gap: clamp(6px, 1dvh, 12px);
+  gap: clamp(8px, 1.2dvh, 14px);
   justify-content: center;
   overflow: visible;
   padding: 0;
+}
+
+#boothScreen.booth-ready:not(.mode-360) #videoWrap > .hidden {
+  display: none;
 }
 
 #boothScreen.booth-ready:not(.mode-360) #videoContainer {
@@ -86,7 +93,7 @@
   max-width: var(--booth-preview-max-width);
   max-height: var(--booth-preview-max-height) !important;
   width: auto !important;
-  height: 100%;
+  height: var(--booth-preview-max-height);
   min-height: 0;
   box-sizing: border-box;
   border-width: clamp(6px, 0.7vw, 10px);
@@ -98,13 +105,13 @@
 
 #boothScreen.booth-ready:not(.mode-360) #videoWrap.view-landscape #videoContainer {
   width: auto !important;
-  height: 100%;
+  height: var(--booth-preview-max-height);
   aspect-ratio: 3 / 2;
 }
 
 #boothScreen.booth-ready:not(.mode-360) #videoWrap.view-portrait #videoContainer {
   width: auto !important;
-  height: 100%;
+  height: var(--booth-preview-max-height);
   max-width: min(82vw, var(--live-camera-width, 540px));
   aspect-ratio: 2 / 3;
 }
@@ -200,7 +207,10 @@
 @media (orientation: portrait) {
   :root {
     --booth-ready-top-space: clamp(60px, 7dvh, 80px);
-    --booth-preview-max-height: min(78dvh, calc(100dvh - 196px));
+    --booth-preview-max-height: min(
+      78dvh,
+      calc(100dvh - var(--booth-ready-top-space) - var(--booth-ready-bottom-space) - var(--booth-action-height) - 32px)
+    );
     --booth-preview-max-width: calc(100vw - clamp(24px, 5vw, 48px));
   }
 
@@ -210,11 +220,21 @@
   }
 }
 
+@media (max-width: 860px) and (max-height: 760px) {
+  body.viewport-short #boothScreen.booth-ready:not(.mode-360) #videoWrap {
+    max-width: 100%;
+    padding-inline: 0;
+  }
+}
+
 @media (max-height: 760px) {
   :root {
     --booth-ready-top-space: clamp(104px, 14dvh, 112px);
     --booth-action-height: clamp(64px, 10dvh, 76px);
-    --booth-preview-max-height: min(72dvh, calc(100dvh - 170px));
+    --booth-preview-max-height: min(
+      72dvh,
+      calc(100dvh - var(--booth-ready-top-space) - var(--booth-ready-bottom-space) - var(--booth-action-height) - 32px)
+    );
   }
 
   #boothScreen.booth-ready:not(.mode-360) #boothMain {
@@ -470,6 +490,8 @@
 @media (orientation: portrait) {
   #finalPreview {
     overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   #finalPreviewContent {
@@ -494,5 +516,44 @@
     width: min(100%, 420px);
     max-width: min(100%, 420px);
     justify-self: center;
+  }
+}
+
+@media (max-height: 760px) and (orientation: portrait) {
+  #finalPreviewContent {
+    height: auto;
+    min-height: 100%;
+    grid-template-rows: auto auto;
+    gap: 8px;
+    align-content: center;
+    padding: 12px;
+  }
+
+  #finalStrip,
+  #finalLive,
+  #finalStrip[data-orientation="portrait"],
+  #finalLive[data-orientation="portrait"] {
+    max-height: min(26dvh, 170px) !important;
+  }
+
+  #finalPreviewActions {
+    grid-template-rows: auto auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  #qrCodeContainer {
+    height: auto;
+    max-height: none;
+    grid-template-rows: auto auto auto;
+    gap: 6px;
+    padding: 10px;
+  }
+
+  #qrCode {
+    width: min(24dvh, 150px) !important;
+    height: min(24dvh, 150px) !important;
+    max-width: min(24dvh, 150px) !important;
+    max-height: min(24dvh, 150px) !important;
   }
 }
