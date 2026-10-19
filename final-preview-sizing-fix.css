@@ -557,3 +557,38 @@
     max-height: min(24dvh, 150px) !important;
   }
 }
+
+@media (max-width: 600px) and (orientation: portrait) {
+  :root {
+    --booth-ready-top-space: clamp(56px, 8dvh, 64px);
+    --booth-ready-bottom-space: max(12px, env(safe-area-inset-bottom, 0px) + 12px);
+    --booth-action-height: clamp(68px, 8dvh, 80px);
+    --booth-preview-max-width: calc(100vw - 24px);
+    --booth-preview-max-height: min(
+      76dvh,
+      calc(100dvh - var(--booth-ready-top-space) - var(--booth-ready-bottom-space) - var(--booth-action-height) - 24px),
+      calc(var(--booth-preview-max-width) * 1.5)
+    );
+  }
+
+  #boothScreen.booth-ready:not(.mode-360) #boothMain {
+    padding:
+      var(--booth-ready-top-space)
+      12px
+      var(--booth-ready-bottom-space) !important;
+  }
+
+  #boothScreen.booth-ready:not(.mode-360) #videoContainer {
+    flex-shrink: 0;
+    height: var(--booth-preview-max-height) !important;
+    max-width: var(--booth-preview-max-width) !important;
+    max-height: var(--booth-preview-max-height) !important;
+  }
+
+  #boothScreen.booth-ready:not(.mode-360) #videoWrap.view-portrait #videoContainer {
+    width: auto !important;
+    height: var(--booth-preview-max-height) !important;
+    max-width: var(--booth-preview-max-width) !important;
+    max-height: var(--booth-preview-max-height) !important;
+  }
+}

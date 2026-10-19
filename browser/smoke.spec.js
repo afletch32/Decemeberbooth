@@ -726,8 +726,8 @@ test("final share photo and QR stay inside supported kiosk viewports", async ({ 
 test("live camera preview uses the available short-screen space", async ({ page }) => {
   test.setTimeout(60_000);
   const viewports = [
-    { width: 360, height: 640, minPreviewWidth: 160 },
-    { width: 390, height: 844, minPreviewWidth: 160 },
+    { width: 360, height: 640, minPreviewWidth: 280 },
+    { width: 390, height: 844, minPreviewWidth: 300 },
     { width: 1024, height: 768, minPreviewWidth: 512 },
     { width: 1194, height: 834, minPreviewWidth: 600 },
     { width: 834, height: 1194, minPreviewWidth: 0 },
