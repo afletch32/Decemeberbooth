@@ -7043,7 +7043,7 @@ function getPrintSettings() {
 function getPrintQueueEventId() {
   const settings = getPrintSettings();
   const activeEvent = getActiveEvent();
-  return String(settings.eventId || (activeEvent && (activeEvent.id || activeEvent.name)) || "default")
+  return String((activeEvent && activeEvent.id) || settings.eventId || "default")
     .trim()
     .replace(/[^a-zA-Z0-9_-]+/g, "-")
     .replace(/-+/g, "-")
@@ -7052,15 +7052,17 @@ function getPrintQueueEventId() {
 
 function getStaffPrintQueueUrl() {
   const url = new URL("staff-print.html", window.location.href);
+  const activeEvent = getActiveEvent();
   const draftEventId = DOM.printEventIdInput
     ? DOM.printEventIdInput.value.trim()
     : "";
-  const eventId = draftEventId
-    ? draftEventId
-        .replace(/[^a-zA-Z0-9_-]+/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-|-$/g, "")
-    : getPrintQueueEventId();
+  const eventId =
+    (activeEvent && activeEvent.id) ||
+    draftEventId
+      .replace(/[^a-zA-Z0-9_-]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "") ||
+    getPrintQueueEventId();
   url.searchParams.set("eventId", eventId || "default");
   return url.toString();
 }
@@ -13500,6 +13502,7 @@ function setActiveEventId(id, options = {}) {
   else localStorage.removeItem(ACTIVE_EVENT_KEY);
   if (id) activeSessionTextDetails = {};
   if (DOM.eventProfileSelect) DOM.eventProfileSelect.value = id || "";
+  updateStaffPrintQueueUrl();
   if (!options.skipRemoteSync) scheduleEventsRemoteSync();
 }
 

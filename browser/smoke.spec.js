@@ -315,6 +315,24 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
   expect(result.partnerFieldsVisible).toBe(true);
 });
 
+test("print queue link follows the selected event instead of an old manual queue ID", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "photoboothPrintSettings",
+      JSON.stringify({ mode: "paid", eventId: "old-event-id" })
+    );
+  });
+  await createWeddingEvent(page, {
+    partner1: "Maya",
+    partner2: "Noah",
+    date: "2027-09-19",
+  });
+
+  const eventId = await page.evaluate(() => window.__photoboothTest.getActiveEvent().id);
+  const queueHref = await page.locator("#statusQueueLink").getAttribute("href");
+  expect(new URL(queueHref, page.url()).searchParams.get("eventId")).toBe(eventId);
+});
+
 test("blemish correction heals local skin spots", async ({ page }) => {
   await gotoApp(page, "/index.html?testMode=booth");
 
