@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Make the Print Queue shortcut and submissions use the selected event ID.
-- Done: Selected saved events now take precedence over an old manual queue ID, every active-event change refreshes the queue shortcut, and the app-shell cache versions are bumped for returning booths.
-- In progress: None.
-- Next steps: Verify queue use on the physical booth when it is next in service.
+- Current goal: Make the empty Session Print Defaults preview follow the selected paper orientation.
+- Done: The Print Queue shortcut and submissions use the selected saved event ID; the empty session preview now reflects selected paper direction and layout.
+- In progress: Commit, push, deploy, and verify the production update.
+- Next steps: Confirm the live staff queue serves the updated preview.
 - Known bugs/blockers: Physical booth-device verification remains outstanding.
 - Important decisions: The top Print Queue shortcut opens the selected event's staff queue in a new tab; the optional manual queue ID is used when no saved event is selected. The adjacent Queue count continues to report pending uploads.
-- Verification: `npm test` 288/288 pass. Playwright regression confirms the shortcut follows the selected event when an older manual ID is saved. Production serves the new app script and service worker cache version; canonical page responds HTTP 200. `git diff --check` clean.
-- Release: Queue fix and cache bust pushed to `codex/unify-guest-photo-filter` and deployed to production at https://decemeberbooth.pages.dev/.
+- Verification: `npm test` 288/288 pass. Staff queue browser regression confirms the empty preview changes from portrait to landscape; `git diff --check` clean.
+- Release: Previous queue fix and cache bust are pushed to `codex/unify-guest-photo-filter` and deployed to production at https://decemeberbooth.pages.dev/. This preview fix is pending release.
 
 ## Existing production records
 

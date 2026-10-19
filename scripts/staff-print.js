@@ -146,11 +146,31 @@
         (candidate.thumbnailUrl || candidate.imageUrl)
     );
     if (!item) {
-      previewSheet.className = "print-preview-sheet landscape single";
-      previewSheet.innerHTML = '<div class="print-preview-slot"></div>';
-      previewSummary.textContent = "Waiting for the next queued photo";
+      const layout = getPrintLayout();
+      const count = layout === "double" ? 2 : 1;
+      const requestedOrientation = getPrintOrientation();
+      const sheetOrientation =
+        requestedOrientation === "auto" ? "landscape" : requestedOrientation;
+      const sheetSize = sheetOrientation === "landscape" ? "6×4" : "4×6";
+      const arrangement =
+        count === 2
+          ? sheetOrientation === "landscape"
+            ? " side by side"
+            : " stacked"
+          : "";
+      previewSheet.className = `print-preview-sheet ${sheetOrientation} ${layout}`;
+      previewSheet.innerHTML = Array.from(
+        { length: count },
+        () => '<div class="print-preview-slot"></div>'
+      ).join("");
+      previewSummary.textContent =
+        requestedOrientation === "auto"
+          ? "Waiting for the next queued photo"
+          : `${count} ${count === 1 ? "photo" : "photos"}${arrangement} on a ${sheetOrientation} ${sheetSize} sheet.`;
       previewDetails.textContent =
-        "Choose the sheet settings now; the diagram will use the next photo when it arrives.";
+        requestedOrientation === "auto"
+          ? "Automatic paper direction follows the next queued photo; the blank preview uses landscape until one arrives."
+          : "This preview reflects the selected session default before the next photo arrives.";
       return;
     }
 
