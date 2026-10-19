@@ -2,12 +2,12 @@
 
 - Current goal: Make the Print Queue shortcut and submissions use the selected event ID.
 - Done: Selected saved events now take precedence over an old manual queue ID, every active-event change refreshes the queue shortcut, and the app-shell cache versions are bumped for returning booths.
-- In progress: Commit, push, deploy, and verify production.
-- Next steps: Confirm production serves the new app script and service worker versions.
+- In progress: None.
+- Next steps: Verify queue use on the physical booth when it is next in service.
 - Known bugs/blockers: Physical booth-device verification remains outstanding.
 - Important decisions: The top Print Queue shortcut opens the selected event's staff queue in a new tab; the optional manual queue ID is used when no saved event is selected. The adjacent Queue count continues to report pending uploads.
-- Verification: `npm test` 288/288 pass. Playwright regression confirms the shortcut follows the selected event when an older manual ID is saved. `git diff --check` clean.
-- Release: Pending for this change; Cloudflare Pages project `decemeberbooth`, production URL https://decemeberbooth.pages.dev/.
+- Verification: `npm test` 288/288 pass. Playwright regression confirms the shortcut follows the selected event when an older manual ID is saved. Production serves the new app script and service worker cache version; canonical page responds HTTP 200. `git diff --check` clean.
+- Release: Queue fix and cache bust pushed to `codex/unify-guest-photo-filter` and deployed to production at https://decemeberbooth.pages.dev/.
 
 ## Existing production records
 
