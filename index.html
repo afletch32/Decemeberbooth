@@ -5158,6 +5158,13 @@
       backdrop-filter: blur(18px) saturate(1.15);
     }
 
+    #boothScreen.has-theme-share-screen.finalizing-mode #finalPreviewContent::before {
+      background: transparent;
+      border-color: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
     #boothScreen.has-theme-share-screen.share-mode #qrCodeContainer {
       color: #ffffff;
       border-color: color-mix(in srgb, var(--accent2) 54%, var(--accent));
@@ -8082,7 +8089,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261020-theme-post-capture-screen"></script>
+  <script type="module" src="scripts/app.js?v=20261020-theme-post-capture-visibility"></script>
 </body>
 
 </html>

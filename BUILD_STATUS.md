@@ -2,12 +2,12 @@
 
 - Current goal: Keep the active theme visible throughout the post-capture review and sharing flow.
 - Done: Applied the selected theme's share artwork and colors to the photo-finalizing screen as well as the QR share screen.
-- In progress: Validate, commit, push, deploy, and verify the post-capture theme continuity fix.
+- In progress: Physical booth-device verification.
 - Next steps: Check the guest flow on the booth iPad during the next setup.
 - Known bugs/blockers: Physical iPad verification is outstanding.
 - Important decisions: Reuse the selected theme's share screen across finalizing and QR states so the artwork and layout stay continuous while upload and QR generation finish.
-- Verification: Pending for this change. Previous button release passed 288 unit tests, two focused browser checks, and a production Chrome guest-flow check at 390×844.
-- Previous release: Button commits `85b0c2f` and `32539d7` are pushed to `codex/unify-guest-photo-filter`; `32539d7` is live on Pages Production as `8e2173e9` at https://decemeberbooth.pages.dev/.
+- Verification: `npm test` passes (288/288); focused Playwright checks pass (2/2), including the pre-QR finalizing state and multi-viewport share flow. Production Chrome confirms the same themed image and panel in finalizing and share states, theme artwork returns HTTP 200, and no page errors occur.
+- Release: Commit `5e126d4` is pushed to `codex/unify-guest-photo-filter` and deployed to Pages Production as `b7d455a4` on `main` at https://decemeberbooth.pages.dev/.
 
 ## Existing production records
 

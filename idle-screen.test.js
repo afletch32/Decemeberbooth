@@ -460,6 +460,7 @@ test("Amanda North provides portrait and landscape share-screen artwork", () => 
   assert.ok(app.includes("function applyThemeShareScreen(theme)"));
   assert.ok(html.includes("#boothScreen.has-theme-share-screen.share-mode #finalPreview"));
   assert.ok(html.includes("#boothScreen.has-theme-share-screen.finalizing-mode #finalPreview"));
+  assert.ok(html.includes("#boothScreen.has-theme-share-screen.finalizing-mode #finalPreviewContent::before"));
   assert.ok(
     readFileSync(
       join(process.cwd(), "assets/themes/back-to-school/back-to-school-share-portrait.webp")

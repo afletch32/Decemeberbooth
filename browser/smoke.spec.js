@@ -871,13 +871,15 @@ test("theme share artwork is visible during photo finalizing before QR appears",
     return {
       backgroundImage,
       themeImagePath: "/assets/themes/avery-birthday/avery-birthday-share-portrait.webp",
+      cardBackground: contentSurface.backgroundImage,
       cardBorderColor: contentSurface.borderTopColor,
       qrHidden: document.querySelector("#qrCodeContainer").classList.contains("hidden"),
     };
   });
 
   expect(themeSurface.backgroundImage).toContain(themeSurface.themeImagePath);
-  expect(themeSurface.cardBorderColor).not.toBe("rgba(0, 0, 0, 0)");
+  expect(themeSurface.cardBackground).toBe("none");
+  expect(themeSurface.cardBorderColor).toBe("rgba(0, 0, 0, 0)");
   expect(themeSurface.qrHidden).toBe(true);
 });
 
