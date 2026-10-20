@@ -850,6 +850,37 @@ test("theme artwork guest actions are visible responsive buttons", async ({ page
   }
 });
 
+test("theme share artwork is visible during photo finalizing before QR appears", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await gotoApp(page, "/index.html?testMode=booth&qaState=final");
+  await expect(page.locator("#finalPreview")).toHaveClass(/show/);
+
+  const themeSurface = await page.evaluate(() => {
+    const booth = document.querySelector("#boothScreen");
+    const preview = document.querySelector("#finalPreview");
+    const content = document.querySelector("#finalPreviewContent");
+    booth.style.setProperty(
+      "--theme-share-screen-image",
+      'url("/assets/themes/avery-birthday/avery-birthday-share-portrait.webp")'
+    );
+    booth.classList.add("has-theme-share-screen", "finalizing-mode");
+    booth.classList.remove("share-mode");
+    document.querySelector("#qrCodeContainer").classList.add("hidden");
+    const backgroundImage = getComputedStyle(preview).backgroundImage;
+    const contentSurface = getComputedStyle(content, "::before");
+    return {
+      backgroundImage,
+      themeImagePath: "/assets/themes/avery-birthday/avery-birthday-share-portrait.webp",
+      cardBorderColor: contentSurface.borderTopColor,
+      qrHidden: document.querySelector("#qrCodeContainer").classList.contains("hidden"),
+    };
+  });
+
+  expect(themeSurface.backgroundImage).toContain(themeSurface.themeImagePath);
+  expect(themeSurface.cardBorderColor).not.toBe("rgba(0, 0, 0, 0)");
+  expect(themeSurface.qrHidden).toBe(true);
+});
+
 test("skin smoothing preserves non-skin facial details", async ({ page }) => {
   await gotoApp(page, "/index.html?testMode=booth");
 
