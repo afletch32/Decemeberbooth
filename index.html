@@ -3913,8 +3913,10 @@
     #welcomeScreen.custom-idle-screen #welcomeTitle,
     #welcomeScreen.custom-idle-screen #welcomeHostLine { display: none !important; }
     #welcomeScreen.custom-idle-screen #welcomeIdleStep { display: block !important; position: absolute; inset: 0; }
-    #welcomeScreen.custom-idle-screen #startButton { position: absolute; margin: 0; min-width: 0; padding: 0; border: 0; outline: 0; border-radius: 0; background: transparent; box-shadow: none; color: transparent; font-size: 0; opacity: 1; filter: none; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; transform: none; cursor: pointer; touch-action: manipulation; }
-    #welcomeScreen.custom-idle-screen #startButton:focus-visible { outline: 4px solid #fff; outline-offset: -4px; box-shadow: 0 0 0 7px #155eef; }
+    #welcomeScreen.custom-idle-screen #startButton { position: absolute; display: grid; place-items: center; box-sizing: border-box; margin: 0; min-width: 48px; min-height: 56px; max-width: calc(100vw - 24px); max-height: min(24dvh, 180px); padding: 8px 18px; border: 3px solid color-mix(in srgb, var(--accent) 68%, #17211f); border-radius: 999px; outline: 0; background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 24%, white), color-mix(in srgb, var(--accent) 42%, white)); box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 38%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.72); color: #17211f; font-size: clamp(1rem, 4vw, 1.4rem); font-weight: 900; letter-spacing: 0.045em; line-height: 1.1; text-align: center; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.32); opacity: 1; filter: none; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; transform: none; cursor: pointer; touch-action: manipulation; }
+    #welcomeScreen.custom-idle-screen #startButton:hover { filter: brightness(1.06); }
+    #welcomeScreen.custom-idle-screen #startButton:active { transform: scale(0.97); filter: brightness(0.94); }
+    #welcomeScreen.custom-idle-screen #startButton:focus-visible { outline: 4px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 7px #155eef, 0 12px 28px color-mix(in srgb, var(--accent) 38%, transparent); }
     #welcomeScreen.custom-photo-choice-screen { overflow: hidden; background: #000 !important; }
     #welcomeScreen.custom-photo-choice-screen #welcomeImg,
     #welcomeScreen.custom-photo-choice-screen #welcomeVideo { display: block !important; z-index: 0; }
@@ -3925,11 +3927,16 @@
     #welcomeScreen.custom-photo-choice-screen #welcomeModeBackBtn { display: none !important; }
     #welcomeScreen.custom-photo-choice-screen #welcomeModeStep { display: block !important; position: absolute; inset: 0; }
     #welcomeScreen.custom-photo-choice-screen .welcome-mode-grid { display: block; position: absolute; inset: 0; width: 100%; }
-    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn { position: absolute; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; outline: 0; background: transparent; box-shadow: none; color: transparent; font-size: 0; opacity: 1; filter: none; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; transform: translate(-50%, -50%); cursor: pointer; touch-action: manipulation; }
-    #welcomeScreen.custom-photo-choice-screen #welcomeModeStep > .welcome-flow-title,
-    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn > * { visibility: hidden !important; }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn { position: absolute; display: grid; box-sizing: border-box; min-width: 48px; min-height: 64px; max-width: calc(100vw - 24px); max-height: min(28dvh, 190px); gap: 4px; margin: 0; padding: 12px 18px; border: 3px solid color-mix(in srgb, var(--accent) 68%, #17211f); border-radius: 20px; outline: 0; background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 24%, white), color-mix(in srgb, var(--accent) 42%, white)); box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 34%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.74); color: #17211f; opacity: 1; filter: none; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; transform: translate(-50%, -50%); cursor: pointer; touch-action: manipulation; }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn[data-welcome-mode="strip"] { border-color: color-mix(in srgb, var(--accent) 72%, white); background: color-mix(in srgb, var(--accent) 30%, #17131d); color: #fff; }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn:hover { filter: brightness(1.08); }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn:active { transform: translate(-50%, -50%) scale(0.97); filter: brightness(0.94); }
+    #welcomeScreen.custom-photo-choice-screen #welcomeModeStep > .welcome-flow-title { visibility: hidden !important; }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn strong { font-size: clamp(1rem, 3.5vw, 1.25rem); line-height: 1.1; }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn span { color: currentColor; font-size: clamp(0.68rem, 2.2vw, 0.82rem); letter-spacing: 0.04em; line-height: 1.2; opacity: 0.88; text-transform: none; }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-visual { width: auto; height: auto; border-radius: 0; background: none; font-size: clamp(1.25rem, 4vw, 1.75rem); }
     #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn[data-welcome-mode="live-photo"] { display: none !important; }
-    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn:focus-visible { outline: 4px solid #fff; outline-offset: -4px; box-shadow: 0 0 0 7px #155eef; }
+    #welcomeScreen.custom-photo-choice-screen .welcome-mode-btn:focus-visible { outline: 4px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 7px #155eef, 0 12px 28px color-mix(in srgb, var(--accent) 34%, transparent); }
     #welcomeScreen.welcome-transitioning #welcomeOverlay::after {
       content: "";
       position: absolute;
@@ -8071,7 +8078,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261019-preview-show-full-camera"></script>
+  <script type="module" src="scripts/app.js?v=20261019-theme-action-buttons"></script>
 </body>
 
 </html>

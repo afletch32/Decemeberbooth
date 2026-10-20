@@ -9920,12 +9920,15 @@ function selectPhotoChoiceScreenEntry() {
 }
 
 
-function getCoverImageRect(img, container) {
+function getWelcomeArtworkRect(img, container) {
   const width = container.clientWidth;
   const height = container.clientHeight;
   const naturalWidth = img.naturalWidth || img.videoWidth || width;
   const naturalHeight = img.naturalHeight || img.videoHeight || height;
-  const scale = Math.max(width / naturalWidth, height / naturalHeight);
+  const objectFit = getComputedStyle(img).objectFit;
+  const scale = objectFit === "contain"
+    ? Math.min(width / naturalWidth, height / naturalHeight)
+    : Math.max(width / naturalWidth, height / naturalHeight);
   const renderedWidth = naturalWidth * scale;
   const renderedHeight = naturalHeight * scale;
   return {
@@ -9933,6 +9936,26 @@ function getCoverImageRect(img, container) {
     top: (height - renderedHeight) / 2,
     width: renderedWidth,
     height: renderedHeight,
+  };
+}
+
+function getWelcomeActionBox(zone, artworkRect, container) {
+  const width = Math.min((zone.width / 100) * artworkRect.width, container.clientWidth - 24);
+  const height = Math.min((zone.height / 100) * artworkRect.height, container.clientHeight - 24);
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  return {
+    left: clamp(
+      artworkRect.left + (zone.x / 100) * artworkRect.width,
+      width / 2 + 12,
+      container.clientWidth - width / 2 - 12
+    ),
+    top: clamp(
+      artworkRect.top + (zone.y / 100) * artworkRect.height,
+      height / 2 + 12,
+      container.clientHeight - height / 2 - 12
+    ),
+    width,
+    height,
   };
 }
 
@@ -9944,12 +9967,13 @@ function positionIdleStartHotspot(entry) {
   const media = getWelcomeArtworkMedia(entry);
   if (!media || !DOM.welcomeScreen || !DOM.startButton) return;
   const zone = normalizeIdleButtonZone(entry && entry.buttonZones && entry.buttonZones.start);
-  const rect = getCoverImageRect(media, DOM.welcomeScreen);
+  const rect = getWelcomeArtworkRect(media, DOM.welcomeScreen);
+  const box = getWelcomeActionBox(zone, rect, DOM.welcomeScreen);
   Object.assign(DOM.startButton.style, {
-    left: `${rect.left + (zone.x / 100) * rect.width}px`,
-    top: `${rect.top + (zone.y / 100) * rect.height}px`,
-    width: `${(zone.width / 100) * rect.width}px`,
-    height: `${(zone.height / 100) * rect.height}px`,
+    left: `${box.left}px`,
+    top: `${box.top}px`,
+    width: `${box.width}px`,
+    height: `${box.height}px`,
     transform: "translate(-50%, -50%)",
   });
   DOM.startButton.setAttribute("aria-label", "Start photo booth");
@@ -10021,17 +10045,18 @@ function clearCustomIdleScreen() {
 function positionPhotoChoiceHotspots(entry) {
   const media = getWelcomeArtworkMedia(entry);
   if (!media || !DOM.welcomeScreen) return;
-  const rect = getCoverImageRect(media, DOM.welcomeScreen);
+  const rect = getWelcomeArtworkRect(media, DOM.welcomeScreen);
   const zones = entry && entry.buttonZones ? entry.buttonZones : {};
   const place = (modeName, zoneValue) => {
     const button = document.querySelector(`.welcome-mode-btn[data-welcome-mode="${modeName}"]`);
     if (!button) return;
     const zone = normalizeIdleButtonZone(zoneValue);
+    const box = getWelcomeActionBox(zone, rect, DOM.welcomeScreen);
     Object.assign(button.style, {
-      left: `${rect.left + (zone.x / 100) * rect.width}px`,
-      top: `${rect.top + (zone.y / 100) * rect.height}px`,
-      width: `${(zone.width / 100) * rect.width}px`,
-      height: `${(zone.height / 100) * rect.height}px`,
+      left: `${box.left}px`,
+      top: `${box.top}px`,
+      width: `${box.width}px`,
+      height: `${box.height}px`,
     });
   };
   place("still-photo", zones.singlePhoto || photoChoiceEditorZones.singlePhoto);

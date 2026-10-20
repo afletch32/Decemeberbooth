@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Keep the enlarged live camera preview fully visible without cropping its side edges.
-- Done: Removed hidden panel space from live preview; enlarged portrait phone previews to 80–84% of viewport width; changed the live camera surfaces to contain the full camera image; preserved share layout.
-- In progress: Physical booth-device verification.
-- Next steps: On the booth iPhone/iPad, confirm the full camera view and a complete photo/share/print flow.
-- Known bugs/blockers: Physical booth-device camera and printer verification remains outstanding.
-- Important decisions: Keep the preview box large, fit the complete live camera feed inside it, and leave room for the capture control and safe area.
-- Verification: `npm test` passes (288/288); the Playwright camera-preview check passes at five phone, tablet, and kiosk sizes. Production Chrome check at 390×844 confirms camera and processed preview use `contain`, the frame remains 329×494, and the capture button stays visible; app, CSS, and service worker return HTTP 200.
-- Release: Commit `05541de` pushed to `codex/unify-guest-photo-filter` and deployed to Pages Production as `5a26c397` on `main` at https://decemeberbooth.pages.dev/.
+- Current goal: Make theme welcome and photo-choice buttons visible, readable, and easy to tap.
+- Done: Styled the existing controls with theme-aware contrast, labels, focus/pressed feedback, and touch-sized targets; aligned them to the displayed artwork and clamped them within the screen.
+- In progress: Commit, push, deploy, and verify the theme button update.
+- Next steps: Confirm the deployed controls on the production guest flow; physical iPad booth verification remains useful.
+- Known bugs/blockers: Physical booth-device verification is outstanding.
+- Important decisions: Preserve the theme artwork as the full-screen background while keeping actions as accessible HTML buttons; align zones to `object-fit` rendering.
+- Verification: `npm test` passes (288/288); focused Playwright checks pass (2/2) at 390×844 and 844×390, covering the camera preview and themed guest actions.
+- Previous release: Commit `05541de` pushed to `codex/unify-guest-photo-filter` and deployed to Pages Production as `5a26c397` on `main` at https://decemeberbooth.pages.dev/.
 
 ## Existing production records
 

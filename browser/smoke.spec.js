@@ -773,6 +773,81 @@ test("live camera preview uses the available short-screen space", async ({ page 
   }
 });
 
+test("theme artwork guest actions are visible responsive buttons", async ({ page }) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 844, height: 390 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await gotoApp(page, "/index.html?testMode=booth&qaState=welcome");
+    await expect(page.locator("#welcomeScreen.custom-idle-screen")).toBeVisible();
+    await expect(page.locator("#startButton")).toBeVisible();
+
+    const startButton = await page.locator("#startButton").evaluate((button) => {
+      const rect = button.getBoundingClientRect();
+      const style = getComputedStyle(button);
+      return {
+        width: rect.width,
+        height: rect.height,
+        left: rect.left,
+        right: rect.right,
+        bottom: rect.bottom,
+        background: style.backgroundImage,
+        color: style.color,
+        text: button.textContent.trim(),
+      };
+    });
+    expect(startButton.width).toBeGreaterThanOrEqual(48);
+    expect(startButton.height).toBeGreaterThanOrEqual(48);
+    expect(startButton.left).toBeGreaterThanOrEqual(0);
+    expect(startButton.right).toBeLessThanOrEqual(viewport.width);
+    expect(startButton.bottom).toBeLessThanOrEqual(viewport.height);
+    expect(startButton.background).toContain("linear-gradient");
+    expect(startButton.color).not.toBe("rgba(0, 0, 0, 0)");
+    expect(startButton.text).not.toBe("");
+
+    await page.locator("#startButton").click();
+    await expect(page.locator("#welcomeScreen.custom-photo-choice-screen")).toBeVisible();
+    const choices = await page.locator('.welcome-mode-btn[data-welcome-mode="still-photo"], .welcome-mode-btn[data-welcome-mode="strip"]').evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const rect = button.getBoundingClientRect();
+        const style = getComputedStyle(button);
+        return {
+          width: rect.width,
+          height: rect.height,
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
+          background: style.backgroundColor,
+          backgroundImage: style.backgroundImage,
+          color: style.color,
+          text: button.innerText.trim(),
+        };
+      })
+    );
+    expect(choices).toHaveLength(2);
+    expect(choices[0].color).toBe("rgb(23, 33, 31)");
+    expect(choices[1].color).toBe("rgb(255, 255, 255)");
+    for (const choice of choices) {
+      expect(choice.width).toBeGreaterThanOrEqual(48);
+      expect(choice.height).toBeGreaterThanOrEqual(48);
+      expect(choice.left).toBeGreaterThanOrEqual(0);
+      expect(choice.right).toBeLessThanOrEqual(viewport.width);
+      expect(choice.bottom).toBeLessThanOrEqual(viewport.height);
+      expect(
+        choice.background !== "rgba(0, 0, 0, 0)" || choice.backgroundImage !== "none"
+      ).toBe(true);
+      expect(choice.text).not.toBe("");
+    }
+    const [photo, strip] = choices;
+    const overlaps = photo.left < strip.right && photo.right > strip.left && photo.top < strip.bottom && photo.bottom > strip.top;
+    expect(overlaps).toBe(false);
+    await page.locator('.welcome-mode-btn[data-welcome-mode="still-photo"]').click();
+    await expect(page.locator("#boothScreen")).toHaveClass(/booth-ready/);
+  }
+});
+
 test("skin smoothing preserves non-skin facial details", async ({ page }) => {
   await gotoApp(page, "/index.html?testMode=booth");
 

@@ -360,7 +360,7 @@ test("returning from mode selection restores custom idle artwork", () => {
   assert.ok(goBackFromWelcome.includes("if (idleEntry) applyCustomIdleScreen(idleEntry);"));
 });
 
-test("photo choice artwork uses two saved invisible hotspots", () => {
+test("theme artwork actions use visible accessible button controls", () => {
   assert.ok(html.includes('id="photoChoiceSingleZone"'));
   assert.ok(html.includes('id="photoChoiceStripZone"'));
   assert.ok(html.includes('custom-photo-choice-screen'));
@@ -368,11 +368,11 @@ test("photo choice artwork uses two saved invisible hotspots", () => {
   assert.ok(app.includes('place("still-photo", zones.singlePhoto'));
   assert.ok(app.includes('place("strip", zones.photoStrip'));
   assert.ok(app.includes("selectPhotoChoiceScreenEntry()"));
-  assert.ok(
-    html.includes(
-      "#welcomeScreen.custom-photo-choice-screen .welcome-mode-btn > * { visibility: hidden !important; }"
-    )
-  );
+  assert.ok(html.includes("color-mix(in srgb, var(--accent) 24%, white)"));
+  assert.ok(html.includes("color: #17211f;"));
+  assert.ok(html.includes("#welcomeScreen.custom-photo-choice-screen .welcome-mode-btn:active"));
+  assert.ok(html.includes("#welcomeScreen.custom-idle-screen #startButton:focus-visible"));
+  assert.ok(!html.includes(".welcome-mode-btn > * { visibility: hidden !important; }"));
 });
 
 test("custom welcome artwork hides legacy UI before its image finishes loading", () => {
@@ -613,10 +613,11 @@ test("admin video previews use still images without downloading or autoplaying M
   assert.ok(!preview.includes(".play()"));
 });
 
-test("video screen hotspots use media dimensions in runtime and editor", () => {
-  const coverRect = extractFunction(app, "getCoverImageRect");
-  assert.ok(coverRect.includes("img.videoWidth"));
-  assert.ok(coverRect.includes("img.videoHeight"));
+test("video screen hotspots use rendered media dimensions in runtime and editor", () => {
+  const artworkRect = extractFunction(app, "getWelcomeArtworkRect");
+  assert.ok(artworkRect.includes("img.videoWidth"));
+  assert.ok(artworkRect.includes("img.videoHeight"));
+  assert.ok(artworkRect.includes("getComputedStyle(img).objectFit"));
   assert.ok(html.includes('id="idleScreenEditorVideo"'));
   assert.ok(app.includes("function getIdleScreenEditorMedia()"));
   assert.ok(app.includes("DOM.idleScreenEditorVideo.onloadedmetadata"));
@@ -741,14 +742,17 @@ test("welcome mode inline handlers can resolve their exported function", () => {
   assert.ok(app.includes("  beginModeSelection,\n  beginWelcome,"));
 });
 
-test("cover bounds account for horizontal and vertical cropping", () => {
-  const source = extractFunction(app, "getCoverImageRect");
-  const getCoverImageRect = Function(`${source}; return getCoverImageRect;`)();
+test("artwork bounds follow cover and contain rendering", () => {
+  const source = extractFunction(app, "getWelcomeArtworkRect");
+  const getWelcomeArtworkRect = Function(
+    "getComputedStyle",
+    `${source}; return getWelcomeArtworkRect;`
+  )((img) => ({ objectFit: img.objectFit || "cover" }));
   assert.deepEqual(
-    getCoverImageRect({ naturalWidth: 1600, naturalHeight: 900 }, { clientWidth: 1000, clientHeight: 1000 }),
+    getWelcomeArtworkRect({ naturalWidth: 1600, naturalHeight: 900 }, { clientWidth: 1000, clientHeight: 1000 }),
     { left: -388.8888888888889, top: 0, width: 1777.7777777777778, height: 1000 }
   );
-  const portraitCrop = getCoverImageRect(
+  const portraitCrop = getWelcomeArtworkRect(
     { naturalWidth: 900, naturalHeight: 1600 },
     { clientWidth: 1200, clientHeight: 800 }
   );
@@ -756,6 +760,12 @@ test("cover bounds account for horizontal and vertical cropping", () => {
   assert.equal(portraitCrop.width, 1200);
   assert.ok(Math.abs(portraitCrop.top - -666.6666666666666) < 1e-9);
   assert.ok(Math.abs(portraitCrop.height - 2133.333333333333) < 1e-9);
+
+  const contained = getWelcomeArtworkRect(
+    { naturalWidth: 1600, naturalHeight: 900, objectFit: "contain" },
+    { clientWidth: 1000, clientHeight: 1000 }
+  );
+  assert.deepEqual(contained, { left: 0, top: 218.75, width: 1000, height: 562.5 });
 });
 
 test("resize and orientation changes recalculate hotspot placement", () => {
