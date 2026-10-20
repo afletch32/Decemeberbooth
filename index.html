@@ -3915,7 +3915,46 @@
     #welcomeScreen.custom-idle-screen #welcomeIdleStep { display: block !important; position: absolute; inset: 0; }
     #welcomeScreen.custom-idle-screen.custom-artwork-loading #startButton { visibility: hidden; pointer-events: none; }
     #welcomeScreen.custom-idle-screen #startButton { position: absolute; display: grid; place-items: center; box-sizing: border-box; margin: 0; min-width: 48px; min-height: 56px; max-width: calc(100vw - 24px); max-height: min(24dvh, 180px); padding: 8px 18px; border: 3px solid color-mix(in srgb, var(--accent) 68%, #17211f); border-radius: 999px; outline: 0; background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 24%, white), color-mix(in srgb, var(--accent) 42%, white)); box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 38%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.72); color: #17211f; font-size: clamp(1rem, 4vw, 1.4rem); font-weight: 900; letter-spacing: 0.045em; line-height: 1.1; text-align: center; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.32); opacity: 1; filter: none; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; transform: none; cursor: pointer; touch-action: manipulation; }
+    #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton {
+      min-width: 0;
+      min-height: 0;
+      padding: 12px 24px;
+      border: 4px solid #d89126;
+      border-radius: clamp(10px, 1.2vw, 20px);
+      background: linear-gradient(180deg, #4a1927 0%, #250b1b 52%, #3a101d 100%);
+      box-shadow: 0 0 0 2px #603514, 0 0 20px 5px rgba(255, 164, 31, 0.76), inset 0 0 22px rgba(242, 126, 25, 0.24);
+      color: #ffd17b;
+      font-family: var(--font-heading), Georgia, serif;
+      font-size: clamp(1rem, 4vw, 3.25rem);
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      line-height: 1;
+      text-transform: uppercase;
+      text-shadow: 0 1px 2px #741e08, 0 0 12px rgba(255, 156, 30, 0.9);
+      transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease, background 120ms ease;
+    }
+    #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton::before {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border: 2px solid rgba(255, 210, 123, 0.64);
+      border-radius: clamp(5px, 0.7vw, 12px);
+      pointer-events: none;
+    }
+    #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton:focus-visible {
+      outline: 4px solid #fff4d6;
+      outline-offset: 4px;
+      box-shadow: 0 0 0 8px #8b4311, 0 0 24px 9px rgba(255, 185, 53, 0.95);
+    }
+
     #welcomeScreen.custom-idle-screen #startButton:hover { filter: brightness(1.06); }
+    #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton:active {
+      transform: translate(-50%, -50%) scale(0.97) !important;
+      border-color: #ffe5a5;
+      background: linear-gradient(180deg, #210817 0%, #45101e 100%);
+      box-shadow: inset 0 7px 14px rgba(0, 0, 0, 0.76), inset 0 0 12px rgba(255, 170, 40, 0.32), 0 0 13px 3px rgba(255, 184, 53, 0.94);
+      filter: brightness(1.12);
+    }
     #welcomeScreen.custom-idle-screen #startButton:active { transform: scale(0.97); filter: brightness(0.94); }
     #welcomeScreen.custom-idle-screen #startButton:focus-visible { outline: 4px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 7px #155eef, 0 12px 28px color-mix(in srgb, var(--accent) 38%, transparent); }
     #welcomeScreen.custom-photo-choice-screen { overflow: hidden; background: #000 !important; }
@@ -8089,7 +8128,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261020-theme-post-capture-artwork"></script>
+  <script type="module" src="scripts/app.js?v=20261020-halloween-marquee-button"></script>
 </body>
 
 </html>

@@ -151,6 +151,29 @@ export function migrateHalloweenThemeAssets(target) {
         changed = true;
       }
     }
+    if (pack.key === "halloween") {
+      const marqueeScreen = (theme.idleScreens || []).find((entry) =>
+        getAssetSource(entry).endsWith("/themes/halloween/halloween-idle-landscape.webp")
+      );
+      if (marqueeScreen) {
+        const zone = marqueeScreen.buttonZones?.start || {};
+        const hasLegacyDefault =
+          zone.x === 50 && zone.y === 82 && zone.width === 38 && zone.height === 20;
+        const nextZone = {
+          ...(hasLegacyDefault || Object.keys(zone).length === 0
+            ? { x: 51, y: 78, width: 51, height: 24 }
+            : zone),
+          variant: "marquee",
+        };
+        if (JSON.stringify(zone) !== JSON.stringify(nextZone)) {
+          marqueeScreen.buttonZones = {
+            ...(marqueeScreen.buttonZones || {}),
+            start: nextZone,
+          };
+          changed = true;
+        }
+      }
+    }
     for (const field of ["overlays", "templates"]) {
       const base = `/assets/themes/${pack.folder}/${field}/`;
       const defaults = expected[field].map((entry) => ({ ...entry, src: base + entry.src }));

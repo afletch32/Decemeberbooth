@@ -25,6 +25,29 @@ test("Halloween migration replaces legacy defaults and preserves custom uploads"
   assert.equal(migrateHalloweenThemeAssets(target), false);
 });
 
+
+test("Halloween theme migration aligns the landscape start control to its marquee", async () => {
+  const { migrateHalloweenThemeAssets } = await import("./scripts/halloween-assets.mjs");
+  const screen = {
+    src: "/assets/themes/halloween/halloween-idle-landscape.webp",
+    role: "idle",
+    orientation: "landscape",
+    buttonZones: { start: { x: 50, y: 82, width: 38, height: 20 } },
+  };
+  const theme = { idleScreens: [screen] };
+  const target = { fall: { holidays: { halloween: theme } } };
+
+  assert.equal(migrateHalloweenThemeAssets(target), true);
+  assert.deepEqual(screen.buttonZones.start, {
+    x: 51,
+    y: 78,
+    width: 51,
+    height: 24,
+    variant: "marquee",
+  });
+  assert.equal(migrateHalloweenThemeAssets(target), false);
+});
+
 test("Halloween migration replaces deleted legacy backgrounds and keeps orientation pair", async () => {
   const { migrateHalloweenThemeAssets } = await import("./scripts/halloween-assets.mjs");
   const custom = "/uploads/added-background.webp";

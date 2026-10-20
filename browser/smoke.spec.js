@@ -773,6 +773,52 @@ test("live camera preview uses the available short-screen space", async ({ page 
   }
 });
 
+test("Halloween start button matches the marquee on the static artwork", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.addInitScript(() => {
+    localStorage.setItem("photoboothLastThemeKey", "fall:halloween");
+  });
+  await gotoApp(page, "/index.html?testMode=booth&qaState=welcome");
+
+  const welcome = page.locator("#welcomeScreen.marquee-start-screen");
+  const button = page.locator("#startButton");
+  await expect(welcome).toBeVisible();
+  await expect(button).toBeVisible();
+  await expect(button).toHaveText("Tap to Start");
+
+  const appearance = await button.evaluate((node) => {
+    const style = getComputedStyle(node);
+    const rect = node.getBoundingClientRect();
+    return {
+      backgroundImage: style.backgroundImage,
+      borderColor: style.borderTopColor,
+      borderRadius: parseFloat(style.borderTopLeftRadius),
+      color: style.color,
+      width: rect.width,
+      height: rect.height,
+      left: rect.left,
+      right: rect.right,
+      bottom: rect.bottom,
+    };
+  });
+  expect(appearance.backgroundImage).toContain("linear-gradient");
+  expect(appearance.borderColor).toBe("rgb(216, 145, 38)");
+  expect(appearance.color).toBe("rgb(255, 209, 123)");
+  expect(appearance.borderRadius).toBeLessThan(appearance.height / 2);
+  expect(appearance.width).toBeGreaterThan(500);
+  expect(appearance.left).toBeGreaterThanOrEqual(0);
+  expect(appearance.right).toBeLessThanOrEqual(1280);
+  expect(appearance.bottom).toBeLessThanOrEqual(800);
+
+  const buttonBounds = await button.boundingBox();
+  await page.mouse.move(buttonBounds.x + buttonBounds.width / 2, buttonBounds.y + buttonBounds.height / 2);
+  await page.mouse.down();
+  await expect.poll(() => button.evaluate((node) => new DOMMatrixReadOnly(getComputedStyle(node).transform).a)).toBeLessThan(0.99);
+  await expect.poll(() => button.evaluate((node) => getComputedStyle(node).boxShadow)).toContain("inset");
+  await page.mouse.up();
+  await expect(page.locator("#welcomeScreen.custom-photo-choice-screen")).toBeVisible();
+});
+
 test("theme artwork guest actions are visible responsive buttons", async ({ page }) => {
   for (const viewport of [
     { width: 390, height: 844 },

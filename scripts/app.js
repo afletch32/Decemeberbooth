@@ -867,7 +867,7 @@ let themes = {
         ],
         idleScreens: [
           { src: "/assets/themes/halloween/halloween-idle-portrait.webp", name: "Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
-          { src: "/assets/themes/halloween/halloween-idle-landscape.webp", name: "Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 50, y: 82, width: 38, height: 20 } } },
+          { src: "/assets/themes/halloween/halloween-idle-landscape.webp", name: "Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 51, y: 78, width: 51, height: 24, variant: "marquee" } } },
           { src: "/assets/themes/halloween/halloween-photo-choice-portrait.webp", name: "Halloween photo choice portrait", role: "photo-choice", orientation: "portrait", buttonZones: { singlePhoto: { x: 50, y: 43, width: 76, height: 22 }, photoStrip: { x: 50, y: 72, width: 76, height: 22 } } },
           { src: "/assets/themes/halloween/halloween-photo-choice-landscape.webp", name: "Halloween photo choice landscape", role: "photo-choice", orientation: "landscape", buttonZones: { singlePhoto: { x: 30, y: 55, width: 34, height: 48 }, photoStrip: { x: 70, y: 55, width: 34, height: 48 } } },
         ],
@@ -881,7 +881,7 @@ let themes = {
           title: "Happy Halloween!",
           portrait: "",
           landscape: "",
-          prompt: "Touch to start",
+          prompt: "Tap to Start",
         },
         soundEffects: {
           start: "/assets/sounds/witchcomein.mp3",
@@ -9888,7 +9888,27 @@ function hydrateIdleScreenEntry(entry) {
   const stored = (assetLibrary.assets || []).find(
     (asset) => asset.category === "idle-screen" && getAssetEntrySrc(asset) === src
   );
-  return stored ? { ...cloneThemeValue(entry), ...cloneThemeValue(stored), src } : entry;
+  if (!stored) return entry;
+  const hydrated = { ...cloneThemeValue(entry), ...cloneThemeValue(stored), src };
+  const defaultStartZone = entry?.buttonZones?.start;
+  const storedStartZone = stored.buttonZones?.start;
+  if (defaultStartZone?.variant === "marquee") {
+    const hasLegacyDefault =
+      storedStartZone?.x === 50 &&
+      storedStartZone?.y === 82 &&
+      storedStartZone?.width === 38 &&
+      storedStartZone?.height === 20;
+    hydrated.buttonZones = {
+      ...(entry.buttonZones || {}),
+      ...(stored.buttonZones || {}),
+      start: {
+        ...defaultStartZone,
+        ...(hasLegacyDefault ? {} : storedStartZone || {}),
+        variant: defaultStartZone.variant,
+      },
+    };
+  }
+  return hydrated;
 }
 
 function selectIdleScreenEntry() {
@@ -10023,7 +10043,7 @@ function startCustomArtworkLoadFallback(onTimeout) {
 function clearCustomIdleScreen() {
   welcomeArtworkLoadId += 1;
   clearCustomArtworkLoadTimer();
-  if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("custom-idle-screen", "custom-photo-choice-screen");
+  if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("custom-idle-screen", "custom-photo-choice-screen", "marquee-start-screen");
   if (DOM.welcomeScreen) DOM.welcomeScreen.classList.remove("custom-artwork-loading");
   if (DOM.welcomeImg) {
     DOM.welcomeImg.onload = null;
@@ -10124,6 +10144,7 @@ function applyCustomIdleScreen(entry) {
     return false;
   }
   DOM.welcomeScreen.classList.remove("custom-photo-choice-screen");
+  DOM.welcomeScreen.classList.toggle("marquee-start-screen", entry?.buttonZones?.start?.variant === "marquee");
   DOM.welcomeScreen.classList.add("custom-idle-screen", "custom-artwork-loading");
   return loadWelcomeArtwork(entry, () => positionIdleStartHotspot(entry));
 }

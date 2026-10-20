@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Keep the active theme visible throughout the post-capture review and sharing flow.
-- Done: Applied the selected theme's share artwork and colors to the photo-finalizing screen as well as the QR share screen.
+- Current goal: Match the Halloween welcome start button to the static marquee artwork and make its pressed state clear.
+- Done: Applied the selected theme's share artwork and colors to the photo-finalizing screen and QR share screen; aligned the Halloween landscape start button with its marquee, styled it to match, and added a visible held press effect.
 - In progress: Physical booth-device verification.
 - Next steps: Check the guest flow on the booth iPad during the next setup.
 - Known bugs/blockers: Physical iPad verification is outstanding.
-- Important decisions: Reuse the selected theme's share screen in both post-capture states and keep the finalizing surface transparent enough for the artwork to remain visible beneath the photo.
-- Verification: `npm test` passes (288/288); focused Playwright checks pass (2/2), including the pre-QR finalizing state and multi-viewport share flow. Production Chrome at 390×844 confirms the themed backdrop is visible behind the captured photo before QR actions appear; theme artwork returns HTTP 200 and no page errors occur.
-- Release: Commit `9b63a51` is pushed to `codex/unify-guest-photo-filter` and deployed to Pages Production as `ea827a9a` on `main` at https://decemeberbooth.pages.dev/.
+- Important decisions: Reuse the selected theme's share screen in both post-capture states. The Halloween start control remains a real accessible button, aligned with the artwork marquee, and uses a distinct pressed state.
+- Verification: `npm test` passes (289/289); targeted Playwright check passes (1/1), confirming marquee styling, pressed appearance, and advancement to photo choice. `git diff --check` passes. Physical iPad verification remains outstanding.
+- Release: Pending scoped commit, push, and Pages Production deployment.
 
 ## Existing production records
 
