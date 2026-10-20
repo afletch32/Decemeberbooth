@@ -781,6 +781,7 @@ test("theme artwork guest actions are visible responsive buttons", async ({ page
     await page.setViewportSize(viewport);
     await gotoApp(page, "/index.html?testMode=booth&qaState=welcome");
     await expect(page.locator("#welcomeScreen.custom-idle-screen")).toBeVisible();
+    await expect(page.locator("#welcomeScreen")).not.toHaveClass(/custom-artwork-loading/);
     await expect(page.locator("#startButton")).toBeVisible();
 
     const startButton = await page.locator("#startButton").evaluate((button) => {
@@ -808,6 +809,7 @@ test("theme artwork guest actions are visible responsive buttons", async ({ page
 
     await page.locator("#startButton").click();
     await expect(page.locator("#welcomeScreen.custom-photo-choice-screen")).toBeVisible();
+    await expect(page.locator("#welcomeScreen")).not.toHaveClass(/custom-artwork-loading/);
     const choices = await page.locator('.welcome-mode-btn[data-welcome-mode="still-photo"], .welcome-mode-btn[data-welcome-mode="strip"]').evaluateAll((buttons) =>
       buttons.map((button) => {
         const rect = button.getBoundingClientRect();

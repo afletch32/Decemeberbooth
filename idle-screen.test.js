@@ -372,6 +372,8 @@ test("theme artwork actions use visible accessible button controls", () => {
   assert.ok(html.includes("color: #17211f;"));
   assert.ok(html.includes("#welcomeScreen.custom-photo-choice-screen .welcome-mode-btn:active"));
   assert.ok(html.includes("#welcomeScreen.custom-idle-screen #startButton:focus-visible"));
+  assert.ok(html.includes("custom-artwork-loading #startButton { visibility: hidden; pointer-events: none; }"));
+  assert.ok(html.includes("custom-artwork-loading .welcome-mode-btn { visibility: hidden; pointer-events: none; }"));
   assert.ok(!html.includes(".welcome-mode-btn > * { visibility: hidden !important; }"));
 });
 
