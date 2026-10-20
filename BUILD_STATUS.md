@@ -5,9 +5,9 @@
 - In progress: Physical booth-device verification.
 - Next steps: Check the guest flow on the booth iPad during the next setup.
 - Known bugs/blockers: Physical iPad verification is outstanding.
-- Important decisions: Reuse the selected theme's share screen across finalizing and QR states so the artwork and layout stay continuous while upload and QR generation finish.
-- Verification: `npm test` passes (288/288); focused Playwright checks pass (2/2), including the pre-QR finalizing state and multi-viewport share flow. Production Chrome confirms the same themed image and panel in finalizing and share states, theme artwork returns HTTP 200, and no page errors occur.
-- Release: Commit `5e126d4` is pushed to `codex/unify-guest-photo-filter` and deployed to Pages Production as `b7d455a4` on `main` at https://decemeberbooth.pages.dev/.
+- Important decisions: Reuse the selected theme's share screen in both post-capture states and keep the finalizing surface transparent enough for the artwork to remain visible beneath the photo.
+- Verification: `npm test` passes (288/288); focused Playwright checks pass (2/2), including the pre-QR finalizing state and multi-viewport share flow. The final production image-visibility check is pending.
+- Previous release: Commit `5e126d4` is pushed to `codex/unify-guest-photo-filter` and deployed to Pages Production as `b7d455a4` on `main` at https://decemeberbooth.pages.dev/.
 
 ## Existing production records
 
