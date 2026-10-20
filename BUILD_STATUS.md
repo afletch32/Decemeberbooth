@@ -7,7 +7,7 @@
 - Known bugs/blockers: Physical iPad verification is outstanding.
 - Important decisions: Reuse the selected theme's share screen in both post-capture states. The Halloween start control remains a real accessible button, aligned with the artwork marquee, and uses a distinct pressed state.
 - Verification: `npm test` passes (289/289); targeted Playwright check passes (1/1), confirming marquee styling, pressed appearance, and advancement to photo choice. `git diff --check` passes. Physical iPad verification remains outstanding.
-- Release: Pending scoped commit, push, and Pages Production deployment.
+- Release: Commit `e9b018f` is pushed to `codex/unify-guest-photo-filter` and deployed to Pages Production as `2075191e` at https://decemeberbooth.pages.dev/. Production HTML, app module, and service worker return HTTP 200; live markers confirm the marquee styles and shell cache v46.
 
 ## Existing production records
 
