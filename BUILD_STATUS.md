@@ -2,12 +2,12 @@
 
 - Current goal: Keep Wedding Setup scoped to its Eucalyptus Wedding theme.
 - Done: Made the date input fill its grid column; included the active wedding theme assets in the Asset Library; derive readable names from string asset paths; hide booth shape and print settings while wedding setup is active; show Eucalyptus Wedding as the selected theme and guard against switching a wedding to another theme.
-- In progress: Push and deploy the Eucalyptus choice and theme guard.
+- In progress: Physical booth-device verification at the next setup.
 - Next steps: Check the wedding setup and asset library on the booth iPad at the next setup.
 - Known bugs/blockers: Physical booth-device verification is outstanding.
 - Important decisions: Keep the Asset Library scoped to the selected theme while including generated wedding themes as asset sources.
 - Verification: `npm test` passes (289/289); focused wedding browser check passes (1/1), confirming Eucalyptus Wedding is visible, general theme browsing stays hidden, and booth shape/print controls remain hidden; `git diff --check` passes.
-- Release: Previous setup change commit `6e236ce` deployed to Pages Production as `46e75fd7` at https://decemeberbooth.pages.dev/. App shell cache v51. Eucalyptus choice/theme guard release pending.
+- Release: Commit `95090bf` pushed to `codex/unify-guest-photo-filter`; deployed to Pages Production on 2026-10-21. Canonical production HTML shows the Eucalyptus choice and updated app module version; service worker returns cache v52. Deployment list lookup failed due to Cloudflare API connectivity, but canonical endpoint verification succeeded.
 
 ## Existing production records
 
