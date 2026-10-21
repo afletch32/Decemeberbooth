@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Keep Wedding Setup scoped to its Eucalyptus Wedding theme.
-- Done: Made the date input fill its grid column; included the active wedding theme assets in the Asset Library; derive readable names from string asset paths; hide booth shape and print settings while wedding setup is active; show Eucalyptus Wedding as the selected theme and guard against switching a wedding to another theme.
-- In progress: Physical booth-device verification at the next setup.
+- Current goal: Add a complete Minimal Wedding style alongside Eucalyptus in Wedding Setup.
+- Done: Built eight portrait/landscape Minimal Wedding screens; added a saved wedding style choice and retained wedding-only theme selection.
+- In progress: Commit, push, and deploy the Minimal Wedding theme.
 - Next steps: Check the wedding setup and asset library on the booth iPad at the next setup.
 - Known bugs/blockers: Physical booth-device verification is outstanding.
 - Important decisions: Keep the Asset Library scoped to the selected theme while including generated wedding themes as asset sources.
-- Verification: `npm test` passes (289/289); focused wedding browser check passes (1/1), confirming Eucalyptus Wedding is visible, general theme browsing stays hidden, and booth shape/print controls remain hidden; `git diff --check` passes.
-- Release: Commit `95090bf` pushed to `codex/unify-guest-photo-filter`; deployed to Pages Production on 2026-10-21. Canonical production HTML shows the Eucalyptus choice and updated app module version; service worker returns cache v52. Deployment list lookup failed due to Cloudflare API connectivity, but canonical endpoint verification succeeded.
+- Verification: `npm test` passes (290/290); focused Chromium wedding checks pass (2/2), confirming both wedding-only choices, saved Minimal style, correct screen dimensions, and successful asset loading; `git diff --check` passes.
+- Release: Previous wedding setup release commit `95090bf` is deployed. Minimal Wedding release pending.
 
 ## Existing production records
 

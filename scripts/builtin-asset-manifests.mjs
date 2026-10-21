@@ -102,6 +102,16 @@ const BUILTIN_ASSET_MANIFESTS = {
       ]
     }
   ],
+  "assets/themes/minimal-wedding/": [
+    { src: "minimal-wedding-background-portrait.webp", category: "background", orientation: "portrait" },
+    { src: "minimal-wedding-background-landscape.webp", category: "background", orientation: "landscape" },
+    { src: "minimal-wedding-idle-portrait.webp", category: "idle-screen", role: "idle", orientation: "portrait" },
+    { src: "minimal-wedding-idle-landscape.webp", category: "idle-screen", role: "idle", orientation: "landscape" },
+    { src: "minimal-wedding-photo-choice-portrait.webp", category: "idle-screen", role: "photo-choice", orientation: "portrait" },
+    { src: "minimal-wedding-photo-choice-landscape.webp", category: "idle-screen", role: "photo-choice", orientation: "landscape" },
+    { src: "minimal-wedding-thank-you-portrait.webp", category: "thank-you-screen", orientation: "portrait" },
+    { src: "minimal-wedding-thank-you-landscape.webp", category: "thank-you-screen", orientation: "landscape" }
+  ],
   "assets/school/hawks/overlays/": [
     "1.png",
     "2.png",

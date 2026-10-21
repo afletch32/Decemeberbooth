@@ -233,18 +233,20 @@ async function createWeddingEvent(page, options = {}) {
     partner1 = "Jordan",
     partner2 = "Alex",
     date = "2026-06-14",
+    style = "eucalyptus",
   } = options;
   await gotoApp(page, "/index.html");
   await page.getByRole("button", { name: "Set Up a Wedding" }).click();
   await expect(page.locator("#weddingEventSetup")).toBeVisible();
-  await expect(page.locator(".wedding-theme-choice")).toContainText("Eucalyptus Wedding");
-  await expect(page.locator('input[name="weddingThemeChoice"][value="eucalyptus"]')).toBeChecked();
+  await expect(page.locator(".wedding-theme-choices")).toContainText("Eucalyptus Wedding");
+  await expect(page.locator(".wedding-theme-choices")).toContainText("Minimal Wedding");
   await expect(page.locator("#screenShapeSetupField")).toBeHidden();
   await expect(page.locator("#printModeSetupField")).toBeHidden();
   await expect(page.locator("#eventProfileSelect")).toBeVisible();
   await page.fill("#eventDateInput", date);
   await page.fill("#eventPartner1Input", partner1);
   await page.fill("#eventPartner2Input", partner2);
+  await page.locator(`input[name="weddingThemeChoice"][value="${style}"]`).check();
   await expect(page.locator("#themeQuickPicker")).toBeHidden();
   await expect(page.locator("#generalThemeBrowse")).toBeHidden();
   await page.getByRole("button", { name: "Create Wedding Theme" }).click();
@@ -267,7 +269,7 @@ test("overlay builder emits reusable text metadata when autofill fields are sele
   await expect(manifestEntry).toContainText("\"event_date\"");
 });
 
-test("Wedding events can be set up without a built-in Wedding theme", async ({
+test("Wedding setup offers only the completed wedding theme choices", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -287,7 +289,7 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
   await expect(page.locator("#screenShapeSetupField")).toBeHidden();
   await expect(page.locator("#printModeSetupField")).toBeHidden();
   await expect(page.locator("#eventProfileSelect")).toBeVisible();
-  await expect(page.locator(".wedding-theme-choice")).toContainText("Eucalyptus Wedding");
+  await expect(page.locator(".wedding-theme-choices")).toContainText("Eucalyptus Wedding");
   await expect(page.locator("#generalThemeBrowse")).toBeHidden();
 
   const result = await page.evaluate(() => {
@@ -359,6 +361,44 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
   expect(result.partnerFieldsVisible).toBe(true);
   await openAssetLibrary(page);
   await expect(page.locator("#assetLibraryGrid .asset-library-card")).toHaveCount(5);
+});
+
+test("minimal wedding theme is saved with its own artwork", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.removeItem("photoboothActiveEventId");
+    localStorage.removeItem("photoboothEvents");
+  });
+  await createWeddingEvent(page, {
+    partner1: "Maya",
+    partner2: "Noah",
+    date: "2027-09-19",
+    style: "minimal",
+  });
+
+  await expect(page.locator('input[name="weddingThemeChoice"][value="minimal"]')).toBeChecked();
+  const event = await page.evaluate(() => window.__photoboothTest.getActiveEvent());
+  expect(event.weddingThemeStyle).toBe("minimal");
+  expect(event.weddingTheme.backgrounds[0]).toContain("minimal-wedding-background-portrait.webp");
+  expect(event.weddingTheme.idleScreens).toHaveLength(4);
+  expect(event.weddingTheme.thankYouScreens).toHaveLength(2);
+  expect(event.weddingTheme.overlays).toHaveLength(2);
+  expect(event.weddingTheme.templates[0].layout).toBe("photo_strip_3");
+  const loadedSources = await page.evaluate(async () => {
+    const theme = window.__photoboothTest.getActiveTheme();
+    const sources = [
+      ...theme.backgrounds,
+      ...theme.idleScreens.map((screen) => screen.src),
+      ...theme.thankYouScreens.map((screen) => screen.src),
+    ];
+    return Promise.all(sources.map((src) => new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => resolve({ src, width: image.naturalWidth, height: image.naturalHeight });
+      image.onerror = () => resolve({ src, error: true });
+      image.src = src;
+    })));
+  });
+  expect(loadedSources.filter((image) => image.error)).toEqual([]);
+  expect(loadedSources.filter((image) => image.width !== (image.height === 1800 ? 1200 : 1800))).toEqual([]);
 });
 
 test("print queue link follows the selected event instead of an old manual queue ID", async ({ page }) => {

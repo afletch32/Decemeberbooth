@@ -347,28 +347,31 @@
     }
 
     .wedding-event-fields input { width: 100%; min-width: 0; }
+    .wedding-theme-choices {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
     .wedding-theme-choice {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      align-items: flex-start;
+      gap: 12px;
+      min-height: 88px;
       padding: 14px 16px;
       border: 1px solid #a9d8cb;
       border-radius: 14px;
       background: #f3fbf8;
+      cursor: pointer;
     }
-    .wedding-theme-choice-main { display: flex; align-items: center; gap: 12px; }
+    .wedding-theme-choice:has(input:checked) {
+      border-color: #46bca3;
+      background: #eaf8f3;
+      box-shadow: 0 0 0 2px rgba(70, 188, 163, .12);
+    }
     .wedding-theme-choice input { width: 20px; height: 20px; accent-color: #3a987f; }
     .wedding-theme-choice strong { display: block; color: #345c4b; }
-    .wedding-theme-choice span { color: #617268; font-size: .9rem; }
-    .wedding-theme-choice-badge {
-      flex: 0 0 auto;
-      padding: 5px 10px;
-      border-radius: 999px;
-      background: #dff5ec;
-      color: #28634f !important;
-      font-weight: 700;
-    }
+    .wedding-theme-choice-copy { display: block; color: #617268; font-size: .9rem; }
+    @media (max-width: 640px) { .wedding-theme-choices { grid-template-columns: 1fr; } }
 
     #createWeddingEventBtn { justify-self: start; min-height: 48px; }
 
@@ -7220,7 +7223,7 @@
         <section id="weddingEventSetup" class="wedding-event-setup" aria-labelledby="weddingEventSetupHeading" hidden>
           <div>
             <h2 id="weddingEventSetupHeading">Wedding Setup</h2>
-            <p>Enter the couple’s names and wedding date. This event gets its own Eucalyptus theme.</p>
+            <p>Enter the couple’s names and wedding date, then choose a wedding look.</p>
           </div>
           <div class="wedding-event-fields">
             <div class="theme-field wedding-only-event-field">
@@ -7236,17 +7239,21 @@
               <input type="date" id="eventDateInput" autocomplete="off">
             </div>
           </div>
-          <div class="wedding-theme-choice" role="group" aria-label="Wedding theme">
-            <label class="wedding-theme-choice-main">
+          <div class="wedding-theme-choices" role="radiogroup" aria-label="Wedding theme">
+            <label class="wedding-theme-choice">
               <input type="radio" name="weddingThemeChoice" value="eucalyptus" checked>
-              <span>
+              <span class="wedding-theme-choice-copy">
                 <strong>Eucalyptus Wedding</strong>
-                <span>Eucalyptus greenery, ivory, and warm gold</span>
+                Eucalyptus greenery, ivory, and warm gold
               </span>
             </label>
-            <div>
-              <span class="wedding-theme-choice-badge">Selected</span>
-            </div>
+            <label class="wedding-theme-choice">
+              <input type="radio" name="weddingThemeChoice" value="minimal">
+              <span class="wedding-theme-choice-copy">
+                <strong>Minimal Wedding</strong>
+                Warm ivory, soft sage, and delicate gold
+              </span>
+            </label>
           </div>
           <div class="btn-row" style="margin:0; align-items:center;">
             <button type="button" id="cancelWeddingSetupBtn">Back to Event Setup</button>
@@ -8171,7 +8178,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261021-eucalyptus-wedding-choice"></script>
+  <script type="module" src="scripts/app.js?v=20261021-minimal-wedding-theme"></script>
 </body>
 
 </html>

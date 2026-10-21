@@ -65,6 +65,20 @@ test("every Eucalyptus wedding manifest entry resolves to a checked-in asset", a
   });
 });
 
+test("minimal wedding foundation assets are available in both orientations", async () => {
+  const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
+  const root = join(process.cwd(), "assets/themes/minimal-wedding");
+  const entries = getBuiltinAssetManifest("assets/themes/minimal-wedding/");
+
+  assert.equal(entries.length, 8);
+  entries.forEach((entry) => {
+    assert.ok(existsSync(join(root, entry.src)), `${entry.src} should exist`);
+  });
+  assert.equal(entries.filter((entry) => entry.role === "idle").length, 2);
+  assert.equal(entries.filter((entry) => entry.role === "photo-choice").length, 2);
+  assert.equal(entries.filter((entry) => entry.category === "thank-you-screen").length, 2);
+});
+
 test("summer overlays remain available in built-in asset manifests", async () => {
   const getBuiltinAssetManifest = await loadGetBuiltinAssetManifest();
   const entries = getBuiltinAssetManifest("assets/general/summer/overlays/");

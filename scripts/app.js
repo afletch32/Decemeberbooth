@@ -2194,6 +2194,7 @@ let photoChoiceEditorZones = {
 };
 let activeSessionTextDetails = {};
 let weddingSetupRequested = false;
+let weddingThemeChoiceDirty = false;
 let boothAudioContext = null;
 let boothAudioEnabled = false;
 let boothThemeAudio = null;
@@ -3712,11 +3713,13 @@ function setupEventProfileControls() {
       disableShowcaseDemo();
       const id = event.target.value || "";
       weddingSetupRequested = false;
+      weddingThemeChoiceDirty = false;
       setActiveEventId(id);
       syncEventInputsFromActive();
       syncEventPrintPriceInput();
       loadPayPalPrintConfigStatus();
       const active = getActiveEvent();
+      syncWeddingThemeChoice(active?.weddingThemeStyle || "eucalyptus");
       if (active && active.themeKey) {
         setEventSelection(active.themeKey);
         loadTheme(active.themeKey);
@@ -6317,6 +6320,8 @@ function setupEventVisualEditorControls() {
   if (DOM.startWeddingSetupBtn) {
     DOM.startWeddingSetupBtn.addEventListener("click", () => {
       weddingSetupRequested = true;
+      weddingThemeChoiceDirty = false;
+      syncWeddingThemeChoice(getActiveEvent()?.weddingThemeStyle || "eucalyptus");
       syncWeddingOnlyEventFields(getEventEditorTheme());
       syncWeddingSetupMode();
       DOM.eventPartner1Input?.focus();
@@ -6325,6 +6330,7 @@ function setupEventVisualEditorControls() {
   if (DOM.cancelWeddingSetupBtn) {
     DOM.cancelWeddingSetupBtn.addEventListener("click", () => {
       weddingSetupRequested = false;
+      weddingThemeChoiceDirty = false;
       syncWeddingOnlyEventFields(getEventEditorTheme());
       syncWeddingSetupMode();
       DOM.startWeddingSetupBtn?.focus();
@@ -6333,6 +6339,11 @@ function setupEventVisualEditorControls() {
   if (DOM.createWeddingEventBtn) {
     DOM.createWeddingEventBtn.addEventListener("click", createWeddingEventFromSetup);
   }
+  document.querySelectorAll('input[name="weddingThemeChoice"]').forEach((input) => {
+    input.addEventListener("change", () => {
+      weddingThemeChoiceDirty = true;
+    });
+  });
 
   if (DOM.eventBannerSizeInput) {
     DOM.eventBannerSizeInput.addEventListener("input", () => {
@@ -13527,6 +13538,108 @@ function createEucalyptusWeddingTheme(partner1, partner2, date) {
   };
 }
 
+function createMinimalWeddingTheme(partner1, partner2, date) {
+  const theme = createEucalyptusWeddingTheme(partner1, partner2, date);
+  const assetBase = "/assets/themes/minimal-wedding/";
+  const coupleNames = `${partner1} & ${partner2}`;
+  theme.name = `${coupleNames} Wedding`;
+  theme.accent = "#647363";
+  theme.accent2 = "#d9c8a1";
+  theme.fontHeading = "'Lora', serif";
+  theme.fontBody = "'Lora', serif";
+  theme.vibeSummary = "Warm ivory, soft sage, and delicate gold";
+  theme.overlays = theme.overlays.map((overlay) => ({
+    ...overlay,
+    id: overlay.orientation === "landscape"
+      ? "minimal-wedding-landscape"
+      : "minimal-wedding-portrait",
+    name: `Minimal Wedding ${overlay.orientation === "landscape" ? "Landscape" : "Portrait"}`,
+    textFields: overlay.textFields.map((field) => ({
+      ...field,
+      fontFamily: "'Lora', serif",
+      fontWeight: "500",
+      color: "#465447",
+    })),
+  }));
+  theme.templates = theme.templates.map((template) => ({
+    ...template,
+    name: "Minimal Wedding Three-Photo Strip",
+    textFields: template.textFields.map((field) => ({
+      ...field,
+      fontFamily: "'Lora', serif",
+      fontWeight: "500",
+      color: "#465447",
+    })),
+  }));
+  theme.backgrounds = [
+    `${assetBase}minimal-wedding-background-portrait.webp`,
+    `${assetBase}minimal-wedding-background-landscape.webp`,
+  ];
+  theme.idleScreens = [
+    {
+      src: `${assetBase}minimal-wedding-idle-portrait.webp`,
+      name: "Minimal Wedding welcome portrait",
+      role: "idle",
+      orientation: "portrait",
+      buttonZones: { start: { x: 50, y: 52, width: 74, height: 17 } },
+    },
+    {
+      src: `${assetBase}minimal-wedding-idle-landscape.webp`,
+      name: "Minimal Wedding welcome landscape",
+      role: "idle",
+      orientation: "landscape",
+      buttonZones: { start: { x: 50, y: 61, width: 48, height: 20 } },
+    },
+    {
+      src: `${assetBase}minimal-wedding-photo-choice-portrait.webp`,
+      name: "Minimal Wedding photo choice portrait",
+      role: "photo-choice",
+      orientation: "portrait",
+      buttonZones: {
+        singlePhoto: { x: 50, y: 43, width: 72, height: 27 },
+        photoStrip: { x: 50, y: 71, width: 72, height: 27 },
+      },
+    },
+    {
+      src: `${assetBase}minimal-wedding-photo-choice-landscape.webp`,
+      name: "Minimal Wedding photo choice landscape",
+      role: "photo-choice",
+      orientation: "landscape",
+      buttonZones: {
+        singlePhoto: { x: 31, y: 55, width: 38, height: 49 },
+        photoStrip: { x: 70, y: 55, width: 38, height: 49 },
+      },
+    },
+  ];
+  theme.thankYouScreens = [
+    {
+      src: `${assetBase}minimal-wedding-thank-you-portrait.webp`,
+      name: "Minimal Wedding thank you portrait",
+      orientation: "portrait",
+    },
+    {
+      src: `${assetBase}minimal-wedding-thank-you-landscape.webp`,
+      name: "Minimal Wedding thank you landscape",
+      orientation: "landscape",
+    },
+  ];
+  theme.welcome = { title: coupleNames, prompt: "Touch to start" };
+  return theme;
+}
+
+function syncWeddingThemeChoice(style = "eucalyptus") {
+  const normalizedStyle = style === "minimal" ? "minimal" : "eucalyptus";
+  document.querySelectorAll('input[name="weddingThemeChoice"]').forEach((input) => {
+    input.checked = input.value === normalizedStyle;
+  });
+}
+
+function createWeddingTheme(style, partner1, partner2, date) {
+  return style === "minimal"
+    ? createMinimalWeddingTheme(partner1, partner2, date)
+    : createEucalyptusWeddingTheme(partner1, partner2, date);
+}
+
 function getStoredEvents() {
   try {
     const raw = localStorage.getItem(EVENTS_STORAGE_KEY);
@@ -13734,6 +13847,9 @@ function syncWeddingSetupMode() {
     active && active.eventType === "wedding" && active.weddingTheme
   );
   const weddingSelected = weddingSetupRequested || editingWedding;
+  if (editingWedding && !weddingThemeChoiceDirty) {
+    syncWeddingThemeChoice(active.weddingThemeStyle || "eucalyptus");
+  }
   document.querySelector(".setup-session-card")?.classList.toggle("wedding-setup-mode", weddingSelected);
   if (DOM.weddingSetupAction) DOM.weddingSetupAction.hidden = weddingSelected;
   if (DOM.weddingEventSetup) DOM.weddingEventSetup.hidden = !weddingSelected;
@@ -14198,6 +14314,9 @@ function createWeddingEventFromSetup() {
   }
 
   const name = `${partner1} & ${partner2} Wedding`;
+  const weddingThemeStyle = document.querySelector(
+    'input[name="weddingThemeChoice"]:checked'
+  )?.value === "minimal" ? "minimal" : "eucalyptus";
   const active = getActiveEvent();
   if (active && active.eventType === "wedding" && active.weddingTheme) {
     const events = getStoredEvents();
@@ -14211,10 +14330,12 @@ function createWeddingEventFromSetup() {
       eventType: "wedding",
       partner1,
       partner2,
+      weddingThemeStyle,
       themeKey,
-      weddingTheme: createEucalyptusWeddingTheme(partner1, partner2, date),
+      weddingTheme: createWeddingTheme(weddingThemeStyle, partner1, partner2, date),
     };
     setStoredEvents(events);
+    weddingThemeChoiceDirty = false;
     populateEventProfileSelect(active.id);
     loadTheme(themeKey);
     syncEventInputsFromActive();
@@ -14233,9 +14354,10 @@ function createWeddingEventFromSetup() {
     eventType: "wedding",
     partner1,
     partner2,
+    weddingThemeStyle,
     printPrice: 3,
     createdAt: new Date().toISOString(),
-    weddingTheme: createEucalyptusWeddingTheme(partner1, partner2, date),
+    weddingTheme: createWeddingTheme(weddingThemeStyle, partner1, partner2, date),
     overrides: {
       backgrounds: [],
       overlays: [],
@@ -14246,6 +14368,7 @@ function createWeddingEventFromSetup() {
   const events = getStoredEvents();
   events.push(newEvent);
   setStoredEvents(events);
+  weddingThemeChoiceDirty = false;
   setActiveEventId(id);
   populateEventProfileSelect(id);
   setEventSelection(themeKey);
