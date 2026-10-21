@@ -347,6 +347,28 @@
     }
 
     .wedding-event-fields input { width: 100%; min-width: 0; }
+    .wedding-theme-choice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      border: 1px solid #a9d8cb;
+      border-radius: 14px;
+      background: #f3fbf8;
+    }
+    .wedding-theme-choice-main { display: flex; align-items: center; gap: 12px; }
+    .wedding-theme-choice input { width: 20px; height: 20px; accent-color: #3a987f; }
+    .wedding-theme-choice strong { display: block; color: #345c4b; }
+    .wedding-theme-choice span { color: #617268; font-size: .9rem; }
+    .wedding-theme-choice-badge {
+      flex: 0 0 auto;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #dff5ec;
+      color: #28634f !important;
+      font-weight: 700;
+    }
 
     #createWeddingEventBtn { justify-self: start; min-height: 48px; }
 
@@ -7214,6 +7236,18 @@
               <input type="date" id="eventDateInput" autocomplete="off">
             </div>
           </div>
+          <div class="wedding-theme-choice" role="group" aria-label="Wedding theme">
+            <label class="wedding-theme-choice-main">
+              <input type="radio" name="weddingThemeChoice" value="eucalyptus" checked>
+              <span>
+                <strong>Eucalyptus Wedding</strong>
+                <span>Eucalyptus greenery, ivory, and warm gold</span>
+              </span>
+            </label>
+            <div>
+              <span class="wedding-theme-choice-badge">Selected</span>
+            </div>
+          </div>
           <div class="btn-row" style="margin:0; align-items:center;">
             <button type="button" id="cancelWeddingSetupBtn">Back to Event Setup</button>
             <button type="button" class="setup-session-save-btn" id="createWeddingEventBtn">Create Wedding Theme</button>
@@ -8137,7 +8171,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261021-focused-wedding-setup"></script>
+  <script type="module" src="scripts/app.js?v=20261021-eucalyptus-wedding-choice"></script>
 </body>
 
 </html>

@@ -237,6 +237,8 @@ async function createWeddingEvent(page, options = {}) {
   await gotoApp(page, "/index.html");
   await page.getByRole("button", { name: "Set Up a Wedding" }).click();
   await expect(page.locator("#weddingEventSetup")).toBeVisible();
+  await expect(page.locator(".wedding-theme-choice")).toContainText("Eucalyptus Wedding");
+  await expect(page.locator('input[name="weddingThemeChoice"][value="eucalyptus"]')).toBeChecked();
   await expect(page.locator("#screenShapeSetupField")).toBeHidden();
   await expect(page.locator("#printModeSetupField")).toBeHidden();
   await expect(page.locator("#eventProfileSelect")).toBeVisible();
@@ -244,6 +246,7 @@ async function createWeddingEvent(page, options = {}) {
   await page.fill("#eventPartner1Input", partner1);
   await page.fill("#eventPartner2Input", partner2);
   await expect(page.locator("#themeQuickPicker")).toBeHidden();
+  await expect(page.locator("#generalThemeBrowse")).toBeHidden();
   await page.getByRole("button", { name: "Create Wedding Theme" }).click();
   await expect(page.locator("#eventProfileSelect")).toHaveValue(/.+/);
   await page.waitForFunction(() => window.__photoboothTest?.getActiveEvent()?.eventType === "wedding");
@@ -284,6 +287,8 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
   await expect(page.locator("#screenShapeSetupField")).toBeHidden();
   await expect(page.locator("#printModeSetupField")).toBeHidden();
   await expect(page.locator("#eventProfileSelect")).toBeVisible();
+  await expect(page.locator(".wedding-theme-choice")).toContainText("Eucalyptus Wedding");
+  await expect(page.locator("#generalThemeBrowse")).toBeHidden();
 
   const result = await page.evaluate(() => {
     const api = window.__photoboothTest;

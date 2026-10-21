@@ -7976,6 +7976,16 @@ function setEventSelection(key) {
   key = normalizeThemeSelectionKey(key);
   const active = getActiveEvent();
   if (
+    weddingSetupRequested &&
+    !key.startsWith("wedding:")
+  ) return false;
+  if (
+    active &&
+    active.eventType === "wedding" &&
+    active.weddingTheme &&
+    active.themeKey !== key
+  ) return false;
+  if (
     active &&
     active.eventType === "wedding" &&
     active.themeKey === key &&
