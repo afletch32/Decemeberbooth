@@ -336,6 +336,9 @@
     .wedding-event-setup[hidden] { display: none !important; }
     .wedding-event-setup h2 { margin: 0 0 4px; color: #345c4b; font-family: 'Fraunces', serif; }
     .wedding-event-setup p { margin: 0; color: #617268; }
+    .setup-session-card.wedding-setup-mode #screenShapeSetupField,
+    .setup-session-card.wedding-setup-mode #printModeSetupField,
+    .setup-session-card.wedding-setup-mode #eventPrintPriceSettings { display: none !important; }
 
     .wedding-event-fields {
       display: grid;
@@ -7248,7 +7251,7 @@
             </div>
             <select id="createPathThemeSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
           </div>
-          <div class="setup-session-item">
+          <div class="setup-session-item" id="screenShapeSetupField">
             <span class="setup-session-item-label">Booth screen shape</span>
             <div class="orientation-quick-pick" role="group" aria-label="Booth screen shape">
               <button type="button" class="orientation-quick-pick-option" data-screen-orientation="portrait" aria-pressed="false">
@@ -7265,7 +7268,7 @@
               <option value="landscape">Landscape</option>
             </select>
           </div>
-          <div class="setup-session-item">
+          <div class="setup-session-item" id="savedEventSetupField">
             <label for="eventProfileSelect">Saved Event</label>
             <select id="eventProfileSelect"></select>
           </div>
@@ -7274,7 +7277,7 @@
             <input type="number" id="eventPrintPriceInput" min="0.01" max="999.99" step="0.01" value="3.00" inputmode="decimal">
             <button type="button" class="setup-session-save-btn" id="saveEventPrintPriceBtn">Save Event Price</button>
           </div>
-          <div class="setup-session-item">
+          <div class="setup-session-item" id="printModeSetupField">
             <label for="printModeInput">Print Mode</label>
             <select id="printModeInput">
               <option value="off">Digital Only</option>
@@ -8134,7 +8137,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261021-wedding-setup-assets"></script>
+  <script type="module" src="scripts/app.js?v=20261021-focused-wedding-setup"></script>
 </body>
 
 </html>

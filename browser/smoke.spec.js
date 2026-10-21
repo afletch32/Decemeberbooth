@@ -237,6 +237,9 @@ async function createWeddingEvent(page, options = {}) {
   await gotoApp(page, "/index.html");
   await page.getByRole("button", { name: "Set Up a Wedding" }).click();
   await expect(page.locator("#weddingEventSetup")).toBeVisible();
+  await expect(page.locator("#screenShapeSetupField")).toBeHidden();
+  await expect(page.locator("#printModeSetupField")).toBeHidden();
+  await expect(page.locator("#eventProfileSelect")).toBeVisible();
   await page.fill("#eventDateInput", date);
   await page.fill("#eventPartner1Input", partner1);
   await page.fill("#eventPartner2Input", partner2);
@@ -278,6 +281,9 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
     partner2: "Noah",
     date: "2027-09-19",
   });
+  await expect(page.locator("#screenShapeSetupField")).toBeHidden();
+  await expect(page.locator("#printModeSetupField")).toBeHidden();
+  await expect(page.locator("#eventProfileSelect")).toBeVisible();
 
   const result = await page.evaluate(() => {
     const api = window.__photoboothTest;

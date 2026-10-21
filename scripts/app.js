@@ -13724,6 +13724,7 @@ function syncWeddingSetupMode() {
     active && active.eventType === "wedding" && active.weddingTheme
   );
   const weddingSelected = weddingSetupRequested || editingWedding;
+  document.querySelector(".setup-session-card")?.classList.toggle("wedding-setup-mode", weddingSelected);
   if (DOM.weddingSetupAction) DOM.weddingSetupAction.hidden = weddingSelected;
   if (DOM.weddingEventSetup) DOM.weddingEventSetup.hidden = !weddingSelected;
   if (DOM.themeQuickPicker) DOM.themeQuickPicker.classList.toggle("hidden", weddingSelected);
