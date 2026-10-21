@@ -360,7 +360,7 @@ test("returning from mode selection restores custom idle artwork", () => {
   assert.ok(goBackFromWelcome.includes("if (idleEntry) applyCustomIdleScreen(idleEntry);"));
 });
 
-test("theme artwork actions use visible accessible button controls", () => {
+test("photo-choice artwork uses invisible accessible touch targets", () => {
   assert.ok(html.includes('id="photoChoiceSingleZone"'));
   assert.ok(html.includes('id="photoChoiceStripZone"'));
   assert.ok(html.includes('custom-photo-choice-screen'));
@@ -368,13 +368,15 @@ test("theme artwork actions use visible accessible button controls", () => {
   assert.ok(app.includes('place("still-photo", zones.singlePhoto'));
   assert.ok(app.includes('place("strip", zones.photoStrip'));
   assert.ok(app.includes("selectPhotoChoiceScreenEntry()"));
-  assert.ok(html.includes("color-mix(in srgb, var(--accent) 24%, white)"));
-  assert.ok(html.includes("color: #17211f;"));
-  assert.ok(html.includes("#welcomeScreen.custom-photo-choice-screen .welcome-mode-btn:active"));
+  assert.ok(html.includes('data-welcome-mode="still-photo" aria-label="Take a single photo"'));
+  assert.ok(html.includes('data-welcome-mode="strip" aria-label="Take a photo strip"'));
+  assert.ok(html.includes("#welcomeScreen.custom-photo-choice-screen .welcome-mode-btn { position: absolute; display: block;"));
+  assert.ok(html.includes("background: transparent; box-shadow: none; color: transparent; font-size: 0;"));
+  assert.ok(html.includes(".welcome-mode-btn:active { filter: none; transform: translate(-50%, -50%); }"));
+  assert.ok(html.includes(".welcome-mode-btn:focus-visible { outline: 3px solid #fff;"));
   assert.ok(html.includes("#welcomeScreen.custom-idle-screen #startButton:focus-visible"));
   assert.ok(html.includes("custom-artwork-loading #startButton { visibility: hidden; pointer-events: none; }"));
   assert.ok(html.includes("custom-artwork-loading .welcome-mode-btn { visibility: hidden; pointer-events: none; }"));
-  assert.ok(!html.includes(".welcome-mode-btn > * { visibility: hidden !important; }"));
 });
 
 test("custom welcome artwork hides legacy UI before its image finishes loading", () => {

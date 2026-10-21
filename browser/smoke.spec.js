@@ -833,7 +833,7 @@ test("Halloween start button matches the marquee on the static artwork", async (
   await expect(page.locator("#welcomeScreen.custom-photo-choice-screen")).toBeVisible();
 });
 
-test("theme artwork guest actions are visible responsive buttons", async ({ page }) => {
+test("theme artwork guest actions stay accessible responsive hotspots", async ({ page }) => {
   for (const viewport of [
     { width: 390, height: 844 },
     { width: 844, height: 390 },
@@ -884,23 +884,24 @@ test("theme artwork guest actions are visible responsive buttons", async ({ page
           background: style.backgroundColor,
           backgroundImage: style.backgroundImage,
           color: style.color,
-          text: button.innerText.trim(),
+          label: button.getAttribute("aria-label"),
+          fontSize: style.fontSize,
         };
       })
     );
     expect(choices).toHaveLength(2);
-    expect(choices[0].color).toBe("rgb(23, 33, 31)");
-    expect(choices[1].color).toBe("rgb(255, 255, 255)");
+    expect(choices[0].label).toBe("Take a single photo");
+    expect(choices[1].label).toBe("Take a photo strip");
     for (const choice of choices) {
       expect(choice.width).toBeGreaterThanOrEqual(48);
       expect(choice.height).toBeGreaterThanOrEqual(48);
       expect(choice.left).toBeGreaterThanOrEqual(0);
       expect(choice.right).toBeLessThanOrEqual(viewport.width);
       expect(choice.bottom).toBeLessThanOrEqual(viewport.height);
-      expect(
-        choice.background !== "rgba(0, 0, 0, 0)" || choice.backgroundImage !== "none"
-      ).toBe(true);
-      expect(choice.text).not.toBe("");
+      expect(choice.background).toBe("rgba(0, 0, 0, 0)");
+      expect(choice.backgroundImage).toBe("none");
+      expect(choice.color).toBe("rgba(0, 0, 0, 0)");
+      expect(choice.fontSize).toBe("0px");
     }
     const [photo, strip] = choices;
     const overlaps = photo.left < strip.right && photo.right > strip.left && photo.top < strip.bottom && photo.bottom > strip.top;

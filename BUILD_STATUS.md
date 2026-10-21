@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Sync the theme-card stability fix.
-- Done: Kept theme cards at a constant border width during selection; verified the Halloween marquee touch-target fix is deployed.
-- In progress: Physical booth-device verification at the next setup.
+- Current goal: Make photo-choice artwork hotspots invisible while keeping them usable.
+- Done: Replaced visible Photo and Photo Strip controls over custom photo-choice artwork with transparent, positioned touch targets. Added accessible labels and a visible keyboard focus indicator.
+- In progress: Commit, push, production deployment, and live verification.
 - Next steps: Check on the booth iPad at the next setup.
 - Known bugs/blockers: Physical booth-device verification is outstanding.
-- Important decisions: Theme selection changes only the border color, preventing a visible size jump.
-- Verification: `npm test` passes (289/289); the focused setup browser check passes (1/1); `git diff --check` passes.
-- Release: Commit `c67cb66` pushed to `codex/unify-guest-photo-filter`; deployed to Pages Production as `d27e0186` at https://decemeberbooth.pages.dev/. Live HTML and service worker return HTTP 200 and include the stable card border, Halloween hotspot, app module version, and shell cache v48.
+- Important decisions: Custom artwork owns the visible photo-choice labels; invisible buttons provide the positioned touch and keyboard action zones.
+- Verification: `npm test` passes (289/289); the focused responsive photo-choice browser check passes (1/1); `git diff --check` passes.
+- Release: Pending.
 
 ## Existing production records
 
