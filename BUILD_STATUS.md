@@ -2,12 +2,12 @@
 
 - Current goal: Make photo-choice artwork hotspots invisible while keeping them usable.
 - Done: Replaced visible Photo and Photo Strip controls over custom photo-choice artwork with transparent, positioned touch targets. Added accessible labels and a visible keyboard focus indicator.
-- In progress: Commit, push, production deployment, and live verification.
+- In progress: Physical booth-device verification at the next setup.
 - Next steps: Check on the booth iPad at the next setup.
 - Known bugs/blockers: Physical booth-device verification is outstanding.
 - Important decisions: Custom artwork owns the visible photo-choice labels; invisible buttons provide the positioned touch and keyboard action zones.
-- Verification: `npm test` passes (289/289); the focused responsive photo-choice browser check passes (1/1); `git diff --check` passes.
-- Release: Pending.
+- Verification: `npm test` passes (289/289); focused browser checks pass for portrait and landscape photo-choice hotspots and the Halloween marquee button; `git diff --check` passes. Production HTML and service worker return HTTP 200 with the expected styles and cache marker.
+- Release: Commit `20f8b57` pushed to `codex/unify-guest-photo-filter`; deployed to Pages Production as `5b5e3d9b` at https://decemeberbooth.pages.dev/. The live release includes transparent artwork hotspots, stable theme-card dimensions, and the Halloween marquee fix; shell cache v49.
 
 ## Existing production records
 
