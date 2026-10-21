@@ -161,7 +161,7 @@ export function migrateHalloweenThemeAssets(target) {
           zone.x === 50 && zone.y === 82 && zone.width === 38 && zone.height === 20;
         const nextZone = {
           ...(hasLegacyDefault || Object.keys(zone).length === 0
-            ? { x: 51, y: 78, width: 51, height: 24 }
+            ? { x: 51, y: 77, width: 48, height: 22 }
             : zone),
           variant: "marquee",
         };

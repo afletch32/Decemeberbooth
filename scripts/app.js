@@ -867,7 +867,7 @@ let themes = {
         ],
         idleScreens: [
           { src: "/assets/themes/halloween/halloween-idle-portrait.webp", name: "Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
-          { src: "/assets/themes/halloween/halloween-idle-landscape.webp", name: "Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 51, y: 78, width: 51, height: 24, variant: "marquee" } } },
+          { src: "/assets/themes/halloween/halloween-idle-landscape.webp", name: "Halloween idle landscape", role: "idle", orientation: "landscape", buttonZones: { start: { x: 51, y: 77, width: 48, height: 22, variant: "marquee" } } },
           { src: "/assets/themes/halloween/halloween-photo-choice-portrait.webp", name: "Halloween photo choice portrait", role: "photo-choice", orientation: "portrait", buttonZones: { singlePhoto: { x: 50, y: 43, width: 76, height: 22 }, photoStrip: { x: 50, y: 72, width: 76, height: 22 } } },
           { src: "/assets/themes/halloween/halloween-photo-choice-landscape.webp", name: "Halloween photo choice landscape", role: "photo-choice", orientation: "landscape", buttonZones: { singlePhoto: { x: 30, y: 55, width: 34, height: 48 }, photoStrip: { x: 70, y: 55, width: 34, height: 48 } } },
         ],

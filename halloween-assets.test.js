@@ -40,9 +40,9 @@ test("Halloween theme migration aligns the landscape start control to its marque
   assert.equal(migrateHalloweenThemeAssets(target), true);
   assert.deepEqual(screen.buttonZones.start, {
     x: 51,
-    y: 78,
-    width: 51,
-    height: 24,
+    y: 77,
+    width: 48,
+    height: 22,
     variant: "marquee",
   });
   assert.equal(migrateHalloweenThemeAssets(target), false);

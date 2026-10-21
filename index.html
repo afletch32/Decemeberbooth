@@ -3918,42 +3918,45 @@
     #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton {
       min-width: 0;
       min-height: 0;
-      padding: 12px 24px;
-      border: 4px solid #d89126;
-      border-radius: clamp(10px, 1.2vw, 20px);
-      background: linear-gradient(180deg, #4a1927 0%, #250b1b 52%, #3a101d 100%);
-      box-shadow: 0 0 0 2px #603514, 0 0 20px 5px rgba(255, 164, 31, 0.76), inset 0 0 22px rgba(242, 126, 25, 0.24);
-      color: #ffd17b;
-      font-family: var(--font-heading), Georgia, serif;
-      font-size: clamp(1rem, 4vw, 3.25rem);
-      font-weight: 900;
-      letter-spacing: 0.1em;
-      line-height: 1;
-      text-transform: uppercase;
-      text-shadow: 0 1px 2px #741e08, 0 0 12px rgba(255, 156, 30, 0.9);
-      transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease, background 120ms ease;
+      padding: 0;
+      border: 0;
+      border-radius: clamp(12px, 2vw, 26px);
+      background: transparent;
+      box-shadow: none;
+      color: transparent;
+      font-size: 0;
+      text-shadow: none;
+      transition: transform 120ms ease;
     }
     #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton::before {
+      content: none;
+    }
+    #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton::after {
       content: "";
       position: absolute;
-      inset: 5px;
-      border: 2px solid rgba(255, 210, 123, 0.64);
-      border-radius: clamp(5px, 0.7vw, 12px);
+      inset: 0;
+      border-radius: inherit;
+      background: rgba(36, 7, 24, 0.28);
+      opacity: 0;
+      transition: opacity 120ms ease;
       pointer-events: none;
     }
     #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton:focus-visible {
       outline: 4px solid #fff4d6;
       outline-offset: 4px;
-      box-shadow: 0 0 0 8px #8b4311, 0 0 24px 9px rgba(255, 185, 53, 0.95);
+      box-shadow: 0 0 0 8px #8b4311;
     }
 
     #welcomeScreen.custom-idle-screen #startButton:hover { filter: brightness(1.06); }
     #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton:active {
-      transform: translate(-50%, -50%) scale(0.97) !important;
-      border-color: #ffe5a5;
-      background: linear-gradient(180deg, #210817 0%, #45101e 100%);
-      box-shadow: inset 0 7px 14px rgba(0, 0, 0, 0.76), inset 0 0 12px rgba(255, 170, 40, 0.32), 0 0 13px 3px rgba(255, 184, 53, 0.94);
-      filter: brightness(1.12);
+      transform: translate(-50%, -50%) !important;
+      filter: none;
+    }
+    #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton:active::after {
+      opacity: 1;
+    }
+    #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton:hover {
+      filter: none;
     }
     #welcomeScreen.custom-idle-screen #startButton:active { transform: scale(0.97); filter: brightness(0.94); }
     #welcomeScreen.custom-idle-screen #startButton:focus-visible { outline: 4px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 7px #155eef, 0 12px 28px color-mix(in srgb, var(--accent) 38%, transparent); }

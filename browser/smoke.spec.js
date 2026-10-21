@@ -790,10 +790,12 @@ test("Halloween start button matches the marquee on the static artwork", async (
     const style = getComputedStyle(node);
     const rect = node.getBoundingClientRect();
     return {
-      backgroundImage: style.backgroundImage,
-      borderColor: style.borderTopColor,
+      backgroundColor: style.backgroundColor,
+      borderWidth: style.borderTopWidth,
       borderRadius: parseFloat(style.borderTopLeftRadius),
       color: style.color,
+      fontSize: style.fontSize,
+      activeOverlayOpacity: getComputedStyle(node, "::after").opacity,
       width: rect.width,
       height: rect.height,
       left: rect.left,
@@ -801,9 +803,11 @@ test("Halloween start button matches the marquee on the static artwork", async (
       bottom: rect.bottom,
     };
   });
-  expect(appearance.backgroundImage).toContain("linear-gradient");
-  expect(appearance.borderColor).toBe("rgb(216, 145, 38)");
-  expect(appearance.color).toBe("rgb(255, 209, 123)");
+  expect(appearance.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+  expect(appearance.borderWidth).toBe("0px");
+  expect(appearance.color).toBe("rgba(0, 0, 0, 0)");
+  expect(appearance.fontSize).toBe("0px");
+  expect(appearance.activeOverlayOpacity).toBe("0");
   expect(appearance.borderRadius).toBeLessThan(appearance.height / 2);
   expect(appearance.width).toBeGreaterThan(500);
   expect(appearance.left).toBeGreaterThanOrEqual(0);
@@ -813,8 +817,7 @@ test("Halloween start button matches the marquee on the static artwork", async (
   const buttonBounds = await button.boundingBox();
   await page.mouse.move(buttonBounds.x + buttonBounds.width / 2, buttonBounds.y + buttonBounds.height / 2);
   await page.mouse.down();
-  await expect.poll(() => button.evaluate((node) => new DOMMatrixReadOnly(getComputedStyle(node).transform).a)).toBeLessThan(0.99);
-  await expect.poll(() => button.evaluate((node) => getComputedStyle(node).boxShadow)).toContain("inset");
+  await expect.poll(() => button.evaluate((node) => getComputedStyle(node, "::after").opacity)).toBe("1");
   await page.mouse.up();
   await expect(page.locator("#welcomeScreen.custom-photo-choice-screen")).toBeVisible();
 });
