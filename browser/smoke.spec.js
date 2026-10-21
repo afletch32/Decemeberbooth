@@ -194,8 +194,19 @@ async function expectCreatePathValidation(page, options) {
   );
   await expect(themeValue).not.toBe("");
 
-  await page.locator(".theme-quick-card").filter({ hasText: /^Wedding/ }).click();
+  const weddingCard = page.locator(".theme-quick-card").filter({ hasText: /^Wedding/ });
+  const cardSizeBeforeSelection = await weddingCard.evaluate((card) => {
+    const rect = card.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  });
+  await weddingCard.click();
   await expect(page.locator("#themeQuickSelectionName")).toHaveText("Wedding");
+  await expect.poll(() =>
+    weddingCard.evaluate((card) => {
+      const rect = card.getBoundingClientRect();
+      return { width: rect.width, height: rect.height };
+    })
+  ).toEqual(cardSizeBeforeSelection);
 
   for (const selector of visibleFieldSelectors || []) {
     await expect(page.locator(selector)).not.toHaveClass(/hidden/);

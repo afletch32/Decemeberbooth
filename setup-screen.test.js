@@ -1002,6 +1002,7 @@ test("asset library explains saved, filtered, and removal actions", () => {
 
 test("quick theme picker shows the full catalog and repairs saved Halloween frames", () => {
   const appScript = readProjectFile("scripts", "app.js");
+  const html = readProjectFile("index.html");
 
   assert.ok(
     appScript.includes("const visibleEntries = entries;") &&
@@ -1012,6 +1013,12 @@ test("quick theme picker shows the full catalog and repairs saved Halloween fram
     appScript.includes("hasOverlayDefinitionSource(baseOverlays)") &&
       appScript.includes("hasCorruptedThemeOverlayEntries(parsed)"),
     "saved built-in overlays should restore their structured frame definitions"
+  );
+  assert.ok(
+    html.includes(".theme-quick-card {\n      flex: 0 0 clamp(150px, 19vw, 200px);\n      height: 156px;") &&
+      html.includes("border: 2px solid rgba(127, 219, 207, 0.48);") &&
+      html.includes(".theme-quick-card.active {\n      border-color: #2db7a2;"),
+    "selecting a theme should keep the card border width fixed to avoid a visible card jump"
   );
 });
 

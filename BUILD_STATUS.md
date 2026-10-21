@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Make the Halloween start control visually match the artwork's printed marquee.
-- Done: Removed duplicate button styling and label, retained an accessible transparent touch target, added a pressed overlay, and tightened its bounds to fit the viewport.
-- In progress: Physical booth-device verification at the next setup.
-- Next steps: Verify the production welcome screen after deployment; check on the booth iPad at the next setup.
-- Known bugs/blockers: Physical iPad verification is outstanding.
-- Important decisions: The printed artwork provides the only visible button label; the HTML button remains the accessible interactive target.
-- Verification: `npm test` passes (289/289); the focused Playwright check passes (1/1), including pressed state and transition to photo choice; `git diff --check` passes.
-- Release: Commits `cce5b47` and `d7d90d1` pushed to `codex/unify-guest-photo-filter`; deployed to Pages Production as `3ce0048c` at https://decemeberbooth.pages.dev/. Live HTML and service worker return HTTP 200 and include the hotspot styling, updated module version, and shell cache v47.
+- Current goal: Sync the theme-card stability fix.
+- Done: Kept theme cards at a constant border width during selection; verified the Halloween marquee touch-target fix is deployed.
+- In progress: Commit, push, production deployment, and live verification for the card fix.
+- Next steps: Check on the booth iPad at the next setup.
+- Known bugs/blockers: Physical booth-device verification is outstanding.
+- Important decisions: Theme selection changes only the border color, preventing a visible size jump.
+- Verification: `npm test` passes (289/289); the focused setup browser check passes (1/1); `git diff --check` passes.
+- Release: Pending.
 
 ## Existing production records
 
