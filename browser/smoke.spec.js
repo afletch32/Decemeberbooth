@@ -264,6 +264,15 @@ test("overlay builder emits reusable text metadata when autofill fields are sele
 test("Wedding events can be set up without a built-in Wedding theme", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await gotoApp(page, "/index.html");
+  await page.getByRole("button", { name: "Set Up a Wedding" }).click();
+  await expect(page.locator("#weddingEventSetup")).toBeVisible();
+  const fieldWidths = await page.locator(".wedding-event-fields input").evaluateAll((inputs) =>
+    inputs.map((input) => input.getBoundingClientRect().width)
+  );
+  expect(Math.max(...fieldWidths) - Math.min(...fieldWidths)).toBeLessThan(1);
+
   await createWeddingEvent(page, {
     partner1: "Maya",
     partner2: "Noah",
@@ -275,6 +284,13 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
     const event = api.getActiveEvent();
     return {
       event,
+      weddingAssetCounts: api.getAllAssetLibraryRows()
+        .filter((asset) => asset.themeKeys?.includes(event.themeKey))
+        .reduce((counts, asset) => {
+          counts[asset.category] = (counts[asset.category] || 0) + 1;
+          return counts;
+        }, {}),
+      weddingBackgroundSummary: document.querySelector("#launchBackgroundAssets")?.textContent || "",
       weddingCardCount: document.querySelectorAll(
         '.theme-quick-card[data-theme-key^="wedding:"]'
       ).length,
@@ -294,6 +310,12 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
 
   expect(result.weddingCardCount).toBe(0);
   expect(result.event.eventType).toBe("wedding");
+  expect(result.weddingAssetCounts).toMatchObject({
+    background: 2,
+    overlay: 2,
+    template: 1,
+  });
+  expect(result.weddingBackgroundSummary).not.toContain("Untitled asset");
   expect(result.event.themeKey).toMatch(/^wedding:/);
   expect(result.event.weddingTheme).toBeTruthy();
   expect(result.event.weddingTheme.name).toBe("Maya & Noah Wedding");
@@ -324,6 +346,8 @@ test("Wedding events can be set up without a built-in Wedding theme", async ({
   expect(result.event.partner2).toBe("Noah");
   expect(result.event.date).toBe("2027-09-19");
   expect(result.partnerFieldsVisible).toBe(true);
+  await openAssetLibrary(page);
+  await expect(page.locator("#assetLibraryGrid .asset-library-card")).toHaveCount(5);
 });
 
 test("print queue link follows the selected event instead of an old manual queue ID", async ({ page }) => {

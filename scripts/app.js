@@ -16545,8 +16545,10 @@ async function deleteAssetLibraryItem(id, fallbackAsset = null) {
 
 function getAssetDisplayName(asset) {
   if (asset && asset.name) return String(asset.name);
-  const url = String((asset && asset.url) || "");
-  const filename = decodeURIComponent(url.split("/").pop() || "");
+  const url = typeof asset === "string"
+    ? asset
+    : String((asset && (asset.url || asset.src || asset.secure_url)) || "");
+  const filename = decodeURIComponent(url.split(/[?#]/, 1)[0].split("/").pop() || "");
   return filename.replace(/\.[a-z0-9]+$/i, "") || "Untitled asset";
 }
 
@@ -16622,7 +16624,7 @@ function collectThemeAssetRows(category = "") {
       existing.themeKeys.push(themeKey);
     }
   };
-  forEachThemeEntry((theme, themeKey) => {
+  const addThemeAssets = (theme, themeKey) => {
     const themeName = theme && theme.name ? theme.name : themeKey;
     if (
       theme &&
@@ -16646,7 +16648,17 @@ function collectThemeAssetRows(category = "") {
         add(entry, "idle-screen", themeName, themeKey)
       );
     }
-  });
+  };
+  forEachThemeEntry(addThemeAssets);
+  const activeEvent = getActiveEvent();
+  if (
+    activeEvent &&
+    activeEvent.eventType === "wedding" &&
+    activeEvent.weddingTheme &&
+    activeEvent.themeKey
+  ) {
+    addThemeAssets(activeEvent.weddingTheme, activeEvent.themeKey);
+  }
   return Array.from(byKey.values()).map((row) => ({
     ...row,
     categories: [...new Set(row.themeKeys.map(themeKeyToCategory))],
