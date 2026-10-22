@@ -28,6 +28,7 @@ test("resolveTemplateTextValue supports event autofill aliases", async () => {
   assert.equal(resolveTemplateTextValue("expo_company", event), "Acme Booths");
   assert.equal(resolveTemplateTextValue("event_name", event), "Launch Party");
   assert.equal(resolveTemplateTextValue("event_date", event), "April 2026");
+  assert.equal(resolveTemplateTextValue("event_date", { date: "2027-09-19" }), "09/19/2027");
 });
 
 test("normalizeTemplateTextFields keeps valid field definitions", async () => {

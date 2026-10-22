@@ -80,6 +80,10 @@ export function resolveTemplateTextValue(key, event = {}) {
   const normalized = normalizeKey(key);
   const values = buildTemplateTextMap(event);
   const resolvedKey = TEMPLATE_TEXT_ALIASES[normalized] || normalized;
+  if (resolvedKey === "event_date" && values.event_date) {
+    const match = values.event_date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) return `${match[2]}/${match[3]}/${match[1]}`;
+  }
   return values[resolvedKey] || "";
 }
 
