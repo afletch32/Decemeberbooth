@@ -156,9 +156,9 @@ const BUILTIN_ASSET_MANIFESTS = {
       ],
       textFields: [
         { key: "couple_names", xPct: 0.07, yPct: 0.845, wPct: 0.4, hPct: 0.03, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 38, minFontSize: 20, color: "#262626", align: "center" },
-        { key: "event_date", xPct: 0.07, yPct: 0.89, wPct: 0.4, hPct: 0.02, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 21, minFontSize: 14, color: "#555555", align: "center" },
+        { key: "event_date", xPct: 0.07, yPct: 0.89, wPct: 0.4, hPct: 0.03, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 30, minFontSize: 26, color: "#333333", align: "center" },
         { key: "couple_names", xPct: 0.53, yPct: 0.845, wPct: 0.4, hPct: 0.03, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 38, minFontSize: 20, color: "#262626", align: "center" },
-        { key: "event_date", xPct: 0.53, yPct: 0.89, wPct: 0.4, hPct: 0.02, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 21, minFontSize: 14, color: "#555555", align: "center" }
+        { key: "event_date", xPct: 0.53, yPct: 0.89, wPct: 0.4, hPct: 0.03, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 30, minFontSize: 26, color: "#333333", align: "center" }
       ]
     }
   ],
