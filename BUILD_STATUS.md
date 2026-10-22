@@ -1,13 +1,13 @@
 # Build status
 
-- Current goal: Add a complete Minimal Wedding style alongside Eucalyptus in Wedding Setup.
-- Done: Built eight portrait/landscape Minimal Wedding screens; added a saved wedding style choice and retained wedding-only theme selection.
-- In progress: Check Minimal Wedding on the booth iPad at the next setup.
-- Next steps: Check the wedding setup and asset library on the booth iPad at the next setup.
+- Current goal: Refine Minimal Wedding to match the user's monochrome photo-keepsake reference.
+- Done: Replaced the warm floral screens with clean paper, black-and-white typography, and sparse botanical details; added dedicated transparent portrait/landscape frames and a three-photo strip with aligned photo openings.
+- In progress: Commit, push, and deploy the revised wedding artwork.
+- Next steps: Check the wedding setup and printed keepsakes on the booth iPad at the next setup.
 - Known bugs/blockers: Physical booth-device verification is outstanding.
 - Important decisions: Keep the Asset Library scoped to the selected theme while including generated wedding themes as asset sources.
-- Verification: `npm test` passes (290/290); focused Chromium wedding checks pass (2/2), confirming both wedding-only choices, saved Minimal style, correct screen dimensions, and successful asset loading; `git diff --check` passes. Production HTML and all eight artwork files return HTTP 200; app shell cache is v53.
-- Release: Commit `2adec08` pushed to `codex/unify-guest-photo-filter`; deployed to Pages Production on 2026-10-21 as `bcf75819` at https://decemeberbooth.pages.dev/.
+- Verification: `npm test` passes (290/290); focused Chromium wedding check passes (1/1), including loading the new screens, overlays, and strip; overlay photo openings and strip slots were checked against their transparent pixels; `git diff --check` passes.
+- Release: Previous release `2adec08` / Pages deployment `bcf75819` has the earlier artwork. Revised artwork is pending sync.
 
 ## Existing production records
 

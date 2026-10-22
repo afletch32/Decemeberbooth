@@ -70,13 +70,15 @@ test("minimal wedding foundation assets are available in both orientations", asy
   const root = join(process.cwd(), "assets/themes/minimal-wedding");
   const entries = getBuiltinAssetManifest("assets/themes/minimal-wedding/");
 
-  assert.equal(entries.length, 8);
+  assert.equal(entries.length, 11);
   entries.forEach((entry) => {
     assert.ok(existsSync(join(root, entry.src)), `${entry.src} should exist`);
   });
   assert.equal(entries.filter((entry) => entry.role === "idle").length, 2);
   assert.equal(entries.filter((entry) => entry.role === "photo-choice").length, 2);
   assert.equal(entries.filter((entry) => entry.category === "thank-you-screen").length, 2);
+  assert.equal(entries.filter((entry) => entry.type === "overlay").length, 2);
+  assert.equal(entries.find((entry) => entry.category === "template").layout, "photo_strip_3");
 });
 
 test("summer overlays remain available in built-in asset manifests", async () => {

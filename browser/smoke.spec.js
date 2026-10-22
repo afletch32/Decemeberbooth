@@ -383,12 +383,17 @@ test("minimal wedding theme is saved with its own artwork", async ({ page }) => 
   expect(event.weddingTheme.thankYouScreens).toHaveLength(2);
   expect(event.weddingTheme.overlays).toHaveLength(2);
   expect(event.weddingTheme.templates[0].layout).toBe("photo_strip_3");
+  expect(event.weddingTheme.overlays[0].src).toContain("minimal-wedding-overlay-portrait.png");
+  expect(event.weddingTheme.templates[0].src).toContain("minimal-wedding-three-photo-strip.png");
+  expect(event.weddingTheme.templates[0].photoSlots).toHaveLength(3);
   const loadedSources = await page.evaluate(async () => {
     const theme = window.__photoboothTest.getActiveTheme();
     const sources = [
       ...theme.backgrounds,
       ...theme.idleScreens.map((screen) => screen.src),
       ...theme.thankYouScreens.map((screen) => screen.src),
+      ...theme.overlays.map((overlay) => overlay.src),
+      ...theme.templates.map((template) => template.src),
     ];
     return Promise.all(sources.map((src) => new Promise((resolve) => {
       const image = new Image();

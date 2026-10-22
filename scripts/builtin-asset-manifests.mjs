@@ -110,7 +110,52 @@ const BUILTIN_ASSET_MANIFESTS = {
     { src: "minimal-wedding-photo-choice-portrait.webp", category: "idle-screen", role: "photo-choice", orientation: "portrait" },
     { src: "minimal-wedding-photo-choice-landscape.webp", category: "idle-screen", role: "photo-choice", orientation: "landscape" },
     { src: "minimal-wedding-thank-you-portrait.webp", category: "thank-you-screen", orientation: "portrait" },
-    { src: "minimal-wedding-thank-you-landscape.webp", category: "thank-you-screen", orientation: "landscape" }
+    { src: "minimal-wedding-thank-you-landscape.webp", category: "thank-you-screen", orientation: "landscape" },
+    {
+      src: "minimal-wedding-overlay-portrait.png",
+      id: "minimal-wedding-portrait",
+      name: "Minimal Wedding Portrait",
+      type: "overlay",
+      category: "wedding",
+      orientation: "portrait",
+      aspectRatio: "2:3",
+      foreground: { type: "image", src: "minimal-wedding-overlay-portrait.png" },
+      photoSlots: [{ x: 0.154, y: 0.117, width: 0.692, height: 0.669, objectFit: "cover" }],
+      textFields: [
+        { key: "couple_names", xPct: 0.16, yPct: 0.816, wPct: 0.68, hPct: 0.035, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 48, minFontSize: 24, color: "#262626", align: "center" },
+        { key: "event_date", xPct: 0.2, yPct: 0.866, wPct: 0.6, hPct: 0.026, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 25, minFontSize: 15, color: "#555555", align: "center" }
+      ]
+    },
+    {
+      src: "minimal-wedding-overlay-landscape.png",
+      id: "minimal-wedding-landscape",
+      name: "Minimal Wedding Landscape",
+      type: "overlay",
+      category: "wedding",
+      orientation: "landscape",
+      aspectRatio: "3:2",
+      foreground: { type: "image", src: "minimal-wedding-overlay-landscape.png" },
+      photoSlots: [{ x: 0.052, y: 0.103, width: 0.898, height: 0.776, objectFit: "cover" }],
+      textFields: [
+        { key: "couple_names", xPct: 0.2, yPct: 0.905, wPct: 0.6, hPct: 0.032, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 43, minFontSize: 22, color: "#262626", align: "center" },
+        { key: "event_date", xPct: 0.25, yPct: 0.949, wPct: 0.5, hPct: 0.023, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 22, minFontSize: 14, color: "#555555", align: "center" }
+      ]
+    },
+    {
+      src: "minimal-wedding-three-photo-strip.png",
+      category: "template",
+      name: "Minimal Wedding Three-Photo Strip",
+      layout: "photo_strip_3",
+      photoSlots: [
+        { x: 0.283, y: 0.079, width: 0.435, height: 0.228, sourceIndex: 0 },
+        { x: 0.283, y: 0.334, width: 0.435, height: 0.237, sourceIndex: 1 },
+        { x: 0.283, y: 0.601, width: 0.435, height: 0.232, sourceIndex: 2 }
+      ],
+      textFields: [
+        { key: "couple_names", xPct: 0.28, yPct: 0.878, wPct: 0.44, hPct: 0.03, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 38, minFontSize: 20, color: "#262626", align: "center" },
+        { key: "event_date", xPct: 0.3, yPct: 0.92, wPct: 0.4, hPct: 0.02, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 21, minFontSize: 14, color: "#555555", align: "center" }
+      ]
+    }
   ],
   "assets/school/hawks/overlays/": [
     "1.png",

@@ -13543,34 +13543,59 @@ function createMinimalWeddingTheme(partner1, partner2, date) {
   const assetBase = "/assets/themes/minimal-wedding/";
   const coupleNames = `${partner1} & ${partner2}`;
   theme.name = `${coupleNames} Wedding`;
-  theme.accent = "#647363";
-  theme.accent2 = "#d9c8a1";
+  theme.accent = "#252525";
+  theme.accent2 = "#efede8";
   theme.fontHeading = "'Lora', serif";
   theme.fontBody = "'Lora', serif";
-  theme.vibeSummary = "Warm ivory, soft sage, and delicate gold";
-  theme.overlays = theme.overlays.map((overlay) => ({
-    ...overlay,
-    id: overlay.orientation === "landscape"
-      ? "minimal-wedding-landscape"
-      : "minimal-wedding-portrait",
-    name: `Minimal Wedding ${overlay.orientation === "landscape" ? "Landscape" : "Portrait"}`,
-    textFields: overlay.textFields.map((field) => ({
-      ...field,
-      fontFamily: "'Lora', serif",
-      fontWeight: "500",
-      color: "#465447",
-    })),
-  }));
-  theme.templates = theme.templates.map((template) => ({
-    ...template,
-    name: "Minimal Wedding Three-Photo Strip",
-    textFields: template.textFields.map((field) => ({
-      ...field,
-      fontFamily: "'Lora', serif",
-      fontWeight: "500",
-      color: "#465447",
-    })),
-  }));
+  theme.vibeSummary = "Monochrome keepsake prints with delicate botanical details";
+  theme.overlays = [
+    {
+      id: "minimal-wedding-portrait",
+      name: "Minimal Wedding Portrait",
+      src: `${assetBase}minimal-wedding-overlay-portrait.png`,
+      type: "overlay",
+      category: "wedding",
+      orientation: "portrait",
+      aspectRatio: "2:3",
+      foreground: { type: "image", src: `${assetBase}minimal-wedding-overlay-portrait.png` },
+      photoSlots: [{ x: 0.154, y: 0.117, width: 0.692, height: 0.669, objectFit: "cover" }],
+      textFields: [
+        { key: "couple_names", xPct: 0.16, yPct: 0.816, wPct: 0.68, hPct: 0.035, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 48, minFontSize: 24, color: "#262626", align: "center" },
+        { key: "event_date", xPct: 0.2, yPct: 0.866, wPct: 0.6, hPct: 0.026, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 25, minFontSize: 15, color: "#555555", align: "center" },
+      ],
+    },
+    {
+      id: "minimal-wedding-landscape",
+      name: "Minimal Wedding Landscape",
+      src: `${assetBase}minimal-wedding-overlay-landscape.png`,
+      type: "overlay",
+      category: "wedding",
+      orientation: "landscape",
+      aspectRatio: "3:2",
+      foreground: { type: "image", src: `${assetBase}minimal-wedding-overlay-landscape.png` },
+      photoSlots: [{ x: 0.052, y: 0.103, width: 0.898, height: 0.776, objectFit: "cover" }],
+      textFields: [
+        { key: "couple_names", xPct: 0.2, yPct: 0.905, wPct: 0.6, hPct: 0.032, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 43, minFontSize: 22, color: "#262626", align: "center" },
+        { key: "event_date", xPct: 0.25, yPct: 0.949, wPct: 0.5, hPct: 0.023, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 22, minFontSize: 14, color: "#555555", align: "center" },
+      ],
+    },
+  ];
+  theme.templates = [
+    {
+      src: `${assetBase}minimal-wedding-three-photo-strip.png`,
+      name: "Minimal Wedding Three-Photo Strip",
+      layout: "photo_strip_3",
+      photoSlots: [
+        { x: 0.283, y: 0.079, width: 0.435, height: 0.228, sourceIndex: 0 },
+        { x: 0.283, y: 0.334, width: 0.435, height: 0.237, sourceIndex: 1 },
+        { x: 0.283, y: 0.601, width: 0.435, height: 0.232, sourceIndex: 2 },
+      ],
+      textFields: [
+        { key: "couple_names", xPct: 0.28, yPct: 0.878, wPct: 0.44, hPct: 0.03, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 38, minFontSize: 20, color: "#262626", align: "center" },
+        { key: "event_date", xPct: 0.3, yPct: 0.92, wPct: 0.4, hPct: 0.02, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 21, minFontSize: 14, color: "#555555", align: "center" },
+      ],
+    },
+  ];
   theme.backgrounds = [
     `${assetBase}minimal-wedding-background-portrait.webp`,
     `${assetBase}minimal-wedding-background-landscape.webp`,
