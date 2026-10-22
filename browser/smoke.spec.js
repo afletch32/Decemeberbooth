@@ -385,7 +385,8 @@ test("minimal wedding theme is saved with its own artwork", async ({ page }) => 
   expect(event.weddingTheme.templates[0].layout).toBe("photo_strip_3");
   expect(event.weddingTheme.overlays[0].src).toContain("minimal-wedding-overlay-portrait.png");
   expect(event.weddingTheme.templates[0].src).toContain("minimal-wedding-three-photo-strip.png");
-  expect(event.weddingTheme.templates[0].photoSlots).toHaveLength(3);
+  expect(event.weddingTheme.templates[0].photoSlots).toHaveLength(6);
+  expect(event.weddingTheme.templates[0].photoSlots.map((slot) => slot.sourceIndex)).toEqual([0, 1, 2, 0, 1, 2]);
   const loadedSources = await page.evaluate(async () => {
     const theme = window.__photoboothTest.getActiveTheme();
     const sources = [
@@ -404,6 +405,41 @@ test("minimal wedding theme is saved with its own artwork", async ({ page }) => 
   });
   expect(loadedSources.filter((image) => image.error)).toEqual([]);
   expect(loadedSources.filter((image) => image.width !== (image.height === 1800 ? 1200 : 1800))).toEqual([]);
+
+  const stripSamples = await page.evaluate(async () => {
+    const { composeStrip, getActiveTheme } = window.__photoboothTest;
+    const photos = [40, 110, 190].map((value) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 80;
+      canvas.height = 80;
+      const context = canvas.getContext("2d");
+      context.fillStyle = `rgb(${value}, ${value}, ${value})`;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      return canvas;
+    });
+    const dataUrl = await composeStrip(getActiveTheme().templates[0], photos);
+    const rendered = new Image();
+    rendered.src = dataUrl;
+    await rendered.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = rendered.naturalWidth;
+    canvas.height = rendered.naturalHeight;
+    const context = canvas.getContext("2d");
+    context.drawImage(rendered, 0, 0);
+    return [0.2, 0.45, 0.7].map((y) => [0.27, 0.72].map((x) => {
+      const [red, green, blue] = context.getImageData(
+        Math.round(canvas.width * x),
+        Math.round(canvas.height * y),
+        1,
+        1
+      ).data;
+      return [red, green, blue];
+    }));
+  });
+  expect(stripSamples[0][0]).toEqual(stripSamples[0][1]);
+  expect(stripSamples[1][0]).toEqual(stripSamples[1][1]);
+  expect(stripSamples[2][0]).toEqual(stripSamples[2][1]);
+  expect(new Set(stripSamples.map(([left]) => left.join(","))).size).toBe(3);
 });
 
 test("print queue link follows the selected event instead of an old manual queue ID", async ({ page }) => {

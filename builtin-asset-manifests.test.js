@@ -78,7 +78,10 @@ test("minimal wedding foundation assets are available in both orientations", asy
   assert.equal(entries.filter((entry) => entry.role === "photo-choice").length, 2);
   assert.equal(entries.filter((entry) => entry.category === "thank-you-screen").length, 2);
   assert.equal(entries.filter((entry) => entry.type === "overlay").length, 2);
-  assert.equal(entries.find((entry) => entry.category === "template").layout, "photo_strip_3");
+  const template = entries.find((entry) => entry.category === "template");
+  assert.equal(template.layout, "photo_strip_3");
+  assert.equal(template.photoSlots.length, 6);
+  assert.deepEqual(template.photoSlots.map((slot) => slot.sourceIndex), [0, 1, 2, 0, 1, 2]);
 });
 
 test("summer overlays remain available in built-in asset manifests", async () => {

@@ -13586,13 +13586,18 @@ function createMinimalWeddingTheme(partner1, partner2, date) {
       name: "Minimal Wedding Three-Photo Strip",
       layout: "photo_strip_3",
       photoSlots: [
-        { x: 0.283, y: 0.079, width: 0.435, height: 0.228, sourceIndex: 0 },
-        { x: 0.283, y: 0.334, width: 0.435, height: 0.237, sourceIndex: 1 },
-        { x: 0.283, y: 0.601, width: 0.435, height: 0.232, sourceIndex: 2 },
+        { x: 0.099, y: 0.086, width: 0.356, height: 0.226, sourceIndex: 0 },
+        { x: 0.099, y: 0.335, width: 0.356, height: 0.226, sourceIndex: 1 },
+        { x: 0.099, y: 0.585, width: 0.356, height: 0.235, sourceIndex: 2 },
+        { x: 0.545, y: 0.086, width: 0.352, height: 0.226, sourceIndex: 0 },
+        { x: 0.545, y: 0.335, width: 0.352, height: 0.226, sourceIndex: 1 },
+        { x: 0.545, y: 0.585, width: 0.352, height: 0.235, sourceIndex: 2 },
       ],
       textFields: [
-        { key: "couple_names", xPct: 0.28, yPct: 0.878, wPct: 0.44, hPct: 0.03, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 38, minFontSize: 20, color: "#262626", align: "center" },
-        { key: "event_date", xPct: 0.3, yPct: 0.92, wPct: 0.4, hPct: 0.02, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 21, minFontSize: 14, color: "#555555", align: "center" },
+        { key: "couple_names", xPct: 0.07, yPct: 0.845, wPct: 0.4, hPct: 0.03, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 38, minFontSize: 20, color: "#262626", align: "center" },
+        { key: "event_date", xPct: 0.07, yPct: 0.89, wPct: 0.4, hPct: 0.02, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 21, minFontSize: 14, color: "#555555", align: "center" },
+        { key: "couple_names", xPct: 0.53, yPct: 0.845, wPct: 0.4, hPct: 0.03, fontFamily: "'Great Vibes', cursive", fontWeight: "400", fontSize: 38, minFontSize: 20, color: "#262626", align: "center" },
+        { key: "event_date", xPct: 0.53, yPct: 0.89, wPct: 0.4, hPct: 0.02, fontFamily: "'Lora', serif", fontWeight: "400", fontSize: 21, minFontSize: 14, color: "#555555", align: "center" },
       ],
     },
   ];
