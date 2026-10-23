@@ -2759,7 +2759,7 @@ function getSessionEffectiveAssetSourceSet(category = "") {
   }
   if (normalized === "overlay") {
     return new Set(
-      getOverlayList(theme)
+      getAssignedOverlayList(theme)
         .map((o) => (o && o.src ? o.src : null))
         .filter(Boolean)
     );

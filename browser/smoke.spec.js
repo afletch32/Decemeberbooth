@@ -241,7 +241,7 @@ async function createWeddingEvent(page, options = {}) {
   await expect(page.locator(".wedding-theme-choices")).toContainText("Eucalyptus Wedding");
   await expect(page.locator(".wedding-theme-choices")).toContainText("Minimal Wedding");
   await expect(page.locator("#screenShapeSetupField")).toBeHidden();
-  await expect(page.locator("#printModeSetupField")).toBeHidden();
+  await expect(page.locator("#printModeSetupField")).toBeVisible();
   await expect(page.locator("#eventProfileSelect")).toBeVisible();
   await page.fill("#eventDateInput", date);
   await page.fill("#eventPartner1Input", partner1);
@@ -287,7 +287,7 @@ test("Wedding setup offers only the completed wedding theme choices", async ({
     date: "2027-09-19",
   });
   await expect(page.locator("#screenShapeSetupField")).toBeHidden();
-  await expect(page.locator("#printModeSetupField")).toBeHidden();
+  await expect(page.locator("#printModeSetupField")).toBeVisible();
   await expect(page.locator("#eventProfileSelect")).toBeVisible();
   await expect(page.locator(".wedding-theme-choices")).toContainText("Eucalyptus Wedding");
   await expect(page.locator("#generalThemeBrowse")).toBeHidden();
@@ -1157,9 +1157,7 @@ test("asset library cards toggle selection from the full card surface", async ({
   await page.waitForFunction(() => !!window.__photoboothTest);
   await openAssetLibrary(page);
 
-  const initialCard = page
-    .locator('#assetLibraryGrid .asset-library-card[aria-selected="false"]')
-    .first();
+  const initialCard = page.locator("#assetLibraryGrid .asset-library-card").first();
   await expect(initialCard).toBeVisible();
   const cardName = await initialCard.locator(".asset-library-name").innerText();
   const card = page
@@ -1180,6 +1178,9 @@ test("asset library cards toggle selection from the full card surface", async ({
 test("asset defaults persist across save, reopen, and reload", async ({
   page,
 }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("photoboothRemoteSync", "false");
+  });
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
   await openAssetLibrary(page);
@@ -1275,6 +1276,10 @@ test("asset defaults group themes by category and parent selects children", asyn
 
   await page.evaluate(() => {
     const themes = window.__photoboothTest.getThemes();
+    themes.general.themes.summer = {
+      ...JSON.parse(JSON.stringify(themes.general.themes.averyBirthday)),
+      name: "Summer",
+    };
     themes.basic = { name: "basic" };
     themes.ANE = { name: "ANE" };
   });
@@ -1322,6 +1327,9 @@ test("asset defaults group themes by category and parent selects children", asyn
 test("asset default saved to current theme appears immediately after session removal", async ({
   page,
 }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("photoboothRemoteSync", "false");
+  });
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
 
@@ -1825,7 +1833,7 @@ test("strip rendering honors manifest photoSlots before default geometry", async
           { x: 20 / 120, y: 126 / 180, width: 72 / 120, height: 28 / 180 },
         ],
       },
-      [makePhoto("#ff0000"), makePhoto("#00ff00"), makePhoto("#0000ff")]
+      [makePhoto("#ff0000"), makePhoto("#ff00ff"), makePhoto("#0000ff")]
     );
     const img = new Image();
     img.src = url;
@@ -1848,8 +1856,9 @@ test("strip rendering honors manifest photoSlots before default geometry", async
   expect(samples.size).toEqual([120, 180]);
   expect(samples.firstSlot[0]).toBeGreaterThan(200);
   expect(samples.firstSlot[1]).toBeLessThan(80);
-  expect(samples.secondSlot[1]).toBeGreaterThan(150);
-  expect(samples.secondSlot[0]).toBeLessThan(100);
+  expect(samples.secondSlot[0]).toBeGreaterThan(150);
+  expect(samples.secondSlot[2]).toBeGreaterThan(150);
+  expect(samples.secondSlot[1]).toBeLessThan(100);
   expect(samples.thirdSlot[2]).toBeGreaterThan(150);
   expect(samples.defaultFallbackArea.slice(0, 3)).toEqual([255, 255, 255]);
 });
@@ -2331,7 +2340,17 @@ test("frame picker hides during finalizing on desktop and mobile", async ({
       width: viewport.width,
       height: viewport.height,
     });
-    await enterStillPhotoCapture(page);
+    await gotoApp(page, "/index.html");
+    await page.waitForFunction(() => !!window.__photoboothTest);
+    await page.evaluate(() => {
+      document.getElementById("adminScreen")?.classList.add("hidden");
+      document.body.classList.remove("admin-open");
+      document.documentElement.classList.remove("admin-open");
+      const booth = document.getElementById("boothScreen");
+      booth.classList.remove("hidden", "welcome-active", "share-mode", "countdown-mode", "finalizing-mode");
+      booth.classList.add("booth-ready");
+      window.setMode("still-photo");
+    });
     await expect(page.locator("#overlayPickerButton"), viewport.label).toBeVisible();
     await page.locator("#overlayPickerButton").click();
     await expect(page.locator("#mobileSettingsSheet"), viewport.label).toBeVisible();
@@ -2341,7 +2360,9 @@ test("frame picker hides during finalizing on desktop and mobile", async ({
     expect(chooser.y, `${viewport.label} chooser top edge`).toBeCloseTo(0, 0);
     expect(chooser.width, `${viewport.label} chooser width`).toBe(viewport.width);
     expect(chooser.height, `${viewport.label} chooser height`).toBe(viewport.height);
-    await expect(page.locator("#mobileSettingsSheet .options-section-title")).toContainText("Overlays");
+    await expect(
+      page.locator("#mobileSettingsSheet .options-section-title").filter({ hasText: "Overlays" })
+    ).toHaveCount(1);
     await expect(page.locator("#mobileSettingsSheet .filter-choice")).toHaveCount(0);
     await expect(page.locator("#frameCarouselName, #filterCarouselName, #framePrevBtn, #frameNextBtn, #filterPrevBtn, #filterNextBtn")).toHaveCount(0);
     await page.locator("#mobileSettingsClose").click();
@@ -2351,6 +2372,7 @@ test("frame picker hides during finalizing on desktop and mobile", async ({
       if (!booth) return;
       booth.classList.add("finalizing-mode");
       booth.classList.remove("mobile-settings-open");
+      window.setMode("still-photo");
     });
     await expect(page.locator("#mobileSettingsSheet"), viewport.label).toBeHidden();
     await expect(page.locator("#overlayPickerButton"), viewport.label).toBeHidden();

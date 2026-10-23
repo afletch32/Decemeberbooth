@@ -14,7 +14,7 @@ test("Digital Only saves immediately and does not show a print price to guests",
     }
   });
   await page.goto(boothTestUrl(), { waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => document.querySelector("#printModeInput")?.dataset.priceVisibilityBound === "true");
+  await page.waitForFunction(() => document.documentElement.dataset.priceVisibilityBound === "true");
   await page.locator("#printModeInput").evaluate((select) => {
     select.value = "off";
     select.dispatchEvent(new Event("change", { bubbles: true }));
@@ -25,7 +25,7 @@ test("Digital Only saves immediately and does not show a print price to guests",
   );
 
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => document.querySelector("#printModeInput")?.dataset.priceVisibilityBound === "true");
+  await page.waitForFunction(() => document.documentElement.dataset.priceVisibilityBound === "true");
   assert.equal(await page.evaluate(() => document.querySelector("#printModeInput").value), "off");
   await page.evaluate(() => {
     const canvas = document.createElement("canvas");
