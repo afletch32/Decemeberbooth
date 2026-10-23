@@ -17,6 +17,10 @@ let assetLibraryUtils;
 const assetLibraryUtilsReady = import('./scripts/asset-library-utils.mjs').then((utils) => {
   assetLibraryUtils = utils;
 });
+let themeSyncUtils;
+const themeSyncUtilsReady = import('./scripts/theme-sync-utils.mjs').then((utils) => {
+  themeSyncUtils = utils;
+});
 const getAssetLibraryId = (...args) => assetLibraryUtils.getAssetLibraryId(...args);
 const getAssetLibraryUrlKey = (...args) => assetLibraryUtils.getAssetLibraryUrlKey(...args);
 const normalizeAssetLibraryRecords = (...args) => assetLibraryUtils.normalizeAssetLibraryPayload(...args);
@@ -339,10 +343,12 @@ app.get('/api/themes', (req, res) => {
 });
 
 // API: PUT /api/themes
-app.put('/api/themes', (req, res) => {
+app.put('/api/themes', async (req, res) => {
   try {
-    const data = req.body;
-    writeJsonFile('themes.json', data);
+    await themeSyncUtilsReady;
+    const current = readJsonFile('themes.json', {});
+    const merged = themeSyncUtils.mergeThemeCatalog(current, req.body);
+    writeJsonFile('themes.json', merged);
     res.json({ ok: true });
   } catch (err) {
     console.error('Error saving themes:', err);

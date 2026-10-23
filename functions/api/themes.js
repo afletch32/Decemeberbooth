@@ -1,3 +1,5 @@
+import { mergeThemeCatalog } from "../../scripts/theme-sync-utils.mjs";
+
 function buildJsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -43,7 +45,8 @@ export async function onRequest(context) {
   if (request.method === "PUT") {
     try {
       const payload = await request.json();
-      await env.THEMES_KV.put("themes", JSON.stringify(payload || {}));
+      const merged = mergeThemeCatalog(await readThemes(env), payload);
+      await env.THEMES_KV.put("themes", JSON.stringify(merged));
       return buildJsonResponse({ ok: true });
     } catch (err) {
       return buildJsonResponse(
