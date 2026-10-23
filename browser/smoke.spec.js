@@ -2602,6 +2602,94 @@ test("Eucalyptus wedding overlays are transparent PNG assets", async ({
   expect(response.headers()["content-type"]).toContain("image/png");
 });
 
+test("Hawks pizza frames and strips render photos through their transparent slots", async ({
+  page,
+}) => {
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+  const rendered = await page.evaluate(async () => {
+    const api = window.__photoboothTest;
+    const theme = api.getThemes().school.themes.hawks;
+    const assetPrefix = "/assets/themes/spring-hill-hawks/pizza/";
+    const strips = api
+      .getBaseTemplateList(theme)
+      .filter((entry) => entry.src.startsWith(assetPrefix));
+    const overlays = api
+      .getBaseOverlayList(theme)
+      .filter((entry) => entry.src.startsWith(assetPrefix));
+    const makePhoto = (color) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 40;
+      canvas.height = 40;
+      const context = canvas.getContext("2d");
+      context.fillStyle = color;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      return canvas;
+    };
+    const colors = ["#ff0000", "#ff00ff", "#0000ff"];
+    const renderSamples = async (entry) => {
+      const photos = entry.photoSlots.map((slot) =>
+        makePhoto(colors[slot.sourceIndex || 0])
+      );
+      const dataUrl = await api.composeStrip(
+        {
+          ...entry,
+          layout: entry.layout || "single_photo",
+        },
+        photos
+      );
+      const image = new Image();
+      image.src = dataUrl;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d");
+      context.drawImage(image, 0, 0);
+      return entry.photoSlots.map((slot) =>
+        Array.from(
+          context.getImageData(
+            Math.floor((slot.x + slot.width / 2) * canvas.width),
+            Math.floor((slot.y + slot.height / 2) * canvas.height),
+            1,
+            1
+          ).data
+        )
+      );
+    };
+    const outputs = [];
+    for (const entry of [...strips, ...overlays]) {
+      outputs.push({ src: entry.src, samples: await renderSamples(entry) });
+    }
+    return {
+      stripSources: strips.map((entry) => entry.src),
+      overlaySources: overlays.map((entry) => entry.src),
+      outputs,
+    };
+  });
+
+  expect(rendered.stripSources).toHaveLength(2);
+  expect(rendered.overlaySources).toHaveLength(3);
+  expect(rendered.outputs).toHaveLength(5);
+  rendered.outputs.forEach((output) => {
+    expect(output.samples.length).toBe(
+      output.src.includes("3-photo-strip") ? 3 : 1
+    );
+    output.samples.forEach((pixel, index) => {
+      const expected = output.src.includes("3-photo-strip")
+        ? [
+            [255, 0, 0],
+            [255, 0, 255],
+            [0, 0, 255],
+          ][index]
+        : [255, 0, 0];
+      expected.forEach((channel, channelIndex) => {
+        expect(Math.abs(pixel[channelIndex] - channel)).toBeLessThan(20);
+      });
+    });
+  });
+});
+
 test.skip("single-photo overlay autofill renders couple names and date from the created event", async ({
   page,
 }) => {

@@ -1,14 +1,14 @@
 # Build status
 
-- Current goal: Match Minimal Wedding print layout to the user's two-strip reference.
-- Done: Minimal Wedding now uses two matching vertical three-photo strips side by side on one print, with duplicate names and date on both strips.
-- In progress: Physical check of the two-strip print on the booth printer.
-- Next steps: Check the printed keepsake on the booth printer at the next setup.
-- Known bugs/blockers: Physical booth-device verification is outstanding.
-- Important decisions: Keep the Asset Library scoped to the selected theme while including generated wedding themes as asset sources.
-- Verification: `npm test` passes (290/290); focused Chromium wedding render check passes (1/1), confirming three captured images repeat in the same positions across both strips; `git diff --check` passes.
-- Release: Commit `d7c174c` pushed to `codex/unify-guest-photo-filter`; deployed to Pages Production on 2026-10-22 as `521efca3` at https://decemeberbooth.pages.dev/.
-- Live check: Production HTML references the new app version, and the two-strip template and app script return HTTP 200.
+- Current goal: Add the Hawks pizza photo frames and three-photo strips to Decemberbooth.
+- Done: Cropped five source designs and prepared transparent photo windows; added three frames and two strip templates to the Spring Hill Hawks theme, including defaults migration for existing saved themes.
+- In progress: Ready to commit the scoped release.
+- Next steps: Push, deploy, and verify the production theme.
+- Known bugs/blockers: The source collage crops are low resolution; native crop dimensions are retained to avoid inventing image detail.
+- Important decisions: Single-photo designs are overlays; the two three-photo designs are strip templates. The artwork stays in its own Hawks pizza asset folder.
+- Verification: `npm test` passes (291/291); focused Chromium check passes (1/1), confirming the two three-photo strips and three single-photo frames render photos through their openings. The full browser suite reported 39 passed, 6 failed, and 18 skipped; failures were in PayPal, asset-library persistence/selection, strip-slot rendering, and frame-picker visibility checks.
+- Release: Pending.
+- Live check: Pending.
 
 ## Existing production records
 
