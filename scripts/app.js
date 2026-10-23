@@ -7146,9 +7146,13 @@ function loadPrintSettings() {
   if (DOM.printModeInput) {
     DOM.printModeInput.value = settings.mode;
     syncEventPrintPriceVisibility();
-    if (DOM.printModeInput.dataset.priceVisibilityBound !== "true") {
-      DOM.printModeInput.dataset.priceVisibilityBound = "true";
-      DOM.printModeInput.addEventListener("change", persistPrintModeSelection);
+    if (document.documentElement.dataset.priceVisibilityBound !== "true") {
+      document.documentElement.dataset.priceVisibilityBound = "true";
+      document.addEventListener("change", (event) => {
+        if (event.target && event.target.id === "printModeInput") {
+          persistPrintModeSelection();
+        }
+      });
     }
   }
   if (DOM.printNoPaymentRequiredInput) DOM.printNoPaymentRequiredInput.checked = settings.noPaymentRequired === true;
@@ -7167,9 +7171,10 @@ function loadPrintSettings() {
 }
 
 function persistPrintModeSelection() {
-  if (!DOM.printModeInput) return;
-  const mode = ["off", "free", "paid"].includes(DOM.printModeInput.value)
-    ? DOM.printModeInput.value
+  const printModeInput = document.getElementById("printModeInput");
+  if (!printModeInput) return;
+  const mode = ["off", "free", "paid"].includes(printModeInput.value)
+    ? printModeInput.value
     : "off";
   const settings = getPrintSettings();
   settings.mode = mode;
@@ -7191,8 +7196,13 @@ function persistPrintModeSelection() {
 }
 
 function syncEventPrintPriceVisibility() {
-  if (!DOM.eventPrintPriceSettings || !DOM.printModeInput) return;
-  DOM.eventPrintPriceSettings.hidden = DOM.printModeInput.value !== "paid";
+  const eventPrintPriceSettings = document.getElementById("eventPrintPriceSettings");
+  const printModeInput = document.getElementById("printModeInput");
+  if (!eventPrintPriceSettings || !printModeInput) return;
+  const weddingSetup = !!document.querySelector(
+    ".setup-session-card.wedding-setup-mode"
+  );
+  eventPrintPriceSettings.hidden = printModeInput.value !== "paid" && !weddingSetup;
 }
 
 function syncEventPrintPriceInput(force = false) {
@@ -13919,6 +13929,7 @@ function syncWeddingSetupMode() {
     syncWeddingThemeChoice(active.weddingThemeStyle || "eucalyptus");
   }
   document.querySelector(".setup-session-card")?.classList.toggle("wedding-setup-mode", weddingSelected);
+  syncEventPrintPriceVisibility();
   if (DOM.weddingSetupAction) DOM.weddingSetupAction.hidden = weddingSelected;
   if (DOM.weddingEventSetup) DOM.weddingEventSetup.hidden = !weddingSelected;
   if (DOM.themeQuickPicker) DOM.themeQuickPicker.classList.toggle("hidden", weddingSelected);

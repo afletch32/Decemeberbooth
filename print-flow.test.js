@@ -19,8 +19,10 @@ test("event print price appears only when paid printing is selected", () => {
   const app = read("scripts", "app.js");
   assert.ok(html.includes('id="eventPrintPriceSettings" hidden'));
   assert.ok(app.includes("function syncEventPrintPriceVisibility()"));
-  assert.ok(app.includes('DOM.eventPrintPriceSettings.hidden = DOM.printModeInput.value !== "paid";'));
-  assert.ok(app.includes('addEventListener("change", persistPrintModeSelection)'));
+  assert.ok(app.includes('printModeInput.value !== "paid" && !weddingSetup;'));
+  assert.ok(app.includes('".setup-session-card.wedding-setup-mode"'));
+  assert.ok(app.includes('event.target.id === "printModeInput"'));
+  assert.ok(app.includes('document.addEventListener("change"'));
   assert.ok(app.includes('localStorage.setItem(PRINT_SETTINGS_STORAGE_KEY, JSON.stringify(settings))'));
 });
 
