@@ -1,12 +1,12 @@
 # Build status
 
-- Current goal: Provide paired-strip and single-photo overlay choices with and without pizza in Spring Hill Hawks Cheer.
-- Done: Added a second side-by-side pair of 2×6 strips (three photos per strip) and a single portrait overlay without pizza, alongside the pizza versions. Registered all four assets in the Cheer theme and extended legacy catalog migration.
-- In progress: None.
+- Current goal: Provide Spring Hill Hawks 2026 paired strips and portrait overlays in both pizza and regular styles.
+- Done: Added matching 2026 artwork to both styles, refined pizza to clean cartoon wedges, removed cheese-like drips from the regular overlay, and preserved all transparent photo windows. Added versioned asset paths and migration that replaces the four unbranded picker entries.
+- In progress: Commit, deploy, and verify the 2026 catalog update.
 - Next steps: Check physical print sharpness when practical.
 - Known bugs/blockers: Concurrent read-modify-write requests can still race because Cloudflare KV is not transactional; same-theme edits are last-write-wins. Theme deletion is not represented by the current whole-catalog PUT contract. The source collage crops are low resolution; native crop dimensions are retained to avoid inventing image detail. Physical print quality has not been checked.
 - Important decisions: Single-photo designs are overlays; the two three-photo designs are strip templates. Preserve the existing pizza asset folder paths; keep these designs exclusively in Hawks Cheer.
-- Verification: `npm test` passes (294/294). Focused Hawks Cheer render and legacy-catalog migration browser checks pass (2/2), including transparent-slot alpha and repeated photo order for both pizza and pizza-free assets. `git diff --check` passes. Production page returns HTTP 200, the picker shows “Spring Hill Hawks Cheer,” all four new PNG assets return HTTP 200, and `/api/themes` stores five overlays plus four templates under Cheer with none in football Hawks. Full browser suite has not been rerun after earlier fixture corrections.
+- Verification: `npm test` passes (294/294). Focused Hawks Cheer render and legacy-catalog migration browser checks pass (2/2), including transparent-slot alpha, repeated photo order, and removal of replaced entries. `git diff --check` passes. Production verification pending.
 - Release: Commit `4124048` pushed to `codex/unify-guest-photo-filter` and deployed to Pages Production on 2026-10-23 as deployment `215ffce8`.
 - Live check: Production root returns HTTP 200 and references `scripts/app.js?v=20261023-paypal-picker-sync`; `sw.js` reports `pb-app-shell-v57`. Wrangler identifies source `4124048` as Production on `main`. Local `exports/` files were excluded from the deployment.
 - Theme sync release: Commit `8caf82e` pushed to `codex/unify-guest-photo-filter` and deployed as Pages Production on `main`, deployment `1ed6f017`. The preview and canonical URLs both return HTTP 200 and preserve all 10 live theme records. The untracked `exports/` folder was excluded.

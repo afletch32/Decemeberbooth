@@ -2692,7 +2692,7 @@ test("Hawks Cheer pizza frames and strips render through their transparent slots
     };
     const inspectTransparentWindows = async (entry) => {
       if (!entry.src.includes("double-2x6-three-photo-strips") &&
-          !entry.src.includes("single-photo-portrait.png")) {
+          !entry.src.includes("single-photo-portrait")) {
         return [];
       }
       const image = new Image();
@@ -2741,7 +2741,7 @@ test("Hawks Cheer pizza frames and strips render through their transparent slots
     output.src.includes("pizza-double-2x6-three-photo-strips")
   );
   const pairedNoPizzaStrip = rendered.outputs.find((output) =>
-    output.src.includes("no-pizza-double-2x6-three-photo-strips")
+    output.src.includes("cheer-double-2x6-three-photo-strips-2026")
   );
   [pairedStrip, pairedNoPizzaStrip].forEach((strip) => {
     expect(strip.samples).toHaveLength(6);
@@ -2795,6 +2795,14 @@ test("legacy Hawks pizza assets migrate into Spring Hill Hawks Cheer", async ({
     const themes = structuredClone(window.__photoboothTest.getThemes());
     const hawks = themes.school.themes.hawks;
     const cheer = themes.school.themes.hawksCheer;
+    cheer.overlays.push(
+      { src: "/assets/themes/spring-hill-hawks/pizza/hawks-pizza-single-photo-portrait.png" },
+      { src: "/assets/themes/spring-hill-hawks-cheer/overlays/spring-hill-hawks-cheer-no-pizza-single-photo-portrait.png" }
+    );
+    cheer.templates.push(
+      { src: "/assets/themes/spring-hill-hawks/pizza/hawks-pizza-double-2x6-three-photo-strips.png" },
+      { src: "/assets/themes/spring-hill-hawks-cheer/overlays/spring-hill-hawks-cheer-no-pizza-double-2x6-three-photo-strips.png" }
+    );
     const prefixes = [
       "/assets/themes/spring-hill-hawks/pizza/",
       "/assets/themes/spring-hill-hawks-cheer/overlays/",
@@ -2812,7 +2820,7 @@ test("legacy Hawks pizza assets migrate into Spring Hill Hawks Cheer", async ({
     });
     localStorage.setItem("photoboothThemes", JSON.stringify(themes));
   });
-  await page.reload();
+  await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => !!window.__photoboothTest);
 
   const migrated = await page.evaluate(() => {

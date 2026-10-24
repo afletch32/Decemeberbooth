@@ -11,10 +11,10 @@ const assets = [
   "pizza/hawks-pizza-wide-landscape.png",
   "pizza/hawks-pizza-small-landscape.png",
   "pizza/hawks-pizza-portrait.png",
-  "pizza/hawks-pizza-double-2x6-three-photo-strips.png",
-  "pizza/hawks-pizza-single-photo-portrait.png",
-  "../spring-hill-hawks-cheer/overlays/spring-hill-hawks-cheer-no-pizza-double-2x6-three-photo-strips.png",
-  "../spring-hill-hawks-cheer/overlays/spring-hill-hawks-cheer-no-pizza-single-photo-portrait.png",
+  "pizza/hawks-pizza-double-2x6-three-photo-strips-2026.png",
+  "pizza/hawks-pizza-single-photo-portrait-2026.png",
+  "../spring-hill-hawks-cheer/overlays/spring-hill-hawks-cheer-double-2x6-three-photo-strips-2026.png",
+  "../spring-hill-hawks-cheer/overlays/spring-hill-hawks-cheer-single-photo-portrait-2026.png",
 ];
 
 test("Hawks pizza artwork belongs to Spring Hill Hawks Cheer", () => {
@@ -37,10 +37,10 @@ test("Hawks pizza artwork belongs to Spring Hill Hawks Cheer", () => {
   assert.ok(cheerTheme.includes('name: "Spring Hill Hawks Cheer"'));
   assert.ok(cheerTheme.includes('name: "Spring Hill Hawks Cheer Pizza Three-Photo Strip Navy"'));
   assert.ok(cheerTheme.includes('name: "Spring Hill Hawks Cheer Pizza Three-Photo Strip White"'));
-  assert.ok(cheerTheme.includes('name: "Spring Hill Hawks Cheer Pizza Double 2x6 Three-Photo Strips"'));
-  assert.ok(cheerTheme.includes('name: "Spring Hill Hawks Cheer Pizza Single Photo Portrait"'));
-  assert.ok(cheerTheme.includes('name: "Spring Hill Hawks Cheer Double 2x6 Three-Photo Strips"'));
-  assert.ok(cheerTheme.includes('name: "Spring Hill Hawks Cheer Single Photo Portrait"'));
+  assert.ok(cheerTheme.includes('name: "Spring Hill Hawks 2026 Pizza Double 2x6 Three-Photo Strips"'));
+  assert.ok(cheerTheme.includes('name: "Spring Hill Hawks 2026 Pizza Single Photo Portrait"'));
+  assert.ok(cheerTheme.includes('name: "Spring Hill Hawks 2026 Double 2x6 Three-Photo Strips"'));
+  assert.ok(cheerTheme.includes('name: "Spring Hill Hawks 2026 Single Photo Portrait"'));
   assert.ok(cheerTheme.includes('sourceIndex: 0'));
   assert.ok(cheerTheme.includes('sourceIndex: 1'));
   assert.ok(cheerTheme.includes('sourceIndex: 2'));
