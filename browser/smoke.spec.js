@@ -2624,15 +2624,21 @@ test("Eucalyptus wedding overlays are transparent PNG assets", async ({
   expect(response.headers()["content-type"]).toContain("image/png");
 });
 
-test("Hawks pizza frames and strips render photos through their transparent slots", async ({
+test("Hawks Cheer pizza frames and strips render through their transparent slots", async ({
   page,
 }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("photoboothRemoteSync", "false");
+  });
   await gotoApp(page, "/index.html");
   await page.waitForFunction(() => !!window.__photoboothTest);
   const rendered = await page.evaluate(async () => {
     const api = window.__photoboothTest;
-    const theme = api.getThemes().school.themes.hawks;
+    const theme = api.getThemes().school.themes.hawksCheer;
     const assetPrefix = "/assets/themes/spring-hill-hawks/pizza/";
+    const cardLabel = document.querySelector(
+      '.theme-quick-card[data-theme-key="school:hawksCheer"] strong'
+    )?.textContent;
     const strips = api
       .getBaseTemplateList(theme)
       .filter((entry) => entry.src.startsWith(assetPrefix));
@@ -2686,6 +2692,7 @@ test("Hawks pizza frames and strips render photos through their transparent slot
     return {
       stripSources: strips.map((entry) => entry.src),
       overlaySources: overlays.map((entry) => entry.src),
+      cardLabel,
       outputs,
     };
   });
@@ -2693,6 +2700,7 @@ test("Hawks pizza frames and strips render photos through their transparent slot
   expect(rendered.stripSources).toHaveLength(2);
   expect(rendered.overlaySources).toHaveLength(3);
   expect(rendered.outputs).toHaveLength(5);
+  expect(rendered.cardLabel).toBe("Spring Hill Hawks Cheer");
   rendered.outputs.forEach((output) => {
     expect(output.samples.length).toBe(
       output.src.includes("3-photo-strip") ? 3 : 1
@@ -2709,6 +2717,61 @@ test("Hawks pizza frames and strips render photos through their transparent slot
         expect(Math.abs(pixel[channelIndex] - channel)).toBeLessThan(20);
       });
     });
+  });
+});
+
+test("legacy Hawks pizza assets migrate into Spring Hill Hawks Cheer", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("photoboothRemoteSync", "false");
+  });
+  await gotoApp(page, "/index.html");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+  await page.evaluate(() => {
+    const themes = structuredClone(window.__photoboothTest.getThemes());
+    const hawks = themes.school.themes.hawks;
+    const cheer = themes.school.themes.hawksCheer;
+    const prefix = "/assets/themes/spring-hill-hawks/pizza/";
+    ["overlays", "templates"].forEach((field) => {
+      const pizzaEntries = cheer[field].filter((entry) =>
+        entry.src.startsWith(prefix)
+      );
+      hawks[field].push(...pizzaEntries);
+      cheer[field] = cheer[field].filter(
+        (entry) => !entry.src.startsWith(prefix)
+      );
+    });
+    localStorage.setItem("photoboothThemes", JSON.stringify(themes));
+  });
+  await page.reload();
+  await page.waitForFunction(() => !!window.__photoboothTest);
+
+  const migrated = await page.evaluate(() => {
+    const themes = window.__photoboothTest.getThemes().school.themes;
+    const prefix = "/assets/themes/spring-hill-hawks/pizza/";
+    return {
+      name: themes.hawksCheer.name,
+      cheerOverlays: themes.hawksCheer.overlays.filter((entry) =>
+        entry.src.startsWith(prefix)
+      ).length,
+      cheerTemplates: themes.hawksCheer.templates.filter((entry) =>
+        entry.src.startsWith(prefix)
+      ).length,
+      hawksPizzaAssets: ["overlays", "templates"].reduce(
+        (count, field) =>
+          count +
+          themes.hawks[field].filter((entry) => entry.src.startsWith(prefix))
+            .length,
+        0
+      ),
+    };
+  });
+  expect(migrated).toEqual({
+    name: "Spring Hill Hawks Cheer",
+    cheerOverlays: 3,
+    cheerTemplates: 2,
+    hawksPizzaAssets: 0,
   });
 });
 

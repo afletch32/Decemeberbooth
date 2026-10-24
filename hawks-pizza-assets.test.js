@@ -16,16 +16,25 @@ const assets = [
   "hawks-pizza-portrait.png",
 ];
 
-test("Hawks pizza artwork is bundled as transparent PNGs and registered", () => {
+test("Hawks pizza artwork belongs to Spring Hill Hawks Cheer", () => {
+  const hawksStart = app.indexOf("hawks: {");
+  const cheerStart = app.indexOf("hawksCheer: {");
+  const cheerEnd = app.indexOf("ane: {", cheerStart);
+  const hawksTheme = app.slice(hawksStart, cheerStart);
+  const cheerTheme = app.slice(cheerStart, cheerEnd);
+
   assets.forEach((filename) => {
     const path = `/assets/themes/spring-hill-hawks/pizza/${filename}`;
     const image = readFileSync(join(assetDirectory, filename));
     assert.equal(image[25], 6, `${filename} should preserve an alpha channel`);
-    assert.ok(app.includes(path), `${filename} should be registered in the theme`);
+    assert.ok(cheerTheme.includes(path), `${filename} should be in Hawks Cheer`);
+    assert.ok(!hawksTheme.includes(path), `${filename} should not be in Hawks football`);
   });
 
-  assert.ok(app.includes('name: "Hawks Pizza Three-Photo Strip Navy"'));
-  assert.ok(app.includes('name: "Hawks Pizza Three-Photo Strip White"'));
-  assert.ok(app.includes('layout: "photo_strip_3"'));
+  assert.ok(cheerTheme.includes('name: "Spring Hill Hawks Cheer"'));
+  assert.ok(cheerTheme.includes('name: "Spring Hill Hawks Cheer Pizza Three-Photo Strip Navy"'));
+  assert.ok(cheerTheme.includes('name: "Spring Hill Hawks Cheer Pizza Three-Photo Strip White"'));
+  assert.ok(cheerTheme.includes('layout: "photo_strip_3"'));
+  assert.ok(app.includes('"school hawkscheer": "Spring Hill Hawks Cheer"'));
   assert.ok(app.includes('const pizzaAssetPrefix = "/assets/themes/spring-hill-hawks/pizza/"'));
 });
