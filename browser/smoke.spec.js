@@ -2636,15 +2636,20 @@ test("Hawks Cheer pizza frames and strips render through their transparent slots
     const api = window.__photoboothTest;
     const theme = api.getThemes().school.themes.hawksCheer;
     const assetPrefix = "/assets/themes/spring-hill-hawks/pizza/";
+    const cheerOverlayPrefix =
+      "/assets/themes/spring-hill-hawks-cheer/overlays/";
+    const isNewThemeAsset = (entry) =>
+      entry.src.startsWith(assetPrefix) ||
+      entry.src.startsWith(cheerOverlayPrefix);
     const cardLabel = document.querySelector(
       '.theme-quick-card[data-theme-key="school:hawksCheer"] strong'
     )?.textContent;
     const strips = api
       .getBaseTemplateList(theme)
-      .filter((entry) => entry.src.startsWith(assetPrefix));
+      .filter(isNewThemeAsset);
     const overlays = api
       .getBaseOverlayList(theme)
-      .filter((entry) => entry.src.startsWith(assetPrefix));
+      .filter(isNewThemeAsset);
     const makePhoto = (color) => {
       const canvas = document.createElement("canvas");
       canvas.width = 40;
@@ -2685,9 +2690,40 @@ test("Hawks Cheer pizza frames and strips render through their transparent slots
         )
       );
     };
+    const inspectTransparentWindows = async (entry) => {
+      if (!entry.src.includes("double-2x6-three-photo-strips") &&
+          !entry.src.includes("single-photo-portrait.png")) {
+        return [];
+      }
+      const image = new Image();
+      image.src = entry.src;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d");
+      context.drawImage(image, 0, 0);
+      const points = [0.15, 0.35, 0.65, 0.85];
+      return entry.photoSlots.flatMap((slot) =>
+        points.flatMap((xRatio) =>
+          points.map((yRatio) =>
+            context.getImageData(
+              Math.floor((slot.x + slot.width * xRatio) * canvas.width),
+              Math.floor((slot.y + slot.height * yRatio) * canvas.height),
+              1,
+              1
+            ).data[3]
+          )
+        )
+      );
+    };
     const outputs = [];
     for (const entry of [...strips, ...overlays]) {
-      outputs.push({ src: entry.src, samples: await renderSamples(entry) });
+      outputs.push({
+        src: entry.src,
+        samples: await renderSamples(entry),
+        alphaSamples: await inspectTransparentWindows(entry),
+      });
     }
     return {
       stripSources: strips.map((entry) => entry.src),
@@ -2697,21 +2733,48 @@ test("Hawks Cheer pizza frames and strips render through their transparent slots
     };
   });
 
-  expect(rendered.stripSources).toHaveLength(2);
-  expect(rendered.overlaySources).toHaveLength(3);
-  expect(rendered.outputs).toHaveLength(5);
+  expect(rendered.stripSources).toHaveLength(4);
+  expect(rendered.overlaySources).toHaveLength(5);
+  expect(rendered.outputs).toHaveLength(9);
   expect(rendered.cardLabel).toBe("Spring Hill Hawks Cheer");
+  const pairedStrip = rendered.outputs.find((output) =>
+    output.src.includes("pizza-double-2x6-three-photo-strips")
+  );
+  const pairedNoPizzaStrip = rendered.outputs.find((output) =>
+    output.src.includes("no-pizza-double-2x6-three-photo-strips")
+  );
+  [pairedStrip, pairedNoPizzaStrip].forEach((strip) => {
+    expect(strip.samples).toHaveLength(6);
+    strip.samples.forEach((pixel, index) => {
+      const expected = [
+        [255, 0, 0],
+        [255, 0, 255],
+        [0, 0, 255],
+      ][index % 3];
+      expected.forEach((channel, channelIndex) => {
+        expect(Math.abs(pixel[channelIndex] - channel)).toBeLessThan(20);
+      });
+    });
+  });
   rendered.outputs.forEach((output) => {
-    expect(output.samples.length).toBe(
-      output.src.includes("3-photo-strip") ? 3 : 1
-    );
+    if (output.alphaSamples.length) {
+      expect(
+        output.alphaSamples.every((alpha) => alpha === 0),
+        `${output.src} alpha samples: ${output.alphaSamples.join(",")}`
+      ).toBe(true);
+    }
+    const isPairedStrip = output.src.includes("double-2x6-three-photo-strips");
+    const isStrip = output.src.includes("3-photo-strip") || isPairedStrip;
+    expect(output.samples.length).toBe(isPairedStrip ? 6 : isStrip ? 3 : 1);
     output.samples.forEach((pixel, index) => {
-      const expected = output.src.includes("3-photo-strip")
+      const expected = isStrip
         ? [
             [255, 0, 0],
             [255, 0, 255],
             [0, 0, 255],
-          ][index]
+          ][
+            isPairedStrip ? index % 3 : index
+          ]
         : [255, 0, 0];
       expected.forEach((channel, channelIndex) => {
         expect(Math.abs(pixel[channelIndex] - channel)).toBeLessThan(20);
@@ -2732,14 +2795,19 @@ test("legacy Hawks pizza assets migrate into Spring Hill Hawks Cheer", async ({
     const themes = structuredClone(window.__photoboothTest.getThemes());
     const hawks = themes.school.themes.hawks;
     const cheer = themes.school.themes.hawksCheer;
-    const prefix = "/assets/themes/spring-hill-hawks/pizza/";
+    const prefixes = [
+      "/assets/themes/spring-hill-hawks/pizza/",
+      "/assets/themes/spring-hill-hawks-cheer/overlays/",
+    ];
+    const isCheerAsset = (entry) =>
+      prefixes.some((prefix) => entry.src.startsWith(prefix));
     ["overlays", "templates"].forEach((field) => {
       const pizzaEntries = cheer[field].filter((entry) =>
-        entry.src.startsWith(prefix)
+        isCheerAsset(entry)
       );
       hawks[field].push(...pizzaEntries);
       cheer[field] = cheer[field].filter(
-        (entry) => !entry.src.startsWith(prefix)
+        (entry) => !isCheerAsset(entry)
       );
     });
     localStorage.setItem("photoboothThemes", JSON.stringify(themes));
@@ -2749,19 +2817,24 @@ test("legacy Hawks pizza assets migrate into Spring Hill Hawks Cheer", async ({
 
   const migrated = await page.evaluate(() => {
     const themes = window.__photoboothTest.getThemes().school.themes;
-    const prefix = "/assets/themes/spring-hill-hawks/pizza/";
+    const prefixes = [
+      "/assets/themes/spring-hill-hawks/pizza/",
+      "/assets/themes/spring-hill-hawks-cheer/overlays/",
+    ];
+    const isCheerAsset = (entry) =>
+      prefixes.some((prefix) => entry.src.startsWith(prefix));
     return {
       name: themes.hawksCheer.name,
       cheerOverlays: themes.hawksCheer.overlays.filter((entry) =>
-        entry.src.startsWith(prefix)
+        isCheerAsset(entry)
       ).length,
       cheerTemplates: themes.hawksCheer.templates.filter((entry) =>
-        entry.src.startsWith(prefix)
+        isCheerAsset(entry)
       ).length,
       hawksPizzaAssets: ["overlays", "templates"].reduce(
         (count, field) =>
           count +
-          themes.hawks[field].filter((entry) => entry.src.startsWith(prefix))
+          themes.hawks[field].filter((entry) => isCheerAsset(entry))
             .length,
         0
       ),
@@ -2769,8 +2842,8 @@ test("legacy Hawks pizza assets migrate into Spring Hill Hawks Cheer", async ({
   });
   expect(migrated).toEqual({
     name: "Spring Hill Hawks Cheer",
-    cheerOverlays: 3,
-    cheerTemplates: 2,
+    cheerOverlays: 5,
+    cheerTemplates: 4,
     hawksPizzaAssets: 0,
   });
 });

@@ -686,6 +686,34 @@ let themes = {
             orientation: "portrait",
             photoSlots: [{ x: 0.1036, y: 0.0872, width: 0.7896, height: 0.7867 }],
           },
+          {
+            src: "/assets/themes/spring-hill-hawks/pizza/hawks-pizza-single-photo-portrait.png",
+            name: "Spring Hill Hawks Cheer Pizza Single Photo Portrait",
+            orientation: "portrait",
+            photoSlots: [
+              {
+                x: 0.1104,
+                y: 0.1146,
+                width: 0.7793,
+                height: 0.7539,
+                objectFit: "cover",
+              },
+            ],
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks-cheer/overlays/spring-hill-hawks-cheer-no-pizza-single-photo-portrait.png",
+            name: "Spring Hill Hawks Cheer Single Photo Portrait",
+            orientation: "portrait",
+            photoSlots: [
+              {
+                x: 0.1143,
+                y: 0.1152,
+                width: 0.7754,
+                height: 0.7507,
+                objectFit: "cover",
+              },
+            ],
+          },
         ],
         templates: [
           { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788508/photobooth/events/assets/hawks-template-go-hawks_avfpzg.png", layout: "single_photo" },
@@ -707,6 +735,32 @@ let themes = {
               { x: 0.066, y: 0.1, width: 0.868, height: 0.1949, sourceIndex: 0 },
               { x: 0.0627, y: 0.3153, width: 0.8713, height: 0.1969, sourceIndex: 1 },
               { x: 0.066, y: 0.5327, width: 0.8713, height: 0.2031, sourceIndex: 2 },
+            ],
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks/pizza/hawks-pizza-double-2x6-three-photo-strips.png",
+            name: "Spring Hill Hawks Cheer Pizza Double 2x6 Three-Photo Strips",
+            layout: "photo_strip_3",
+            photoSlots: [
+              { x: 0.0781, y: 0.1354, width: 0.3711, height: 0.1927, sourceIndex: 0 },
+              { x: 0.0781, y: 0.3665, width: 0.3711, height: 0.1953, sourceIndex: 1 },
+              { x: 0.0781, y: 0.6035, width: 0.3721, height: 0.1934, sourceIndex: 2 },
+              { x: 0.5479, y: 0.1354, width: 0.3740, height: 0.1927, sourceIndex: 0 },
+              { x: 0.5498, y: 0.3665, width: 0.3721, height: 0.1953, sourceIndex: 1 },
+              { x: 0.5498, y: 0.6029, width: 0.3721, height: 0.1934, sourceIndex: 2 },
+            ],
+          },
+          {
+            src: "/assets/themes/spring-hill-hawks-cheer/overlays/spring-hill-hawks-cheer-no-pizza-double-2x6-three-photo-strips.png",
+            name: "Spring Hill Hawks Cheer Double 2x6 Three-Photo Strips",
+            layout: "photo_strip_3",
+            photoSlots: [
+              { x: 0.0791, y: 0.1367, width: 0.3701, height: 0.1901, sourceIndex: 0 },
+              { x: 0.0791, y: 0.3659, width: 0.3701, height: 0.1947, sourceIndex: 1 },
+              { x: 0.0791, y: 0.6010, width: 0.3701, height: 0.1940, sourceIndex: 2 },
+              { x: 0.5508, y: 0.1367, width: 0.3691, height: 0.1914, sourceIndex: 0 },
+              { x: 0.5508, y: 0.3672, width: 0.3701, height: 0.1934, sourceIndex: 1 },
+              { x: 0.5508, y: 0.6029, width: 0.3701, height: 0.1934, sourceIndex: 2 },
             ],
           },
         ],
@@ -19027,6 +19081,15 @@ function migrateSpringHillHawksCheerAssets(target = themes) {
   }
   const hawksTheme = themeGroup.hawks;
   const pizzaAssetPrefix = "/assets/themes/spring-hill-hawks/pizza/";
+  const cheerOverlayAssetPrefix =
+    "/assets/themes/spring-hill-hawks-cheer/overlays/";
+  const isHawksCheerAsset = (entry) => {
+    const src = getAssetEntrySrc(entry);
+    return (
+      src.startsWith(pizzaAssetPrefix) ||
+      src.startsWith(cheerOverlayAssetPrefix)
+    );
+  };
   [
     ["overlays", "overlaysRemoved"],
     ["templates", "templatesRemoved"],
@@ -19040,12 +19103,10 @@ function migrateSpringHillHawksCheerAssets(target = themes) {
     const hawksEntries = Array.isArray(hawksTheme && hawksTheme[field])
       ? hawksTheme[field]
       : [];
-    const movedPizzaEntries = hawksEntries.filter((entry) =>
-      getAssetEntrySrc(entry).startsWith(pizzaAssetPrefix)
-    );
-    const defaultPizzaEntries = (Array.isArray(defaults[field]) ? defaults[field] : [])
-      .filter((entry) => getAssetEntrySrc(entry).startsWith(pizzaAssetPrefix));
-    const additions = [...defaultPizzaEntries, ...movedPizzaEntries].filter(
+    const movedCheerEntries = hawksEntries.filter(isHawksCheerAsset);
+    const defaultCheerEntries = (Array.isArray(defaults[field]) ? defaults[field] : [])
+      .filter(isHawksCheerAsset);
+    const additions = [...defaultCheerEntries, ...movedCheerEntries].filter(
       (entry, index, entries) => {
         const src = getAssetEntrySrc(entry);
         return (
@@ -19060,9 +19121,9 @@ function migrateSpringHillHawksCheerAssets(target = themes) {
       theme[field] = [...additions.map(cloneThemeValue), ...cheerEntries];
       migrated = true;
     }
-    if (movedPizzaEntries.length && hawksTheme) {
+    if (movedCheerEntries.length && hawksTheme) {
       hawksTheme[field] = hawksEntries.filter(
-        (entry) => !getAssetEntrySrc(entry).startsWith(pizzaAssetPrefix)
+        (entry) => !isHawksCheerAsset(entry)
       );
       migrated = true;
     }
