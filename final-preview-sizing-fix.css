@@ -560,10 +560,10 @@
   }
 
   #qrCode {
-    width: min(24dvh, 150px) !important;
-    height: min(24dvh, 150px) !important;
-    max-width: min(24dvh, 150px) !important;
-    max-height: min(24dvh, 150px) !important;
+    width: min(34dvh, 240px) !important;
+    height: min(34dvh, 240px) !important;
+    max-width: min(34dvh, 240px) !important;
+    max-height: min(34dvh, 240px) !important;
   }
 }
 
