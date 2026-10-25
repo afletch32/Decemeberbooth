@@ -6572,6 +6572,8 @@ function init() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("DOMContentLoaded event fired.");
+  // Warm the QR library before guests reach the share screen.
+  void loadQrCodeLibrary().catch(() => {});
   loadThemesFromStorage();
   loadEventsFromStorage();
   loadFontsFromStorage();
