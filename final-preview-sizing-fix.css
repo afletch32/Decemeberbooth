@@ -430,7 +430,8 @@
 }
 
 #qrCodeContainer {
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: grid;
+  grid-template-rows: auto minmax(180px, 1fr) auto;
   align-content: stretch;
   gap: clamp(8px, 1.8vh, 16px);
   height: 100%;
@@ -451,12 +452,13 @@
 
 #qrCode {
   align-self: center;
-  width: auto;
-  height: min(100%, 240px);
+  justify-self: center;
+  width: min(100%, 240px);
+  height: auto;
   max-width: 100%;
-  max-height: 100%;
-  min-width: 0;
-  min-height: 0;
+  max-height: 240px;
+  min-width: min(180px, 100%);
+  min-height: min(180px, 100%);
   aspect-ratio: 1 / 1;
   object-fit: contain;
   box-sizing: border-box;
