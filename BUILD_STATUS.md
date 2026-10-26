@@ -1,5 +1,7 @@
 # Build status
 
+- QR readability update (2026-10-25): Increased the final-share QR canvas cap on tablet layouts from 220px to 280px and on narrow phones from 200px to 240px; the default cap is now 320px. The canvas uses border-box sizing so its padding does not reduce the encoded code area. `npm test` passes (285 passed, 9 skipped). Playwright visual check could not start because sandbox networking denied binding `127.0.0.1:4321`; production publish and verification are still pending.
+
 - Current goal: Provide Spring Hill Hawks 2026 paired strips and portrait overlays in both pizza and regular styles.
 - Done: Added matching 2026 artwork to both styles, refined pizza to clean cartoon wedges, removed cheese-like drips from the regular overlay, and preserved all transparent photo windows. Added versioned asset paths and migration that replaces the four unbranded picker entries.
 - In progress: No code work remains.
