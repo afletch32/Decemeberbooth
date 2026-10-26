@@ -10975,6 +10975,8 @@ async function capturePhotoFlow() {
     enterFinalizingState(finalUrl);
     const galleryUrl = getEventGalleryUrl();
     showFinal(finalUrl, {
+      shareType: livePhotoEnabled && lastLiveClipBlob ? "video" : "image",
+      shareBlob: livePhotoEnabled ? lastLiveClipBlob : null,
       shareUrl: galleryUrl,
       printImageUrl: finalUrl,
       uploadPending: true,
@@ -10986,8 +10988,9 @@ async function capturePhotoFlow() {
     const uploadToken = ++activeFinalUploadToken;
     void uploadCaptureOnce({
       previewUrl: finalUrl,
-      mediaBlob: finalized.blob,
-      modeName: "photo",
+      mediaBlob: livePhotoEnabled && lastLiveClipBlob ? lastLiveClipBlob : finalized.blob,
+      resourceType: livePhotoEnabled && lastLiveClipBlob ? "video" : "image",
+      modeName: livePhotoEnabled ? "live-photo" : "photo",
     }).then((uploadResult) => {
       if (uploadToken !== activeFinalUploadToken || !DOM.qrHint) return;
       if (uploadResult.queued) {
