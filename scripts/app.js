@@ -13283,7 +13283,7 @@ function showFinal(url, options = {}) {
       ? String(options.shareUrl)
       : "";
   const printImageUrl =
-    options.printImageUrl && /^https?:/i.test(String(options.printImageUrl))
+    options.printImageUrl && /^(https?:|blob:)/i.test(String(options.printImageUrl))
       ? String(options.printImageUrl)
       : shareType === "image"
         ? providedShareUrl
