@@ -5,8 +5,8 @@ const LIBRARIES = {
     getValue: (windowRef) => windowRef.emailjs,
   },
   qr: {
-    src: "https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js",
-    isReady: (windowRef) => Boolean(windowRef.QRCode?.toCanvas),
+    src: "/scripts/vendor/qrcode.js",
+    isReady: (windowRef) => typeof windowRef.QRCode === "function",
     getValue: (windowRef) => windowRef.QRCode,
   },
   segmentation: {
