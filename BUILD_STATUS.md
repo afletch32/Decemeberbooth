@@ -1,6 +1,6 @@
 # Build status
 
-- QR readability update (2026-10-26): Increased the final-share QR canvas cap on tablet layouts from 220px to 280px and on narrow phones from 200px to 240px; the default cap is now 320px. Added border-box sizing so canvas padding does not reduce the QR image area. The full suite currently has seven pre-existing failures, reproduced unchanged on `origin/main`; the focused viewport test also reports QR panel overflow at 1600×900 on both `origin/main` and this change. Production publish and live verification are pending.
+- QR readability update (2026-10-26): Increased the final-share QR canvas cap on tablet layouts from 220px to 280px and on narrow phones from 200px to 240px; the default cap is now 320px. Added border-box sizing so canvas padding does not reduce the QR image area. `npm test` has seven failures, all reproduced on `origin/main`; the focused viewport test also reports QR panel overflow at 1600×900 on both the baseline and this change. Commit `93a7b3c` is deployed to Pages Production (`8865ad97`); canonical production returns HTTP 200 and serves the updated QR sizing. The existing viewport overflow remains unresolved.
 
 - Current goal: Provide Spring Hill Hawks 2026 paired strips and portrait overlays in both pizza and regular styles.
 - Done: Added matching 2026 artwork to both styles, refined pizza to clean cartoon wedges, removed cheese-like drips from the regular overlay, and preserved all transparent photo windows. Added versioned asset paths and migration that replaces the four unbranded picker entries.
