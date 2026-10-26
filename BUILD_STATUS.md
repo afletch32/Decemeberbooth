@@ -21,3 +21,5 @@
 - Halloween fog release: `0b3c2ea`, deployed as `22d38325`; stationary artwork with drifting fog in both orientations.
 - Eucalyptus wedding artwork and event-specific names/date remain part of the application.
 - Event print price uses the shared event record; default is $3.00 USD. No live purchase was made.
+
+- Photo finalization guard: capture now reports a retry message if the print canvas cannot be created, and the booth script cache key was refreshed. Production deployment and iPad flow verification are pending.
