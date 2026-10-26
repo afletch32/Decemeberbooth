@@ -13449,21 +13449,38 @@ function showFinal(url, options = {}) {
 
 async function renderQrCodeAtWidth(canvas, text, width = 360) {
   if (!canvas || !text) return false;
+  let stage;
   try {
-    const qrCode = await loadQrCodeLibrary();
-    return await new Promise((resolve) => {
-      qrCode.toCanvas(canvas, text, { width, margin: 1 }, function (error) {
-        if (error) {
-          console.error(error);
-          resolve(false);
-          return;
-        }
-        resolve(true);
-      });
+    const QRCode = await loadQrCodeLibrary();
+    stage = document.createElement("div");
+    stage.style.cssText = "position:fixed;left:-10000px;top:0;width:1px;height:1px;overflow:hidden";
+    document.body.appendChild(stage);
+    new QRCode(stage, {
+      text: String(text),
+      width,
+      height: width,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M,
     });
+    const generated = stage.querySelector("canvas");
+    if (!generated) return false;
+    canvas.width = width;
+    canvas.height = width;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return false;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, width);
+    // Keep a quiet zone around the code so phone cameras can scan it reliably.
+    const inset = Math.round(width * 0.08);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(generated, inset, inset, width - inset * 2, width - inset * 2);
+    return true;
   } catch (e) {
     console.error(e);
     return false;
+  } finally {
+    if (stage) stage.remove();
   }
 }
 
