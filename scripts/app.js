@@ -14708,6 +14708,10 @@ function getEventAssetUploadOptions(event = getActiveEvent(), kind = "") {
 function getEventGalleryUrl() {
   const cfg = getCloudinaryConfig();
   if (!cfg || !cfg.cloud) return "";
+  const eventId = getActiveEventId();
+  if (eventId) {
+    return `${location.origin}/g/${encodeURIComponent(eventId)}?c=${encodeURIComponent(cfg.cloud)}`;
+  }
   const tag = getEventUploadSlug();
   const quickStartDate = getQuickStartFolderDate();
   const title = encodeURIComponent(
