@@ -10970,6 +10970,10 @@ async function capturePhotoFlow() {
   let finalPreviewStarted = false;
   try {
     const finalized = await finalizeToPrint(photo, selectedOverlay);
+    if (!finalized?.previewUrl || !finalized.blob) {
+      showToast("Could not finish that photo. Please try again.");
+      return;
+    }
     const finalUrl = finalized.previewUrl;
     lastOutputSurfaceTrace = createOutputSurfaceTrace(finalUrl);
     enterFinalizingState(finalUrl);
@@ -12763,7 +12767,7 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
   const resolvedAspect = getResolvedCaptureAspectRatio();
   const orientation = resolvedAspect < 1 ? "portrait" : "landscape";
   const { canvas: c, ctx, size } = createPrintCanvas(orientation);
-  if (!ctx) return "";
+  if (!ctx) return null;
   const targetW = size.width;
   const targetH = size.height;
   const resolvedOverlaySrc = overlaySrc
