@@ -2171,6 +2171,7 @@ let lastCaptureFlow = null; // To store the function for retake
 let removedStack = []; // For undo of removed assets in session
 let toastTimer = null;
 let lastShareUrl = null; // Public Cloudinary share URL; service-worker share cache is offline fallback only.
+let activeFinalUploadToken = 0;
 let lastOutputSurfaceTrace = null;
 let demoMode = false; // Allows running from file:// without camera
 let showcaseDemoActive = false;
@@ -10968,35 +10969,44 @@ async function capturePhotoFlow() {
   });
   let finalPreviewStarted = false;
   try {
-    const finalUrl = await finalizeToPrint(photo, selectedOverlay);
+    const finalized = await finalizeToPrint(photo, selectedOverlay);
+    const finalUrl = finalized.previewUrl;
     lastOutputSurfaceTrace = createOutputSurfaceTrace(finalUrl);
     enterFinalizingState(finalUrl);
-    const uploadResult = await uploadCaptureOnce({
-      previewUrl: finalUrl,
-      mediaBlob: livePhotoEnabled ? lastLiveClipBlob : null,
-      resourceType: livePhotoEnabled && lastLiveClipBlob ? "video" : "image",
-      modeName: livePhotoEnabled ? "live-photo" : "photo",
+    const galleryUrl = getEventGalleryUrl();
+    showFinal(finalUrl, {
+      shareUrl: galleryUrl,
+      printImageUrl: finalUrl,
+      uploadPending: true,
     });
-    const deliveredPreviewUrl = livePhotoEnabled
-      ? finalUrl
-      : getDeliveredFilterPreviewUrl(finalUrl, uploadResult);
-    showFinal(
-      deliveredPreviewUrl,
-      livePhotoEnabled && lastLiveClipBlob
-        ? {
-            shareType: "video",
-            shareBlob: lastLiveClipBlob,
-            shareUrl: uploadResult.publicUrl || uploadResult.pendingShareUrl,
-            uploadQueued: uploadResult.queued,
-          }
-        : {
-            shareUrl: uploadResult.publicUrl || uploadResult.pendingShareUrl,
-            uploadQueued: uploadResult.queued,
-        }
-    );
     finalPreviewStarted = true;
-    recordAnalytics(livePhotoEnabled ? "live-photo" : "photo", selectedOverlay);
-    addToGallery(deliveredPreviewUrl);
+    recordAnalytics("photo", selectedOverlay);
+    addToGallery(finalUrl);
+
+    const uploadToken = ++activeFinalUploadToken;
+    void uploadCaptureOnce({
+      previewUrl: finalUrl,
+      mediaBlob: finalized.blob,
+      modeName: "photo",
+    }).then((uploadResult) => {
+      if (uploadToken !== activeFinalUploadToken || !DOM.qrHint) return;
+      if (uploadResult.queued) {
+        DOM.qrHint.textContent = "Photo queued; it will appear in the gallery after upload.";
+        DOM.qrHint.style.display = "block";
+      } else if (uploadResult.publicUrl) {
+        DOM.qrHint.textContent = "";
+        DOM.qrHint.style.display = "none";
+      } else {
+        DOM.qrHint.textContent = "Photo upload failed. Ask the attendant for help.";
+        DOM.qrHint.style.display = "block";
+      }
+    }).catch((error) => {
+      console.error("Photo upload failed after preview was shown", error);
+      if (uploadToken === activeFinalUploadToken && DOM.qrHint) {
+        DOM.qrHint.textContent = "Photo upload failed. Ask the attendant for help.";
+        DOM.qrHint.style.display = "block";
+      }
+    });
   } finally {
     if (!finalPreviewStarted) leaveFinalizingState();
   }
@@ -12819,7 +12829,11 @@ async function finalizeToPrint(photoCanvas, overlaySrc) {
     drawDynamicEventText(ctx, targetW, targetH, active, activeTheme);
   }
 
-  return c.toDataURL("image/png");
+  const blob = await new Promise((resolve) => {
+    c.toBlob(resolve, "image/jpeg", 0.94);
+  });
+  if (!blob) throw new Error("Could not encode the finished photo.");
+  return { previewUrl: URL.createObjectURL(blob), blob };
 }
 
 /**
@@ -13343,11 +13357,13 @@ function showFinal(url, options = {}) {
         }
         if (DOM.qrHint) {
           DOM.qrHint.textContent = qrRendered
-            ? options.uploadQueued
-              ? "Save this QR code. Your photo will appear at this link after the booth reconnects."
-              : ""
+            ? options.uploadPending
+              ? "Your photo is uploading and will appear here shortly."
+              : options.uploadQueued
+                ? "Save this QR code. Your photo will appear at this link after the booth reconnects."
+                : ""
             : "Open the link button if the QR does not appear.";
-          DOM.qrHint.style.display = qrRendered && options.uploadQueued
+          DOM.qrHint.style.display = qrRendered && (options.uploadPending || options.uploadQueued)
             ? "block"
             : qrRendered
               ? "none"
