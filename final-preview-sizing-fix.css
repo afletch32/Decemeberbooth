@@ -507,7 +507,7 @@
 
   #finalPreviewContent {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) minmax(50dvh, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(56dvh, 1fr);
     gap: clamp(8px, 2vh, 16px);
   }
 
@@ -527,6 +527,13 @@
     width: min(100%, 420px);
     max-width: min(100%, 420px);
     justify-self: center;
+  }
+
+  #qrCode {
+    width: min(75vw, 38dvh, 420px) !important;
+    height: min(75vw, 38dvh, 420px) !important;
+    max-width: min(75vw, 38dvh, 420px) !important;
+    max-height: min(75vw, 38dvh, 420px) !important;
   }
 }
 
