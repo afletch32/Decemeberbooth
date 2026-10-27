@@ -1,10 +1,11 @@
+const { readAppSource, readTestProjectFile } = require("./test-utils/app-source.cjs");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 function readProjectFile(...parts) {
-  return readFileSync(join(process.cwd(), ...parts), "utf8");
+  return readTestProjectFile(...parts);
 }
 
 test("overlay preview renders into explicit photo slots", () => {
@@ -52,7 +53,7 @@ test("overlay builder exports persistent transparent photo windows", () => {
 });
 
 test("reserved magenta marker creates photo slots and transparent foregrounds", () => {
-  const appJs = readProjectFile("scripts", "app.js");
+  const appJs = readAppSource();
 
   assert.ok(
     appJs.includes("const RESERVED_PHOTO_MARKER =") &&

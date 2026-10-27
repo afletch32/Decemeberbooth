@@ -1,9 +1,10 @@
+const { readAppSource } = require("./test-utils/app-source.cjs");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
-const app = readFileSync(join(process.cwd(), "scripts/app.js"), "utf8");
+const app = readAppSource();
 const assetDirectory = join(process.cwd(), "assets/themes/spring-hill-hawks");
 const assets = [
   "pizza/hawks-pizza-3-photo-strip-navy.png",

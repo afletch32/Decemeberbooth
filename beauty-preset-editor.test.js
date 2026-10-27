@@ -1,10 +1,11 @@
+const { readAppSource } = require("./test-utils/app-source.cjs");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { readFileSync } = require("node:fs");
 
 test("admin filter editor saves shared preset overrides and stays out of the guest booth", () => {
   const html = readFileSync("index.html", "utf8");
-  const app = readFileSync("scripts/app.js", "utf8");
+  const app = readAppSource();
 
   assert.ok(
     html.includes('id="beautyPresetEditor"') &&

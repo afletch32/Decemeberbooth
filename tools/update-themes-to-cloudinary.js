@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
- * Update theme definitions in scripts/app.js to use Cloudinary URLs
+ * Review built-in theme definitions in scripts/app/themes/builtin-catalog.mjs
+ * to use Cloudinary URLs
  * instead of local folder paths.
  *
  * Reads: tools/cloudinary-upload-map.json
- * Updates: scripts/app.js
+ * Updates: scripts/app/themes/builtin-catalog.mjs
  *
  * This script:
  * 1. Groups uploaded assets by theme and category
@@ -17,7 +18,6 @@ const fsp = require("fs/promises");
 const path = require("path");
 
 const MAPPING_FILE = path.resolve("tools/cloudinary-upload-map.json");
-const APP_JS = path.resolve("scripts/app.js");
 
 async function main() {
   // Read mapping
@@ -82,7 +82,7 @@ async function main() {
   }
 
   console.log("\n\n=== Instructions ===\n");
-  console.log("To update the theme definitions in scripts/app.js, replace:");
+  console.log("To update the theme definitions in scripts/app/themes/builtin-catalog.mjs, replace:");
   console.log("  1. `backgroundFolder: 'assets/...'` → remove it, keep `backgrounds: ['url1', 'url2']`");
   console.log("  2. `overlaysFolder: 'assets/...'` → remove it, keep `overlays: [{src: 'url1'}, ...]`");
   console.log("  3. `templatesFolder: 'assets/...'` → remove it, keep `templates: [{src: 'url1', layout: '...'}, ...]`");

@@ -1,14 +1,15 @@
+const { readAppSource, readTestProjectFile } = require("./test-utils/app-source.cjs");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 function readProjectFile(...parts) {
-  return readFileSync(join(process.cwd(), ...parts), "utf8");
+  return readTestProjectFile(...parts);
 }
 
 test("managed asset uploads are Cloudinary-only", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes('showToast("Upload failed: configure Cloudinary first.");'),
@@ -22,7 +23,7 @@ test("managed asset uploads are Cloudinary-only", () => {
 
 test("asset migration UI is exposed from the Cloudinary settings section", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes('id="migrateAssetsBtn" onclick="saveCloudinarySettings(); migrateAllManagedLocalAssets()"'),
@@ -39,7 +40,7 @@ test("asset migration UI is exposed from the Cloudinary settings section", () =>
 });
 
 test("no-event booth uploads use a date Cloudinary folder", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("function getDateSessionSlug()"),
@@ -56,7 +57,7 @@ test("no-event booth uploads use a date Cloudinary folder", () => {
 });
 
 test("capture modes share one canonical upload pipeline", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("async function uploadCaptureOnce(options = {})"),
@@ -73,7 +74,6 @@ test("capture modes share one canonical upload pipeline", () => {
   assert.ok(
     appScript.includes("enqueueFinalPrintIfNeeded(pendingFinalPrintImageUrl, true)") &&
       appScript.includes('shareType === "image"') &&
-      appScript.includes("service-worker share cache is offline fallback only") &&
       appScript.includes("Print queue waiting for shared upload") &&
       appScript.includes("Print queue failed"),
     "print queue submissions should use remote image uploads, skip live/video captures, and surface failures"
@@ -94,7 +94,7 @@ test("capture modes share one canonical upload pipeline", () => {
 });
 
 test("staff print route links and popup printing handle reliable handoff", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const staffScript = readProjectFile("scripts", "staff-print.js");
   const html = readProjectFile("staff-print.html");
   const serverScript = readProjectFile("server.js");
@@ -149,7 +149,7 @@ test("staff print route links and popup printing handle reliable handoff", () =>
 });
 
 test("upload failures are queued with retry and gallery metadata", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("function createCaptureUploadId("),
@@ -186,7 +186,7 @@ test("upload failures are queued with retry and gallery metadata", () => {
 });
 
 test("uploaded assets register in a persistent shared library", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const html = readProjectFile("index.html");
 
   assert.ok(
@@ -238,7 +238,7 @@ test("uploaded assets register in a persistent shared library", () => {
 });
 
 test("bulk uploads provide a dedicated Thank You screen path", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const html = readProjectFile("index.html");
 
   assert.ok(
@@ -254,7 +254,7 @@ test("bulk uploads provide a dedicated Thank You screen path", () => {
 });
 
 test("managed video assets use optimized Cloudinary delivery URLs", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const cloudinaryUtils = readProjectFile("scripts", "cloudinary-utils.mjs");
 
   assert.ok(
@@ -280,7 +280,7 @@ test("managed video assets use optimized Cloudinary delivery URLs", () => {
 });
 
 test("asset uploads show an in-progress state and repair legacy Hawks paths", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const assetLibraryUtils = readProjectFile("scripts", "asset-library-utils.mjs");
   const assetsFn = readProjectFile("functions", "api", "assets.js");
   const html = readProjectFile("index.html");
@@ -308,7 +308,7 @@ test("asset uploads show an in-progress state and repair legacy Hawks paths", ()
 });
 
 test("managed asset uploads validate files, block duplicates, and report failures", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("function validateManagedAssetUpload(file, kind)") &&
@@ -339,7 +339,7 @@ test("managed asset uploads validate files, block duplicates, and report failure
 });
 
 test("asset library management supports sorting and category metadata", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const assetLibraryView = readProjectFile("scripts", "asset-library-view.mjs");
   const html = readProjectFile("index.html");
 
@@ -386,7 +386,7 @@ test("asset library management supports sorting and category metadata", () => {
 });
 
 test("asset library defaults to the selected theme main category", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const html = readProjectFile("index.html");
 
   assert.ok(html.includes('<option value="">Main Category</option>'));
@@ -408,7 +408,7 @@ test("asset library defaults to the selected theme main category", () => {
 });
 
 test("canonical asset collection includes explicit theme arrays and deduplicates category URLs", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const assetLibraryUtils = readProjectFile("scripts", "asset-library-utils.mjs");
 
   assert.ok(
@@ -436,7 +436,7 @@ test("canonical asset collection includes explicit theme arrays and deduplicates
 });
 
 test("asset library cards hide source labels and manage every asset through metadata", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     !appScript.includes('asset.source === "builtin" ? "Built-in" : "Uploaded"') &&

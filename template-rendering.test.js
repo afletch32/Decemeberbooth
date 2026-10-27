@@ -1,14 +1,15 @@
+const { readAppModule, readAppSource, readTestProjectFile } = require("./test-utils/app-source.cjs");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 function readProjectFile(...parts) {
-  return readFileSync(join(process.cwd(), ...parts), "utf8");
+  return readTestProjectFile(...parts);
 }
 
 test("template rendering logic preserves photo overlays across strip mode and supports strip aliases", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const html = readProjectFile("index.html");
   const finalPreviewCss = readProjectFile("final-preview-sizing-fix.css");
 
@@ -84,7 +85,7 @@ test("wedding templates use transparent photo windows", async () => {
 });
 
 test("final preview clears temporary capture overlays before display", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("function resetTransientCaptureOverlays(options = {})") &&
@@ -107,7 +108,7 @@ test("final preview clears temporary capture overlays before display", () => {
 });
 
 test("strip capture keeps the template preview cleared until the completed strip is shown", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const stripStart = appScript.indexOf("async function runStripSequence(template)");
   const stripEnd = appScript.indexOf("function delay(ms)", stripStart);
   const stripFlow = appScript.slice(stripStart, stripEnd);
@@ -123,7 +124,7 @@ test("strip capture keeps the template preview cleared until the completed strip
 });
 
 test("strip capture keeps the live preview in the selected booth orientation", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const start = appScript.indexOf("async function prepareStripCapture(template)");
   const end = appScript.indexOf("function openConfirm", start);
   const stripPreparation = appScript.slice(start, end);
@@ -134,24 +135,25 @@ test("strip capture keeps the live preview in the selected booth orientation", (
 });
 
 test("photo capture freezes the completed print while upload is prepared", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppModule("booth", "capture-flow.mjs");
+  const imaging = readAppModule("booth", "imaging.mjs");
   const html = readProjectFile("index.html");
   const photoStart = appScript.indexOf("async function capturePhotoFlow()");
   const photoEnd = appScript.indexOf("async function captureMessageFlow()", photoStart);
   const photoFlow = appScript.slice(photoStart, photoEnd);
 
   assert.ok(
-    photoFlow.includes("const finalUrl = await finalizeToPrint(photo, selectedOverlay);") &&
+    photoFlow.includes("const finalized = await finalizeToPrint(photo, selectedOverlay);") &&
       photoFlow.indexOf("enterFinalizingState(finalUrl);") >
-        photoFlow.indexOf("const finalUrl = await finalizeToPrint(photo, selectedOverlay);") &&
+        photoFlow.indexOf("const finalUrl = finalized.previewUrl;") &&
       photoFlow.indexOf("enterFinalizingState(finalUrl);") <
-        photoFlow.indexOf("const uploadResult = await uploadCaptureOnce"),
+        photoFlow.indexOf("void uploadCaptureOnce({"),
     "single-photo capture should show the composed print before upload begins"
   );
   assert.ok(
-    appScript.includes("function enterFinalizingState(finalUrl)") &&
-      appScript.includes("DOM.finalStrip.src = finalUrl;") &&
-      appScript.includes("DOM.finalStrip.onload = reveal;"),
+    imaging.includes("function enterFinalizingState(finalUrl)") &&
+      imaging.includes("DOM.finalStrip.src = finalUrl;") &&
+      imaging.includes("DOM.finalStrip.onload = reveal;"),
     "the finalizing state should use the fully composed final image"
   );
   assert.ok(

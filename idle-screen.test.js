@@ -1,15 +1,16 @@
+const { readAppHtml, readAppSource } = require("./test-utils/app-source.cjs");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
-const app = readFileSync(join(process.cwd(), "scripts/app.js"), "utf8");
+const app = readAppSource();
 const idleScreenModule = readFileSync(join(process.cwd(), "scripts/idle-screen.mjs"), "utf8");
 const assetLibraryUtils = readFileSync(
   join(process.cwd(), "scripts/asset-library-utils.mjs"),
   "utf8"
 );
-const html = readFileSync(join(process.cwd(), "index.html"), "utf8");
+const html = readAppHtml();
 
 function extractFunctionFromEither(source, moduleSource, name) {
   const appIndex = source.indexOf(`function ${name}`);
@@ -745,7 +746,7 @@ test("preset screens retain orientation and role metadata without library cards"
 
 test("welcome mode inline handlers can resolve their exported function", () => {
   assert.ok(html.includes("onclick=\"beginModeSelection('still-photo', event)\""));
-  assert.ok(app.includes("  beginModeSelection,\n  beginWelcome,"));
+  assert.match(app, /beginModeSelection:\s*beginModeSelection[\s\S]*beginWelcome:\s*beginWelcome/);
 });
 
 test("artwork bounds follow cover and contain rendering", () => {

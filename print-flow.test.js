@@ -1,3 +1,4 @@
+const { readAppSource } = require("./test-utils/app-source.cjs");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { test } = require("node:test");
@@ -16,7 +17,7 @@ test("admin exposes digital-only, free, and paid print modes", () => {
 
 test("event print price appears only when paid printing is selected", () => {
   const html = read("index.html");
-  const app = read("scripts", "app.js");
+  const app = readAppSource();
   assert.ok(html.includes('id="eventPrintPriceSettings" hidden'));
   assert.ok(app.includes("function syncEventPrintPriceVisibility()"));
   assert.ok(app.includes('printModeInput.value !== "paid" && !weddingSetup;'));
@@ -27,13 +28,13 @@ test("event print price appears only when paid printing is selected", () => {
 });
 
 test("legacy paid queue settings migrate to explicit print modes", () => {
-  const app = read("scripts", "app.js");
+  const app = readAppSource();
   assert.ok(app.includes('if (settings.mode === "paid-queue")'));
   assert.ok(app.includes('settings.noPaymentRequired === true ? "free" : "paid"'));
 });
 
 test("free printing queues comped items and paid printing requires payment", () => {
-  const app = read("scripts", "app.js");
+  const app = readAppSource();
   assert.ok(app.includes('paymentRequired: settings.mode === "paid"'));
   assert.ok(app.includes('if (settings.mode === "off" || !printEligible) return null;'));
 });

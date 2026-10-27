@@ -1,12 +1,12 @@
 # Build status
 
-- Current goal: Polish individual event galleries for mobile and desktop.
-- Done: Reworked the gallery header and responsive photo grid; added loading, empty, and retry states plus viewer download and share actions. Event QR generation now uses `/gallery` directly, with legacy `/g` links preserved.
-- In progress: None.
-- Next steps: None for the gallery update.
-- Known bugs/blockers: The full suite retains seven unrelated QR, viewport, and capture failures. Pre-existing uncommitted changes in `BUILD_STATUS.md` and `final-preview-sizing-fix.css` remain outside the scoped commits.
-- Important decisions: Share a photo through its stable `/share/{captureId}` URL when available; otherwise share its stored image URL. Keep all photo data on the existing gallery API.
-- Verification/release: Gallery browser checks pass locally and against production (3/3 each); event link and legacy route assertions pass (2/2); JS syntax and `git diff --check` pass. Full suite passes 287/294; seven unrelated QR, viewport, and capture tests fail. Commit `c4b3295` is pushed to `main` and live on Pages Production (`4a5f3c5f`); `/gallery` and `/api/gallery` return HTTP 200.
+- Current goal: Break the booth app into focused modules without changing behavior.
+- Done: Extracted 27 feature modules and four ordered stylesheets. `scripts/app.js` is 155 lines and `index.html` is 1,025 lines. The service worker precaches all new files under shell cache v61.
+- In progress: Final verification, then commit, push, and production deployment from committed contents.
+- Next steps: Deploy to Cloudflare Pages Production and verify the canonical app and service-worker version.
+- Known bugs/blockers: The full browser suite has four failures reproduced against the pre-refactor baseline (filter parity, QR fit, 4×6 output, and a responsive hotspot check that can pass or fail on both versions). No new failure has been identified.
+- Important decisions: Keep vanilla ES modules and static HTML; pass shared state through the explicit app runtime context. Preserve the independent QR sizing follow-up in `BUILD_STATUS.md` and `final-preview-sizing-fix.css` outside this release.
+- Verification: `npm test` passes after updating stale monolith-coupled assertions. Portrait/landscape release gates and print-preview orientation pass (3/3). Full browser suite: 47 passed, 4 baseline failures, 18 skipped. Entry/module syntax and `git diff --check` pass.
 
 - QR readability update (2026-10-26): Increased the final-share QR canvas cap on tablet layouts from 220px to 280px and on narrow phones from 200px to 240px; the default cap is now 320px. Added border-box sizing so canvas padding does not reduce the QR image area. `npm test` has seven failures, all reproduced on `origin/main`; the focused viewport test also reports QR panel overflow at 1600×900 on both the baseline and this change. Commit `93a7b3c` is deployed to Pages Production (`8865ad97`); canonical production returns HTTP 200 and serves the updated QR sizing. The existing viewport overflow remains unresolved.
 

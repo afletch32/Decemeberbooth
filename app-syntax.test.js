@@ -1,29 +1,36 @@
 const assert = require("assert");
+const fs = require("node:fs");
 const { readFileSync } = require("fs");
+const path = require("node:path");
 const { spawnSync } = require("child_process");
 const test = require("node:test");
 
-test("browser app module parses as an ES module", () => {
-  const appScript = readFileSync("scripts/app.js", "utf8");
-  const result = spawnSync(process.execPath, ["--input-type=module", "--check"], {
-    input: appScript,
-    encoding: "utf8",
+function listModules(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) return listModules(file);
+    return entry.isFile() && entry.name.endsWith(".mjs") ? [file] : [];
   });
+}
 
-  assert.strictEqual(
-    result.status,
-    0,
-    result.stderr || result.stdout || "scripts/app.js failed to parse"
-  );
+test("browser app entry and feature modules parse as ES modules", () => {
+  const files = ["scripts/app.js", ...listModules("scripts/app")];
+  for (const file of files) {
+    const result = spawnSync(process.execPath, ["--input-type=module", "--check"], {
+      input: readFileSync(file, "utf8"),
+      encoding: "utf8",
+    });
+    assert.strictEqual(result.status, 0, result.stderr || result.stdout || `${file} failed to parse`);
+  }
 });
 
 test("static element lookups and ID selectors target existing elements", () => {
   const html = readFileSync("index.html", "utf8");
-  const appScript = readFileSync("scripts/app.js", "utf8");
+  const { readAppSource } = require("./test-utils/app-source.cjs");
+  const appScript = readAppSource();
   const styles = [
-    ...Array.from(html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi), (match) =>
-      match[1]
-    ),
+    ...fs.readdirSync("styles").filter((name) => name.startsWith("app-") && name.endsWith(".css"))
+      .map((name) => readFileSync(path.join("styles", name), "utf8")),
     readFileSync("final-preview-sizing-fix.css", "utf8"),
     readFileSync("fonts.css", "utf8"),
   ].join("\n");

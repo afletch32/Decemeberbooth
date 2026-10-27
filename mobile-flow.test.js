@@ -2,9 +2,10 @@ const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
+const { readTestProjectFile } = require("./test-utils/app-source.cjs");
 
 function readProjectFile(...parts) {
-  return readFileSync(join(process.cwd(), ...parts), "utf8");
+  return readTestProjectFile(...parts);
 }
 
 test("mobile photo flow freezes the captured frame after countdown", () => {

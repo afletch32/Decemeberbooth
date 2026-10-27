@@ -1,10 +1,11 @@
+const { readAppHtml, readAppSource } = require("./test-utils/app-source.cjs");
 const assert = require("node:assert/strict");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const test = require("node:test");
 
-const app = readFileSync(join(process.cwd(), "scripts", "app.js"), "utf8");
-const html = readFileSync(join(process.cwd(), "index.html"), "utf8");
+const app = readAppSource();
+const html = readAppHtml();
 
 let getThemeSoundCue;
 let MAX_THEME_SOUND_BYTES;

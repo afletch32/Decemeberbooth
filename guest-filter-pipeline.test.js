@@ -1,25 +1,19 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { readFileSync } = require("node:fs");
-const { runInNewContext } = require("node:vm");
+const { readAppSource } = require("./test-utils/app-source.cjs");
 
-const app = readFileSync("scripts/app.js", "utf8");
+let createCaptureFlowModule;
+let createImagingModule;
 
-function loadFunction(name, globals) {
-  const start = app.indexOf(`async function ${name}(`);
-  assert.ok(start >= 0, `${name} must exist`);
-  let end = app.indexOf("{", start);
-  let depth = 1;
-  while (depth && ++end < app.length) {
-    if (app[end] === "{") depth++;
-    if (app[end] === "}") depth--;
-  }
-  return runInNewContext(`(${app.slice(start, end + 1)})`, globals);
-}
+test.before(async () => {
+  ({ createImagingModule } = await import("./scripts/app/booth/imaging.mjs"));
+  ({ createCaptureFlowModule } = await import("./scripts/app/booth/capture-flow.mjs"));
+});
 
 test("preview and capture apply the same selected preset, including beauty", async () => {
   const calls = [];
-  const process = loadFunction("processCanvasThroughImagingPipeline", {
+  const { processCanvasThroughImagingPipeline: process } = createImagingModule({
     applySelectedFilterToCanvas: (canvas) => {
       calls.push("filter");
       canvas.value += 10;
@@ -42,7 +36,7 @@ test("preview and capture apply the same selected preset, including beauty", asy
 
 test("finalizers process raw photos once and preserve processed capture pixels", async () => {
   let passes = 0;
-  const ensure = loadFunction("ensureGuestPhotoProcessed", {
+  const { ensureGuestPhotoProcessed: ensure } = createCaptureFlowModule({
     processCanvasThroughImagingPipeline: async (canvas) => {
       passes++;
       canvas.value += 10;
@@ -62,6 +56,7 @@ test("finalizers process raw photos once and preserve processed capture pixels",
 });
 
 test("the retired enhancement control and saved setting cannot add a second pass", () => {
+  const app = readAppSource();
   const html = readFileSync("index.html", "utf8");
   assert.ok(!html.includes("enhancementModeSelect"));
   assert.ok(!app.includes("photoboothEnhancementMode"));

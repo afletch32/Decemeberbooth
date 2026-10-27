@@ -1,14 +1,15 @@
+const { readAppSource, readTestProjectFile } = require("./test-utils/app-source.cjs");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 function readProjectFile(...parts) {
-  return readFileSync(join(process.cwd(), ...parts), "utf8");
+  return readTestProjectFile(...parts);
 }
 
 test("app syncs events through the remote sync flow", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes('await fetch("/api/events", { cache: "no-store" });'),
