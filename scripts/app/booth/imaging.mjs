@@ -1150,13 +1150,13 @@ export function createImagingModule(__appRuntimeContext) {
     return true;
   }
 
-  async function startCamera(autoStartBooth = false) {
+  async function startCamera(autoStartBooth = false, { themeReady = false } = {}) {
     if (__appRuntimeContext.isStartingCamera) return;
     __appRuntimeContext.isStartingCamera = true;
 
     try {
       // Load the theme first to ensure all assets and settings are ready.
-      __appRuntimeContext.loadTheme(__appRuntimeContext.getSelectedThemeKey());
+      if (!themeReady) __appRuntimeContext.loadTheme(__appRuntimeContext.getSelectedThemeKey());
 
       if (__appRuntimeContext.isBoothTestMode()) {
         setBoothTestCameraStream();
@@ -1259,8 +1259,7 @@ export function createImagingModule(__appRuntimeContext) {
   async function startBooth(options = {}) {
     if (!options.preserveSession) {
       __appRuntimeContext.prepareThemeSessionFromSetup();
-    }
-    if (__appRuntimeContext.getSelectedThemeKey()) {
+    } else if (__appRuntimeContext.getSelectedThemeKey()) {
       __appRuntimeContext.loadTheme(__appRuntimeContext.getSelectedThemeKey());
     }
     if (!__appRuntimeContext.activeTheme) {
@@ -1273,7 +1272,7 @@ export function createImagingModule(__appRuntimeContext) {
     }
     startBoothFlow();
     // Start camera after the booth view is already visible so setup cannot stall.
-    startCamera(false);
+    startCamera(false, { themeReady: true });
   }
 
   function startBoothFlow() {

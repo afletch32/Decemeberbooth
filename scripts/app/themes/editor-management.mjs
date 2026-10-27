@@ -5,8 +5,6 @@ export function createEditorManagementModule(__appRuntimeContext) {
         await __appRuntimeContext.reloadFontPickerOptions();
         __appRuntimeContext.fontPickerInitialized = true;
       })();
-    } else if (__appRuntimeContext.fontPickerInitialized) {
-      await __appRuntimeContext.reloadFontPickerOptions();
     }
     return __appRuntimeContext.fontPickerSetupPromise;
   }

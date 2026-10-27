@@ -1,5 +1,5 @@
 // Bump these to force one-time invalidation when changing strategies.
-const APP_SHELL_CACHE = "pb-app-shell-v62";
+const APP_SHELL_CACHE = "pb-app-shell-v63";
 const RUNTIME_CACHE = "pb-runtime-v5";
 const SHARE_CACHE = "pb-share-v1";
 const OFFLINE_ASSETS_CACHE = "pb-offline-assets-v1";
@@ -12,6 +12,8 @@ const APP_SHELL_ASSETS = [
   "manifest.json",
   "appicon.png",
   "fonts.css",
+  "fonts.json",
+  "scripts/vendor/qrcode.js",
   "styles/animations.css",
   "styles/app-foundation.css",
   "styles/app-setup.css",
@@ -19,6 +21,7 @@ const APP_SHELL_ASSETS = [
   "styles/app-guest.css",
   "final-preview-sizing-fix.css?v=20261027-qr-panel-layout",
   "scripts/app.js",
+  "scripts/app.js?v=20261027-launch-speed",
   "scripts/app/state.mjs",
   "scripts/app/dom.mjs",
   "scripts/app/lifecycle.mjs",
@@ -132,6 +135,7 @@ self.addEventListener("fetch", (event) => {
       event.request.destination === "script" ||
       event.request.destination === "style" ||
       event.request.destination === "font" ||
+      url.pathname === `${base}fonts.json` ||
       url.pathname === `${base}manifest.json` ||
       url.pathname === `${base}appicon.png`);
 

@@ -1,4 +1,25 @@
 export function createFontPickerModule(__appRuntimeContext) {
+  let fontManifestPromise = null;
+
+  function loadFontManifest() {
+    if (!fontManifestPromise) {
+      fontManifestPromise = (async () => {
+        for (const candidate of ["fonts.json", "./fonts.json", "/fonts.json"]) {
+          try {
+            const response = await fetch(candidate, { cache: "no-cache" });
+            if (response.ok) return await response.json();
+          } catch (error) {
+            console.warn("Failed to load fonts manifest from", candidate, error);
+          }
+        }
+        // Retry on the next refresh if the manifest was unavailable offline.
+        fontManifestPromise = null;
+        return { available: [], defaults: {}, pairings: [] };
+      })();
+    }
+    return fontManifestPromise;
+  }
+
   function getStoredFonts() {
     try {
       const raw = localStorage.getItem("photoboothFonts");
@@ -284,19 +305,7 @@ export function createFontPickerModule(__appRuntimeContext) {
   }
 
   async function reloadFontPickerOptions(options = {}) {
-    let base = { available: [], defaults: {}, pairings: [] };
-    const manifestCandidates = ["fonts.json", "./fonts.json", "/fonts.json"];
-    for (const candidate of manifestCandidates) {
-      try {
-        const res = await fetch(candidate, { cache: "no-store" });
-        if (res && res.ok) {
-          base = await res.json();
-          break;
-        }
-      } catch (e) {
-        console.warn("Failed to load fonts manifest from", candidate, e);
-      }
-    }
+    const base = await loadFontManifest();
     const stored = getStoredFonts();
     const extras = stored
       .filter((f) => f && f.type === "family" && f.value)
