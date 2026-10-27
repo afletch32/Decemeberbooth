@@ -1026,7 +1026,16 @@ export function createOperationsModule(__appRuntimeContext) {
     const src = __appRuntimeContext.getAssetEntrySrc(entry.src) || __appRuntimeContext.getAssetEntrySrc(entry.renderSrc);
     if (!src) return null;
     const renderSrc = __appRuntimeContext.getAssetEntrySrc(entry.renderSrc) || src;
-    const photoSlots = normalizeOverlayPhotoSlots(entry);
+    const savedAsset = (__appRuntimeContext.assetLibrary.assets || []).find((asset) =>
+      asset &&
+      asset.category === "overlay" &&
+      __appRuntimeContext.getAssetEntrySrc(asset) === src &&
+      Array.isArray(asset.photoSlots) &&
+      asset.photoSlots.length
+    );
+    const photoSlots = normalizeOverlayPhotoSlots(
+      savedAsset ? { ...entry, photoSlots: savedAsset.photoSlots } : entry
+    );
     const aspectRatio =
       parseAspectRatioValue(entry.aspectRatio) ||
       parseAspectRatioValue(entry.layoutAspectRatio) ||

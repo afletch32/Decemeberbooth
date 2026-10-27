@@ -284,6 +284,10 @@ export function createAppState(dependencies = {}) {
 
   let overlaySlotEditorSlot = null;
 
+  let overlaySlotEditorSlots = [];
+
+  let overlaySlotEditorSelectedIndex = 0;
+
   let idleScreenEditorZone = { x: 50, y: 73, width: 28, height: 20 };
 
   let photoChoiceEditorZones = {
@@ -805,6 +809,8 @@ export function createAppState(dependencies = {}) {
     "activeIdleScreenEditorAsset": { enumerable: true, get: () => activeIdleScreenEditorAsset, set: (value) => { activeIdleScreenEditorAsset = value; } },
     "activeOverlaySlotEditorAsset": { enumerable: true, get: () => activeOverlaySlotEditorAsset, set: (value) => { activeOverlaySlotEditorAsset = value; } },
     "overlaySlotEditorSlot": { enumerable: true, get: () => overlaySlotEditorSlot, set: (value) => { overlaySlotEditorSlot = value; } },
+    "overlaySlotEditorSlots": { enumerable: true, get: () => overlaySlotEditorSlots, set: (value) => { overlaySlotEditorSlots = value; } },
+    "overlaySlotEditorSelectedIndex": { enumerable: true, get: () => overlaySlotEditorSelectedIndex, set: (value) => { overlaySlotEditorSelectedIndex = value; } },
     "idleScreenEditorZone": { enumerable: true, get: () => idleScreenEditorZone, set: (value) => { idleScreenEditorZone = value; } },
     "photoChoiceEditorZones": { enumerable: true, get: () => photoChoiceEditorZones, set: (value) => { photoChoiceEditorZones = value; } },
     "activeSessionTextDetails": { enumerable: true, get: () => activeSessionTextDetails, set: (value) => { activeSessionTextDetails = value; } },

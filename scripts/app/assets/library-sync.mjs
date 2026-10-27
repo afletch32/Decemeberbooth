@@ -1285,23 +1285,48 @@ export function createLibrarySyncModule(__appRuntimeContext) {
   }
 
   function renderOverlaySlotEditorZone() {
-    if (!__appRuntimeContext.DOM.overlaySlotEditorZone || !__appRuntimeContext.overlaySlotEditorSlot) return;
-    const slot = __appRuntimeContext.overlaySlotEditorSlot;
-    __appRuntimeContext.DOM.overlaySlotEditorZone.style.left = `${slot.x * 100}%`;
-    __appRuntimeContext.DOM.overlaySlotEditorZone.style.top = `${slot.y * 100}%`;
-    __appRuntimeContext.DOM.overlaySlotEditorZone.style.width = `${slot.width * 100}%`;
-    __appRuntimeContext.DOM.overlaySlotEditorZone.style.height = `${slot.height * 100}%`;
-    if (__appRuntimeContext.DOM.overlaySlotEditorFit) __appRuntimeContext.DOM.overlaySlotEditorFit.value = slot.objectFit || "cover";
+    const canvas = __appRuntimeContext.DOM.overlaySlotEditorCanvas;
+    const firstZone = __appRuntimeContext.DOM.overlaySlotEditorZone;
+    const slots = __appRuntimeContext.overlaySlotEditorSlots || [];
+    if (!canvas || !firstZone || !slots.length) return;
+    const zones = [firstZone, ...canvas.querySelectorAll(".overlay-slot-editor-zone-extra")];
+    while (zones.length < slots.length) {
+      const zone = firstZone.cloneNode(true);
+      zone.removeAttribute("id");
+      zone.classList.add("overlay-slot-editor-zone-extra");
+      canvas.appendChild(zone);
+      zones.push(zone);
+    }
+    zones.slice(slots.length).forEach((zone) => zone.remove());
+    zones.slice(0, slots.length).forEach((zone, index) => {
+      const slot = slots[index];
+      zone.dataset.slotIndex = String(index);
+      zone.classList.toggle("is-selected", index === __appRuntimeContext.overlaySlotEditorSelectedIndex);
+      zone.style.left = `${slot.x * 100}%`;
+      zone.style.top = `${slot.y * 100}%`;
+      zone.style.width = `${slot.width * 100}%`;
+      zone.style.height = `${slot.height * 100}%`;
+      const label = zone.querySelector("span");
+      if (label) label.textContent = `Photo ${index + 1}`;
+    });
+    __appRuntimeContext.overlaySlotEditorSlot = slots[__appRuntimeContext.overlaySlotEditorSelectedIndex] || slots[0];
+    if (__appRuntimeContext.DOM.overlaySlotEditorFit) {
+      __appRuntimeContext.DOM.overlaySlotEditorFit.value = __appRuntimeContext.overlaySlotEditorSlot.objectFit || "cover";
+    }
   }
 
   function bindOverlaySlotEditorPointer() {
-    const zone = __appRuntimeContext.DOM.overlaySlotEditorZone;
     const canvas = __appRuntimeContext.DOM.overlaySlotEditorCanvas;
-    if (!zone || !canvas || zone.dataset.bound === "true") return;
-    zone.dataset.bound = "true";
-    zone.addEventListener("pointerdown", (event) => {
-      if (!__appRuntimeContext.overlaySlotEditorSlot) return;
+    if (!__appRuntimeContext.DOM.overlaySlotEditorZone || !canvas || canvas.dataset.bound === "true") return;
+    canvas.dataset.bound = "true";
+    canvas.addEventListener("pointerdown", (event) => {
+      const zone = event.target.closest(".overlay-slot-editor-zone");
+      if (!zone || !__appRuntimeContext.overlaySlotEditorSlots.length) return;
       event.preventDefault();
+      __appRuntimeContext.overlaySlotEditorSelectedIndex = Number(zone.dataset.slotIndex || 0);
+      __appRuntimeContext.overlaySlotEditorSlot = __appRuntimeContext.overlaySlotEditorSlots[__appRuntimeContext.overlaySlotEditorSelectedIndex];
+      renderOverlaySlotEditorZone();
+      zone.setPointerCapture(event.pointerId);
       const resize = event.target.tagName === "I";
       const startX = event.clientX;
       const startY = event.clientY;
@@ -1313,18 +1338,19 @@ export function createLibrarySyncModule(__appRuntimeContext) {
         const dx = (nextEvent.clientX - startX) / rect.width;
         const dy = (nextEvent.clientY - startY) / rect.height;
         if (resize) {
-          __appRuntimeContext.overlaySlotEditorSlot = normalizeOverlaySlotEditorSlot({
+          __appRuntimeContext.overlaySlotEditorSlots[__appRuntimeContext.overlaySlotEditorSelectedIndex] = normalizeOverlaySlotEditorSlot({
             ...original,
             width: Math.min(1 - original.x, Math.max(0.06, original.width + dx)),
             height: Math.min(1 - original.y, Math.max(0.06, original.height + dy)),
           });
         } else {
-          __appRuntimeContext.overlaySlotEditorSlot = normalizeOverlaySlotEditorSlot({
+          __appRuntimeContext.overlaySlotEditorSlots[__appRuntimeContext.overlaySlotEditorSelectedIndex] = normalizeOverlaySlotEditorSlot({
             ...original,
             x: Math.max(0, Math.min(1 - original.width, original.x + dx)),
             y: Math.max(0, Math.min(1 - original.height, original.y + dy)),
           });
         }
+        __appRuntimeContext.overlaySlotEditorSlot = __appRuntimeContext.overlaySlotEditorSlots[__appRuntimeContext.overlaySlotEditorSelectedIndex];
         renderOverlaySlotEditorZone();
       };
       const stop = () => {
@@ -1341,14 +1367,24 @@ export function createLibrarySyncModule(__appRuntimeContext) {
   function closeOverlaySlotEditor() {
     __appRuntimeContext.activeOverlaySlotEditorAsset = null;
     __appRuntimeContext.overlaySlotEditorSlot = null;
+    __appRuntimeContext.overlaySlotEditorSlots = [];
+    __appRuntimeContext.overlaySlotEditorSelectedIndex = 0;
+    __appRuntimeContext.DOM.overlaySlotEditorCanvas?.querySelectorAll(".overlay-slot-editor-zone-extra").forEach((zone) => zone.remove());
     if (__appRuntimeContext.DOM.overlaySlotEditorModal) __appRuntimeContext.DOM.overlaySlotEditorModal.classList.add("hidden");
   }
 
   function openOverlaySlotEditor(asset) {
     if (!asset || !__appRuntimeContext.DOM.overlaySlotEditorModal || !__appRuntimeContext.DOM.overlaySlotEditorArtwork) return;
     __appRuntimeContext.activeOverlaySlotEditorAsset = asset;
-    const savedSlot = Array.isArray(asset.photoSlots) && asset.photoSlots[0];
-    __appRuntimeContext.overlaySlotEditorSlot = normalizeOverlaySlotEditorSlot(savedSlot || createDefaultOverlayPhotoSlot());
+    const savedSlots = Array.isArray(asset.photoSlots) && asset.photoSlots.length
+      ? asset.photoSlots
+      : Array.isArray(asset.raw && asset.raw.photoSlots)
+        ? asset.raw.photoSlots
+        : [];
+    __appRuntimeContext.overlaySlotEditorSlots = (savedSlots.length ? savedSlots : [createDefaultOverlayPhotoSlot()])
+      .map((slot) => normalizeOverlaySlotEditorSlot(slot));
+    __appRuntimeContext.overlaySlotEditorSelectedIndex = 0;
+    __appRuntimeContext.overlaySlotEditorSlot = __appRuntimeContext.overlaySlotEditorSlots[0];
     const sampleSrc = __appRuntimeContext.DOM.lastShot ? __appRuntimeContext.DOM.lastShot.getAttribute("src") || "" : "";
     if (__appRuntimeContext.DOM.overlaySlotEditorSample) {
       __appRuntimeContext.DOM.overlaySlotEditorSample.src = sampleSrc;
@@ -1387,10 +1423,14 @@ export function createLibrarySyncModule(__appRuntimeContext) {
 
   async function saveOverlaySlotEditor() {
     if (!__appRuntimeContext.activeOverlaySlotEditorAsset || !__appRuntimeContext.overlaySlotEditorSlot) return;
-    const photoSlots = [normalizeOverlaySlotEditorSlot(__appRuntimeContext.overlaySlotEditorSlot)];
+    const photoSlots = __appRuntimeContext.overlaySlotEditorSlots.map((slot) => normalizeOverlaySlotEditorSlot(slot));
     const asset = __appRuntimeContext.activeOverlaySlotEditorAsset;
     await updateAssetLibraryItem(asset.id, { photoSlots }, asset);
     replaceSavedPhotoSlotInThemes(asset, photoSlots);
+    if (__appRuntimeContext.activeTheme) {
+      __appRuntimeContext.renderCurrentAssets(__appRuntimeContext.activeTheme);
+      __appRuntimeContext.renderOptions();
+    }
     closeOverlaySlotEditor();
     __appRuntimeContext.showToast("Photo window saved. It will use this exact placement on the final photo.");
   }

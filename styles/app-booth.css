@@ -441,7 +441,8 @@
     .overlay-slot-editor-canvas { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: min(62vh, 620px); margin: 16px 0; overflow: hidden; background: linear-gradient(135deg, #dbeafe, #fce7f3 48%, #dcfce7); touch-action: none; }
     .overlay-slot-editor-canvas img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
     .overlay-slot-editor-canvas .overlay-slot-editor-sample { object-fit: cover; opacity: 0.9; }
-    .overlay-slot-editor-zone { position: absolute; border: 3px dashed #0ea5e9; background: rgba(14, 165, 233, 0.14); cursor: move; box-shadow: 0 0 0 999px rgba(15, 23, 42, 0.18); }
+    .overlay-slot-editor-zone { position: absolute; z-index: 1; border: 3px dashed #0ea5e9; background: rgba(14, 165, 233, 0.14); cursor: move; }
+    .overlay-slot-editor-zone.is-selected { z-index: 2; border-color: #0284c7; background: rgba(14, 165, 233, 0.22); box-shadow: 0 0 0 999px rgba(15, 23, 42, 0.14); }
     .overlay-slot-editor-zone span { position: absolute; left: 0; bottom: 100%; padding: 4px 8px; background: #0369a1; color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; }
     .overlay-slot-editor-zone i { position: absolute; right: -10px; bottom: -10px; width: 22px; height: 22px; border-radius: 50%; background: #0369a1; border: 2px solid #fff; cursor: nwse-resize; }
 

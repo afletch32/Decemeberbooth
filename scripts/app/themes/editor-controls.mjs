@@ -134,7 +134,9 @@ export function createEditorControlsModule(__appRuntimeContext) {
       });
     if (__appRuntimeContext.DOM.overlaySlotEditorReset)
       __appRuntimeContext.DOM.overlaySlotEditorReset.addEventListener("click", () => {
-        __appRuntimeContext.overlaySlotEditorSlot = __appRuntimeContext.createDefaultOverlayPhotoSlot();
+        const index = __appRuntimeContext.overlaySlotEditorSelectedIndex || 0;
+        __appRuntimeContext.overlaySlotEditorSlots[index] = __appRuntimeContext.createDefaultOverlayPhotoSlot();
+        __appRuntimeContext.overlaySlotEditorSlot = __appRuntimeContext.overlaySlotEditorSlots[index];
         __appRuntimeContext.renderOverlaySlotEditorZone();
       });
     if (__appRuntimeContext.DOM.overlaySlotEditorCancel)
