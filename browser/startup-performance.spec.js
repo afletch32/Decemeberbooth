@@ -53,6 +53,7 @@ for (const viewport of [{ width: 1024, height: 1366 }, { width: 1366, height: 10
     await expect(page.locator("#welcomeOverlay")).toHaveAttribute("data-step", "mode");
     await expect(page.locator("#welcomeScreen")).not.toHaveClass(/welcome-transitioning/);
     await page.locator('[data-welcome-mode="still-photo"]').evaluate((button) => button.click());
+    await expect(page.locator("#boothScreen")).not.toHaveClass(/welcome-active/);
     await expect(page.locator("#captureBtn")).toBeVisible();
     const started = Date.now();
     await page.locator("#captureBtn").click({ force: true });
@@ -61,7 +62,7 @@ for (const viewport of [{ width: 1024, height: 1366 }, { width: 1366, height: 10
     await expect(page.locator("#qrCodeContainer")).toHaveAttribute("data-ready", "true");
     expect(manifests).toBe(1);
     expect(errors).toEqual([]);
-    await page.screenshot({ path: `/tmp/booth-speed-${viewport.width}.png` });
+    await page.screenshot({ path: `/tmp/booth-speed-${viewport.width}.png`, animations: "disabled" });
     console.log(JSON.stringify({ viewport, launchMs: launch.ms, captureToQrMs: Date.now() - started, manifests, themeLoads: launch.loads }));
     await page.locator("#finishBoothBtn").click({ force: true });
     await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
