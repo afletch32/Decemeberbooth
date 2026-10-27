@@ -1,4 +1,5 @@
 export function createSessionAssetsModule(__appRuntimeContext) {
+  const missingPreviewThumbnails = new Set();
   function getUrlParam(name) {
     try {
       return new URLSearchParams(window.location.search).get(name) || "";
@@ -412,11 +413,25 @@ export function createSessionAssetsModule(__appRuntimeContext) {
 
   function createAssetPreviewMedia(entry, alt = "") {
     const source = getAssetEntrySrc(entry);
-    const previewSrc = isVideoAsset(entry)
+    const video = isVideoAsset(entry);
+    const previewSrc = video
       ? __appRuntimeContext.getVideoPreviewPosterSrc(entry, source)
       : getAssetPreviewSrc(source);
+    const resolvedPreview = __appRuntimeContext.resolvePreviewAssetSrc(previewSrc, window.location.href);
+    const original = __appRuntimeContext.resolvePreviewAssetSrc(source, window.location.href);
+    let usingThumbnail = !video && resolvedPreview !== original && !missingPreviewThumbnails.has(resolvedPreview);
     const img = document.createElement("img");
-    img.src = withBust(__appRuntimeContext.resolvePreviewAssetSrc(previewSrc, window.location.href));
+    if (usingThumbnail) {
+      img.addEventListener("error", (event) => {
+        if (!usingThumbnail) return;
+        usingThumbnail = false;
+        missingPreviewThumbnails.add(resolvedPreview);
+        // Callers render their error placeholder only if the original fails too.
+        event.stopImmediatePropagation();
+        img.src = withBust(original);
+      });
+    }
+    img.src = withBust(!video && missingPreviewThumbnails.has(resolvedPreview) ? original : resolvedPreview);
     img.alt = alt;
     img.loading = "lazy";
     img.decoding = "async";
@@ -425,13 +440,16 @@ export function createSessionAssetsModule(__appRuntimeContext) {
 
   function getAssetPreviewSrc(src) {
     const value = String(src || "");
-    if (!/^\/assets\//.test(value) || /\.svg(?:$|[?#])/i.test(value)) {
+    if (!/^\/assets\//.test(value) || /(?:\.svg|\.thumb\.webp)(?:$|[?#])/i.test(value)) {
       return __appRuntimeContext.resolvePreviewAssetSrc(value, window.location.href);
     }
-    return __appRuntimeContext.resolvePreviewAssetSrc(
+    const preview = __appRuntimeContext.resolvePreviewAssetSrc(
       value.replace(/\.(png|jpe?g|webp)(?=($|[?#]))/i, ".thumb.webp"),
       window.location.href
     );
+    return missingPreviewThumbnails.has(preview)
+      ? __appRuntimeContext.resolvePreviewAssetSrc(value, window.location.href)
+      : preview;
   }
 
   function createAssetSelectionSet(value) {

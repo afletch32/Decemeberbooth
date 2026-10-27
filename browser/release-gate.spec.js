@@ -1,22 +1,41 @@
 const { test, expect } = require("@playwright/test");
 
+// Keep these GPU/media-heavy flows sequential even with fullyParallel enabled.
+test.describe.configure({ mode: "default" });
+
+// Back to School has no photo overlays/templates and is intentionally hidden by
+// the existing completed-theme filter. Exercise every currently selectable pack.
 const APPROVED_THEMES = [
   "general:averyBirthday",
-  "general:backToSchool",
   "general:summer",
   "fall:halloween",
   "fall:cuteHalloween",
   "school:hawks",
+  "school:hawksTitansStadium",
   "school:hawksCheer",
   "school:ane",
   "school:streamNight",
 ];
 
+test.beforeEach(async ({ page }) => {
+  // A release gate must not mutate shared settings or race a remote catalog merge.
+  await page.addInitScript(() => localStorage.setItem("photoboothRemoteSync", "false"));
+  await page.route("**/api/**", (route) => route.request().method() === "GET"
+    ? route.continue() : route.fulfill({ json: { ok: true } }));
+  await page.route("https://fonts.googleapis.com/**", (route) => route.fulfill({ contentType: "text/css", body: "" }));
+  await page.route("https://fonts.gstatic.com/**", (route) => route.abort());
+});
+
 for (const orientation of ["portrait", "landscape"]) {
-  test(`approved theme guest flow works in ${orientation}`, async ({ page }) => {
-    test.setTimeout(180000);
-    for (const themeKey of APPROVED_THEMES) {
-      await page.goto(`/index.html?testMode=booth&releaseGate=${themeKey}`, {
+  for (const themeKey of APPROVED_THEMES) {
+    test(`${themeKey} guest flow works in ${orientation}`, async ({ page }) => {
+      const errors = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      // Restore the pack under test directly instead of loading Summer first.
+      await page.addInitScript((key) => localStorage.setItem("photoboothLastThemeKey", key), themeKey);
+      await page.setViewportSize(orientation === "portrait"
+        ? { width: 1024, height: 1366 } : { width: 1366, height: 1024 });
+      await page.goto(`/?testMode=booth&releaseGate=${themeKey}`, {
         waitUntil: "domcontentloaded",
       });
       await page.waitForFunction(() => !!window.__photoboothTest);
@@ -32,6 +51,7 @@ for (const orientation of ["portrait", "landscape"]) {
         }
       }, { themeKey, orientation });
       await page.evaluate(() => window.__photoboothQA.enterState("welcome"));
+      await expect.poll(() => page.evaluate(() => window.__photoboothTest.getSelectedThemeKey())).toBe(themeKey);
 
       await expect(page.locator("#boothScreen")).not.toHaveClass(/hidden/);
       await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
@@ -55,9 +75,12 @@ for (const orientation of ["portrait", "landscape"]) {
       await expect(page.locator("#captureBtn")).toBeVisible();
       await page.locator("#captureBtn").click({ force: true });
       await expect(page.locator("#finalPreview")).toHaveClass(/show/);
-      await page.locator("#finishBoothBtn").click({ force: true });
+      await expect(page.locator("#qrCodeContainer")).toHaveAttribute("data-ready", "true");
+      await expect(page.locator("#finishBoothBtn")).toBeVisible();
+      await page.locator("#finishBoothBtn").click();
       await expect(page.locator("#finalPreview")).not.toHaveClass(/show/);
       await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
-    }
-  });
+      expect(errors).toEqual([]);
+    });
+  }
 }

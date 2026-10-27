@@ -523,6 +523,8 @@
   }
 
   #finalPreviewActions {
+    height: 100%;
+    padding: 20px;
     grid-column: 1;
     grid-row: 2;
     width: min(100%, 420px);
@@ -530,50 +532,111 @@
     justify-self: center;
   }
 
-  #qrCode {
-    width: min(75vw, 38dvh, 420px) !important;
-    height: min(75vw, 38dvh, 420px) !important;
-    max-width: min(75vw, 38dvh, 420px) !important;
-    max-height: min(75vw, 38dvh, 420px) !important;
+  #qrCodeContainer {
+    height: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
   }
+
+  #qrCodeContainer .share-header { grid-row: 1; }
+  #qrSaveCopy { margin: 0; }
+
+  #qrCode {
+    grid-row: 2;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0;
+    min-height: 0;
+    max-width: min(100%, 420px) !important;
+    max-height: 100% !important;
+  }
+
+  #finalPrintActions {
+    grid-row: 3;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px;
+  }
+
+  #printPriceNotice {
+    grid-column: 1;
+    padding: 4px;
+    font-size: 0.8rem;
+    line-height: 1.2;
+  }
+
+  #qrHint {
+    grid-row: 4;
+    margin-top: 0 !important;
+  }
+
+  #openEventGalleryFromShare { grid-row: 5; }
 }
 
-@media (max-height: 760px) and (orientation: portrait) {
+/* Keep a real photo row and a bounded share row on short phones. The QR
+   uses the space left after status, print, gallery, and review controls. */
+@media (max-height: 760px) and (orientation: portrait),
+       (max-width: 600px) and (orientation: portrait) {
+  #finalPreview {
+    padding:
+      max(8px, env(safe-area-inset-top, 0px))
+      max(8px, env(safe-area-inset-right, 0px))
+      max(8px, env(safe-area-inset-bottom, 0px))
+      max(8px, env(safe-area-inset-left, 0px));
+  }
+
   #finalPreviewContent {
-    height: auto;
-    min-height: 100%;
-    grid-template-rows: auto auto;
+    height: 100%;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 3fr);
     gap: 8px;
-    align-content: center;
-    padding: 12px;
+    padding: 8px;
   }
 
   #finalStrip,
   #finalLive,
   #finalStrip[data-orientation="portrait"],
   #finalLive[data-orientation="portrait"] {
-    max-height: min(26dvh, 170px) !important;
+    max-height: min(20dvh, 170px) !important;
+    border-width: 6px;
   }
 
   #finalPreviewActions {
-    grid-template-rows: auto auto;
-    max-height: none;
-    overflow: visible;
+    height: 100%;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 8px;
   }
 
   #qrCodeContainer {
-    height: auto;
-    max-height: none;
-    grid-template-rows: auto auto auto;
-    gap: 6px;
-    padding: 10px;
+    gap: 4px;
+    padding: 8px;
   }
 
-  #qrCode {
-    width: min(42dvh, 420px) !important;
-    height: min(42dvh, 420px) !important;
-    max-width: min(42dvh, 420px) !important;
-    max-height: min(42dvh, 420px) !important;
+  #qrCodeContainer .share-header {
+    gap: 4px;
+  }
+
+  #qrCodeContainer .share-header-copy {
+    gap: 4px;
+  }
+
+  #qrCodeContainer h2 {
+    font-size: 1.1rem;
+    line-height: 1.1;
+  }
+
+  #qrSaveCopy,
+  #qrHint {
+    font-size: 0.8rem;
+    line-height: 1.2;
+  }
+
+  #openEventGalleryFromShare,
+  #finalPrintActions button,
+  .final-review-actions button {
+    min-height: 44px;
+    padding: 8px;
   }
 }
 
