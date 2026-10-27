@@ -17,7 +17,7 @@ const APP_SHELL_ASSETS = [
   "styles/app-setup.css",
   "styles/app-booth.css",
   "styles/app-guest.css",
-  "final-preview-sizing-fix.css",
+  "final-preview-sizing-fix.css?v=20261027-qr-panel-layout",
   "scripts/app.js",
   "scripts/app/state.mjs",
   "scripts/app/dom.mjs",

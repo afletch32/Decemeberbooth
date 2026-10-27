@@ -30,6 +30,14 @@ test("booth entry, static page, and feature modules stay within size limits", ()
 
 test("service worker precaches every application module and split stylesheet", () => {
   const serviceWorker = fs.readFileSync("sw.js", "utf8");
+  const html = fs.readFileSync("index.html", "utf8");
+  const previewStylesheet = html.match(/href="(final-preview-sizing-fix\.css\?v=[^"]+)"/);
+  assert.ok(previewStylesheet, "the final preview stylesheet should have a cache-busting version");
+  assert.ok(
+    serviceWorker.includes(`"${previewStylesheet[1]}"`),
+    "the service worker should precache the exact final preview stylesheet URL for offline use"
+  );
+
   for (const file of listFiles("scripts/app", ".mjs")) {
     const assetPath = file.split(path.sep).join("/");
     assert.ok(serviceWorker.includes(`"${assetPath}"`), `${assetPath} should be in the app shell cache`);

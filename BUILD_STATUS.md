@@ -1,7 +1,7 @@
 # Build status
 
 - Current goal: Keep final-share content inside supported booth viewports.
-- Done: The landscape share actions span both preview grid rows. The stylesheet URL and service-worker shell cache are versioned so offline clients receive this layout update.
+- Done: The landscape share actions span both preview grid rows. The exact versioned stylesheet URL is precached under service-worker shell v62 so offline clients receive this layout update.
 - In progress: Physical iPad/Safari verification when the booth device is available.
 - Next steps: Investigate the remaining 360×640 phone overflow and confirm the deployed kiosk layout on iPad Safari.
 - Known bugs/blockers: The focused viewport test passes through 768×1024, including 1600×900, but reports `#finalPreviewActions` extending below the viewport at 360×640 (bottom 680.8px vs 641px).
