@@ -3,56 +3,85 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="Event photo gallery" />
+  <meta name="description" content="Browse and download photos from this event gallery." />
+  <meta name="theme-color" content="#111523" />
   <title>Event Gallery</title>
   <link rel="stylesheet" href="fonts.css">
   <style>
     :root { --accent:#d4f2d9; --accent-strong:#fff; --ink:#fff; --muted:#c3c9d8; --surface:#111523; --page:#0b0d12; --heading:'Comic Neue',cursive; --body:'Comic Neue',cursive; }
     * { box-sizing:border-box; }
     body { margin:0; min-height:100vh; color:var(--ink); background:var(--page); font-family:var(--body); }
-    .hero { padding:clamp(28px,7vw,72px) 20px 34px; text-align:center; background:linear-gradient(135deg,var(--hero-bg,#0f1220),var(--page)); border-bottom:1px solid color-mix(in srgb,var(--accent) 28%,transparent); }
+    button,.button { min-height:44px; border:1px solid color-mix(in srgb,var(--accent) 62%,transparent); border-radius:999px; padding:10px 17px; color:var(--page); background:var(--accent); font:700 1rem var(--body); text-decoration:none; cursor:pointer; transition:transform .18s ease,background .18s ease,border-color .18s ease; }
+    button:hover,.button:hover { transform:translateY(-1px); }
+    button:focus-visible,.button:focus-visible { outline:3px solid var(--accent-strong); outline-offset:3px; }
+    button.secondary,.button.secondary { color:var(--ink); background:#ffffff0b; }
+    .hero { position:relative; overflow:hidden; padding:clamp(34px,8vw,82px) 20px 38px; text-align:center; background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--accent) 19%,transparent),transparent 58%),linear-gradient(145deg,var(--hero-bg,#171b2a),var(--page) 82%); border-bottom:1px solid color-mix(in srgb,var(--accent) 24%,transparent); }
+    .hero:after { position:absolute; inset:auto 0 0; height:1px; content:""; background:linear-gradient(90deg,transparent,var(--accent),transparent); opacity:.38; }
+    .hero-inner { position:relative; z-index:1; width:min(760px,100%); margin:auto; }
     .hero-logo { display:none; max-width:150px; max-height:86px; margin:0 auto 18px; object-fit:contain; }
     .hero-logo.visible { display:block; }
-    h1 { margin:0; color:var(--accent-strong); font:700 clamp(2rem,5vw,3.6rem)/1.05 var(--heading); }
-    .subtitle { margin:12px auto 0; max-width:650px; color:var(--muted); font-size:1.05rem; }
-    .toolbar { display:flex; justify-content:center; gap:12px; margin-top:24px; }
-    button { border:1px solid color-mix(in srgb,var(--accent) 65%,transparent); border-radius:999px; padding:11px 18px; color:var(--page); background:var(--accent); font:600 1rem var(--body); cursor:pointer; }
-    button.secondary { color:var(--ink); background:transparent; }
-    .grid { width:min(1220px,100%); margin:0 auto; padding:24px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
-    .card { min-width:0; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 22%,transparent); border-radius:14px; background:var(--surface); box-shadow:0 10px 24px #0005; cursor:pointer; }
-    .card img,.card video { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; }
-    .card video { cursor:default; }
-    .note { padding:30px 20px; color:var(--muted); text-align:center; }
-    #loadMore { display:none; margin:0 auto 34px; }
-    .viewer { position:fixed; inset:0; z-index:5; display:none; place-items:center; padding:20px; background:#05060acc; }
+    .eyebrow { margin:0 0 12px; color:var(--accent); font-size:.78rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase; }
+    h1 { margin:0; color:var(--accent-strong); font:700 clamp(2.15rem,7vw,4rem)/1.02 var(--heading); text-wrap:balance; }
+    .subtitle { margin:14px auto 0; max-width:580px; color:var(--muted); font-size:clamp(1rem,2.5vw,1.15rem); line-height:1.5; }
+    .toolbar { display:flex; justify-content:center; gap:10px; margin-top:24px; }
+    main { width:min(1320px,100%); margin:0 auto; padding:12px 0 44px; }
+    .gallery-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 26px 12px; color:var(--muted); font-size:.95rem; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:8px 20px 24px; }
+    .card { min-width:0; overflow:hidden; border:1px solid #ffffff15; border-radius:16px; padding:0; color:var(--ink); background:var(--surface); text-align:left; box-shadow:0 12px 28px #0003; }
+    .card:hover { border-color:color-mix(in srgb,var(--accent) 58%,transparent); }
+    .card img,.card video { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; background:#ffffff0a; }
+    .card video { cursor:pointer; }
+    .card-caption { display:block; padding:10px 12px; color:var(--muted); font-size:.85rem; }
+    .note { width:min(580px,calc(100% - 40px)); margin:30px auto; padding:26px 20px; border:1px solid #ffffff15; border-radius:18px; color:var(--muted); background:var(--surface); text-align:center; line-height:1.5; }
+    .note strong { display:block; margin-bottom:6px; color:var(--ink); font-size:1.1rem; }
+    .note button { margin-top:14px; }
+    #loadMore { display:none; margin:0 auto 24px; }
+    .skeleton { aspect-ratio:4/3; border-radius:16px; background:linear-gradient(100deg,#ffffff08 20%,#ffffff13 38%,#ffffff08 56%); background-size:220% 100%; animation:shimmer 1.5s linear infinite; }
+    @keyframes shimmer { to { background-position-x:-220%; } }
+    .viewer { position:fixed; inset:0; z-index:5; display:none; grid-template-rows:auto minmax(0,1fr) auto; gap:12px; padding:14px; background:#05060af2; backdrop-filter:blur(12px); }
     .viewer.open { display:grid; }
-    .viewer img,.viewer video { max-width:min(94vw,1100px); max-height:82vh; object-fit:contain; }
-    .viewer-close { position:absolute; top:18px; right:18px; }
-    .viewer-nav { position:absolute; top:50%; transform:translateY(-50%); padding:12px 16px; }
-    .viewer-prev { left:14px; } .viewer-next { right:14px; }
-    @media (min-width:700px) { .grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; padding:32px; } }
-    @media (min-width:1100px) { .grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
-    @media (max-width:560px) { .toolbar { flex-wrap:wrap; } .grid { padding:16px; gap:10px; } }
+    .viewer-top,.viewer-bottom { display:flex; align-items:center; justify-content:space-between; gap:10px; width:min(100%,1100px); margin:auto; }
+    .viewer-count { color:var(--muted); font-variant-numeric:tabular-nums; }
+    .viewer-media-wrap { display:grid; min-height:0; place-items:center; }
+    .viewer img,.viewer video { display:block; max-width:min(94vw,1100px); max-height:calc(100vh - 150px); object-fit:contain; }
+    .viewer-close { color:var(--ink); background:#ffffff12; }
+    .viewer-actions { display:flex; gap:8px; }
+    .viewer-nav { position:absolute; top:50%; z-index:1; transform:translateY(-50%); width:48px; height:54px; padding:8px; border-color:#ffffff38; color:#fff; background:#111827b8; font-size:1.5rem; }
+    .viewer-nav:hover { background:#111827; }
+    .viewer-prev { left:12px; } .viewer-next { right:12px; }
+    [hidden] { display:none !important; }
+    @media (min-width:640px) { .grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; padding:10px 28px 30px; } }
+    @media (min-width:980px) { .grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; padding-inline:32px; } }
+    @media (max-width:560px) { .hero { padding-top:42px; } main { padding-top:8px; } .gallery-meta { padding-inline:20px; } .grid { gap:9px; padding-inline:14px; } .card { border-radius:12px; } .card-caption { padding:8px; font-size:.78rem; } .viewer { padding:12px; } .viewer-nav { top:auto; bottom:66px; width:44px; height:48px; transform:none; } .viewer-prev { left:12px; } .viewer-next { right:12px; } .viewer img,.viewer video { max-width:100%; max-height:calc(100vh - 168px); } }
+    @media (prefers-reduced-motion:reduce) { *,*:before,*:after { scroll-behavior:auto !important; animation-duration:.01ms !important; transition-duration:.01ms !important; } }
   </style>
 </head>
 <body>
   <header class="hero">
-    <img id="galleryLogo" class="hero-logo" alt="Event logo">
-    <h1 id="galleryTitle">Event Gallery</h1>
-    <p id="gallerySubtitle" class="subtitle">Loading photos…</p>
-    <div class="toolbar"><button type="button" id="viewAllButton" class="secondary">View all photos</button></div>
+    <div class="hero-inner">
+      <img id="galleryLogo" class="hero-logo" alt="Event logo">
+      <p class="eyebrow">Event gallery</p>
+      <h1 id="galleryTitle">Event Gallery</h1>
+      <p id="gallerySubtitle" class="subtitle" aria-live="polite">Loading your event photos…</p>
+      <div class="toolbar"><button type="button" id="shareGalleryButton" class="secondary">Share gallery</button></div>
+    </div>
   </header>
   <main>
-    <div id="galleryGrid" class="grid"></div>
-    <div id="emptyState" class="note" hidden>No photos found yet.</div>
-    <div id="errorState" class="note" hidden></div>
+    <div id="galleryMeta" class="gallery-meta" hidden><span id="photoCount"></span><span>Tap any photo to view</span></div>
+    <div id="galleryGrid" class="grid" aria-busy="true">
+      <div class="skeleton" aria-hidden="true"></div><div class="skeleton" aria-hidden="true"></div>
+      <div class="skeleton" aria-hidden="true"></div><div class="skeleton" aria-hidden="true"></div>
+    </div>
+    <div id="emptyState" class="note" hidden><strong>Photos are on the way</strong>This event gallery does not have any photos yet.</div>
+    <div id="errorState" class="note" hidden><strong>We couldn’t load this gallery</strong><span id="errorMessage">Check your connection and try again.</span><br><button type="button" id="retryButton" class="secondary">Try again</button></div>
     <button type="button" id="loadMore">Load more photos</button>
   </main>
-  <div id="viewer" class="viewer" role="dialog" aria-modal="true" aria-label="Photo viewer">
-    <button type="button" class="viewer-close" id="viewerClose" aria-label="Close photo viewer">Close</button>
+  <div id="viewer" class="viewer" role="dialog" aria-modal="true" aria-label="Photo viewer" aria-hidden="true">
+    <div class="viewer-top"><span id="viewerCount" class="viewer-count"></span><button type="button" class="viewer-close" id="viewerClose" aria-label="Close photo viewer">Close</button></div>
     <button type="button" class="viewer-nav viewer-prev" id="viewerPrev" aria-label="Previous photo">‹</button>
-    <div id="viewerMedia"></div>
+    <div id="viewerMedia" class="viewer-media-wrap"></div>
     <button type="button" class="viewer-nav viewer-next" id="viewerNext" aria-label="Next photo">›</button>
+    <div class="viewer-bottom"><span id="viewerHint" class="viewer-count">Full size</span><div class="viewer-actions"><button type="button" id="sharePhotoButton" class="secondary">Share</button><a id="downloadPhotoButton" class="button" download>Download</a></div></div>
   </div>
   <script src="scripts/gallery.js"></script>
 </body>
