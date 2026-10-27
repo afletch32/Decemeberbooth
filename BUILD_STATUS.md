@@ -2,11 +2,12 @@
 
 - Current goal: Break the booth app into focused modules without changing behavior.
 - Done: Extracted 27 feature modules and four ordered stylesheets. `scripts/app.js` is 155 lines and `index.html` is 1,025 lines. The service worker precaches all new files under shell cache v61.
-- In progress: Final verification, then commit, push, and production deployment from committed contents.
-- Next steps: Deploy to Cloudflare Pages Production and verify the canonical app and service-worker version.
+- In progress: Physical iPad/Safari camera and kiosk checks when the booth device is available.
+- Next steps: Verify the deployed guest flow on the booth iPad; no physical-device check was performed in this release.
 - Known bugs/blockers: The full browser suite has four failures reproduced against the pre-refactor baseline (filter parity, QR fit, 4×6 output, and a responsive hotspot check that can pass or fail on both versions). No new failure has been identified.
-- Important decisions: Keep vanilla ES modules and static HTML; pass shared state through the explicit app runtime context. Preserve the independent QR sizing follow-up in `BUILD_STATUS.md` and `final-preview-sizing-fix.css` outside this release.
-- Verification: `npm test` passes after updating stale monolith-coupled assertions. Portrait/landscape release gates and print-preview orientation pass (3/3). Full browser suite: 47 passed, 4 baseline failures, 18 skipped. Entry/module syntax and `git diff --check` pass.
+- Important decisions: Keep vanilla ES modules and static HTML; pass shared state through the explicit app runtime context. Preserve unrelated QR sizing edits outside this release.
+- Release: Commit `c35f830` is pushed to `main` and deployed to Pages Production as `31822029`; canonical production serves the modular app.
+- Verification: `npm test` passes (297/297); portrait/landscape release gates and print-preview orientation pass (3/3). Full browser suite: 47 passed, 4 failures reproduced on the pre-refactor baseline, 18 skipped. Entry/module syntax and `git diff --check` pass. Production root, entry point, sampled modules/styles, and service worker return HTTP 200; `sw.js` reports `pb-app-shell-v61`.
 
 - QR readability update (2026-10-26): Increased the final-share QR canvas cap on tablet layouts from 220px to 280px and on narrow phones from 200px to 240px; the default cap is now 320px. Added border-box sizing so canvas padding does not reduce the QR image area. `npm test` has seven failures, all reproduced on `origin/main`; the focused viewport test also reports QR panel overflow at 1600×900 on both the baseline and this change. Commit `93a7b3c` is deployed to Pages Production (`8865ad97`); canonical production returns HTTP 200 and serves the updated QR sizing. The existing viewport overflow remains unresolved.
 
