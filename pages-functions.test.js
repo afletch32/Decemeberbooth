@@ -93,3 +93,11 @@ test("pages functions provide live sync endpoints for themes, events, and fonts"
     "print queue mutations should support server-side staff authorization"
   );
 });
+
+test("legacy event gallery links resolve to the clean gallery route", () => {
+  const galleryRoute = readProjectFile("functions", "g", "[id].js");
+  assert.ok(
+    galleryRoute.includes("new URL(`/gallery?${paramsOut}`, request.url)"),
+    "legacy event links should reach the gallery without the .html canonicalization hop"
+  );
+});

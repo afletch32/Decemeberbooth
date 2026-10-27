@@ -1320,7 +1320,9 @@ test("gallery link panel stays button only", () => {
   assert.ok(
     appScript.includes('DOM.eventGalleryActions.classList.toggle("hidden", !hasTheme);') &&
       appScript.includes('if (DOM.eventGalleryLink)') &&
-      appScript.includes('getEventGalleryStatusText()'),
+      appScript.includes('getEventGalleryStatusText()') &&
+      appScript.includes('return `${location.origin}/gallery?${params.toString()}`;') &&
+      appScript.includes('}/gallery?cloud=${cloud}&tag='),
     "gallery link behavior should still drive the link target without extra panel copy"
   );
 });

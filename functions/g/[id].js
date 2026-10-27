@@ -42,5 +42,5 @@ export async function onRequest({ request, params, env }) {
     event: eventId,
     theme: String(event.themeKey || ""),
   });
-  return Response.redirect(new URL(`/gallery.html?${paramsOut}`, request.url), 302);
+  return Response.redirect(new URL(`/gallery?${paramsOut}`, request.url), 302);
 }

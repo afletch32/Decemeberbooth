@@ -14733,7 +14733,19 @@ function getEventGalleryUrl() {
   if (!cfg || !cfg.cloud) return "";
   const eventId = getActiveEventId();
   if (eventId) {
-    return `${location.origin}/g/${encodeURIComponent(eventId)}?c=${encodeURIComponent(cfg.cloud)}`;
+    const event = getActiveEvent() || {};
+    const name = event.name || getEventNameForUploads() || "Event";
+    const date = event.date || getEventDateForUploads();
+    const legacyTag = slugifyEventText(date ? `${name}-${date}` : name);
+    const params = new URLSearchParams({
+      cloud: cfg.cloud,
+      tag: `event-${slugifyEventText(eventId)}`,
+      legacyTag,
+      title: date ? `${name} (${date})` : name,
+      event: eventId,
+      theme: event.themeKey || getEventGalleryThemeKey(),
+    });
+    return `${location.origin}/gallery?${params.toString()}`;
   }
   const tag = getEventUploadSlug();
   const quickStartDate = getQuickStartFolderDate();
@@ -14747,7 +14759,7 @@ function getEventGalleryUrl() {
   const cloud = encodeURIComponent(cfg.cloud);
   return `${
     location.origin
-  }/gallery.html?cloud=${cloud}&tag=${encodeURIComponent(tag)}&legacyTag=${encodeURIComponent(getLegacyEventGalleryTag())}&title=${title}&event=${encodeURIComponent(getActiveEventId())}&theme=${encodeURIComponent(getEventGalleryThemeKey())}`;
+  }/gallery?cloud=${cloud}&tag=${encodeURIComponent(tag)}&legacyTag=${encodeURIComponent(getLegacyEventGalleryTag())}&title=${title}&event=${encodeURIComponent(getActiveEventId())}&theme=${encodeURIComponent(getEventGalleryThemeKey())}`;
 }
 
 function getLegacyEventGalleryTag() {

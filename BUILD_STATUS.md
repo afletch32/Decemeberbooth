@@ -1,12 +1,12 @@
 # Build status
 
 - Current goal: Polish individual event galleries for mobile and desktop.
-- Done: Reworked the gallery header and responsive photo grid; added loading, empty, and retry states plus viewer download and share actions. Existing `/api/gallery` event tags and event QR entry links remain intact.
-- In progress: Prepare the scoped gallery commit and production release.
-- Next steps: Push the active branch, deploy the committed release, and verify the live gallery.
+- Done: Reworked the gallery header and responsive photo grid; added loading, empty, and retry states plus viewer download and share actions. Event QR generation now uses `/gallery` directly, with legacy `/g` links preserved.
+- In progress: Commit and deploy the clean-URL routing follow-up.
+- Next steps: Verify the final production URLs and deployment source.
 - Known bugs/blockers: Pre-existing uncommitted changes in `BUILD_STATUS.md` and `final-preview-sizing-fix.css`; preserve their scope when preparing a release.
 - Important decisions: Share a photo through its stable `/share/{captureId}` URL when available; otherwise share its stored image URL. Keep all photo data on the existing gallery API.
-- Verification/release: `npx playwright test browser/gallery.spec.js` passes (3/3); JavaScript syntax and `git diff --check` pass. `npm test` passes 287/294; its seven QR, viewport, and capture failures match the previously recorded unrelated baseline failures. Not yet deployed.
+- Verification/release: Gallery browser checks pass (3/3); event link and legacy route assertions pass (2/2); JS syntax and `git diff --check` pass. Full suite passes 287/294; seven QR, viewport, and capture failures match the existing unrelated baseline. Gallery UI commit `9898bf7` is live on Pages Production as `f0adca50`; routing follow-up is pending deployment.
 
 - QR readability update (2026-10-26): Increased the final-share QR canvas cap on tablet layouts from 220px to 280px and on narrow phones from 200px to 240px; the default cap is now 320px. Added border-box sizing so canvas padding does not reduce the QR image area. `npm test` has seven failures, all reproduced on `origin/main`; the focused viewport test also reports QR panel overflow at 1600×900 on both the baseline and this change. Commit `93a7b3c` is deployed to Pages Production (`8865ad97`); canonical production returns HTTP 200 and serves the updated QR sizing. The existing viewport overflow remains unresolved.
 
