@@ -80,3 +80,12 @@ test("unavailable originals still show a terminal preview error", async ({ page 
   await expect(card.locator(".asset-library-preview-fallback")).toHaveText("Preview unavailable");
   await expect(card.locator("img")).toHaveCount(0);
 });
+
+test("retained tea party artwork previews load from their original PNGs", async ({ page }) => {
+  await openLibrary(page, "Tea Party");
+  const cards = page.locator("#assetLibraryGrid .asset-library-card");
+  await expect(cards).toHaveCount(5);
+  for (const card of await cards.all()) await expectPreview(card);
+  await cards.first().scrollIntoViewIfNeeded();
+  await page.screenshot({ path: "/tmp/booth-tea-party-previews.png", animations: "disabled" });
+});
