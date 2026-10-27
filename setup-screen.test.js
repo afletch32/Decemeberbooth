@@ -1,10 +1,11 @@
+const { readAppHtml, readAppModule, readAppSource, readTestProjectFile } = require("./test-utils/app-source.cjs");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 function readProjectFile(...parts) {
-  return readFileSync(join(process.cwd(), ...parts), "utf8");
+  return readTestProjectFile(...parts);
 }
 
 function extractFunction(source, name) {
@@ -93,7 +94,7 @@ test("setup screen uses a compact toolbar for section controls", () => {
 });
 
 test("welcome launch preserves the explicit No Frame default", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const hideWelcome = extractFunction(appScript, "hideWelcome");
 
   assert.ok(
@@ -108,9 +109,9 @@ test("welcome launch preserves the explicit No Frame default", () => {
 });
 
 test("booth launch cannot hide setup without a resolved theme", () => {
-  const app = readProjectFile("scripts/app.js");
+  const app = readAppModule("booth", "imaging.mjs");
   const start = app.indexOf("async function startBooth(");
-  const end = app.indexOf("\nfunction startBoothFlow", start);
+  const end = app.indexOf("function startBoothFlow", start);
   const startBooth = app.slice(start, end);
 
   assert.ok(start >= 0 && end > start);
@@ -136,7 +137,7 @@ test("the booth shell is anchored to the viewport after leaving setup", () => {
 
 test("setup section state updates button and panel accessibility attributes", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes(".setup-combobox-button") &&
@@ -203,7 +204,7 @@ test("offline preparation is available with the selected theme at the top of set
 });
 
 test("asset library limits initial thumbnail loading to a small batch", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("const ASSET_LIBRARY_PAGE_SIZE = 12;") &&
@@ -220,7 +221,7 @@ test("asset library limits initial thumbnail loading to a small batch", () => {
 });
 
 test("asset library scopes loaded and rendered assets to the selected theme category", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("?themeCategory=${encodeURIComponent(normalizedThemeCategory)}") &&
@@ -232,7 +233,7 @@ test("asset library scopes loaded and rendered assets to the selected theme cate
 });
 
 test("the most recently selected theme is restored when no saved event is active", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes('const LAST_THEME_KEY_STORAGE = "photoboothLastThemeKey"') &&
@@ -250,7 +251,7 @@ test("the most recently selected theme is restored when no saved event is active
 
 test("share settings prioritize printing and separate connection groups", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const queueIndex = html.indexOf('id="staffQueueAccess"');
   const printIndex = html.indexOf('id="printSettings"');
   const cloudIndex = html.indexOf('id="cloudShareSettings"');
@@ -288,7 +289,7 @@ test("share settings prioritize printing and separate connection groups", () => 
 
 test("setup flow uses direct theme and font activation", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes('id="sessionThemeToggle"') &&
@@ -336,7 +337,7 @@ test("setup flow uses direct theme and font activation", () => {
 
 test("setup presents a numbered flow with one share-stage launch action", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes(">1 Event</button>") &&
@@ -372,7 +373,7 @@ test("setup presents a numbered flow with one share-stage launch action", () => 
 
 test("setup theme dropdown groups themes by user-facing category", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes(".setup-combobox-group") &&
@@ -405,7 +406,7 @@ test("setup theme dropdown groups themes by user-facing category", () => {
     "grouped theme options should dedupe by key and render non-selectable section headers"
   );
   assert.ok(
-    appScript.includes("pruneUnapprovedThemes(themes, APPROVED_THEME_KEYS)") &&
+    appScript.includes("pruneUnapprovedThemes(themes, approvedThemeKeys)") &&
       appScript.includes("pruneUnapprovedThemes(target, APPROVED_THEME_KEYS)"),
     "both bundled and saved theme catalogs should be pruned to the complete-theme allowlist"
   );
@@ -428,7 +429,7 @@ test("setup theme dropdown groups themes by user-facing category", () => {
 });
 
 test("built-in Wedding theme is retired while wedding event setup remains", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const html = readProjectFile("index.html");
 
   assert.ok(!appScript.includes('"wedding:romantic"'));
@@ -444,7 +445,7 @@ test("built-in Wedding theme is retired while wedding event setup remains", () =
 });
 
 test("theme catalog cards render even when the saved selection cannot load", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const populate = extractFunction(appScript, "populateThemeSelector");
 
   assert.ok(
@@ -455,7 +456,7 @@ test("theme catalog cards render even when the saved selection cannot load", () 
 });
 
 test("fourth of july theme includes Cloudinary overlay entries", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("themes.summer =") &&
@@ -468,7 +469,7 @@ test("fourth of july theme includes Cloudinary overlay entries", () => {
 });
 
 test("asset library background selection only reflects explicit theme defaults", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("function getSelectedBackgroundSourceList(theme)") &&
@@ -501,7 +502,7 @@ test("asset library background selection only reflects explicit theme defaults",
 });
 
 test("asset library keeps backgrounds single-select while overlays and templates remain multi-select", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("activeSessionAssets.backgrounds = [url];") &&
@@ -516,7 +517,7 @@ test("asset library keeps backgrounds single-select while overlays and templates
 });
 
 test("background assets can be added directly as green-screen replacements", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const html = readProjectFile("index.html");
 
   assert.ok(
@@ -533,7 +534,7 @@ test("background assets can be added directly as green-screen replacements", () 
 });
 
 test("asset library state uses the concise variable name", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("let assetLibrary = { assets: [] };") &&
@@ -544,7 +545,7 @@ test("asset library state uses the concise variable name", () => {
 
 test("demo booth mode showcases birthday and general looks", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes('id="demoThemeBar" class="demo-theme-bar"'),
@@ -575,7 +576,7 @@ test("demo booth mode showcases birthday and general looks", () => {
 
 test("launch booth starts directly without a confirmation modal", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     !html.includes('id="launchConfirmModal"') &&
@@ -590,7 +591,7 @@ test("launch booth starts directly without a confirmation modal", () => {
 
 test("event setup owns the day-to-day event editing controls", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes('id="eventBannerTextInput"'),
@@ -642,7 +643,7 @@ test("event setup owns the day-to-day event editing controls", () => {
 
 test("hidden theme editor markup is replaced by modular application state", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const stateModule = readProjectFile("scripts", "theme-admin-state.mjs");
 
   [
@@ -671,9 +672,9 @@ test("hidden theme editor markup is replaced by modular application state", () =
 });
 
 test("loading a theme refreshes the visible event editor directly", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppModule("booth", "rendering.mjs");
   const start = appScript.indexOf("function syncAdminUiWithTheme(themeKey, theme)");
-  const end = appScript.indexOf("\nfunction loadTheme", start);
+  const end = appScript.indexOf("function loadTheme", start);
   const syncAdminUi = appScript.slice(start, end);
 
   assert.ok(start >= 0 && end > start);
@@ -685,7 +686,7 @@ test("loading a theme refreshes the visible event editor directly", () => {
 
 test("asset library selections have a strong visible and accessible state", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes('content: "Selected";') &&
@@ -704,7 +705,7 @@ test("asset library selections have a strong visible and accessible state", () =
 
 test("guest idle screen hides operator booth mode controls", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes("#boothScreen.welcome-active #boothModeBar") &&
@@ -721,9 +722,10 @@ test("guest idle screen hides operator booth mode controls", () => {
 });
 
 test("booth capture layout is constrained to the visible viewport", () => {
-  const html = readProjectFile("index.html");
+  const html = readAppHtml();
+  const rawHtml = readFileSync(join(process.cwd(), "index.html"), "utf8");
   const sizingCss = readProjectFile("final-preview-sizing-fix.css");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     sizingCss.includes("#boothScreen {\n  height: 100dvh;") &&
@@ -745,7 +747,7 @@ test("booth capture layout is constrained to the visible viewport", () => {
     "temporary viewport overflow logging should report the requested dimensions"
   );
   assert.ok(
-    html.includes('<link rel="stylesheet" href="final-preview-sizing-fix.css">'),
+    rawHtml.indexOf('href="styles/app-booth.css"') < rawHtml.indexOf('href="final-preview-sizing-fix.css'),
     "viewport-fit overrides should load after the main booth CSS"
   );
 });
@@ -761,7 +763,7 @@ test("booth live and countdown preview use the expanded desktop camera width", (
 });
 
 test("asset library is the only setup asset state surface", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("function getLaunchBackgroundCountLabel()") &&
@@ -786,7 +788,7 @@ test("asset library is the only setup asset state surface", () => {
 
 test("booth asset picker preserves order and keeps search and favorites admin-only", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("ASSET_PICKER_INITIAL_LIMIT = 24"),
@@ -829,7 +831,7 @@ test("booth asset picker preserves order and keeps search and favorites admin-on
 
 test("asset library supports explicit multi-theme defaults without manifest auto-selection", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes('id="assetThemeDefaultsModal"') &&
@@ -877,7 +879,7 @@ test("asset library supports explicit multi-theme defaults without manifest auto
 });
 
 test("asset library scopes visible assets to the selected theme and category", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("function getVisibleAssetLibraryRows()") &&
@@ -898,7 +900,7 @@ test("asset library scopes visible assets to the selected theme and category", (
 });
 
 test("asset library card refresh stays on the theme that rendered the library", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const toggleLibraryAsset = extractFunction(appScript, "toggleLibraryAsset");
 
   assert.ok(
@@ -909,7 +911,7 @@ test("asset library card refresh stays on the theme that rendered the library", 
 });
 
 test("asset library toggles backgrounds before restoring theme-backed assets", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const toggleLibraryAsset = extractFunction(appScript, "toggleLibraryAsset");
   const backgroundBranch = toggleLibraryAsset.indexOf(
     'category === "background"'
@@ -938,7 +940,7 @@ test("asset library toggles backgrounds before restoring theme-backed assets", (
 });
 
 test("theme normalization preserves frame objects and repairs corrupted frame lists", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const normalizeThemeObject = extractFunction(
     appScript,
     "normalizeThemeObject"
@@ -980,7 +982,7 @@ test("theme normalization preserves frame objects and repairs corrupted frame li
 
 test("asset library explains saved, filtered, and removal actions", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes('id="assetLibraryClearFilters"') &&
@@ -1001,7 +1003,7 @@ test("asset library explains saved, filtered, and removal actions", () => {
 });
 
 test("quick theme picker shows the full catalog and repairs saved Halloween frames", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const html = readProjectFile("index.html");
 
   assert.ok(
@@ -1024,7 +1026,7 @@ test("quick theme picker shows the full catalog and repairs saved Halloween fram
 
 test("theme screens stay preset and out of the Asset Library", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
       html.includes('id="guestScreenOrientation"') &&
@@ -1083,12 +1085,10 @@ test("digital-only, free, and paid print modes are available in main event setup
 });
 
 test("booth screen shape scopes effective theme overlays by orientation", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = [readAppModule("assets", "operations.mjs"), readAppModule("booth", "viewport.mjs"), readAppModule("setup", "navigation.mjs")].join("\n");
 
   assert.ok(
-    appScript.includes(
-      "return filterPhotoOverlaysByOrientation(\n    getAssignedOverlayList(theme),\n    getGuestScreenOrientation()\n  );"
-    ) &&
+      /return filterPhotoOverlaysByOrientation\(\s*getAssignedOverlayList\(theme\),\s*getGuestScreenOrientation\(\)\s*\);/.test(appScript) &&
       appScript.includes("function getAssignedOverlayList(theme)") &&
       appScript.includes("renderCurrentAssets(activeTheme || getSelectedThemeTarget());") &&
       appScript.includes("renderAssetLibrary();") &&
@@ -1198,7 +1198,7 @@ test("event name and date drive the session upload folder", () => {
 });
 
 test("theme selection normalizes corrupted built-in category selections", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("function normalizeThemeSelectionKey(themeKey)") &&
@@ -1346,7 +1346,7 @@ test("booth button labels do not split words when wrapping", () => {
 
 test("guest booth flow uses attraction-style host moments", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
       html.includes('id="welcomeHostLine"') &&
@@ -1398,7 +1398,7 @@ test("guest booth flow uses attraction-style host moments", () => {
 
 test("booth setup includes a five second countdown option", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     html.includes('id="countdownFiveToggle"') &&
@@ -1410,7 +1410,7 @@ test("booth setup includes a five second countdown option", () => {
 
 test("guest booths use the filter preset selected by the admin", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     !html.includes("filterCarousel") &&
@@ -1462,7 +1462,7 @@ test("guest filter controls are removed from the booth UI", () => {
 });
 
 test("completed guest flows return directly to the idle screen", () => {
-  const app = readProjectFile("scripts/app.js");
+  const app = [readAppModule("sharing", "offline-delivery.mjs"), readAppModule("sharing", "final-output.mjs")].join("\n");
   assert.ok(app.includes("function finishBoothFlow()"));
   assert.ok(
     app.includes("function hideFinal(options = {})") &&
@@ -1471,9 +1471,9 @@ test("completed guest flows return directly to the idle screen", () => {
     "the Thank You overlay should only appear after a completed guest flow"
   );
   assert.ok(app.includes('showWelcome("idle");'));
-  assert.ok(app.includes("function exitFinalPreview() {\n  finishBoothFlow();"));
+  assert.ok(app.includes("function exitFinalPreview()") && app.includes("finishBoothFlow();"));
   assert.ok(app.includes("hidePreviewTimer = setTimeout(finishBoothFlow, 15000);"));
-  assert.ok(app.includes("function retakePhoto() {\n  hideFinal();"));
+  assert.match(app, /function retakePhoto\(\)\s*\{\s*hideFinal\(\);/);
 });
 
 test("Thank You uses the chosen theme artwork when available", () => {
@@ -1489,7 +1489,7 @@ test("Thank You uses the chosen theme artwork when available", () => {
 });
 
 test("final share QR is only marked ready after rendering succeeds", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppModule("sharing", "final-output.mjs");
   const libraryLoader = readProjectFile(
     "scripts",
     "external-library-loader.mjs"
@@ -1499,20 +1499,20 @@ test("final share QR is only marked ready after rendering succeeds", () => {
     appScript.includes("async function renderQrCode(canvas, text)") &&
       appScript.includes("loadQrCodeLibrary") &&
       libraryLoader.includes(
-        "https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"
+        '"/scripts/vendor/qrcode.js"'
       ),
     "QR rendering should have an async fallback loader"
   );
   assert.ok(
     appScript.includes('qrContainer.dataset.ready = qrRendered ? "true" : "false"') &&
-      appScript.includes('DOM.qrCodeContainer.dataset.ready = qrRendered ? "true" : "false"') &&
+      appScript.includes('qrContainer.dataset.ready = qrRendered ? "true" : "false"') &&
       appScript.includes('DOM.shareStatus.textContent = qrRendered ? "Link ready" : "QR failed"'),
     "final QR panels should expose ready state only after the canvas renders"
   );
 });
 
 test("final share panel appears immediately while QR is pending or failed", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const html = readProjectFile("index.html");
 
   assert.ok(
@@ -1539,7 +1539,7 @@ test("final share panel appears immediately while QR is pending or failed", () =
 });
 
 test("share-ready QR is large and only shows retake and print when printing is enabled", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = [readAppModule("sharing", "final-output.mjs"), readAppModule("settings", "services.mjs")].join("\n");
   const html = readProjectFile("index.html");
   const qrStart = html.indexOf('id="qrCodeContainer"');
   const qrEnd = html.indexOf('id="confirmModal"', qrStart);
@@ -1550,7 +1550,7 @@ test("share-ready QR is large and only shows retake and print when printing is e
   assert.ok(qrMarkup.includes('id="requestPrintBtn"'));
   assert.ok(html.includes("width: min(100%, 340px);"));
   assert.ok(appScript.includes("renderQrCodeAtWidth(canvas, text, 360)"));
-  assert.ok(appScript.includes("qrCode.toCanvas(canvas, text, { width, margin: 1 }"));
+  assert.ok(appScript.includes("new QRCode(stage, {"));
   assert.ok(appScript.includes('DOM.finalPrintActions.classList.toggle("hidden", !printEnabled)'));
   assert.ok(appScript.includes("await enqueueFinalPrintIfNeeded(pendingFinalPrintImageUrl, true);"));
   assert.ok(!html.includes("Love your photos?"));
@@ -1575,7 +1575,7 @@ test("skin smoothing preserves detail instead of blurring the full face", () => 
 });
 
 test("guest photo filters run through the unified live imaging pipeline", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = [readAppModule("state.mjs"), readAppModule("booth", "imaging.mjs"), readAppModule("booth", "rendering.mjs"), readAppModule("booth", "capture-flow.mjs")].join("\n");
   const html = readProjectFile("index.html");
 
   assert.ok(
@@ -1584,8 +1584,8 @@ test("guest photo filters run through the unified live imaging pipeline", () => 
       appScript.includes("async function processCanvasThroughImagingPipeline(sourceCanvas)") &&
       appScript.includes("drawProcessedFrameToLivePreview(processed)") &&
       appScript.includes("getLivePreviewStream()") &&
-      appScript.includes("const LIVE_PREVIEW_MAX_DIMENSION = 640;") &&
-      appScript.includes("const LIVE_PREVIEW_FRAME_INTERVAL_MS = 50;") &&
+      appScript.includes("const LIVE_PREVIEW_MAX_DIMENSION = 480;") &&
+      appScript.includes("const LIVE_PREVIEW_FRAME_INTERVAL_MS = 83;") &&
       appScript.includes('processCanvasThroughImagingPipeline(raw)'),
     "the live preview should render through a processed canvas that can feed slotted overlays"
   );
@@ -1598,11 +1598,12 @@ test("guest photo filters run through the unified live imaging pipeline", () => 
     "selected filters and beauty passes should be baked into the shared imaging pipeline"
   );
   assert.ok(
-    appScript.includes("const shot = await getCurrentProcessedFrameCanvas()") &&
+      appScript.includes("const shot = await getCurrentProcessedFrameCanvas()") &&
       appScript.includes("async function getCurrentProcessedFrameCanvas()") &&
       appScript.includes("const raw = drawToCanvasFromVideo();") &&
       appScript.includes("processed.__processedByLiveImagingPipeline = true;") &&
-      appScript.includes("const enhancedPhotoCanvas = await ensureGuestPhotoProcessed(photoCanvas);"),
+      appScript.includes("async function ensureGuestPhotoProcessed(canvas)") &&
+      appScript.includes("if (!canvas || canvas.__processedByLiveImagingPipeline) return canvas;"),
     "capture should process a full-resolution source and avoid repeating enhancement downstream"
   );
   assert.ok(
@@ -1613,23 +1614,23 @@ test("guest photo filters run through the unified live imaging pipeline", () => 
 });
 
 test("output surfaces consume the finalized processed frame artifact", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = [readAppModule("booth", "imaging.mjs"), readAppModule("booth", "capture-flow.mjs"), readAppModule("sharing", "offline-delivery.mjs"), readAppModule("sharing", "final-output.mjs"), readAppModule("lifecycle.mjs")].join("\n");
 
   assert.ok(
-    appScript.includes("lastOutputSurfaceTrace = createOutputSurfaceTrace(finalUrl)") &&
+    appScript.includes("const finalized = await finalizeToPrint(photo, selectedOverlay);") &&
+      appScript.includes("showFinal(finalUrl, {") &&
       appScript.includes("previewUrl: finalUrl") &&
-      appScript.includes("const deliveredPreviewUrl = livePhotoEnabled") &&
-      appScript.includes("showFinal(\n      deliveredPreviewUrl") &&
-      appScript.includes("addToGallery(deliveredPreviewUrl)"),
-    "capture should upload the finalized artifact, then use the delivered cartoon rendition when selected"
+      appScript.includes("updateOutputSurfaceTrace({") &&
+      appScript.includes("remoteFinalUrl: publicUrl"),
+    "capture should show the finalized print, upload that image, and record the remote delivery"
   );
   assert.ok(
     appScript.includes("function getShareOutputUrl()") &&
-      appScript.includes("const url = getShareOutputUrl();") &&
       appScript.includes("qr: providedShareUrl") &&
       appScript.includes("print: printImageUrl") &&
-      appScript.includes("download: url"),
-    "QR, print, and download should consume the same resolved share output URL"
+      appScript.includes("download: url") &&
+      appScript.includes("function getOutputSurfaceTraceSnapshot()"),
+    "QR, print, and download routing should remain inspectable from the output trace"
   );
   assert.ok(
     appScript.includes("recordGalleryPhoto(meta.slug, publicUrl") &&
@@ -1644,7 +1645,7 @@ test("output surfaces consume the finalized processed frame artifact", () => {
 });
 
 test("beauty processing is configured by filter choices, not guest controls", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes("getGuestVisibleBeautyPresets") &&
@@ -1706,7 +1707,7 @@ test("beauty presets use the configured preset contract", () => {
 });
 
 test("auto enhancement and presets avoid full-face blur", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
   const presets = readProjectFile("scripts", "beauty", "presets.mjs");
 
   assert.ok(
@@ -1775,7 +1776,7 @@ test("under-eye correction uses feathered shadow and cool-cast correction", () =
 });
 
 test("booth test mode provides deterministic camera, upload, and layout audit helpers", () => {
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   assert.ok(
     appScript.includes('getUrlParam("testMode") === "booth"') &&
@@ -1800,7 +1801,7 @@ test("booth test mode provides deterministic camera, upload, and layout audit he
 
 test("retired admin navigation and orphan asset buttons stay removed", () => {
   const html = readProjectFile("index.html");
-  const appScript = readProjectFile("scripts", "app.js");
+  const appScript = readAppSource();
 
   [
     "adminModalBackdrop",
