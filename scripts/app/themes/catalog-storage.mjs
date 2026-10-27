@@ -493,6 +493,8 @@ export function createCatalogStorageModule(__appRuntimeContext) {
     const cheerOverlayAssetPrefix =
       "/assets/themes/spring-hill-hawks-cheer/overlays/";
     const replacedHawksCheerAssetSources = new Set([
+      "/assets/themes/spring-hill-hawks-cheer/overlays/hawks-cheer-garden-tea-party-single-photo-portrait.png",
+      "/assets/themes/spring-hill-hawks-cheer/overlays/hawks-cheer-garden-tea-party-double-2x6-three-photo-strips.png",
       "/assets/themes/spring-hill-hawks/pizza/hawks-pizza-single-photo-portrait.png",
       "/assets/themes/spring-hill-hawks/pizza/hawks-pizza-double-2x6-three-photo-strips.png",
       "/assets/themes/spring-hill-hawks-cheer/overlays/spring-hill-hawks-cheer-no-pizza-single-photo-portrait.png",

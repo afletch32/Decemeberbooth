@@ -452,15 +452,15 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
           ],
           overlays: [
             {
-              "src": "/assets/themes/spring-hill-hawks-cheer/overlays/hawks-cheer-garden-tea-party-single-photo-portrait.png",
-              "name": "Hawks Cheer Garden Tea Party Portrait",
+              "src": "/assets/themes/spring-hill-hawks-cheer/overlays/hawks-cheer-garden-tea-party-single-photo-portrait-simple-v2.png",
+              "name": "Hawks Cheer Garden Tea Party Simple Portrait",
               "orientation": "portrait",
               "photoSlots": [
                 {
-                  "x": 0.1,
-                  "y": 0.11,
-                  "width": 0.8,
-                  "height": 0.66,
+                  "x": 0.068,
+                  "y": 0.073,
+                  "width": 0.867,
+                  "height": 0.77,
                   "objectFit": "cover"
                 }
               ]
@@ -548,50 +548,50 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
           ],
           templates: [
             {
-              "src": "/assets/themes/spring-hill-hawks-cheer/overlays/hawks-cheer-garden-tea-party-double-2x6-three-photo-strips.png",
-              "name": "Hawks Cheer Garden Tea Party Double 2x6 Three-Photo Strips",
+              "src": "/assets/themes/spring-hill-hawks-cheer/overlays/hawks-cheer-garden-tea-party-double-2x6-three-photo-strips-simple-v2.png",
+              "name": "Hawks Cheer Garden Tea Party Simple Double 2x6 Three-Photo Strips",
               "layout": "photo_strip_3",
               "photoSlots": [
                 {
-                  "x": 0.085,
-                  "y": 0.13,
-                  "width": 0.36,
-                  "height": 0.175,
+                  "x": 0.075,
+                  "y": 0.128,
+                  "width": 0.395,
+                  "height": 0.208,
                   "sourceIndex": 0
                 },
                 {
-                  "x": 0.085,
-                  "y": 0.33,
-                  "width": 0.36,
-                  "height": 0.18,
+                  "x": 0.075,
+                  "y": 0.359,
+                  "width": 0.395,
+                  "height": 0.21,
                   "sourceIndex": 1
                 },
                 {
-                  "x": 0.085,
-                  "y": 0.53,
-                  "width": 0.36,
-                  "height": 0.18,
+                  "x": 0.075,
+                  "y": 0.592,
+                  "width": 0.395,
+                  "height": 0.22,
                   "sourceIndex": 2
                 },
                 {
-                  "x": 0.555,
-                  "y": 0.13,
-                  "width": 0.36,
-                  "height": 0.175,
+                  "x": 0.532,
+                  "y": 0.128,
+                  "width": 0.395,
+                  "height": 0.208,
                   "sourceIndex": 0
                 },
                 {
-                  "x": 0.555,
-                  "y": 0.33,
-                  "width": 0.36,
-                  "height": 0.18,
+                  "x": 0.532,
+                  "y": 0.359,
+                  "width": 0.395,
+                  "height": 0.21,
                   "sourceIndex": 1
                 },
                 {
-                  "x": 0.555,
-                  "y": 0.53,
-                  "width": 0.36,
-                  "height": 0.18,
+                  "x": 0.532,
+                  "y": 0.592,
+                  "width": 0.395,
+                  "height": 0.22,
                   "sourceIndex": 2
                 }
               ]

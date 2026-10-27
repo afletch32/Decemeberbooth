@@ -9,11 +9,26 @@ test("Hawks Cheer tea party assets compose with the correct repeated photos", as
     ? route.continue() : route.fulfill({ json: { ok: true } }));
   await page.goto("/?testMode=booth", { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => !!window.__photoboothTest);
+  // Simulate an existing saved catalog from the first garden release.
+  await page.evaluate(() => {
+    const themes = window.__photoboothTest.getThemes();
+    const theme = themes.school.themes.hawksCheer;
+    for (const field of ["overlays", "templates"]) {
+      theme[field] = theme[field].map((entry) => entry.src?.includes("-simple-v2.png")
+        ? { ...entry, src: entry.src.replace("-simple-v2.png", ".png") } : entry);
+    }
+    localStorage.setItem("photoboothThemes", JSON.stringify(themes));
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => !!window.__photoboothTest);
   const results = await page.evaluate(async () => {
     const api = window.__photoboothTest;
     const theme = api.getThemeByKey("school:hawksCheer");
     const assets = [...api.getBaseOverlayList(theme), ...api.getBaseTemplateList(theme)]
       .filter((entry) => entry.src?.includes("tea-party"));
+    if (assets.some((entry) => entry.src.includes("garden-tea-party") && !entry.src.includes("-simple-v2.png"))) {
+      throw new Error("Saved garden assets were not upgraded to the simple designs");
+    }
     const results = [];
     for (const asset of assets) {
       const photos = ["#e67593", "#8aa75f", "#ab8ed0"].map((color) => {
