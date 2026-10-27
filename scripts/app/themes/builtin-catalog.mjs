@@ -451,6 +451,50 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
             },
           ],
           overlays: [
+            {
+              "src": "/assets/themes/spring-hill-hawks-cheer/overlays/hawks-cheer-garden-tea-party-single-photo-portrait.png",
+              "name": "Hawks Cheer Garden Tea Party Portrait",
+              "orientation": "portrait",
+              "photoSlots": [
+                {
+                  "x": 0.1,
+                  "y": 0.11,
+                  "width": 0.8,
+                  "height": 0.66,
+                  "objectFit": "cover"
+                }
+              ]
+            },
+
+            {
+              "src": "/assets/themes/spring-hill-hawks-cheer/overlays/hawks-cheer-tea-party-single-photo-portrait.png",
+              "name": "Hawks Cheer Tea Party Portrait",
+              "orientation": "portrait",
+              "photoSlots": [
+                {
+                  "x": 0.1,
+                  "y": 0.11,
+                  "width": 0.8,
+                  "height": 0.7,
+                  "objectFit": "cover"
+                }
+              ]
+            },
+            {
+              "src": "/assets/themes/spring-hill-hawks-cheer/overlays/hawks-cheer-tea-party-single-photo-landscape.png",
+              "name": "Hawks Cheer Tea Party Landscape",
+              "orientation": "landscape",
+              "photoSlots": [
+                {
+                  "x": 0.08,
+                  "y": 0.1,
+                  "width": 0.84,
+                  "height": 0.68,
+                  "objectFit": "cover"
+                }
+              ]
+            },
+
             { src: "/assets/school/hawks/overlays/1.png", name: "hawks-overlay-1" },
             { src: "/assets/school/hawks/overlays/hawks-frame-cheerleader.png", name: "hawks-overlay-cheerleader" },
             { src: "/assets/school/hawks/overlays/hawks-frame-fan.png", name: "hawks-overlay-fan" },
@@ -503,6 +547,105 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
             },
           ],
           templates: [
+            {
+              "src": "/assets/themes/spring-hill-hawks-cheer/overlays/hawks-cheer-garden-tea-party-double-2x6-three-photo-strips.png",
+              "name": "Hawks Cheer Garden Tea Party Double 2x6 Three-Photo Strips",
+              "layout": "photo_strip_3",
+              "photoSlots": [
+                {
+                  "x": 0.085,
+                  "y": 0.13,
+                  "width": 0.36,
+                  "height": 0.175,
+                  "sourceIndex": 0
+                },
+                {
+                  "x": 0.085,
+                  "y": 0.33,
+                  "width": 0.36,
+                  "height": 0.18,
+                  "sourceIndex": 1
+                },
+                {
+                  "x": 0.085,
+                  "y": 0.53,
+                  "width": 0.36,
+                  "height": 0.18,
+                  "sourceIndex": 2
+                },
+                {
+                  "x": 0.555,
+                  "y": 0.13,
+                  "width": 0.36,
+                  "height": 0.175,
+                  "sourceIndex": 0
+                },
+                {
+                  "x": 0.555,
+                  "y": 0.33,
+                  "width": 0.36,
+                  "height": 0.18,
+                  "sourceIndex": 1
+                },
+                {
+                  "x": 0.555,
+                  "y": 0.53,
+                  "width": 0.36,
+                  "height": 0.18,
+                  "sourceIndex": 2
+                }
+              ]
+            },
+
+            {
+              "src": "/assets/themes/spring-hill-hawks-cheer/overlays/hawks-cheer-tea-party-double-2x6-three-photo-strips.png",
+              "name": "Hawks Cheer Tea Party Double 2x6 Three-Photo Strips",
+              "layout": "photo_strip_3",
+              "photoSlots": [
+                {
+                  "x": 0.07,
+                  "y": 0.14,
+                  "width": 0.38,
+                  "height": 0.19,
+                  "sourceIndex": 0
+                },
+                {
+                  "x": 0.07,
+                  "y": 0.35,
+                  "width": 0.38,
+                  "height": 0.2,
+                  "sourceIndex": 1
+                },
+                {
+                  "x": 0.07,
+                  "y": 0.57,
+                  "width": 0.38,
+                  "height": 0.2,
+                  "sourceIndex": 2
+                },
+                {
+                  "x": 0.55,
+                  "y": 0.14,
+                  "width": 0.38,
+                  "height": 0.19,
+                  "sourceIndex": 0
+                },
+                {
+                  "x": 0.55,
+                  "y": 0.35,
+                  "width": 0.38,
+                  "height": 0.2,
+                  "sourceIndex": 1
+                },
+                {
+                  "x": 0.55,
+                  "y": 0.57,
+                  "width": 0.38,
+                  "height": 0.2,
+                  "sourceIndex": 2
+                }
+              ]
+            },
             { src: "https://res.cloudinary.com/afletch32/image/upload/v1783788508/photobooth/events/assets/hawks-template-go-hawks_avfpzg.png", layout: "single_photo" },
             {
               src: "/assets/themes/spring-hill-hawks/pizza/hawks-pizza-3-photo-strip-navy.png",
