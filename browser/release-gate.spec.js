@@ -55,6 +55,24 @@ for (const orientation of ["portrait", "landscape"]) {
 
       await expect(page.locator("#boothScreen")).not.toHaveClass(/hidden/);
       await expect(page.locator("#boothScreen")).toHaveClass(/welcome-active/);
+      if (themeKey === "school:hawksCheer") {
+        const hotspot = await page.locator("#startButton").evaluate((button) => {
+          const rect = button.getBoundingClientRect();
+          const style = getComputedStyle(button);
+          return {
+            width: rect.width,
+            height: rect.height,
+            backgroundImage: style.backgroundImage,
+            color: style.color,
+            hotspotMode: button.closest("#welcomeScreen").classList.contains("artwork-start-hotspot-screen"),
+          };
+        });
+        expect(hotspot.hotspotMode).toBe(true);
+        expect(hotspot.width).toBeGreaterThanOrEqual(48);
+        expect(hotspot.height).toBeGreaterThanOrEqual(48);
+        expect(hotspot.backgroundImage).toBe("none");
+        expect(hotspot.color).toBe("rgba(0, 0, 0, 0)");
+      }
       await page.locator("#startButton").evaluate((button) => button.click());
       await expect(page.locator("#welcomeOverlay")).toHaveAttribute(
         "data-step",

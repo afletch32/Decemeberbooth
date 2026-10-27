@@ -292,7 +292,7 @@ test("Spring Hill Hawks Cheer stays separate with its complete cartoon screen pa
       'src: "/assets/themes/spring-hill-hawks-cheer/spring-hill-hawks-cheer-idle-landscape.webp"'
     )
   );
-  assert.ok(app.includes("start: { x: 50, y: 82, width: 44, height: 15 }"));
+  assert.ok(app.includes('start: { x: 50, y: 82, width: 44, height: 15, variant: "hotspot" }'));
   assert.ok(app.includes("function migrateSpringHillHawksCheerAssets"));
 });
 

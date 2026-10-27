@@ -405,7 +405,7 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
               role: "idle",
               orientation: "portrait",
               buttonZones: {
-                start: { x: 50, y: 77, width: 60, height: 13 },
+                start: { x: 50, y: 77, width: 60, height: 13, variant: "hotspot" },
               },
             },
             {
@@ -414,7 +414,7 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
               role: "idle",
               orientation: "landscape",
               buttonZones: {
-                start: { x: 50, y: 82, width: 44, height: 15 },
+                start: { x: 50, y: 82, width: 44, height: 15, variant: "hotspot" },
               },
             },
             {

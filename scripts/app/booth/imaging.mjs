@@ -758,30 +758,6 @@ export function createImagingModule(__appRuntimeContext) {
       transform: "translate(-50%, -50%)",
     });
     __appRuntimeContext.DOM.startButton.setAttribute("aria-label", "Start photo booth");
-    const computed = getComputedStyle(__appRuntimeContext.DOM.startButton);
-    const rawSource = entry && entry.src ? entry.src : "";
-    let sourceClassification = "missing";
-    if (rawSource) {
-      if (rawSource.startsWith("data:image/")) {
-        sourceClassification = "data-url";
-      } else if (rawSource.startsWith("https://") || rawSource.startsWith("http://")) {
-        sourceClassification = "hosted-url";
-      } else {
-        sourceClassification = "local-path";
-      }
-    }
-    console.log("[idle-start-diagnostic]", {
-      welcomeFlowStep: __appRuntimeContext.welcomeFlowStep,
-      customIdleScreen: __appRuntimeContext.DOM.welcomeScreen.classList.contains("custom-idle-screen"),
-      startButtonExists: !!__appRuntimeContext.DOM.startButton,
-      rawButtonZoneExists: !!(entry && entry.buttonZones && entry.buttonZones.start),
-      normalizedZone: { x: zone.x, y: zone.y, width: zone.width, height: zone.height },
-      positionIdleStartHotspotExecuted: true,
-      rect: __appRuntimeContext.DOM.startButton.getBoundingClientRect(),
-      pointerEvents: computed.pointerEvents,
-      zIndex: computed.zIndex,
-      sourceClassification,
-    });
   }
 
   function clearCustomArtworkLoadTimer() {
@@ -801,7 +777,7 @@ export function createImagingModule(__appRuntimeContext) {
   function clearCustomIdleScreen() {
     __appRuntimeContext.welcomeArtworkLoadId += 1;
     clearCustomArtworkLoadTimer();
-    if (__appRuntimeContext.DOM.welcomeScreen) __appRuntimeContext.DOM.welcomeScreen.classList.remove("custom-idle-screen", "custom-photo-choice-screen", "marquee-start-screen");
+    if (__appRuntimeContext.DOM.welcomeScreen) __appRuntimeContext.DOM.welcomeScreen.classList.remove("custom-idle-screen", "custom-photo-choice-screen", "marquee-start-screen", "artwork-start-hotspot-screen");
     if (__appRuntimeContext.DOM.welcomeScreen) __appRuntimeContext.DOM.welcomeScreen.classList.remove("custom-artwork-loading");
     if (__appRuntimeContext.DOM.welcomeImg) {
       __appRuntimeContext.DOM.welcomeImg.onload = null;
@@ -818,6 +794,7 @@ export function createImagingModule(__appRuntimeContext) {
       __appRuntimeContext.DOM.welcomeVideo.classList.add("hidden");
     }
     if (__appRuntimeContext.DOM.startButton) __appRuntimeContext.DOM.startButton.removeAttribute("style");
+
   }
 
   function positionPhotoChoiceHotspots(entry) {
@@ -903,6 +880,7 @@ export function createImagingModule(__appRuntimeContext) {
     }
     __appRuntimeContext.DOM.welcomeScreen.classList.remove("custom-photo-choice-screen");
     __appRuntimeContext.DOM.welcomeScreen.classList.toggle("marquee-start-screen", entry?.buttonZones?.start?.variant === "marquee");
+    __appRuntimeContext.DOM.welcomeScreen.classList.toggle("artwork-start-hotspot-screen", entry?.buttonZones?.start?.variant === "hotspot");
     __appRuntimeContext.DOM.welcomeScreen.classList.add("custom-idle-screen", "custom-artwork-loading");
     return loadWelcomeArtwork(entry, () => positionIdleStartHotspot(entry));
   }
@@ -920,8 +898,9 @@ export function createImagingModule(__appRuntimeContext) {
     __appRuntimeContext.DOM.welcomeTitle.style.fontFamily =
       __appRuntimeContext.activeTheme.fontHeading || __appRuntimeContext.activeTheme.fontBody || __appRuntimeContext.activeTheme.font || "";
     __appRuntimeContext.fitWelcomeTitleToViewport();
-    if (__appRuntimeContext.DOM.startButton)
+    if (__appRuntimeContext.DOM.startButton) {
       __appRuntimeContext.DOM.startButton.textContent = __appRuntimeContext.resolveStartButtonText();
+    }
 
     //  the booth background on the welcome screen and hide standalone images
     const boothBg = __appRuntimeContext.DOM.boothScreen ? __appRuntimeContext.DOM.boothScreen.style.backgroundImage : "";

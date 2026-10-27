@@ -334,6 +334,39 @@
     #welcomeScreen.custom-idle-screen #welcomeIdleStep { display: block !important; position: absolute; inset: 0; }
     #welcomeScreen.custom-idle-screen.custom-artwork-loading #startButton { visibility: hidden; pointer-events: none; }
     #welcomeScreen.custom-idle-screen #startButton { position: absolute; display: grid; place-items: center; box-sizing: border-box; margin: 0; min-width: 48px; min-height: 56px; max-width: calc(100vw - 24px); max-height: min(24dvh, 180px); padding: 8px 18px; border: 3px solid color-mix(in srgb, var(--accent) 68%, #17211f); border-radius: 999px; outline: 0; background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 24%, white), color-mix(in srgb, var(--accent) 42%, white)); box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 38%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.72); color: #17211f; font-size: clamp(1rem, 4vw, 1.4rem); font-weight: 900; letter-spacing: 0.045em; line-height: 1.1; text-align: center; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.32); opacity: 1; filter: none; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; transform: none; cursor: pointer; touch-action: manipulation; }
+    #welcomeScreen.custom-idle-screen.artwork-start-hotspot-screen #startButton {
+      min-width: 0;
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 12px;
+      outline: 0;
+      background: transparent;
+      box-shadow: none;
+      color: transparent;
+      font-size: 0;
+      text-shadow: none;
+      transition: none;
+    }
+    #welcomeScreen.custom-idle-screen.artwork-start-hotspot-screen #startButton::before { content: none; }
+    #welcomeScreen.custom-idle-screen.artwork-start-hotspot-screen #startButton::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: rgba(4, 30, 66, 0.22);
+      opacity: 0;
+      transition: opacity 120ms ease;
+      pointer-events: none;
+    }
+    #welcomeScreen.custom-idle-screen.artwork-start-hotspot-screen #startButton:hover { filter: none; }
+    #welcomeScreen.custom-idle-screen.artwork-start-hotspot-screen #startButton:active { transform: translate(-50%, -50%); filter: none; }
+    #welcomeScreen.custom-idle-screen.artwork-start-hotspot-screen #startButton:active::after { opacity: 1; }
+    #welcomeScreen.custom-idle-screen.artwork-start-hotspot-screen #startButton:focus-visible {
+      outline: 4px solid #fff;
+      outline-offset: 4px;
+      box-shadow: 0 0 0 7px #041e42;
+    }
     #welcomeScreen.custom-idle-screen.marquee-start-screen #startButton {
       min-width: 0;
       min-height: 0;
