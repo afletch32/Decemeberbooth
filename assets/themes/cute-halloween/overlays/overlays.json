@@ -1,5 +1,22 @@
 [
   {
+    "src": "cute-halloween-simple-single-photo-landscape.png",
+    "name": "Happy Halloween simple single photo landscape",
+    "type": "photo",
+    "orientation": "landscape",
+    "aspectRatio": "3:2",
+    "photoSlots": [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1,
+        "borderRadius": 0
+      }
+    ]
+  },
+  "cute-halloween-simple-single-photo-landscape.thumb.webp",
+  {
     "src": "cute-halloween-simple-single-photo-portrait.png",
     "name": "Happy Halloween simple single photo portrait",
     "type": "photo",
@@ -15,20 +32,9 @@
       }
     ]
   },
-  {
-    "src": "cute-halloween-simple-single-photo-landscape.png",
-    "name": "Happy Halloween simple single photo landscape",
-    "type": "photo",
-    "orientation": "landscape",
-    "aspectRatio": "3:2",
-    "photoSlots": [
-      {
-        "x": 0,
-        "y": 0,
-        "width": 1,
-        "height": 1,
-        "borderRadius": 0
-      }
-    ]
-  }
+  "cute-halloween-simple-single-photo-portrait.thumb.webp",
+  "happy-halloween-single-photo-landscape.png",
+  "happy-halloween-single-photo-landscape.svg",
+  "happy-halloween-single-photo-portrait.png",
+  "happy-halloween-single-photo-portrait.svg"
 ]
