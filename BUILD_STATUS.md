@@ -1,15 +1,15 @@
 # Build status
 
-- Current goal: Break the booth app into focused modules without changing behavior.
-- Done: Extracted 27 feature modules and four ordered stylesheets. `scripts/app.js` is 155 lines and `index.html` is 1,025 lines. The service worker precaches all new files under shell cache v61.
-- In progress: Physical iPad/Safari camera and kiosk checks when the booth device is available.
-- Next steps: Verify the deployed guest flow on the booth iPad; no physical-device check was performed in this release.
-- Known bugs/blockers: The full browser suite has four failures reproduced against the pre-refactor baseline (filter parity, QR fit, 4×6 output, and a responsive hotspot check that can pass or fail on both versions). No new failure has been identified.
-- Important decisions: Keep vanilla ES modules and static HTML; pass shared state through the explicit app runtime context. Preserve unrelated QR sizing edits outside this release.
-- Release: Commit `c35f830` is pushed to `main` and deployed to Pages Production as `31822029`; canonical production serves the modular app.
-- Verification: `npm test` passes (297/297); portrait/landscape release gates and print-preview orientation pass (3/3). Full browser suite: 47 passed, 4 failures reproduced on the pre-refactor baseline, 18 skipped. Entry/module syntax and `git diff --check` pass. Production root, entry point, sampled modules/styles, and service worker return HTTP 200; `sw.js` reports `pb-app-shell-v61`.
+- Current goal: Keep final-share content inside supported booth viewports.
+- Done: The landscape share actions span both preview grid rows. The stylesheet URL and service-worker shell cache are versioned so offline clients receive this layout update.
+- In progress: Physical iPad/Safari verification when the booth device is available.
+- Next steps: Investigate the remaining 360×640 phone overflow and confirm the deployed kiosk layout on iPad Safari.
+- Known bugs/blockers: The focused viewport test passes through 768×1024, including 1600×900, but reports `#finalPreviewActions` extending below the viewport at 360×640 (bottom 680.8px vs 641px).
+- Important decisions: Keep this change scoped to the share action grid and cache invalidation.
+- Verification: `npm test` passes (297/297). The rendered viewport test confirms the landscape sizing through 768×1024; its final 360×640 case still fails as noted.
 
-- QR readability update (2026-10-26): Increased the final-share QR canvas cap on tablet layouts from 220px to 280px and on narrow phones from 200px to 240px; the default cap is now 320px. Added border-box sizing so canvas padding does not reduce the QR image area. `npm test` has seven failures, all reproduced on `origin/main`; the focused viewport test also reports QR panel overflow at 1600×900 on both the baseline and this change. Commit `93a7b3c` is deployed to Pages Production (`8865ad97`); canonical production returns HTTP 200 and serves the updated QR sizing. The existing viewport overflow remains unresolved.
+- QR readability update (2026-10-26): Increased the final-share QR canvas cap on tablet layouts from 220px to 280px and on narrow phones from 200px to 240px; the default cap is now 320px. Added border-box sizing so canvas padding does not reduce the QR image area. Commit `93a7b3c` is deployed to Pages Production (`8865ad97`). The next landscape-grid follow-up addressed the 1600×900 QR panel overflow; the narrow-phone overflow remains.
+- QR panel sizing follow-up (2026-10-27): Made landscape share actions span both preview grid rows, bumped the stylesheet URL, and advanced the service-worker shell to v62. The focused browser test passes through 768×1024, including 1600×900; it still reports overflow at 360×640 (panel bottom 680.8px vs 641px).
 
 - Current goal: Provide Spring Hill Hawks 2026 paired strips and portrait overlays in both pizza and regular styles.
 - Done: Added matching 2026 artwork to both styles, refined pizza to clean cartoon wedges, removed cheese-like drips from the regular overlay, and preserved all transparent photo windows. Added versioned asset paths and migration that replaces the four unbranded picker entries.

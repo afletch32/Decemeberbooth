@@ -410,6 +410,7 @@
   transform: none;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  grid-row: 1 / span 2;
   align-self: stretch;
   justify-self: stretch;
   width: 100%;
