@@ -19,12 +19,8 @@
     const base = theme || {};
     const accent = source.accent || source.primaryColor || base.accent || base.primaryColor;
     const background = source.backgroundColor || base.backgroundColor;
-    const heading = source.fontHeading || source.headingFont || base.fontHeading || base.headingFont;
-    const body = source.fontBody || source.bodyFont || base.fontBody || base.bodyFont;
     if (accent) document.documentElement.style.setProperty("--accent", accent);
     if (background) document.documentElement.style.setProperty("--hero-bg", background);
-    if (heading) document.documentElement.style.setProperty("--heading", heading);
-    if (body) document.documentElement.style.setProperty("--body", body);
     const logo = source.logo || base.logo;
     if (logo) { $("galleryLogo").src = logo; $("galleryLogo").classList.add("visible"); }
   }

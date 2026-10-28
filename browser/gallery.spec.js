@@ -13,15 +13,23 @@ test("event gallery loads its own photos and offers photo actions on mobile", as
       : [{ secure_url: "https://res.cloudinary.com/demo/image/upload/other.jpg", capture_id: "other-event" }];
     await route.fulfill({ json: { resources } });
   });
+  await page.route("**/api/events", (route) => route.fulfill({
+    json: { events: [{ id: "birthday-event", name: "Birthday", fontHeading: "'Comic Neue', cursive", fontBody: "'Comic Neue', cursive" }] },
+  }));
+  await page.route("**/api/themes", (route) => route.fulfill({
+    json: { general: { birthday: { fontHeading: "'Comic Neue', cursive", fontBody: "'Comic Neue', cursive" } } },
+  }));
 
   await page.addInitScript(() => {
     window.__shared = [];
     navigator.share = async (payload) => window.__shared.push(payload);
   });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/gallery.html?tag=birthday-2026&legacyTag=other-event&title=Birthday");
+  await page.goto("/gallery.html?tag=birthday-2026&legacyTag=other-event&title=Birthday&event=birthday-event&theme=general%3Abirthday");
 
   await expect(page.getByRole("heading", { name: "Birthday" })).toBeVisible();
+  await expect.poll(() => page.locator("h1").evaluate((element) => getComputedStyle(element).fontFamily)).toContain("Montserrat");
+  await expect.poll(() => page.locator("body").evaluate((element) => getComputedStyle(element).fontFamily)).toContain("Inter");
   await expect(page.locator(".card")).toHaveCount(3);
   expect(requestedTags).toEqual(["birthday-2026", "other-event"]);
   await page.locator(".card").first().click();
