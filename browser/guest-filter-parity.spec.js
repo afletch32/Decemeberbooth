@@ -68,13 +68,60 @@ test("beauty processing does not wait for a stalled face-tracker CDN", async ({ 
   canvas.width = 80; canvas.height = 60;
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "#a87860"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const video = document.createElement("canvas");
+  video.width = 80; video.height = 60;
+  Object.defineProperties(video, {
+   readyState: { value: 2 },
+   videoWidth: { value: 80 },
+   videoHeight: { value: 60 },
+  });
   const startedAt = performance.now();
   await applyBeautyFrame({
    canvas,
-   video: document.createElement("video"),
+   video,
    settings: { beauty: { enabled: true, skinSmooth: 25, tone: 10 } }
   });
   return performance.now() - startedAt;
  });
  assert.ok(elapsed < 1000, `Beauty processing took ${elapsed}ms while tracker CDN was stalled`);
+});
+
+test("face tracker transfers frames to its worker and returns landmarks", async ({ page }) => {
+ await page.route("https://cdn.jsdelivr.net/**", (route) => {
+  const url = route.request().url();
+  if (url.endsWith("/+esm")) {
+   return route.fulfill({
+    contentType: "application/javascript",
+    body: "export const FilesetResolver={forVisionTasks:async()=>({})};export const FaceLandmarker={createFromOptions:async()=>({detectForVideo:()=>({faceLandmarks:[[{x:0.25,y:0.5,z:0}]]})})};",
+   });
+  }
+  return route.fulfill({ status: 200, body: "" });
+ });
+ await page.goto("http://127.0.0.1:4321/?testMode=booth", { waitUntil: "domcontentloaded" });
+ const result = await page.evaluate(async () => {
+  const { initializeFaceTracker, detectFace } = await import("/scripts/beauty/tracker.mjs?worker-check");
+  const initialized = await initializeFaceTracker();
+  const frame = document.createElement("canvas");
+  frame.width = 320; frame.height = 240;
+  Object.defineProperties(frame, {
+   readyState: { value: 2 },
+   videoWidth: { value: 320 },
+   videoHeight: { value: 240 },
+  });
+  const startedAt = performance.now();
+  let detection = null;
+  while (performance.now() - startedAt < 1500) {
+   detection = detectFace(frame);
+   if (detection && detection.faceLandmarks[0]?.length) break;
+   await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  return {
+   initialized,
+   landmarkCount: detection && detection.faceLandmarks[0] ? detection.faceLandmarks[0].length : 0,
+   elapsed: performance.now() - startedAt,
+  };
+ });
+ assert.equal(result.initialized, true);
+ assert.equal(result.landmarkCount, 1);
+ assert.ok(result.elapsed < 1500, `worker did not return a face result in time (${result.elapsed}ms)`);
 });
