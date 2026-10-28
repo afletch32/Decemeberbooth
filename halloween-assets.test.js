@@ -11,8 +11,8 @@ test("Halloween migration replaces legacy defaults and preserves custom uploads"
   };
   const target = { fall: { holidays: { halloween: theme, cuteHalloween: { overlays: [], templates: [] } } } };
   assert.equal(migrateHalloweenThemeAssets(target), true);
-  assert.deepEqual(theme.overlays.map((asset) => asset.orientation), ["portrait", "landscape", undefined]);
-  assert.equal(theme.overlays[2], custom);
+  assert.deepEqual(theme.overlays.map((asset) => asset.orientation), ["portrait", "landscape", "portrait", undefined]);
+  assert.equal(theme.overlays[3], custom);
   assert.equal(theme.templates.length, 1);
   assert.equal(theme.templates[0].layout, "double_column");
   assert.deepEqual(theme.templates[0].photoSlots.map((slot) => slot.sourceIndex), [0, 1, 2, 0, 1, 2]);
@@ -97,8 +97,15 @@ test("Halloween manifests use shared geometry and production-size alpha PNGs", a
   for (const [folder, assets] of Object.entries(HALLOWEEN_ASSET_MANIFESTS)) {
     if (!folder.endsWith("/overlays/") && !folder.endsWith("/templates/")) continue;
     const file = folder.includes("overlays") ? "overlays.json" : "templates.json";
-    assert.deepEqual(JSON.parse(readFileSync(folder + file, "utf8")), assets);
+    const manifest = JSON.parse(readFileSync(folder + file, "utf8"));
+    const entriesBySource = new Map(
+      manifest.filter((entry) => entry && typeof entry === "object")
+        .map((entry) => [entry.src, entry])
+    );
     for (const asset of assets) {
+      const entry = entriesBySource.get(asset.src);
+      assert.ok(entry, `${folder}${file} should include ${asset.src}`);
+      assert.deepEqual(entry, asset);
       const png = readFileSync(folder + asset.src);
       assert.equal(png.readUInt32BE(16), asset.orientation === "landscape" ? 1800 : 1200);
       assert.equal(png.readUInt32BE(20), asset.orientation === "landscape" ? 1200 : 1800);

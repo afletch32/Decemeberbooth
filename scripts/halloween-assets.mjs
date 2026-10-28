@@ -33,15 +33,35 @@ const PACKS = [
 ];
 
 function createPack({ folder, name }, prefix = "") {
+  const frame = folder === "halloween"
+    ? {
+        src: "halloween-ravens-pumpkin-single-photo-portrait.png",
+        name: "Halloween ravens and pumpkins portrait",
+        orientation: "portrait",
+      }
+    : {
+        src: "happy-halloween-ghost-pumpkin-single-photo-portrait.png",
+        name: "Happy Halloween ghost and pumpkin portrait",
+        orientation: "portrait",
+      };
   return {
-    overlays: ["portrait", "landscape"].map((orientation) => ({
-      src: `${prefix}${folder}-simple-single-photo-${orientation}.png`,
-      name: `${name} simple single photo ${orientation}`,
-      type: "photo",
-      orientation,
-      aspectRatio: orientation === "portrait" ? "2:3" : "3:2",
-      photoSlots: structuredClone(HALLOWEEN_PHOTO_SLOTS[orientation]),
-    })),
+    overlays: [
+      ...["portrait", "landscape"].map((orientation) => ({
+        src: `${prefix}${folder}-simple-single-photo-${orientation}.png`,
+        name: `${name} simple single photo ${orientation}`,
+        type: "photo",
+        orientation,
+        aspectRatio: orientation === "portrait" ? "2:3" : "3:2",
+        photoSlots: structuredClone(HALLOWEEN_PHOTO_SLOTS[orientation]),
+      })),
+      {
+        ...frame,
+        src: `${prefix}${frame.src}`,
+        type: "photo",
+        aspectRatio: "2:3",
+        photoSlots: structuredClone(HALLOWEEN_PHOTO_SLOTS.portrait),
+      },
+    ],
     templates: [{
       src: `${prefix}${folder}-graphic-double-column-strip.png`,
       name: `${name} graphic identical double strips`,

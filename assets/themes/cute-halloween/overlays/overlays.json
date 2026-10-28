@@ -36,5 +36,22 @@
   "happy-halloween-single-photo-landscape.png",
   "happy-halloween-single-photo-landscape.svg",
   "happy-halloween-single-photo-portrait.png",
-  "happy-halloween-single-photo-portrait.svg"
+  "happy-halloween-single-photo-portrait.svg",
+  {
+    "src": "happy-halloween-ghost-pumpkin-single-photo-portrait.png",
+    "name": "Happy Halloween ghost and pumpkin portrait",
+    "type": "photo",
+    "orientation": "portrait",
+    "aspectRatio": "2:3",
+    "photoSlots": [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1,
+        "borderRadius": 0
+      }
+    ]
+  },
+  "happy-halloween-ghost-pumpkin-single-photo-portrait.thumb.webp"
 ]

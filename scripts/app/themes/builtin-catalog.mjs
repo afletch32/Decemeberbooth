@@ -886,6 +886,8 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
           backgrounds: [
             "/assets/themes/halloween/halloween-fog-background-portrait.mp4",
             "/assets/themes/halloween/halloween-fog-background-landscape.mp4",
+            // THEME_ASSETS:halloween:backgrounds:START
+            // THEME_ASSETS:halloween:backgrounds:END
           ],
           idleScreens: [
             { src: "/assets/themes/halloween/halloween-idle-portrait.webp", name: "Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
@@ -897,8 +899,22 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
             { src: "/assets/themes/halloween/halloween-thank-you-portrait.webp", name: "Halloween Thank You portrait", orientation: "portrait" },
             { src: "/assets/themes/halloween/halloween-thank-you-landscape.webp", name: "Halloween Thank You landscape", orientation: "landscape" },
           ],
-          overlays: [],
-          templates: [],
+          overlays: [
+            // THEME_ASSETS:halloween:overlays:START
+            {
+              src: "/assets/themes/halloween/overlays/halloween-ravens-pumpkin-single-photo-portrait.png",
+              name: "Halloween ravens and pumpkins portrait",
+              type: "photo",
+              orientation: "portrait",
+              aspectRatio: "2:3",
+              photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
+            },
+            // THEME_ASSETS:halloween:overlays:END
+          ],
+          templates: [
+            // THEME_ASSETS:halloween:templates:START
+            // THEME_ASSETS:halloween:templates:END
+          ],
           welcome: {
             title: "Happy Halloween!",
             portrait: "",
@@ -1122,6 +1138,8 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
     backgrounds: [
       "/assets/themes/cute-halloween/cute-halloween-background-portrait.webp",
       "/assets/themes/cute-halloween/cute-halloween-background-landscape.webp",
+      // THEME_ASSETS:cute-halloween:backgrounds:START
+      // THEME_ASSETS:cute-halloween:backgrounds:END
     ],
     idleScreens: [
       { src: "/assets/themes/cute-halloween/cute-halloween-idle-portrait.webp", name: "Happy Halloween idle portrait", role: "idle", orientation: "portrait", buttonZones: { start: { x: 50, y: 82, width: 58, height: 18 } } },
@@ -1133,8 +1151,22 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
       { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-portrait.webp", name: "Happy Halloween Thank You portrait", orientation: "portrait" },
       { src: "/assets/themes/cute-halloween/cute-halloween-thank-you-landscape.webp", name: "Happy Halloween Thank You landscape", orientation: "landscape" },
     ],
-    overlays: [],
-    templates: [],
+    overlays: [
+      // THEME_ASSETS:cute-halloween:overlays:START
+      {
+        src: "/assets/themes/cute-halloween/overlays/happy-halloween-ghost-pumpkin-single-photo-portrait.png",
+        name: "Happy Halloween ghost and pumpkin portrait",
+        type: "photo",
+        orientation: "portrait",
+        aspectRatio: "2:3",
+        photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
+      },
+      // THEME_ASSETS:cute-halloween:overlays:END
+    ],
+    templates: [
+      // THEME_ASSETS:cute-halloween:templates:START
+      // THEME_ASSETS:cute-halloween:templates:END
+    ],
     welcome: { title: "Happy Halloween", portrait: "", landscape: "", prompt: "Tap to Start" },
   };
 
