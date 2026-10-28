@@ -7,4 +7,5 @@
 - Known bugs/blockers: Other existing asset-library preview failures are outside this Halloween asset change. Physical iPad/Safari behavior is not verified.
 - Important decisions: Keep each frame in its matching Halloween theme; preserve the existing vanilla app, migration behavior, and photo-storage flow.
 - Production target: Cloudflare Pages project `decemeberbooth`, branch `main`, `https://decemeberbooth.pages.dev/`.
+- Beauty engine fix (2026-10-28): Corrected the lazy import from the booth renderer to `scripts/beauty/engine.mjs`; focused regression test passes. Full suite is 298/301 with three failures in unrelated, uncommitted asset-library work. Production release pending.
 - Gallery typography (2026-10-27): Gallery headings use Montserrat and body text uses Inter regardless of booth theme font settings; theme colors and logos still apply. Focused gallery browser checks pass locally and on production (3/3 each). Full suite is 300/301 with the known unrelated Halloween manifest fixture failure. Commit `8b12b22` is pushed to `main` and active on Pages Production (`a1bed870`).

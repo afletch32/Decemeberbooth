@@ -1650,7 +1650,7 @@ test("beauty processing is configured by filter choices, not guest controls", ()
   assert.ok(
     appScript.includes("getGuestVisibleBeautyPresets") &&
       appScript.includes("function getSelectedFilterBeautySettings()") &&
-      appScript.includes('beautyEngineModulePromise = import("./beauty/engine.mjs")') &&
+      appScript.includes('beautyEngineModulePromise = import("../../beauty/engine.mjs")') &&
       appScript.includes("await applySelectedBeautyToCanvas("),
     "beauty settings should be attached to existing filters and applied through the beauty engine"
   );

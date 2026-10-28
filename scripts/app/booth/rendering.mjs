@@ -1896,7 +1896,7 @@ export function createRenderingModule(__appRuntimeContext) {
     if (!settings || !settings.beauty) return canvas;
     try {
       if (!__appRuntimeContext.beautyEngineModulePromise) {
-        __appRuntimeContext.beautyEngineModulePromise = import("./beauty/engine.mjs");
+        __appRuntimeContext.beautyEngineModulePromise = import("../../beauty/engine.mjs");
       }
       const { applyBeautyFrame } = await __appRuntimeContext.beautyEngineModulePromise;
       return await applyBeautyFrame({
