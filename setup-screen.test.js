@@ -147,9 +147,9 @@ test("setup section state updates button and panel accessibility attributes", ()
   assert.ok(
     html.includes(".setup-session-theme") &&
       html.includes("grid-column: span 2;") &&
-      html.includes("min-height: 58px;") &&
-      html.indexOf('data-setup-combobox="theme"') < html.indexOf('id="eventProfileSelect"'),
-    "theme selection should be the first and largest session control"
+      html.includes('id="themeQuickPicker"') &&
+      !html.includes('data-setup-combobox="theme"'),
+    "the primary theme picker should replace the duplicate theme dropdown"
   );
   assert.ok(
     !html.includes('id="launchWarning"') &&
@@ -161,9 +161,9 @@ test("setup section state updates button and panel accessibility attributes", ()
     "Booth Mode control should remain in the simplified setup flow"
   );
   assert.ok(
-    appScript.includes("item.dataset.themeKey = entry.key;") &&
+    appScript.includes("card.dataset.themeKey = entry.key;") &&
       appScript.includes("activateThemeFromSetupKey(entry.key)"),
-    "theme option clicks should activate immediately"
+    "theme cards should activate immediately"
   );
   assert.ok(
     appScript.includes("activateFontPairingFromSetup(pairing)") &&
@@ -291,18 +291,20 @@ test("share settings prioritize printing and separate connection groups", () => 
   );
 });
 
-test("setup flow uses direct theme and font activation", () => {
+test("setup flow uses the theme picker and searchable font combobox", () => {
   const html = readProjectFile("index.html");
   const appScript = readAppSource();
 
   assert.ok(
-    html.includes('id="sessionThemeToggle"') &&
-      html.includes('id="sessionThemeMenu"') &&
-      html.includes('id="sessionThemeOptions" class="setup-combobox-options"') &&
+    !html.includes('id="sessionThemeToggle"') &&
+      !html.includes('id="sessionThemeMenu"') &&
+      !html.includes('id="sessionThemeOptions"') &&
+      html.includes('id="themeQuickPicker"') &&
+      html.includes('id="createPathThemeSelect" class="hidden"') &&
       html.includes('id="sessionFontToggle"') &&
       html.includes('id="sessionFontMenu"') &&
       html.includes('id="sessionFontOptions" class="setup-combobox-options"'),
-    "theme and font should be dropdown comboboxes with optional search"
+    "theme selection should use the primary picker while font pairing keeps searchable options"
   );
   assert.ok(
     !appScript.includes("baseFolderList") &&
@@ -311,14 +313,13 @@ test("setup flow uses direct theme and font activation", () => {
     "removed folder fallback state should not interrupt setup dropdown initialization"
   );
   assert.ok(
-    appScript.includes("function activateThemeFromSetupSearch()") &&
-      appScript.includes("loadTheme(key);") &&
+    appScript.includes("loadTheme(key);") &&
       appScript.includes("function getSessionPairingOptions(") &&
       appScript.includes("(fontCatalog.pairings || []).slice(0, 8)") &&
       appScript.includes('appendSessionFontGroupLabel("Popular pairings")') &&
       appScript.includes("applyFontSelection(pairing.heading, pairing.body") &&
       appScript.includes("function openSetupCombobox(kind)") &&
-      appScript.includes("renderSessionThemeOptions(DOM.sessionThemeSearch.value)") &&
+      !appScript.includes("renderSessionThemeOptions") &&
       appScript.includes("renderSessionFontOptions(DOM.sessionFontSearch.value)"),
     "theme and curated preset-pairing selection should activate immediately"
   );
@@ -375,17 +376,15 @@ test("setup presents a numbered flow with one share-stage launch action", () => 
   );
 });
 
-test("setup theme dropdown groups themes by user-facing category", () => {
+test("setup theme picker groups themes by user-facing category", () => {
   const html = readProjectFile("index.html");
   const appScript = readAppSource();
 
   assert.ok(
-    html.includes(".setup-combobox-group") &&
-      html.includes(".setup-combobox-group-title") &&
-      html.includes("pointer-events: none;") &&
-      html.includes("user-select: none;") &&
-      html.includes(".setup-combobox-group-options"),
-    "theme dropdown should style grouped section headers"
+    html.includes('id="themeQuickFilters"') &&
+      html.includes('id="themeQuickGrid"') &&
+      !html.includes('id="sessionThemeToggle"'),
+    "the picker should use category filters and a single theme grid"
   );
   assert.ok(
     appScript.includes("const THEME_SETUP_GROUP_ORDER = [") &&
@@ -403,11 +402,10 @@ test("setup theme dropdown groups themes by user-facing category", () => {
     "theme setup should define friendly group and label mappings"
   );
   assert.ok(
-    appScript.includes("const seenKeys = new Set();") &&
-      appScript.includes("seenKeys.has(entry.key)") &&
-      appScript.includes('title.setAttribute("role", "presentation");') &&
-      appScript.includes('title.setAttribute("aria-hidden", "true");'),
-    "grouped theme options should dedupe by key and render non-selectable section headers"
+    appScript.includes("const allEntries = getSetupThemeEntries();") &&
+      appScript.includes("button.dataset.themeFilter = filter;") &&
+      appScript.includes("themeMatchesQuickFilter(entry, activeThemeQuickFilter)"),
+    "category filters should group the theme cards in the primary picker"
   );
   assert.ok(
     appScript.includes("pruneUnapprovedThemes(themes, approvedThemeKeys)") &&
@@ -415,15 +413,15 @@ test("setup theme dropdown groups themes by user-facing category", () => {
     "both bundled and saved theme catalogs should be pruned to the complete-theme allowlist"
   );
   assert.ok(
-    appScript.includes("item.dataset.themeKey = entry.key;") &&
+      appScript.includes("card.dataset.themeKey = entry.key;") &&
       appScript.includes("activateThemeFromSetupKey(entry.key)") &&
-      appScript.includes("item.textContent = entry.label;"),
-    "setup options should keep the original keys while showing friendly labels"
+      appScript.includes("label.textContent = entry.label"),
+    "theme cards should keep original keys while showing friendly labels"
   );
   assert.ok(
     !appScript.includes('${theme.name} > ${subTheme.name}') &&
       !appScript.includes('theme.name = `${theme.name} >'),
-    "theme dropdown should not use arrow labels"
+    "theme picker should not use arrow labels"
   );
   assert.ok(
     appScript.includes("function removeLegacyFlatBuiltinThemes()") &&

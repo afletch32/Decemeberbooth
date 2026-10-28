@@ -30,14 +30,6 @@ export function createThemePickerModule(__appRuntimeContext) {
       __appRuntimeContext.setEventSelection(selectedKey);
       __appRuntimeContext.loadTheme(selectedKey);
     }
-    syncSessionThemeSearch();
-  }
-
-  function getThemeOptionLabel(key = "") {
-    const options = __appRuntimeContext.getThemeOptions();
-    const match = options.find((option) => option.value === key);
-    if (match) return match.textContent || key;
-    return getThemeSetupDisplayLabel(key, __appRuntimeContext.resolveThemeByKey(key));
   }
 
   function normalizeThemeSetupText(value = "") {
@@ -131,94 +123,6 @@ export function createThemePickerModule(__appRuntimeContext) {
         if (itemDiff !== 0) return itemDiff;
         return a.label.localeCompare(b.label);
       });
-  }
-
-  function getSessionThemeOptions(filter = "") {
-    const needle = String(filter || "").trim().toLowerCase();
-    return __appRuntimeContext.getThemeOptions().filter(
-      (option) => {
-        if (!option || !option.value) return false;
-        if (!needle) return true;
-        return (
-          String(option.textContent || "").toLowerCase().includes(needle) ||
-          String(option.value || "").toLowerCase().includes(needle)
-        );
-      }
-    );
-  }
-
-  function renderSessionThemeOptions(filter = "") {
-    if (__appRuntimeContext.DOM.sessionThemeOptions) {
-      __appRuntimeContext.DOM.sessionThemeOptions.innerHTML = "";
-      const selectedKey =
-        (__appRuntimeContext.DOM.createPathThemeSelect && __appRuntimeContext.DOM.createPathThemeSelect.value) ||
-        __appRuntimeContext.getSelectedThemeKey() ||
-        "";
-      const entries = getSetupThemeEntries(filter);
-      const groupedEntries = new Map();
-      entries.forEach((entry) => {
-        if (!groupedEntries.has(entry.group)) groupedEntries.set(entry.group, []);
-        groupedEntries.get(entry.group).push(entry);
-      });
-      const orderedGroups = __appRuntimeContext.THEME_SETUP_GROUP_ORDER.filter((group) =>
-        groupedEntries.has(group)
-      ).concat(
-        Array.from(groupedEntries.keys()).filter(
-          (group) => !__appRuntimeContext.THEME_SETUP_GROUP_ORDER.includes(group)
-        )
-      );
-      orderedGroups.forEach((groupName) => {
-        const groupEntries = groupedEntries.get(groupName);
-        if (!groupEntries || !groupEntries.length) return;
-        const group = document.createElement("div");
-        group.className = "setup-combobox-group";
-        const title = document.createElement("div");
-        title.className = "setup-combobox-group-title";
-        title.textContent = groupName;
-        title.setAttribute("role", "presentation");
-        title.setAttribute("aria-hidden", "true");
-        const list = document.createElement("div");
-        list.className = "setup-combobox-group-options";
-        groupEntries.forEach((entry) => {
-          const item = document.createElement("button");
-          item.type = "button";
-          item.className = "setup-combobox-option";
-          item.textContent = entry.label;
-          item.dataset.themeKey = entry.key;
-          item.dataset.themeGroup = entry.group;
-          item.setAttribute("role", "option");
-          item.setAttribute(
-            "aria-selected",
-            entry.key === selectedKey ? "true" : "false"
-          );
-          item.addEventListener("click", () =>
-            activateThemeFromSetupKey(entry.key)
-          );
-          list.appendChild(item);
-        });
-        group.appendChild(title);
-        group.appendChild(list);
-        __appRuntimeContext.DOM.sessionThemeOptions.appendChild(group);
-      });
-      if (!entries.length) {
-        const empty = document.createElement("div");
-        empty.className = "setup-combobox-empty";
-        empty.textContent = "No themes found";
-        __appRuntimeContext.DOM.sessionThemeOptions.appendChild(empty);
-      }
-    }
-  }
-
-  function syncSessionThemeSearch() {
-    renderSessionThemeOptions();
-    const key =
-      (__appRuntimeContext.DOM.createPathThemeSelect && __appRuntimeContext.DOM.createPathThemeSelect.value) ||
-      __appRuntimeContext.getSelectedThemeKey() ||
-      "";
-    if (__appRuntimeContext.DOM.sessionThemeValue)
-      __appRuntimeContext.DOM.sessionThemeValue.textContent = getThemeOptionLabel(key) || "Choose theme";
-    if (__appRuntimeContext.DOM.sessionThemeSearch) __appRuntimeContext.DOM.sessionThemeSearch.value = "";
-    renderThemeQuickPicker();
   }
 
   function themeMatchesQuickFilter(entry, filter) {
@@ -358,27 +262,6 @@ export function createThemePickerModule(__appRuntimeContext) {
     if (__appRuntimeContext.DOM.themeQuickSelectionMeta) __appRuntimeContext.DOM.themeQuickSelectionMeta.textContent = selectedEntry ? `${selectedEntry.group} · ${getThemeQuickMeta(selectedEntry.theme)}` : "Choose a look to see the included guest screens and photo styling.";
   }
 
-  function resolveThemeKeyFromSearchValue(value = "") {
-    const needle = String(value || "").trim().toLowerCase();
-    if (!needle) return "";
-    const options = __appRuntimeContext.getThemeOptions();
-    const byLabel = options.find(
-      (option) => String(option.textContent || "").trim().toLowerCase() === needle
-    );
-    if (byLabel) return byLabel.value;
-    const byValue = options.find(
-      (option) => String(option.value || "").trim().toLowerCase() === needle
-    );
-    return byValue ? byValue.value : "";
-  }
-
-  function activateThemeFromSetupSearch() {
-    const key = resolveThemeKeyFromSearchValue(
-      __appRuntimeContext.DOM.sessionThemeSearch ? __appRuntimeContext.DOM.sessionThemeSearch.value : ""
-    );
-    activateThemeFromSetupKey(key);
-  }
-
   function activateThemeFromSetupKey(key) {
     if (!key) return;
     __appRuntimeContext.disableShowcaseDemo();
@@ -389,18 +272,9 @@ export function createThemePickerModule(__appRuntimeContext) {
     __appRuntimeContext.loadTheme(key);
     __appRuntimeContext.updateLaunchSummary();
     renderThemeQuickPicker();
-    closeSetupCombobox("theme");
   }
 
   function getSetupComboboxParts(kind) {
-    if (kind === "theme") {
-      return {
-        toggle: __appRuntimeContext.DOM.sessionThemeToggle,
-        menu: __appRuntimeContext.DOM.sessionThemeMenu,
-        search: __appRuntimeContext.DOM.sessionThemeSearch,
-        render: renderSessionThemeOptions,
-      };
-    }
     if (kind === "font") {
       return {
         toggle: __appRuntimeContext.DOM.sessionFontToggle,
@@ -643,7 +517,6 @@ export function createThemePickerModule(__appRuntimeContext) {
 
   return {
     populateCreatePathThemeSelect,
-    getThemeOptionLabel,
     normalizeThemeSetupText,
     titleCaseThemeSetupText,
     getThemeSetupDisplayLabel,
@@ -651,15 +524,10 @@ export function createThemePickerModule(__appRuntimeContext) {
     getThemeSetupGroupIndex,
     getThemeSetupItemIndex,
     getSetupThemeEntries,
-    getSessionThemeOptions,
-    renderSessionThemeOptions,
-    syncSessionThemeSearch,
     themeMatchesQuickFilter,
     getThemeQuickPreview,
     getThemeQuickMeta,
     renderThemeQuickPicker,
-    resolveThemeKeyFromSearchValue,
-    activateThemeFromSetupSearch,
     activateThemeFromSetupKey,
     getSetupComboboxParts,
     closeSetupCombobox,

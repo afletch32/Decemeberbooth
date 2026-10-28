@@ -1,11 +1,11 @@
 # Build status
 
-- Current goal: Make all Christmas and other holiday assets discoverable in the Asset Library.
-- Done: Added holiday subfilters from the full built-in index; the library now collects unapproved built-in holiday assets and fetches the selected category from the remote asset API. Christmas-only tags are recognized as holiday metadata. Locally, Christmas shows its 7 backgrounds and 2 templates; `npm test` passes 301/301.
-- In progress: Production release pending.
-- Next steps: Deploy and verify the Christmas and Halloween filters on the canonical production URL.
-- Known bugs/blockers: Holiday assets are listed only when their built-in theme or remote asset metadata identifies the holiday. Physical iPad/Safari behavior is not verified.
-- Important decisions: Keep holiday filtering view-only and preserve theme approval rules; do not remove or replace existing assets.
+- Current goal: Keep setup theme browsing clear and make holiday assets discoverable by category.
+- Done: Removed the duplicate Browse All Themes dropdown; the main picker remains. Avery's Birthday is cataloged under General and the picker classifies it as General. Holiday filters load built-in and remote assets; production Christmas results verified at 13 cards (backgrounds and templates).
+- In progress: Deploy the setup picker cleanup.
+- Next steps: Verify setup layout and Christmas filter on the canonical production URL.
+- Known bugs/blockers: User reports Christmas overlays that are absent from the current 13 returned Christmas filter results; physical iPad/Safari behavior is not verified.
+- Important decisions: Keep holiday filtering view-only and preserve existing assets and theme approval rules.
 - Production target: Cloudflare Pages project `decemeberbooth`, branch `main`, `https://decemeberbooth.pages.dev/`.
 - Face tracking performance (2026-10-28): Moved MediaPipe inference into a module worker, capped scheduling at about 3.3 frames/second, downsized analysis frames to 320px, and kept preview processing nonblocking with a fallback when worker support or loading fails. Focused tracker tests pass (2/2); focused browser checks pass (2/2). Full suite currently has one unrelated setup-picker assertion failure; physical camera/iPad performance remains unverified.
 - Beauty engine fix (2026-10-28): Corrected the lazy import from the booth renderer to `scripts/beauty/engine.mjs`; included in this release. Full suite now passes 301/301.

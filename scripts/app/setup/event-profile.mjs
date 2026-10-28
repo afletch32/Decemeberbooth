@@ -40,25 +40,6 @@ export function createEventProfileModule(__appRuntimeContext) {
         );
       });
     });
-    if (__appRuntimeContext.DOM.sessionThemeToggle) {
-      __appRuntimeContext.DOM.sessionThemeToggle.addEventListener("click", () =>
-        __appRuntimeContext.toggleSetupCombobox("theme")
-      );
-    }
-    if (__appRuntimeContext.DOM.sessionThemeSearch) {
-      __appRuntimeContext.DOM.sessionThemeSearch.addEventListener("input", () =>
-        __appRuntimeContext.renderSessionThemeOptions(__appRuntimeContext.DOM.sessionThemeSearch.value)
-      );
-      __appRuntimeContext.DOM.sessionThemeSearch.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          __appRuntimeContext.disableShowcaseDemo();
-          __appRuntimeContext.selectFirstVisibleComboboxOption("theme");
-        } else if (event.key === "Escape") {
-          __appRuntimeContext.closeSetupCombobox("theme");
-        }
-      });
-    }
     if (__appRuntimeContext.DOM.sessionFontToggle) {
       __appRuntimeContext.DOM.sessionFontToggle.addEventListener("click", () =>
         __appRuntimeContext.toggleSetupCombobox("font")
@@ -104,7 +85,6 @@ export function createEventProfileModule(__appRuntimeContext) {
     __appRuntimeContext.populateCreatePathThemeSelect(
       __appRuntimeContext.getSelectedThemeKey()
     );
-    __appRuntimeContext.syncSessionThemeSearch();
     __appRuntimeContext.syncSessionFontSearch();
     if (__appRuntimeContext.DOM.eventProfileSelect) {
       __appRuntimeContext.DOM.eventProfileSelect.addEventListener("change", (event) => {

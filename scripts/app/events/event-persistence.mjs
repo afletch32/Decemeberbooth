@@ -468,7 +468,6 @@ export function createEventPersistenceModule(__appRuntimeContext) {
     if (__appRuntimeContext.DOM.weddingSetupAction) __appRuntimeContext.DOM.weddingSetupAction.hidden = weddingSelected;
     if (__appRuntimeContext.DOM.weddingEventSetup) __appRuntimeContext.DOM.weddingEventSetup.hidden = !weddingSelected;
     if (__appRuntimeContext.DOM.themeQuickPicker) __appRuntimeContext.DOM.themeQuickPicker.classList.toggle("hidden", weddingSelected);
-    if (__appRuntimeContext.DOM.generalThemeBrowse) __appRuntimeContext.DOM.generalThemeBrowse.classList.toggle("hidden", weddingSelected);
     if (__appRuntimeContext.DOM.eventNameSetupField) __appRuntimeContext.DOM.eventNameSetupField.classList.toggle("hidden", weddingSelected);
     if (__appRuntimeContext.DOM.createWeddingEventBtn) {
       __appRuntimeContext.DOM.createWeddingEventBtn.textContent = editingWedding

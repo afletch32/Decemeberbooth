@@ -28,17 +28,11 @@ export function createDOMCache() {
   weddingEventSetup: document.getElementById("weddingEventSetup"),
   createWeddingEventBtn: document.getElementById("createWeddingEventBtn"),
   themeQuickPicker: document.getElementById("themeQuickPicker"),
-  generalThemeBrowse: document.getElementById("generalThemeBrowse"),
   eventNameSetupField: document.getElementById("eventNameSetupField"),
   eventGeneralDateInput: document.getElementById("eventGeneralDateInput"),
   eventPrintPriceInput: document.getElementById("eventPrintPriceInput"),
   saveEventPrintPriceBtn: document.getElementById("saveEventPrintPriceBtn"),
   createPathThemeSelect: document.getElementById("createPathThemeSelect"),
-  sessionThemeToggle: document.getElementById("sessionThemeToggle"),
-  sessionThemeValue: document.getElementById("sessionThemeValue"),
-  sessionThemeMenu: document.getElementById("sessionThemeMenu"),
-  sessionThemeSearch: document.getElementById("sessionThemeSearch"),
-  sessionThemeOptions: document.getElementById("sessionThemeOptions"),
   guestScreenOrientation: document.getElementById("guestScreenOrientation"),
   screenOrientationButtons: Array.from(
     document.querySelectorAll("[data-screen-orientation]")

@@ -940,7 +940,6 @@ export function createRenderingModule(__appRuntimeContext) {
     syncAdminUiWithTheme(themeKey, theme);
     __appRuntimeContext.renderAssetLibrary();
     __appRuntimeContext.updateLaunchSummary();
-    __appRuntimeContext.syncSessionThemeSearch();
     __appRuntimeContext.syncSessionFontSearch();
     __appRuntimeContext.deferNonCriticalTask(() => __appRuntimeContext.loadAssetLibraryRemote().catch(() => __appRuntimeContext.renderAssetLibrary()));
   }

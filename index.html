@@ -121,18 +121,7 @@
           </aside>
         </section>
       <div class="setup-session-secondary">
-          <div class="setup-session-item setup-combobox" id="generalThemeBrowse" data-setup-combobox="theme">
-            <label for="sessionThemeSearch">Browse all themes</label>
-            <button type="button" id="sessionThemeToggle" class="setup-combobox-button" aria-expanded="false" aria-controls="sessionThemeMenu">
-              <span id="sessionThemeValue">Choose theme</span>
-              <span class="setup-combobox-caret" aria-hidden="true">▼</span>
-            </button>
-            <div id="sessionThemeMenu" class="setup-combobox-menu hidden">
-              <input type="search" id="sessionThemeSearch" class="setup-combobox-search" placeholder="Search themes" autocomplete="off">
-            <div id="sessionThemeOptions" class="setup-combobox-options" role="listbox" aria-label="Theme options"></div>
-            </div>
-            <select id="createPathThemeSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
-          </div>
+          <select id="createPathThemeSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
           <div class="setup-session-item" id="screenShapeSetupField">
             <span class="setup-session-item-label">Booth screen shape</span>
             <div class="orientation-quick-pick" role="group" aria-label="Booth screen shape">
@@ -1027,7 +1016,7 @@
   </div>
   <input type="file" id="createThemeFolderInput" class="hidden" webkitdirectory multiple>
 
-  <script type="module" src="scripts/app.js?v=20261028-holiday-asset-loading"></script>
+  <script type="module" src="scripts/app.js?v=20261028-theme-picker-cleanup"></script>
 </body>
 
 </html>
