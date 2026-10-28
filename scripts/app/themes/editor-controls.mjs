@@ -104,6 +104,11 @@ export function createEditorControlsModule(__appRuntimeContext) {
       __appRuntimeContext.DOM.assetLibrarySearch.addEventListener("input", refreshAssetLibraryFromFilter);
     if (__appRuntimeContext.DOM.assetLibraryCategory)
       __appRuntimeContext.DOM.assetLibraryCategory.addEventListener("change", refreshAssetLibraryFromFilter);
+    if (__appRuntimeContext.DOM.assetLibraryHolidayTheme)
+      __appRuntimeContext.DOM.assetLibraryHolidayTheme.addEventListener("change", (event) => {
+        __appRuntimeContext.assetLibraryState.selectedHolidayThemeKey = event.target.value;
+        refreshAssetLibraryFromFilter();
+      });
     if (__appRuntimeContext.DOM.assetLibrarySort)
       __appRuntimeContext.DOM.assetLibrarySort.addEventListener("change", refreshAssetLibraryFromFilter);
     if (__appRuntimeContext.DOM.assetLibraryClearFilters)

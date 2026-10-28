@@ -53,6 +53,9 @@ export function createLibraryUiModule(__appRuntimeContext) {
             group: displayGroup,
             groupKey: `group:${slugThemeDefaultsGroup(displayGroup)}`,
             label: String(theme.name || leafKey).trim(),
+            rootKey,
+            leafKey,
+            bucket,
             theme,
           });
         }
@@ -335,6 +338,30 @@ export function createLibraryUiModule(__appRuntimeContext) {
     __appRuntimeContext.DOM.assetThemeDefaultsModal.classList.add("show");
   }
 
+  function toggleCurrentThemeAssetDefault(asset) {
+    const category = __appRuntimeContext.normalizeUploadedAssetCategory(asset && asset.category);
+    const src = __appRuntimeContext.getAssetEntrySrc(asset);
+    const themeKey = __appRuntimeContext.normalizeThemeSelectionKey(
+      __appRuntimeContext.getSelectedThemeKey()
+    );
+    const themeEntry = getSelectableThemeEntries().find((entry) => entry.key === themeKey);
+    const arrayName = getThemeDefaultArrayName(category);
+    if (!themeEntry || !arrayName || !src) return;
+
+    const current = getExplicitThemeAssetEntries(category, themeEntry.theme);
+    const exists = current.some((entry) => __appRuntimeContext.getAssetEntrySrc(entry) === src);
+    const next = exists
+      ? current.filter((entry) => __appRuntimeContext.getAssetEntrySrc(entry) !== src)
+      : [...current, __appRuntimeContext.buildThemeDefaultAssetEntry(asset)];
+    __appRuntimeContext.replaceThemeDefaultEntries(themeEntry.theme, category, next);
+    __appRuntimeContext.saveThemesToStorage();
+    if (!exists) __appRuntimeContext.clearSessionRemovedAsset(category, src);
+    __appRuntimeContext.loadTheme(themeKey);
+    renderAssetLibrary();
+    __appRuntimeContext.updateLaunchSummary();
+    __appRuntimeContext.showToast(exists ? "Removed from current theme." : "Added to current theme.");
+  }
+
   function updateAssetThemeDefaultsSelectionCount() {
     if (!__appRuntimeContext.DOM.assetThemeDefaultsSelectionCount) return;
     const count = __appRuntimeContext.DOM.assetThemeDefaultsList
@@ -565,6 +592,31 @@ export function createLibraryUiModule(__appRuntimeContext) {
     });
   }
 
+  function renderAssetLibraryHolidayFilter() {
+    const select = __appRuntimeContext.DOM.assetLibraryHolidayTheme;
+    const wrapper = __appRuntimeContext.DOM.assetLibraryHolidayFilterWrap;
+    if (!select || !wrapper) return;
+    const selectedCategory = __appRuntimeContext.DOM.assetLibraryCategory
+      ? __appRuntimeContext.DOM.assetLibraryCategory.value
+      : "";
+    const category = selectedCategory || __appRuntimeContext.getMainAssetLibraryCategory();
+    const isHolidayCategory = category === "holidays";
+    wrapper.classList.toggle("hidden", !isHolidayCategory);
+    if (!isHolidayCategory) {
+      __appRuntimeContext.assetLibraryState.selectedHolidayThemeKey = "";
+    }
+
+    const options = __appRuntimeContext.HOLIDAY_THEME_INDEX || [];
+    select.innerHTML = '<option value="">All holidays</option>';
+    options.forEach((option) => {
+      const element = document.createElement("option");
+      element.value = option.key;
+      element.textContent = option.label;
+      select.appendChild(element);
+    });
+    select.value = __appRuntimeContext.assetLibraryState.selectedHolidayThemeKey || "";
+  }
+
   function renderAssetLibrary() {
     const grid = __appRuntimeContext.DOM.assetLibraryGrid;
     const status = __appRuntimeContext.DOM.assetLibraryStatus;
@@ -572,6 +624,7 @@ export function createLibraryUiModule(__appRuntimeContext) {
     const panel = document.getElementById("uploaded" + "AssetLibraryPanel");
     if (panel && !panel.open) return;
     renderAssetLibraryPills();
+    renderAssetLibraryHolidayFilter();
 
     // Update search query from DOM
     if (__appRuntimeContext.DOM.assetLibrarySearch) {
@@ -680,6 +733,26 @@ export function createLibraryUiModule(__appRuntimeContext) {
             event.stopPropagation();
             openAssetThemeDefaultsModal(asset);
           });
+          const currentThemeBtn = document.createElement("button");
+          currentThemeBtn.type = "button";
+          const currentThemeKey = __appRuntimeContext.normalizeThemeSelectionKey(
+            __appRuntimeContext.getSelectedThemeKey()
+          );
+          const currentThemeEntry = getSelectableThemeEntries().find(
+            (entry) => entry.key === currentThemeKey
+          );
+          const currentThemeHasAsset = currentThemeEntry &&
+            getExplicitThemeAssetEntries(asset.category, currentThemeEntry.theme).some(
+              (entry) => __appRuntimeContext.getAssetEntrySrc(entry) === assetSrc
+            );
+          currentThemeBtn.textContent = currentThemeHasAsset
+            ? "Remove from Current Theme"
+            : "Add to Current Theme";
+          currentThemeBtn.disabled = !currentThemeEntry;
+          currentThemeBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            toggleCurrentThemeAssetDefault(asset);
+          });
           const greenScreenBtn = document.createElement("button");
           greenScreenBtn.type = "button";
           greenScreenBtn.textContent = "Use as photo background";
@@ -709,7 +782,7 @@ export function createLibraryUiModule(__appRuntimeContext) {
           });
           const deleteBtn = document.createElement("button");
           deleteBtn.type = "button";
-          deleteBtn.textContent = "Delete";
+          deleteBtn.textContent = "Delete from Library";
           deleteBtn.className = "asset-library-delete";
           deleteBtn.addEventListener("click", async (event) => {
             event.stopPropagation();
@@ -718,8 +791,12 @@ export function createLibraryUiModule(__appRuntimeContext) {
               ? "\n\nThis asset is used by theme defaults."
               : "";
             if (!confirm(`Remove this asset from the Asset Library?${warning}`)) return;
-            await __appRuntimeContext.deleteAssetLibraryItem(asset.id, asset);
-            __appRuntimeContext.showToast("Asset removed from Asset Library.");
+            const saved = await __appRuntimeContext.deleteAssetLibraryItem(asset.id, asset);
+            __appRuntimeContext.showToast(
+              saved
+                ? "Asset removed from Asset Library."
+                : "Asset hidden on this device, but the change could not sync. Refresh and try again."
+            );
           });
           actions.appendChild(favoriteBtn);
           actions.appendChild(renameBtn);
@@ -727,6 +804,7 @@ export function createLibraryUiModule(__appRuntimeContext) {
           actions.appendChild(greenScreenBtn);
           actions.appendChild(hotspotBtn);
           actions.appendChild(photoWindowBtn);
+          actions.appendChild(currentThemeBtn);
           actions.appendChild(defaultsBtn);
           actions.appendChild(deleteBtn);
           card.appendChild(img);
@@ -778,6 +856,13 @@ export function createLibraryUiModule(__appRuntimeContext) {
           : effectiveCategory.charAt(0).toUpperCase() + effectiveCategory.slice(1);
         filterLabels.push(`Category: ${categoryLabel}`);
       }
+      const holidayThemeKey = __appRuntimeContext.assetLibraryState.selectedHolidayThemeKey;
+      if (holidayThemeKey && __appRuntimeContext.DOM.assetLibraryHolidayTheme) {
+        const holidayOption = __appRuntimeContext.DOM.assetLibraryHolidayTheme.selectedOptions[0];
+        if (holidayOption && holidayOption.textContent) {
+          filterLabels.push(`Holiday: ${holidayOption.textContent}`);
+        }
+      }
       if (__appRuntimeContext.assetLibraryState.searchQuery) {
         filterLabels.push(`Search: ${__appRuntimeContext.assetLibraryState.searchQuery}`);
       }
@@ -786,6 +871,7 @@ export function createLibraryUiModule(__appRuntimeContext) {
           "hidden",
           !(
             selectedCategory ||
+            holidayThemeKey ||
             __appRuntimeContext.assetLibraryState.searchQuery ||
             (__appRuntimeContext.assetLibraryState.selectedCategory &&
               __appRuntimeContext.assetLibraryState.selectedCategory !== "all")

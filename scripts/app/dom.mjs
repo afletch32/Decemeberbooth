@@ -254,6 +254,8 @@ export function createDOMCache() {
   bulkAssetApply: document.getElementById("bulkAssetApply"),
   assetLibrarySearch: document.getElementById("assetLibrarySearch"),
   assetLibraryCategory: document.getElementById("assetLibraryCategory"),
+  assetLibraryHolidayTheme: document.getElementById("assetLibraryHolidayTheme"),
+  assetLibraryHolidayFilterWrap: document.getElementById("assetLibraryHolidayFilterWrap"),
   assetLibrarySort: document.getElementById("assetLibrarySort"),
   assetLibraryPills: document.getElementById("assetLibraryPills"),
   assetLibraryClearFilters: document.getElementById("assetLibraryClearFilters"),

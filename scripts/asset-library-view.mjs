@@ -137,10 +137,25 @@ export function sortAssetLibraryRows(rows, sortMode, options = {}) {
 
 export function filterAssetLibraryRows(rows, filters = {}, options = {}) {
   const query = String(filters.query || "").trim().toLowerCase();
+  const themeKey = String(filters.themeKey || "").trim();
+  const themeLabel = String(filters.themeLabel || "").trim().toLowerCase();
   const filtered = (Array.isArray(rows) ? rows : []).filter((asset) => {
     if (!asset) return false;
     if (!assetMatchesLibraryCategoryFilter(asset, filters.pillCategory)) return false;
     if (!assetMatchesLibraryCategoryFilter(asset, filters.category)) return false;
+    if (themeKey) {
+      const themeKeys = Array.isArray(asset.themeKeys) ? asset.themeKeys : [];
+      const leaf = (themeKey.split(":")[1] || "")
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/[-_]+/g, " ")
+        .toLowerCase();
+      const searchText = getAssetLibrarySearchText(asset);
+      if (
+        !themeKeys.includes(themeKey) &&
+        !(themeLabel && searchText.includes(themeLabel)) &&
+        !(leaf && searchText.includes(leaf))
+      ) return false;
+    }
     return !query || getAssetLibrarySearchText(asset).includes(query);
   });
   return sortAssetLibraryRows(filtered, filters.sortMode || "newest", options);

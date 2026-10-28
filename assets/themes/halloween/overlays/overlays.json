@@ -51,5 +51,22 @@
       }
     ]
   },
-  "halloween-ravens-pumpkin-single-photo-portrait.thumb.webp"
+  "halloween-ravens-pumpkin-single-photo-portrait.thumb.webp",
+  {
+    "src": "halloween-ravens-pumpkin-single-photo-landscape.png",
+    "name": "Halloween ravens and pumpkins landscape",
+    "type": "photo",
+    "orientation": "landscape",
+    "aspectRatio": "3:2",
+    "photoSlots": [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1,
+        "borderRadius": 0
+      }
+    ]
+  },
+  "halloween-ravens-pumpkin-single-photo-landscape.thumb.webp"
 ]

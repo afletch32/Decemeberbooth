@@ -21,7 +21,7 @@ const APP_SHELL_ASSETS = [
   "styles/app-guest.css",
   "final-preview-sizing-fix.css?v=20261027-compact-share-fit",
   "scripts/app.js",
-  "scripts/app.js?v=20261027-halloween-overlays",
+  "scripts/app.js?v=20261027-holiday-asset-filter",
   "scripts/app/state.mjs",
   "scripts/app/dom.mjs",
   "scripts/app/lifecycle.mjs",

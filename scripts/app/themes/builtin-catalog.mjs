@@ -909,6 +909,14 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
               aspectRatio: "2:3",
               photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
             },
+            {
+              src: "/assets/themes/halloween/overlays/halloween-ravens-pumpkin-single-photo-landscape.png",
+              name: "Halloween ravens and pumpkins landscape",
+              type: "photo",
+              orientation: "landscape",
+              aspectRatio: "3:2",
+              photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
+            },
             // THEME_ASSETS:halloween:overlays:END
           ],
           templates: [
@@ -1161,6 +1169,14 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
         aspectRatio: "2:3",
         photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
       },
+      {
+        src: "/assets/themes/cute-halloween/overlays/happy-halloween-ghost-pumpkin-single-photo-landscape.png",
+        name: "Happy Halloween ghost and pumpkin landscape",
+        type: "photo",
+        orientation: "landscape",
+        aspectRatio: "3:2",
+        photoSlots: [{ x: 0, y: 0, width: 1, height: 1, borderRadius: 0 }],
+      },
       // THEME_ASSETS:cute-halloween:overlays:END
     ],
     templates: [
@@ -1297,8 +1313,15 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
     ],
   };
 
+  const holidayThemeIndex = Object.entries(themes).flatMap(([rootKey, group]) =>
+    Object.entries(group && group.holidays || {}).map(([leafKey, theme]) => ({
+      key: `${rootKey}:${leafKey}`,
+      label: String(theme && theme.name || leafKey),
+    }))
+  ).sort((a, b) => a.label.localeCompare(b.label));
+
   pruneUnapprovedThemes(themes, approvedThemeKeys);
 
   const BUILTIN_THEMES = JSON.parse(JSON.stringify(themes));
-  return { themes, BUILTIN_THEMES };
+  return { themes, BUILTIN_THEMES, holidayThemeIndex };
 }

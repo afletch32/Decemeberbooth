@@ -53,5 +53,22 @@
       }
     ]
   },
-  "happy-halloween-ghost-pumpkin-single-photo-portrait.thumb.webp"
+  "happy-halloween-ghost-pumpkin-single-photo-portrait.thumb.webp",
+  {
+    "src": "happy-halloween-ghost-pumpkin-single-photo-landscape.png",
+    "name": "Happy Halloween ghost and pumpkin landscape",
+    "type": "photo",
+    "orientation": "landscape",
+    "aspectRatio": "3:2",
+    "photoSlots": [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1,
+        "borderRadius": 0
+      }
+    ]
+  },
+  "happy-halloween-ghost-pumpkin-single-photo-landscape.thumb.webp"
 ]

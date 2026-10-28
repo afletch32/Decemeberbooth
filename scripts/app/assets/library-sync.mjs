@@ -727,65 +727,39 @@ export function createLibrarySyncModule(__appRuntimeContext) {
     __appRuntimeContext.assetLibrary = normalizeAssetLibraryPayload(library);
     saveAssetLibraryLocal();
     scheduleAssetLibraryRender();
+    let remoteSaved = true;
     if (__appRuntimeContext.canSyncRemote()) {
       try {
-        await fetch("/api/assets", {
+        const response = await fetch("/api/assets", {
           method: index >= 0 ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...nextRecord, id }),
         });
+        remoteSaved = response.ok;
       } catch (err) {
+        remoteSaved = false;
         console.warn("Asset library update failed", err);
       }
     }
+    return remoteSaved;
   }
 
   async function deleteAssetLibraryItem(id, fallbackAsset = null) {
     if (!id) return;
     const fallbackUrl = fallbackAsset && (fallbackAsset.url || fallbackAsset.secure_url);
-    const repoBackedAsset = fallbackAsset && fallbackAsset.source === "theme";
-    if (repoBackedAsset || !__appRuntimeContext.canSyncRemote()) {
-      await updateAssetLibraryItem(
-        id,
-        {
-          category: fallbackAsset.category,
-          url: fallbackUrl,
-          secure_url: fallbackUrl,
-          name: getAssetDisplayName(fallbackAsset),
-          tags: fallbackAsset.tags || [],
-          hidden: true,
-          archived: true,
-        },
-        fallbackAsset
-      );
-    } else {
-      const library = normalizeAssetLibraryPayload(__appRuntimeContext.assetLibrary);
-      const index = library.assets.findIndex(
-        (asset) =>
-          asset &&
-          (asset.id === id || __appRuntimeContext.getAssetLibraryId(asset.category, asset.url) === id)
-      );
-      if (index !== -1) {
-        library.assets.splice(index, 1);
-      }
-      __appRuntimeContext.assetLibrary = normalizeAssetLibraryPayload(library);
-      saveAssetLibraryLocal();
-      scheduleAssetLibraryRender();
-      if (__appRuntimeContext.canSyncRemote()) {
-        try {
-          await fetch("/api/assets", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id,
-              url: fallbackUrl,
-            }),
-          });
-        } catch (err) {
-          console.warn("Asset library delete failed", err);
-        }
-      }
-    }
+    const saved = await updateAssetLibraryItem(
+      id,
+      {
+        category: fallbackAsset && fallbackAsset.category,
+        url: fallbackUrl,
+        secure_url: fallbackUrl,
+        name: getAssetDisplayName(fallbackAsset),
+        tags: (fallbackAsset && fallbackAsset.tags) || [],
+        hidden: true,
+        archived: true,
+      },
+      fallbackAsset
+    );
 
     if (fallbackUrl) {
       const category = __appRuntimeContext.normalizeUploadedAssetCategory(
@@ -800,6 +774,7 @@ export function createLibrarySyncModule(__appRuntimeContext) {
         __appRuntimeContext.updateLaunchSummary();
       }
     }
+    return saved;
   }
 
   function getAssetDisplayName(asset) {
@@ -1044,13 +1019,27 @@ export function createLibrarySyncModule(__appRuntimeContext) {
   }
 
   function getVisibleAssetLibraryRows() {
-    const themeKey = __appRuntimeContext.normalizeThemeSelectionKey(__appRuntimeContext.getSelectedThemeKey());
-    const themeCategory = getMainAssetLibraryCategory();
+    const currentThemeKey = __appRuntimeContext.normalizeThemeSelectionKey(__appRuntimeContext.getSelectedThemeKey());
+    const selectedCategory = __appRuntimeContext.DOM.assetLibraryCategory
+      ? __appRuntimeContext.DOM.assetLibraryCategory.value
+      : "";
+    const themeCategory = selectedCategory || getMainAssetLibraryCategory();
+    const holidayThemeKey = __appRuntimeContext.assetLibraryState.selectedHolidayThemeKey || "";
+    const themeKey = holidayThemeKey || (themeCategory === "holidays" ? "" : currentThemeKey);
+    const isHolidayBrowse = themeCategory === "holidays";
     return getAllAssetLibraryRows().filter((asset) => {
       if (__appRuntimeContext.normalizeUploadedAssetCategory(asset && asset.category) === "idle-screen")
         return false;
       const themeKeys = Array.isArray(asset.themeKeys) ? asset.themeKeys : [];
-      if (themeKeys.length) return themeKeys.includes(themeKey);
+      if (themeKeys.length) {
+        if (themeKey) return themeKeys.includes(themeKey);
+        if (isHolidayBrowse) {
+          return themeKeys.some(
+            (key) => __appRuntimeContext.themeKeyToCategory(key) === "holidays"
+          );
+        }
+        return themeKeys.includes(currentThemeKey);
+      }
       const tags = Array.isArray(asset.tags) ? asset.tags : [];
       if (themeKey && tags.includes(themeKey)) return true;
       return __appRuntimeContext.getAssetLibraryFilterCategories(asset).includes(themeCategory);
@@ -1072,7 +1061,16 @@ export function createLibrarySyncModule(__appRuntimeContext) {
     const sortMode = __appRuntimeContext.DOM.assetLibrarySort ? __appRuntimeContext.DOM.assetLibrarySort.value : "newest";
     return __appRuntimeContext.filterAssetLibraryRows(
       getVisibleAssetLibraryRows(),
-      { query, category, pillCategory, sortMode },
+      {
+        query,
+        category,
+        pillCategory,
+        sortMode,
+        themeKey: __appRuntimeContext.assetLibraryState.selectedHolidayThemeKey,
+        themeLabel: __appRuntimeContext.DOM.assetLibraryHolidayTheme
+          ? __appRuntimeContext.DOM.assetLibraryHolidayTheme.selectedOptions[0]?.textContent || ""
+          : "",
+      },
       {
         favoriteKeys: getAssetLibraryFavoriteKeys(),
         recentKeys: getAssetLibraryRecentKeys(),
@@ -1086,6 +1084,10 @@ export function createLibrarySyncModule(__appRuntimeContext) {
     if (__appRuntimeContext.DOM.assetLibrarySearch) __appRuntimeContext.DOM.assetLibrarySearch.value = "";
     if (__appRuntimeContext.DOM.assetLibraryCategory) __appRuntimeContext.DOM.assetLibraryCategory.value = "";
     __appRuntimeContext.assetLibraryState.selectedCategory = "";
+    __appRuntimeContext.assetLibraryState.selectedHolidayThemeKey = "";
+    if (__appRuntimeContext.DOM.assetLibraryHolidayTheme) {
+      __appRuntimeContext.DOM.assetLibraryHolidayTheme.value = "";
+    }
     __appRuntimeContext.resetAssetLibraryVisibleCount();
     __appRuntimeContext.renderAssetLibrary();
   }

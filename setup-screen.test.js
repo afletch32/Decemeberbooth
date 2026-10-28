@@ -226,9 +226,10 @@ test("asset library scopes loaded and rendered assets to the selected theme cate
   assert.ok(
     appScript.includes("?themeCategory=${encodeURIComponent(normalizedThemeCategory)}") &&
       appScript.includes("function getVisibleAssetLibraryRows()") &&
-      appScript.includes("if (themeKeys.length) return themeKeys.includes(themeKey);") &&
+      appScript.includes("if (themeKeys.length) {") &&
+      appScript.includes("themeKeys.includes(currentThemeKey)") &&
       appScript.includes("getAssetLibraryFilterCategories(asset).includes(themeCategory)"),
-    "the library should request and render assets within the active theme/category scope"
+    "the library should request and render assets within the active theme/category scope, with holiday browsing across themes"
   );
 });
 
@@ -883,13 +884,15 @@ test("asset library scopes visible assets to the selected theme and category", (
 
   assert.ok(
     appScript.includes("function getVisibleAssetLibraryRows()") &&
-      appScript.includes("const themeKey = normalizeThemeSelectionKey(getSelectedThemeKey());") &&
-      appScript.includes("if (themeKeys.length) return themeKeys.includes(themeKey);") &&
+      appScript.includes("const currentThemeKey = normalizeThemeSelectionKey(getSelectedThemeKey());") &&
+      appScript.includes("if (themeKeys.length) {") &&
+      appScript.includes("themeKeys.includes(currentThemeKey)") &&
+      appScript.includes('themeKeyToCategory(key) === "holidays"') &&
       appScript.includes("getAssetLibraryFilterCategories(asset).includes(themeCategory)") &&
       appScript.includes("filterAssetLibraryRows(") &&
       appScript.includes("getVisibleAssetLibraryRows(),") &&
       appScript.includes("const allAssets = getVisibleAssetLibraryRows();"),
-    "theme selection should limit cards and type counts to the active theme/category"
+    "theme selection should scope cards except when browsing all holiday themes"
   );
   assert.ok(
     appScript.includes("if (Array.isArray(theme && theme.idleScreens))") &&

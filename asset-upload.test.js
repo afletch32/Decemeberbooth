@@ -224,16 +224,15 @@ test("uploaded assets register in a persistent shared library", () => {
     "setup pickers and Asset Library should share one canonical asset collection"
   );
   assert.ok(
-    appScript.includes('method: "DELETE"') &&
-      appScript.includes("async function deleteAssetLibraryItem("),
-    "library assets should support deletion through the active item handler"
+    appScript.includes("async function deleteAssetLibraryItem(") &&
+      appScript.includes('method: index >= 0 ? "PATCH" : "POST"'),
+    "library removals should persist through the active item handler"
   );
   assert.ok(
-    appScript.includes('const repoBackedAsset = fallbackAsset && fallbackAsset.source === "theme";') &&
-      appScript.includes("await updateAssetLibraryItem(") &&
+    appScript.includes("const saved = await updateAssetLibraryItem(") &&
       appScript.includes("hidden: true,") &&
       appScript.includes("archived: true,"),
-    "repo-backed asset deletes should keep a local/remote tombstone instead of reappearing from theme manifests"
+    "removed assets should keep a local/remote tombstone instead of reappearing from theme manifests"
   );
 });
 
