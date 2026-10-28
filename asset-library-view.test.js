@@ -43,9 +43,14 @@ test("asset view categories derive from theme keys and asset metadata", async ()
 
   assert.equal(themeKeyToCategory("school:hawks"), "school");
   assert.equal(themeKeyToCategory("summer:pool"), "holidays");
+  assert.equal(themeKeyToCategory("general:christmas"), "holidays");
   assert.equal(themeKeyToCategory("general:birthday"), "birthday");
   assert.deepEqual(getAssetLibraryFilterCategories(rows[0]), ["school"]);
   assert.deepEqual(getAssetLibraryFilterCategories(rows[1]), ["wedding"]);
+  assert.deepEqual(
+    getAssetLibraryFilterCategories({ name: "Christmas overlay", tags: ["christmas"] }),
+    ["holidays"]
+  );
   assert.deepEqual(
     getAssetLibraryFilterCategories({ name: "Uncategorized upload" }),
     ["general"]

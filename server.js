@@ -545,7 +545,7 @@ app.get('/api/assets', (req, res) => {
         asset.url,
       ].join(' ').toLowerCase();
       if (themeCategory === 'holidays') {
-        return /(^|[\s/_:-])(holiday|holidays|fall|winter|spring|summer)(?=$|[\s/_:-])/.test(hints);
+        return /(^|[\s/_:-])(holiday|holidays|fall|winter|spring|summer|halloween|christmas|xmas|santa|easter|thanksgiving|valentines?|new[\s_-]?year|st[\s_-]?patricks?(?:'s)?|fourth[\s_-]?of[\s_-]?july)(?=$|[\s/_:-])/.test(hints);
       }
       return new RegExp(`(^|[\\s/_:-])${themeCategory}(?=$|[\\s/_:-])`).test(hints);
     };

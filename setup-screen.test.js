@@ -228,8 +228,11 @@ test("asset library scopes loaded and rendered assets to the selected theme cate
       appScript.includes("function getVisibleAssetLibraryRows()") &&
       appScript.includes("if (themeKeys.length) {") &&
       appScript.includes("themeKeys.includes(currentThemeKey)") &&
+      appScript.includes("HOLIDAY_THEME_CATALOG || []") &&
+      appScript.includes("const selectedCategory = event.target.value || getMainAssetLibraryCategory();") &&
+      appScript.includes("loadAssetLibraryRemote(selectedCategory).catch") &&
       appScript.includes("getAssetLibraryFilterCategories(asset).includes(themeCategory)"),
-    "the library should request and render assets within the active theme/category scope, with holiday browsing across themes"
+    "the library should load remote assets for a category and include unpruned holiday theme assets"
   );
 });
 

@@ -1313,15 +1313,17 @@ export function createBuiltinThemeData({ pruneUnapprovedThemes, approvedThemeKey
     ],
   };
 
-  const holidayThemeIndex = Object.entries(themes).flatMap(([rootKey, group]) =>
+  const holidayThemeCatalog = Object.entries(themes).flatMap(([rootKey, group]) =>
     Object.entries(group && group.holidays || {}).map(([leafKey, theme]) => ({
       key: `${rootKey}:${leafKey}`,
       label: String(theme && theme.name || leafKey),
+      theme,
     }))
   ).sort((a, b) => a.label.localeCompare(b.label));
+  const holidayThemeIndex = holidayThemeCatalog.map(({ key, label }) => ({ key, label }));
 
   pruneUnapprovedThemes(themes, approvedThemeKeys);
 
   const BUILTIN_THEMES = JSON.parse(JSON.stringify(themes));
-  return { themes, BUILTIN_THEMES, holidayThemeIndex };
+  return { themes, BUILTIN_THEMES, holidayThemeIndex, holidayThemeCatalog };
 }

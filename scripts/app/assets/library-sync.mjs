@@ -884,6 +884,9 @@ export function createLibrarySyncModule(__appRuntimeContext) {
       }
     };
     __appRuntimeContext.forEachThemeEntry(addThemeAssets);
+    (__appRuntimeContext.HOLIDAY_THEME_CATALOG || []).forEach(({ key, theme }) =>
+      addThemeAssets(theme, key)
+    );
     const activeEvent = __appRuntimeContext.getActiveEvent();
     if (
       activeEvent &&

@@ -90,6 +90,7 @@ export function createAppState(dependencies = {}) {
   let themes = __builtinThemeData.themes;
   const BUILTIN_THEMES = __builtinThemeData.BUILTIN_THEMES;
   const HOLIDAY_THEME_INDEX = __builtinThemeData.holidayThemeIndex;
+  const HOLIDAY_THEME_CATALOG = __builtinThemeData.holidayThemeCatalog;
 
   const DEFAULT_THEME_KEY = "general:summer";
 
@@ -733,6 +734,7 @@ export function createAppState(dependencies = {}) {
     "themes": { enumerable: true, get: () => themes, set: (value) => { themes = value; } },
     "BUILTIN_THEMES": { enumerable: true, get: () => BUILTIN_THEMES },
     "HOLIDAY_THEME_INDEX": { enumerable: true, get: () => HOLIDAY_THEME_INDEX },
+    "HOLIDAY_THEME_CATALOG": { enumerable: true, get: () => HOLIDAY_THEME_CATALOG },
     "DEFAULT_THEME_KEY": { enumerable: true, get: () => DEFAULT_THEME_KEY, set: (value) => { DEFAULT_THEME_KEY = value; } },
     "BUILTIN_THEME_LOCATIONS": { enumerable: true, get: () => BUILTIN_THEME_LOCATIONS, set: (value) => { BUILTIN_THEME_LOCATIONS = value; } },
     "PRINT_SIZES": { enumerable: true, get: () => PRINT_SIZES, set: (value) => { PRINT_SIZES = value; } },

@@ -1,5 +1,7 @@
 import { normalizeUploadedAssetCategory } from "./asset-library-utils.mjs";
 
+const HOLIDAY_ASSET_HINT = /(^|[\s/_:-])(holiday|holidays|fall|winter|spring|summer|halloween|christmas|xmas|santa|easter|thanksgiving|valentines?|new[\s_-]?year|st[\s_-]?patricks?(?:'s)?|fourth[\s_-]?of[\s_-]?july)(?=$|[\s/_:-])/i;
+
 export function themeKeyToCategory(themeKey) {
   const raw = String(themeKey || "").trim();
   if (!raw) return "general";
@@ -9,6 +11,7 @@ export function themeKeyToCategory(themeKey) {
   if (root === "wedding") return "wedding";
   if (root === "holidays") return "holidays";
   if (["fall", "winter", "spring", "summer"].includes(root)) return "holidays";
+  if (HOLIDAY_ASSET_HINT.test(raw)) return "holidays";
   if (root === "general") {
     const leaf = raw.split(":")[1] || "";
     if (leaf === "birthday" || raw.includes("birthday")) return "birthday";
@@ -24,7 +27,7 @@ export function addAssetCategoryHint(categories, value) {
   if (/(^|[\/:_-])school($|[\/:_-])/.test(raw)) categories.add("school");
   if (/(^|[\/:_-])wedding($|[\/:_-])/.test(raw)) categories.add("wedding");
   if (/(^|[\/:_-])birthday($|[\/:_-])/.test(raw)) categories.add("birthday");
-  if (/(^|[\/:_-])(holidays?|fall|winter|spring|summer)($|[\/:_-])/.test(raw)) {
+  if (HOLIDAY_ASSET_HINT.test(raw)) {
     categories.add("holidays");
   }
   if (/(^|[\/:_-])general($|[\/:_-])/.test(raw)) categories.add("general");

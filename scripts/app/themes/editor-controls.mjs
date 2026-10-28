@@ -103,7 +103,13 @@ export function createEditorControlsModule(__appRuntimeContext) {
     if (__appRuntimeContext.DOM.assetLibrarySearch)
       __appRuntimeContext.DOM.assetLibrarySearch.addEventListener("input", refreshAssetLibraryFromFilter);
     if (__appRuntimeContext.DOM.assetLibraryCategory)
-      __appRuntimeContext.DOM.assetLibraryCategory.addEventListener("change", refreshAssetLibraryFromFilter);
+      __appRuntimeContext.DOM.assetLibraryCategory.addEventListener("change", (event) => {
+        refreshAssetLibraryFromFilter();
+        const selectedCategory = event.target.value || __appRuntimeContext.getMainAssetLibraryCategory();
+        __appRuntimeContext.loadAssetLibraryRemote(selectedCategory).catch((err) => {
+          console.warn("Asset library category load failed", err);
+        });
+      });
     if (__appRuntimeContext.DOM.assetLibraryHolidayTheme)
       __appRuntimeContext.DOM.assetLibraryHolidayTheme.addEventListener("change", (event) => {
         __appRuntimeContext.assetLibraryState.selectedHolidayThemeKey = event.target.value;
