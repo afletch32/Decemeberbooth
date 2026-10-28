@@ -1714,6 +1714,44 @@ export function createRenderingModule(__appRuntimeContext) {
     return !resolved || resolved === orientation;
   }
 
+  function cyclePhotoOverlay(direction) {
+    if (
+      __appRuntimeContext.getSelectedCaptureMode(__appRuntimeContext.mode) !== "photo" ||
+      !__appRuntimeContext.canShowFrameSettings()
+    ) return false;
+    const orientation = __appRuntimeContext.photoOverlayOrientation;
+    const overlays = __appRuntimeContext.filterPhotoOverlaysByOrientation(
+      __appRuntimeContext.getOverlayList(__appRuntimeContext.activeTheme),
+      orientation
+    ).filter((overlay) => overlay && overlay.src);
+    if (!overlays.length) return false;
+
+    const choices = [null, ...overlays.map((overlay) => overlay.src)];
+    const currentIndex = choices.indexOf(__appRuntimeContext.selectedOverlay || null);
+    const startIndex = currentIndex < 0 ? 0 : currentIndex;
+    const step = Number(direction) < 0 ? -1 : 1;
+    const nextIndex = (startIndex + step + choices.length) % choices.length;
+    const nextSource = choices[nextIndex];
+    __appRuntimeContext.selectedOverlay = nextSource;
+    __appRuntimeContext.lastPhotoOverlay = nextSource;
+    __appRuntimeContext.lastPhotoOverlayByOrientation[orientation] = nextSource;
+
+    __appRuntimeContext.DOM.options
+      ?.querySelectorAll(".thumb[data-overlay-none], .thumb[data-overlay-src]")
+      .forEach((thumb) => {
+        thumb.classList.toggle(
+          "selected",
+          thumb.hasAttribute("data-overlay-none")
+            ? !nextSource
+            : thumb.dataset.overlaySrc === nextSource
+        );
+      });
+    __appRuntimeContext.syncOverlayPreviewSurface({ mode: "live" });
+    __appRuntimeContext.applyPreviewOrientation();
+    __appRuntimeContext.logBoothFrameState("overlay-swiped", __appRuntimeContext.mode);
+    return true;
+  }
+
   function getFirstPhotoOverlayForOrientation(orientation = __appRuntimeContext.photoOverlayOrientation) {
     const overlays = __appRuntimeContext.filterPhotoOverlaysByOrientation(
       __appRuntimeContext.getOverlayList(__appRuntimeContext.activeTheme),
@@ -1943,6 +1981,7 @@ export function createRenderingModule(__appRuntimeContext) {
     setMode,
     getPhotoOverlayBySrc,
     photoOverlayMatchesOrientation,
+    cyclePhotoOverlay,
     getFirstPhotoOverlayForOrientation,
     syncPhotoOverlayOrientationWithAssets,
     syncOverlayPickerUi,

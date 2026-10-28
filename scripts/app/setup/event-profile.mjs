@@ -191,6 +191,43 @@ export function createEventProfileModule(__appRuntimeContext) {
     }
   }
 
+  function setupPreviewGestureControls() {
+    const preview = __appRuntimeContext.DOM.videoContainer;
+    if (!preview) return;
+    let start = null;
+    const threshold = () => Math.max(48, preview.clientWidth * 0.12);
+
+    preview.addEventListener("pointerdown", (event) => {
+      if (
+        event.pointerType !== "touch" ||
+        !event.isPrimary ||
+        event.button !== 0 ||
+        !__appRuntimeContext.canShowFrameSettings() ||
+        __appRuntimeContext.getSelectedCaptureMode(__appRuntimeContext.mode) !== "photo"
+      ) {
+        start = null;
+        return;
+      }
+      start = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+    });
+
+    preview.addEventListener("pointerup", (event) => {
+      if (!start || event.pointerId !== start.pointerId) return;
+      const deltaX = event.clientX - start.x;
+      const deltaY = event.clientY - start.y;
+      start = null;
+      if (Math.abs(deltaX) < threshold() || Math.abs(deltaX) < Math.abs(deltaY) * 1.25) return;
+      __appRuntimeContext.cyclePhotoOverlay(deltaX < 0 ? 1 : -1);
+    });
+
+    const clearStart = (event) => {
+      if (start && event.pointerId === start.pointerId) start = null;
+    };
+    preview.addEventListener("pointercancel", clearStart);
+    preview.addEventListener("lostpointercapture", clearStart);
+
+  }
+
   function setupFinalPreviewListeners() {
     if (!__appRuntimeContext.DOM.finalPreview || !__appRuntimeContext.DOM.finalPreviewContent) return;
     __appRuntimeContext.DOM.finalPreview.addEventListener("click", () => __appRuntimeContext.exitFinalPreview());
@@ -207,6 +244,7 @@ export function createEventProfileModule(__appRuntimeContext) {
     setupBoothButtons,
     setupMobileSettingsControls,
     setupVideoListeners,
+    setupPreviewGestureControls,
     setupFinalPreviewListeners,
   };
 }

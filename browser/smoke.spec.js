@@ -2384,6 +2384,55 @@ test("frame picker hides during finalizing on desktop and mobile", async ({
   }
 });
 
+test("swiping the live photo preview cycles through photo frames", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await gotoApp(page, "/index.html?testMode=booth&qaState=capture");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+  await page.waitForFunction(() => !!window.__photoboothTest.getActiveTheme());
+  await expect(page.locator("#boothScreen")).toHaveClass(/booth-ready/);
+  await page.evaluate(() => {
+    const booth = document.getElementById("boothScreen");
+    booth.classList.remove("hidden", "welcome-active", "share-mode", "countdown-mode", "finalizing-mode");
+    booth.classList.add("booth-ready");
+    window.setMode("still-photo");
+    const makeOverlay = (color, name) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 16;
+      canvas.height = 16;
+      const context = canvas.getContext("2d");
+      context.fillStyle = color;
+      context.fillRect(0, 0, 16, 16);
+      return { src: canvas.toDataURL("image/png"), name, type: "overlay", orientation: "portrait" };
+    };
+    window.__photoboothTest.setTestOverlays([
+      makeOverlay("#d62976", "Test Frame One"),
+      makeOverlay("#177e89", "Test Frame Two"),
+    ]);
+  });
+  const preview = page.locator("#videoContainer");
+  const selectedFrame = () => page.locator("#options .thumb.selected[data-overlay-src]").getAttribute("data-overlay-src");
+  const firstFrame = await selectedFrame();
+
+  await preview.evaluate((node) => {
+    const bounds = node.getBoundingClientRect();
+    const y = bounds.top + bounds.height / 2;
+    const dispatch = (type, x) => node.dispatchEvent(new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      pointerId: 31,
+      pointerType: "touch",
+      isPrimary: true,
+      button: 0,
+      clientX: x,
+      clientY: y,
+    }));
+    dispatch("pointerdown", bounds.left + bounds.width * 0.78);
+    dispatch("pointerup", bounds.left + bounds.width * 0.22);
+  });
+  await expect.poll(selectedFrame).not.toBe(firstFrame);
+  await expect(page.locator("#boothHostPrompt")).toContainText("Swipe left or right to change frames");
+});
+
 test("booth capture layout does not vertically overflow common viewports", async ({
   page,
 }) => {

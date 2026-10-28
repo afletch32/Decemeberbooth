@@ -797,6 +797,8 @@
       color: #5d6c69;
     }
 
+    #boothScreen.booth-ready:not(.mode-360) #videoContainer { touch-action: pan-y; }
+
     #recordingOverlay {
       position: absolute;
       top: 14px;

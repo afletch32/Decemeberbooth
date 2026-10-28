@@ -66,6 +66,7 @@ export function createLifecycleModule(__appRuntimeContext) {
     __appRuntimeContext.setupBoothButtons();
     __appRuntimeContext.setupMobileSettingsControls();
     __appRuntimeContext.setupVideoListeners();
+    __appRuntimeContext.setupPreviewGestureControls();
     __appRuntimeContext.setupFinalPreviewListeners();
     __appRuntimeContext.setupThemeEditorControls();
     __appRuntimeContext.setupCreateThemeModalControls();

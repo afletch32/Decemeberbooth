@@ -642,7 +642,8 @@ export function createEditorManagementModule(__appRuntimeContext) {
     const personality = getBoothPersonality();
     if (__appRuntimeContext.DOM.welcomeHostLine) __appRuntimeContext.DOM.welcomeHostLine.textContent = personality.welcome;
     if (__appRuntimeContext.DOM.boothHostPrompt) {
-      __appRuntimeContext.DOM.boothHostPrompt.innerHTML = "";
+      __appRuntimeContext.DOM.boothHostPrompt.textContent =
+        "Swipe left or right to change frames. Tap Take Photo when you’re ready.";
     }
     if (__appRuntimeContext.DOM.qrCodeContainer) {
       const heading = __appRuntimeContext.DOM.qrCodeContainer.querySelector("h2");
