@@ -2,9 +2,9 @@
 
 - Current goal: Keep setup theme browsing clear and make holiday assets discoverable by category.
 - Done: Removed the duplicate Browse All Themes dropdown; the main picker remains. Avery's Birthday is cataloged under General and the picker classifies it as General. Holiday filters load built-in and remote assets; production Christmas results verified at 13 cards (backgrounds and templates).
-- In progress: Deploy the setup picker cleanup.
-- Next steps: Verify setup layout and Christmas filter on the canonical production URL.
-- Known bugs/blockers: User reports Christmas overlays that are absent from the current 13 returned Christmas filter results; physical iPad/Safari behavior is not verified.
+- In progress: Production release complete; locate the Christmas overlay records reported by the user.
+- Next steps: Add holiday metadata to the source records once identified so those overlays appear in Christmas filtering.
+- Known bugs/blockers: The current production API and built-in Christmas catalog expose no overlay records, despite the user's report that Christmas overlays exist; physical iPad/Safari behavior is not verified.
 - Important decisions: Keep holiday filtering view-only and preserve existing assets and theme approval rules.
 - Production target: Cloudflare Pages project `decemeberbooth`, branch `main`, `https://decemeberbooth.pages.dev/`.
 - Face tracking performance (2026-10-28): Moved MediaPipe inference into a module worker, capped scheduling at about 3.3 frames/second, downsized analysis frames to 320px, and kept preview processing nonblocking with a fallback when worker support or loading fails. Focused tracker tests pass (2/2); focused browser checks pass (2/2). Full suite currently has one unrelated setup-picker assertion failure; physical camera/iPad performance remains unverified.
