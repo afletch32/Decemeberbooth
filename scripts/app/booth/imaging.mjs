@@ -237,7 +237,7 @@ export function createImagingModule(__appRuntimeContext) {
 
     if (captureMode === "photo") {
       __appRuntimeContext.syncPhotoOverlayOrientationWithAssets();
-      const overlayGrid = addSection("Overlays");
+      const overlayGrid = addSection("Photo Frames");
       const noOverlay = document.createElement("div");
       noOverlay.className = "thumb";
       noOverlay.dataset.overlayNone = "true";

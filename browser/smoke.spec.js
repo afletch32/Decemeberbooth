@@ -2352,6 +2352,11 @@ test("frame picker hides during finalizing on desktop and mobile", async ({
       window.setMode("still-photo");
     });
     await expect(page.locator("#overlayPickerButton"), viewport.label).toBeVisible();
+    await expect(page.locator("#overlayPickerButton")).toHaveText(/Choose a frame/);
+    await expect(page.locator("#overlayPickerButton")).toHaveAttribute("aria-label", "Choose a photo frame");
+    const pickerButton = await page.locator("#overlayPickerButton").boundingBox();
+    expect(pickerButton.width, `${viewport.label} frame picker width`).toBeGreaterThanOrEqual(150);
+    expect(pickerButton.right ?? pickerButton.x + pickerButton.width).toBeLessThanOrEqual(viewport.width);
     await page.locator("#overlayPickerButton").click();
     await expect(page.locator("#mobileSettingsSheet"), viewport.label).toBeVisible();
     const chooser = await page.locator("#mobileSettingsSheet").boundingBox();
@@ -2361,7 +2366,7 @@ test("frame picker hides during finalizing on desktop and mobile", async ({
     expect(chooser.width, `${viewport.label} chooser width`).toBe(viewport.width);
     expect(chooser.height, `${viewport.label} chooser height`).toBe(viewport.height);
     await expect(
-      page.locator("#mobileSettingsSheet .options-section-title").filter({ hasText: "Overlays" })
+      page.locator("#mobileSettingsSheet .options-section-title").filter({ hasText: "Photo Frames" })
     ).toHaveCount(1);
     await expect(page.locator("#mobileSettingsSheet .filter-choice")).toHaveCount(0);
     await expect(page.locator("#frameCarouselName, #filterCarouselName, #framePrevBtn, #frameNextBtn, #filterPrevBtn, #filterNextBtn")).toHaveCount(0);

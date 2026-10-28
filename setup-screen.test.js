@@ -1426,7 +1426,7 @@ test("booth overlay chooser uses a single full-screen panel trigger", () => {
   const app = readProjectFile("scripts/app.js");
   assert.ok(html.includes('id="overlayPickerButton"'));
   assert.ok(html.includes('id="mobileSettingsSheet"'));
-  assert.ok(html.includes("Choose an overlay"));
+  assert.ok(html.includes("Choose a frame"));
   assert.ok(!html.includes("frameCarouselName"));
   assert.ok(!html.includes("framePrevBtn") && !html.includes("frameNextBtn"));
   assert.ok(app.includes("function syncOverlayPickerUi()"));
