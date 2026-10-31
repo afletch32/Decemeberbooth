@@ -26,6 +26,8 @@ http://localhost:8000
 
 The server also exposes local network URLs for kiosk/iPad/phone testing on the same WiFi network.
 
+From booth setup, **Launch Kiosk Mode** opens the guest booth and requests browser full screen. On iPad, add the booth to the Home Screen for a browser-free window; use Guided Access in iPad settings if the device must stay locked to the booth. The in-app button cannot lock the device by itself.
+
 ## Launch the production booth in macOS kiosk mode
 
 On the booth Mac, open `launch-booth-kiosk.command` to start the production booth in Chrome kiosk mode. The launcher uses a dedicated Chrome profile so its camera permission and booth settings stay separate from everyday browsing. Allow camera access the first time, select the booth event, and set the photo printer as the macOS default printer before operating. Chrome kiosk printing suppresses the print dialog for print actions initiated by the app; it does not automatically print new queue items on its own. Press `Command-Q` to exit kiosk mode.

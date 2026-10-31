@@ -133,6 +133,36 @@ async function launchStillPhotoBooth(page) {
   await expect(page.locator("#captureBtn")).toBeVisible();
 }
 
+test("Launch Kiosk Mode opens the booth full screen and Admin exits it", async ({ page }) => {
+  await gotoApp(page, "/index.html?testMode=booth");
+  await page.waitForFunction(() => !!window.__photoboothTest);
+  await page.evaluate(() => {
+    let isFullscreen = false;
+    const root = document.documentElement;
+    Object.defineProperty(document, "fullscreenElement", {
+      configurable: true,
+      get: () => (isFullscreen ? root : null),
+    });
+    root.requestFullscreen = () => {
+      isFullscreen = true;
+      return Promise.resolve();
+    };
+    document.exitFullscreen = () => {
+      isFullscreen = false;
+      return Promise.resolve();
+    };
+  });
+
+  await page.locator("#startBoothButton").click({ force: true });
+  await expect(page.locator("#boothScreen")).not.toHaveClass(/hidden/);
+  await expect(page.locator("#adminScreen")).toHaveClass(/hidden/);
+  expect(await page.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
+
+  await page.locator("#adminBtn").click({ force: true });
+  await expect(page.locator("#adminScreen")).not.toHaveClass(/hidden/);
+  expect(await page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
+});
+
 async function enterStillPhotoCapture(page) {
   await launchStillPhotoBooth(page);
   await page.locator("#startButton").click({ force: true });

@@ -355,9 +355,9 @@ test("setup presents a numbered flow with one share-stage launch action", () => 
   assert.ok(
     html.includes('class="admin-launch-dock" data-setup-section="share"') &&
       html.split('id="startBoothButton"').length - 1 === 1 &&
-      appScript.includes('startBoothBtn.addEventListener("click", startBooth)') &&
+      html.includes("Launch Kiosk Mode") && appScript.includes("requestFullscreen.call(root)") &&
       appScript.includes('document.querySelectorAll("[data-setup-next]")'),
-    "Share should own the only launch action and start the booth directly"
+    "Share should own the only launch action and start the booth in kiosk full screen"
   );
   assert.ok(
     html.includes('<summary>Customize Event Details</summary>') &&
@@ -586,8 +586,8 @@ test("launch booth starts directly without a confirmation modal", () => {
       html.includes("body:not(.admin-open) .admin-launch-dock") &&
       !appScript.includes("openBoothLaunchConfirm") &&
       !appScript.includes("confirmBoothLaunch") &&
-      appScript.includes('startBoothBtn.addEventListener("click", startBooth)'),
-    "launch should enter the booth without an intermediate confirmation or setup dock"
+      html.includes("Launch Kiosk Mode") && appScript.includes("requestFullscreen.call(root)"),
+    "launch should enter kiosk full screen without an intermediate confirmation"
   );
 });
 

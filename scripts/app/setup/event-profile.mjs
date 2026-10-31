@@ -1,4 +1,13 @@
 export function createEventProfileModule(__appRuntimeContext) {
+  function exitKioskFullscreen() {
+    const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
+    if (!document.fullscreenElement || typeof exitFullscreen !== "function") return;
+    try {
+      const fullscreenExit = exitFullscreen.call(document);
+      if (fullscreenExit && typeof fullscreenExit.catch === "function") fullscreenExit.catch(() => {});
+    } catch (_) {}
+  }
+
   function setupEventProfileControls() {
     if (__appRuntimeContext.DOM.quickStartCancel)
       __appRuntimeContext.DOM.quickStartCancel.addEventListener("click", __appRuntimeContext.hideQuickStartModal);
@@ -123,9 +132,33 @@ export function createEventProfileModule(__appRuntimeContext) {
 
     const startBoothBtn = document.getElementById("startBoothButton");
     if (startBoothBtn) {
-      startBoothBtn.addEventListener("click", __appRuntimeContext.startBooth);
+      startBoothBtn.addEventListener("click", () => {
+        const root = document.documentElement;
+        const requestFullscreen = root.requestFullscreen || root.webkitRequestFullscreen;
+        let fullscreenRequest = document.fullscreenElement ? Promise.resolve() : null;
+        if (!fullscreenRequest && typeof requestFullscreen === "function") {
+          try {
+            fullscreenRequest = requestFullscreen.call(root);
+          } catch (_) {}
+        }
+        __appRuntimeContext.startBooth();
+        if (!fullscreenRequest) {
+          __appRuntimeContext.showToast(
+            "Booth opened. This browser did not allow full screen; use the device's kiosk setting to keep guests in the booth."
+          );
+        } else if (typeof fullscreenRequest.catch === "function") {
+          fullscreenRequest.catch(() => {
+            __appRuntimeContext.showToast(
+              "Booth opened. Full screen was blocked; use the device's kiosk setting to keep guests in the booth."
+            );
+          });
+        }
+      });
     }
     else console.warn("Start Booth button not found in DOM.");
+
+    const adminBtn = document.getElementById("adminBtn");
+    if (adminBtn) adminBtn.addEventListener("click", exitKioskFullscreen);
 
     if (__appRuntimeContext.DOM.launchModeSingleBtn) {
       __appRuntimeContext.DOM.launchModeSingleBtn.addEventListener("click", () =>
