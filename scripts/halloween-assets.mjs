@@ -44,6 +44,62 @@ function createPack({ folder, name }, prefix = "") {
         name: "Happy Halloween ghost and pumpkin portrait",
         orientation: "portrait",
       };
+  const captionFrame = folder === "halloween"
+    ? {
+        portraitSrc: "halloween-lantern-plaque-single-photo-portrait.png",
+        landscapeSrc: "halloween-lantern-plaque-single-photo-landscape.png",
+        portraitName: "Halloween lantern plaque portrait",
+        landscapeName: "Halloween lantern plaque landscape",
+        fontFamily: "Georgia, serif",
+        color: "#ffc35c",
+        portraitFontSize: 38,
+        landscapeFontSize: 38,
+        portraitDateFontSize: 23,
+        landscapeDateFontSize: 23,
+      }
+    : {
+        portraitSrc: "cute-halloween-ghost-glow-plaque-single-photo-portrait.png",
+        landscapeSrc: "cute-halloween-ghost-glow-plaque-single-photo-landscape.png",
+        portraitName: "Ghost glow caption portrait",
+        landscapeName: "Ghost glow caption landscape",
+        fontFamily: "Trebuchet MS, sans-serif",
+        color: "#ffe0ff",
+        portraitFontSize: 36,
+        landscapeFontSize: 36,
+        portraitDateFontSize: 22,
+        landscapeDateFontSize: 22,
+      };
+  const captionFields = (orientation) => {
+    const portrait = orientation === "portrait";
+    return [
+      {
+        key: "event_name",
+        xPct: portrait ? 0.3 : 0.31,
+        yPct: portrait ? 0.916 : 0.9,
+        wPct: portrait ? 0.4 : 0.38,
+        hPct: portrait ? 0.034 : 0.04,
+        fontFamily: captionFrame.fontFamily,
+        fontWeight: "700",
+        fontSize: portrait ? captionFrame.portraitFontSize : captionFrame.landscapeFontSize,
+        minFontSize: 18,
+        color: captionFrame.color,
+        align: "center",
+      },
+      {
+        key: "event_date",
+        xPct: portrait ? 0.3 : 0.31,
+        yPct: portrait ? 0.952 : 0.94,
+        wPct: portrait ? 0.4 : 0.38,
+        hPct: portrait ? 0.022 : 0.028,
+        fontFamily: captionFrame.fontFamily,
+        fontWeight: "700",
+        fontSize: portrait ? captionFrame.portraitDateFontSize : captionFrame.landscapeDateFontSize,
+        minFontSize: 14,
+        color: captionFrame.color,
+        align: "center",
+      },
+    ];
+  };
   return {
     overlays: [
       ...["portrait", "landscape"].map((orientation) => ({
@@ -53,6 +109,15 @@ function createPack({ folder, name }, prefix = "") {
         orientation,
         aspectRatio: orientation === "portrait" ? "2:3" : "3:2",
         photoSlots: structuredClone(HALLOWEEN_PHOTO_SLOTS[orientation]),
+      })),
+      ...["portrait", "landscape"].map((orientation) => ({
+        src: `${prefix}${orientation === "portrait" ? captionFrame.portraitSrc : captionFrame.landscapeSrc}`,
+        name: orientation === "portrait" ? captionFrame.portraitName : captionFrame.landscapeName,
+        type: "photo",
+        orientation,
+        aspectRatio: orientation === "portrait" ? "2:3" : "3:2",
+        photoSlots: structuredClone(HALLOWEEN_PHOTO_SLOTS[orientation]),
+        textFields: captionFields(orientation),
       })),
       {
         ...frame,

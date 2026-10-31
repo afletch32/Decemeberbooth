@@ -690,6 +690,9 @@ export function createFinalOutputModule(__appRuntimeContext) {
         __appRuntimeContext.DOM.boothScreen.classList.remove("countdown-mode", "finalizing-mode");
         __appRuntimeContext.DOM.boothScreen.classList.add("share-mode");
       }
+      __appRuntimeContext.setMobileSettingsOpen(false);
+      __appRuntimeContext.syncMobileSettingsUi();
+      __appRuntimeContext.syncOverlayPickerUi();
       if (img) img.classList.toggle("hidden", useLiveClip);
       if (__appRuntimeContext.DOM.finalLive && __appRuntimeContext.DOM.finalLive.src) {
         __appRuntimeContext.DOM.finalLive.classList.remove("hidden");

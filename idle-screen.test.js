@@ -117,14 +117,18 @@ test("complete Spring Hill Hawks packs are approved for Event Setup", () => {
   assert.ok(app.includes('"school:hawksCheer"'));
 });
 
-test("Halloween packs include the new portrait frames alongside both simple orientations", async () => {
+test("Halloween packs include caption frames alongside both simple orientations", async () => {
   const { migrateHalloweenThemeAssets } = await import("./scripts/halloween-assets.mjs");
   const target = { fall: { holidays: { halloween: {}, cuteHalloween: {} } } };
   migrateHalloweenThemeAssets(target);
-  assert.deepEqual(target.fall.holidays.halloween.overlays.map((asset) => asset.orientation), ["portrait", "landscape", "portrait"]);
+  assert.deepEqual(target.fall.holidays.halloween.overlays.map((asset) => asset.orientation), ["portrait", "landscape", "portrait", "landscape", "portrait"]);
   assert.ok(target.fall.holidays.halloween.overlays.every((asset) => asset.src.endsWith(".png")));
-  assert.equal(target.fall.holidays.halloween.overlays[2].src, "/assets/themes/halloween/overlays/halloween-ravens-pumpkin-single-photo-portrait.png");
-  assert.equal(target.fall.holidays.cuteHalloween.overlays[2].src, "/assets/themes/cute-halloween/overlays/happy-halloween-ghost-pumpkin-single-photo-portrait.png");
+  assert.equal(target.fall.holidays.halloween.overlays[2].src, "/assets/themes/halloween/overlays/halloween-lantern-plaque-single-photo-portrait.png");
+  assert.equal(target.fall.holidays.halloween.overlays[3].src, "/assets/themes/halloween/overlays/halloween-lantern-plaque-single-photo-landscape.png");
+  assert.equal(target.fall.holidays.halloween.overlays[4].src, "/assets/themes/halloween/overlays/halloween-ravens-pumpkin-single-photo-portrait.png");
+  assert.equal(target.fall.holidays.cuteHalloween.overlays[2].src, "/assets/themes/cute-halloween/overlays/cute-halloween-ghost-glow-plaque-single-photo-portrait.png");
+  assert.equal(target.fall.holidays.cuteHalloween.overlays[3].src, "/assets/themes/cute-halloween/overlays/cute-halloween-ghost-glow-plaque-single-photo-landscape.png");
+  assert.equal(target.fall.holidays.cuteHalloween.overlays[4].src, "/assets/themes/cute-halloween/overlays/happy-halloween-ghost-pumpkin-single-photo-portrait.png");
 });
 
 test("theme storage refresh uses the canonical application storage key", () => {

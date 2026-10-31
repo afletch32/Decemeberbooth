@@ -68,5 +68,95 @@
       }
     ]
   },
-  "halloween-ravens-pumpkin-single-photo-landscape.thumb.webp"
+  "halloween-ravens-pumpkin-single-photo-landscape.thumb.webp",
+  {
+    "src": "halloween-lantern-plaque-single-photo-portrait.png",
+    "name": "Halloween lantern plaque portrait",
+    "type": "photo",
+    "orientation": "portrait",
+    "aspectRatio": "2:3",
+    "photoSlots": [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1,
+        "borderRadius": 0
+      }
+    ],
+    "textFields": [
+      {
+        "key": "event_name",
+        "xPct": 0.3,
+        "yPct": 0.916,
+        "wPct": 0.4,
+        "hPct": 0.034,
+        "fontFamily": "Georgia, serif",
+        "fontWeight": "700",
+        "fontSize": 38,
+        "minFontSize": 18,
+        "color": "#ffc35c",
+        "align": "center"
+      },
+      {
+        "key": "event_date",
+        "xPct": 0.3,
+        "yPct": 0.952,
+        "wPct": 0.4,
+        "hPct": 0.022,
+        "fontFamily": "Georgia, serif",
+        "fontWeight": "700",
+        "fontSize": 23,
+        "minFontSize": 14,
+        "color": "#ffc35c",
+        "align": "center"
+      }
+    ]
+  },
+  "halloween-lantern-plaque-single-photo-portrait.thumb.webp",
+  {
+    "src": "halloween-lantern-plaque-single-photo-landscape.png",
+    "name": "Halloween lantern plaque landscape",
+    "type": "photo",
+    "orientation": "landscape",
+    "aspectRatio": "3:2",
+    "photoSlots": [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1,
+        "borderRadius": 0
+      }
+    ],
+    "textFields": [
+      {
+        "key": "event_name",
+        "xPct": 0.31,
+        "yPct": 0.9,
+        "wPct": 0.38,
+        "hPct": 0.04,
+        "fontFamily": "Georgia, serif",
+        "fontWeight": "700",
+        "fontSize": 38,
+        "minFontSize": 18,
+        "color": "#ffc35c",
+        "align": "center"
+      },
+      {
+        "key": "event_date",
+        "xPct": 0.31,
+        "yPct": 0.94,
+        "wPct": 0.38,
+        "hPct": 0.028,
+        "fontFamily": "Georgia, serif",
+        "fontWeight": "700",
+        "fontSize": 23,
+        "minFontSize": 14,
+        "color": "#ffc35c",
+        "align": "center"
+      }
+    ]
+  },
+  "halloween-lantern-plaque-single-photo-landscape.thumb.webp"
 ]

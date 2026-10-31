@@ -1735,6 +1735,13 @@
       display: none !important;
     }
 
+    #boothScreen.welcome-active #overlayPickerButton,
+    #boothScreen.countdown-mode #overlayPickerButton,
+    #boothScreen.finalizing-mode #overlayPickerButton,
+    #boothScreen.share-mode #overlayPickerButton {
+      display: none !important;
+    }
+
     #boothScreen #overlayPickerButton > .overlay-picker-icon {
       font-size: 1.45rem;
       line-height: 1;

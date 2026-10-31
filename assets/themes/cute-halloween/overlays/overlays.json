@@ -70,5 +70,95 @@
       }
     ]
   },
-  "happy-halloween-ghost-pumpkin-single-photo-landscape.thumb.webp"
+  "happy-halloween-ghost-pumpkin-single-photo-landscape.thumb.webp",
+  {
+    "src": "cute-halloween-ghost-glow-plaque-single-photo-portrait.png",
+    "name": "Ghost glow caption portrait",
+    "type": "photo",
+    "orientation": "portrait",
+    "aspectRatio": "2:3",
+    "photoSlots": [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1,
+        "borderRadius": 0
+      }
+    ],
+    "textFields": [
+      {
+        "key": "event_name",
+        "xPct": 0.3,
+        "yPct": 0.916,
+        "wPct": 0.4,
+        "hPct": 0.034,
+        "fontFamily": "Trebuchet MS, sans-serif",
+        "fontWeight": "700",
+        "fontSize": 36,
+        "minFontSize": 18,
+        "color": "#ffe0ff",
+        "align": "center"
+      },
+      {
+        "key": "event_date",
+        "xPct": 0.3,
+        "yPct": 0.952,
+        "wPct": 0.4,
+        "hPct": 0.022,
+        "fontFamily": "Trebuchet MS, sans-serif",
+        "fontWeight": "700",
+        "fontSize": 22,
+        "minFontSize": 14,
+        "color": "#ffe0ff",
+        "align": "center"
+      }
+    ]
+  },
+  "cute-halloween-ghost-glow-plaque-single-photo-portrait.thumb.webp",
+  {
+    "src": "cute-halloween-ghost-glow-plaque-single-photo-landscape.png",
+    "name": "Ghost glow caption landscape",
+    "type": "photo",
+    "orientation": "landscape",
+    "aspectRatio": "3:2",
+    "photoSlots": [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1,
+        "borderRadius": 0
+      }
+    ],
+    "textFields": [
+      {
+        "key": "event_name",
+        "xPct": 0.31,
+        "yPct": 0.9,
+        "wPct": 0.38,
+        "hPct": 0.04,
+        "fontFamily": "Trebuchet MS, sans-serif",
+        "fontWeight": "700",
+        "fontSize": 36,
+        "minFontSize": 18,
+        "color": "#ffe0ff",
+        "align": "center"
+      },
+      {
+        "key": "event_date",
+        "xPct": 0.31,
+        "yPct": 0.94,
+        "wPct": 0.38,
+        "hPct": 0.028,
+        "fontFamily": "Trebuchet MS, sans-serif",
+        "fontWeight": "700",
+        "fontSize": 22,
+        "minFontSize": 14,
+        "color": "#ffe0ff",
+        "align": "center"
+      }
+    ]
+  },
+  "cute-halloween-ghost-glow-plaque-single-photo-landscape.thumb.webp"
 ]

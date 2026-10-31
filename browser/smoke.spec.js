@@ -2411,6 +2411,20 @@ test("frame picker hides during finalizing on desktop and mobile", async ({
     });
     await expect(page.locator("#mobileSettingsSheet"), viewport.label).toBeHidden();
     await expect(page.locator("#overlayPickerButton"), viewport.label).toBeHidden();
+
+    await page.evaluate(() => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 2;
+      canvas.height = 2;
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#d74a33";
+      context.fillRect(0, 0, 2, 2);
+      window.__photoboothQA.showFinal(canvas.toDataURL(), { skipShare: true, forceImage: true });
+    });
+    await expect(page.locator("#finalPreview")).toHaveClass(/show/);
+    await expect(page.locator("#finalStrip")).toBeVisible();
+    await expect(page.locator("#overlayPickerButton"), viewport.label).toBeHidden();
+    await expect(page.locator("#mobileSettingsSheet"), viewport.label).toBeHidden();
   }
 });
 

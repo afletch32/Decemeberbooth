@@ -11,8 +11,8 @@ test("Halloween migration replaces legacy defaults and preserves custom uploads"
   };
   const target = { fall: { holidays: { halloween: theme, cuteHalloween: { overlays: [], templates: [] } } } };
   assert.equal(migrateHalloweenThemeAssets(target), true);
-  assert.deepEqual(theme.overlays.map((asset) => asset.orientation), ["portrait", "landscape", "portrait", undefined]);
-  assert.equal(theme.overlays[3], custom);
+  assert.deepEqual(theme.overlays.map((asset) => asset.orientation), ["portrait", "landscape", "portrait", "landscape", "portrait", undefined]);
+  assert.equal(theme.overlays[5], custom);
   assert.equal(theme.templates.length, 1);
   assert.equal(theme.templates[0].layout, "double_column");
   assert.deepEqual(theme.templates[0].photoSlots.map((slot) => slot.sourceIndex), [0, 1, 2, 0, 1, 2]);
